@@ -1,0 +1,8 @@
+{
+  "/(member)/profile/page": "app/(member)/profile/page.js",
+  "/auth/login/page": "app/auth/login/page.js",
+  "/(member)/home/page": "app/(member)/home/page.js",
+  "/(member)/leaderboard/page": "app/(member)/leaderboard/page.js",
+  "/(member)/cost/page": "app/(member)/cost/page.js",
+  "/(member)/activity/page": "app/(member)/activity/page.js"
+}

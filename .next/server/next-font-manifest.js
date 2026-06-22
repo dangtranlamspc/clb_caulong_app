@@ -1,0 +1,1 @@
+self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/Volumes/SOURCE/CODE/Ngoi/member-management/frontend/src/app/layout\":[\"static/media/6a9c36ea9dc9b36b-s.p.woff2\",\"static/media/ee40bb094c99a29a-s.p.woff2\"]},\"appUsingSizeAdjust\":true,\"pagesUsingSizeAdjust\":false}"
