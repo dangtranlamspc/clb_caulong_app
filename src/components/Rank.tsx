@@ -14,7 +14,7 @@
 const TIER_ICONS: Record<string, string> = {
     'Sắt': '/ranks_final/sat-new-final.png',
     'Đồng': '/ranks_final/dong_new_final.png',
-    'Bạc': '/ranks_final/bac_final.png',
+    'Bạc': '/ranks_final/bac_new_final.png',
     'Vàng': '/ranks_final/vang_new_final.png',
     'Lục Bảo': '/ranks_final/lucbao_new_final.png',
     'Bạch Kim': '/ranks_final/bk_new_final.png',

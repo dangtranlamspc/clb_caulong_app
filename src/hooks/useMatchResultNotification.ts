@@ -81,58 +81,50 @@ function buildResult(m: any, userId: string): MatchResult | null {
 
 export function useMatchResultNotification() {
     const { user, isAuthenticated } = useAuthStore();
-    const [pending, setPending] = useState<MatchResult[]>([]);
+    const userId = user?.id;
     const [current, setCurrent] = useState<MatchResult | null>(null);
+    const pendingRef = useRef<MatchResult[]>([]);
     const channelRef = useRef<RealtimeChannel | null>(null);
 
     const pushResult = useCallback((result: MatchResult) => {
         const seen = getSeenIds();
         if (seen.has(result.matchId)) return;
-        setPending(prev => {
-            if (prev.some(r => r.matchId === result.matchId)) return prev;
-            const next = [...prev, result];
-            setCurrent(c => c ?? next[0]);
-            return next;
-        });
+        if (pendingRef.current.some(r => r.matchId === result.matchId)) return;
+        pendingRef.current.push(result);
+        setCurrent(c => c ?? pendingRef.current[0]);
     }, []);
 
     const check = useCallback(async () => {
-        if (!isAuthenticated || !user) return;
+        if (!isAuthenticated || !userId) return;
         try {
             const { data } = await matchesApi.list({ status: 'approved', limit: 20 });
             const matches: any[] = data.data ?? [];
             const seen = getSeenIds();
             for (const m of matches) {
                 if (seen.has(m.id)) continue;
-                const result = buildResult(m, user.id);
+                const result = buildResult(m, userId);
                 if (result) pushResult(result);
             }
         } catch { }
-    }, [isAuthenticated, user, pushResult]);
+    }, [isAuthenticated, userId, pushResult]);
 
     useEffect(() => {
-        if (!isAuthenticated || !user) return;
+        if (!isAuthenticated || !userId) return;
 
         check();
 
         const channel = supabase
-            .channel(`match-result-notification:${user.id}`)
-            .on(
-                'broadcast',
-                { event: 'match_result' },
-                async (payload) => {
-                    const matchId = payload.payload?.matchId;
-                    if (!matchId) return;
-                    try {
-                        const { data } = await matchesApi.getOne(matchId);
-                        const result = buildResult(data, user.id);
-                        if (result) pushResult(result);
-                    } catch { }
-                },
-            )
-            .subscribe((status) => {
-                // console.log('[Realtime] match_result channel status:', status);
-            });
+            .channel(`match-result-notification:${userId}`)
+            .on('broadcast', { event: 'match_result' }, async (payload) => {
+                const matchId = payload.payload?.matchId;
+                if (!matchId) return;
+                try {
+                    const { data } = await matchesApi.getOne(matchId);
+                    const result = buildResult(data, userId);
+                    if (result) pushResult(result);
+                } catch { }
+            })
+            .subscribe();
 
         channelRef.current = channel;
 
@@ -142,16 +134,13 @@ export function useMatchResultNotification() {
                 channelRef.current = null;
             }
         };
-    }, [isAuthenticated, user?.id, check, pushResult]);
+    }, [isAuthenticated, userId, check]);
 
     const dismiss = useCallback(() => {
         if (!current) return;
         markSeen(current.matchId);
-        setPending(prev => {
-            const remaining = prev.filter(r => r.matchId !== current.matchId);
-            setCurrent(remaining[0] ?? null);
-            return remaining;
-        });
+        pendingRef.current = pendingRef.current.filter(r => r.matchId !== current.matchId);
+        setCurrent(pendingRef.current[0] ?? null);
     }, [current]);
 
     return { current, dismiss };

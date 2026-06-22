@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { rankingsApi } from '../../../lib/api';
 import { RankIcon, RankPodiumAvatar } from '@/components/Rank';
+import { RankInfoModal } from '@/components/RankInfoModal';
 
 const LEVEL_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
   'Cố định (tháng)': { emoji: '🏆', cls: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
@@ -27,6 +28,7 @@ export default function ProfilePage() {
   const [myRank, setMyRank] = useState<any>(null);
   const [myStats, setMyStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showRankInfo, setShowRankInfo] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -102,7 +104,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center gap-2">
-        <RankIcon tier={tier} size={200} />
+        <RankIcon tier={tier} size={280} />
         <p className="text-sx font-bold text-gray-800">{tier} {myRank?.division ?? 'V'}</p>
         <div className="flex items-center justify-center gap-1">
           {Array.from({ length: totalGems }).map((_, i) => (
@@ -168,6 +170,17 @@ export default function ProfilePage() {
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </Link>
 
+        <button
+          onClick={() => setShowRankInfo(true)}
+          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-50 text-left"
+        >
+          <div className="w-8 h-8 rounded-xl bg-cyan-50 flex items-center justify-center flex-shrink-0">
+            <Trophy className="w-4 h-4 text-cyan-600" />
+          </div>
+          <span className="flex-1 text-sm font-medium text-gray-700">Thông tin các rank</span>
+          <ChevronRight className="w-4 h-4 text-gray-300" />
+        </button>
+
         <Link
           href="/profile/change-password"
           className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-50"
@@ -193,7 +206,7 @@ export default function ProfilePage() {
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </Link>
       </div>
-
+      {showRankInfo && <RankInfoModal onClose={() => setShowRankInfo(false)} />}
     </div>
   );
 }
