@@ -100,11 +100,21 @@ export function useMatchResultNotification() {
             const { data } = await matchesApi.list({ status: 'approved', limit: 20 });
             const matches: any[] = data.data ?? [];
             const seen = getSeenIds();
-            for (const m of matches) {
-                if (seen.has(m.id)) continue;
-                const result = buildResult(m, userId);
-                if (result) pushResult(result);
-            }
+
+            const unseen = matches.filter(m => !seen.has(m.id));
+            if (unseen.length === 0) return;
+
+            unseen.sort((a, b) =>
+                new Date(b.approved_at ?? b.played_at ?? 0).getTime() -
+                new Date(a.approved_at ?? a.played_at ?? 0).getTime()
+            );
+
+            const [latest, ...rest] = unseen;
+
+            rest.forEach(m => markSeen(m.id));
+
+            const result = buildResult(latest, userId);
+            if (result) pushResult(result);
         } catch { }
     }, [isAuthenticated, userId, pushResult]);
 
