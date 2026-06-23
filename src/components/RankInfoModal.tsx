@@ -42,7 +42,6 @@ export function RankInfoModal({ onClose }: RankInfoModalProps) {
 
     useEffect(() => {
         setMounted(true);
-        // Khoá scroll nền khi modal mở
         const original = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
         return () => {

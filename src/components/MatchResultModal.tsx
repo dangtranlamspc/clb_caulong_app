@@ -203,6 +203,7 @@ export function MatchResultModal({ result, onClose }: Props) {
             style={{
                 background: visible ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0)',
                 backdropFilter: visible ? 'blur(3px)' : 'blur(0px)',
+                pointerEvents: visible ? 'auto' : 'none',
                 transition: 'background 0.3s ease, backdrop-filter 0.3s ease',
             }}
             onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}

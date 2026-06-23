@@ -215,6 +215,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
 
             {matchResult && (
                 <MatchResultModal
+                    key={matchResult.matchId}
                     result={matchResult}
                     onClose={dismissResult}
                 />

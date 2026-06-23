@@ -11,16 +11,6 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/auth/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/auth/layout.js"
-    ],
-    "/auth/login/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/auth/login/page.js"
-    ],
     "/(member)/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -51,15 +41,20 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/profile/page.js"
     ],
-    "/(member)/matches/create/page": [
+    "/(member)/profile/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/matches/create/page.js"
+      "static/chunks/app/(member)/profile/settings/page.js"
     ],
-    "/(member)/matches/[id]/page": [
+    "/auth/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/matches/[id]/page.js"
+      "static/chunks/app/auth/layout.js"
+    ],
+    "/auth/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/login/page.js"
     ]
   }
 }
