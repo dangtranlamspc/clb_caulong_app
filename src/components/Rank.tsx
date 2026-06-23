@@ -1,39 +1,4 @@
 'use client';
-// const TIER_ICONS: Record<string, string> = {
-//     'Sắt': '/ranks/sat_old.png',
-//     'Đồng': '/ranks/dong_new.png',
-//     'Bạc': '/ranks/bac_old.png',
-//     'Vàng': '/ranks/vang_old.png',
-//     'Bạch Kim': '/ranks/bk_old.png',
-//     'Lục Bảo': '/ranks/lucbao_old.png',
-//     'Kim Cương': '/ranks/kimcuong_old.png',
-//     'Cao Thủ': '/ranks/caothu_old.png',
-// };
-
-
-// const TIER_ICONS: Record<string, string> = {
-//     'Sắt': '/ranks_final/sat-new-final.png',
-//     'Đồng': '/ranks_final/dong_new_final.png',
-//     'Bạc': '/ranks_final/bac_new_final.png',
-//     'Vàng': '/ranks_final/vang_new_final.png',
-//     'Lục Bảo': '/ranks_final/lucbao_new_final.png',
-//     'Bạch Kim': '/ranks_final/bk_new_final.png',
-//     'Kim Cương': '/ranks_final/kc_new_final.png',
-//     'Cao Thủ': '/ranks_final/caothu_new_final.png',
-// };
-
-
-// const TIER_ICONS: Record<string, string> = {
-//     'Sắt': '/rank_new/sat_phoi_fn.png',
-//     'Đồng': '/rank_new/dong_phoi_fn.png',
-//     'Bạc': '/rank_new/bac_phoi_fn.png',
-//     'Vàng': '/rank_new/vang_phoi_fn.png',
-//     'Lục Bảo': '/rank_new/lucbao_phoi_fn.png',
-//     'Bạch Kim': '/rank_new/bk_phoi_fn.png',
-//     'Kim Cương': '/rank_new/kc_phoi_fn.png',
-//     'Cao Thủ': '/rank_new/caothu_phoi_fn.png',
-// };
-
 
 const TIER_ICONS: Record<string, string> = {
     'Sắt': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177252/sat-new-final_um4smq.png',
