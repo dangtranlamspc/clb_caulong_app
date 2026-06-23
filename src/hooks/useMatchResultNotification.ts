@@ -4,8 +4,6 @@ import { useAuthStore } from '../store/auth.store';
 import { matchesApi } from '../lib/api';
 import { createClient, RealtimeChannel } from '@supabase/supabase-js';
 
-const SEEN_KEY = 'seen_match_results';
-
 interface PlayerInfo {
     name: string;
     tier?: string;
@@ -20,21 +18,6 @@ interface MatchResult {
     opponents: PlayerInfo[];
     myTeam?: PlayerInfo[];
     matchType: 'singles' | 'doubles';
-}
-
-function getSeenIds(): Set<string> {
-    try {
-        const raw = localStorage.getItem(SEEN_KEY);
-        return new Set(raw ? JSON.parse(raw) : []);
-    } catch { return new Set(); }
-}
-
-function markSeen(id: string) {
-    try {
-        const seen = getSeenIds();
-        seen.add(id);
-        localStorage.setItem(SEEN_KEY, JSON.stringify(Array.from(seen).slice(-100)));
-    } catch { }
 }
 
 function shortName(p: any): string {
@@ -60,13 +43,8 @@ function buildResult(m: any, userId: string): MatchResult | null {
     if (!isTeamA && !isTeamB) return null;
 
     const myTeam = isTeamA ? 'A' : 'B';
-
-    const myPlayers = isTeamA
-        ? [m.player_a1, m.player_a2]
-        : [m.player_b1, m.player_b2];
-    const oppPlayers = isTeamA
-        ? [m.player_b1, m.player_b2]
-        : [m.player_a1, m.player_a2];
+    const myPlayers = isTeamA ? [m.player_a1, m.player_a2] : [m.player_b1, m.player_b2];
+    const oppPlayers = isTeamA ? [m.player_b1, m.player_b2] : [m.player_a1, m.player_a2];
 
     return {
         matchId: m.id,
@@ -87,8 +65,6 @@ export function useMatchResultNotification() {
     const channelRef = useRef<RealtimeChannel | null>(null);
 
     const pushResult = useCallback((result: MatchResult) => {
-        const seen = getSeenIds();
-        if (seen.has(result.matchId)) return;
         if (pendingRef.current.some(r => r.matchId === result.matchId)) return;
         pendingRef.current.push(result);
         setCurrent(c => c ?? pendingRef.current[0]);
@@ -97,23 +73,20 @@ export function useMatchResultNotification() {
     const check = useCallback(async () => {
         if (!isAuthenticated || !userId) return;
         try {
-            const { data } = await matchesApi.list({ status: 'approved', limit: 20 });
-            const matches: any[] = data.data ?? [];
-            const seen = getSeenIds();
+            const { data } = await matchesApi.getUnseenResults();
+            const rows: any[] = data ?? [];
+            if (rows.length === 0) return;
 
-            const unseen = matches.filter(m => !seen.has(m.id));
-            if (unseen.length === 0) return;
+            // BE đã order created_at desc -> rows[0] là mới nhất
+            const [latestRow, ...rest] = rows;
 
-            unseen.sort((a, b) =>
-                new Date(b.approved_at ?? b.played_at ?? 0).getTime() -
-                new Date(a.approved_at ?? a.played_at ?? 0).getTime()
+            // Các trận cũ hơn: đánh dấu đã xem ngay, KHÔNG hiện modal,
+            // tránh phải bấm "Tuyệt vời" liên tục cho backlog
+            await Promise.allSettled(
+                rest.map(r => matchesApi.markResultSeen(r.match_id))
             );
 
-            const [latest, ...rest] = unseen;
-
-            rest.forEach(m => markSeen(m.id));
-
-            const result = buildResult(latest, userId);
+            const result = buildResult(latestRow.match, userId);
             if (result) pushResult(result);
         } catch { }
     }, [isAuthenticated, userId, pushResult]);
@@ -148,7 +121,7 @@ export function useMatchResultNotification() {
 
     const dismiss = useCallback(() => {
         if (!current) return;
-        markSeen(current.matchId);
+        matchesApi.markResultSeen(current.matchId).catch(() => { });
         pendingRef.current = pendingRef.current.filter(r => r.matchId !== current.matchId);
         setCurrent(pendingRef.current[0] ?? null);
     }, [current]);
