@@ -78,18 +78,18 @@ export default function ProfilePage() {
     <div className="space-y-4">
 
       {/* ── Hero banner ── */}
-      <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 rounded-3xl p-5 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 rounded-3xl px-5 py-10 min-h-[180px] overflow-hidden">
         <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10" />
         <div className="absolute -bottom-6 -left-4 w-20 h-20 rounded-full bg-white/5" />
 
-        <div className="relative flex items-center gap-4">
+        <div className="relative flex items-center gap-4 ml-4">
           {/* Avatar */}
           <RankPodiumAvatar
             tier={tier}
             avatar={data?.avatar_url}
             name={data?.full_name}
             size={100}
-            frameScale={3.6}
+            frameScale={4}
           />
           <div className="flex-1 min-w-0 ml-8">
             <p className="text-white/70 text-xs">Thành viên</p>

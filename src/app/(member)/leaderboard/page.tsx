@@ -148,7 +148,7 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                     <p className="text-xs font-semibold text-gray-700 truncate max-w-[72px]">{top3[1].full_name}</p>
                                     <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
                                         {top3[1].total_points}
-                                        <img src="/icons/cau-long-icon.png" alt="" className="w-8 h-8 object-contain" />
+                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
                                     </p>
                                     <div className="bg-slate-100 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-slate-500 font-bold">🥈 #2</p></div>
                                 </div>
@@ -166,7 +166,7 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                     <p className="text-sm font-bold text-gray-900 truncate max-w-[80px]">{top3[0].full_name}</p>
                                     <p className="text-base font-black text-yellow-600 mt-0.5 flex items-center justify-center gap-1">
                                         {top3[0].total_points}
-                                        <img src="/icons/cau-long-icon.png" alt="" className="w-10 h-10 object-contain" style={{ mixBlendMode: 'multiply' }} />
+                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-10 h-10 object-contain" style={{ mixBlendMode: 'multiply' }} />
                                     </p>
                                     <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥇 #1</p></div>
                                 </div>
@@ -183,7 +183,7 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                     <p className="text-xs font-semibold text-gray-700 truncate max-w-[72px]">{top3[2].full_name}</p>
                                     <p className="text-sm font-black text-amber-700 mt-0.5 flex items-center justify-center gap-1">
                                         {top3[2].total_points}
-                                        <img src="/icons/cau-long-icon.png" alt="" className="w-8 h-8 object-contain" style={{ mixBlendMode: 'multiply' }} />
+                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" style={{ mixBlendMode: 'multiply' }} />
                                     </p>
                                     <div className="bg-amber-50 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-amber-600 font-bold">🥉 #3</p></div>
                                 </div>
@@ -225,7 +225,7 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                         <div className="text-right flex-shrink-0">
                                             <p className={`font-black text-base flex items-center justify-end gap-0.5 ${isMe ? 'text-blue-600' : 'text-gray-700'}`}>
                                                 {member.total_points}
-                                                <img src="/icons/cau-long-icon.png" alt="" className="w-5 h-5 object-contain" style={{ mixBlendMode: 'multiply' }} />
+                                                <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-5 h-5 object-contain" style={{ mixBlendMode: 'multiply' }} />
                                             </p>
                                             <p className="text-[10px] text-gray-400">{member.total_sessions} buổi</p>
                                         </div>
@@ -338,7 +338,7 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                                                 avatar={p.avatar_url}
                                                 name={p.full_name}
                                                 size={48}
-                                                frameScale={6}
+                                                frameScale={5.5}
                                             />
                                         </div>
                                         <div className="flex-1 min-w-0 ml-12">
@@ -413,7 +413,7 @@ export default function LeaderboardPage() {
         { key: 'winrate', label: 'Giao hữu', icon: '⚔️' },
         {
             key: 'leaderboard', label: 'Cầu lông',
-            icon: <img src="/icons/cau-long-icon.png" className="w-4 h-4 object-contain" style={{ mixBlendMode: 'screen' }} />
+            icon: <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" className="w-4 h-4 object-contain" style={{ mixBlendMode: 'screen' }} />
         },
     ];
 

@@ -108,7 +108,7 @@ export default function HomePage() {
                                         <p className="text-white/60 text-[10px] leading-none">Cầu lông</p>
                                         <p className="text-white font-black text-xl mt-0.5 flex items-center justify-center gap-1.5 w-full">
                                             {myStats?.badminton?.total_points ?? 0}
-                                            <img src="/icons/cau-long-icon.png" alt="cầu lông" className="w-6 h-6 object-contain" style={{ mixBlendMode: 'screen' }} />
+                                            <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="cầu lông" className="w-6 h-6 object-contain" style={{ mixBlendMode: 'screen' }} />
                                         </p>
                                     </div>
                                     <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
@@ -419,7 +419,7 @@ export default function HomePage() {
                                                     <span className={`text-xs font-medium ${cfg.cls}`}>{cfg.label}</span>
                                                     {reg.points_awarded && (
                                                         <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                                                            +1 <img src="/icons/cau-long-icon.png" alt="cầu lông" className="w-5 h-5 object-contain" style={{ mixBlendMode: 'multiply' }} />
+                                                            +1 <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="cầu lông" className="w-5 h-5 object-contain" style={{ mixBlendMode: 'multiply' }} />
                                                         </span>
                                                     )}
                                                     {reg.payment_status === 'pending' && !reg.payment_reference && (

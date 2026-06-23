@@ -12,14 +12,14 @@ const TIER_ICONS: Record<string, string> = {
 };
 
 const TIER_FRAMES: Record<string, string> = {
-    'Sắt': '/ranks/sat_frame.webp',
-    'Đồng': '/ranks/dong_frame.webp',
-    'Bạc': '/ranks/bac_frame.webp',
-    'Vàng': '/ranks/vang_frame.webp',
-    'Bạch Kim': '/ranks/bachkim_frame.webp',
-    'Lục Bảo': '/ranks/lucbao_frame.webp',
-    'Kim Cương': '/ranks/kimcuong_frame.webp',
-    'Cao Thủ': '/ranks/caothu_frame.webp',
+    'Sắt': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203453/sat_frame_sjcdg2.webp',
+    'Đồng': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203449/dong_frame_s3nbx6.webp',
+    'Bạc': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203449/bac_frame_tvdjpw.webp',
+    'Vàng': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203452/vang_frame_t1xqgf.webp',
+    'Lục Bảo': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203451/lucbao_frame_skokel.webp',
+    'Bạch Kim': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203448/bachkim_frame_wg452j.webp',
+    'Kim Cương': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203450/kimcuong_frame_lqps4s.webp',
+    'Cao Thủ': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203454/caothu_frame_mom7dj.webp',
 };
 
 interface RankIconProps {
@@ -62,8 +62,8 @@ export function RankIcon({ tier, size = 48, className }: RankIconProps) {
 
 export function RankPodiumAvatar({
     tier, avatar, name,
-    size = 120, frameScale = 2.2,
-    avatarTop = '50%', frameTop = '16%',
+    size = 110, frameScale = 2.2,
+    avatarTop = '50%', frameTop = '10%',
 }: RankAvatarProps) {
     const frame = TIER_FRAMES[tier] ?? TIER_FRAMES['Sắt'];
     return (
@@ -71,7 +71,7 @@ export function RankPodiumAvatar({
             {/* Avatar */}
             <div style={{
                 position: 'absolute',
-                width: size, height: size,
+                width: size + 1.1, height: size * 1.1,
                 left: '50%', top: avatarTop,
                 transform: 'translate(-50%, -50%)',
                 zIndex: 1, borderRadius: '50%', overflow: 'hidden',
@@ -155,7 +155,7 @@ export function RankPodiumAvatarList({
                 width: size * frameScale,
                 height: size * frameScale,
                 left: '50%',
-                top: '-10%',
+                top: '1%',
                 transform: 'translate(-50%, -50%)',
                 zIndex: 2,
                 pointerEvents: 'none',

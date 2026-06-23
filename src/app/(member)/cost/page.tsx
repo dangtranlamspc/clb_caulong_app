@@ -31,7 +31,6 @@ function groupByMonth(items: any[]): { month: string; items: any[] }[] {
     return Object.keys(map).map(month => ({ month, items: map[month] }));
 }
 
-// Component fade+slide với delay
 function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
     const [visible, setVisible] = useState(false);
     useEffect(() => {
@@ -80,8 +79,13 @@ function SessionCostCard({ item }: { item: any }) {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Chi phí thực tế</p>
                 {chi_phi.shuttle_count > 0 && (
                     <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">
-                            🏸 Cầu
+                        <span className="text-gray-500 flex items-center gap-1">
+                            <img
+                                src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png"
+                                alt="cầu lông"
+                                className="w-8 h-8 inline-block"
+                            />
+                            Cầu
                             <span className="text-gray-400 text-xs ml-1">{chi_phi.shuttle_count} × {new Intl.NumberFormat('vi-VN').format(chi_phi.shuttle_price / 1000)}k</span>
                         </span>
                         <span className="font-medium text-gray-700">{fmtFull(chi_phi.shuttle_cost)}</span>

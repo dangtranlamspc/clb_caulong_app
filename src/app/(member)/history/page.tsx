@@ -75,7 +75,7 @@ export default function HistoryPage() {
                         <p className="text-2xl font-black flex items-center gap-1.5">
                             {totalPoints}
                             <img
-                                src="/icons/cau-long-icon.png"
+                                src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png"
                                 alt="cầu lông"
                                 className="w-8 h-8 object-contain"
                                 style={{ mixBlendMode: 'screen' }}
@@ -150,7 +150,7 @@ export default function HistoryPage() {
                                                 <span className={`text-xs font-medium ${cfg.cls}`}>{cfg.label}</span>
                                                 {reg.points_awarded && (
                                                     <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                                                        +1 <img src="/icons/cau-long-icon.png" alt="cầu lông" className="w-5 h-5 object-contain" style={{ mixBlendMode: 'multiply' }} />
+                                                        +1 <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="cầu lông" className="w-5 h-5 object-contain" style={{ mixBlendMode: 'multiply' }} />
                                                     </span>
                                                 )}
                                             </div>

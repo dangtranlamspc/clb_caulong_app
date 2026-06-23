@@ -1,9 +1,9 @@
 {
   "pages": {
-    "/page": [
+    "/(member)/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
+      "static/chunks/app/(member)/layout.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
@@ -11,15 +11,10 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/(member)/home/page": [
+    "/(member)/matches/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/home/page.js"
-    ],
-    "/(member)/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/layout.js"
+      "static/chunks/app/(member)/matches/[id]/page.js"
     ],
     "/(member)/activity/page": [
       "static/chunks/webpack.js",
@@ -36,6 +31,11 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/leaderboard/page.js"
     ],
+    "/(member)/home/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/home/page.js"
+    ],
     "/(member)/profile/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -46,25 +46,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/sessions/[id]/page.js"
     ],
-    "/(member)/matches/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/matches/[id]/page.js"
-    ],
     "/(member)/profile/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/profile/settings/page.js"
-    ],
-    "/(member)/matches/create/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/matches/create/page.js"
-    ],
-    "/not-found": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/not-found.js"
     ]
   }
 }

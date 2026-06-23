@@ -8,15 +8,14 @@ import {
     Clock, Trophy, Loader2, Plus, Minus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Image from 'next/image';
 import { matchesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import { createClient, RealtimeChannel } from '@supabase/supabase-js';
 
 function Revive({ size = 24, className = '' }: { size?: number; className?: string }) {
     return (
-        <Image
-            src="/images/revive.png"
+        <img
+            src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118305/revive_hi34ip.png"
             alt="chai Revive"
             width={size}
             height={size * 2.4}
@@ -50,7 +49,6 @@ function SetRow({
         const [raw, setRaw] = useState(String(val));
 
         useEffect(() => {
-            // Chỉ sync khi không đang edit (raw không phải prefix hợp lệ)
             if (document.activeElement?.tagName !== 'INPUT') {
                 setRaw(String(val));
             }
