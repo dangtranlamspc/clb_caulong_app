@@ -144,7 +144,10 @@ export default function SessionDetailPage() {
         <div className="space-y-4">
             {/* Back */}
             <button
-                onClick={() => router.back()}
+                onClick={() => {
+                    sessionStorage.setItem('activity:return-tab', 'sessions');
+                    router.push('/activity');
+                }}
                 className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
             >
                 <ArrowLeft className="w-4 h-4" /> Quay lại

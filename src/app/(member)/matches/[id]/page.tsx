@@ -244,7 +244,8 @@ export default function MatchDetailPage() {
         try {
             await matchesApi.decline(id, 'Đối thủ từ chối');
             toast.success('Đã từ chối');
-            router.push('/activity?tab=matches');
+            sessionStorage.setItem('activity:return-tab', 'matches');
+            router.push('/activity');
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? 'Thất bại');
         } finally { setSubmitting(false); }
@@ -274,7 +275,10 @@ export default function MatchDetailPage() {
             }
         `}</style>
 
-            <button onClick={() => router.push('/activity?tab=matches')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+            <button onClick={() => {
+                sessionStorage.setItem('activity:return-tab', 'matches');
+                router.push('/activity');
+            }} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
                 <ArrowLeft className="w-4 h-4" /> Quay lại
             </button>
 
@@ -311,9 +315,6 @@ export default function MatchDetailPage() {
                         </p>
                         {[match.player_a1, match.player_a2].filter(Boolean).map((p: any) => (
                             <div key={p.id} className="flex items-center gap-2 min-w-0">
-                                {/* <div className={`w-4 h-4 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${p.id === user?.id ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700'}`}>
-                                    {p.full_name?.[0]?.toUpperCase()}
-                                </div> */}
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{p.full_name}</p>
                                     {p.id === user?.id && <p className="text-[10px] text-blue-500 leading-none mt-0.5">Bạn</p>}

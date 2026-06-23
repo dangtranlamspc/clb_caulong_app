@@ -25,7 +25,7 @@ const NAV_ITEMS = [
 function BadmintonLogo({ size = 26 }: { size?: number }) {
     return (
         <img
-            src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782183914/icon_home-Photoroom_lyqlri.png"
+            src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782199056/icon_home-fn_z1thtm.png"
             width={size}
             height={size}
             alt="BNB Badminton Club"
@@ -97,7 +97,7 @@ function BottomNav({ pathname }: { pathname: string }) {
                                     style={{
                                         width: 20,
                                         height: 20,
-                                        color: isActive ? '#1e3a5f' : '#9ca3af',
+                                        color: isActive ? '#0e56b5' : '#9ca3af',
                                         strokeWidth: isActive ? 2.2 : 1.8,
                                         transition: 'color 0.2s',
                                     }}
@@ -107,7 +107,7 @@ function BottomNav({ pathname }: { pathname: string }) {
                                 style={{
                                     fontSize: 10,
                                     fontWeight: isActive ? 600 : 400,
-                                    color: isActive ? '#1e3a5f' : '#9ca3af',
+                                    color: isActive ? '#0e56b5' : '#9ca3af',
                                     transition: 'color 0.2s',
                                     letterSpacing: '0.01em',
                                 }}
@@ -211,8 +211,8 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                     style={{ height: 64, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', background: 'rgba(255,255,255,0.07)', borderBottom: '0.5px solid rgba(255,255,255,0.12)' }}
                 >
                     <div className="flex items-center gap-2.5">
-                        <div className="flex-shrink-0 pt-2">
-                            <BadmintonLogo size={70} />
+                        <div className="flex-shrink-0 pt-3  ">
+                            <BadmintonLogo size={85} />
                         </div>
                         <div>
                             <p className="font-bold text-white leading-none" style={{ fontSize: 16, letterSpacing: '-0.01em' }}>

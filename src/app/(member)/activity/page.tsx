@@ -36,7 +36,6 @@ const SESSION_FILTER_TABS = [
     { value: 'open', label: 'Mở', dot: 'bg-emerald-400' },
     { value: 'full', label: 'Đầy', dot: 'bg-amber-400' },
     { value: 'completed', label: 'Xong', dot: 'bg-gray-400' },
-
 ];
 
 const MATCH_STATUS_CFG: Record<string, { label: string; icon: any; cls: string; dot: string }> = {
@@ -56,23 +55,15 @@ const MATCH_FILTER_OPTS = [
     { value: 'rejected', label: 'Bị từ chối', dot: 'bg-red-400' },
 ];
 
-
 const BLOCKING_STATUSES = ['pending_opponent', 'pending_result', 'pending_approval'];
 
-function useContentAnim(dep: any) {
+function useFadeIn(trigger: boolean) {
     const [visible, setVisible] = useState(false);
-    const prev = useRef(dep);
     useEffect(() => {
-        if (prev.current !== dep) {
-            setVisible(false);
-            const t = setTimeout(() => setVisible(true), 180);
-            prev.current = dep;
-            return () => clearTimeout(t);
-        } else {
-            const t = setTimeout(() => setVisible(true), 50);
-            return () => clearTimeout(t);
-        }
-    }, [dep]);
+        if (!trigger) { setVisible(false); return; }
+        const t = setTimeout(() => setVisible(true), 30);
+        return () => clearTimeout(t);
+    }, [trigger]);
     return visible;
 }
 
@@ -159,23 +150,52 @@ function MembersModal({ sessionId, sessionTitle, onClose }: { sessionId: number;
         registrationsApi.listBySession(sessionId)
             .then(({ data }) => setMembers(data.data ?? []))
             .finally(() => setLoading(false));
-        requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+        const t = requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+        return () => { cancelAnimationFrame(t); };
     }, [sessionId]);
 
-    const close = () => { setVisible(false); setTimeout(onClose, 300); };
+    // Tách riêng overflow lock để cleanup độc lập
+    useEffect(() => {
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = prev; };
+    }, []);
 
-    return (
+    const close = () => {
+        setVisible(false);
+        setTimeout(onClose, 300);
+    };
+
+    return createPortal(
         <div
-            className="fixed inset-0 z-50 flex items-end justify-content-center"
-            style={{ background: visible ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0)', backdropFilter: visible ? 'blur(2px)' : 'none', transition: 'background .3s,backdrop-filter .3s' }}
+            className="fixed inset-0 z-[9999] flex flex-col justify-end"
+            style={{
+                background: visible ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0)',
+                backdropFilter: visible ? 'blur(2px)' : 'none',
+                transition: 'background .3s, backdrop-filter .3s',
+            }}
             onClick={e => e.target === e.currentTarget && close()}
         >
             <div
-                className="w-full max-w-md mx-auto bg-white rounded-t-2xl overflow-hidden"
-                style={{ transform: visible ? 'translateY(0)' : 'translateY(100%)', transition: 'transform .3s cubic-bezier(0.32,0.72,0,1)' }}
+                className="w-full bg-white rounded-t-2xl"
+                style={{
+                    transform: visible ? 'translateY(0)' : 'translateY(100%)',
+                    transition: 'transform .3s cubic-bezier(0.32,0.72,0,1)',
+                    paddingBottom: 'env(safe-area-inset-bottom)',
+                    maxHeight: '80vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    willChange: 'transform',
+                }}
+                onClick={e => e.stopPropagation()}
             >
-                <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-gray-200" /></div>
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                {/* Handle bar */}
+                <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+                    <div className="w-9 h-1 rounded-full bg-gray-200" />
+                </div>
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
                     <div>
                         <p className="text-sm font-semibold text-gray-900">Thành viên đăng ký</p>
                         <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[240px]">{sessionTitle}</p>
@@ -184,28 +204,43 @@ function MembersModal({ sessionId, sessionTitle, onClose }: { sessionId: number;
                         <X className="w-4 h-4 text-gray-500" />
                     </button>
                 </div>
-                <div className="overflow-y-auto max-h-[55vh] px-4 pb-6">
+
+                {/* Scrollable list */}
+                <div className="overflow-y-auto flex-1 px-4 pb-6">
                     {loading ? (
-                        <div className="space-y-3 pt-4">{[...Array(4)].map((_, i) => (
-                            <div key={i} className="flex items-center gap-3 animate-pulse">
-                                <div className="w-9 h-9 rounded-full bg-gray-100" />
-                                <div className="flex-1 space-y-1.5"><div className="h-3 bg-gray-100 rounded w-2/3" /><div className="h-2.5 bg-gray-100 rounded w-1/3" /></div>
-                            </div>
-                        ))}</div>
+                        <div className="space-y-3 pt-4">
+                            {[...Array(4)].map((_, i) => (
+                                <div key={i} className="flex items-center gap-3 animate-pulse">
+                                    <div className="w-9 h-9 rounded-full bg-gray-100" />
+                                    <div className="flex-1 space-y-1.5">
+                                        <div className="h-3 bg-gray-100 rounded w-2/3" />
+                                        <div className="h-2.5 bg-gray-100 rounded w-1/3" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     ) : members.length === 0 ? (
-                        <div className="py-12 text-center"><Users className="w-8 h-8 mx-auto text-gray-200 mb-2" /><p className="text-sm text-gray-400">Chưa có thành viên nào</p></div>
+                        <div className="py-12 text-center">
+                            <Users className="w-8 h-8 mx-auto text-gray-200 mb-2" />
+                            <p className="text-sm text-gray-400">Chưa có thành viên nào</p>
+                        </div>
                     ) : (
                         <ul className="divide-y divide-gray-50 pt-1">
                             {members.map((m, idx) => {
                                 const u = m.users;
                                 const fullName = u?.full_name ?? '?';
                                 const parts = fullName.trim().split(' ').filter(Boolean);
-                                const initials = parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase() : fullName.slice(0, 2).toUpperCase();
+                                const initials = parts.length >= 2
+                                    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+                                    : fullName.slice(0, 2).toUpperCase();
                                 const regCfg = REG_CFG[m.payment_status] ?? REG_CFG.pending;
                                 const RegIcon = regCfg.icon;
                                 return (
-                                    <li key={m.id} className="flex items-center gap-3 py-3"
-                                        style={{ animation: `fadeSlideUp .25s ease both`, animationDelay: `${idx * 40}ms` }}>
+                                    <li
+                                        key={m.id}
+                                        className="flex items-center gap-3 py-3"
+                                        style={{ opacity: 0, animation: `fadeIn .2s ease forwards`, animationDelay: `${idx * 35}ms` }}
+                                    >
                                         {u?.avatar_url
                                             ? <img src={u.avatar_url} alt={fullName} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
                                             : <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-semibold flex-shrink-0">{initials}</div>
@@ -224,7 +259,8 @@ function MembersModal({ sessionId, sessionTitle, onClose }: { sessionId: number;
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -234,7 +270,7 @@ function SessionsTab() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('open');
     const [modalSession, setModalSession] = useState<{ id: number; title: string } | null>(null);
-    const contentVisible = useContentAnim(loading ? 'loading' : filter);
+    const fadeIn = useFadeIn(!loading);
 
     const fetchSessions = useCallback(async () => {
         setLoading(true);
@@ -263,8 +299,7 @@ function SessionsTab() {
                 ))}
             </div>
 
-            <div className="space-y-3 transition-all duration-300"
-                style={{ opacity: contentVisible ? 1 : 0, transform: contentVisible ? 'translateY(0)' : 'translateY(10px)' }}>
+            <div className="space-y-3" style={{ opacity: fadeIn ? 1 : 0, transition: 'opacity 0.3s ease' }}>
                 {loading ? (
                     [...Array(4)].map((_, i) => (
                         <div key={i} style={{ animationDelay: `${i * 60}ms`, animation: 'fadeSlideUp .3s ease both' }}>
@@ -356,7 +391,13 @@ function SessionsTab() {
                 )}
             </div>
 
-            {modalSession && <MembersModal sessionId={modalSession.id} sessionTitle={modalSession.title} onClose={() => setModalSession(null)} />}
+            {modalSession && (
+                <MembersModal
+                    sessionId={modalSession.id}
+                    sessionTitle={modalSession.title}
+                    onClose={() => setModalSession(null)}
+                />
+            )}
         </div>
     );
 }
@@ -368,10 +409,9 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
     const [filter, setFilter] = useState('');
     const [sheetOpen, setSheetOpen] = useState(false);
     const [sheetVisible, setSheetVisible] = useState(false);
-
     const [activeMatch, setActiveMatch] = useState<any>(null);
     const channelRef = useRef<RealtimeChannel | null>(null);
-    const contentVisible = useContentAnim(loading ? 'loading' : filter);
+    const fadeIn = useFadeIn(!loading);
 
     const openSheet = () => { setSheetOpen(true); requestAnimationFrame(() => requestAnimationFrame(() => setSheetVisible(true))); };
     const closeSheet = () => { setSheetVisible(false); setTimeout(() => setSheetOpen(false), 300); };
@@ -394,34 +434,20 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
     }, [filter, onActiveMatchChange]);
 
     const fetchMatchesRef = useRef<() => Promise<void>>(async () => { });
-
     useEffect(() => { fetchMatchesRef.current = fetchMatches }, [fetchMatches]);
-
     useEffect(() => { fetchMatches(); }, [fetchMatches]);
 
     useEffect(() => {
         if (!user?.id) return;
-
         const channel = supabase
             .channel(`matches-list:${user.id}`)
-            .on('broadcast', { event: 'match_result' }, () => {
-                fetchMatchesRef.current();
-            })
-            .on('broadcast', { event: 'new_challenge' }, () => {
-                fetchMatchesRef.current();
-            })
-            .on('broadcast', { event: 'match_status_changed' }, () => {
-                fetchMatchesRef.current();
-            })
+            .on('broadcast', { event: 'match_result' }, () => { fetchMatchesRef.current(); })
+            .on('broadcast', { event: 'new_challenge' }, () => { fetchMatchesRef.current(); })
+            .on('broadcast', { event: 'match_status_changed' }, () => { fetchMatchesRef.current(); })
             .subscribe();
-
         channelRef.current = channel;
-
         return () => {
-            if (channelRef.current) {
-                supabase.removeChannel(channelRef.current);
-                channelRef.current = null;
-            }
+            if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null; }
         };
     }, [user?.id]);
 
@@ -431,7 +457,6 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
 
     return (
         <div className="space-y-4">
-            {/* Filter trigger */}
             <button
                 type="button" onClick={openSheet}
                 className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-2.5 hover:border-gray-300 active:bg-gray-50 transition-colors"
@@ -462,9 +487,7 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                 </Link>
             )}
 
-            {/* Content */}
-            <div className="space-y-4 transition-all duration-300"
-                style={{ opacity: contentVisible ? 1 : 0, transform: contentVisible ? 'translateY(0)' : 'translateY(10px)' }}>
+            <div className="space-y-4" style={{ opacity: fadeIn ? 1 : 0, transition: 'opacity 0.3s ease' }}>
                 {loading ? (
                     [...Array(4)].map((_, i) => (
                         <div key={i} style={{ animation: 'fadeSlideUp .3s ease both', animationDelay: `${i * 60}ms` }}>
@@ -517,11 +540,7 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                                             {myNames.map((p: any) => (
                                                 <div key={p.id} className="flex items-center gap-1.5">
                                                     {p.avatar_url ? (
-                                                        <img
-                                                            src={p.avatar_url}
-                                                            alt={p.full_name}
-                                                            className="w-12 h-12 rounded-full object-cover flex-shrink-0 mb-2"
-                                                        />
+                                                        <img src={p.avatar_url} alt={p.full_name} className="w-12 h-12 rounded-full object-cover flex-shrink-0 mb-2" />
                                                     ) : (
                                                         <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-[11px] font-bold text-blue-700 flex-shrink-0 mb-2">
                                                             {p.full_name?.[0]?.toUpperCase()}
@@ -551,11 +570,7 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                                                 <div key={p.id} className="flex items-center justify-end gap-1.5">
                                                     <span className="text-xs font-semibold text-gray-900 leading-tight break-words text-right">{p.full_name}</span>
                                                     {p.avatar_url ? (
-                                                        <img
-                                                            src={p.avatar_url}
-                                                            alt={p.full_name}
-                                                            className="w-12 h-12 rounded-full object-cover flex-shrink-0 mb-2"
-                                                        />
+                                                        <img src={p.avatar_url} alt={p.full_name} className="w-12 h-12 rounded-full object-cover flex-shrink-0 mb-2" />
                                                     ) : (
                                                         <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-[11px] font-bold text-red-600 flex-shrink-0 mb-2">
                                                             {p.full_name?.[0]?.toUpperCase()}
@@ -591,10 +606,9 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                 )}
             </div>
 
-            {/* Bottom sheet */}
             {sheetOpen && createPortal(
                 <div
-                    className="fixed inset-0 z-[9999] flex items-end"
+                    className="fixed inset-0 z-[9999] flex flex-col justify-end"
                     style={{
                         background: sheetVisible ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0)',
                         backdropFilter: sheetVisible ? 'blur(2px)' : 'none',
@@ -640,8 +654,7 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                             })}
                         </div>
                         <div className="px-4 pt-3 pb-8 border-t border-gray-100">
-                            <button onClick={closeSheet}
-                                className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700">
+                            <button onClick={closeSheet} className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700">
                                 Xong
                             </button>
                         </div>
@@ -653,33 +666,59 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
     );
 }
 
-
 export default function ActivityPage() {
-    const searchParams = useSearchParams();
-    const [tab, setTab] = useState<MainTab>(searchParams.get('tab') === 'matches' ? 'matches' : 'sessions');
-    const [tabVisible, setTabVisible] = useState(true);
-    const [indicatorStyle, setIndicatorStyle] = useState(
-        searchParams.get('tab') === 'matches'
-            ? { left: 'calc(50%)', width: 'calc(50% - 4px)' }
-            : { left: '4px', width: 'calc(50% - 4px)' }
-    );
-    const tabRef = useRef<MainTab>('sessions');
+    // const searchParams = useSearchParams();
+    // const initialTab: MainTab = searchParams.get('tab') === 'matches' ? 'matches' : 'sessions';
 
+    // const [tab, setTab] = useState<MainTab>(initialTab);
+    // const [tabVisible, setTabVisible] = useState(true);
+
+    // const [indicatorStyle, setIndicatorStyle] = useState(
+    //     initialTab === 'matches'
+    //         ? { left: 'calc(50%)', width: 'calc(50% - 4px)' }
+    //         : { left: '4px', width: 'calc(50% - 4px)' }
+    // );
+    // const tabRef = useRef<MainTab>(initialTab);
+    // const [activeMatch, setActiveMatch] = useState<any>(null);
+
+    const [tab, setTab] = useState<MainTab>('sessions');
+    const [tabVisible, setTabVisible] = useState(true);
+    const [indicatorStyle, setIndicatorStyle] = useState({ left: '4px', width: 'calc(50% - 4px)' });
+    const tabRef = useRef<MainTab>('sessions');
     const [activeMatch, setActiveMatch] = useState<any>(null);
 
+    const switchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const switchTab = (next: MainTab) => {
         if (next === tabRef.current) return;
+        if (switchTimerRef.current) clearTimeout(switchTimerRef.current);
         setTabVisible(false);
         setIndicatorStyle({
             left: next === 'sessions' ? '4px' : 'calc(50%)',
             width: 'calc(50% - 4px)',
         });
-        setTimeout(() => {
+        switchTimerRef.current = setTimeout(() => {
             tabRef.current = next;
             setTab(next);
             setTabVisible(true);
-        }, 200);
+            switchTimerRef.current = null;
+        }, 150);
     };
+
+    useEffect(() => {
+        const remembered = sessionStorage.getItem('activity:return-tab');
+        if (remembered === 'matches') {
+            sessionStorage.removeItem('activity:return-tab');
+            tabRef.current = 'matches';
+            setTab('matches');
+            setIndicatorStyle({ left: 'calc(50%)', width: 'calc(50% - 4px)' });
+        }
+    }, []);
+
+    useEffect(() => { tabRef.current = tab; }, [tab]);
+
+    useEffect(() => {
+        return () => { document.body.style.overflow = ''; };
+    }, []);
 
     return (
         <>
@@ -688,13 +727,16 @@ export default function ActivityPage() {
                     from { opacity: 0; transform: translateY(14px); }
                     to   { opacity: 1; transform: translateY(0);    }
                 }
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to   { opacity: 1; }
+                }
                 @keyframes shimmer {
                     100% { transform: translateX(200%); }
                 }
             `}</style>
 
             <div className="space-y-4">
-                {/* Header */}
                 <div className="flex items-center justify-between">
                     <div style={{ transition: 'opacity .2s', opacity: tabVisible ? 1 : 0 }}>
                         <h1 className="text-xl font-bold text-gray-900">
@@ -712,10 +754,8 @@ export default function ActivityPage() {
                         pointerEvents: tab === 'matches' ? 'auto' : 'none',
                     }}>
                         {activeMatch ? (
-                            <div
-                                className="flex items-center gap-1.5 bg-gray-100 text-gray-400 px-4 py-2 rounded-xl text-sm font-semibold cursor-not-allowed select-none"
-                                title="Hoàn thành trận hiện tại trước khi tạo trận mới"
-                            >
+                            <div className="flex items-center gap-1.5 bg-gray-100 text-gray-400 px-4 py-2 rounded-xl text-sm font-semibold cursor-not-allowed select-none"
+                                title="Hoàn thành trận hiện tại trước khi tạo trận mới">
                                 <Plus className="w-4 h-4" /> Tạo trận
                             </div>
                         ) : (
@@ -751,11 +791,9 @@ export default function ActivityPage() {
                     </button>
                 </div>
 
-                {/* Tab content */}
                 <div style={{
-                    transition: 'opacity .2s ease, transform .2s ease',
                     opacity: tabVisible ? 1 : 0,
-                    transform: tabVisible ? 'translateX(0)' : tab === 'sessions' ? 'translateX(-12px)' : 'translateX(12px)',
+                    transition: 'opacity 0.2s ease',
                 }}>
                     {tab === 'sessions'
                         ? <SessionsTab />
