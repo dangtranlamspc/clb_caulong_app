@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-// useRef dùng cho cả CakeCanvas, ConfettiCanvas và useBirthdayGreeting hook
 import { X } from 'lucide-react';
 
 interface BirthdayModalProps {
@@ -300,8 +299,6 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
             setTimeout(() => setIsVisible(true), 50);
         }
     }, [show]);
-
-    useEffect(() => { setIsVisible(true); }, []);
 
     useEffect(() => {
         if (!hasEverShown) return;

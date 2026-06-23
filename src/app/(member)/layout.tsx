@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '../../store/auth.store';
@@ -24,19 +24,13 @@ const NAV_ITEMS = [
 
 function BadmintonLogo({ size = 26 }: { size?: number }) {
     return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <defs>
-                <linearGradient id="racket-grad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#60a5fa" />
-                    <stop offset="100%" stopColor="#34d399" />
-                </linearGradient>
-            </defs>
-            <ellipse cx="8.5" cy="8.5" rx="6" ry="7.5" transform="rotate(-35 8.5 8.5)" stroke="url(#racket-grad)" strokeWidth="2" fill="none" />
-            <line x1="5" y1="7" x2="13" y2="4" stroke="rgba(96,165,250,0.5)" strokeWidth="0.9" strokeLinecap="round" />
-            <line x1="4" y1="10" x2="13" y2="7" stroke="rgba(96,165,250,0.5)" strokeWidth="0.9" strokeLinecap="round" />
-            <line x1="13" y1="13" x2="21" y2="21" stroke="url(#racket-grad)" strokeWidth="2.2" strokeLinecap="round" />
-            <circle cx="21.5" cy="21.5" r="1.8" fill="#34d399" />
-        </svg>
+        <img
+            src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782183914/icon_home-Photoroom_lyqlri.png"
+            width={size}
+            height={size}
+            alt="BNB Badminton Club"
+            style={{ objectFit: 'contain' }}
+        />
     );
 }
 
@@ -69,36 +63,16 @@ function UserAvatar({ fullName, avatarUrl }: { fullName?: string; avatarUrl?: st
 
 
 function BottomNav({ pathname }: { pathname: string }) {
-    const [scrolling, setScrolling] = useState(false);
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            setScrolling(true);
-            if (timerRef.current) clearTimeout(timerRef.current);
-            timerRef.current = setTimeout(() => setScrolling(false), 800);
-        };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-            if (timerRef.current) clearTimeout(timerRef.current);
-        };
-    }, []);
-
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pb-4 px-6 pointer-events-none">
-            <div
-                className="pointer-events-auto flex items-center gap-0.5 rounded-full shadow-2xl"
-                style={{
-                    background: 'linear-gradient(135deg, rgba(15,25,50,0.82) 0%, rgba(10,15,35,0.88) 50%, rgba(20,10,40,0.82) 100%)',
-                    backdropFilter: 'blur(40px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)',
-                    padding: scrolling ? '5px 18px' : '8px 20px',
-                    transition: 'padding 0.4s cubic-bezier(0.34,1.56,0.64,1)',
-                }}
-            >
+        <nav
+            className="fixed bottom-0 left-0 right-0 z-40"
+            style={{
+                background: '#ffffff',
+                borderTop: '1px solid #e5e7eb',
+                boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
+            }}
+        >
+            <div className="max-w-lg mx-auto flex items-stretch">
                 {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
                     const isActive = href === '/profile'
                         ? pathname === '/profile'
@@ -108,35 +82,38 @@ function BottomNav({ pathname }: { pathname: string }) {
                         <Link
                             key={href}
                             href={href}
-                            title={label}
-                            className="relative flex items-center justify-center"
-                            style={{
-                                width: scrolling ? 48 : 58,
-                                height: scrolling ? 36 : 44,
-                                transition: 'width 0.4s cubic-bezier(0.34,1.56,0.64,1), height 0.4s cubic-bezier(0.34,1.56,0.64,1)',
-                            }}
+                            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors"
+                            style={{ minHeight: 56 }}
                         >
                             <div
-                                className="flex items-center justify-center"
+                                className="flex items-center justify-center rounded-xl transition-all"
                                 style={{
-                                    width: isActive ? (scrolling ? 44 : 54) : (scrolling ? 32 : 38),
-                                    height: isActive ? (scrolling ? 30 : 36) : (scrolling ? 28 : 34),
-                                    borderRadius: isActive ? 999 : '50%',
-                                    background: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.06)',
-                                    boxShadow: isActive ? 'inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.08)' : 'none',
-                                    transition: 'all 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+                                    width: 36,
+                                    height: 28,
+                                    background: isActive ? 'rgba(30,58,95,0.1)' : 'transparent',
                                 }}
                             >
                                 <Icon
                                     style={{
-                                        width: scrolling ? 18 : 22,
-                                        height: scrolling ? 18 : 22,
-                                        color: isActive ? '#111' : 'rgba(255,255,255,0.8)',
+                                        width: 20,
+                                        height: 20,
+                                        color: isActive ? '#1e3a5f' : '#9ca3af',
                                         strokeWidth: isActive ? 2.2 : 1.8,
-                                        transition: 'all 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+                                        transition: 'color 0.2s',
                                     }}
                                 />
                             </div>
+                            <span
+                                style={{
+                                    fontSize: 10,
+                                    fontWeight: isActive ? 600 : 400,
+                                    color: isActive ? '#1e3a5f' : '#9ca3af',
+                                    transition: 'color 0.2s',
+                                    letterSpacing: '0.01em',
+                                }}
+                            >
+                                {label}
+                            </span>
                         </Link>
                     );
                 })}
@@ -234,15 +211,12 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                     style={{ height: 64, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', background: 'rgba(255,255,255,0.07)', borderBottom: '0.5px solid rgba(255,255,255,0.12)' }}
                 >
                     <div className="flex items-center gap-2.5">
-                        <div
-                            className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                            style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}
-                        >
-                            <BadmintonLogo size={26} />
+                        <div className="flex-shrink-0 pt-2">
+                            <BadmintonLogo size={70} />
                         </div>
                         <div>
                             <p className="font-bold text-white leading-none" style={{ fontSize: 16, letterSpacing: '-0.01em' }}>
-                                CLB Cầu Lông
+                                BNB BADMINTON CLUB
                             </p>
                             <span
                                 className="inline-flex items-center gap-1 font-semibold"

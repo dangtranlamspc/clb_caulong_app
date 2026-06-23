@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { profileApi, rankingsApi, registrationsApi, sessionsApi, usersApi } from '@/lib/api';
-import { BirthdayModal, useBirthdayGreeting } from '@/components/BirthdayModal';
 
 const LEVEL_CFG_VI: Record<string, { emoji: string; cls: string }> = {
     'Cố định (tháng)': { emoji: '🏆', cls: 'text-purple-700' },
@@ -33,8 +32,6 @@ export default function HomePage() {
     const [myStats, setMyStats] = useState<any>(null);
     const [birthdays, setBirthdays] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-
-    const { show: showBirthdayModal, close: closeBirthdayModal } = useBirthdayGreeting(user ?? null);
 
     useEffect(() => {
         Promise.all([
@@ -66,27 +63,8 @@ export default function HomePage() {
 
     return (
         <>
-            {showBirthdayModal && user?.full_name && (
-                <BirthdayModal
-                    userName={user.full_name}
-                    onClose={closeBirthdayModal}
-                    show
-                />
-            )}
 
             <div className="space-y-5">
-                {/* <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 rounded-3xl p-5 overflow-hidden">
-                    <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10" />
-                    <div className="absolute -bottom-8 -left-4 w-24 h-24 rounded-full bg-white/5" />
-                    <div className="relative">
-                        <p className="text-blue-200 text-sm">{greeting()},</p>
-                        <h2 className="text-white text-xl font-black mt-0.5">{user?.full_name} 👋</h2>
-                        <div className="flex items-stretch gap-2.5 mt-4">
-
-                        </div>
-                    </div>
-                </div> */}
-
 
                 {/* Hero banner */}
                 <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 rounded-3xl p-5 overflow-hidden">

@@ -6,7 +6,7 @@ import './globals.css';
 const nunito = Nunito({ subsets: ['latin', 'vietnamese'], weight: ['400', '500', '600', '700', '800'] });
 
 export const metadata: Metadata = {
-  title: 'CLB Cầu Lông',
+  title: 'BNB BADMINTON CLUB',
   description: 'Hệ thống quản lý thành viên',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 };

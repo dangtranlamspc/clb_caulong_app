@@ -1,9 +1,5 @@
 {
-  "/page": "app/page.js",
   "/auth/login/page": "app/auth/login/page.js",
-  "/(member)/activity/page": "app/(member)/activity/page.js",
   "/(member)/home/page": "app/(member)/home/page.js",
-  "/(member)/cost/page": "app/(member)/cost/page.js",
-  "/(member)/matches/create/page": "app/(member)/matches/create/page.js",
-  "/(member)/matches/[id]/page": "app/(member)/matches/[id]/page.js"
+  "/(member)/profile/page": "app/(member)/profile/page.js"
 }
