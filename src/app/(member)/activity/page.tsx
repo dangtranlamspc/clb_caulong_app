@@ -277,7 +277,11 @@ function SessionsTab() {
             const params: any = { limit: 30 };
             if (filter) params.status = filter;
             const { data } = await sessionsApi.list(params);
-            setSessions(data.data ?? []);
+            // Xếp buổi mới nhất (scheduled_at lớn nhất) lên đầu danh sách
+            const sorted = [...(data.data ?? [])].sort(
+                (a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime()
+            );
+            setSessions(sorted);
         } finally { setLoading(false); }
     }, [filter]);
 
@@ -497,11 +501,9 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                     <div className="bg-white rounded-2xl py-14 text-center border border-dashed border-gray-200" style={{ animation: 'fadeSlideUp .3s ease both' }}>
                         <Swords className="w-10 h-10 mx-auto text-gray-200 mb-3" />
                         <p className="text-gray-400 text-sm">Chưa có trận nào</p>
-                        {!activeMatch && (
-                            <Link href="/matches/create">
-                                <span className="inline-block mt-3 text-xs text-blue-600 font-semibold bg-blue-50 px-4 py-2 rounded-full">Thách đấu ngay →</span>
-                            </Link>
-                        )}
+                        <Link href="/matches/create">
+                            <span className="inline-block mt-3 text-xs text-blue-600 font-semibold bg-blue-50 px-4 py-2 rounded-full">Thách đấu ngay →</span>
+                        </Link>
                     </div>
                 ) : (
                     matches.map((m, idx) => {
@@ -738,18 +740,11 @@ export default function ActivityPage() {
                         transform: tab === 'matches' ? 'scale(1)' : 'scale(0.85)',
                         pointerEvents: tab === 'matches' ? 'auto' : 'none',
                     }}>
-                        {activeMatch ? (
-                            <div className="flex items-center gap-1.5 bg-gray-100 text-gray-400 px-4 py-2 rounded-xl text-sm font-semibold cursor-not-allowed select-none"
-                                title="Hoàn thành trận hiện tại trước khi tạo trận mới">
+                        <Link href="/matches/create">
+                            <div className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm shadow-blue-200 active:scale-95 transition-transform">
                                 <Plus className="w-4 h-4" /> Tạo trận
                             </div>
-                        ) : (
-                            <Link href="/matches/create">
-                                <div className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm shadow-blue-200 active:scale-95 transition-transform">
-                                    <Plus className="w-4 h-4" /> Tạo trận
-                                </div>
-                            </Link>
-                        )}
+                        </Link>
                     </div>
                 </div>
 

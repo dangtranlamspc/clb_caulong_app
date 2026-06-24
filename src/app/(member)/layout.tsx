@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { Home, CalendarDays, ClipboardList, Trophy, UserCircle2, LogOut, BadgePercent } from 'lucide-react';
 import { useTeamInviteNotification } from '@/hooks/useTeamInviteNotification';
 import { TeamInviteModal } from '@/components/TeamInviteModal';
+import { NotificationBell } from '@/components/NotificationBell';
 
 const NAV_ITEMS = [
     { href: '/home', icon: Home, label: 'Trang chủ' },
@@ -228,15 +229,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className="text-right">
-                            <p className="font-semibold leading-tight" style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>
-                                {firstName}
-                            </p>
-                            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 1 }}>
-                                {user?.role === 'admin' ? '⭐ Quản trị viên' : 'Thành viên'}
-                            </p>
-                        </div>
-                        <UserAvatar fullName={user?.full_name} avatarUrl={user?.avatar_url} />
+                        <NotificationBell />
                         <button
                             onClick={handleLogout}
                             title="Đăng xuất"

@@ -1,12 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
     ArrowLeft, CalendarDays, MapPin, Clock, Users,
     CheckCircle2, Hourglass, AlertCircle, Copy, ExternalLink,
-    Loader2, XCircle,
+    Loader2, XCircle, ImagePlus, X as XIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { sessionsApi, registrationsApi } from '../../../../lib/api';
@@ -30,6 +30,13 @@ export default function SessionDetailPage() {
     const [payRef, setPayRef] = useState('');
     const [submittingRef, setSubmittingRef] = useState(false);
     const [showPayInput, setShowPayInput] = useState(false);
+
+    // ── Bill image upload state ──
+    const [billFile, setBillFile] = useState<File | null>(null);
+    const [billPreview, setBillPreview] = useState<string | null>(null);
+    const [billUrl, setBillUrl] = useState<string | null>(null);
+    const [uploadingBill, setUploadingBill] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchSession = async () => {
         try {
@@ -90,8 +97,49 @@ export default function SessionDetailPage() {
         }
     };
 
+    const handlePickBill = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            toast.error('Vui lòng chọn file ảnh');
+            return;
+        }
+        if (file.size > 8 * 1024 * 1024) {
+            toast.error('Ảnh quá lớn (tối đa 8MB)');
+            return;
+        }
+        setBillFile(file);
+        setBillUrl(null);
+        const reader = new FileReader();
+        reader.onload = () => setBillPreview(reader.result as string);
+        reader.readAsDataURL(file);
+    };
+
+    const handleClearBill = () => {
+        setBillFile(null);
+        setBillPreview(null);
+        setBillUrl(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleUploadBill = async () => {
+        if (!billFile || !session?.my_registration?.id) return;
+        setUploadingBill(true);
+        try {
+            const { data } = await registrationsApi.uploadPaymentProof(session.my_registration.id, billFile);
+            setBillUrl(data.payment_proof_url);
+            toast.success('Đã tải ảnh bill lên!');
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Tải ảnh thất bại, thử lại');
+            console.error(err);
+        } finally {
+            setUploadingBill(false);
+        }
+    };
+
     const handleSubmitRef = async () => {
         if (!payRef.trim()) { toast.error('Vui lòng nhập mã chuyển khoản'); return; }
+        if (!billUrl) { toast.error('Vui lòng tải ảnh bill chuyển khoản trước'); return; }
         setSubmittingRef(true);
         try {
             await registrationsApi.submitPayment(session.my_registration.id, {
@@ -99,6 +147,7 @@ export default function SessionDetailPage() {
             });
             toast.success('Đã gửi mã thanh toán!');
             setShowPayInput(false);
+            handleClearBill();
             fetchSession();
         } catch {
             toast.error('Gửi thất bại, thử lại');
@@ -139,6 +188,8 @@ export default function SessionDetailPage() {
         ?? (myReg && price > 0
             ? `https://img.vietqr.io/image/${process.env.NEXT_PUBLIC_BANK_ID ?? 'MB'}-${process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? '0000000000'}-compact.png?amount=${price}&addInfo=${encodeURIComponent(suggestedRef)}&accountName=${encodeURIComponent(process.env.NEXT_PUBLIC_BANK_NAME ?? 'CLB CAU LONG')}`
             : null);
+
+    const canConfirmSubmit = !!billUrl && !!payRef.trim() && !submittingRef;
 
     return (
         <div className="space-y-4">
@@ -211,20 +262,6 @@ export default function SessionDetailPage() {
                         {price.toLocaleString('vi-VN')}đ
                     </span>
                 </div>
-
-                {/* Nam/Nữ price breakdown nếu có */}
-                {/* {session.price_male && session.price_female && (
-                    <div className="flex gap-3 mt-2">
-                        <div className="flex-1 bg-blue-50 rounded-xl px-3 py-2 text-center">
-                            <p className="text-xs text-blue-400">👨 Nam</p>
-                            <p className="text-sm font-bold text-blue-700">{session.price_male.toLocaleString('vi-VN')}đ</p>
-                        </div>
-                        <div className="flex-1 bg-pink-50 rounded-xl px-3 py-2 text-center">
-                            <p className="text-xs text-pink-400">👩 Nữ</p>
-                            <p className="text-sm font-bold text-pink-700">{session.price_female.toLocaleString('vi-VN')}đ</p>
-                        </div>
-                    </div>
-                )} */}
             </div>
 
             {/* Registration status card */}
@@ -302,24 +339,81 @@ export default function SessionDetailPage() {
                                 Tôi đã chuyển khoản — Gửi mã xác nhận
                             </button>
                         ) : (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 <input
                                     value={payRef}
                                     onChange={e => setPayRef(e.target.value)}
                                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                                     placeholder={`Nhập: ${suggestedRef}`}
                                 />
+
+                                {/* ── Upload ảnh bill ── */}
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-600 mb-1.5">
+                                        Ảnh bill chuyển khoản <span className="text-red-400">*</span>
+                                    </p>
+
+                                    {!billPreview ? (
+                                        <button
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="w-full py-6 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5 text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors"
+                                        >
+                                            <ImagePlus className="w-6 h-6" />
+                                            <span className="text-xs font-medium">Chọn ảnh bill chuyển khoản</span>
+                                        </button>
+                                    ) : (
+                                        <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                                            <img src={billPreview} alt="Bill preview" className="w-full max-h-56 object-contain bg-gray-50" />
+                                            <button
+                                                onClick={handleClearBill}
+                                                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center"
+                                            >
+                                                <XIcon className="w-3.5 h-3.5 text-white" />
+                                            </button>
+
+                                            {billUrl ? (
+                                                <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-emerald-500 text-white text-[11px] font-semibold px-2 py-1 rounded-full">
+                                                    <CheckCircle2 className="w-3 h-3" /> Đã tải lên
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={handleUploadBill}
+                                                    disabled={uploadingBill}
+                                                    className="absolute bottom-2 left-2 right-2 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 disabled:opacity-60"
+                                                >
+                                                    {uploadingBill ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
+                                                    {uploadingBill ? 'Đang tải lên...' : 'Tải ảnh lên'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handlePickBill}
+                                        className="hidden"
+                                    />
+
+                                    {!billUrl && (
+                                        <p className="text-[11px] text-amber-600 mt-1.5">
+                                            ⓘ Cần tải ảnh bill lên trước khi gửi xác nhận
+                                        </p>
+                                    )}
+                                </div>
+
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => setShowPayInput(false)}
+                                        onClick={() => { setShowPayInput(false); handleClearBill(); }}
                                         className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500 hover:bg-gray-50"
                                     >
                                         Hủy
                                     </button>
                                     <button
                                         onClick={handleSubmitRef}
-                                        disabled={submittingRef}
-                                        className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                                        disabled={!canConfirmSubmit}
+                                        className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 transition-opacity"
                                     >
                                         {submittingRef && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                                         Xác nhận

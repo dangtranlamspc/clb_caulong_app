@@ -96,6 +96,13 @@ export const registrationsApi = {
   submitPayment: (id: string, data: { payment_reference: string; payment_proof_url?: string }) => api.patch(`/registrations/${id}/payment`, data),
   cancel: (id: string) => api.delete(`/registrations/${id}`),
   getQR: (id: string) => api.get(`/registrations/${id}/qr`),
+  uploadPaymentProof: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/registrations/${id}/payment-proof`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 export const rankingsApi = {
@@ -124,6 +131,13 @@ export const usersApi = {
   birthdaysThisMonth: () => api.get('/users/birthday/this-month'),
   searchMembers: (q: string) =>
     api.get('/users/search/members', { params: { q } }),
+};
+
+export const notificationsApi = {
+  list: (params?: any) => api.get('/notifications', { params }),
+  unreadCount: () => api.get('/notifications/unread-count'),
+  markRead: (id: string) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.patch('/notifications/read-all'),
 };
 
 
