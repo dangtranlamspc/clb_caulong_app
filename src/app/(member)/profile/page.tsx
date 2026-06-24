@@ -22,6 +22,40 @@ const LEVEL_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
   'Chưa có level': { emoji: '🎯', cls: 'text-gray-500', bg: 'bg-gray-50 border-gray-200' },
 };
 
+const LEVEL_LABELS: Record<string, string> = {
+  yeu: 'Yếu',
+  tb_yeu: 'TB yếu',
+  tb: 'TB',
+  tb_plus: 'TB+',
+  ban_chuyen: 'Bán chuyên (BC)',
+  chuyen_nghiep: 'Chuyên nghiệp',
+};
+
+function getMemberLevel(user: any) {
+  if (!user) return { line1: 'Chưa có level' };
+
+  if (user.member_type === 'co_dinh') {
+    const isVip = user.member_subtype === 'vip';
+
+    return {
+      line1: isVip ? 'Thành viên VIP' : 'Thành viên thường',
+      line2: user.level ? LEVEL_LABELS[user.level] : undefined,
+    };
+  }
+
+  if (user.member_type === 'vang_lai') {
+    const count = user.attendance_count ?? 0;
+    const isKhachQuen =
+      user.vang_lai_status === 'khach_quen' || count >= 5;
+
+    return {
+      line1: user.vang_lai_label ?? (isKhachQuen ? 'Khách quen' : 'Khách mới'),
+    };
+  }
+
+  return { line1: 'Chưa có level' };
+}
+
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
   const [profile, setProfile] = useState<any>(null);
@@ -45,8 +79,6 @@ export default function ProfilePage() {
 
   const data = profile || user;
 
-  const levelCfg = LEVEL_CFG[myStats?.level] ?? LEVEL_CFG['Chưa có level'];
-
   const POINTS_PER_DIVISION: Record<string, number> = {
     'Sắt': 20, 'Đồng': 20, 'Bạc': 20, 'Vàng': 20,
     'Bạch Kim': 20, 'Lục Bảo': 25, 'Kim Cương': 30, 'Cao Thủ': 30,
@@ -58,6 +90,8 @@ export default function ProfilePage() {
   const threshold = POINTS_PER_DIVISION[tier] ?? 20;
   const totalGems = threshold / POINTS_PER_GEM;
   const filledGems = Math.min(totalGems, Math.floor((myRank?.points ?? 0) / POINTS_PER_GEM));
+
+  const memberLevel = getMemberLevel(data);
 
   if (loading) {
     return (
@@ -92,12 +126,20 @@ export default function ProfilePage() {
             frameScale={4}
           />
           <div className="flex-1 min-w-0 ml-8">
-            <p className="text-white/70 text-xs">Thành viên</p>
-            <h2 className="text-white text-lg font-black leading-tight truncate">{data?.full_name}</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full">
-                {data?.role === 'admin' ? '⭐ Quản trị viên' : '🎖 Thành viên'}
-              </span>
+            <h2 className="text-white text-lg font-black leading-tight truncate">
+              {data?.full_name}
+            </h2>
+            {/* Member + Level */}
+            <div className="mt-1.5 leading-tight">
+              <p className="text-base text-white font-semibold tracking-wide">
+                {memberLevel.line1}
+              </p>
+
+              {memberLevel.line2 && (
+                <p className="text-[13px] text-yellow-200 font-medium drop-shadow">
+                  Trình độ: {memberLevel.line2}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -128,12 +170,6 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
           <p className="text-xl font-black text-amber-600">{myStats?.sessions_this_month ?? 0}</p>
           <p className="text-[10px] text-gray-400 mt-0.5">Buổi tháng này</p>
-        </div>
-        <div className={`rounded-2xl p-3 text-center shadow-sm border ${levelCfg.bg}`}>
-          <p className="text-lg">{levelCfg.emoji}</p>
-          <p className={`text-[10px] font-bold mt-0.5 ${levelCfg.cls} leading-tight`}>
-            {myStats?.level ?? 'Chưa có level'}
-          </p>
         </div>
       </div>
 

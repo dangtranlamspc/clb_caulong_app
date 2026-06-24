@@ -145,11 +145,26 @@ export default function HomePage() {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
+                                    {/* <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
                                         <p className="text-white/60 text-[10px] leading-none">Cầu lông</p>
                                         <p className="text-white font-black text-xl mt-0.5 flex items-center justify-center gap-1.5 w-full">
                                             {myStats?.badminton?.total_points ?? 0}
                                             <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="cầu lông" className="w-6 h-6 object-contain" style={{ mixBlendMode: 'screen' }} />
+                                        </p>
+                                    </div> */}
+                                    <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
+                                        <p className="text-white/60 text-[10px] leading-none">W / L</p>
+
+                                        <p className="text-white font-black text-lg mt-0.5">
+                                            {myStats?.revice?.wins ?? 0} / {myStats?.revice?.losses ?? 0}
+                                        </p>
+
+                                        <p className="text-[10px] text-white/50 mt-0.5">
+                                            Winrate
+                                        </p>
+
+                                        <p className="text-emerald-300 font-bold text-sm">
+                                            {myStats?.revice?.win_rate ?? 0}%
                                         </p>
                                     </div>
                                     <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
