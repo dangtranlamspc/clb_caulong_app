@@ -11,13 +11,49 @@ import {
 import { useAuthStore } from '@/store/auth.store';
 import { profileApi, rankingsApi, registrationsApi, sessionsApi, usersApi } from '@/lib/api';
 
-const LEVEL_CFG_VI: Record<string, { emoji: string; cls: string }> = {
-    'Cố định (tháng)': { emoji: '🏆', cls: 'text-purple-700' },
-    'Vãng lai cố định': { emoji: '🥇', cls: 'text-blue-700' },
-    'Vãng lai lâu lâu': { emoji: '🥈', cls: 'text-cyan-700' },
-    'Vãng lai lần đầu': { emoji: '🥉', cls: 'text-green-700' },
-    'Chưa có level': { emoji: '🎯', cls: 'text-gray-500' },
+// ─── Nhãn trình độ thật của user (khớp levelMap trong users.service.ts) ──
+const LEVEL_LABELS: Record<string, string> = {
+    yeu: 'Yếu',
+    tb_yeu: 'TB yếu',
+    tb: 'TB',
+    tb_plus: 'TB+',
+    ban_chuyen: 'Bán chuyên (BC)',
+    chuyen_nghiep: 'Chuyên nghiệp',
 };
+
+// Ngưỡng phân loại vãng lai: >= 5 buổi đăng ký (đã xác nhận) -> Khách quen
+const VANG_LAI_THRESHOLD = 5;
+
+function getMemberLevelBadge(user: any): {
+    emoji: string;
+    line1: string;
+    line2?: string;
+} {
+    if (!user) return { emoji: '🎯', line1: 'Chưa có level' };
+
+    if (user.member_type === 'co_dinh') {
+        const isVip = user.member_subtype === 'vip';
+        const levelLabel = user.level ? LEVEL_LABELS[user.level] : undefined;
+
+        return {
+            emoji: isVip ? '👑' : '🏆',
+            line1: isVip ? 'Thành viên VIP' : 'Thành viên thường',
+            line2: levelLabel,
+        };
+    }
+
+    if (user.member_type === 'vang_lai') {
+        const count = user.attendance_count ?? 0;
+        const isKhachQuen = user.vang_lai_status === 'khach_quen' || count >= VANG_LAI_THRESHOLD;
+
+        return {
+            emoji: isKhachQuen ? '🥈' : '🥉',
+            line1: user.vang_lai_label ?? (isKhachQuen ? 'Khách quen' : 'Khách mới'),
+        };
+    }
+
+    return { emoji: '🎯', line1: 'Chưa có level' };
+}
 
 const REG_CFG: Record<string, { label: string; icon: any; cls: string; bg: string }> = {
     pending: { label: 'Chờ xác nhận', icon: Hourglass, cls: 'text-amber-600', bg: 'bg-amber-50' },
@@ -49,7 +85,7 @@ export default function HomePage() {
         }).finally(() => setLoading(false));
     }, []);
 
-    const levelCfg = LEVEL_CFG_VI[myStats?.level] ?? { emoji: '🎯', cls: 'text-gray-500' };
+    const levelBadge = getMemberLevelBadge(user);
 
     const greeting = () => {
         const h = new Date().getHours();
@@ -96,12 +132,17 @@ export default function HomePage() {
                             ) : (
                                 <>
                                     <div className="bg-white/15 rounded-2xl px-3 py-2 flex items-center gap-2 flex-1">
-                                        <span className="text-2xl">{levelCfg.emoji}</span>
-                                        <div>
-                                            <p className="text-white/60 text-[10px] leading-none">Level</p>
-                                            <p className="text-white text-xs font-bold mt-0.5 leading-tight">
-                                                {myStats?.level ?? 'Chưa có level'}
+                                        <span className="text-2xl">{levelBadge.emoji}</span>
+                                        <div className="text-white mt-0.5 leading-tight">
+                                            <p className="text-xs font-bold">
+                                                {levelBadge.line1}
                                             </p>
+
+                                            {levelBadge.line2 && (
+                                                <p className="text-[11px] text-yellow-200 font-medium">
+                                                    {levelBadge.line2}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">

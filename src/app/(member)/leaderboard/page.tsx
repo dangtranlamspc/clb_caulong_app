@@ -314,11 +314,22 @@ const TIER_COLOR: Record<string, string> = {
 function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
     const filteredData = filterByGender(data, genderFilter)
-        .sort((a, b) => Number(a.rank_position) - Number(b.rank_position));
+        .sort((a, b) => {
+            if (b.total_points !== a.total_points) {
+                return b.total_points - a.total_points;
+            }
 
-    const displayList = genderFilter === 'all'
-        ? filterData_withOriginalRank(filteredData)
-        : filteredData.map((p, idx) => ({ ...p, _displayRank: idx + 1 }));
+            if (b.wins !== a.wins) {
+                return b.wins - a.wins;
+            }
+
+            return a.losses - b.losses;
+        });
+
+    const displayList = filteredData.map((p, idx) => ({
+        ...p,
+        _displayRank: idx + 1,
+    }));
 
     return (
         <div className="space-y-4">
@@ -335,7 +346,7 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                             const isMe = p.id === user?.id;
                             const pos = p._displayRank;
                             const tierColor = TIER_COLOR[p.tier] ?? 'text-gray-600';
-                            const winRate = p.win_rate ? Number(p.win_rate).toFixed(1) : '0.0';
+                            // const winRate = p.win_rate ? Number(p.win_rate).toFixed(1) : '0.0';
                             return (
                                 <AnimatedRow key={p.id} index={idx}>
                                     <div className={`flex items-center gap-3 px-4 py-7 ${isMe ? 'bg-blue-50' : pos <= 3 ? 'bg-yellow-50/50' : 'hover:bg-gray-50/50'}`}>
@@ -362,7 +373,7 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                                                 <span className="mx-0.5">/</span>
                                                 <span className="text-red-400 font-medium">{p.losses}L</span>
                                             </p>
-                                            <p className="text-[12px] text-gray-400">{winRate}%</p>
+                                            {/* <p className="text-[12px] text-gray-400">{winRate}%</p> */}
                                         </div>
                                     </div>
                                 </AnimatedRow>
