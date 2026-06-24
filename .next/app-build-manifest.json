@@ -1,20 +1,35 @@
 {
   "pages": {
-    "/(member)/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/layout.js"
-    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/(member)/matches/[id]/page": [
+    "/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/matches/[id]/page.js"
+      "static/chunks/app/page.js"
+    ],
+    "/(member)/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/layout.js"
+    ],
+    "/(member)/home/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/home/page.js"
+    ],
+    "/auth/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/layout.js"
+    ],
+    "/auth/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/login/page.js"
     ],
     "/(member)/activity/page": [
       "static/chunks/webpack.js",
@@ -31,25 +46,30 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/leaderboard/page.js"
     ],
-    "/(member)/home/page": [
+    "/(member)/matches/create/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/home/page.js"
-    ],
-    "/(member)/profile/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/profile/page.js"
+      "static/chunks/app/(member)/matches/create/page.js"
     ],
     "/(member)/sessions/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/sessions/[id]/page.js"
     ],
-    "/(member)/profile/settings/page": [
+    "/(member)/profile/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/profile/settings/page.js"
+      "static/chunks/app/(member)/profile/page.js"
+    ],
+    "/(member)/history/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/history/page.js"
+    ],
+    "/(member)/matches/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/matches/[id]/page.js"
     ]
   }
 }

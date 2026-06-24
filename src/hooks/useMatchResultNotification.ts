@@ -49,8 +49,8 @@ function buildResult(m: any, userId: string): MatchResult | null {
     return {
         matchId: m.id,
         isWinner: m.winner_team === myTeam,
-        myScore: isTeamA ? (m.team_a_sets_won ?? 0) : (m.team_b_sets_won ?? 0),
-        oppScore: isTeamA ? (m.team_b_sets_won ?? 0) : (m.team_a_sets_won ?? 0),
+        myScore: isTeamA ? (m.score_a ?? 0) : (m.score_b ?? 0),
+        oppScore: isTeamA ? (m.score_b ?? 0) : (m.score_a ?? 0),
         opponents: oppPlayers.filter(Boolean).map(toPlayerInfo),
         myTeam: myPlayers.filter(Boolean).map(toPlayerInfo),
         matchType: m.match_type === 'doubles' ? 'doubles' : 'singles',

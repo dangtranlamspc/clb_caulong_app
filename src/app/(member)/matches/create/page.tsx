@@ -106,7 +106,6 @@ export default function CreateMatchPage() {
     const { user } = useAuthStore();
 
     const [matchType, setMatchType] = useState<MatchType>('singles');
-    const [bestOf, setBestOf] = useState<3 | 5>(5);
     const [partnerA, setPartnerA] = useState<any>(null);
     const [opponentB1, setOpponentB1] = useState<any>(null);
     const [opponentB2, setOpponentB2] = useState<any>(null);
@@ -128,7 +127,6 @@ export default function CreateMatchPage() {
         try {
             const payload: any = {
                 match_type: matchType,
-                best_of: bestOf,
                 team_b_player1: opponentB1.id,
             };
             if (matchType === 'doubles') {
@@ -156,7 +154,7 @@ export default function CreateMatchPage() {
                 </button>
                 <div>
                     <h1 className="text-xl font-bold text-gray-900">Tạo trận giao hữu</h1>
-                    <p className="text-xs text-gray-500">Thách đấu thành viên khác trong CLB</p>
+                    <p className="text-xs text-gray-500">Thách đấu thành viên khác trong CLB · 1 set duy nhất</p>
                 </div>
             </div>
 
@@ -177,25 +175,6 @@ export default function CreateMatchPage() {
                                 }`}
                         >
                             {t === 'singles' ? '👤 Đơn (1v1)' : '👥 Đôi (2v2)'}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Best of */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-                <p className="text-sm font-bold text-gray-700">Số set tối đa</p>
-                <div className="grid grid-cols-2 gap-3">
-                    {([3, 5] as const).map((b) => (
-                        <button
-                            key={b}
-                            onClick={() => setBestOf(b)}
-                            className={`py-3 rounded-xl border-2 text-sm font-semibold transition-all ${bestOf === b
-                                ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                                }`}
-                        >
-                            Best of {b} <span className="text-xs font-normal opacity-70">(thắng {Math.ceil(b / 2)} set)</span>
                         </button>
                     ))}
                 </div>

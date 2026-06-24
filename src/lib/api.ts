@@ -114,7 +114,7 @@ export const matchesApi = {
   accept: (id: string) => api.patch(`/matches/${id}/accept`),
   decline: (id: string, reason?: string) =>
     api.patch(`/matches/${id}/decline`, { reason }),
-  submitResult: (id: string, data: { sets: any[]; played_at?: string; note?: string }) =>
+  submitResult: (id: string, data: { score_a: number; score_b: number; played_at?: string; note?: string }) =>
     api.patch(`/matches/${id}/result`, data),
   getUnseenResults: () => api.get('/matches/results/unseen'),
   markResultSeen: (id: string) => api.patch(`/matches/${id}/seen`),

@@ -15,10 +15,11 @@ const LEVEL_CFG: Record<string, { cls: string; bg: string; emoji: string; desc: 
 
 type Tab = 'rank' | 'winrate' | 'leaderboard';
 
-type GenderFilter = 'male' | 'female';
+type GenderFilter = 'all' | 'male' | 'female';
 
 function GenderSubTabs({ value, onChange }: { value: GenderFilter; onChange: (v: GenderFilter) => void }) {
     const OPTS: { key: GenderFilter; label: string }[] = [
+        { key: 'all', label: 'Tất cả' },
         { key: 'male', label: 'Nam' },
         { key: 'female', label: 'Nữ' },
     ];
@@ -41,8 +42,10 @@ function GenderSubTabs({ value, onChange }: { value: GenderFilter; onChange: (v:
 }
 
 function filterByGender<T extends { gender?: string }>(data: T[], filter: GenderFilter): T[] {
+    if (filter === 'all') return data;
     return data.filter(d => d.gender === filter);
 }
+
 
 function TabContent({ children, tabKey }: { children: React.ReactNode; tabKey: string }) {
     const [visible, setVisible] = useState(false);
@@ -126,7 +129,7 @@ function AnimatedRow({ children, index }: { children: React.ReactNode; index: nu
 }
 
 function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
-    const [genderFilter, setGenderFilter] = useState<GenderFilter>('male');
+    const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
     const filteredData = filterByGender(data, genderFilter);
     const top3 = filteredData.slice(0, 3);
     const rest = filteredData.slice(3);
@@ -241,7 +244,7 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
 }
 
 function WinRateTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
-    const [genderFilter, setGenderFilter] = useState<GenderFilter>('male');
+    const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
     const filteredData = filterByGender(data, genderFilter);
     return (
         <div className="space-y-4">
@@ -309,13 +312,18 @@ const TIER_COLOR: Record<string, string> = {
 };
 
 function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
-    const [genderFilter, setGenderFilter] = useState<GenderFilter>('male');
-    const filterData = filterByGender(data, genderFilter);
+    const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
+    const filteredData = filterByGender(data, genderFilter)
+        .sort((a, b) => Number(a.rank_position) - Number(b.rank_position));
+
+    const displayList = genderFilter === 'all'
+        ? filterData_withOriginalRank(filteredData)
+        : filteredData.map((p, idx) => ({ ...p, _displayRank: idx + 1 }));
 
     return (
         <div className="space-y-4">
             <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
-            {filterData.length === 0 ? (
+            {displayList.length === 0 ? (
                 <div className="bg-white rounded-2xl py-14 text-center">
                     <Shield className="w-10 h-10 mx-auto text-gray-200 mb-3" />
                     <p className="text-gray-400 text-sm">Chưa có dữ liệu rank</p>
@@ -323,9 +331,9 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
             ) : (
                 <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
                     <div className="divide-y divide-gray-50">
-                        {filterData.map((p, idx) => {
+                        {displayList.map((p, idx) => {
                             const isMe = p.id === user?.id;
-                            const pos = Number(p.rank_position);
+                            const pos = p._displayRank;
                             const tierColor = TIER_COLOR[p.tier] ?? 'text-gray-600';
                             const winRate = p.win_rate ? Number(p.win_rate).toFixed(1) : '0.0';
                             return (
@@ -365,6 +373,10 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
             )}
         </div>
     );
+}
+
+function filterData_withOriginalRank(data: any[]) {
+    return data.map(p => ({ ...p, _displayRank: Number(p.rank_position) }));
 }
 
 export default function LeaderboardPage() {

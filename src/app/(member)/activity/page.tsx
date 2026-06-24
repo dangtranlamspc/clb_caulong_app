@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { sessionsApi, registrationsApi, matchesApi } from '@/lib/api';
-import { useSearchParams } from 'next/navigation';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { createPortal } from 'react-dom';
@@ -529,7 +528,7 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
-                                                {m.match_type === 'doubles' ? '👥 Đôi' : '👤 Đơn'} · BO{m.best_of}
+                                                {m.match_type === 'doubles' ? '👥 Đôi' : '👤 Đơn'} · 1 set
                                             </span>
                                             {iWon && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">🏆 Thắng</span>}
                                             {iLost && <span className="text-[10px] font-bold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Thua</span>}
@@ -554,11 +553,11 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                                             {m.status === 'approved' || m.status === 'pending_approval' ? (
                                                 <div className="flex items-center gap-1.5">
                                                     <span className={`text-xl font-black ${isTeamA ? m.winner_team === 'A' ? 'text-emerald-600' : 'text-gray-400' : m.winner_team === 'B' ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                                        {isTeamA ? m.team_a_sets_won : m.team_b_sets_won}
+                                                        {isTeamA ? m.score_a : m.score_b}
                                                     </span>
                                                     <span className="text-gray-300">–</span>
                                                     <span className={`text-xl font-black ${isTeamA ? m.winner_team === 'B' ? 'text-emerald-600' : 'text-gray-400' : m.winner_team === 'A' ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                                        {isTeamA ? m.team_b_sets_won : m.team_a_sets_won}
+                                                        {isTeamA ? m.score_b : m.score_a}
                                                     </span>
                                                 </div>
                                             ) : (
@@ -667,20 +666,6 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
 }
 
 export default function ActivityPage() {
-    // const searchParams = useSearchParams();
-    // const initialTab: MainTab = searchParams.get('tab') === 'matches' ? 'matches' : 'sessions';
-
-    // const [tab, setTab] = useState<MainTab>(initialTab);
-    // const [tabVisible, setTabVisible] = useState(true);
-
-    // const [indicatorStyle, setIndicatorStyle] = useState(
-    //     initialTab === 'matches'
-    //         ? { left: 'calc(50%)', width: 'calc(50% - 4px)' }
-    //         : { left: '4px', width: 'calc(50% - 4px)' }
-    // );
-    // const tabRef = useRef<MainTab>(initialTab);
-    // const [activeMatch, setActiveMatch] = useState<any>(null);
-
     const [tab, setTab] = useState<MainTab>('sessions');
     const [tabVisible, setTabVisible] = useState(true);
     const [indicatorStyle, setIndicatorStyle] = useState({ left: '4px', width: 'calc(50% - 4px)' });

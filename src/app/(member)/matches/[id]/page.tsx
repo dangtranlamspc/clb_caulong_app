@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
     ArrowLeft, CheckCircle2, XCircle, Hourglass,
-    Clock, Trophy, Loader2, Plus, Minus,
+    Clock, Trophy, Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { matchesApi } from '@/lib/api';
@@ -33,11 +33,45 @@ const STATUS_CFG: Record<string, { label: string; cls: string; bg: string }> = {
     rejected: { label: 'Đã từ chối', cls: 'text-red-600', bg: 'bg-red-50 border-red-200' },
 };
 
-function SetRow({
-    setNum, scoreA, scoreB,
+function ScoreInput({ val, onChange, color }: { val: number; onChange: (v: number) => void; color: string }) {
+    const [raw, setRaw] = useState(String(val));
+    const isFocused = useRef(false);
+
+    useEffect(() => {
+        if (!isFocused.current) {
+            setRaw(String(val));
+        }
+    }, [val]);
+
+    return (
+        <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={21}
+            value={raw}
+            onFocus={() => { isFocused.current = true; }}
+            onChange={e => {
+                const str = e.target.value;
+                if (str.length > 2) return; // tối đa 2 chữ số (0-21)
+                setRaw(str);
+                const v = parseInt(str);
+                if (!isNaN(v) && v >= 0) onChange(Math.min(v, 21));
+            }}
+            onBlur={() => {
+                isFocused.current = false;
+                setRaw(String(val));
+            }}
+            className={`w-20 h-16 text-center text-4xl font-black bg-white rounded-2xl border-2 border-gray-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all ${color}`}
+        />
+    );
+}
+
+function ScoreRow({
+    scoreA, scoreB,
     onChangeA, onChangeB, isMe,
 }: {
-    setNum: number; scoreA: number; scoreB: number;
+    scoreA: number; scoreB: number;
     onChangeA: (v: number) => void; onChangeB: (v: number) => void;
     isMe: boolean;
 }) {
@@ -45,65 +79,17 @@ function SetRow({
     const oppScore = isMe ? scoreB : scoreA;
     const iWon = myScore > oppScore;
 
-    const Stepper = ({ val, onChange, color }: { val: number; onChange: (v: number) => void; color: string }) => {
-        const [raw, setRaw] = useState(String(val));
-
-        useEffect(() => {
-            if (document.activeElement?.tagName !== 'INPUT') {
-                setRaw(String(val));
-            }
-        }, [val]);
-
-        return (
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={() => { const next = Math.max(0, val - 1); onChange(next); setRaw(String(next)); }}
-                    className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center active:scale-95 transition-transform"
-                >
-                    <Minus className="w-3.5 h-3.5 text-gray-600" />
-                </button>
-                <input
-                    type="number"
-                    min={0}
-                    value={raw}
-                    onChange={e => {
-                        const str = e.target.value;
-                        setRaw(str);
-                        const v = parseInt(str);
-                        if (!isNaN(v) && v >= 0) onChange(v);
-                    }}
-                    onBlur={() => setRaw(String(val))}
-                    className={`w-10 text-center text-xl font-black bg-transparent border-none outline-none ${color}`}
-                />
-                <button
-                    onClick={() => { const next = val + 1; onChange(next); setRaw(String(next)); }}
-                    className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center active:scale-95 transition-transform"
-                >
-                    <Plus className="w-3.5 h-3.5 text-gray-600" />
-                </button>
-            </div>
-        );
-    };
-
     return (
-        <div className={`flex items-center gap-3 p-3 rounded-2xl border ${myScore === oppScore ? 'bg-gray-50 border-gray-100' : iWon ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
-            <span className={`text-xs font-bold w-8 text-center ${myScore === oppScore ? 'text-gray-500' : iWon ? 'text-emerald-600' : 'text-red-500'}`}>
-                S{setNum}
-            </span>
-            <div className="flex-1 flex items-center justify-center gap-4">
-                <div className="flex flex-col items-center gap-1">
-                    <span className="text-[10px] text-blue-500 font-semibold">Bạn</span>
-                    <Stepper val={isMe ? scoreA : scoreB} onChange={v => isMe ? onChangeA(v) : onChangeB(v)} color={iWon ? 'text-emerald-600' : 'text-gray-700'} />
-                </div>
-                <span className="text-gray-300 font-bold text-lg">–</span>
-                <div className="flex flex-col items-center gap-1">
-                    <span className="text-[10px] text-red-400 font-semibold">Đối thủ</span>
-                    <Stepper val={isMe ? scoreB : scoreA} onChange={v => isMe ? onChangeB(v) : onChangeA(v)} color={!iWon && myScore !== oppScore ? 'text-red-500' : 'text-gray-700'} />
-                </div>
+        <div className={`flex items-center justify-center gap-6 p-4 rounded-2xl border ${myScore === oppScore ? 'bg-gray-50 border-gray-100' : iWon ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+            <div className="flex flex-col items-center gap-2">
+                <span className="text-xs text-blue-500 font-semibold">Bạn</span>
+                <ScoreInput val={isMe ? scoreA : scoreB} onChange={v => isMe ? onChangeA(v) : onChangeB(v)} color={iWon ? 'text-emerald-600' : 'text-gray-700'} />
             </div>
-            <span className={`text-[10px] font-bold w-12 text-center ${myScore === oppScore ? 'text-gray-400' : iWon ? 'text-emerald-600' : 'text-red-500'}`}>
-                {myScore === oppScore ? '—' : iWon ? 'Thắng' : 'Thua'}
-            </span>
+            <span className="text-gray-300 font-bold text-2xl">–</span>
+            <div className="flex flex-col items-center gap-2">
+                <span className="text-xs text-red-400 font-semibold">Đối thủ</span>
+                <ScoreInput val={isMe ? scoreB : scoreA} onChange={v => isMe ? onChangeB(v) : onChangeA(v)} color={!iWon && myScore !== oppScore ? 'text-red-500' : 'text-gray-700'} />
+            </div>
         </div>
     );
 }
@@ -122,23 +108,15 @@ export default function MatchDetailPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const channelRef = useRef<RealtimeChannel | null>(null);
-    const [sets, setSets] = useState<{ score_a: number; score_b: number }[]>(
-        Array.from({ length: 5 }, () => ({ score_a: 0, score_b: 0 }))
-    );
-    const [activeSets, setActiveSets] = useState(2);
+    const [scoreA, setScoreA] = useState(0);
+    const [scoreB, setScoreB] = useState(0);
 
     const fetchMatch = async () => {
         try {
             const { data } = await matchesApi.get(id);
             setMatch(data);
-            if (data.sets?.length) {
-                const filled = Array.from({ length: 5 }, (_, i) => {
-                    const s = data.sets.find((x: any) => x.set_number === i + 1);
-                    return s ? { score_a: s.score_a, score_b: s.score_b } : { score_a: 0, score_b: 0 };
-                });
-                setSets(filled);
-                setActiveSets(Math.max(data.sets.length, 2));
-            }
+            if (typeof data.score_a === 'number') setScoreA(data.score_a);
+            if (typeof data.score_b === 'number') setScoreB(data.score_b);
         } finally {
             setLoading(false);
         }
@@ -172,26 +150,6 @@ export default function MatchDetailPage() {
         }
     }, [user?.id, id]);
 
-    useEffect(() => {
-        if (!match) return;
-
-        const setsToWin = Math.ceil(match.best_of / 2);
-        let aWon = 0, bWon = 0;
-        for (let i = 0; i < activeSets; i++) {
-            if (sets[i].score_a > sets[i].score_b) aWon++;
-            else if (sets[i].score_b > sets[i].score_a) bWon++;
-        }
-
-        if (
-            aWon === bWon &&
-            aWon > 0 &&
-            activeSets < match.best_of &&
-            Math.max(aWon, bWon) < setsToWin
-        ) {
-            setActiveSets(prev => Math.min(prev + 1, match.best_of));
-        }
-    }, [sets, activeSets, match])
-
     if (loading || !match) {
         return (
             <div className="space-y-4">
@@ -208,22 +166,16 @@ export default function MatchDetailPage() {
     const isInvited = match.player_b1?.id === user?.id;
     const cfg = STATUS_CFG[match.status] ?? STATUS_CFG.pending_opponent;
 
-    const activeSetsData = sets.slice(0, activeSets);
-    let myWon = 0, oppWon = 0;
-    activeSetsData.forEach(s => {
-        const myScore = isTeamA ? s.score_a : s.score_b;
-        const oppScore = isTeamA ? s.score_b : s.score_a;
-        if (myScore > oppScore) myWon++;
-        else if (oppScore > myScore) oppWon++;
-    });
+    const myScore = isTeamA ? scoreA : scoreB;
+    const oppScore = isTeamA ? scoreB : scoreA;
 
-    const setsToWin = Math.ceil(match.best_of / 2);
-    const isValidResult = Math.max(myWon, oppWon) >= setsToWin;
-    const revivePreview = (myWon - oppWon) * 5;
+    const isValidResult = scoreA !== scoreB;
+    const revivePreview = isTeamA ? (scoreA > scoreB ? 5 : -5) : (scoreB > scoreA ? 5 : -5);
 
-    const mySetWins = isTeamA ? match.team_a_sets_won : match.team_b_sets_won;
-    const oppSetWins = isTeamA ? match.team_b_sets_won : match.team_a_sets_won;
-    const reviveNet = (mySetWins - oppSetWins) * 5;
+    const myFinalScore = isTeamA ? match.score_a : match.score_b;
+    const oppFinalScore = isTeamA ? match.score_b : match.score_a;
+    const iWonFinal = match.winner_team === (isTeamA ? 'A' : 'B');
+    const reviveNet = iWonFinal ? 5 : -5;
 
     const handleAccept = async () => {
         setSubmitting(true);
@@ -250,13 +202,10 @@ export default function MatchDetailPage() {
     };
 
     const handleSubmitResult = async () => {
-        if (!isValidResult) { toast.error(`Cần có đội thắng ${setsToWin} set (BO${match.best_of})`); return; }
+        if (!isValidResult) { toast.error('Trận đấu không được hoà, phải có đội thắng'); return; }
         setSubmitting(true);
         try {
-            const setsPayload = activeSetsData
-                .map((s, i) => ({ set_number: i + 1, score_a: s.score_a, score_b: s.score_b }))
-                .filter(s => s.score_a > 0 || s.score_b > 0);
-            await matchesApi.submitResult(id, { sets: setsPayload });
+            await matchesApi.submitResult(id, { score_a: scoreA, score_b: scoreB });
             toast.success('Đã gửi kết quả, chờ admin duyệt 📋');
             fetchMatch();
         } catch (err: any) {
@@ -266,13 +215,6 @@ export default function MatchDetailPage() {
 
     return (
         <div className="space-y-4">
-            <style>{`
-            @keyframes setPopIn {
-                from { opacity: 0; transform: translateY(-8px) scale(0.97); }
-                to   { opacity: 1; transform: translateY(0)   scale(1);    }
-            }
-        `}</style>
-
             <button onClick={() => {
                 sessionStorage.setItem('activity:return-tab', 'matches');
                 router.push('/activity');
@@ -295,7 +237,7 @@ export default function MatchDetailPage() {
                 {/* Type + date */}
                 <div className="flex items-center justify-between mb-4">
                     <span className="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full">
-                        {match.match_type === 'doubles' ? '👥 Đôi' : '👤 Đơn'} · Best of {match.best_of}
+                        {match.match_type === 'doubles' ? '👥 Đôi' : '👤 Đơn'} · 1 set
                     </span>
                     {match.played_at && (
                         <span className="text-xs text-gray-400">
@@ -327,11 +269,11 @@ export default function MatchDetailPage() {
                             <>
                                 <div className="flex items-center gap-1.5">
                                     <span className={`text-2xl font-black leading-none ${match.winner_team === 'A' ? 'text-emerald-600' : 'text-gray-300'}`}>
-                                        {match.team_a_sets_won}
+                                        {match.score_a}
                                     </span>
                                     <span className="text-gray-300 text-lg leading-none">–</span>
                                     <span className={`text-2xl font-black leading-none ${match.winner_team === 'B' ? 'text-emerald-600' : 'text-gray-300'}`}>
-                                        {match.team_b_sets_won}
+                                        {match.score_b}
                                     </span>
                                 </div>
                                 {match.status === 'approved' && match.winner_team && (
@@ -359,33 +301,10 @@ export default function MatchDetailPage() {
                                     <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{p.full_name}</p>
                                     {p.id === user?.id && <p className="text-[10px] text-blue-500 leading-none mt-0.5">Bạn</p>}
                                 </div>
-                                {/* <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${p.id === user?.id ? 'bg-blue-600 text-white' : 'bg-red-100 text-red-600'}`}>
-                                    {p.full_name?.[0]?.toUpperCase()}
-                                </div> */}
                             </div>
                         ))}
                     </div>
                 </div>
-
-                {/* Set results read-only */}
-                {match.sets?.length > 0 && match.status !== 'pending_result' && (
-                    <div className="mt-4 pt-4 border-t border-gray-50">
-                        <p className="text-xs font-semibold text-gray-500 mb-2">Tỉ số từng set</p>
-                        <div className="flex gap-2 flex-wrap">
-                            {[...match.sets].sort((a: any, b: any) => a.set_number - b.set_number).map((s: any) => {
-                                const myScore = isTeamA ? s.score_a : s.score_b;
-                                const oppScore = isTeamA ? s.score_b : s.score_a;
-                                const iWon = myScore > oppScore;
-                                return (
-                                    <div key={s.set_number} className={`px-3 py-1.5 rounded-xl border text-center ${iWon ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-                                        <p className="text-[10px] text-gray-400">Set {s.set_number}</p>
-                                        <p className={`text-sm font-black ${iWon ? 'text-emerald-600' : 'text-red-500'}`}>{myScore}–{oppScore}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
 
                 {/* ── Revive summary (approved) ── */}
                 {match.status === 'approved' && (
@@ -395,34 +314,15 @@ export default function MatchDetailPage() {
                             <p className="text-xs font-semibold text-gray-500">Chai Revive nhận được</p>
                         </div>
 
-                        <div className="flex gap-3">
-                            {/* Set thắng */}
-                            <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 text-center">
-                                <p className="text-[10px] text-emerald-500 font-medium mb-1">Set thắng</p>
-                                <div className="flex items-center justify-center gap-1">
-                                    <span className="font-black text-emerald-600 text-base">+{mySetWins * 5}</span>
-                                    <Revive size={12} />
-                                </div>
-                            </div>
-
-                            {/* Set thua */}
-                            <div className="flex-1 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5 text-center">
-                                <p className="text-[10px] text-red-400 font-medium mb-1">Set thua</p>
-                                <div className="flex items-center justify-center gap-1">
-                                    <span className="font-black text-red-500 text-base">-{oppSetWins * 5}</span>
-                                    <Revive size={12} />
-                                </div>
-                            </div>
-
-                            {/* Tổng */}
-                            <div className={`flex-1 rounded-xl px-3 py-2.5 text-center border ${reviveNet >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-                                <p className="text-[10px] text-gray-400 font-medium mb-1">Tổng</p>
-                                <div className="flex items-center justify-center gap-1">
-                                    <span className={`font-black text-base ${reviveNet >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                        {reviveNet > 0 ? '+' : ''}{reviveNet}
-                                    </span>
-                                    <Revive size={12} />
-                                </div>
+                        <div className={`rounded-xl px-3 py-2.5 text-center border ${reviveNet >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+                            <p className="text-[10px] text-gray-400 font-medium mb-1">
+                                {iWonFinal ? 'Thắng trận' : 'Thua trận'} ({myFinalScore}–{oppFinalScore})
+                            </p>
+                            <div className="flex items-center justify-center gap-1">
+                                <span className={`font-black text-base ${reviveNet >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                    {reviveNet > 0 ? '+' : ''}{reviveNet}
+                                </span>
+                                <Revive size={12} />
                             </div>
                         </div>
                     </div>
@@ -455,45 +355,24 @@ export default function MatchDetailPage() {
             {/* Enter result */}
             {match.status === 'pending_result' && isCreator && (
                 <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm font-bold text-gray-900">Nhập tỉ số từng set</p>
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-400">Số set:</span>
-                            <div className="flex gap-1">
-                                {Array.from({ length: match.best_of }, (_, i) => i + 1).map(n => (
-                                    <button key={n} onClick={() => setActiveSets(n)} className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${activeSets === n ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                                        {n}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        {Array.from({ length: activeSets }, (_, i) => (
-                            <div
-                                key={i}
-                                style={{ animation: 'setPopIn 0.25s cubic-bezier(0.32,0.72,0,1) both' }}
-                            >
-                                <SetRow
-                                    setNum={i + 1}
-                                    scoreA={sets[i].score_a}
-                                    scoreB={sets[i].score_b}
-                                    onChangeA={v => setSets(prev => prev.map((s, j) => j === i ? { ...s, score_a: v } : s))}
-                                    onChangeB={v => setSets(prev => prev.map((s, j) => j === i ? { ...s, score_b: v } : s))}
-                                    isMe={isTeamA}
-                                />
-                            </div>
-                        ))}
-                    </div>
+                    <p className="text-sm font-bold text-gray-900">Nhập tỉ số (1 set)</p>
+
+                    <ScoreRow
+                        scoreA={scoreA}
+                        scoreB={scoreB}
+                        onChangeA={setScoreA}
+                        onChangeB={setScoreB}
+                        isMe={isTeamA}
+                    />
 
                     {/* Preview revive */}
-                    <div className={`rounded-xl px-4 py-3 border text-center ${!isValidResult ? 'bg-gray-50 border-gray-200' : myWon > oppWon ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className={`rounded-xl px-4 py-3 border text-center ${!isValidResult ? 'bg-gray-50 border-gray-200' : myScore > oppScore ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
                         {!isValidResult ? (
-                            <p className="text-xs text-gray-500">Cần thắng {setsToWin} set để kết thúc (BO{match.best_of})</p>
+                            <p className="text-xs text-gray-500">Tỉ số không được hoà, phải có đội thắng</p>
                         ) : (
                             <div className="space-y-1">
-                                <p className={`text-sm font-bold ${myWon > oppWon ? 'text-emerald-700' : 'text-red-600'}`}>
-                                    {myWon > oppWon ? '🏆 Bạn thắng!' : '😅 Bạn thua'} ({myWon}–{oppWon} set)
+                                <p className={`text-sm font-bold ${myScore > oppScore ? 'text-emerald-700' : 'text-red-600'}`}>
+                                    {myScore > oppScore ? '🏆 Bạn thắng!' : '😅 Bạn thua'} ({myScore}–{oppScore})
                                 </p>
                                 <div className={`flex items-center justify-center gap-1.5 text-xs font-semibold ${revivePreview >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                                     <span>Chai Revive: {revivePreview > 0 ? '+' : ''}{revivePreview}</span>
