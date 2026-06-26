@@ -1,9 +1,6 @@
 {
-  "/not-found": "app/not-found.js",
-  "/(member)/home/page": "app/(member)/home/page.js",
-  "/(member)/activity/page": "app/(member)/activity/page.js",
-  "/(member)/leaderboard/page": "app/(member)/leaderboard/page.js",
-  "/(member)/sessions/[id]/page": "app/(member)/sessions/[id]/page.js",
+  "/auth/register/page": "app/auth/register/page.js",
   "/(member)/profile/page": "app/(member)/profile/page.js",
-  "/(member)/cost/page": "app/(member)/cost/page.js"
+  "/(member)/profile/settings/page": "app/(member)/profile/settings/page.js",
+  "/auth/login/page": "app/auth/login/page.js"
 }

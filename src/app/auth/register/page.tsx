@@ -228,6 +228,47 @@ export default function RegisterPage() {
           {errors.confirm_password && <p className="text-red-500 text-xs mt-1">{errors.confirm_password.message as string}</p>}
         </div>
 
+        {/* Loại thành viên */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Loại thành viên</label>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {
+                value: 'vang_lai',
+                label: '⚪ Vãng lai',
+                desc: 'Tham gia không thường xuyên',
+              },
+              {
+                value: 'co_dinh',
+                label: '🔵 Thành viên',
+                desc: 'Thành viên\ncâu lạc bộ',
+              },
+            ].map(opt => (
+              <label key={opt.value} className="cursor-pointer">
+                <input {...register('member_type')} type="radio" value={opt.value} className="sr-only peer" defaultChecked={opt.value === 'vang_lai'} />
+                <div className="p-3 rounded-xl border-2 border-gray-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all text-center">
+                  <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 whitespace-pre-line">{opt.desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Trình độ */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Trình độ</label>
+          <select {...register('level')} className="input-field">
+            <option value="">-- Chọn trình độ --</option>
+            <option value="yeu">Yếu</option>
+            <option value="tb_yeu">Trung bình yếu</option>
+            <option value="tb">Trung bình</option>
+            <option value="tb_plus">Trung bình+</option>
+            <option value="ban_chuyen">Bán chuyên</option>
+            <option value="chuyen_nghiep">Chuyên nghiệp</option>
+          </select>
+        </div>
+
         <button type="submit" disabled={loading} className="btn-primary flex items-center justify-center gap-2 !mt-6">
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Tạo tài khoản

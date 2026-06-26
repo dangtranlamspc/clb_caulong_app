@@ -34,6 +34,8 @@ export default function SettingsPage() {
           date_of_birth: data.date_of_birth?.split('T')[0] || '',
           gender: data.gender || '',
           shirt_size: data.shirt_size || '',
+          member_type: data.member_type || 'vang_lai',
+          level: data.level || '',
         });
         setCurrentAvatarUrl(data.avatar_url || null);
       })
@@ -241,6 +243,49 @@ export default function SettingsPage() {
                   </span>
                 </label>
               ))}
+            </div>
+          </div>
+          {/* Membership info card */}
+          <div className="card space-y-4">
+            <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Thành viên & trình độ</h2>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Loại thành viên</label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  {
+                    value: 'vang_lai',
+                    label: '⚪ Vãng lai',
+                    desc: 'Tham gia không thường xuyên',
+                  },
+                  {
+                    value: 'co_dinh',
+                    label: '🔵 Thành viên',
+                    desc: 'Thành viên\ncâu lạc bộ',
+                  },
+                ].map(opt => (
+                  <label key={opt.value} className="cursor-pointer">
+                    <input {...register('member_type')} type="radio" value={opt.value} className="sr-only peer" />
+                    <div className="p-3 rounded-xl border-2 border-gray-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all text-center">
+                      <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
+                      <p className="text-xs text-gray-400 mt-0.5 whitespace-pre-line">{opt.desc}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Trình độ</label>
+              <select {...register('level')} className="input-field">
+                <option value="">-- Chọn trình độ --</option>
+                <option value="yeu">Yếu</option>
+                <option value="tb_yeu">Trung bình yếu</option>
+                <option value="tb">Trung bình</option>
+                <option value="tb_plus">Trung bình+</option>
+                <option value="ban_chuyen">Bán chuyên</option>
+                <option value="chuyen_nghiep">Chuyên nghiệp</option>
+              </select>
             </div>
           </div>
         </div>

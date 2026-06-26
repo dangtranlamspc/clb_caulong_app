@@ -21,35 +21,30 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/home/page.js"
     ],
-    "/(member)/activity/page": [
+    "/auth/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/activity/page.js"
+      "static/chunks/app/auth/layout.js"
     ],
-    "/(member)/cost/page": [
+    "/auth/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/cost/page.js"
+      "static/chunks/app/auth/login/page.js"
     ],
-    "/(member)/leaderboard/page": [
+    "/auth/register/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/leaderboard/page.js"
+      "static/chunks/app/auth/register/page.js"
     ],
     "/(member)/profile/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/profile/page.js"
     ],
-    "/(member)/sessions/[id]/page": [
+    "/(member)/profile/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/sessions/[id]/page.js"
-    ],
-    "/not-found": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/not-found.js"
+      "static/chunks/app/(member)/profile/settings/page.js"
     ]
   }
 }
