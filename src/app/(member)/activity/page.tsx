@@ -420,6 +420,7 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
             .on('broadcast', { event: 'match_result' }, () => { fetchMatchesRef.current(); })
             .on('broadcast', { event: 'new_challenge' }, () => { fetchMatchesRef.current(); })
             .on('broadcast', { event: 'match_status_changed' }, () => { fetchMatchesRef.current(); })
+            .on('broadcast', { event: 'admin_match_created' }, () => { fetchMatchesRef.current(); })
             .subscribe();
         channelRef.current = channel;
         return () => {
