@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, CheckCircle2, AlertCircle, Wallet, X } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -14,6 +14,8 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     payment_added: { icon: Wallet, cls: 'text-blue-600', bg: 'bg-blue-50' },
     payment_confirmed: { icon: CheckCircle2, cls: 'text-emerald-600', bg: 'bg-emerald-50' },
     payment_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
+    bill_issued: { icon: Wallet, cls: 'text-amber-600', bg: 'bg-amber-50' },
+    added_to_session: { icon: CalendarDays, cls: 'text-blue-600', bg: 'bg-blue-50' },
 };
 
 export function NotificationBell() {

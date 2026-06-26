@@ -92,7 +92,7 @@ export const sessionsApi = {
 export const registrationsApi = {
   register: (data: { session_id: string; notes?: string }) => api.post('/registrations', data),
   getMyRegistrations: (params?: any) => api.get('/registrations/my', { params }),
-  listBySession: (sessionId: number, params?: any) => api.get(`/registrations/session/${sessionId}`, { params }),
+  listBySession: (sessionId: string, params?: any) => api.get(`/registrations/session/${sessionId}`, { params }),
   submitPayment: (id: string, data: { payment_reference: string; payment_proof_url?: string }) => api.patch(`/registrations/${id}/payment`, data),
   cancel: (id: string) => api.delete(`/registrations/${id}`),
   getQR: (id: string) => api.get(`/registrations/${id}/qr`),
@@ -103,6 +103,9 @@ export const registrationsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  requestCash: (id: string) => api.patch(`/registrations/${id}/request-cash`),
+  addGuest: (registrationId: string, data: { guest_full_name: string; guest_gender: string; guest_skill_level?: string; notes?: string }) =>
+    api.post(`/registrations/${registrationId}/guests`, data),
 };
 
 export const rankingsApi = {

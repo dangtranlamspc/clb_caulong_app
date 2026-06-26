@@ -19,9 +19,9 @@ const STATUS_CFG: Record<string, { label: string; dotCls: string }> = {
 };
 
 const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
-    pending: { label: 'Chờ xác nhận', icon: Hourglass, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-    confirmed: { label: 'Đã xác nhận', icon: CheckCircle2, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    rejected: { label: 'Từ chối', icon: AlertCircle, cls: 'bg-red-50 text-red-500 border-red-200' },
+    pending: { label: 'Chờ thanh toán', icon: Hourglass, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+    confirmed: { label: 'Đã xác nhận thanh toán', icon: CheckCircle2, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    rejected: { label: 'Thanh toán bị từ chối', icon: AlertCircle, cls: 'bg-red-50 text-red-500 border-red-200' },
 };
 
 const FILTER_TABS = [
@@ -61,7 +61,7 @@ function energyTextCls(ratio: number) {
 }
 
 interface MembersModalProps {
-    sessionId: number;
+    sessionId: string;
     sessionTitle: string;
     onClose: () => void;
 }
@@ -121,8 +121,8 @@ function MembersModal({ sessionId, sessionTitle, onClose }: MembersModalProps) {
                         <ul className="divide-y divide-gray-50 pt-1">
                             {members.map((m) => {
                                 const user = m.users;
-                                const fullName = user?.full_name ?? '?';
-                                const gender = user?.gender;
+                                const fullName = user?.full_name ?? m.guest_full_name ?? '?';
+                                const gender = user?.gender ?? m.guest_gender;
                                 const avatar = user?.avatar_url;
 
                                 const parts = fullName.trim().split(' ').filter(Boolean);
@@ -151,6 +151,7 @@ function MembersModal({ sessionId, sessionTitle, onClose }: MembersModalProps) {
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium text-gray-900 truncate">
                                                 {fullName}
+                                                {m.is_guest && <span className="text-xs text-gray-400 ml-1">(khách)</span>}
                                             </p>
                                             <p className="text-xs text-gray-400">
                                                 {gender === 'male' ? 'Nam' : gender === 'female' ? 'Nữ' : ''}
@@ -172,13 +173,13 @@ function MembersModal({ sessionId, sessionTitle, onClose }: MembersModalProps) {
     );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// Page
 export default function SessionsPage() {
     const { user } = useAuthStore();
     const [sessions, setSessions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('open');
-    const [modalSession, setModalSession] = useState<{ id: number; title: string } | null>(null);
+    const [modalSession, setModalSession] = useState<{ id: string; title: string } | null>(null);
 
     const fetchSessions = useCallback(async () => {
         setLoading(true);
@@ -242,7 +243,7 @@ export default function SessionsPage() {
                     {sessions.map((s) => {
                         const cfg = STATUS_CFG[s.status] ?? STATUS_CFG.open;
                         const myReg = s.my_registration;
-                        const regCfg = myReg ? REG_CFG[myReg.payment_status] : null;
+                        const regCfg = myReg ? (REG_CFG[myReg.payment_status] ?? REG_CFG.pending) : null;
                         const RegIcon = regCfg?.icon;
 
                         const filled = (s.max_slots ?? 0) - (s.available_slots ?? 0);
@@ -339,6 +340,7 @@ export default function SessionsPage() {
                                                 <Users className="w-3.5 h-3.5" />
                                                 {filled} người
                                             </button>
+
                                         </div>
                                         <ChevronRight className="w-4 h-4 text-gray-300" />
                                     </div>

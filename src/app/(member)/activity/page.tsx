@@ -6,34 +6,42 @@ import { vi } from 'date-fns/locale';
 import {
     CalendarDays, MapPin, Clock, ChevronRight, AlertCircle,
     CheckCircle2, Hourglass, Users, X, Zap, Plus,
-    Swords, Clock3, SlidersHorizontal, ChevronDown,
+    Swords, Clock3, SlidersHorizontal, ChevronDown
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
-import { sessionsApi, registrationsApi, matchesApi } from '@/lib/api';
+import { sessionsApi, matchesApi } from '@/lib/api';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { createPortal } from 'react-dom';
+import { PaymentModal } from '@/components/PaymentModal';
+import { MembersModal } from '@/components/MemberModalConponent';
 
 
 type MainTab = 'sessions' | 'matches';
 
+
 const SESSION_STATUS_CFG: Record<string, { label: string; dotCls: string }> = {
     open: { label: 'Mở đăng ký', dotCls: 'bg-emerald-400' },
     full: { label: 'Đã đầy', dotCls: 'bg-amber-400' },
+    waiting_payment: { label: 'Đang chốt thanh toán', dotCls: 'bg-blue-400' },
     cancelled: { label: 'Đã hủy', dotCls: 'bg-red-400' },
     completed: { label: 'Hoàn thành', dotCls: 'bg-gray-400' },
 };
 
+
 const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
-    pending: { label: 'Chờ xác nhận', icon: Hourglass, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-    confirmed: { label: 'Đã xác nhận', icon: CheckCircle2, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    rejected: { label: 'Từ chối', icon: AlertCircle, cls: 'bg-red-50 text-red-500 border-red-200' },
+    awaiting_checkin: { label: 'Chờ điểm danh', icon: Hourglass, cls: 'bg-slate-50 text-slate-600 border-slate-200' },
+    pending: { label: 'Chờ thanh toán', icon: Hourglass, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+    pending_review: { label: 'Chờ admin xác nhận', icon: Clock3, cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+    confirmed: { label: 'Đã xác nhận thanh toán', icon: CheckCircle2, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    rejected: { label: 'Thanh toán bị từ chối', icon: AlertCircle, cls: 'bg-red-50 text-red-500 border-red-200' },
 };
 
 const SESSION_FILTER_TABS = [
     { value: '', label: 'Tất cả' },
     { value: 'open', label: 'Mở', dot: 'bg-emerald-400' },
     { value: 'full', label: 'Đầy', dot: 'bg-amber-400' },
+    { value: 'waiting_payment', label: 'Chờ TT', dot: 'bg-blue-400' },
     { value: 'completed', label: 'Xong', dot: 'bg-gray-400' },
 ];
 
@@ -140,150 +148,56 @@ function energyTextCls(ratio: number) {
     return 'text-emerald-600';
 }
 
-function MembersModal({ sessionId, sessionTitle, onClose }: { sessionId: number; sessionTitle: string; onClose: () => void }) {
-    const [members, setMembers] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [visible, setVisible] = useState(false);
 
-    useEffect(() => {
-        registrationsApi.listBySession(sessionId)
-            .then(({ data }) => setMembers(data.data ?? []))
-            .finally(() => setLoading(false));
-        const t = requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
-        return () => { cancelAnimationFrame(t); };
-    }, [sessionId]);
-
-    // Tách riêng overflow lock để cleanup độc lập
-    useEffect(() => {
-        const prev = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = prev; };
-    }, []);
-
-    const close = () => {
-        setVisible(false);
-        setTimeout(onClose, 300);
-    };
-
-    return createPortal(
-        <div
-            className="fixed inset-0 z-[9999] flex flex-col justify-end"
-            style={{
-                background: visible ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0)',
-                backdropFilter: visible ? 'blur(2px)' : 'none',
-                transition: 'background .3s, backdrop-filter .3s',
-            }}
-            onClick={e => e.target === e.currentTarget && close()}
-        >
-            <div
-                className="w-full bg-white rounded-t-2xl"
-                style={{
-                    transform: visible ? 'translateY(0)' : 'translateY(100%)',
-                    transition: 'transform .3s cubic-bezier(0.32,0.72,0,1)',
-                    paddingBottom: 'env(safe-area-inset-bottom)',
-                    maxHeight: '80vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    willChange: 'transform',
-                }}
-                onClick={e => e.stopPropagation()}
-            >
-                {/* Handle bar */}
-                <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-                    <div className="w-9 h-1 rounded-full bg-gray-200" />
-                </div>
-
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
-                    <div>
-                        <p className="text-sm font-semibold text-gray-900">Thành viên đăng ký</p>
-                        <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[240px]">{sessionTitle}</p>
-                    </div>
-                    <button onClick={close} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
-                        <X className="w-4 h-4 text-gray-500" />
-                    </button>
-                </div>
-
-                {/* Scrollable list */}
-                <div className="overflow-y-auto flex-1 px-4 pb-6">
-                    {loading ? (
-                        <div className="space-y-3 pt-4">
-                            {[...Array(4)].map((_, i) => (
-                                <div key={i} className="flex items-center gap-3 animate-pulse">
-                                    <div className="w-9 h-9 rounded-full bg-gray-100" />
-                                    <div className="flex-1 space-y-1.5">
-                                        <div className="h-3 bg-gray-100 rounded w-2/3" />
-                                        <div className="h-2.5 bg-gray-100 rounded w-1/3" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : members.length === 0 ? (
-                        <div className="py-12 text-center">
-                            <Users className="w-8 h-8 mx-auto text-gray-200 mb-2" />
-                            <p className="text-sm text-gray-400">Chưa có thành viên nào</p>
-                        </div>
-                    ) : (
-                        <ul className="divide-y divide-gray-50 pt-1">
-                            {members.map((m, idx) => {
-                                const u = m.users;
-                                const fullName = u?.full_name ?? '?';
-                                const parts = fullName.trim().split(' ').filter(Boolean);
-                                const initials = parts.length >= 2
-                                    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-                                    : fullName.slice(0, 2).toUpperCase();
-                                const regCfg = REG_CFG[m.payment_status] ?? REG_CFG.pending;
-                                const RegIcon = regCfg.icon;
-                                return (
-                                    <li
-                                        key={m.id}
-                                        className="flex items-center gap-3 py-3"
-                                        style={{ opacity: 0, animation: `fadeIn .2s ease forwards`, animationDelay: `${idx * 35}ms` }}
-                                    >
-                                        {u?.avatar_url
-                                            ? <img src={u.avatar_url} alt={fullName} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
-                                            : <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-semibold flex-shrink-0">{initials}</div>
-                                        }
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate">{fullName}</p>
-                                            <p className="text-xs text-gray-400">{u?.gender === 'male' ? 'Nam' : u?.gender === 'female' ? 'Nữ' : ''}</p>
-                                        </div>
-                                        <span className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border ${regCfg.cls}`}>
-                                            <RegIcon className="w-3 h-3" />{regCfg.label}
-                                        </span>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    )}
-                </div>
-            </div>
-        </div>,
-        document.body
-    );
-}
 
 function SessionsTab() {
     const { user } = useAuthStore();
     const [sessions, setSessions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('open');
-    const [modalSession, setModalSession] = useState<{ id: number; title: string } | null>(null);
+    const [modalSession, setModalSession] = useState<{ id: string; title: string } | null>(null);
     const fadeIn = useFadeIn(!loading);
+    const [pendingBills, setPendingBills] = useState<any[]>([]);
+    const [payModalSession, setPayModalSession] = useState<any>(null);
 
     const fetchSessions = useCallback(async () => {
         setLoading(true);
         try {
             const params: any = { limit: 30 };
-            if (filter) params.status = filter;
+            // Chỉ gửi status lên server nếu là status hợp lệ của session
+            if (filter && filter !== 'waiting_payment') params.status = filter;
+
             const { data } = await sessionsApi.list(params);
-            // Xếp buổi mới nhất (scheduled_at lớn nhất) lên đầu danh sách
-            const sorted = [...(data.data ?? [])].sort(
-                (a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime()
-            );
+            let list = data.data ?? [];
+
+            // "Chờ TT" là trạng thái thanh toán của registration, lọc ở client
+            if (filter === 'waiting_payment') {
+                list = list.filter((s: any) => s.my_registration?.payment_status === 'pending');
+            }
+
+            const sorted = [...list].sort((a: any, b: any) => {
+                const aTime = new Date(a.created_at ?? a.scheduled_at).getTime();
+                const bTime = new Date(b.created_at ?? b.scheduled_at).getTime();
+                return bTime - aTime;
+            });
             setSessions(sorted);
         } finally { setLoading(false); }
     }, [filter]);
+
+    const fetchPendingBills = useCallback(async () => {
+        try {
+            const { data } = await sessionsApi.list({ limit: 50 });
+            const bills = (data.data ?? []).filter(
+                (s: any) =>
+                    s.my_registration?.amount_override > 0 &&
+                    s.my_registration?.payment_status === 'pending' &&
+                    !s.my_registration?.payment_reference
+            );
+            setPendingBills(bills);
+        } catch { }
+    }, []);
+
+    useEffect(() => { fetchPendingBills(); }, [fetchPendingBills]);
 
     useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
@@ -302,7 +216,33 @@ function SessionsTab() {
                 ))}
             </div>
 
-            <div className="space-y-3" style={{ opacity: fadeIn ? 1 : 0, transition: 'opacity 0.3s ease' }}>
+            {pendingBills.length > 0 && (
+                <div className="space-y-2">
+                    <p className="text-xs font-semibold text-red-500 flex items-center gap-1">
+                        💳 Cần thanh toán ({pendingBills.length})
+                    </p>
+                    {pendingBills.map(s => (
+                        <Link key={s.id} href={`/sessions/${s.id}`} className="block">
+                            <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl px-4 py-3 active:bg-red-100 transition-colors">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{s.title}</p>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                        {format(new Date(s.scheduled_at), 'EEE dd/MM', { locale: vi })}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="text-sm font-bold text-red-600">
+                                        {s.my_registration.amount_override.toLocaleString('vi-VN')}đ
+                                    </span>
+                                    <ChevronRight className="w-4 h-4 text-red-400" />
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            )}
+
+            <div className="space-y-4" style={{ opacity: fadeIn ? 1 : 0, transition: 'opacity 0.3s ease' }}>
                 {loading ? (
                     [...Array(4)].map((_, i) => (
                         <div key={i} style={{ animationDelay: `${i * 60}ms`, animation: 'fadeSlideUp .3s ease both' }}>
@@ -318,7 +258,12 @@ function SessionsTab() {
                     sessions.map((s, idx) => {
                         const cfg = SESSION_STATUS_CFG[s.status] ?? SESSION_STATUS_CFG.open;
                         const myReg = s.my_registration;
-                        const regCfg = myReg ? REG_CFG[myReg.payment_status] : null;
+                        const effectiveStatus = myReg?.participation_status === 'awaiting_checkin'
+                            ? 'awaiting_checkin'
+                            : myReg?.payment_status === 'pending' && myReg?.payment_reference
+                                ? 'pending_review'
+                                : myReg?.payment_status;
+                        const regCfg = effectiveStatus ? (REG_CFG[effectiveStatus] ?? REG_CFG.pending) : null;
                         const RegIcon = regCfg?.icon;
                         const filled = (s.max_slots ?? 0) - (s.available_slots ?? 0);
                         const ratio = s.max_slots > 0 ? filled / s.max_slots : 0;
@@ -335,7 +280,7 @@ function SessionsTab() {
                         })();
 
                         return (
-                            <Link key={s.id} href={`/sessions/${s.id}`}>
+                            <Link key={s.id} href={`/sessions/${s.id}`} className="block">
                                 <div
                                     className={`bg-white rounded-2xl p-4 border transition-all active:scale-[0.99] ${myReg ? 'border-blue-100' : 'border-transparent'}`}
                                     style={{ animation: 'fadeSlideUp .35s ease both', animationDelay: `${idx * 50}ms` }}
@@ -384,6 +329,19 @@ function SessionsTab() {
                                             >
                                                 <Users className="w-3.5 h-3.5" />{filled} người
                                             </button>
+                                            {myReg && myReg.amount_override > 0 && myReg.payment_status === 'pending'
+                                                && !myReg.payment_reference && myReg.participation_status === 'confirmed' && (
+                                                    <button
+                                                        onClick={e => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            setPayModalSession({ session: s, reg: myReg });
+                                                        }}
+                                                        className="flex items-center gap-1 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 px-2.5 py-1 rounded-full animate-pulse"
+                                                    >
+                                                        💳 Thanh toán {myReg.amount_override.toLocaleString('vi-VN')}đ
+                                                    </button>
+                                                )}
                                         </div>
                                         <ChevronRight className="w-4 h-4 text-gray-300" />
                                     </div>
@@ -399,6 +357,21 @@ function SessionsTab() {
                     sessionId={modalSession.id}
                     sessionTitle={modalSession.title}
                     onClose={() => setModalSession(null)}
+                />
+            )}
+
+            {payModalSession && (
+                <PaymentModal
+                    session={payModalSession.session}
+                    reg={payModalSession.reg}
+                    onClose={() => setPayModalSession(null)}
+                    onSuccess={() => {
+                        setPayModalSession(null);
+                        setTimeout(() => {
+                            fetchSessions();
+                            fetchPendingBills();
+                        }, 300);
+                    }}
                 />
             )}
         </div>
@@ -482,7 +455,7 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-amber-800">Có trận chưa hoàn thành</p>
                             <p className="text-xs text-amber-600 mt-0.5">
-                                {MATCH_STATUS_CFG[activeMatch.status]?.label} · Gửi kết quả để tạo trận mới
+                                {MATCH_STATUS_CFG[activeMatch.status]?.label} · Nhấp vào để thêm tỉ số
                             </p>
                         </div>
                         <ChevronRight className="w-4 h-4 text-amber-400 flex-shrink-0" />
@@ -552,17 +525,22 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                                             ))}
                                         </div>
                                         <div className="flex-shrink-0 text-center">
-                                            {m.status === 'approved' || m.status === 'pending_approval' ? (
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className={`text-xl font-black ${isTeamA ? m.winner_team === 'A' ? 'text-emerald-600' : 'text-gray-400' : m.winner_team === 'B' ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                                        {isTeamA ? m.score_a : m.score_b}
-                                                    </span>
-                                                    <span className="text-gray-300">–</span>
-                                                    <span className={`text-xl font-black ${isTeamA ? m.winner_team === 'B' ? 'text-emerald-600' : 'text-gray-400' : m.winner_team === 'A' ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                                        {isTeamA ? m.score_b : m.score_a}
-                                                    </span>
-                                                </div>
-                                            ) : (
+                                            {(m.status === 'approved' || m.status === 'pending_approval') && m.sets?.length > 0 ? (() => {
+                                                const s = m.sets[0];
+                                                const myScore = isTeamA ? s.score_a : s.score_b;
+                                                const oppScore = isTeamA ? s.score_b : s.score_a;
+                                                return (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className={`text-xl font-black ${iWon ? 'text-emerald-600' : 'text-gray-400'}`}>
+                                                            {myScore}
+                                                        </span>
+                                                        <span className="text-gray-300">–</span>
+                                                        <span className={`text-xl font-black ${iLost ? 'text-emerald-600' : 'text-gray-400'}`}>
+                                                            {oppScore}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })() : (
                                                 <span className="text-gray-300 font-bold text-sm">VS</span>
                                             )}
                                         </div>
@@ -581,19 +559,6 @@ function MatchesTab({ onActiveMatchChange }: { onActiveMatchChange: (m: any) => 
                                             ))}
                                         </div>
                                     </div>
-                                    {m.sets?.length > 0 && (
-                                        <div className="flex gap-1.5 mt-3 flex-wrap">
-                                            {[...m.sets].sort((a: any, b: any) => a.set_number - b.set_number).map((s: any) => {
-                                                const myScore = isTeamA ? s.score_a : s.score_b;
-                                                const oppScore = isTeamA ? s.score_b : s.score_a;
-                                                return (
-                                                    <span key={s.set_number} className={`text-[10px] font-mono px-2 py-0.5 rounded-lg border ${myScore > oppScore ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-600'}`}>
-                                                        S{s.set_number}: {myScore}–{oppScore}
-                                                    </span>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
                                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-50">
                                         <span className="text-[10px] text-gray-400">
                                             {m.played_at ? format(new Date(m.played_at), 'EEE dd/MM/yyyy', { locale: vi }) : format(new Date(m.created_at), 'dd/MM/yyyy', { locale: vi })}
