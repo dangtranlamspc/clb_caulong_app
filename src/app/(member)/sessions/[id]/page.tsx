@@ -12,6 +12,7 @@ import {
 import toast from 'react-hot-toast';
 import { sessionsApi, registrationsApi } from '../../../../lib/api';
 import { useAuthStore } from '../../../../store/auth.store';
+import { supabase } from '@/lib/supabase';
 
 const STATUS_CFG: Record<string, { label: string; cls: string; icon: any }> = {
     pending: { label: 'Chờ thanh toán', icon: Hourglass, cls: 'bg-amber-50 border-amber-200 text-amber-700' },
@@ -88,6 +89,32 @@ export default function SessionDetailPage() {
     useEffect(() => {
         fetchSession();
         fetchRegistrations();
+    }, [id]);
+
+
+    useEffect(() => {
+        if (!id) return;
+
+        const channel = supabase
+            .channel(`registrations-session-${id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'registrations',
+                    filter: `session_id=eq.${id}`,
+                },
+                () => {
+                    fetchSession();
+                    fetchRegistrations();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [id]);
 
     const handleRegister = async () => {

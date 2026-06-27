@@ -164,13 +164,11 @@ function SessionsTab() {
         setLoading(true);
         try {
             const params: any = { limit: 30 };
-            // Chỉ gửi status lên server nếu là status hợp lệ của session
             if (filter && filter !== 'waiting_payment') params.status = filter;
 
             const { data } = await sessionsApi.list(params);
             let list = data.data ?? [];
 
-            // "Chờ TT" là trạng thái thanh toán của registration, lọc ở client
             if (filter === 'waiting_payment') {
                 list = list.filter((s: any) => s.my_registration?.payment_status === 'pending');
             }
