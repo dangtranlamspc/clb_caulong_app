@@ -199,6 +199,20 @@ function SessionsTab() {
 
     useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const channel = supabase
+            .channel(`activity-realtime:${user.id}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'registrations', filter: `user_id=eq.${user.id}` },
+                () => { fetchSessions(); fetchPendingBills(); })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' },
+                () => { fetchSessions(); fetchPendingBills(); })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [user?.id, fetchSessions, fetchPendingBills]);
+
     return (
         <div className="space-y-4">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -291,10 +305,6 @@ function SessionsTab() {
                                                 <span className="text-xs text-gray-500">{cfg.label}</span>
                                             </div>
                                         </div>
-                                        <div className="text-right flex-shrink-0">
-                                            <p className="font-bold text-blue-600 text-sm">{priceDisplay.text}</p>
-                                            <p className="text-[10px] text-gray-400">{priceDisplay.sub}</p>
-                                        </div>
                                     </div>
                                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mb-3">
                                         <span className="flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5" />{format(new Date(s.scheduled_at), 'EEE dd/MM, HH:mm', { locale: vi })}</span>
@@ -362,6 +372,7 @@ function SessionsTab() {
                 <PaymentModal
                     session={payModalSession.session}
                     reg={payModalSession.reg}
+                    userFullName={user?.full_name ?? ''}
                     onClose={() => setPayModalSession(null)}
                     onSuccess={() => {
                         setPayModalSession(null);

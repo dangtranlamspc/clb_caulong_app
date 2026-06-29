@@ -376,16 +376,13 @@ export default function HomePage() {
                             <p className="text-gray-400 text-sm">Chưa có buổi nào đang mở</p>
                         </div>
                     ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             {upcoming.map((s) => {
                                 const myReg = s.my_registration;
                                 const isFull = s.available_slots <= 0;
-                                const price = s.price_male && user?.gender === 'male' ? s.price_male
-                                    : s.price_female && user?.gender === 'female' ? s.price_female
-                                        : s.price_per_slot ?? 0;
                                 return (
                                     <Link key={s.id} href={`/sessions/${s.id}`}>
-                                        <div className={`bg-white rounded-2xl p-4 shadow-sm border transition-all active:scale-99 ${myReg ? 'border-blue-100' : 'border-transparent'}`}>
+                                        <div className={`bg-white rounded-2xl p-4 shadow-sm border transition-all active:scale-99 ${myReg ? 'border-blue-200' : 'border-gray-100'}`}>
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-semibold text-gray-900 text-sm truncate">{s.title}</p>
@@ -406,9 +403,6 @@ export default function HomePage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                                                    <span className="font-bold text-blue-600 text-sm">
-                                                        {price.toLocaleString('vi-VN')}đ
-                                                    </span>
                                                     {myReg ? (
                                                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${myReg.payment_status === 'confirmed'
                                                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'

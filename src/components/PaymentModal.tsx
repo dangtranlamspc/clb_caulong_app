@@ -1,12 +1,14 @@
+import { buildTransferNote } from "@/hooks/payment-ref";
 import { registrationsApi } from "@/lib/api";
 import { CheckCircle2Icon, Copy, ImagePlus, Loader2, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import toast from 'react-hot-toast';
 
-export function PaymentModal({ session, reg, onClose, onSuccess }: {
+export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }: {
     session: any;
     reg: any;
+    userFullName: string;
     onClose: () => void;
     onSuccess: () => void;
 }) {
@@ -21,7 +23,7 @@ export function PaymentModal({ session, reg, onClose, onSuccess }: {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const amount = reg.amount_override ?? 0;
-    const suggestedRef = `DANGKY ${reg.id.replace(/-/g, '').substring(0, 8).toUpperCase()}`;
+    const suggestedRef = buildTransferNote(userFullName, session.title, session.scheduled_at);
     const qrUrl = `https://img.vietqr.io/image/${process.env.NEXT_PUBLIC_BANK_ID ?? 'MB'}-${process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? '0000000000'}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(suggestedRef)}&accountName=${encodeURIComponent(process.env.NEXT_PUBLIC_BANK_NAME ?? 'CLB CAU LONG')}`;
 
     const handlePickBill = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,10 +52,12 @@ export function PaymentModal({ session, reg, onClose, onSuccess }: {
 
     const handleSubmitTransfer = async () => {
         if (!payRef.trim()) { toast.error('Vui lòng nhập mã chuyển khoản'); return; }
-        if (!billUrl) { toast.error('Vui lòng tải ảnh bill trước'); return; }
         setSubmitting(true);
         try {
-            await registrationsApi.submitPayment(reg.id, { payment_reference: payRef.trim() });
+            await registrationsApi.submitPayment(reg.id, {
+                payment_reference: payRef.trim(),
+                ...(billUrl ? { payment_proof_url: billUrl } : {}),
+            });
             toast.success('Đã gửi xác nhận thanh toán!');
             onSuccess();
         } catch {
@@ -172,7 +176,9 @@ export function PaymentModal({ session, reg, onClose, onSuccess }: {
                                 placeholder={`Nhập nội dung: ${suggestedRef}`} />
                             {/* Upload bill */}
                             <div>
-                                <p className="text-xs font-semibold text-gray-600 mb-1.5">Ảnh bill <span className="text-red-400">*</span></p>
+                                <p className="text-xs font-semibold text-gray-600 mb-1.5">
+                                    Ảnh bill <span className="text-gray-400 font-normal">(không bắt buộc)</span>
+                                </p>
                                 {!billPreview ? (
                                     <button onClick={() => fileInputRef.current?.click()}
                                         className="w-full py-5 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center gap-1.5 text-gray-400 hover:border-blue-300 hover:text-blue-500">
@@ -206,7 +212,7 @@ export function PaymentModal({ session, reg, onClose, onSuccess }: {
                                     className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
                                     Quay lại
                                 </button>
-                                <button onClick={handleSubmitTransfer} disabled={!billUrl || !payRef.trim() || submitting}
+                                <button onClick={handleSubmitTransfer} disabled={!payRef.trim() || submitting}
                                     className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5">
                                     {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                                     Gửi xác nhận

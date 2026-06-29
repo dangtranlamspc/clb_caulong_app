@@ -87,13 +87,19 @@ export const sessionsApi = {
   list: (params?: any) => api.get('/sessions', { params }),
   get: (id: string) => api.get(`/sessions/${id}`),
   getAllCosts: () => api.get('/sessions/costs/summary'),
+
 };
 
 export const registrationsApi = {
   register: (data: { session_id: string; notes?: string }) => api.post('/registrations', data),
   getMyRegistrations: (params?: any) => api.get('/registrations/my', { params }),
   listBySession: (sessionId: string, params?: any) => api.get(`/registrations/session/${sessionId}`, { params }),
-  submitPayment: (id: string, data: { payment_reference: string; payment_proof_url?: string }) => api.patch(`/registrations/${id}/payment`, data),
+  submitPayment: (id: string, data: {
+    payment_reference: string;
+    payment_proof_url?: string;
+    pay_type?: 'solo' | 'grouped';
+    grouped_amount?: number;
+  }) => api.patch(`/registrations/${id}/payment`, data),
   cancel: (id: string) => api.delete(`/registrations/${id}`),
   getQR: (id: string) => api.get(`/registrations/${id}/qr`),
   uploadPaymentProof: (id: string, file: File) => {
@@ -103,7 +109,10 @@ export const registrationsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  requestCash: (id: string) => api.patch(`/registrations/${id}/request-cash`),
+  requestCash: (id: string, data?: {
+    pay_type?: 'solo' | 'grouped';
+    grouped_amount?: number;
+  }) => api.patch(`/registrations/${id}/request-cash`, data ?? {}),
   addGuest: (registrationId: string, data: { guest_full_name: string; guest_gender: string; guest_skill_level?: string; notes?: string }) =>
     api.post(`/registrations/${registrationId}/guests`, data),
 };
