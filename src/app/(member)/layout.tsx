@@ -10,7 +10,7 @@ import { ChallengeModal } from '../../components/ChallengeModal';
 import { useMatchResultNotification } from '../../hooks/useMatchResultNotification';
 import { useChallengeNotification } from '../../hooks/useChallengeNotification';
 import toast from 'react-hot-toast';
-import { Home, CalendarDays, ClipboardList, Trophy, UserCircle2, LogOut, BadgePercent } from 'lucide-react';
+import { Home, CalendarDays, ClipboardList, Trophy, UserCircle2, LogOut, BadgePercent, Wallet } from 'lucide-react';
 import { useTeamInviteNotification } from '@/hooks/useTeamInviteNotification';
 import { TeamInviteModal } from '@/components/TeamInviteModal';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -18,6 +18,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 const NAV_ITEMS = [
     { href: '/home', icon: Home, label: 'Trang chủ' },
     { href: '/activity', icon: CalendarDays, label: 'Hoạt động' },
+    { href: '/wallet', icon: Wallet, label: 'Ví' },
     { href: '/cost', icon: BadgePercent, label: 'Chi phí' },
     { href: '/leaderboard', icon: Trophy, label: 'Xếp hạng' },
     { href: '/profile', icon: UserCircle2, label: 'Hồ sơ' },

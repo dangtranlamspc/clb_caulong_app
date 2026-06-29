@@ -291,10 +291,10 @@ function SessionsTab() {
                                                 <span className="text-xs text-gray-500">{cfg.label}</span>
                                             </div>
                                         </div>
-                                        <div className="text-right flex-shrink-0">
+                                        {/* <div className="text-right flex-shrink-0">
                                             <p className="font-bold text-blue-600 text-sm">{priceDisplay.text}</p>
                                             <p className="text-[10px] text-gray-400">{priceDisplay.sub}</p>
-                                        </div>
+                                        </div> */}
                                     </div>
                                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mb-3">
                                         <span className="flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5" />{format(new Date(s.scheduled_at), 'EEE dd/MM, HH:mm', { locale: vi })}</span>

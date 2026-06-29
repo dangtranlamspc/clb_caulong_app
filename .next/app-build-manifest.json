@@ -11,6 +11,16 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
+    "/auth/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/layout.js"
+    ],
+    "/auth/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/login/page.js"
+    ],
     "/(member)/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -26,25 +36,30 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/activity/page.js"
     ],
-    "/(member)/sessions/[id]/page": [
+    "/(member)/cost/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/sessions/[id]/page.js"
-    ],
-    "/(member)/profile/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/profile/page.js"
+      "static/chunks/app/(member)/cost/page.js"
     ],
     "/(member)/leaderboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/leaderboard/page.js"
     ],
-    "/(member)/cost/page": [
+    "/(member)/profile/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/cost/page.js"
+      "static/chunks/app/(member)/profile/page.js"
+    ],
+    "/(member)/sessions/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/sessions/[id]/page.js"
+    ],
+    "/(member)/wallet/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/wallet/page.js"
     ],
     "/not-found": [
       "static/chunks/webpack.js",

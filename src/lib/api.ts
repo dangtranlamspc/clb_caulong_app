@@ -144,6 +144,18 @@ export const notificationsApi = {
 };
 
 
+export const walletApi = {
+  getMe: () => api.get('/wallet/me'),
+  getTransactions: (params?: any) => api.get('/wallet/me/transactions', { params }),
+  requestTopup: (data: {
+    amount: number; payment_method?: 'transfer' | 'cash';
+    payment_reference?: string; payment_proof_url?: string; note?: string;
+  }) => api.post('/wallet/topup', data),
+  getMyTopupRequests: (params?: any) => api.get('/wallet/me/topup-requests', { params }),
+  payRegistration: (registrationId: string) => api.post(`/wallet/registrations/${registrationId}/pay`),
+};
+
+
 
 // if (refreshToken) {
 //         try {
