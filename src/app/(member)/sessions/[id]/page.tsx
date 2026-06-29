@@ -581,7 +581,6 @@ export default function SessionDetailPage() {
                     </div>
                 )}
 
-                {/* ── Modal thêm khách đi cùng — giữ nguyên không đổi ── */}
                 {showGuestModal && (
                     <div
                         className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4"
@@ -724,7 +723,6 @@ export default function SessionDetailPage() {
 
                             <div className="px-5 py-4 space-y-4">
 
-                                {/* BƯỚC 1: Chọn kiểu thanh toán (chỉ hiện nếu có guest) */}
                                 {!payType && myGuests.length > 0 && (
                                     <div className="space-y-3">
                                         <p className="text-xs text-gray-500 font-medium">Bạn muốn thanh toán:</p>
@@ -763,13 +761,11 @@ export default function SessionDetailPage() {
                                     </div>
                                 )}
 
-                                {/* Nếu không có guest, auto solo */}
                                 {!payType && myGuests.length === 0 && (() => {
                                     setPayType('solo');
                                     return null;
                                 })()}
 
-                                {/* BƯỚC 2: Chọn phương thức sau khi đã chọn kiểu */}
                                 {payType && (() => {
                                     const amt = payType === 'grouped' ? groupedAmount : soloAmount;
                                     return (
