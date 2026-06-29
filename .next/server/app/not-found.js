@@ -149,7 +149,11 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 var __webpack_require__ = require("../webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
+<<<<<<< HEAD
 var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/react-hot-toast","vendor-chunks/goober","vendor-chunks/@swc"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fnot-found&page=%2Fnot-found&appPaths=&pagePath=..%2Fnode_modules%2Fnext%2Fdist%2Fclient%2Fcomponents%2Fnot-found-error.js&appDir=D%3A%5CLAM%5CCODE%5Cproject-ngoi%5Cclb_caulong_app%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=D%3A%5CLAM%5CCODE%5Cproject-ngoi%5Cclb_caulong_app&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
+=======
+var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@swc","vendor-chunks/react-hot-toast","vendor-chunks/goober"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fnot-found&page=%2Fnot-found&appPaths=&pagePath=..%2Fnode_modules%2Fnext%2Fdist%2Fclient%2Fcomponents%2Fnot-found-error.js&appDir=%2FVolumes%2FSOURCE%2FCODE%2FNgoi%2Fmember-management%2Ffrontend%2Fsrc%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2FVolumes%2FSOURCE%2FCODE%2FNgoi%2Fmember-management%2Ffrontend&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
+>>>>>>> f893dd44a464a0144e9b97608b1829cbeba5a73c
 module.exports = __webpack_exports__;
 
 })();
