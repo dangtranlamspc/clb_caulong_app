@@ -21,15 +21,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/home/page.js"
     ],
-    "/(member)/wallet/page": [
+    "/auth/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/wallet/page.js"
+      "static/chunks/app/auth/layout.js"
     ],
-    "/(member)/cost/page": [
+    "/auth/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/cost/page.js"
+      "static/chunks/app/auth/login/page.js"
     ],
     "/(member)/leaderboard/page": [
       "static/chunks/webpack.js",
@@ -41,40 +41,20 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/profile/page.js"
     ],
+    "/(member)/cost/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/cost/page.js"
+    ],
+    "/(member)/wallet/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/wallet/page.js"
+    ],
     "/(member)/activity/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/activity/page.js"
-    ],
-    "/auth/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/auth/layout.js"
-    ],
-    "/auth/login/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/auth/login/page.js"
-    ],
-    "/(member)/matches/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/matches/[id]/page.js"
-    ],
-    "/(member)/sessions/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/sessions/[id]/page.js"
-    ],
-    "/(member)/profile/settings/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/profile/settings/page.js"
-    ],
-    "/not-found": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/not-found.js"
     ]
   }
 }

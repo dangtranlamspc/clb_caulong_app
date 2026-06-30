@@ -435,10 +435,10 @@ export default function LeaderboardPage() {
     };
 
     const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-        { key: 'rank', label: 'Rank LP', icon: '💎' },
-        { key: 'winrate', label: 'Giao hữu', icon: '⚔️' },
+        { key: 'rank', label: 'Rank', icon: '💎' },
+        { key: 'winrate', label: 'Winrate', icon: '⚔️' },
         {
-            key: 'leaderboard', label: 'Cầu lông',
+            key: 'leaderboard', label: 'Buổi đánh',
             icon: <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" className="w-4 h-4 object-contain" style={{ mixBlendMode: 'screen' }} />
         },
     ];

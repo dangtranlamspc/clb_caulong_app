@@ -10,6 +10,8 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { walletApi } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/store/auth.store';
 
 function fmt(n: number) {
     return new Intl.NumberFormat('vi-VN').format(Math.round(n)) + 'đ';
@@ -174,7 +176,6 @@ function TopupModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
                                             const reader = new FileReader();
                                             reader.onload = () => setBillPreview(reader.result as string);
                                             reader.readAsDataURL(f);
-                                            // upload thực tế: tái dùng registrationsApi.uploadPaymentProof-style endpoint nếu muốn lưu ảnh thật
                                         }} />
                                     </label>
                                 ) : (
@@ -226,6 +227,7 @@ function TopupModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
 }
 
 export default function WalletPage() {
+    const { user } = useAuthStore();
     const [summary, setSummary] = useState<any>(null);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -250,6 +252,21 @@ export default function WalletPage() {
     useEffect(() => {
         walletApi.getTransactions({ type: txFilter || undefined }).then(({ data }) => setTransactions(data.data ?? []));
     }, [txFilter]);
+
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const channel = supabase
+            .channel(`wallet:${user.id}`)
+            .on('broadcast', { event: 'wallet_updated' }, () => {
+                fetchAll();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user?.id]);
 
     if (loading || !summary) {
         return (
@@ -280,7 +297,6 @@ export default function WalletPage() {
                 </div>
             )}
 
-            {/* Balance hero card */}
             <div
                 className="rounded-3xl p-5 text-white shadow-lg relative overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 60%, #312e81 100%)' }}
@@ -306,7 +322,6 @@ export default function WalletPage() {
                 </span>
             </div>
 
-            {/* Progress card */}
             <div className="bg-white rounded-2xl p-4 shadow-sm">
                 <div className="flex items-center gap-3 mb-2">
                     <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 text-lg">🏸</div>
@@ -326,7 +341,6 @@ export default function WalletPage() {
                 </div>
             </div>
 
-            {/* Actions */}
             <div className="grid grid-cols-2 gap-3">
                 <button
                     onClick={() => setShowTopupModal(true)}
@@ -342,7 +356,6 @@ export default function WalletPage() {
                 </a>
             </div>
 
-            {/* Stats grid */}
             <div className="grid grid-cols-2 gap-3">
                 {[
                     { label: 'Tổng nạp', value: fmt(wallet.total_topup), Icon: ArrowDownToLine, cls: 'bg-emerald-50 text-emerald-600' },
@@ -362,7 +375,6 @@ export default function WalletPage() {
                 ))}
             </div>
 
-            {/* Transaction history */}
             <div id="history" className="bg-white rounded-2xl p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-gray-900">Lịch sử giao dịch</h3>
