@@ -1,7 +1,7 @@
 {
-  "/auth/login/page": "app/auth/login/page.js",
   "/(member)/home/page": "app/(member)/home/page.js",
-  "/(member)/leaderboard/page": "app/(member)/leaderboard/page.js",
   "/(member)/wallet/page": "app/(member)/wallet/page.js",
-  "/(member)/activity/page": "app/(member)/activity/page.js"
+  "/(member)/activity/page": "app/(member)/activity/page.js",
+  "/(member)/sessions/[id]/page": "app/(member)/sessions/[id]/page.js",
+  "/auth/login/page": "app/auth/login/page.js"
 }
