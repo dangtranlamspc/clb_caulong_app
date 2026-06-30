@@ -36,7 +36,6 @@ function getMemberLevel(user: any) {
 
   if (user.member_type === 'co_dinh') {
     const isVip = user.member_subtype === 'vip';
-
     return {
       line1: isVip ? 'Thành viên VIP' : 'Thành viên thường',
       line2: user.level ? LEVEL_LABELS[user.level] : undefined,
@@ -45,9 +44,7 @@ function getMemberLevel(user: any) {
 
   if (user.member_type === 'vang_lai') {
     const count = user.attendance_count ?? 0;
-    const isKhachQuen =
-      user.vang_lai_status === 'khach_quen' || count >= 5;
-
+    const isKhachQuen = user.vang_lai_status === 'khach_quen' || count >= 5;
     return {
       line1: user.vang_lai_label ?? (isKhachQuen ? 'Khách quen' : 'Khách mới'),
     };
@@ -55,6 +52,68 @@ function getMemberLevel(user: any) {
 
   return { line1: 'Chưa có level' };
 }
+
+function EnergyBar({ points, total }: { points: number; total: number }) {
+  const [animatedWidth, setAnimatedWidth] = useState(0);
+  const targetWidth = Math.min(100, (points / total) * 100);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimatedWidth(targetWidth), 150);
+    return () => clearTimeout(timer);
+  }, [targetWidth]);
+
+  return (
+    <div className="w-full max-w-[220px] mt-1">
+      <div className="relative h-4 w-full rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-lime-400 via-green-500 to-emerald-500 relative overflow-hidden"
+          style={{
+            width: `${animatedWidth}%`,
+            transition: 'width 700ms ease-out',
+            willChange: 'width',
+          }}
+        >
+          <div
+            className="absolute top-0 left-0 h-full w-1/2"
+            style={{
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)',
+              animation: 'energy-shimmer 2s linear infinite',
+              willChange: 'transform',
+            }}
+          />
+        </div>
+
+        <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/40 to-transparent pointer-events-none" />
+
+        {animatedWidth > 0 && (
+          <div
+            className="absolute top-1/2 h-2.5 w-2.5 rounded-full pointer-events-none"
+            style={{
+              left: `${animatedWidth}%`,
+              transform: 'translate(-50%, -50%)',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%)',
+              animation: 'energy-pulse 1.5s ease-in-out infinite',
+              willChange: 'opacity, transform',
+            }}
+          />
+        )}
+      </div>
+
+      <style jsx>{`
+        @keyframes energy-shimmer {
+          0% { transform: translateX(-220%); }
+          100% { transform: translateX(220%); }
+        }
+        @keyframes energy-pulse {
+          0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(0.9); }
+          50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+const POINTS_PER_TIER = 50;
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -78,18 +137,8 @@ export default function ProfilePage() {
   }, []);
 
   const data = profile || user;
-
-  const POINTS_PER_DIVISION: Record<string, number> = {
-    'Sắt': 20, 'Đồng': 20, 'Bạc': 20, 'Vàng': 20,
-    'Bạch Kim': 20, 'Lục Bảo': 25, 'Kim Cương': 30, 'Cao Thủ': 30,
-  };
-
-  const POINTS_PER_GEM = 5;
-
   const tier = myRank?.tier;
-  const threshold = POINTS_PER_DIVISION[tier] ?? 20;
-  const totalGems = threshold / POINTS_PER_GEM;
-  const filledGems = Math.min(totalGems, Math.floor((myRank?.points ?? 0) / POINTS_PER_GEM));
+  const points = myRank?.points ?? 0;
 
   const memberLevel = getMemberLevel(data);
 
@@ -117,7 +166,6 @@ export default function ProfilePage() {
         <div className="absolute -bottom-6 -left-4 w-20 h-20 rounded-full bg-white/5" />
 
         <div className="relative flex items-center gap-4 ml-4">
-          {/* Avatar */}
           <RankPodiumAvatar
             tier={tier}
             avatar={data?.avatar_url}
@@ -129,12 +177,10 @@ export default function ProfilePage() {
             <h2 className="text-white text-lg font-black leading-tight truncate">
               {data?.full_name}
             </h2>
-            {/* Member + Level */}
             <div className="mt-1.5 leading-tight">
               <p className="text-base text-white font-semibold tracking-wide">
                 {memberLevel.line1}
               </p>
-
               {memberLevel.line2 && (
                 <p className="text-[13px] text-yellow-200 font-medium drop-shadow">
                   Trình độ: {memberLevel.line2}
@@ -147,21 +193,12 @@ export default function ProfilePage() {
 
       <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center gap-2">
         <RankIcon tier={tier} size={280} />
-        <p className="text-sx font-bold text-gray-800">{tier} {myRank?.division ?? 'V'}</p>
-        <div className="flex items-center justify-center gap-1">
-          {Array.from({ length: totalGems }).map((_, i) => (
-            <Gem
-              key={i}
-              className={`w-8 h-8 ${i < filledGems
-                ? 'text-cyan-400 fill-cyan-400'
-                : 'text-gray-200 fill-gray-100'
-                }`}
-            />
-          ))}
-        </div>
+        <p className="text-sx font-bold text-gray-800">{tier}</p>
+        <p className="text-xs text-gray-400">{points}/{POINTS_PER_TIER} điểm đến hạng tiếp theo</p>
+
+        <EnergyBar points={points} total={POINTS_PER_TIER} />
       </div>
 
-      {/* ── Stats row ── */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
           <p className="text-xl font-black text-blue-600">{myStats?.badminton?.total_points}</p>
@@ -173,7 +210,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ── Account status ── */}
       <div className={`bg-white rounded-2xl flex items-center gap-3 p-4 shadow-sm border ${data?.is_active ? 'border-emerald-100' : 'border-red-100'
         }`}>
         {data?.is_active
@@ -193,7 +229,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ── Quick links ── */}
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
         <Link
           href="/profile/settings"

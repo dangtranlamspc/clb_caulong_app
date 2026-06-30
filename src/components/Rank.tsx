@@ -1,25 +1,25 @@
 'use client';
 
 const TIER_ICONS: Record<string, string> = {
-    'Sắt': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177252/sat-new-final_um4smq.png',
-    'Đồng': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177252/dong_new_final_tiedpm.png',
-    'Bạc': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177251/bac_new_final_h7xxgy.png',
-    'Vàng': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177251/vang_new_final_p4cdml.png',
-    'Lục Bảo': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177254/lucbao_new_final_r5l2hx.png',
-    'Bạch Kim': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177251/bk_new_final_hy3xvm.png',
-    'Kim Cương': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177253/kc_new_final_k9rphd.png',
-    'Cao Thủ': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177249/caothu_new_final_pyehhg.png',
+    'Tân thủ': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177252/sat-new-final_um4smq.png',
+    'Phong trào': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177252/dong_new_final_tiedpm.png',
+    'Cứng cựa': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177251/bac_new_final_h7xxgy.png',
+    'Chủ lực': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177251/vang_new_final_p4cdml.png',
+    'Cao thủ': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177251/bk_new_final_hy3xvm.png',
+    'Kiện tướng': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177254/lucbao_new_final_r5l2hx.png',
+    'Đại Kiện Tướng': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177253/kc_new_final_k9rphd.png',
+    'Huyền Thoại': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782177249/caothu_new_final_pyehhg.png',
 };
 
 const TIER_FRAMES: Record<string, string> = {
-    'Sắt': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203453/sat_frame_sjcdg2.webp',
-    'Đồng': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203449/dong_frame_s3nbx6.webp',
-    'Bạc': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203449/bac_frame_tvdjpw.webp',
-    'Vàng': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203452/vang_frame_t1xqgf.webp',
-    'Lục Bảo': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203451/lucbao_frame_skokel.webp',
-    'Bạch Kim': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203448/bachkim_frame_wg452j.webp',
-    'Kim Cương': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203450/kimcuong_frame_lqps4s.webp',
-    'Cao Thủ': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203454/caothu_frame_mom7dj.webp',
+    'Tân thủ': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203453/sat_frame_sjcdg2.webp',
+    'Phong trào': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203449/dong_frame_s3nbx6.webp',
+    'Cứng cựa': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203449/bac_frame_tvdjpw.webp',
+    'Chủ lực': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203452/vang_frame_t1xqgf.webp',
+    'Cao thủ': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203448/bachkim_frame_wg452j.webp',
+    'Kiện tướng': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203451/lucbao_frame_skokel.webp',
+    'Đại Kiện Tướng': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203450/kimcuong_frame_lqps4s.webp',
+    'Huyền Thoại': 'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782203454/caothu_frame_mom7dj.webp',
 };
 
 interface RankIconProps {
@@ -47,7 +47,7 @@ interface RankPodiumAvatarListProps {
 }
 
 export function RankIcon({ tier, size = 48, className }: RankIconProps) {
-    const src = TIER_ICONS[tier] ?? TIER_ICONS['Sắt'];
+    const src = TIER_ICONS[tier] ?? TIER_ICONS['Tân thủ'];
     return (
         <img
             src={src}
@@ -65,7 +65,7 @@ export function RankPodiumAvatar({
     size = 110, frameScale = 2.2,
     avatarTop = '50%', frameTop = '10%',
 }: RankAvatarProps) {
-    const frame = TIER_FRAMES[tier] ?? TIER_FRAMES['Sắt'];
+    const frame = TIER_FRAMES[tier] ?? TIER_FRAMES['Tân thủ'];
     return (
         <div className="ml-4" style={{ position: 'relative', width: size, height: size, overflow: 'visible', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {/* Avatar */}
@@ -105,7 +105,7 @@ export function RankPodiumAvatar({
 export function RankPodiumAvatarList({
     tier, avatar, name, size = 48, frameScale = 3.2,
 }: RankPodiumAvatarListProps) {
-    const frame = TIER_FRAMES[tier] ?? TIER_FRAMES['Sắt'];
+    const frame = TIER_FRAMES[tier] ?? TIER_FRAMES['Tân thủ'];
 
     return (
         <div
@@ -180,7 +180,7 @@ export function RankPodiumAvatarList({
 export function RankPodiumAvatarModal({
     tier, avatar, name, size = 50, frameScale = 3.2,
 }: RankPodiumAvatarListProps) {
-    const frame = TIER_FRAMES[tier] ?? TIER_FRAMES['Sắt'];
+    const frame = TIER_FRAMES[tier] ?? TIER_FRAMES['Tân thủ'];
 
     return (
         <div
@@ -254,7 +254,7 @@ export function RankPodiumAvatarModal({
 export function RankAvatarMatchResult({
     tier, avatar, name, size = 50, frameScale = 3.2,
 }: RankPodiumAvatarListProps) {
-    const frame = TIER_FRAMES[tier] ?? TIER_FRAMES['Sắt'];
+    const frame = TIER_FRAMES[tier] ?? TIER_FRAMES['Tân thủ'];
 
     return (
         <div

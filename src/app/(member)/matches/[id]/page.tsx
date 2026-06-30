@@ -5,25 +5,15 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
     ArrowLeft, CheckCircle2, XCircle, Hourglass,
-    Clock, Trophy, Loader2,
+    Clock, Trophy, Loader2, Gem,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { matchesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import { createClient, RealtimeChannel } from '@supabase/supabase-js';
 
-function Revive({ size = 24, className = '' }: { size?: number; className?: string }) {
-    return (
-        <img
-            src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118305/revive_hi34ip.png"
-            alt="chai Revive"
-            width={size}
-            height={size * 2.4}
-            className={`object-contain inline-block ${className}`}
-            style={{ imageRendering: 'auto' }}
-        />
-    );
-}
+const WIN_POINTS = 5;
+const LOSE_POINTS = -1;
 
 const STATUS_CFG: Record<string, { label: string; cls: string; bg: string }> = {
     pending_opponent: { label: 'Chờ đối thủ chấp nhận', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },
@@ -53,7 +43,7 @@ function ScoreInput({ val, onChange, color }: { val: number; onChange: (v: numbe
             onFocus={() => { isFocused.current = true; }}
             onChange={e => {
                 const str = e.target.value;
-                if (str.length > 2) return; // tối đa 2 chữ số (0-21)
+                if (str.length > 2) return;
                 setRaw(str);
                 const v = parseInt(str);
                 if (!isNaN(v) && v >= 0) onChange(Math.min(v, 21));
@@ -170,12 +160,14 @@ export default function MatchDetailPage() {
     const oppScore = isTeamA ? scoreB : scoreA;
 
     const isValidResult = scoreA !== scoreB;
-    const revivePreview = isTeamA ? (scoreA > scoreB ? 5 : -5) : (scoreB > scoreA ? 5 : -5);
+    const pointsPreview = isTeamA
+        ? (scoreA > scoreB ? WIN_POINTS : LOSE_POINTS)
+        : (scoreB > scoreA ? WIN_POINTS : LOSE_POINTS);
 
     const myFinalScore = isTeamA ? match.score_a : match.score_b;
     const oppFinalScore = isTeamA ? match.score_b : match.score_a;
     const iWonFinal = match.winner_team === (isTeamA ? 'A' : 'B');
-    const reviveNet = iWonFinal ? 5 : -5;
+    const pointsNet = iWonFinal ? WIN_POINTS : LOSE_POINTS;
 
     const handleAccept = async () => {
         setSubmitting(true);
@@ -234,7 +226,6 @@ export default function MatchDetailPage() {
 
             {/* Match info card */}
             <div className="bg-white rounded-2xl p-5 shadow-sm overflow-hidden">
-                {/* Type + date */}
                 <div className="flex items-center justify-between mb-4">
                     <span className="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full">
                         {match.match_type === 'doubles' ? '👥 Đôi' : '👤 Đơn'} · 1 set
@@ -246,9 +237,7 @@ export default function MatchDetailPage() {
                     )}
                 </div>
 
-                {/* ── Teams VS ── */}
                 <div className="grid items-start gap-2" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
-                    {/* Đội A */}
                     <div className="min-w-0 space-y-2">
                         <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wide">
                             {isTeamA ? 'Đội A (bạn)' : 'Đội A'}
@@ -263,7 +252,6 @@ export default function MatchDetailPage() {
                         ))}
                     </div>
 
-                    {/* Score / VS */}
                     <div className="flex flex-col items-center gap-1 pt-5 px-1 flex-shrink-0">
                         {(match.status === 'approved' || match.status === 'pending_approval') ? (
                             <>
@@ -290,7 +278,6 @@ export default function MatchDetailPage() {
                         )}
                     </div>
 
-                    {/* Đội B */}
                     <div className="min-w-0 space-y-2 text-right">
                         <p className="text-[10px] font-bold text-red-400 uppercase tracking-wide">
                             {isTeamB ? 'Đội B (bạn)' : 'Đội B'}
@@ -306,23 +293,22 @@ export default function MatchDetailPage() {
                     </div>
                 </div>
 
-                {/* ── Revive summary (approved) ── */}
+                {/* ── Điểm nhận được (approved) ── */}
                 {match.status === 'approved' && (
                     <div className="mt-4 pt-4 border-t border-gray-50">
                         <div className="flex items-center gap-1.5 mb-3">
-                            <Revive size={12} />
-                            <p className="text-xs font-semibold text-gray-500">Chai Revive nhận được</p>
+                            <Gem className="w-3.5 h-3.5 text-cyan-500" />
+                            <p className="text-xs font-semibold text-gray-500">Điểm nhận được</p>
                         </div>
 
-                        <div className={`rounded-xl px-3 py-2.5 text-center border ${reviveNet >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+                        <div className={`rounded-xl px-3 py-2.5 text-center border ${pointsNet >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
                             <p className="text-[10px] text-gray-400 font-medium mb-1">
                                 {iWonFinal ? 'Thắng trận' : 'Thua trận'} ({myFinalScore}–{oppFinalScore})
                             </p>
                             <div className="flex items-center justify-center gap-1">
-                                <span className={`font-black text-base ${reviveNet >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                    {reviveNet > 0 ? '+' : ''}{reviveNet}
+                                <span className={`font-black text-base ${pointsNet >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                    {pointsNet > 0 ? '+' : ''}{pointsNet} point
                                 </span>
-                                <Revive size={12} />
                             </div>
                         </div>
                     </div>
@@ -365,7 +351,7 @@ export default function MatchDetailPage() {
                         isMe={isTeamA}
                     />
 
-                    {/* Preview revive */}
+                    {/* Preview điểm */}
                     <div className={`rounded-xl px-4 py-3 border text-center ${!isValidResult ? 'bg-gray-50 border-gray-200' : myScore > oppScore ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
                         {!isValidResult ? (
                             <p className="text-xs text-gray-500">Tỉ số không được hoà, phải có đội thắng</p>
@@ -374,9 +360,9 @@ export default function MatchDetailPage() {
                                 <p className={`text-sm font-bold ${myScore > oppScore ? 'text-emerald-700' : 'text-red-600'}`}>
                                     {myScore > oppScore ? '🏆 Bạn thắng!' : '😅 Bạn thua'} ({myScore}–{oppScore})
                                 </p>
-                                <div className={`flex items-center justify-center gap-1.5 text-xs font-semibold ${revivePreview >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                    <span>Chai Revive: {revivePreview > 0 ? '+' : ''}{revivePreview}</span>
-                                    <Revive size={14} />
+                                <div className={`flex items-center justify-center gap-1.5 text-xs font-semibold ${pointsPreview >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                    <span>Điểm: {pointsPreview > 0 ? '+' : ''}{pointsPreview}</span>
+                                    <Gem className="w-3.5 h-3.5 text-cyan-500" />
                                 </div>
                             </div>
                         )}

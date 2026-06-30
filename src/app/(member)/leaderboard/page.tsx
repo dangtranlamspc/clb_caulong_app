@@ -306,9 +306,14 @@ function WinRateTab({ data, myStats, user }: { data: any[]; myStats: any; user: 
 }
 
 const TIER_COLOR: Record<string, string> = {
-    'Sắt': 'text-zinc-500', 'Đồng': 'text-orange-600', 'Bạc': 'text-slate-500',
-    'Vàng': 'text-yellow-600', 'Bạch Kim': 'text-sky-600', 'Lục Bảo': 'text-emerald-600',
-    'Kim Cương': 'text-blue-600', 'Cao Thủ': 'text-purple-700',
+    'Tân thủ': 'text-zinc-500',
+    'Phong trào': 'text-orange-600',
+    'Cứng cựa': 'text-slate-500',
+    'Chủ lực': 'text-yellow-600',
+    'Cao thủ': 'text-sky-600',
+    'Kiện tướng': 'text-emerald-600',
+    'Đại Kiện Tướng': 'text-blue-600',
+    'Huyền Thoại': 'text-purple-700',
 };
 
 function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
@@ -346,7 +351,6 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                             const isMe = p.id === user?.id;
                             const pos = p._displayRank;
                             const tierColor = TIER_COLOR[p.tier] ?? 'text-gray-600';
-                            // const winRate = p.win_rate ? Number(p.win_rate).toFixed(1) : '0.0';
                             return (
                                 <AnimatedRow key={p.id} index={idx}>
                                     <div className={`flex items-center gap-3 px-4 py-7 ${isMe ? 'bg-blue-50' : pos <= 3 ? 'bg-yellow-50/50' : 'hover:bg-gray-50/50'}`}>
@@ -365,7 +369,7 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                                                 <p className={`font-bold text-base break-words ${isMe ? 'text-blue-700' : 'text-gray-800'}`}>{p.full_name}</p>
                                                 {isMe && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">Bạn</span>}
                                             </div>
-                                            <span className={`text-sm font-semibold ${tierColor}`}>{p.tier} {p.division}</span>
+                                            <span className={`text-sm font-semibold ${tierColor}`}>{p.tier}</span>
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className="text-sm text-gray-400">
@@ -373,7 +377,6 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                                                 <span className="mx-0.5">/</span>
                                                 <span className="text-red-400 font-medium">{p.losses}L</span>
                                             </p>
-                                            {/* <p className="text-[12px] text-gray-400">{winRate}%</p> */}
                                         </div>
                                     </div>
                                 </AnimatedRow>

@@ -4,28 +4,28 @@ import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { RankIcon } from '@/components/Rank';
 
-const RANK_ORDER = ['Sắt', 'Đồng', 'Bạc', 'Vàng', 'Bạch Kim', 'Lục Bảo', 'Kim Cương', 'Cao Thủ'];
+const RANK_ORDER = ['Tân thủ', 'Phong trào', 'Cứng cựa', 'Chủ lực', 'Cao thủ', 'Kiện tướng', 'Đại Kiện Tướng', 'Huyền Thoại'];
 
 const RANK_DESC: Record<string, string> = {
-    'Sắt': 'Hạng khởi đầu',
-    'Đồng': 'Mới làm quen',
-    'Bạc': 'Có nền tảng cơ bản',
-    'Vàng': 'Chơi tốt, ổn định',
-    'Bạch Kim': 'Trình độ khá',
-    'Lục Bảo': 'Trình độ cao',
-    'Kim Cương': 'Trình độ rất cao',
-    'Cao Thủ': 'Đỉnh cao của CLB',
+    'Tân thủ': 'Hạng khởi đầu',
+    'Phong trào': 'Mới làm quen',
+    'Cứng cựa': 'Có nền tảng cơ bản',
+    'Chủ lực': 'Chơi tốt, ổn định',
+    'Cao thủ': 'Trình độ khá',
+    'Kiện tướng': 'Trình độ cao',
+    'Đại Kiện Tướng': 'Trình độ rất cao',
+    'Huyền Thoại': 'Đỉnh cao của CLB',
 };
 
 const RANK_GRADIENT: Record<string, string> = {
-    'Sắt': 'from-zinc-700 via-zinc-800 to-zinc-900',
-    'Đồng': 'from-orange-700 via-orange-900 to-zinc-900',
-    'Bạc': 'from-slate-500 via-slate-700 to-zinc-900',
-    'Vàng': 'from-yellow-500 via-amber-700 to-zinc-900',
-    'Bạch Kim': 'from-sky-500 via-sky-700 to-zinc-900',
-    'Lục Bảo': 'from-emerald-500 via-emerald-700 to-zinc-900',
-    'Kim Cương': 'from-blue-500 via-indigo-700 to-zinc-900',
-    'Cao Thủ': 'from-purple-500 via-pink-700 to-zinc-900',
+    'Tân thủ': 'from-zinc-700 via-zinc-800 to-zinc-900',
+    'Phong trào': 'from-orange-700 via-orange-900 to-zinc-900',
+    'Cứng cựa': 'from-slate-500 via-slate-700 to-zinc-900',
+    'Chủ lực': 'from-yellow-500 via-amber-700 to-zinc-900',
+    'Cao thủ': 'from-sky-500 via-sky-700 to-zinc-900',
+    'Kiện tướng': 'from-emerald-500 via-emerald-700 to-zinc-900',
+    'Đại Kiện Tướng': 'from-blue-500 via-indigo-700 to-zinc-900',
+    'Huyền Thoại': 'from-purple-500 via-pink-700 to-zinc-900',
 };
 
 interface RankInfoModalProps {

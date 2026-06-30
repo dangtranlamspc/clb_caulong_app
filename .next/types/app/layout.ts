@@ -1,4 +1,4 @@
-// File: D:\LAM\CODE\project-ngoi\clb_caulong_app\src\app\layout.tsx
+// File: /Volumes/SOURCE/CODE/Ngoi/member-management/frontend/src/app/layout.tsx
 import * as entry from '../../../src/app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
