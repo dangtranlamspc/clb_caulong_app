@@ -37,6 +37,10 @@ const SKILL_LABEL: Record<string, string> = {
     chuyen_nghiep: 'Chuyên nghiệp',
 };
 
+function fmt(n: number) {
+    return Math.round(n ?? 0).toLocaleString('vi-VN') + 'đ';
+}
+
 export default function SessionDetailPage() {
     const { id } = useParams<{ id: string }>();
 
@@ -210,6 +214,11 @@ export default function SessionDetailPage() {
     );
     const soloAmount = myReg?.amount_override ?? 0;
     const groupedAmount = soloAmount + guestTotal;
+
+    // Tính tổng khoản thu khác từ tất cả registrations (dùng để hiện trong cost section)
+    const totalOtherFeeFromRegs = registrations.reduce(
+        (sum: number, r: any) => sum + (r.other_fee_amount ?? 0), 0
+    );
 
     return (
         <>
@@ -396,7 +405,7 @@ export default function SessionDetailPage() {
 
                 {/* ── Chi phí buổi — chỉ hiện khi đã kết thúc và có data ── */}
                 {(session.status === 'waiting_payment' || session.status === 'completed') &&
-                    (session.court_fee > 0 || session.shuttle_count > 0 || session.other_fee > 0) && (
+                    (session.court_fee > 0 || session.shuttle_count > 0 || totalOtherFeeFromRegs > 0) && (
                         <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3"
                             style={{ animation: 'fadeSlideUp .3s ease both' }}>
                             <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
@@ -407,114 +416,131 @@ export default function SessionDetailPage() {
                             <div className="space-y-1.5 text-sm">
                                 {session.shuttle_count > 0 && (
                                     <div className="flex justify-between text-gray-600">
-                                        <span>🏸 Cầu {session.shuttle_count} × {(session.shuttle_price ?? 0).toLocaleString('vi-VN')}đ</span>
+                                        <span>🏸 Cầu {session.shuttle_count} × {fmt(session.shuttle_price ?? 0)}</span>
                                         <span className="font-medium">
-                                            {((session.shuttle_count ?? 0) * (session.shuttle_price ?? 0)).toLocaleString('vi-VN')}đ
+                                            {fmt((session.shuttle_count ?? 0) * (session.shuttle_price ?? 0))}
                                         </span>
                                     </div>
                                 )}
                                 {session.court_fee > 0 && (
                                     <div className="flex justify-between text-gray-600">
                                         <span>🏟 Tiền sân</span>
-                                        <span className="font-medium">{(session.court_fee ?? 0).toLocaleString('vi-VN')}đ</span>
+                                        <span className="font-medium">{fmt(session.court_fee ?? 0)}</span>
                                     </div>
                                 )}
-                                {session.other_fee > 0 && (
-                                    <div className="flex justify-between text-gray-600">
-                                        <span>
-                                            💰 Khoản thu khác
-                                            {session.other_fee_note && (
-                                                <span className="text-gray-400 italic text-xs ml-1">({session.other_fee_note})</span>
-                                            )}
-                                        </span>
-                                        <span className="font-medium">{(session.other_fee ?? 0).toLocaleString('vi-VN')}đ</span>
+                                {/* Khoản thu khác: tính từ tổng other_fee_amount của tất cả registrations */}
+                                {totalOtherFeeFromRegs > 0 && (
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between text-gray-600">
+                                            <span>💰 Khoản thu khác</span>
+                                            <span className="font-medium">{fmt(totalOtherFeeFromRegs)}</span>
+                                        </div>
                                     </div>
                                 )}
                                 <div className="flex justify-between font-bold border-t border-gray-100 pt-2 text-gray-900">
                                     <span>Tổng chi phí</span>
                                     <span>
-                                        {((session.court_fee ?? 0) +
+                                        {fmt(
+                                            (session.court_fee ?? 0) +
                                             (session.shuttle_count ?? 0) * (session.shuttle_price ?? 0) +
-                                            (session.other_fee ?? 0)).toLocaleString('vi-VN')}đ
+                                            totalOtherFeeFromRegs
+                                        )}
                                     </span>
                                 </div>
                             </div>
 
                             {/* Số tiền từng người */}
                             {registrations.filter(r => r.participation_status === 'confirmed').length > 0 && (
-                                <>
-                                    <div className="border-t border-gray-100 pt-3">
-                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                                            Số tiền từng người
-                                        </p>
-                                        <div className="space-y-2">
-                                            {registrations
-                                                .filter(r => !r.host_registration_id && r.participation_status === 'confirmed')
-                                                .map((r: any) => {
-                                                    const guests = registrations.filter(
-                                                        g => g.host_registration_id === r.id && g.participation_status === 'confirmed'
-                                                    );
-                                                    const name = r.users?.full_name ?? r.guest_full_name ?? '?';
-                                                    const isMe = r.id === myReg?.id;
+                                <div className="border-t border-gray-100 pt-3">
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                                        Số tiền từng người
+                                    </p>
+                                    <div className="space-y-2">
+                                        {registrations
+                                            .filter(r => !r.host_registration_id && r.participation_status === 'confirmed')
+                                            .map((r: any) => {
+                                                const guests = registrations.filter(
+                                                    g => g.host_registration_id === r.id && g.participation_status === 'confirmed'
+                                                );
+                                                const name = r.users?.full_name ?? r.guest_full_name ?? '?';
+                                                const isMe = r.id === myReg?.id;
 
-                                                    const gender = r.users?.gender ?? r.guest_gender;
-                                                    const defaultPrice = gender === 'female'
-                                                        ? (session.price_female ?? session.price_per_slot ?? 0)
-                                                        : (session.price_male ?? session.price_per_slot ?? 0);
-                                                    const amount = r.amount_override ?? defaultPrice;
+                                                const gender = r.users?.gender ?? r.guest_gender;
+                                                const defaultPrice = gender === 'female'
+                                                    ? (session.price_female ?? session.price_per_slot ?? 0)
+                                                    : (session.price_male ?? session.price_per_slot ?? 0);
+                                                const amount = r.amount_override ?? defaultPrice;
 
-                                                    return (
-                                                        <div key={r.id} className={`rounded-xl px-3 py-2 ${isMe ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50'}`}>
-                                                            <div className="flex justify-between items-center">
-                                                                <span className={`text-sm font-medium ${isMe ? 'text-blue-700' : 'text-gray-700'}`}>
-                                                                    {name} {isMe && <span className="text-xs font-normal text-blue-400">(bạn)</span>}
+                                                // Breakdown: chỉ hiện khi có base_amount và other_fee_amount > 0
+                                                const hasBreakdown = r.base_amount != null && r.other_fee_amount != null && r.other_fee_amount > 0;
+
+                                                return (
+                                                    <div key={r.id} className={`rounded-xl px-3 py-2.5 ${isMe ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50'}`}>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className={`text-sm font-medium ${isMe ? 'text-blue-700' : 'text-gray-700'}`}>
+                                                                {name} {isMe && <span className="text-xs font-normal text-blue-400">(bạn)</span>}
+                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                {r.payment_status === 'confirmed'
+                                                                    ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                                                    : <Hourglass className="w-3.5 h-3.5 text-amber-400" />
+                                                                }
+                                                                <span className={`text-sm font-bold ${isMe ? 'text-blue-600' : 'text-gray-900'}`}>
+                                                                    {fmt(amount)}
                                                                 </span>
-                                                                <div className="flex items-center gap-2">
-                                                                    {r.payment_status === 'confirmed'
-                                                                        ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                                                                        : <Hourglass className="w-3.5 h-3.5 text-amber-400" />
-                                                                    }
-                                                                    <span className={`text-sm font-bold ${isMe ? 'text-blue-600' : 'text-gray-900'}`}>
-                                                                        {amount.toLocaleString('vi-VN')}đ
-                                                                    </span>
-                                                                </div>
                                                             </div>
+                                                        </div>
 
-                                                            {guests.map((g: any) => {
-                                                                const gGender = g.guest_gender;
-                                                                const gDefaultPrice = gGender === 'female'
-                                                                    ? (session.price_female ?? session.price_per_slot ?? 0)
-                                                                    : (session.price_male ?? session.price_per_slot ?? 0);
-                                                                const gAmount = g.amount_override ?? gDefaultPrice;
+                                                        {/* Breakdown sân+cầu + khoản khác = tổng */}
+                                                        {hasBreakdown && (
+                                                            <p className="text-[11px] text-gray-400 mt-1">
+                                                                Sân + cầu: <span className="font-medium text-gray-500">{fmt(r.base_amount)}</span>
+                                                                {' + '}Khoản khác: <span className="font-medium text-amber-600">{fmt(r.other_fee_amount)}</span>
+                                                                {' = '}<span className={`font-semibold ${isMe ? 'text-blue-600' : 'text-gray-600'}`}>{fmt(amount)}</span>
+                                                            </p>
+                                                        )}
 
-                                                                const hostReg = registrations.find((rr: any) => rr.id === g.host_registration_id);
-                                                                const isGroupedPaid = g.payment_method === 'grouped_with_host' && g.payment_status === 'confirmed';
-                                                                const guestActuallyConfirmed = isGroupedPaid;
+                                                        {guests.map((g: any) => {
+                                                            const gGender = g.guest_gender;
+                                                            const gDefaultPrice = gGender === 'female'
+                                                                ? (session.price_female ?? session.price_per_slot ?? 0)
+                                                                : (session.price_male ?? session.price_per_slot ?? 0);
+                                                            const gAmount = g.amount_override ?? gDefaultPrice;
+                                                            const gHasBreakdown = g.base_amount != null && g.other_fee_amount != null && g.other_fee_amount > 0;
+                                                            const isGroupedPaid = g.payment_method === 'grouped_with_host' && g.payment_status === 'confirmed';
 
-                                                                return (
-                                                                    <div key={g.id} className="flex justify-between items-center mt-1.5 pl-3 border-l-2 border-purple-100">
+                                                            return (
+                                                                <div key={g.id} className="mt-2 pl-3 border-l-2 border-purple-100">
+                                                                    <div className="flex justify-between items-center">
                                                                         <span className="text-xs text-purple-600">
                                                                             + {g.guest_full_name}
                                                                             <span className="text-gray-400 ml-1">(đi cùng)</span>
                                                                         </span>
                                                                         <div className="flex items-center gap-2">
-                                                                            {guestActuallyConfirmed
+                                                                            {isGroupedPaid
                                                                                 ? <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                                                                                 : <Hourglass className="w-3 h-3 text-amber-400" />
                                                                             }
                                                                             <span className="text-xs font-semibold text-gray-600">
-                                                                                {gAmount.toLocaleString('vi-VN')}đ
+                                                                                {fmt(gAmount)}
                                                                             </span>
                                                                         </div>
                                                                     </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    );
-                                                })}
-                                        </div>
+                                                                    {gHasBreakdown && (
+                                                                        <p className="text-[11px] text-gray-400 mt-0.5">
+                                                                            Sân + cầu: <span className="font-medium text-gray-500">{fmt(g.base_amount)}</span>
+                                                                            {' + '}Khoản khác: <span className="font-medium text-amber-600">{fmt(g.other_fee_amount)}</span>
+                                                                            {' = '}<span className="font-semibold text-gray-600">{fmt(gAmount)}</span>
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                );
+                                            })}
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
                     )}
@@ -522,7 +548,7 @@ export default function SessionDetailPage() {
                 {myReg && myReg.participation_status === 'awaiting_checkin' && (
                     <div
                         className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3"
-                        style={{ animation: 'fadeSlideUp .35s ease both' }} // ← thêm
+                        style={{ animation: 'fadeSlideUp .35s ease both' }}
                     >
                         <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
                             <Hourglass className="w-5 h-5 text-slate-500" />
@@ -560,7 +586,7 @@ export default function SessionDetailPage() {
                             <p className="text-sm font-semibold text-gray-900">Đã thanh toán thành công</p>
                             <p className="text-xs text-gray-500 mt-0.5">
                                 Số tiền đã đóng: <span className="font-semibold text-emerald-600">
-                                    {(myReg.amount_override ?? 0).toLocaleString('vi-VN')}đ
+                                    {fmt(myReg.amount_override ?? 0)}
                                 </span>
                             </p>
                         </div>
@@ -735,7 +761,7 @@ export default function SessionDetailPage() {
                                             <div>
                                                 <p className="text-sm font-semibold text-gray-900">Tiền của riêng tôi</p>
                                                 <p className="text-lg font-black text-blue-600 mt-0.5">
-                                                    {soloAmount.toLocaleString('vi-VN')}đ
+                                                    {fmt(soloAmount)}
                                                 </p>
                                                 <p className="text-xs text-gray-400">
                                                     Khách đi cùng ({myGuests.map((g: any) => g.guest_full_name).join(', ')}) tự thanh toán riêng
@@ -751,10 +777,10 @@ export default function SessionDetailPage() {
                                             <div>
                                                 <p className="text-sm font-semibold text-gray-900">Gộp cả khách đi cùng</p>
                                                 <p className="text-lg font-black text-purple-600 mt-0.5">
-                                                    {groupedAmount.toLocaleString('vi-VN')}đ
+                                                    {fmt(groupedAmount)}
                                                 </p>
                                                 <p className="text-xs text-gray-400">
-                                                    Bao gồm: {myGuests.map((g: any) => `${g.guest_full_name} (${(g.amount_override ?? 0).toLocaleString('vi-VN')}đ)`).join(', ')}
+                                                    Bao gồm: {myGuests.map((g: any) => `${g.guest_full_name} (${fmt(g.amount_override ?? 0)})`).join(', ')}
                                                 </p>
                                             </div>
                                         </button>
@@ -772,7 +798,7 @@ export default function SessionDetailPage() {
                                         <>
                                             <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
                                                 <span className="text-sm text-gray-600">Số tiền thanh toán</span>
-                                                <span className="text-lg font-black text-red-600">{amt.toLocaleString('vi-VN')}đ</span>
+                                                <span className="text-lg font-black text-red-600">{fmt(amt)}</span>
                                             </div>
 
                                             {payMethod === 'choose' && (
@@ -816,7 +842,7 @@ export default function SessionDetailPage() {
                                                         <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
                                                             <div className="flex justify-between">
                                                                 <span className="text-gray-500">Số tiền</span>
-                                                                <span className="font-bold text-blue-600">{amt.toLocaleString('vi-VN')}đ</span>
+                                                                <span className="font-bold text-blue-600">{fmt(amt)}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center">
                                                                 <span className="text-gray-500">Nội dung CK</span>
