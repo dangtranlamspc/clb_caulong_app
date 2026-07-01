@@ -61,7 +61,7 @@ function TopupModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
 
     const suggestedRef = `NAPVI ${Date.now().toString().slice(-8)}`;
     const qrUrl = amount > 0
-        ? `https://img.vietqr.io/image/${process.env.NEXT_PUBLIC_BANK_ID ?? 'MB'}-${process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? '0000000000'}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(suggestedRef)}&accountName=${encodeURIComponent(process.env.NEXT_PUBLIC_BANK_NAME ?? 'CLB CAU LONG')}`
+        ? `https://img.vietqr.io/image/${process.env.NEXT_PUBLIC_BANK_ID ?? 'TCB'}-${process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? '9961060042'}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(suggestedRef)}&accountName=${encodeURIComponent(process.env.NEXT_PUBLIC_BANK_NAME ?? 'NGO VAN NGOI')}`
         : null;
 
     const handleSubmitTransfer = async () => {

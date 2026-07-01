@@ -1,8 +1,5 @@
 {
-  "/(member)/home/page": "app/(member)/home/page.js",
-  "/(member)/sessions/[id]/page": "app/(member)/sessions/[id]/page.js",
-  "/(member)/activity/page": "app/(member)/activity/page.js",
-  "/(member)/wallet/page": "app/(member)/wallet/page.js",
   "/(member)/profile/page": "app/(member)/profile/page.js",
-  "/(member)/leaderboard/page": "app/(member)/leaderboard/page.js"
+  "/(member)/home/page": "app/(member)/home/page.js",
+  "/(member)/wallet/page": "app/(member)/wallet/page.js"
 }
