@@ -15,12 +15,32 @@ import { RankIcon, RankPodiumAvatar } from '@/components/Rank';
 import { RankInfoModal } from '@/components/RankInfoModal';
 
 const LEVEL_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
-  'Cố định (tháng)': { emoji: '🏆', cls: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
-  'Vãng lai cố định': { emoji: '🥇', cls: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
-  'Vãng lai lâu lâu': { emoji: '🥈', cls: 'text-cyan-700', bg: 'bg-cyan-50 border-cyan-200' },
-  'Vãng lai lần đầu': { emoji: '🥉', cls: 'text-green-700', bg: 'bg-green-50 border-green-200' },
-  'Chưa có level': { emoji: '🎯', cls: 'text-gray-500', bg: 'bg-gray-50 border-gray-200' },
+  'Người Mới Tham Gia': { emoji: '🥚', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },
+  'Làm Quen Sân': { emoji: '🏸', cls: 'text-green-700', bg: 'bg-green-50 border-green-200' },
+  'Bắt Nhịp': { emoji: '💪', cls: 'text-cyan-700', bg: 'bg-cyan-50 border-cyan-200' },
+  'Ổn Sân': { emoji: '⚡', cls: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
+  'Thành Thạo Sân': { emoji: '🔥', cls: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
+  'Gắn Bó CLB': { emoji: '⭐', cls: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
+  'Trụ Cột Sân': { emoji: '💎', cls: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200' },
+  'Lão Làng Sân Cầu': { emoji: '👑', cls: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
 };
+
+const ATTENDANCE_TIERS = [
+  { min: 0, max: 1, label: 'Người Mới Tham Gia' },
+  { min: 2, max: 5, label: 'Làm Quen Sân' },
+  { min: 6, max: 12, label: 'Bắt Nhịp' },
+  { min: 13, max: 25, label: 'Ổn Sân' },
+  { min: 26, max: 45, label: 'Thành Thạo Sân' },
+  { min: 46, max: 80, label: 'Gắn Bó CLB' },
+  { min: 81, max: 130, label: 'Trụ Cột Sân' },
+  { min: 131, max: Infinity, label: 'Lão Làng Sân Cầu' },
+];
+
+function getAttendanceLevel(totalSessions: number) {
+  const tier = ATTENDANCE_TIERS.find((t) => totalSessions >= t.min && totalSessions <= t.max) ?? ATTENDANCE_TIERS[0];
+  return { label: tier.label, ...LEVEL_CFG[tier.label] };
+}
+
 
 const LEVEL_LABELS: Record<string, string> = {
   yeu: 'Yếu',
@@ -56,6 +76,7 @@ function getMemberLevel(user: any) {
 function EnergyBar({ points, total }: { points: number; total: number }) {
   const [animatedWidth, setAnimatedWidth] = useState(0);
   const targetWidth = Math.min(100, (points / total) * 100);
+
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimatedWidth(targetWidth), 150);
@@ -123,6 +144,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [showRankInfo, setShowRankInfo] = useState(false);
 
+  const attendanceLevel = getAttendanceLevel(myStats?.badminton?.total_sessions ?? 0);
+
   useEffect(() => {
     Promise.all([
       profileApi.getMe(),
@@ -161,32 +184,44 @@ export default function ProfilePage() {
     <div className="space-y-4">
 
       {/* ── Hero banner ── */}
-      <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 rounded-3xl px-5 py-10 min-h-[180px] overflow-hidden">
-        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10" />
-        <div className="absolute -bottom-6 -left-4 w-20 h-20 rounded-full bg-white/5" />
+      <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 rounded-3xl px-5 py-6 overflow-hidden">
+        <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10" />
+        <div className="absolute -bottom-10 -left-6 w-24 h-24 rounded-full bg-white/5" />
 
-        <div className="relative flex items-center gap-4 ml-4">
-          <RankPodiumAvatar
-            tier={tier}
-            avatar={data?.avatar_url}
-            name={data?.full_name}
-            size={100}
-            frameScale={4}
-          />
-          <div className="flex-1 min-w-0 ml-8">
+        <div className="relative flex items-center gap-3">
+          <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 130, height: 100 }}>
+            <RankPodiumAvatar
+              tier={tier}
+              avatar={data?.avatar_url}
+              name={data?.full_name}
+              size={100}
+              frameScale={4}
+            />
+          </div>
+
+          <div className="flex-1 min-w-0 flex flex-col gap-1.5 py-1 pl-10">
             <h2 className="text-white text-lg font-black leading-tight truncate">
               {data?.full_name}
             </h2>
-            <div className="mt-1.5 leading-tight">
-              <p className="text-base text-white font-semibold tracking-wide">
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[13px] text-white/90 font-semibold whitespace-nowrap">
                 {memberLevel.line1}
-              </p>
+              </span>
               {memberLevel.line2 && (
-                <p className="text-[13px] text-yellow-200 font-medium drop-shadow">
-                  Trình độ: {memberLevel.line2}
-                </p>
+                <>
+                  <span className="text-white/40 text-[13px]">·</span>
+                  <span className="text-[13px] text-yellow-300 font-medium whitespace-nowrap">
+                    {memberLevel.line2}
+                  </span>
+                </>
               )}
             </div>
+
+            <span className="inline-flex items-center gap-1.5 w-fit text-xs font-semibold px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/25 text-white">
+              <span>{attendanceLevel.emoji}</span>
+              <span>{attendanceLevel.label}</span>
+            </span>
           </div>
         </div>
       </div>
@@ -202,7 +237,14 @@ export default function ProfilePage() {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
           <p className="text-xl font-black text-blue-600">{myStats?.badminton?.total_points}</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">🏸 Cầu lông</p>
+          <p className="text-[10px] text-gray-400 mt-0.5 flex items-center justify-center gap-1">
+            <img
+              src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png"
+              alt="Cầu lông"
+              className="w-8 h-8 object-contain"
+            />
+            Cầu lông
+          </p>
         </div>
         <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
           <p className="text-xl font-black text-amber-600">{myStats?.sessions_this_month ?? 0}</p>

@@ -5,13 +5,60 @@ import { rankingsApi } from '../../../lib/api';
 import { useAuthStore } from '../../../store/auth.store';
 import { RankPodiumAvatarList } from '@/components/Rank';
 
-const LEVEL_CFG: Record<string, { cls: string; bg: string; emoji: string; desc: string }> = {
-    'Cố định (tháng)': { cls: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', emoji: '🏆', desc: '12+ buổi/tháng' },
-    'Vãng lai cố định': { cls: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', emoji: '🥇', desc: '8+ buổi/tháng' },
-    'Vãng lai lâu lâu': { cls: 'text-cyan-700', bg: 'bg-cyan-50 border-cyan-200', emoji: '🥈', desc: '3+ buổi/tuần' },
-    'Vãng lai lần đầu': { cls: 'text-green-700', bg: 'bg-green-50 border-green-200', emoji: '🥉', desc: '1+ buổi/tuần' },
-    'Chưa có level': { cls: 'text-gray-500', bg: 'bg-gray-50 border-gray-200', emoji: '—', desc: 'Chưa tham gia' },
+const ATTENDANCE_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
+    'Người Mới Tham Gia': { emoji: '🥚', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },
+    'Làm Quen Sân': { emoji: '🏸', cls: 'text-green-700', bg: 'bg-green-50 border-green-200' },
+    'Bắt Nhịp': { emoji: '💪', cls: 'text-cyan-700', bg: 'bg-cyan-50 border-cyan-200' },
+    'Ổn Sân': { emoji: '⚡', cls: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
+    'Thành Thạo Sân': { emoji: '🔥', cls: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
+    'Gắn Bó CLB': { emoji: '⭐', cls: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
+    'Trụ Cột Sân': { emoji: '💎', cls: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200' },
+    'Lão Làng Sân Cầu': { emoji: '👑', cls: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
 };
+
+const LEVEL_LABELS: Record<string, string> = {
+    yeu: 'Yếu',
+    tb_yeu: 'TB yếu',
+    tb: 'TB',
+    tb_plus: 'TB+',
+    ban_chuyen: 'Bán chuyên (BC)',
+    chuyen_nghiep: 'Chuyên nghiệp',
+};
+
+const ATTENDANCE_TIERS = [
+    { min: 0, max: 1, label: 'Người Mới Tham Gia' },
+    { min: 2, max: 5, label: 'Làm Quen Sân' },
+    { min: 6, max: 12, label: 'Bắt Nhịp' },
+    { min: 13, max: 25, label: 'Ổn Sân' },
+    { min: 26, max: 45, label: 'Thành Thạo Sân' },
+    { min: 46, max: 80, label: 'Gắn Bó CLB' },
+    { min: 81, max: 130, label: 'Trụ Cột Sân' },
+    { min: 131, max: Infinity, label: 'Lão Làng Sân Cầu' },
+];
+
+function getAttendanceLevel(totalSessions: number) {
+    const tier = ATTENDANCE_TIERS.find((t) => totalSessions >= t.min && totalSessions <= t.max) ?? ATTENDANCE_TIERS[0];
+    return { label: tier.label, ...ATTENDANCE_CFG[tier.label] };
+}
+
+function AttendanceBadge({ totalSessions, compact = false }: { totalSessions: number; compact?: boolean }) {
+    const lv = getAttendanceLevel(totalSessions ?? 0);
+    return (
+        <span className={`inline-flex items-center gap-1 font-semibold rounded-full border whitespace-nowrap ${lv.bg} ${lv.cls} ${compact ? 'text-[9px] px-1.5 py-0.5' : 'text-[10px] px-2 py-0.5'}`}>
+            <span>{lv.emoji}</span>
+            <span>{lv.label}</span>
+        </span>
+    );
+}
+
+function SkillBadge({ level, compact = false }: { level?: string | null; compact?: boolean }) {
+    if (!level || !LEVEL_LABELS[level]) return null;
+    return (
+        <span className={`inline-flex items-center font-semibold rounded-full border whitespace-nowrap bg-yellow-50 border-yellow-200 text-yellow-700 ${compact ? 'text-[9px] px-1.5 py-0.5' : 'text-[10px] px-2 py-0.5'}`}>
+            {LEVEL_LABELS[level]}
+        </span>
+    );
+}
 
 type Tab = 'rank' | 'winrate' | 'leaderboard';
 
@@ -148,11 +195,14 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                     <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-xl font-bold text-slate-600 border-2 border-slate-300">{top3[1].full_name?.[0]}</div>
                                 )}
                                 <div className="text-center">
-                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[72px]">{top3[1].full_name}</p>
+                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[1].full_name} <SkillBadge level={top3[1].level} compact /></p>
                                     <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
                                         {top3[1].total_points}
                                         <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
                                     </p>
+                                    <div className="flex justify-center mt-1">
+                                        <AttendanceBadge totalSessions={top3[1].total_sessions} compact />
+                                    </div>
                                     <div className="bg-slate-100 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-slate-500 font-bold">🥈 #2</p></div>
                                 </div>
                             </>}
@@ -166,11 +216,15 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-100 to-amber-200 flex items-center justify-center text-2xl font-black text-yellow-700 border-2 border-yellow-400 shadow-lg shadow-yellow-100">{top3[0].full_name?.[0]}</div>
                                 )}
                                 <div className="text-center">
-                                    <p className="text-sm font-bold text-gray-900 truncate max-w-[80px]">{top3[0].full_name}</p>
-                                    <p className="text-base font-black text-yellow-600 mt-0.5 flex items-center justify-center gap-1">
+                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[0].full_name} <SkillBadge level={top3[0].level} compact /></p>
+
+                                    <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
                                         {top3[0].total_points}
-                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-10 h-10 object-contain" style={{ mixBlendMode: 'multiply' }} />
+                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
                                     </p>
+                                    <div className="flex justify-center mt-1">
+                                        <AttendanceBadge totalSessions={top3[0].total_sessions} compact />
+                                    </div>
                                     <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥇 #1</p></div>
                                 </div>
                             </>}
@@ -183,12 +237,15 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                     <div className="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center text-lg font-bold text-amber-700 border-2 border-amber-300">{top3[2].full_name?.[0]}</div>
                                 )}
                                 <div className="text-center">
-                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[72px]">{top3[2].full_name}</p>
-                                    <p className="text-sm font-black text-amber-700 mt-0.5 flex items-center justify-center gap-1">
+                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[2].full_name} <SkillBadge level={top3[2].level} compact /></p>
+                                    <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
                                         {top3[2].total_points}
-                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" style={{ mixBlendMode: 'multiply' }} />
+                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
                                     </p>
-                                    <div className="bg-amber-50 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-amber-600 font-bold">🥉 #3</p></div>
+                                    <div className="flex justify-center mt-1">
+                                        <AttendanceBadge totalSessions={top3[2].total_sessions} compact />
+                                    </div>
+                                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥉 #3</p></div>
                                 </div>
                             </>}
                         </div>
@@ -201,8 +258,6 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                     <div className="divide-y divide-gray-50">
                         {rest.map((member, idx) => {
                             const isMe = member.id === user?.id;
-                            const isTop3 = false;
-                            const levelCfg = LEVEL_CFG[member.level] ?? LEVEL_CFG['Chưa có level'];
                             return (
                                 <AnimatedRow key={member.id} index={idx}>
                                     <div className={`flex items-center gap-3 px-4 py-3 transition-colors ${isMe ? 'bg-blue-50' : 'hover:bg-gray-50/50'}`}>
@@ -221,9 +276,10 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                                 <p className={`font-semibold text-sm truncate ${isMe ? 'text-blue-700' : 'text-gray-800'}`}>{member.full_name}</p>
                                                 {isMe && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold">Bạn</span>}
                                             </div>
-                                            {member.level && member.level !== 'Chưa có level' && (
-                                                <span className={`text-[10px] font-medium ${levelCfg.cls}`}>{levelCfg.emoji} {member.level}</span>
-                                            )}
+                                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                <AttendanceBadge totalSessions={member.total_sessions} compact />
+                                                <SkillBadge level={member.level} compact />
+                                            </div>
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className={`font-black text-base flex items-center justify-end gap-0.5 ${isMe ? 'text-blue-600' : 'text-gray-700'}`}>

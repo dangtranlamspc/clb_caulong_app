@@ -1,30 +1,25 @@
 {
   "pages": {
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
+    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/(member)/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/layout.js"
-    ],
-    "/(member)/cost/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(member)/cost/page.js"
-    ],
-    "/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
-    ],
     "/(member)/home/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/home/page.js"
+    ],
+    "/(member)/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/layout.js"
     ],
     "/auth/layout": [
       "static/chunks/webpack.js",
@@ -36,6 +31,26 @@
       "static/chunks/main-app.js",
       "static/chunks/app/auth/login/page.js"
     ],
+    "/(member)/leaderboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/leaderboard/page.js"
+    ],
+    "/(member)/profile/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/profile/page.js"
+    ],
+    "/(member)/cost/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/cost/page.js"
+    ],
+    "/(member)/wallet/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(member)/wallet/page.js"
+    ],
     "/(member)/activity/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -46,10 +61,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(member)/sessions/[id]/page.js"
     ],
-    "/(member)/wallet/page": [
+    "/(member)/history/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(member)/wallet/page.js"
+      "static/chunks/app/(member)/history/page.js"
     ]
   }
 }
