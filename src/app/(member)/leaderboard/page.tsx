@@ -175,6 +175,46 @@ function AnimatedRow({ children, index }: { children: React.ReactNode; index: nu
     );
 }
 
+function WeeklyTrendTriangle({ pointsThisWeek }: { pointsThisWeek: number }) {
+    if (!pointsThisWeek) {
+        return (
+            <span className="inline-flex items-center gap-1 text-sm text-gray-300 font-bold">
+                <span className="inline-block w-0 h-0" style={{
+                    borderLeft: '6px solid transparent',
+                    borderRight: '6px solid transparent',
+                    borderTop: '9px solid currentColor',
+                }} />
+                0
+            </span>
+        );
+    }
+
+    const isUp = pointsThisWeek > 0;
+    const color = isUp ? 'text-green-500' : 'text-red-400';
+
+    return (
+        <span className={`inline-flex items-center gap-1.5 text-sm font-bold ${color}`}>
+            <span
+                className="inline-block w-0 h-0"
+                style={
+                    isUp
+                        ? {
+                            borderLeft: '6px solid transparent',
+                            borderRight: '6px solid transparent',
+                            borderBottom: '9px solid currentColor',
+                        }
+                        : {
+                            borderLeft: '6px solid transparent',
+                            borderRight: '6px solid transparent',
+                            borderTop: '9px solid currentColor',
+                        }
+                }
+            />
+            {Math.abs(pointsThisWeek)}
+        </span>
+    );
+}
+
 function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
     const filteredData = filterByGender(data, genderFilter);
@@ -194,7 +234,7 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                 ) : (
                                     <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-xl font-bold text-slate-600 border-2 border-slate-300">{top3[1].full_name?.[0]}</div>
                                 )}
-                                <div className="text-center">
+                                {/* <div className="text-center">
                                     <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[1].full_name} <SkillBadge level={top3[1].level} compact /></p>
                                     <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
                                         {top3[1].total_points}
@@ -204,6 +244,22 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                         <AttendanceBadge totalSessions={top3[1].total_sessions} compact />
                                     </div>
                                     <div className="bg-slate-100 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-slate-500 font-bold">🥈 #2</p></div>
+                                </div> */}
+
+                                <div className="text-center">
+                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[1].full_name} <SkillBadge level={top3[1].level} compact /></p>
+
+                                    <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
+                                        {top3[1].total_points}
+                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
+                                    </p>
+                                    <div className="flex justify-center mt-1">
+                                        <AttendanceBadge totalSessions={top3[1].total_sessions} compact />
+                                    </div>
+                                    <div className="flex justify-center mt-1">
+                                        <WeeklyTrendTriangle pointsThisWeek={top3[1].sessions_delta ?? 0} />
+                                    </div>
+                                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥈 #2</p></div>
                                 </div>
                             </>}
                         </div>
@@ -225,6 +281,9 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                     <div className="flex justify-center mt-1">
                                         <AttendanceBadge totalSessions={top3[0].total_sessions} compact />
                                     </div>
+                                    <div className="flex justify-center mt-1">
+                                        <WeeklyTrendTriangle pointsThisWeek={top3[0].sessions_delta ?? 0} />
+                                    </div>
                                     <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥇 #1</p></div>
                                 </div>
                             </>}
@@ -236,7 +295,7 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                 ) : (
                                     <div className="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center text-lg font-bold text-amber-700 border-2 border-amber-300">{top3[2].full_name?.[0]}</div>
                                 )}
-                                <div className="text-center">
+                                {/* <div className="text-center">
                                     <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[2].full_name} <SkillBadge level={top3[2].level} compact /></p>
                                     <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
                                         {top3[2].total_points}
@@ -244,6 +303,22 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                     </p>
                                     <div className="flex justify-center mt-1">
                                         <AttendanceBadge totalSessions={top3[2].total_sessions} compact />
+                                    </div>
+                                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥉 #3</p></div>
+                                </div> */}
+
+                                <div className="text-center">
+                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[2].full_name} <SkillBadge level={top3[2].level} compact /></p>
+
+                                    <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
+                                        {top3[2].total_points}
+                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
+                                    </p>
+                                    <div className="flex justify-center mt-1">
+                                        <AttendanceBadge totalSessions={top3[2].total_sessions} compact />
+                                    </div>
+                                    <div className="flex justify-center mt-1">
+                                        <WeeklyTrendTriangle pointsThisWeek={top3[2].sessions_delta ?? 0} />
                                     </div>
                                     <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥉 #3</p></div>
                                 </div>
@@ -286,7 +361,10 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                                 {member.total_points}
                                                 <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-5 h-5 object-contain" style={{ mixBlendMode: 'multiply' }} />
                                             </p>
-                                            <p className="text-[10px] text-gray-400">{member.total_sessions} buổi</p>
+                                            {/* <p className="text-[10px] text-gray-400">{member.total_sessions} buổi</p> */}
+                                            <div className="flex justify-end mt-0.5">
+                                                <WeeklyTrendTriangle pointsThisWeek={member.sessions_delta ?? 0} />
+                                            </div>
                                         </div>
                                     </div>
                                 </AnimatedRow>
@@ -372,6 +450,41 @@ const TIER_COLOR: Record<string, string> = {
     'Huyền Thoại': 'text-purple-700',
 };
 
+const POINTS_PER_TIER = 50;
+
+function MiniEnergyBar({ points, total }: { points: number; total: number }) {
+    const [animatedWidth, setAnimatedWidth] = useState(0);
+    const targetWidth = Math.min(100, (points / total) * 100);
+    const percent = Math.round(targetWidth);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setAnimatedWidth(targetWidth), 150);
+        return () => clearTimeout(timer);
+    }, [targetWidth]);
+
+    return (
+        <div className="w-full max-w-[160px] mt-1.5">
+            <div className="flex items-center gap-2">
+                <div className="relative h-3 flex-1 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+                    <div
+                        className="h-full rounded-full bg-gradient-to-r from-lime-400 via-green-500 to-emerald-500"
+                        style={{
+                            width: `${animatedWidth}%`,
+                            transition: 'width 700ms ease-out',
+                        }}
+                    />
+                </div>
+                <span className="text-[13px] font-bold text-green-600 flex-shrink-0">{percent}%</span>
+            </div>
+            <p className="text-[13px] text-gray-400 mt-2">
+                {points}/{total} điểm lên hạng
+            </p>
+        </div>
+    );
+}
+
+
+
 function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
     const filteredData = filterByGender(data, genderFilter)
@@ -379,11 +492,9 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
             if (b.total_points !== a.total_points) {
                 return b.total_points - a.total_points;
             }
-
             if (b.wins !== a.wins) {
                 return b.wins - a.wins;
             }
-
             return a.losses - b.losses;
         });
 
@@ -407,6 +518,7 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                             const isMe = p.id === user?.id;
                             const pos = p._displayRank;
                             const tierColor = TIER_COLOR[p.tier] ?? 'text-gray-600';
+                            const isMaxTier = p.tier === 'Huyền Thoại';
                             return (
                                 <AnimatedRow key={p.id} index={idx}>
                                     <div className={`flex items-center gap-3 px-4 py-7 ${isMe ? 'bg-blue-50' : pos <= 3 ? 'bg-yellow-50/50' : 'hover:bg-gray-50/50'}`}>
@@ -426,13 +538,19 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                                                 {isMe && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">Bạn</span>}
                                             </div>
                                             <span className={`text-sm font-semibold ${tierColor}`}>{p.tier}</span>
+                                            {!isMaxTier && (
+                                                <MiniEnergyBar points={p.points ?? 0} total={POINTS_PER_TIER} />
+                                            )}
                                         </div>
-                                        <div className="text-right flex-shrink-0">
-                                            <p className="text-sm text-gray-400">
+                                        <div className="flex flex-col items-center flex-shrink-0">
+                                            <p className="text-sm text-gray-400 text-center">
                                                 <span className="text-green-600 font-medium">{p.wins}W</span>
                                                 <span className="mx-0.5">/</span>
                                                 <span className="text-red-400 font-medium">{p.losses}L</span>
                                             </p>
+                                            <div className="mt-0.5">
+                                                <WeeklyTrendTriangle pointsThisWeek={p.points_this_week ?? 0} />
+                                            </div>
                                         </div>
                                     </div>
                                 </AnimatedRow>

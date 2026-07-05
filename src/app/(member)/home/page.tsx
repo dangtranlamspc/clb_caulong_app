@@ -11,7 +11,7 @@ import {
 import { useAuthStore } from '@/store/auth.store';
 import { profileApi, rankingsApi, registrationsApi, sessionsApi, usersApi } from '@/lib/api';
 
-// ─── Nhãn trình độ thật của user (khớp levelMap trong users.service.ts) ──
+
 const LEVEL_LABELS: Record<string, string> = {
     yeu: 'Yếu',
     tb_yeu: 'TB yếu',
@@ -21,7 +21,6 @@ const LEVEL_LABELS: Record<string, string> = {
     chuyen_nghiep: 'Chuyên nghiệp',
 };
 
-// Ngưỡng phân loại vãng lai: >= 5 buổi đăng ký (đã xác nhận) -> Khách quen
 const VANG_LAI_THRESHOLD = 5;
 
 function getMemberLevelBadge(user: any): {
@@ -68,18 +67,21 @@ export default function HomePage() {
     const [myStats, setMyStats] = useState<any>(null);
     const [birthdays, setBirthdays] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [myRank, setMyRank] = useState<any>(null);
 
     useEffect(() => {
         Promise.all([
             sessionsApi.list({ status: 'open', limit: 3 }),
             registrationsApi.getMyRegistrations({ limit: 3 }),
             rankingsApi.myStats(),
+            rankingsApi.myRank(),
             usersApi.birthdaysThisMonth(),
             profileApi.getMe(),
-        ]).then(([s, r, st, bd, me]) => {
+        ]).then(([s, r, st, rk, bd, me]) => {
             setUpcoming(s.data.data ?? []);
             setMyRegs(r.data.data ?? []);
             setMyStats(st.data);
+            setMyRank(rk.data);
             setBirthdays(bd.data ?? []);
             setUser(me.data);
         }).finally(() => setLoading(false));
@@ -134,24 +136,17 @@ export default function HomePage() {
                                     <div className="bg-white/15 rounded-2xl px-3 py-2 flex items-center gap-2 flex-1">
                                         <span className="text-2xl">{levelBadge.emoji}</span>
                                         <div className="text-white mt-0.5 leading-tight">
-                                            <p className="text-xs font-bold">
+                                            <p className="text-base font-bold">
                                                 {levelBadge.line1}
                                             </p>
 
                                             {levelBadge.line2 && (
-                                                <p className="text-[11px] text-yellow-200 font-medium">
+                                                <p className="text-[15px] text-yellow-200 font-medium">
                                                     {levelBadge.line2}
                                                 </p>
                                             )}
                                         </div>
                                     </div>
-                                    {/* <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
-                                        <p className="text-white/60 text-[10px] leading-none">Cầu lông</p>
-                                        <p className="text-white font-black text-xl mt-0.5 flex items-center justify-center gap-1.5 w-full">
-                                            {myStats?.badminton?.total_points ?? 0}
-                                            <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="cầu lông" className="w-6 h-6 object-contain" style={{ mixBlendMode: 'screen' }} />
-                                        </p>
-                                    </div> */}
                                     <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
                                         <p className="text-white/60 text-[10px] leading-none">W / L</p>
 
@@ -159,12 +154,12 @@ export default function HomePage() {
                                             {myStats?.revice?.wins ?? 0} / {myStats?.revice?.losses ?? 0}
                                         </p>
 
-                                        <p className="text-[10px] text-white/50 mt-0.5">
-                                            Winrate
+                                        <p className="text-[14px] text-white/50 mt-0.5">
+                                            {myRank?.tier ?? 'Tân thủ'}
                                         </p>
 
-                                        <p className="text-emerald-300 font-bold text-sm">
-                                            {myStats?.revice?.win_rate ?? 0}%
+                                        <p className="text-yellow-300 font-bold text-sm">
+                                            {myRank?.total_points ?? 0} điểm
                                         </p>
                                     </div>
                                     <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
