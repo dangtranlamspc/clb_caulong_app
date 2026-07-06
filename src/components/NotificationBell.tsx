@@ -44,6 +44,13 @@ export function NotificationBell() {
             ]);
             setItems(list ?? []);
             setUnread(cnt?.count ?? 0);
+
+            const resolvedIds = new Set<string>(
+                (list ?? [])
+                    .filter((n: any) => n.data?.resolved)
+                    .map((n: any) => n.id)
+            );
+            setGuestHandled(resolvedIds);
         } finally {
             setLoading(false);
         }
