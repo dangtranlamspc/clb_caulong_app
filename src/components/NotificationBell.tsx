@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth.store';
-import { notificationsApi } from '@/lib/api';
+import { notificationsApi, walletApi, registrationsApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -16,7 +16,9 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     payment_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
     bill_issued: { icon: Wallet, cls: 'text-amber-600', bg: 'bg-amber-50' },
     added_to_session: { icon: CalendarDays, cls: 'text-blue-600', bg: 'bg-blue-50' },
+    wallet_guest_confirm: { icon: Wallet, cls: 'text-amber-600', bg: 'bg-amber-50' },
 };
+
 
 export function NotificationBell() {
     const { user } = useAuthStore();
@@ -25,9 +27,13 @@ export function NotificationBell() {
     const [unread, setUnread] = useState(0);
     const [loading, setLoading] = useState(true);
     const [panelPos, setPanelPos] = useState({ top: 0, right: 0 });
+    const [guestActionId, setGuestActionId] = useState<string | null>(null);
+    const [guestHandled, setGuestHandled] = useState<Set<string>>(new Set());
     const channelRef = useRef<RealtimeChannel | null>(null);
     const btnRef = useRef<HTMLButtonElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
+
+    const guestChannelsRef = useRef<Map<string, RealtimeChannel>>(new Map());
 
     const load = async () => {
         setLoading(true);
@@ -43,9 +49,83 @@ export function NotificationBell() {
         }
     };
 
+    const handleGuestConfirm = async (n: any, mode: 'grouped' | 'separate') => {
+        const hostRegId = n.data?.host_registration_id;
+        if (!hostRegId) return;
+        setGuestActionId(n.id);
+        try {
+            await walletApi.confirmGuestPayment(hostRegId, mode);
+            toast.success(
+                mode === 'grouped'
+                    ? 'Đã trừ ví cho khách đi cùng'
+                    : 'Khách đi cùng sẽ tự thanh toán tiền mặt',
+            );
+            setGuestHandled(prev => new Set(prev).add(n.id));
+            if (!n.is_read) markRead(n.id);
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Có lỗi xảy ra');
+        } finally {
+            setGuestActionId(null);
+        }
+    };
+
     useEffect(() => { load(); }, []);
 
-    // Lắng nghe thông báo mới theo thời gian thực
+    useEffect(() => {
+        const pendingGuestNotifs = items.filter(n => {
+            const isGuestConfirm = n.type === 'wallet_guest_confirm' || n.data?.type === 'wallet_guest_confirm';
+            return isGuestConfirm && !guestHandled.has(n.id) && n.data?.session_id;
+        });
+
+        const neededSessionIds = new Set<string>(
+            pendingGuestNotifs.map(n => n.data.session_id as string)
+        );
+
+        neededSessionIds.forEach(sessionId => {
+            if (guestChannelsRef.current.has(sessionId)) return;
+
+            const channel = supabase
+                .channel(`session:${sessionId}`)
+                .on('broadcast', { event: 'session_updated' }, ({ payload }) => {
+                    const reason = payload?.reason;
+                    if (reason !== 'guest_payment_confirmed' && reason !== 'guest_payment_auto_confirmed') return;
+
+                    const affectedHostRegId = payload?.host_registration_id;
+                    if (!affectedHostRegId) return;
+
+                    setGuestHandled(prev => {
+                        const next = new Set(prev);
+                        items.forEach(n => {
+                            const isGuestConfirm = n.type === 'wallet_guest_confirm' || n.data?.type === 'wallet_guest_confirm';
+                            if (isGuestConfirm &&
+                                n.data?.session_id === sessionId &&
+                                n.data?.host_registration_id === affectedHostRegId) {
+                                next.add(n.id);
+                            }
+                        });
+                        return next;
+                    });
+                })
+                .subscribe();
+
+            guestChannelsRef.current.set(sessionId, channel);
+        });
+
+        guestChannelsRef.current.forEach((channel, sessionId) => {
+            if (!neededSessionIds.has(sessionId)) {
+                supabase.removeChannel(channel);
+                guestChannelsRef.current.delete(sessionId);
+            }
+        });
+    }, [items, guestHandled]);
+
+    useEffect(() => {
+        return () => {
+            guestChannelsRef.current.forEach(channel => supabase.removeChannel(channel));
+            guestChannelsRef.current.clear();
+        };
+    }, []);
+
     useEffect(() => {
         if (!user?.id) return;
         const channel = supabase
@@ -62,7 +142,6 @@ export function NotificationBell() {
         };
     }, [user?.id]);
 
-    // Tính vị trí panel dựa trên vị trí nút chuông (vì panel render qua portal ra body)
     const updatePanelPos = () => {
         if (!btnRef.current) return;
         const rect = btnRef.current.getBoundingClientRect();
@@ -77,7 +156,6 @@ export function NotificationBell() {
         setOpen(o => !o);
     };
 
-    // Đóng panel khi click ra ngoài (cả nút và panel, vì panel giờ ở ngoài DOM tree)
     useEffect(() => {
         if (!open) return;
         const onClickOutside = (e: MouseEvent) => {
@@ -167,6 +245,9 @@ export function NotificationBell() {
                                 {items.map(n => {
                                     const cfg = TYPE_CFG[n.type] ?? TYPE_CFG.payment_added;
                                     const Icon = cfg.icon;
+                                    const isGuestConfirm = n.type === 'wallet_guest_confirm' || n.data?.type === 'wallet_guest_confirm';
+                                    const alreadyHandled = guestHandled.has(n.id);
+
                                     return (
                                         <li
                                             key={n.id}
@@ -185,6 +266,31 @@ export function NotificationBell() {
                                                 <p className="text-[10px] text-gray-300 mt-1">
                                                     {format(new Date(n.created_at), 'dd/MM HH:mm', { locale: vi })}
                                                 </p>
+
+                                                {isGuestConfirm && !alreadyHandled && (
+                                                    <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
+                                                        <button
+                                                            onClick={() => handleGuestConfirm(n, 'grouped')}
+                                                            disabled={guestActionId === n.id}
+                                                            className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                                                        >
+                                                            {guestActionId === n.id
+                                                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                                                : <Wallet className="w-3 h-3" />}
+                                                            Gộp vào ví
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleGuestConfirm(n, 'separate')}
+                                                            disabled={guestActionId === n.id}
+                                                            className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50"
+                                                        >
+                                                            💵 Khách tự trả
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                {isGuestConfirm && alreadyHandled && (
+                                                    <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
+                                                )}
                                             </div>
                                             {!n.is_read && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />}
                                         </li>

@@ -24,6 +24,16 @@ const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
     rejected: { label: 'Thanh toán bị từ chối', icon: AlertCircle, cls: 'bg-red-50 text-red-500 border-red-200' },
 };
 
+const AWAITING_CHECKIN_CFG = { label: 'Chờ điểm danh', icon: Hourglass, cls: 'bg-slate-50 text-slate-600 border-slate-200' };
+const AWAITING_FINISH_CFG = { label: 'Chờ buổi đánh kết thúc', icon: Hourglass, cls: 'bg-slate-50 text-slate-600 border-slate-200' };
+
+function getRegDisplayCfg(reg: any) {
+    if (!reg) return null;
+    if (reg.participation_status === 'awaiting_checkin') return AWAITING_CHECKIN_CFG;
+    if (reg.payment_status === 'pending' && reg.amount_override == null) return AWAITING_FINISH_CFG;
+    return REG_CFG[reg.payment_status] ?? REG_CFG.pending;
+}
+
 const FILTER_TABS = [
     { value: '', label: 'Tất cả' },
     { value: 'open', label: 'Mở' },
@@ -130,7 +140,7 @@ function MembersModal({ sessionId, sessionTitle, onClose }: MembersModalProps) {
                                     ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
                                     : fullName.slice(0, 2).toUpperCase();
 
-                                const regCfg = REG_CFG[m.payment_status] ?? REG_CFG.pending;
+                                const regCfg = getRegDisplayCfg(m) ?? REG_CFG.pending;
                                 const RegIcon = regCfg.icon;
 
                                 return (
@@ -195,6 +205,27 @@ export default function SessionsPage() {
 
     useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
+    useEffect(() => {
+        const handleVisible = () => {
+            if (document.visibilityState === 'visible') {
+                fetchSessions();
+            }
+        };
+        const handlePageShow = (e: PageTransitionEvent) => {
+            if (e.persisted) {
+                fetchSessions();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisible);
+        window.addEventListener('pageshow', handlePageShow);
+        window.addEventListener('focus', handleVisible);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisible);
+            window.removeEventListener('pageshow', handlePageShow);
+            window.removeEventListener('focus', handleVisible);
+        };
+    }, [fetchSessions]);
+
     return (
         <div className="space-y-4">
             {/* Header */}
@@ -243,7 +274,7 @@ export default function SessionsPage() {
                     {sessions.map((s) => {
                         const cfg = STATUS_CFG[s.status] ?? STATUS_CFG.open;
                         const myReg = s.my_registration;
-                        const regCfg = myReg ? (REG_CFG[myReg.payment_status] ?? REG_CFG.pending) : null;
+                        const regCfg = getRegDisplayCfg(myReg);
                         const RegIcon = regCfg?.icon;
 
                         const filled = (s.max_slots ?? 0) - (s.available_slots ?? 0);

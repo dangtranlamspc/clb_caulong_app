@@ -162,6 +162,8 @@ export const walletApi = {
   }) => api.post('/wallet/topup', data),
   getMyTopupRequests: (params?: any) => api.get('/wallet/me/topup-requests', { params }),
   payRegistration: (registrationId: string) => api.post(`/wallet/registrations/${registrationId}/pay`),
+  confirmGuestPayment: (hostRegistrationId: string, mode: 'grouped' | 'separate') =>
+    api.patch(`/wallet/registrations/${hostRegistrationId}/confirm-guest-payment`, { mode }),
 };
 
 

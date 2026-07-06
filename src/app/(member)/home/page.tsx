@@ -136,7 +136,7 @@ export default function HomePage() {
                                     <div className="bg-white/15 rounded-2xl px-3 py-2 flex items-center gap-2 flex-1">
                                         <span className="text-2xl">{levelBadge.emoji}</span>
                                         <div className="text-white mt-0.5 leading-tight">
-                                            <p className="text-base font-bold">
+                                            <p className="text-[13px] font-bold">
                                                 {levelBadge.line1}
                                             </p>
 

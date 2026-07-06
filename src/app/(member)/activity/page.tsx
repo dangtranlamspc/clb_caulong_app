@@ -31,6 +31,7 @@ const SESSION_STATUS_CFG: Record<string, { label: string; dotCls: string }> = {
 
 const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
     awaiting_checkin: { label: 'Chờ điểm danh', icon: Hourglass, cls: 'bg-slate-50 text-slate-600 border-slate-200' },
+    awaiting_finish: { label: 'Chờ buổi đánh kết thúc', icon: Hourglass, cls: 'bg-slate-50 text-slate-600 border-slate-200' },
     pending: { label: 'Chờ thanh toán', icon: Hourglass, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
     pending_review: { label: 'Chờ admin xác nhận', icon: Clock3, cls: 'bg-blue-50 text-blue-700 border-blue-200' },
     confirmed: { label: 'Đã xác nhận thanh toán', icon: CheckCircle2, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
@@ -204,7 +205,7 @@ function SessionsTab() {
 
         const channel = supabase
             .channel(`activity-realtime:${user.id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'registrations', filter: `user_id=eq.${user.id}` },
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'registrations' },
                 () => { fetchSessions(); fetchPendingBills(); })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' },
                 () => { fetchSessions(); fetchPendingBills(); })
@@ -272,9 +273,11 @@ function SessionsTab() {
                         const myReg = s.my_registration;
                         const effectiveStatus = myReg?.participation_status === 'awaiting_checkin'
                             ? 'awaiting_checkin'
-                            : myReg?.payment_status === 'pending' && myReg?.payment_reference
-                                ? 'pending_review'
-                                : myReg?.payment_status;
+                            : myReg?.payment_status === 'pending' && myReg?.amount_override == null
+                                ? 'awaiting_finish'
+                                : myReg?.payment_status === 'pending' && myReg?.payment_reference
+                                    ? 'pending_review'
+                                    : myReg?.payment_status;
                         const regCfg = effectiveStatus ? (REG_CFG[effectiveStatus] ?? REG_CFG.pending) : null;
                         const RegIcon = regCfg?.icon;
                         const filled = (s.max_slots ?? 0) - (s.available_slots ?? 0);
