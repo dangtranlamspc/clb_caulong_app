@@ -15,7 +15,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { TransactionDetailModal } from '@/components/wallets/TransactionDetailModal';
 import { createPortal } from 'react-dom';
 
-export function fmt(n: number) {
+export function smt(n: number) {
     return new Intl.NumberFormat('vi-VN').format(Math.round(n)) + 'đ';
 }
 
@@ -46,7 +46,7 @@ function QuickAmountBtn({ value, active, onClick }: { value: number; active: boo
             className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
                 }`}
         >
-            {fmt(value)}
+            {smt(value)}
         </button>
     );
 }
@@ -155,7 +155,7 @@ function TopupModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
                                 </div>
                             </div>
                             <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
-                                <div className="flex justify-between"><span className="text-gray-500">Số tiền</span><span className="font-bold text-blue-600">{fmt(amount)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-500">Số tiền</span><span className="font-bold text-blue-600">{smt(amount)}</span></div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-gray-500">Nội dung CK</span>
                                     <div className="flex items-center gap-1.5">
@@ -210,7 +210,7 @@ function TopupModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
                         <div className="space-y-4">
                             <div className="flex items-center justify-between bg-green-50 rounded-xl px-4 py-3">
                                 <span className="text-sm text-gray-600">Số tiền nạp</span>
-                                <span className="text-lg font-black text-green-600">{fmt(amount)}</span>
+                                <span className="text-lg font-black text-green-600">{smt(amount)}</span>
                             </div>
                             <input value={note} onChange={e => setNote(e.target.value)}
                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
@@ -298,7 +298,7 @@ export default function WalletPage() {
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-3">
                     <Loader2 className="w-4 h-4 text-amber-600 animate-spin flex-shrink-0" />
                     <p className="text-sm text-amber-700">
-                        Yêu cầu nạp <strong>{fmt(pending_topup.amount)}</strong> đang chờ admin duyệt
+                        Yêu cầu nạp <strong>{smt(pending_topup.amount)}</strong> đang chờ admin duyệt
                     </p>
                 </div>
             )}
@@ -320,7 +320,7 @@ export default function WalletPage() {
                     </button>
                 </div>
                 <p className="relative text-3xl font-black mb-3">
-                    {hideBalance ? '••••••••' : fmt(wallet.balance)}
+                    {hideBalance ? '••••••••' : smt(wallet.balance)}
                 </p>
                 <span className={`relative inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${isDebt ? 'bg-red-500/30' : 'bg-white/15'}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${isDebt ? 'bg-red-300' : 'bg-emerald-300'}`} />
@@ -335,11 +335,11 @@ export default function WalletPage() {
                         <p className="text-sm text-gray-700">
                             Đủ cho khoảng <strong className="text-gray-900">{sessions_left}</strong> buổi đánh nữa
                         </p>
-                        <p className="text-xs text-gray-400">(Dựa trên chi phí trung bình {fmt(avg_session_cost)}/buổi)</p>
+                        <p className="text-xs text-gray-400">(Dựa trên chi phí trung bình {smt(avg_session_cost)}/buổi)</p>
                     </div>
                 </div>
                 <div className="flex justify-between text-xs text-gray-400 mb-1">
-                    <span>{fmt(Math.max(wallet.balance, 0))} / {fmt(target_balance)}</span>
+                    <span>{smt(Math.max(wallet.balance, 0))} / {smt(target_balance)}</span>
                     <span>{Math.round(progress_ratio * 100)}%</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
@@ -364,10 +364,10 @@ export default function WalletPage() {
 
             <div className="grid grid-cols-2 gap-3">
                 {[
-                    { label: 'Tổng nạp', value: fmt(wallet.total_topup), Icon: ArrowDownToLine, cls: 'bg-emerald-50 text-emerald-600' },
-                    { label: 'Tổng đã chi', value: fmt(wallet.total_spent), Icon: ArrowUpFromLine, cls: 'bg-red-50 text-red-500' },
+                    { label: 'Tổng nạp', value: smt(wallet.total_topup), Icon: ArrowDownToLine, cls: 'bg-emerald-50 text-emerald-600' },
+                    { label: 'Tổng đã chi', value: smt(wallet.total_spent), Icon: ArrowUpFromLine, cls: 'bg-red-50 text-red-500' },
                     { label: 'Số buổi đã tham gia', value: String(attended_sessions), Icon: Users, cls: 'bg-blue-50 text-blue-600' },
-                    { label: 'Công nợ', value: fmt(wallet.debt), Icon: AlertCircle, cls: wallet.debt > 0 ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-400' },
+                    { label: 'Công nợ', value: smt(wallet.debt), Icon: AlertCircle, cls: wallet.debt > 0 ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-400' },
                 ].map(({ label, value, Icon, cls }) => (
                     <div key={label} className="bg-white rounded-2xl p-3.5 shadow-sm flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${cls}`}>
@@ -413,7 +413,7 @@ export default function WalletPage() {
                                         <div className="flex items-center justify-between gap-2">
                                             <p className="text-sm font-semibold text-gray-900 truncate">{tx.title}</p>
                                             <span className={`text-sm font-bold flex-shrink-0 ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
-                                                {isPositive ? '+' : ''}{fmt(tx.amount)}
+                                                {isPositive ? '+' : ''}{smt(tx.amount)}
                                             </span>
                                         </div>
                                         <p className="text-xs text-gray-400 truncate">{tx.description}</p>
@@ -421,7 +421,7 @@ export default function WalletPage() {
                                             <span className="text-[11px] text-gray-400">
                                                 {format(new Date(tx.created_at), 'dd/MM/yyyy HH:mm', { locale: vi })}
                                             </span>
-                                            <span className="text-[11px] text-gray-400">Số dư: {fmt(tx.balance_after)}</span>
+                                            <span className="text-[11px] text-gray-400">Số dư: {smt(tx.balance_after)}</span>
                                         </div>
                                     </div>
                                 </li>

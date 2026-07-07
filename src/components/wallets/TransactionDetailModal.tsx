@@ -1,4 +1,4 @@
-import { fmt, txIcon } from "@/app/(member)/wallet/page";
+import { smt, txIcon } from "@/app/(member)/wallet/page";
 import { Loader2, Users, XIcon } from "lucide-react";
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -90,7 +90,7 @@ export function TransactionDetailModal({ tx, onClose }: { tx: any; onClose: () =
                             <Icon className="w-6 h-6" />
                         </div>
                         <p className={`text-2xl font-black ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
-                            {isPositive ? '+' : ''}{fmt(tx.amount)}
+                            {isPositive ? '+' : ''}{smt(tx.amount)}
                         </p>
                         <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
                             {TX_TYPE_LABEL[tx.type] ?? tx.type}
@@ -116,7 +116,7 @@ export function TransactionDetailModal({ tx, onClose }: { tx: any; onClose: () =
                         </div>
                         <div className="flex justify-between px-4 py-3 text-sm">
                             <span className="text-gray-400">Số dư sau giao dịch</span>
-                            <span className="font-bold text-gray-900">{fmt(tx.balance_after)}</span>
+                            <span className="font-bold text-gray-900">{smt(tx.balance_after)}</span>
                         </div>
                     </div>
 
@@ -143,14 +143,14 @@ export function TransactionDetailModal({ tx, onClose }: { tx: any; onClose: () =
 
                                     <div className="flex justify-between px-4 py-2.5 text-sm">
                                         <span className="text-gray-500">Tiền sân + cầu của bạn</span>
-                                        <span className="font-medium text-gray-800">{fmt(myBase)}</span>
+                                        <span className="font-medium text-gray-800">{smt(myBase)}</span>
                                     </div>
 
                                     {myOtherFee > 0 ? (
                                         <div className="px-4 py-2.5 text-sm">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-500">Khoản khác của bạn</span>
-                                                <span className="font-medium text-amber-600">{fmt(myOtherFee)}</span>
+                                                <span className="font-medium text-amber-600">{smt(myOtherFee)}</span>
                                             </div>
                                             {reg.other_fee_note && (
                                                 <p className="text-xs text-gray-400 italic mt-0.5">{reg.other_fee_note}</p>
@@ -177,17 +177,17 @@ export function TransactionDetailModal({ tx, onClose }: { tx: any; onClose: () =
                                                     <div key={g.id} className="py-1.5 border-t border-gray-50 first:border-t-0">
                                                         <div className="flex justify-between text-sm">
                                                             <span className="text-gray-600">+ {g.guest_full_name}</span>
-                                                            <span className="font-medium text-gray-700">{fmt(gTotal)}</span>
+                                                            <span className="font-medium text-gray-700">{smt(gTotal)}</span>
                                                         </div>
                                                         <div className="flex justify-between text-xs text-gray-400 mt-0.5 pl-3">
                                                             <span>Tiền sân + cầu</span>
-                                                            <span>{fmt(gBase)}</span>
+                                                            <span>{smt(gBase)}</span>
                                                         </div>
                                                         {gOtherFee > 0 && (
                                                             <div className="flex justify-between text-xs mt-0.5 pl-3">
                                                                 <span className="text-amber-500">Khoản khác</span>
                                                                 <div className="text-right">
-                                                                    <span className="text-amber-600 font-medium">{fmt(gOtherFee)}</span>
+                                                                    <span className="text-amber-600 font-medium">{smt(gOtherFee)}</span>
                                                                     {g.other_fee_note && (
                                                                         <p className="text-gray-400 italic">{g.other_fee_note}</p>
                                                                     )}
@@ -207,7 +207,7 @@ export function TransactionDetailModal({ tx, onClose }: { tx: any; onClose: () =
 
                                     <div className="flex justify-between px-4 py-3 text-sm bg-gray-50">
                                         <span className="font-semibold text-gray-700">Tổng bạn đã trả</span>
-                                        <span className="font-bold text-gray-900">{fmt(myBase + myOtherFee + guestsTotal)}</span>
+                                        <span className="font-bold text-gray-900">{smt(myBase + myOtherFee + guestsTotal)}</span>
                                     </div>
                                 </div>
                             )}
