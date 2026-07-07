@@ -1,4 +1,4 @@
-// File: D:\LAM\CODE\project-ngoi\clb_caulong_app\src\app\(member)\wallet\page.tsx
+// File: /Volumes/SOURCE/CODE/Ngoi/member-management/frontend/src/app/(member)/wallet/page.tsx
 import * as entry from '../../../../../src/app/(member)/wallet/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

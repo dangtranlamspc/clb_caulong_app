@@ -115,6 +115,7 @@ export const registrationsApi = {
   }) => api.patch(`/registrations/${id}/request-cash`, data ?? {}),
   addGuest: (registrationId: string, data: { guest_full_name: string; guest_gender: string; guest_skill_level?: string; notes?: string }) =>
     api.post(`/registrations/${registrationId}/guests`, data),
+  getDetail: (id: string) => api.get(`/registrations/${id}`),
 };
 
 export const rankingsApi = {

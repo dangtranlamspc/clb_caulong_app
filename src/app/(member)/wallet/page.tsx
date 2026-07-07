@@ -12,8 +12,10 @@ import { vi } from 'date-fns/locale';
 import { walletApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/auth.store';
+import { TransactionDetailModal } from '@/components/wallets/TransactionDetailModal';
+import { createPortal } from 'react-dom';
 
-function fmt(n: number) {
+export function fmt(n: number) {
     return new Intl.NumberFormat('vi-VN').format(Math.round(n)) + 'đ';
 }
 
@@ -26,7 +28,7 @@ const TX_FILTER_OPTS = [
     { value: 'refund', label: 'Hoàn tiền' },
 ];
 
-function txIcon(tx: any) {
+export function txIcon(tx: any) {
     switch (tx.type) {
         case 'topup': return { Icon: ArrowDownToLine, cls: 'bg-emerald-50 text-emerald-600' };
         case 'session_payment': return { Icon: CalendarDays, cls: 'bg-red-50 text-red-500' };
@@ -57,7 +59,9 @@ function TopupModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
     const [billPreview, setBillPreview] = useState<string | null>(null);
     const [note, setNote] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [uploading, setUploading] = useState(false);
+
+    if (typeof document === 'undefined') return null;
+
 
     const suggestedRef = `NAPVI ${Date.now().toString().slice(-8)}`;
     const qrUrl = amount > 0
@@ -94,7 +98,7 @@ function TopupModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
         }
     };
 
-    return (
+    return createPortal(
         <div
             className="fixed inset-0 z-[9999] flex flex-col justify-end"
             style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }}
@@ -222,7 +226,8 @@ function TopupModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -234,6 +239,7 @@ export default function WalletPage() {
     const [hideBalance, setHideBalance] = useState(false);
     const [txFilter, setTxFilter] = useState('');
     const [showTopupModal, setShowTopupModal] = useState(false);
+    const [selectedTx, setSelectedTx] = useState<any>(null);
 
     const fetchAll = async () => {
         const [{ data: s }, { data: t }] = await Promise.all([
@@ -395,7 +401,11 @@ export default function WalletPage() {
                             const { Icon, cls } = txIcon(tx);
                             const isPositive = tx.amount > 0;
                             return (
-                                <li key={tx.id} className="flex items-start gap-3 py-3">
+                                <li
+                                    key={tx.id}
+                                    onClick={() => setSelectedTx(tx)}
+                                    className="flex items-start gap-3 py-3 cursor-pointer hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
+                                >
                                     <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${cls}`}>
                                         <Icon className="w-4 h-4" />
                                     </div>
@@ -420,7 +430,9 @@ export default function WalletPage() {
                     </ul>
                 )}
             </div>
-
+            {selectedTx && (
+                <TransactionDetailModal tx={selectedTx} onClose={() => setSelectedTx(null)} />
+            )}
             {
                 showTopupModal && (
                     <TopupModal
