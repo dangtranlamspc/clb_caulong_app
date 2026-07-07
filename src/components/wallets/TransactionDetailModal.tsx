@@ -85,7 +85,6 @@ export function TransactionDetailModal({ tx, onClose }: { tx: any; onClose: () =
                 </div>
 
                 <div className="px-5 py-5 space-y-5">
-                    {/* Icon + số tiền lớn */}
                     <div className="flex flex-col items-center text-center gap-2">
                         <div className={`w-14 h-14 rounded-full flex items-center justify-center ${cls}`}>
                             <Icon className="w-6 h-6" />
@@ -98,7 +97,6 @@ export function TransactionDetailModal({ tx, onClose }: { tx: any; onClose: () =
                         </span>
                     </div>
 
-                    {/* Thông tin chung */}
                     <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 overflow-hidden">
                         <div className="flex justify-between px-4 py-3 text-sm">
                             <span className="text-gray-400">Tiêu đề</span>
@@ -122,7 +120,6 @@ export function TransactionDetailModal({ tx, onClose }: { tx: any; onClose: () =
                         </div>
                     </div>
 
-                    {/* Breakdown chi tiết cho thanh toán buổi đánh */}
                     {canLoadDetail && (
                         <div>
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
