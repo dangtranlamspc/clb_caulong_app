@@ -1,10 +1,10 @@
-import { smt, txIcon } from "@/app/(member)/wallet/page";
 import { Loader2, Users, XIcon } from "lucide-react";
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { registrationsApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { smt, txIcon } from "@/lib/wallet-helpers";
 
 const TX_TYPE_LABEL: Record<string, string> = {
     topup: 'Nạp tiền',
