@@ -234,23 +234,12 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                 ) : (
                                     <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-xl font-bold text-slate-600 border-2 border-slate-300">{top3[1].full_name?.[0]}</div>
                                 )}
-                                {/* <div className="text-center">
-                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[1].full_name} <SkillBadge level={top3[1].level} compact /></p>
-                                    <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
-                                        {top3[1].total_points}
-                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
-                                    </p>
-                                    <div className="flex justify-center mt-1">
-                                        <AttendanceBadge totalSessions={top3[1].total_sessions} compact />
-                                    </div>
-                                    <div className="bg-slate-100 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-slate-500 font-bold">🥈 #2</p></div>
-                                </div> */}
 
                                 <div className="text-center">
                                     <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[1].full_name} <SkillBadge level={top3[1].level} compact /></p>
 
                                     <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
-                                        {top3[1].total_points}
+                                        {top3[1].sessions_this_month}
                                         <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
                                     </p>
                                     <div className="flex justify-center mt-1">
@@ -275,7 +264,7 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                     <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[0].full_name} <SkillBadge level={top3[0].level} compact /></p>
 
                                     <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
-                                        {top3[0].total_points}
+                                        {top3[0].sessions_this_month}
                                         <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
                                     </p>
                                     <div className="flex justify-center mt-1">
@@ -295,23 +284,12 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                 ) : (
                                     <div className="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center text-lg font-bold text-amber-700 border-2 border-amber-300">{top3[2].full_name?.[0]}</div>
                                 )}
-                                {/* <div className="text-center">
-                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[2].full_name} <SkillBadge level={top3[2].level} compact /></p>
-                                    <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
-                                        {top3[2].total_points}
-                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
-                                    </p>
-                                    <div className="flex justify-center mt-1">
-                                        <AttendanceBadge totalSessions={top3[2].total_sessions} compact />
-                                    </div>
-                                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥉 #3</p></div>
-                                </div> */}
 
                                 <div className="text-center">
                                     <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[2].full_name} <SkillBadge level={top3[2].level} compact /></p>
 
                                     <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
-                                        {top3[2].total_points}
+                                        {top3[2].sessions_this_month}
                                         <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
                                     </p>
                                     <div className="flex justify-center mt-1">
@@ -358,10 +336,9 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className={`font-black text-base flex items-center justify-end gap-0.5 ${isMe ? 'text-blue-600' : 'text-gray-700'}`}>
-                                                {member.total_points}
+                                                {member.sessions_this_month}
                                                 <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-5 h-5 object-contain" style={{ mixBlendMode: 'multiply' }} />
                                             </p>
-                                            {/* <p className="text-[10px] text-gray-400">{member.total_sessions} buổi</p> */}
                                             <div className="flex justify-end mt-0.5">
                                                 <WeeklyTrendTriangle pointsThisWeek={member.sessions_delta ?? 0} />
                                             </div>
