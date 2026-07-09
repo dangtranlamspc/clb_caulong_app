@@ -178,13 +178,8 @@ function AnimatedRow({ children, index }: { children: React.ReactNode; index: nu
 function WeeklyTrendTriangle({ pointsThisWeek }: { pointsThisWeek: number }) {
     if (!pointsThisWeek) {
         return (
-            <span className="inline-flex items-center gap-1 text-sm text-gray-300 font-bold">
-                <span className="inline-block w-0 h-0" style={{
-                    borderLeft: '6px solid transparent',
-                    borderRight: '6px solid transparent',
-                    borderTop: '9px solid currentColor',
-                }} />
-                0
+            <span className="inline-flex items-center text-sm text-gray-300 font-bold">
+                –
             </span>
         );
     }
@@ -215,6 +210,124 @@ function WeeklyTrendTriangle({ pointsThisWeek }: { pointsThisWeek: number }) {
     );
 }
 
+// ── Podium (Top 3) ──────────────────────────────────────────────────────────
+
+const PODIUM_CFG: Record<1 | 2 | 3, {
+    order: string;
+    avatarSize: string;
+    ringColor: string;
+    fallbackBg: string;
+    glow: string;
+    platformHeight: string;
+    platformBg: string;
+    medalEmoji: string;
+    labelColor: string;
+}> = {
+    1: {
+        order: 'order-2',
+        avatarSize: 'w-16 h-16 text-2xl',
+        ringColor: 'border-yellow-400',
+        fallbackBg: 'bg-gradient-to-br from-yellow-100 to-amber-200',
+        glow: 'shadow-lg shadow-yellow-200',
+        platformHeight: 'h-20',
+        platformBg: 'from-yellow-400 to-amber-500',
+        medalEmoji: '🥇',
+        labelColor: 'text-yellow-700',
+    },
+    2: {
+        order: 'order-1',
+        avatarSize: 'w-12 h-12 text-lg',
+        ringColor: 'border-slate-300',
+        fallbackBg: 'bg-slate-100',
+        glow: 'shadow-sm',
+        platformHeight: 'h-14',
+        platformBg: 'from-slate-300 to-slate-400',
+        medalEmoji: '🥈',
+        labelColor: 'text-slate-600',
+    },
+    3: {
+        order: 'order-3',
+        avatarSize: 'w-12 h-12 text-lg',
+        ringColor: 'border-amber-400',
+        fallbackBg: 'bg-amber-50',
+        glow: 'shadow-sm',
+        platformHeight: 'h-10',
+        platformBg: 'from-amber-600 to-orange-700',
+        medalEmoji: '🥉',
+        labelColor: 'text-orange-700',
+    },
+};
+
+function PodiumSlot({ member, rank }: { member: any; rank: 1 | 2 | 3 }) {
+    const cfg = PODIUM_CFG[rank];
+
+    if (!member) {
+        return <div className={`flex-1 ${cfg.order}`} />;
+    }
+
+    return (
+        <div className={`flex flex-col items-center flex-1 min-w-0 ${cfg.order}`}>
+            {rank === 1 && <div className="text-2xl mb-1 leading-none">👑</div>}
+
+            {member.avatar_url ? (
+                <img
+                    src={member.avatar_url}
+                    alt={member.full_name}
+                    className={`${cfg.avatarSize} rounded-full object-cover border-2 ${cfg.ringColor} ${cfg.glow}`}
+                />
+            ) : (
+                <div className={`${cfg.avatarSize} rounded-full ${cfg.fallbackBg} flex items-center justify-center font-black ${cfg.labelColor} border-2 ${cfg.ringColor} ${cfg.glow}`}>
+                    {member.full_name?.[0]}
+                </div>
+            )}
+
+            <p className="text-xs font-semibold text-gray-700 truncate max-w-[84px] mx-auto mt-2 text-center">
+                {member.full_name}
+            </p>
+            <div className="flex justify-center mt-0.5">
+                <SkillBadge level={member.level} compact />
+            </div>
+
+            <p className="text-sm font-black text-slate-700 mt-1 flex items-center justify-center gap-1">
+                {member.sessions_this_month}
+                <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-6 h-6 object-contain" />
+            </p>
+
+            <div className="flex justify-center mt-1">
+                <AttendanceBadge totalSessions={member.total_sessions} compact />
+            </div>
+            <div className="flex justify-center mt-1">
+                <WeeklyTrendTriangle pointsThisWeek={member.sessions_delta ?? 0} />
+            </div>
+
+            <div
+                className={`w-full ${cfg.platformHeight} mt-2 rounded-t-xl bg-gradient-to-b ${cfg.platformBg} ${cfg.glow} flex items-start justify-center pt-2`}
+            >
+                <span className="text-white font-black text-xs flex items-center gap-1">
+                    {cfg.medalEmoji} #{rank}
+                </span>
+            </div>
+        </div>
+    );
+}
+
+function TopThreePodium({ top3 }: { top3: any[] }) {
+    return (
+        <div className="bg-white rounded-2xl p-4 pt-3 shadow-sm">
+            <p className="text-xs text-gray-400 font-medium text-center mb-4 flex items-center justify-center gap-1">
+                <Trophy className="w-3.5 h-3.5 text-amber-400" /> TOP 3
+            </p>
+            <div className="flex items-end justify-center gap-2">
+                <PodiumSlot member={top3[1]} rank={2} />
+                <PodiumSlot member={top3[0]} rank={1} />
+                <PodiumSlot member={top3[2]} rank={3} />
+            </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+
 function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
     const filteredData = filterByGender(data, genderFilter);
@@ -223,88 +336,8 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
     return (
         <div className="space-y-4">
             <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
-            {top3.length > 0 && (
-                <div className="bg-white rounded-2xl p-4 shadow-sm">
-                    <p className="text-xs text-gray-400 font-medium text-center mb-4">🏆 TOP 3</p>
-                    <div className="flex items-end justify-center gap-3">
-                        <div className="flex flex-col items-center gap-2 flex-1">
-                            {top3[1] && <>
-                                {top3[1].avatar_url ? (
-                                    <img src={top3[1].avatar_url} alt={top3[1].full_name} className="w-12 h-12 rounded-full object-cover border-2 border-slate-300" />
-                                ) : (
-                                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-xl font-bold text-slate-600 border-2 border-slate-300">{top3[1].full_name?.[0]}</div>
-                                )}
 
-                                <div className="text-center">
-                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[1].full_name} <SkillBadge level={top3[1].level} compact /></p>
-
-                                    <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
-                                        {top3[1].sessions_this_month}
-                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
-                                    </p>
-                                    <div className="flex justify-center mt-1">
-                                        <AttendanceBadge totalSessions={top3[1].total_sessions} compact />
-                                    </div>
-                                    <div className="flex justify-center mt-1">
-                                        <WeeklyTrendTriangle pointsThisWeek={top3[1].sessions_delta ?? 0} />
-                                    </div>
-                                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥈 #2</p></div>
-                                </div>
-                            </>}
-                        </div>
-                        <div className="flex flex-col items-center gap-2 flex-1 -mt-4">
-                            {top3[0] && <>
-                                <div className="text-2xl mb-1">👑</div>
-                                {top3[0].avatar_url ? (
-                                    <img src={top3[0].avatar_url} alt={top3[0].full_name} className="w-16 h-16 rounded-full object-cover border-2 border-yellow-400 shadow-lg shadow-yellow-100" />
-                                ) : (
-                                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-100 to-amber-200 flex items-center justify-center text-2xl font-black text-yellow-700 border-2 border-yellow-400 shadow-lg shadow-yellow-100">{top3[0].full_name?.[0]}</div>
-                                )}
-                                <div className="text-center">
-                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[0].full_name} <SkillBadge level={top3[0].level} compact /></p>
-
-                                    <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
-                                        {top3[0].sessions_this_month}
-                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
-                                    </p>
-                                    <div className="flex justify-center mt-1">
-                                        <AttendanceBadge totalSessions={top3[0].total_sessions} compact />
-                                    </div>
-                                    <div className="flex justify-center mt-1">
-                                        <WeeklyTrendTriangle pointsThisWeek={top3[0].sessions_delta ?? 0} />
-                                    </div>
-                                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥇 #1</p></div>
-                                </div>
-                            </>}
-                        </div>
-                        <div className="flex flex-col items-center gap-2 flex-1 mt-2">
-                            {top3[2] && <>
-                                {top3[2].avatar_url ? (
-                                    <img src={top3[2].avatar_url} alt={top3[2].full_name} className="w-11 h-11 rounded-full object-cover border-2 border-amber-300" />
-                                ) : (
-                                    <div className="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center text-lg font-bold text-amber-700 border-2 border-amber-300">{top3[2].full_name?.[0]}</div>
-                                )}
-
-                                <div className="text-center">
-                                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[160px] mx-auto">{top3[2].full_name} <SkillBadge level={top3[2].level} compact /></p>
-
-                                    <p className="text-sm font-black text-slate-600 mt-0.5 flex items-center justify-center gap-1">
-                                        {top3[2].sessions_this_month}
-                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-8 h-8 object-contain" />
-                                    </p>
-                                    <div className="flex justify-center mt-1">
-                                        <AttendanceBadge totalSessions={top3[2].total_sessions} compact />
-                                    </div>
-                                    <div className="flex justify-center mt-1">
-                                        <WeeklyTrendTriangle pointsThisWeek={top3[2].sessions_delta ?? 0} />
-                                    </div>
-                                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg py-2 px-3 mt-1"><p className="text-xs text-white font-bold">🥉 #3</p></div>
-                                </div>
-                            </>}
-                        </div>
-                    </div>
-                </div>
-            )}
+            {top3.length > 0 && <TopThreePodium top3={top3} />}
 
             {rest.length > 0 && (
                 <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
