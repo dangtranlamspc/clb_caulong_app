@@ -46,6 +46,55 @@ export function MembersModal({ sessionId, sessionTitle, onClose }: { sessionId: 
         setTimeout(onClose, 300);
     };
 
+    // Gom root (người đứng tên) + guest đi cùng theo host_registration_id
+    const roots = members.filter((m: any) => !m.host_registration_id);
+    const guestsOf = (hostId: string) => members.filter((m: any) => m.host_registration_id === hostId);
+
+    const renderPerson = (m: any, opts?: { nested?: boolean }) => {
+        const u = m.users;
+        const fullName = u?.full_name ?? m.guest_full_name ?? '?';
+        const gender = u?.gender ?? m.guest_gender;
+        const skillLevel = m.is_guest ? m.guest_skill_level : null;
+        const parts = fullName.trim().split(' ').filter(Boolean);
+        const initials = parts.length >= 2
+            ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+            : fullName.slice(0, 2).toUpperCase();
+        const effectiveStatus = m.participation_status === 'awaiting_checkin'
+            ? 'awaiting_checkin'
+            : m.payment_status === 'pending' && m.payment_reference
+                ? 'pending_review'
+                : m.payment_status;
+        const regCfg = REG_CFG[effectiveStatus] ?? REG_CFG.pending;
+        const RegIcon = regCfg.icon;
+
+        return (
+            <li
+                key={m.id}
+                className={`flex items-center gap-3 ${opts?.nested ? 'py-2 pl-6' : 'py-3'}`}
+                style={{ opacity: 0, animation: `fadeIn .2s ease forwards` }}
+            >
+                {opts?.nested && <span className="w-3 h-px bg-gray-200 flex-shrink-0 -ml-3 mr-[-2px]" />}
+                {u?.avatar_url
+                    ? <img src={u.avatar_url} alt={fullName} className={`rounded-full object-cover flex-shrink-0 ${opts?.nested ? 'w-7 h-7' : 'w-9 h-9'}`} />
+                    : <div className={`rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${opts?.nested ? 'w-7 h-7 text-[10px] bg-purple-100 text-purple-700' : 'w-9 h-9 text-xs bg-blue-100 text-blue-700'}`}>{initials}</div>
+                }
+                <div className="flex-1 min-w-0">
+                    <p className={`font-medium text-gray-900 truncate ${opts?.nested ? 'text-xs' : 'text-sm'}`}>
+                        {fullName}
+                        {m.is_guest && <span className="text-xs text-gray-400 ml-1">(khách)</span>}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                        {gender === 'male' ? 'Nam' : gender === 'female' ? 'Nữ' : ''}
+                        {skillLevel && <span> · {SKILL_LABEL[skillLevel] ?? skillLevel}</span>}
+                    </p>
+                </div>
+                <span className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border flex-shrink-0 ${regCfg.cls}`}>
+                    <RegIcon className="w-3 h-3" />{regCfg.label}
+                </span>
+            </li>
+        );
+    };
+
     return createPortal(
         <div
             className="fixed inset-0 z-[9999] flex flex-col justify-end"
@@ -106,46 +155,15 @@ export function MembersModal({ sessionId, sessionTitle, onClose }: { sessionId: 
                         </div>
                     ) : (
                         <ul className="divide-y divide-gray-50 pt-1">
-                            {members.map((m, idx) => {
-                                const u = m.users;
-                                const fullName = u?.full_name ?? m.guest_full_name ?? '?';
-                                const gender = u?.gender ?? m.guest_gender;
-                                const skillLevel = m.is_guest ? m.guest_skill_level : null;
-                                const parts = fullName.trim().split(' ').filter(Boolean);
-                                const initials = parts.length >= 2
-                                    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-                                    : fullName.slice(0, 2).toUpperCase();
-                                const effectiveStatus = m.participation_status === 'awaiting_checkin'
-                                    ? 'awaiting_checkin'
-                                    : m.payment_status === 'pending' && m.payment_reference
-                                        ? 'pending_review'
-                                        : m.payment_status;
-                                const regCfg = REG_CFG[effectiveStatus] ?? REG_CFG.pending;
-                                const RegIcon = regCfg.icon;
+                            {roots.map((root: any) => {
+                                const guests = guestsOf(root.id);
                                 return (
-                                    <li
-                                        key={m.id}
-                                        className="flex items-center gap-3 py-3"
-                                        style={{ opacity: 0, animation: `fadeIn .2s ease forwards`, animationDelay: `${idx * 35}ms` }}
-                                    >
-                                        {u?.avatar_url
-                                            ? <img src={u.avatar_url} alt={fullName} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
-                                            : <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-semibold flex-shrink-0">{initials}</div>
-                                        }
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate">
-                                                {fullName}
-                                                {m.is_guest && <span className="text-xs text-gray-400 ml-1">(khách)</span>}
-                                            </p>
-                                            <p className="text-xs text-gray-400">
-                                                {gender === 'male' ? 'Nam' : gender === 'female' ? 'Nữ' : ''}
-                                                {skillLevel && <span> · {SKILL_LABEL[skillLevel] ?? skillLevel}</span>}
-                                            </p>
-                                        </div>
-                                        <span className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border ${regCfg.cls}`}>
-                                            <RegIcon className="w-3 h-3" />{regCfg.label}
-                                        </span>
-                                    </li>
+                                    <div key={root.id}>
+                                        {renderPerson(root)}
+                                        {guests.length > 0 && (
+                                            <ul>{guests.map((g: any) => renderPerson(g, { nested: true }))}</ul>
+                                        )}
+                                    </div>
                                 );
                             })}
                         </ul>
