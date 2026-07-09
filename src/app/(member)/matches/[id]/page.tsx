@@ -13,7 +13,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { createClient, RealtimeChannel } from '@supabase/supabase-js';
 
 const WIN_POINTS = 5;
-const LOSE_POINTS = -1;
+const LOSE_POINTS = 2;
 
 const STATUS_CFG: Record<string, { label: string; cls: string; bg: string }> = {
     pending_opponent: { label: 'Chờ đối thủ chấp nhận', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },
