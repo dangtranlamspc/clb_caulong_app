@@ -119,7 +119,7 @@ export const registrationsApi = {
 };
 
 export const rankingsApi = {
-  leaderboard: () => api.get('/rankings/leaderboard'),
+  leaderboard: (params?: { month?: number; year?: number }) => api.get('/rankings/leaderboard', { params }),
   myRank: () => api.get('/rankings/my-rank'),
   myStats: () => api.get('/rankings/my-stats'),
   winRate: () => api.get('/rankings/win-rate'),

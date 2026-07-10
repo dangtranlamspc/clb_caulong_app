@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { Trophy, Medal, Star, RefreshCw, TrendingUp, Swords, Shield } from 'lucide-react';
+import { Trophy, Medal, Star, RefreshCw, TrendingUp, Swords, Shield, Calendar, ChevronDown } from 'lucide-react';
 import { rankingsApi } from '../../../lib/api';
 import { useAuthStore } from '../../../store/auth.store';
 import { RankPodiumAvatarList } from '@/components/Rank';
@@ -326,62 +326,139 @@ function TopThreePodium({ top3 }: { top3: any[] }) {
     );
 }
 
-// ─────────────────────────────────────────────────────────────────────────
+function getCurrentMonthValue() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function buildMonthOptions(monthsBack = 12) {
+    const now = new Date();
+    const opts: { value: string; label: string }[] = [];
+    for (let i = 0; i < monthsBack; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        opts.push({ value, label: `Tháng ${d.getMonth() + 1}/${d.getFullYear()}` });
+    }
+    return opts;
+}
+
+const MONTH_OPTIONS = buildMonthOptions(12);
+
+function MonthDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    return (
+        <div className="relative inline-flex items-center">
+            <Calendar className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 pointer-events-none" />
+            <select
+                value={value}
+                onChange={e => onChange(e.target.value)}
+                className="appearance-none bg-gray-50 border border-gray-200 rounded-lg pl-8 pr-7 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 cursor-pointer"
+            >
+                {MONTH_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-2 pointer-events-none" />
+        </div>
+    );
+}
+
 
 function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
-    const filteredData = filterByGender(data, genderFilter);
+    const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthValue());
+    const [monthData, setMonthData] = useState(data);
+    const [monthLoading, setMonthLoading] = useState(false);
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (selectedMonth === getCurrentMonthValue()) {
+            setMonthData(data);
+        }
+    }, [data]);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        const [year, month] = selectedMonth.split('-').map(Number);
+        setMonthLoading(true);
+        rankingsApi.leaderboard({ month, year })
+            .then((res: any) => setMonthData(res.data ?? []))
+            .finally(() => setMonthLoading(false));
+    }, [selectedMonth]);
+
+    const filteredData = filterByGender(monthData, genderFilter);
     const top3 = filteredData.slice(0, 3);
     const rest = filteredData.slice(3);
+
     return (
         <div className="space-y-4">
-            <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
-
-            {top3.length > 0 && <TopThreePodium top3={top3} />}
-
-            {rest.length > 0 && (
-                <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-                    <div className="divide-y divide-gray-50">
-                        {rest.map((member, idx) => {
-                            const isMe = member.id === user?.id;
-                            return (
-                                <AnimatedRow key={member.id} index={idx}>
-                                    <div className={`flex items-center gap-3 px-4 py-3 transition-colors ${isMe ? 'bg-blue-50' : 'hover:bg-gray-50/50'}`}>
-                                        <RankMedal rank={Number(member.rank)} />
-                                        <div className={`w-9 h-9 rounded-full flex-shrink-0 overflow-hidden ${isMe ? 'ring-2 ring-blue-300' : ''}`}>
-                                            {member.avatar_url ? (
-                                                <img src={member.avatar_url} alt={member.full_name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className={`w-full h-full flex items-center justify-center font-bold text-sm ${isMe ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                                                    {member.full_name?.[0]?.toUpperCase()}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-1.5">
-                                                <p className={`font-semibold text-sm truncate ${isMe ? 'text-blue-700' : 'text-gray-800'}`}>{member.full_name}</p>
-                                                {isMe && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold">Bạn</span>}
-                                            </div>
-                                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                                <AttendanceBadge totalSessions={member.total_sessions} compact />
-                                                <SkillBadge level={member.level} compact />
-                                            </div>
-                                        </div>
-                                        <div className="text-right flex-shrink-0">
-                                            <p className={`font-black text-base flex items-center justify-end gap-0.5 ${isMe ? 'text-blue-600' : 'text-gray-700'}`}>
-                                                {member.sessions_this_month}
-                                                <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-5 h-5 object-contain" style={{ mixBlendMode: 'multiply' }} />
-                                            </p>
-                                            <div className="flex justify-end mt-0.5">
-                                                <WeeklyTrendTriangle pointsThisWeek={member.sessions_delta ?? 0} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </AnimatedRow>
-                            );
-                        })}
-                    </div>
+            <div className="space-y-2">
+                <div className="flex justify-end">
+                    <MonthDropdown value={selectedMonth} onChange={setSelectedMonth} />
                 </div>
+                <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
+            </div>
+
+            {monthLoading ? (
+                <SkeletonRows count={5} />
+            ) : (
+                <>
+                    {top3.length > 0 && <TopThreePodium top3={top3} />}
+
+                    {rest.length > 0 && (
+                        <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+                            <div className="divide-y divide-gray-50">
+                                {rest.map((member, idx) => {
+                                    const isMe = member.id === user?.id;
+                                    return (
+                                        <AnimatedRow key={member.id} index={idx}>
+                                            <div className={`flex items-center gap-3 px-4 py-3 transition-colors ${isMe ? 'bg-blue-50' : 'hover:bg-gray-50/50'}`}>
+                                                <RankMedal rank={Number(member.rank)} />
+                                                <div className={`w-9 h-9 rounded-full flex-shrink-0 overflow-hidden ${isMe ? 'ring-2 ring-blue-300' : ''}`}>
+                                                    {member.avatar_url ? (
+                                                        <img src={member.avatar_url} alt={member.full_name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className={`w-full h-full flex items-center justify-center font-bold text-sm ${isMe ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                                                            {member.full_name?.[0]?.toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className={`font-semibold text-sm truncate ${isMe ? 'text-blue-700' : 'text-gray-800'}`}>{member.full_name}</p>
+                                                        {isMe && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold">Bạn</span>}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                        <AttendanceBadge totalSessions={member.total_sessions} compact />
+                                                        <SkillBadge level={member.level} compact />
+                                                    </div>
+                                                </div>
+                                                <div className="text-right flex-shrink-0">
+                                                    <p className={`font-black text-base flex items-center justify-end gap-0.5 ${isMe ? 'text-blue-600' : 'text-gray-700'}`}>
+                                                        {member.sessions_this_month}
+                                                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-5 h-5 object-contain" style={{ mixBlendMode: 'multiply' }} />
+                                                    </p>
+                                                    <div className="flex justify-end mt-0.5">
+                                                        <WeeklyTrendTriangle pointsThisWeek={member.sessions_delta ?? 0} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </AnimatedRow>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {filteredData.length === 0 && (
+                        <div className="bg-white rounded-2xl py-14 text-center">
+                            <Trophy className="w-10 h-10 mx-auto text-gray-200 mb-3" />
+                            <p className="text-gray-400 text-sm">Không có dữ liệu cho tháng này</p>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
@@ -492,7 +569,6 @@ function MiniEnergyBar({ points, total }: { points: number; total: number }) {
         </div>
     );
 }
-
 
 
 function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
