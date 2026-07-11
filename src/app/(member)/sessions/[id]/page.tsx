@@ -214,8 +214,6 @@ export default function SessionDetailPage() {
     const [showPayModal, setShowPayModal] = useState(false);
     const [payModalVisible, setPayModalVisible] = useState(false);
     const [payMethod, setPayMethod] = useState<'choose' | 'transfer' | 'cash' | 'wallet'>('choose');
-    // const [payRefBill, setPayRefBill] = useState('');
-    // const [billUrlPay, setBillUrlPay] = useState<string | null>(null);
     const [submittingPay, setSubmittingPay] = useState(false);
     const [sendingCash, setSendingCash] = useState(false);
 
