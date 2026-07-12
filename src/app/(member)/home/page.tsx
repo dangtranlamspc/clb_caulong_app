@@ -36,6 +36,15 @@ const LEVEL_LABELS: Record<string, string> = {
   chuyen_nghiep: "Chuyên nghiệp",
 };
 
+const GUEST_SKILL_LABELS: Record<string, string> = {
+  yeu: "Yếu",
+  tb_yeu: "TB yếu",
+  tb: "TB",
+  tb_plus: "TB+",
+  ban_chuyen: "Bán chuyên (BC)",
+  chuyen_nghiep: "Chuyên nghiệp",
+};
+
 const VANG_LAI_THRESHOLD = 5;
 
 function getMemberLevelBadge(user: any): {
@@ -103,6 +112,14 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [myRank, setMyRank] = useState<any>(null);
 
+  const [participantsModal, setParticipantsModal] = useState<{
+    open: boolean;
+    sessionId: string | null;
+    sessionTitle?: string;
+  }>({ open: false, sessionId: null });
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [participantsLoading, setParticipantsLoading] = useState(false);
+
   useEffect(() => {
     Promise.all([
       sessionsApi.list({ status: "open", limit: 3 }),
@@ -130,6 +147,19 @@ export default function HomePage() {
     if (h < 12) return "Chào buổi sáng";
     if (h < 18) return "Chào buổi chiều";
     return "Chào buổi tối";
+  };
+
+  const openParticipants = async (sessionId: string, title: string) => {
+    setParticipantsModal({ open: true, sessionId, sessionTitle: title });
+    setParticipantsLoading(true);
+    try {
+      const res = await sessionsApi.getParticipants(sessionId);
+      setParticipants(res.data ?? []);
+    } catch {
+      setParticipants([]);
+    } finally {
+      setParticipantsLoading(false);
+    }
   };
 
   const currentMonth = new Date().getMonth();
@@ -260,8 +290,6 @@ export default function HomePage() {
             </Link>
           ))}
         </div>
-
-        <UpcomingActivities />
 
         {!loading && birthdays.length > 0 && (
           <section>
@@ -492,6 +520,8 @@ export default function HomePage() {
           </section>
         )}
 
+        <UpcomingActivities />
+
         {/* Upcoming sessions */}
         <section>
           <div className="flex items-center justify-between mb-3">
@@ -524,21 +554,32 @@ export default function HomePage() {
               <p className="text-gray-400 text-sm">Chưa có buổi nào đang mở</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {upcoming.map((s) => {
+            <div className="space-y-4">
+              {upcoming.map((s, index) => {
                 const myReg = s.my_registration;
                 const isFull = s.available_slots <= 0;
+
+                const total = s.max_slots ?? s.total_slots ?? null;
+                const filled = total ? total - s.available_slots : null;
+                const pct = total
+                  ? Math.min(100, Math.round((filled! / total) * 100))
+                  : 0;
+
                 return (
                   <Link key={s.id} href={`/sessions/${s.id}`}>
                     <div
-                      className={`bg-white rounded-2xl p-4 shadow-sm border transition-all active:scale-99 ${myReg ? "border-blue-200" : "border-gray-100"}`}
+                      style={{
+                        marginBottom:
+                          index !== upcoming.length - 1 ? "20px" : 0,
+                      }}
+                      className={`bg-white rounded-2xl p-5 shadow-sm border transition-all active:scale-99 ${myReg ? "border-blue-200" : "border-gray-100"}`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-900 text-sm truncate">
                             {s.title}
                           </p>
-                          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-xs text-gray-400">
+                          <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2 text-xs text-gray-400">
                             <span className="flex items-center gap-1">
                               <CalendarDays className="w-3 h-3" />
                               {format(
@@ -553,20 +594,63 @@ export default function HomePage() {
                                 {s.location}
                               </span>
                             )}
+                          </div>
+
+                          {/* Thanh năng lượng slot */}
+                          {total ? (
+                            <div className="mt-3 max-w-[220px]">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] font-semibold text-gray-400">
+                                  Đã đăng ký
+                                </span>
+                                <span
+                                  className={`text-[10px] font-bold ${isFull ? "text-red-500" : "text-emerald-600"}`}
+                                >
+                                  {filled}/{total}
+                                </span>
+                              </div>
+                              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${isFull ? "bg-gradient-to-r from-red-400 to-red-500" : "bg-gradient-to-r from-blue-400 via-emerald-400 to-emerald-500"}`}
+                                  style={{
+                                    width: `${pct}%`,
+                                    backgroundSize: "200% 100%",
+                                    animation:
+                                      "energyFlow 2s linear infinite, growBar 0.8s ease-out",
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
                             <span
-                              className={`flex items-center gap-1 font-medium ${isFull ? "text-red-400" : "text-emerald-500"}`}
+                              className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${isFull ? "text-red-400" : "text-emerald-500"}`}
                             >
                               <Users className="w-3 h-3" />
                               {isFull
                                 ? "Hết chỗ"
                                 : `Còn ${s.available_slots} chỗ`}
                             </span>
-                          </div>
+                          )}
                         </div>
-                        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+
+                        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              openParticipants(s.id, s.title);
+                            }}
+                            className="h-9 pl-3 pr-3.5 rounded-full bg-blue-50 flex items-center gap-1.5 active:scale-90 transition-transform"
+                          >
+                            <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <span className="text-xs font-bold text-blue-600">
+                              {filled ?? 0}
+                            </span>
+                          </button>
+
                           {myReg ? (
                             <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                              className={`text-[11px] font-semibold px-3 py-1.5 rounded-full border ${
                                 myReg.payment_status === "confirmed"
                                   ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                   : "bg-amber-50 text-amber-700 border-amber-200"
@@ -577,8 +661,8 @@ export default function HomePage() {
                                 : "⏳ Chờ"}
                             </span>
                           ) : !isFull ? (
-                            <span className="text-[10px] bg-blue-600 text-white font-semibold px-2 py-0.5 rounded-full">
-                              Đăng ký
+                            <span className="text-xs bg-blue-600 text-white font-bold px-4 py-2 rounded-full shadow-sm shadow-blue-200">
+                              Chi tiết
                             </span>
                           ) : null}
                         </div>
@@ -587,12 +671,28 @@ export default function HomePage() {
                   </Link>
                 );
               })}
+
+              <style jsx>{`
+                @keyframes energyFlow {
+                  0% {
+                    background-position: 0% 0%;
+                  }
+                  100% {
+                    background-position: -200% 0%;
+                  }
+                }
+                @keyframes growBar {
+                  from {
+                    width: 0%;
+                  }
+                }
+              `}</style>
             </div>
           )}
         </section>
 
         {/* Recent registrations */}
-        <section className="pb-2">
+        {/* <section className="pb-2">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1.5">
               <TrendingUp className="w-4 h-4 text-amber-500" />
@@ -689,7 +789,100 @@ export default function HomePage() {
               })}
             </div>
           )}
-        </section>
+        </section> */}
+        {participantsModal.open && (
+          <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
+            onClick={() =>
+              setParticipantsModal({ open: false, sessionId: null })
+            }
+          >
+            <div
+              className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[75vh] flex flex-col animate-slide-up"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div>
+                  <p className="text-xs text-gray-400">Người tham gia</p>
+                  <p className="font-bold text-gray-900 text-sm">
+                    {participantsModal.sessionTitle}
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    setParticipantsModal({ open: false, sessionId: null })
+                  }
+                  className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="overflow-y-auto px-5 py-3 space-y-2">
+                {participantsLoading ? (
+                  [...Array(4)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-14 bg-gray-50 rounded-2xl animate-pulse"
+                    />
+                  ))
+                ) : participants.length === 0 ? (
+                  <p className="text-center text-sm text-gray-400 py-8">
+                    Chưa có ai đăng ký
+                  </p>
+                ) : (
+                  participants.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0"
+                    >
+                      {p.avatar_url ? (
+                        <img
+                          src={p.avatar_url}
+                          alt={p.full_name}
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center font-bold text-blue-600 text-sm flex-shrink-0">
+                          {p.full_name?.[0]?.toUpperCase() ?? "?"}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {p.full_name}
+                          {p.is_guest && (
+                            <span className="ml-1.5 text-[10px] text-gray-400 font-normal">
+                              (khách)
+                            </span>
+                          )}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          {p.level_label && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                              🎯{" "}
+                              {LEVEL_LABELS[p.level_label] ??
+                                GUEST_SKILL_LABELS[p.level_label] ??
+                                p.level_label}
+                            </span>
+                          )}
+                          {p.tier ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
+                              💎 {p.tier} · {p.total_points ?? 0}đ
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-400 border border-gray-100">
+                              Chưa có rank
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

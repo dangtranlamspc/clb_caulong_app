@@ -20,10 +20,14 @@ import {
   Wallet,
   XIcon,
   Clock,
+  UserX,
+  UserPlus,
+  Search,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { activitiesApi } from "@/lib/api";
+import { activitiesApi, usersApi } from "@/lib/api";
 import { createPortal } from "react-dom";
+import { useAuthStore } from "@/store/auth.store";
 
 const TYPE_META: Record<string, { icon: any; label: string }> = {
   shirt_order: { icon: Shirt, label: "Đặt áo nhóm" },
@@ -694,26 +698,20 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
 }
 
 //  Giải đấu
+//  Giải đấu
 function TournamentSection({ activity, myStatus, onChanged }: any) {
+  const { user } = useAuthStore();
   const reg = myStatus?.my_registration;
   const [teamName, setTeamName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const canRegister = activity.status === "open";
 
-  const handleSubmit = async () => {
-    if (!teamName.trim()) return toast.error("Vui lòng nhập tên đội");
-    setSubmitting(true);
-    try {
-      await activitiesApi.registerTournament(activity.id, {
-        team_name: teamName.trim(),
-      });
-      toast.success("Đã đăng ký giải đấu");
-      onChanged();
-    } catch {
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  // ── Teammate modal state ──
+  const [showTeammateModal, setShowTeammateModal] = useState(false);
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState<any>(null);
 
   const handleCancel = async () => {
     if (!confirm("Huỷ đăng ký giải đấu?")) return;
@@ -722,6 +720,52 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
       toast.success("Đã huỷ đăng ký");
       onChanged();
     } catch {}
+  };
+
+  const openTeammateModal = () => {
+    if (!teamName.trim()) return toast.error("Vui lòng nhập tên đội");
+    setSelectedPartner(null);
+    setSearch("");
+    setResults([]);
+    setShowTeammateModal(true);
+  };
+
+  // Debounce search
+  useEffect(() => {
+    if (!showTeammateModal) return;
+    if (!search.trim() || search.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await usersApi.searchMembers(search.trim());
+        const list = Array.isArray(data) ? data : [];
+        setResults(list.filter((u: any) => u.id !== user?.id));
+      } catch {
+      } finally {
+        setSearching(false);
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [search, showTeammateModal, user?.id]);
+
+  const doRegister = async (player2UserId?: string) => {
+    setSubmitting(true);
+    try {
+      await activitiesApi.registerTournament(activity.id, {
+        team_name: teamName.trim(),
+        player2_user_id: player2UserId,
+      });
+      toast.success("Đã đăng ký giải đấu");
+      setShowTeammateModal(false);
+      onChanged();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Đăng ký thất bại");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -750,12 +794,10 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
           />
           <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="w-full py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+            onClick={openTeammateModal}
+            className="w-full py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm flex items-center justify-center gap-2"
           >
-            {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Đăng ký
-            đội
+            Đăng ký đội
           </button>
         </div>
       ) : (
@@ -763,6 +805,148 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
           Đã đóng đăng ký
         </p>
       )}
+
+      {/* ── Teammate modal ── */}
+      {showTeammateModal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex flex-col justify-end"
+            style={{
+              background: "rgba(0,0,0,0.5)",
+              backdropFilter: "blur(2px)",
+            }}
+            onClick={(e) =>
+              e.target === e.currentTarget && setShowTeammateModal(false)
+            }
+          >
+            <div
+              className="w-full bg-white rounded-t-2xl"
+              style={{
+                maxHeight: "90vh",
+                overflowY: "auto",
+                paddingBottom: "env(safe-area-inset-bottom)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-9 h-1 rounded-full bg-gray-200" />
+              </div>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">
+                    Chọn đồng đội
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Đội: {teamName.trim()}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowTeammateModal(false)}
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                  <XIcon className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="px-5 py-4 space-y-4">
+                {selectedPartner ? (
+                  <div className="flex items-center gap-3 bg-blue-50 rounded-xl px-4 py-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-semibold text-blue-600 overflow-hidden flex-shrink-0">
+                      {selectedPartner.avatar_url ? (
+                        <img
+                          src={selectedPartner.avatar_url}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        selectedPartner.full_name?.[0]
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {selectedPartner.full_name}
+                      </p>
+                      <p className="text-xs text-blue-500">Đồng đội</p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedPartner(null)}
+                      className="text-xs text-red-500 font-medium underline flex-shrink-0"
+                    >
+                      Bỏ chọn
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Tìm tên thành viên... (ít nhất 2 ký tự)"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                      {searching ? (
+                        <div className="flex justify-center py-6">
+                          <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                        </div>
+                      ) : search.trim() && results.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-6">
+                          Không tìm thấy thành viên nào
+                        </p>
+                      ) : (
+                        results.map((m: any) => (
+                          <button
+                            key={m.id}
+                            onClick={() => setSelectedPartner(m)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                          >
+                            <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center font-semibold text-gray-600 overflow-hidden flex-shrink-0">
+                              {m.avatar_url ? (
+                                <img
+                                  src={m.avatar_url}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                m.full_name?.[0]
+                              )}
+                            </div>
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {m.full_name}
+                            </p>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
+
+                <div className="flex gap-2 pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => doRegister(undefined)}
+                    disabled={submitting}
+                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    <UserX className="w-3.5 h-3.5" /> Đăng ký không đồng đội
+                  </button>
+                  <button
+                    onClick={() => doRegister(selectedPartner?.id)}
+                    disabled={submitting || !selectedPartner}
+                    className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40"
+                  >
+                    {submitting && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
+                    <UserPlus className="w-3.5 h-3.5" /> Xác nhận
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

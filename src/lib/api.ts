@@ -98,6 +98,7 @@ export const sessionsApi = {
   get: (id: string) => api.get(`/sessions/${id}`),
   getAllCosts: () => api.get("/sessions/costs/summary"),
   getCostDetail: (id: string) => api.get(`/sessions/${id}/cost-detail`),
+  getParticipants: (id: string) => api.get(`/sessions/${id}/participants`),
 };
 
 export const registrationsApi = {
