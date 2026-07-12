@@ -79,7 +79,10 @@ export default function ActivityDetailPage() {
     <div className="max-w-lg mx-auto space-y-4 pb-8">
       <div className="flex items-center gap-3">
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            sessionStorage.setItem("activity:return-tab", "events");
+            router.push("/activity");
+          }}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />

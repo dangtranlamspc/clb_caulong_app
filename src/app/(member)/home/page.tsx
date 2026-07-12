@@ -25,7 +25,7 @@ import {
   sessionsApi,
   usersApi,
 } from "@/lib/api";
-import { UpcomingActivities } from "@/components/activities/UpcomingActivities";
+import { UpcomingEvents } from "@/components/events/UpcomingEvents";
 
 const LEVEL_LABELS: Record<string, string> = {
   yeu: "Yếu",
@@ -520,7 +520,7 @@ export default function HomePage() {
           </section>
         )}
 
-        <UpcomingActivities />
+        <UpcomingEvents />
 
         {/* Upcoming sessions */}
         <section>

@@ -20,16 +20,19 @@ import {
   SlidersHorizontal,
   ChevronDown,
   Lock,
+  Megaphone,
+  Gift,
+  BarChart3,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
-import { sessionsApi, matchesApi } from "@/lib/api";
+import { sessionsApi, matchesApi, activitiesApi } from "@/lib/api";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
 import { PaymentModal } from "@/components/PaymentModal";
 import { MembersModal } from "@/components/MemberModalConponent";
 
-type MainTab = "sessions" | "matches";
+type MainTab = "sessions" | "matches" | "events";
 
 const SESSION_STATUS_CFG: Record<
   string,
@@ -159,6 +162,52 @@ const BLOCKING_STATUSES = [
   "pending_approval",
 ];
 
+const EVENT_TYPE_TABS = [
+  { value: "", label: "Tất cả" },
+  { value: "shirt_order", label: "👕 Đặt áo" },
+  { value: "tournament", label: "🏆 Giải đấu" },
+  { value: "birthday", label: "🎂 Sinh nhật" },
+  { value: "offline_event", label: "🔥 Offline" },
+  { value: "poll", label: "📊 Bình chọn" },
+];
+
+const EVENT_STATUS_CFG: Record<string, { label: string; cls: string }> = {
+  open: { label: "Mở đăng ký", cls: "bg-emerald-50 text-emerald-600" },
+  upcoming: { label: "Sắp diễn ra", cls: "bg-purple-50 text-purple-600" },
+  ongoing: { label: "Chuẩn bị", cls: "bg-blue-50 text-blue-600" },
+  draft: { label: "Sắp mở", cls: "bg-gray-50 text-gray-500" },
+  closed: { label: "Đã đóng", cls: "bg-slate-50 text-slate-500" },
+  completed: { label: "Đã kết thúc", cls: "bg-slate-50 text-slate-500" },
+  cancelled: { label: "Đã huỷ", cls: "bg-red-50 text-red-500" },
+};
+
+const EVENT_TYPE_STATUS_OVERRIDE: Record<string, Record<string, string>> = {
+  shirt_order: { open: "Đang nhận đăng ký" },
+  tournament: { open: "Mở đăng ký" },
+  birthday: { upcoming: "Sắp diễn ra" },
+  offline_event: { ongoing: "Chuẩn bị", draft: "Chuẩn bị" },
+  poll: { open: "Cần bình chọn" },
+};
+
+function getEventParticipantLabel(type: string, count: number) {
+  switch (type) {
+    case "tournament":
+      return `${count} đội đã đăng ký`;
+    case "birthday":
+      return `${count} thành viên`;
+    case "poll":
+      return `${count} lượt bình chọn`;
+    default:
+      return `${count} người đã đăng ký`;
+  }
+}
+
+function getEventParticipantIcon(type: string) {
+  if (type === "birthday") return Gift;
+  if (type === "poll") return BarChart3;
+  return Users;
+}
+
 function useFadeIn(trigger: boolean) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -234,6 +283,29 @@ function MatchSkeleton() {
       <div className="flex justify-between mt-3 pt-2 border-t border-gray-50">
         <div className="h-3 bg-gray-100 rounded w-20" />
         <div className="h-3 bg-gray-100 rounded w-4" />
+      </div>
+    </div>
+  );
+}
+
+function EventSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl p-4 overflow-hidden relative">
+      <div
+        className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite]"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)",
+        }}
+      />
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-gray-100 flex-shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3.5 bg-gray-100 rounded w-3/5" />
+          <div className="h-3 bg-gray-100 rounded w-2/5" />
+          <div className="h-3 bg-gray-100 rounded w-1/3" />
+        </div>
+        <div className="h-5 w-16 bg-gray-100 rounded-lg flex-shrink-0" />
       </div>
     </div>
   );
@@ -1065,25 +1137,315 @@ function MatchesTab({
   );
 }
 
+function EventsTab() {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [typeFilter, setTypeFilter] = useState("");
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const fadeIn = useFadeIn(!loading);
+
+  const openSheet = () => {
+    setSheetOpen(true);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => setSheetVisible(true)),
+    );
+  };
+  const closeSheet = () => {
+    setSheetVisible(false);
+    setTimeout(() => setSheetOpen(false), 300);
+  };
+
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await activitiesApi.list({
+        type: typeFilter || undefined,
+        limit: 30,
+      });
+      setItems(data.data ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }, [typeFilter]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  useEffect(() => {
+    document.body.style.overflow = sheetOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sheetOpen]);
+
+  const activeOpt =
+    EVENT_TYPE_TABS.find((o) => o.value === typeFilter) ?? EVENT_TYPE_TABS[0];
+
+  return (
+    <div className="space-y-4">
+      <button
+        type="button"
+        onClick={openSheet}
+        className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-2.5 hover:border-gray-300 active:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-2.5">
+          <SlidersHorizontal className="w-4 h-4 text-gray-400" />
+          <span className="text-sm text-gray-700 font-medium">
+            {activeOpt.label}
+          </span>
+          {typeFilter && (
+            <span className="text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full">
+              Đang lọc
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1 text-xs text-gray-400">
+          Lọc <ChevronDown className="w-3.5 h-3.5" />
+        </div>
+      </button>
+
+      <div
+        className="space-y-3"
+        style={{ opacity: fadeIn ? 1 : 0, transition: "opacity 0.3s ease" }}
+      >
+        {loading ? (
+          [...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              style={{
+                animationDelay: `${i * 60}ms`,
+                animation: "fadeSlideUp .3s ease both",
+              }}
+            >
+              <EventSkeleton />
+            </div>
+          ))
+        ) : items.length === 0 ? (
+          <div
+            className="bg-white rounded-2xl py-14 text-center border border-dashed border-gray-200"
+            style={{ animation: "fadeSlideUp .3s ease both" }}
+          >
+            <Megaphone className="w-10 h-10 mx-auto text-gray-200 mb-3" />
+            <p className="text-gray-400 text-sm">Chưa có hoạt động nào</p>
+          </div>
+        ) : (
+          items.map((a, idx) => {
+            const cfg = EVENT_STATUS_CFG[a.status] ?? EVENT_STATUS_CFG.draft;
+            const overrideLabel =
+              a.status_label_override ??
+              EVENT_TYPE_STATUS_OVERRIDE[a.type]?.[a.status];
+            const ParticipantIcon = getEventParticipantIcon(a.type);
+            const dateValue = a.deadline ?? a.event_date;
+            const isDeadline = Boolean(a.deadline);
+
+            const maxCapacity =
+              a.detail?.max_slots ??
+              a.detail?.max_teams ??
+              a.detail?.max_participants ??
+              null;
+            const participantCount = a.participant_count ?? 0;
+            const hasCapacity = maxCapacity != null && maxCapacity > 0;
+            const ratio = hasCapacity ? participantCount / maxCapacity : 0;
+            const isFull = hasCapacity && participantCount >= maxCapacity;
+
+            return (
+              <Link key={a.id} href={`/events/${a.id}`} className="block">
+                <div
+                  className="bg-white rounded-2xl p-4 border border-transparent active:scale-[0.99] active:bg-gray-50 transition-all"
+                  style={{
+                    animation: "fadeSlideUp .35s ease both",
+                    animationDelay: `${idx * 50}ms`,
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                      {a.cover_image_url ? (
+                        <img
+                          src={a.cover_image_url}
+                          alt={a.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        (a.emoji ?? "📌")
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-gray-900 leading-snug break-words">
+                          {a.title}
+                        </p>
+                        <span
+                          className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${cfg.cls}`}
+                        >
+                          {overrideLabel ?? cfg.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                        <CalendarDays className="w-3 h-3 flex-shrink-0" />
+                        <span>
+                          {isDeadline ? "Ngày chốt ds đăng kí: " : ""}
+                          {dateValue
+                            ? format(new Date(dateValue), "dd/MM/yyyy", {
+                                locale: vi,
+                              })
+                            : "—"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {hasCapacity ? (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <ParticipantIcon className="w-3 h-3" />
+                          {getEventParticipantLabel(a.type, 0).replace(
+                            /^0\s*/,
+                            "",
+                          )}
+                        </span>
+                        <span
+                          className={`text-xs ${
+                            isFull
+                              ? "text-red-500 font-medium"
+                              : ratio >= 0.6
+                                ? "text-amber-500 font-medium"
+                                : "text-emerald-600"
+                          }`}
+                        >
+                          {isFull
+                            ? "Đã đầy"
+                            : `${participantCount} / ${maxCapacity}`}
+                        </span>
+                      </div>
+                      <EnergyBar
+                        filled={participantCount}
+                        max={maxCapacity}
+                        status={a.status}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-50 text-xs text-gray-400">
+                      <ParticipantIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>
+                        {getEventParticipantLabel(a.type, participantCount)}
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
+                    </div>
+                  )}
+                </div>
+              </Link>
+            );
+          })
+        )}
+      </div>
+
+      {sheetOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex flex-col justify-end"
+            style={{
+              background: sheetVisible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+              backdropFilter: sheetVisible ? "blur(2px)" : "none",
+              transition: "background .3s, backdrop-filter .3s",
+            }}
+            onClick={(e) => e.target === e.currentTarget && closeSheet()}
+          >
+            <div
+              className="w-full bg-white rounded-t-2xl"
+              style={{
+                maxWidth: 480,
+                margin: "0 auto",
+                transform: sheetVisible ? "translateY(0)" : "translateY(100%)",
+                transition: "transform .3s cubic-bezier(0.32,0.72,0,1)",
+                paddingBottom: "env(safe-area-inset-bottom)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-9 h-1 bg-gray-200 rounded-full" />
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <span className="text-sm font-semibold text-gray-900">
+                  Lọc theo loại hoạt động
+                </span>
+                <button
+                  onClick={closeSheet}
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                  <X className="w-3.5 h-3.5 text-gray-500" />
+                </button>
+              </div>
+              <div className="py-2">
+                {EVENT_TYPE_TABS.map((opt) => {
+                  const isActive = typeFilter === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setTypeFilter(opt.value);
+                        closeSheet();
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-3 transition-colors text-left ${isActive ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                    >
+                      <span
+                        className={`text-sm font-medium ${isActive ? "text-blue-700" : "text-gray-700"}`}
+                      >
+                        {opt.label}
+                      </span>
+                      {isActive && (
+                        <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="px-4 pt-3 pb-8 border-t border-gray-100">
+                <button
+                  onClick={closeSheet}
+                  className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
+                >
+                  Xong
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </div>
+  );
+}
+
 export default function ActivityPage() {
   const [tab, setTab] = useState<MainTab>("sessions");
   const [tabVisible, setTabVisible] = useState(true);
   const [indicatorStyle, setIndicatorStyle] = useState({
     left: "4px",
-    width: "calc(50% - 4px)",
+    width: "calc(33.333% - 5.33px)",
   });
   const tabRef = useRef<MainTab>("sessions");
   const [activeMatch, setActiveMatch] = useState<any>(null);
+
+  const TAB_ORDER: MainTab[] = ["sessions", "matches", "events"];
+
+  const indicatorFor = (t: MainTab) => {
+    const idx = TAB_ORDER.indexOf(t);
+    return {
+      left: `calc(${(idx * 100) / 3}% + 4px)`,
+      width: "calc(33.333% - 5.33px)",
+    };
+  };
 
   const switchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const switchTab = (next: MainTab) => {
     if (next === tabRef.current) return;
     if (switchTimerRef.current) clearTimeout(switchTimerRef.current);
     setTabVisible(false);
-    setIndicatorStyle({
-      left: next === "sessions" ? "4px" : "calc(50%)",
-      width: "calc(50% - 4px)",
-    });
+    setIndicatorStyle(indicatorFor(next));
     switchTimerRef.current = setTimeout(() => {
       tabRef.current = next;
       setTab(next);
@@ -1094,11 +1456,12 @@ export default function ActivityPage() {
 
   useEffect(() => {
     const remembered = sessionStorage.getItem("activity:return-tab");
-    if (remembered === "matches") {
+    if (remembered === "matches" || remembered === "events") {
       sessionStorage.removeItem("activity:return-tab");
-      tabRef.current = "matches";
-      setTab("matches");
-      setIndicatorStyle({ left: "calc(50%)", width: "calc(50% - 4px)" });
+      const t = remembered as MainTab;
+      tabRef.current = t;
+      setTab(t);
+      setIndicatorStyle(indicatorFor(t));
     }
   }, []);
 
@@ -1111,6 +1474,21 @@ export default function ActivityPage() {
       document.body.style.overflow = "";
     };
   }, []);
+
+  const TAB_META: Record<MainTab, { title: string; subtitle: string }> = {
+    sessions: {
+      title: "Buổi đánh cầu",
+      subtitle: "Chọn buổi và đăng ký tham gia",
+    },
+    matches: {
+      title: "Trận giao hữu",
+      subtitle: "Tạo và theo dõi trận đấu của bạn",
+    },
+    events: {
+      title: "Hoạt động",
+      subtitle: "Đặt áo, giải đấu, bình chọn và hơn thế",
+    },
+  };
 
   return (
     <>
@@ -1145,12 +1523,10 @@ export default function ActivityPage() {
             style={{ transition: "opacity .2s", opacity: tabVisible ? 1 : 0 }}
           >
             <h1 className="text-xl font-bold text-gray-900">
-              {tab === "sessions" ? "Buổi đánh cầu" : "Trận giao hữu"}
+              {TAB_META[tab].title}
             </h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              {tab === "sessions"
-                ? "Chọn buổi và đăng ký tham gia"
-                : "Tạo và theo dõi trận đấu của bạn"}
+              {TAB_META[tab].subtitle}
             </p>
           </div>
 
@@ -1181,19 +1557,27 @@ export default function ActivityPage() {
           />
           <button
             onClick={() => switchTab("sessions")}
-            className={`relative flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "sessions" ? "text-blue-600" : "text-gray-500"}`}
+            className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "sessions" ? "text-blue-600" : "text-gray-500"}`}
           >
-            <CalendarDays className="w-4 h-4" /> Buổi đánh
+            <CalendarDays className="w-4 h-4" />
+            <span className="hidden xs:inline">Buổi đánh</span>
           </button>
           <button
             onClick={() => switchTab("matches")}
-            className={`relative flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "matches" ? "text-blue-600" : "text-gray-500"}`}
+            className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "matches" ? "text-blue-600" : "text-gray-500"}`}
           >
             <Swords className="w-4 h-4" />
-            Giao hữu
+            <span className="hidden xs:inline">Giao hữu</span>
             {activeMatch && (
-              <span className="w-2 h-2 rounded-full bg-amber-400 absolute top-2 right-6" />
+              <span className="w-2 h-2 rounded-full bg-amber-400 absolute top-2 right-3" />
             )}
+          </button>
+          <button
+            onClick={() => switchTab("events")}
+            className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "events" ? "text-blue-600" : "text-gray-500"}`}
+          >
+            <Megaphone className="w-4 h-4" />
+            <span className="hidden xs:inline">Hoạt động</span>
           </button>
         </div>
 
@@ -1205,8 +1589,10 @@ export default function ActivityPage() {
         >
           {tab === "sessions" ? (
             <SessionsTab />
-          ) : (
+          ) : tab === "matches" ? (
             <MatchesTab onActiveMatchChange={setActiveMatch} />
+          ) : (
+            <EventsTab />
           )}
         </div>
       </div>

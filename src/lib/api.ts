@@ -237,4 +237,11 @@ export const activitiesApi = {
       payment_reference?: string;
     },
   ) => api.post(`/activities/${activityId}/register/shirt-order/payment`, data),
+  payTournament: (
+    id: string,
+    data: {
+      method: "wallet" | "transfer" | "cash";
+      payment_reference?: string;
+    },
+  ) => api.post(`/activities/${id}/register/tournament/payment`, data),
 };

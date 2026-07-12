@@ -23,7 +23,6 @@ const STATUS_CFG: Record<string, { label: string; cls: string }> = {
   cancelled: { label: "Đã huỷ", cls: "bg-red-50 text-red-500" },
 };
 
-// Ghi đè label riêng theo từng loại nếu status_label_override không có sẵn
 const TYPE_STATUS_OVERRIDE: Record<string, Record<string, string>> = {
   shirt_order: { open: "Đang nhận đăng ký" },
   tournament: { open: "Mở đăng ký" },
@@ -51,7 +50,7 @@ function getParticipantIcon(type: string) {
   return Users;
 }
 
-export function UpcomingActivities() {
+export function UpcomingEvents() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -99,7 +98,7 @@ export function UpcomingActivities() {
 
               return (
                 <li key={a.id}>
-                  <Link href={`/activities/${a.id}`}>
+                  <Link href={`/events/${a.id}`}>
                     <div className="flex items-center gap-3 px-4 py-3 active:bg-gray-50 transition-colors">
                       <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
                         {a.cover_image_url ? (
