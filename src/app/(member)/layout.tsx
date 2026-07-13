@@ -14,6 +14,7 @@ import { Home, CalendarDays, ClipboardList, Trophy, UserCircle2, LogOut, BadgePe
 import { useTeamInviteNotification } from '@/hooks/useTeamInviteNotification';
 import { TeamInviteModal } from '@/components/TeamInviteModal';
 import { NotificationBell } from '@/components/NotificationBell';
+import { useNotificationsRealtimeStore } from '@/store/notifications-realtime.store';
 
 const NAV_ITEMS = [
     { href: '/home', icon: Home, label: 'Trang chủ' },
@@ -129,6 +130,14 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     const pathname = usePathname();
     const { isAuthenticated, logout, user } = useAuthStore();
     const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        if (!user?.id) return;
+        useNotificationsRealtimeStore.getState().connect(user.id);
+        return () => {
+            useNotificationsRealtimeStore.getState().disconnect();
+        };
+    }, [user?.id]);
 
     const { show: showBirthday, close: closeBirthday } = useBirthdayGreeting(user ?? null);
 

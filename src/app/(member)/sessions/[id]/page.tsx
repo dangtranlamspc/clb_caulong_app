@@ -17,6 +17,7 @@ import { MorphButton } from '@/components/effect-button/MorphButton';
 import { buildTransferNote } from '@/hooks/payment-ref';
 import { useAuthStore } from '@/store/auth.store';
 import { createPortal } from 'react-dom';
+import { useNotificationsRealtimeStore } from '@/store/notifications-realtime.store';
 
 type ActionPhase = 'idle' | 'loading' | 'success';
 
@@ -262,24 +263,38 @@ export default function SessionDetailPage() {
         return () => { supabase.removeChannel(channel); };
     }, [id]);
 
+    // useEffect(() => {
+    //     if (!user?.id) return;
+    //     const channel = supabase
+    //         .channel(`notifications:${user.id}`)
+    //         .on('broadcast', { event: 'new_notification' }, ({ payload }: any) => {
+    //             if (payload?.type === 'wallet_guest_confirm' || payload?.data?.type === 'wallet_guest_confirm') {
+    //                 const data = payload?.data ?? payload;
+    //                 setGuestConfirmPayload({
+    //                     hostRegistrationId: data.host_registration_id,
+    //                     guestNames: data.guest_names,
+    //                     guestTotal: data.guest_total,
+    //                     deadline: data.deadline,
+    //                 });
+    //             }
+    //         })
+    //         .subscribe();
+    //     return () => { supabase.removeChannel(channel); };
+    // }, [user?.id]);
+
+    const lastNotification = useNotificationsRealtimeStore(s => s.lastNotification);
     useEffect(() => {
-        if (!user?.id) return;
-        const channel = supabase
-            .channel(`notifications:${user.id}`)
-            .on('broadcast', { event: 'new_notification' }, ({ payload }: any) => {
-                if (payload?.type === 'wallet_guest_confirm' || payload?.data?.type === 'wallet_guest_confirm') {
-                    const data = payload?.data ?? payload;
-                    setGuestConfirmPayload({
-                        hostRegistrationId: data.host_registration_id,
-                        guestNames: data.guest_names,
-                        guestTotal: data.guest_total,
-                        deadline: data.deadline,
-                    });
-                }
-            })
-            .subscribe();
-        return () => { supabase.removeChannel(channel); };
-    }, [user?.id]);
+        const payload = lastNotification;
+        if (payload?.type === 'wallet_guest_confirm' || payload?.data?.type === 'wallet_guest_confirm') {
+            const data = payload?.data ?? payload;
+            setGuestConfirmPayload({
+                hostRegistrationId: data.host_registration_id,
+                guestNames: data.guest_names,
+                guestTotal: data.guest_total,
+                deadline: data.deadline,
+            });
+        }
+    }, [lastNotification]);
 
     const handleRegister = async () => {
         setRegisterPhase('loading');
@@ -377,8 +392,11 @@ export default function SessionDetailPage() {
     const soloAmount = myReg?.amount_override ?? 0;
     const groupedAmount = soloAmount + guestTotal;
 
+    // const totalOtherFeeFromRegs = registrations
+    //     .filter((r: any) => r.payment_method !== 'grouped_with_host')
+    //     .reduce((sum: number, r: any) => sum + (r.other_fee_amount ?? 0), 0);
+
     const totalOtherFeeFromRegs = registrations
-        .filter((r: any) => r.payment_method !== 'grouped_with_host')
         .reduce((sum: number, r: any) => sum + (r.other_fee_amount ?? 0), 0);
 
     const hasPendingGuestWallet = myGuests.some(
@@ -432,7 +450,7 @@ export default function SessionDetailPage() {
                             }`}>
                             {effectiveStatus === 'open' ? 'Mở đăng ký' :
                                 effectiveStatus === 'full' ? 'Đã đầy' :
-                                    isAwaitingAdminFinish ? 'Chờ admin chốt' :
+                                    isAwaitingAdminFinish ? 'Chờ admin hoàn thành' :
                                         effectiveStatus === 'waiting_payment' ? 'Chờ thanh toán' :
                                             effectiveStatus === 'completed' ? 'Hoàn thành' :
                                                 effectiveStatus === 'cancelled' ? 'Đã hủy' : effectiveStatus}
@@ -565,7 +583,7 @@ export default function SessionDetailPage() {
                                             <span>💰 Khoản thu khác</span>
                                             <span className="font-medium">{fmt(totalOtherFeeFromRegs)}</span>
                                         </div>
-                                        <div className="mt-1 pl-4 space-y-0.5">
+                                        {/* <div className="mt-1 pl-4 space-y-0.5">
                                             {registrations
                                                 .filter(r => (r.other_fee_amount ?? 0) > 0 && r.payment_method !== 'grouped_with_host')
                                                 .map((r: any) => {
@@ -574,6 +592,31 @@ export default function SessionDetailPage() {
                                                         <div key={r.id} className="flex justify-between text-xs text-gray-400">
                                                             <span>
                                                                 {name}
+                                                                {r.other_fee_note && <span className="italic"> — {r.other_fee_note}</span>}
+                                                            </span>
+                                                            <span className="font-medium text-amber-600">{fmt(r.other_fee_amount)}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div> */}
+                                        <div className="mt-1 pl-4 space-y-0.5">
+                                            {registrations
+                                                .filter(r => (r.other_fee_amount ?? 0) > 0)
+                                                .map((r: any) => {
+                                                    const name = r.users?.full_name ?? r.guest_full_name ?? '?';
+                                                    const isGroupedGuest =
+                                                        r.is_guest && r.host_registration_id && r.payment_method === 'grouped_with_host';
+                                                    const hostName = isGroupedGuest
+                                                        ? (registrations.find((h: any) => h.id === r.host_registration_id)?.users?.full_name
+                                                            ?? registrations.find((h: any) => h.id === r.host_registration_id)?.guest_full_name)
+                                                        : null;
+                                                    return (
+                                                        <div key={r.id} className="flex justify-between text-xs text-gray-400">
+                                                            <span>
+                                                                {isGroupedGuest ? `+ ${name}` : name}
+                                                                {isGroupedGuest && hostName && (
+                                                                    <span className="text-gray-300"> (đi cùng {hostName})</span>
+                                                                )}
                                                                 {r.other_fee_note && <span className="italic"> — {r.other_fee_note}</span>}
                                                             </span>
                                                             <span className="font-medium text-amber-600">{fmt(r.other_fee_amount)}</span>
@@ -592,20 +635,45 @@ export default function SessionDetailPage() {
                                 <div className="border-t border-gray-100 pt-3">
                                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Số tiền từng người</p>
                                     <div className="space-y-2">
-                                        {registrations.filter(r => !r.host_registration_id && r.participation_status === 'confirmed').map((r: any) => {
+                                        {/* {registrations.filter(r => !r.host_registration_id && r.participation_status === 'confirmed').map((r: any) => {
                                             const guests = registrations.filter(g => g.host_registration_id === r.id && g.participation_status === 'confirmed');
                                             const name = r.users?.full_name ?? r.guest_full_name ?? '?';
                                             const isMe = r.id === myReg?.id;
                                             const gender = r.users?.gender ?? r.guest_gender;
                                             const defaultPrice = gender === 'female' ? (session.price_female ?? session.price_per_slot ?? 0) : (session.price_male ?? session.price_per_slot ?? 0);
                                             const amount = r.amount_override ?? defaultPrice;
-                                            const hasBreakdown = r.base_amount != null && r.other_fee_amount != null && r.other_fee_amount > 0;
+                                            const hasBreakdown = r.base_amount != null && r.other_fee_amount != null && r.other_fee_amount > 0; */}
+                                        {registrations.filter(r => !r.host_registration_id && r.participation_status === 'confirmed').map((r: any) => {
+                                            const guests = registrations.filter(g => g.host_registration_id === r.id && g.participation_status === 'confirmed');
+                                            const name = r.users?.full_name ?? r.guest_full_name ?? '?';
+                                            const isMe = r.id === myReg?.id;
+                                            const gender = r.users?.gender ?? r.guest_gender;
+                                            const defaultPrice = gender === 'female' ? (session.price_female ?? session.price_per_slot ?? 0) : (session.price_male ?? session.price_per_slot ?? 0);
+
+                                            const guestDefaultPrice = (g: any) => {
+                                                const gGender = g.guest_gender;
+                                                return gGender === 'female' ? (session.price_female ?? session.price_per_slot ?? 0) : (session.price_male ?? session.price_per_slot ?? 0);
+                                            };
+                                            const groupedWithHostGuests = guests.filter((g: any) => g.payment_method === 'grouped_with_host');
+                                            const groupedWithHostTotal = groupedWithHostGuests.reduce(
+                                                (s: number, g: any) => s + (g.amount_override ?? guestDefaultPrice(g)),
+                                                0,
+                                            );
+
+                                            const hostOwnAmount = r.amount_override ?? defaultPrice;
+                                            const amount = hostOwnAmount + groupedWithHostTotal;
+
+                                            const combinedBaseAmount = (r.base_amount ?? 0) + groupedWithHostGuests.reduce((s: number, g: any) => s + (g.base_amount ?? 0), 0);
+                                            const combinedOtherFeeAmount = (r.other_fee_amount ?? 0) + groupedWithHostGuests.reduce((s: number, g: any) => s + (g.other_fee_amount ?? 0), 0);
+                                            const combinedOtherFeeNote = [r.other_fee_note, ...groupedWithHostGuests.map((g: any) => g.other_fee_note)]
+                                                .filter(Boolean)
+                                                .join(', ');
+                                            const hasBreakdown = r.base_amount != null && combinedOtherFeeAmount > 0;
                                             return (
                                                 <div key={r.id} className={`rounded-xl px-3 py-2.5 ${isMe ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50'}`}>
                                                     <div className="flex justify-between items-center">
                                                         <span className={`text-sm font-medium ${isMe ? 'text-blue-700' : 'text-gray-700'}`}>
                                                             {name} {isMe && <span className="text-xs font-normal text-blue-400">(bạn)</span>}
-                                                            {/* Badge phương thức TT */}
                                                             {(() => {
                                                                 const badge = getPaymentMethodBadge(r);
                                                                 if (!badge) return null;
@@ -621,57 +689,71 @@ export default function SessionDetailPage() {
                                                             <span className={`text-sm font-bold ${isMe ? 'text-blue-600' : 'text-gray-900'}`}>{fmt(amount)}</span>
                                                         </div>
                                                     </div>
-                                                    {hasBreakdown && (
+
+                                                    {/* {hasBreakdown && (
                                                         <p className="text-[11px] text-gray-400 mt-1">
                                                             Sân + cầu: <span className="font-medium text-gray-500">{fmt(r.base_amount)}</span>
                                                             {' + '}<span className="font-medium text-amber-600">{fmt(r.other_fee_amount)}</span>
                                                             {r.other_fee_note && <span className="italic"> ({r.other_fee_note})</span>}
                                                             {' = '}<span className={`font-semibold ${isMe ? 'text-blue-600' : 'text-gray-600'}`}>{fmt(amount)}</span>
                                                         </p>
-                                                    )}
-                                                    {guests.map((g: any) => {
-                                                        const gGender = g.guest_gender;
-                                                        const gDefaultPrice = gGender === 'female' ? (session.price_female ?? session.price_per_slot ?? 0) : (session.price_male ?? session.price_per_slot ?? 0);
-                                                        const gAmount = g.amount_override ?? gDefaultPrice;
-                                                        const gHasBreakdown = g.base_amount != null && g.other_fee_amount != null && g.other_fee_amount > 0;
-                                                        const isGuestPaid = g.payment_status === 'confirmed';
-                                                        const isPendingWallet = g.payment_method === 'wallet_pending_confirm';
-                                                        const isGroupedWithHost = g.payment_method === 'grouped_with_host';
-                                                        const gBadge = getPaymentMethodBadge(g);
-                                                        return (
-                                                            <div key={g.id} className="mt-2 pl-3 border-l-2 border-purple-100">
-                                                                <div className="flex justify-between items-center">
-                                                                    <span className="text-xs text-purple-600 flex flex-wrap items-center gap-1">
-                                                                        + {g.guest_full_name}<span className="text-gray-400">(đi cùng)</span>
-                                                                        {isPendingWallet && <span className="text-amber-500">· chờ xác nhận</span>}
-                                                                        {gBadge && (
-                                                                            <span className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${gBadge.cls}`}>
-                                                                                {gBadge.icon} {gBadge.label}
-                                                                            </span>
-                                                                        )}
-                                                                    </span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        {isGroupedWithHost ? (
-                                                                            <span className="text-[11px] text-gray-400 italic">đã gộp vào {name}</span>
-                                                                        ) : (
-                                                                            <>
-                                                                                {isGuestPaid ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <Hourglass className="w-3 h-3 text-amber-400" />}
-                                                                                <span className="text-xs font-semibold text-gray-600">{fmt(gAmount)}</span>
-                                                                            </>
-                                                                        )}
+                                                    )} */}
+
+                                                    {hasBreakdown && (
+                                                        <p className="text-[11px] text-gray-400 mt-1">
+                                                            Sân + cầu: <span className="font-medium text-gray-500">{fmt(combinedBaseAmount)}</span>
+                                                            {' + '}<span className="font-medium text-amber-600">{fmt(combinedOtherFeeAmount)}</span>
+                                                            {combinedOtherFeeNote && <span className="italic"> ({combinedOtherFeeNote})</span>}
+                                                            {' = '}<span className={`font-semibold ${isMe ? 'text-blue-600' : 'text-gray-600'}`}>{fmt(amount)}</span>
+                                                        </p>
+                                                    )
+                                                    }
+
+                                                    {
+                                                        guests.map((g: any) => {
+                                                            const gGender = g.guest_gender;
+                                                            const gDefaultPrice = gGender === 'female' ? (session.price_female ?? session.price_per_slot ?? 0) : (session.price_male ?? session.price_per_slot ?? 0);
+                                                            const gAmount = g.amount_override ?? gDefaultPrice;
+                                                            const gHasBreakdown = g.base_amount != null && g.other_fee_amount != null && g.other_fee_amount > 0;
+                                                            const isGuestPaid = g.payment_status === 'confirmed';
+                                                            const isPendingWallet = g.payment_method === 'wallet_pending_confirm';
+                                                            const isGroupedWithHost = g.payment_method === 'grouped_with_host';
+                                                            const gBadge = getPaymentMethodBadge(g);
+                                                            return (
+                                                                <div key={g.id} className="mt-2 pl-3 border-l-2 border-purple-100">
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span className="text-xs text-purple-600 flex flex-wrap items-center gap-1">
+                                                                            + {g.guest_full_name}<span className="text-gray-400">(đi cùng)</span>
+                                                                            {isPendingWallet && <span className="text-amber-500">· chờ xác nhận</span>}
+                                                                            {gBadge && (
+                                                                                <span className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${gBadge.cls}`}>
+                                                                                    {gBadge.icon} {gBadge.label}
+                                                                                </span>
+                                                                            )}
+                                                                        </span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            {isGroupedWithHost ? (
+                                                                                <span className="text-[11px] text-gray-400 italic">đã gộp vào {name}</span>
+                                                                            ) : (
+                                                                                <>
+                                                                                    {isGuestPaid ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <Hourglass className="w-3 h-3 text-amber-400" />}
+                                                                                    <span className="text-xs font-semibold text-gray-600">{fmt(gAmount)}</span>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
+                                                                    {gHasBreakdown && !isGroupedWithHost && (
+                                                                        <p className="text-[11px] text-gray-400 mt-0.5">
+                                                                            Sân + cầu: <span className="font-medium text-gray-500">{fmt(g.base_amount)}</span>
+                                                                            {' + '}<span className="font-medium text-amber-600">{fmt(g.other_fee_amount)}</span>
+                                                                            {g.other_fee_note && <span className="italic"> ({g.other_fee_note})</span>}
+                                                                            {' = '}<span className="font-semibold text-gray-600">{fmt(gAmount)}</span>
+                                                                        </p>
+                                                                    )}
                                                                 </div>
-                                                                {gHasBreakdown && !isGroupedWithHost && (
-                                                                    <p className="text-[11px] text-gray-400 mt-0.5">
-                                                                        Sân + cầu: <span className="font-medium text-gray-500">{fmt(g.base_amount)}</span>
-                                                                        {' + '}<span className="font-medium text-amber-600">{fmt(g.other_fee_amount)}</span>
-                                                                        {g.other_fee_note && <span className="italic"> ({g.other_fee_note})</span>}
-                                                                        {' = '}<span className="font-semibold text-gray-600">{fmt(gAmount)}</span>
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
+                                                            );
+                                                        })
+                                                    }
                                                 </div>
                                             );
                                         })}
@@ -681,7 +763,6 @@ export default function SessionDetailPage() {
                         </div>
                     )}
 
-                {/* Status banners */}
                 {myReg && myReg.participation_status === 'awaiting_checkin' && (
                     <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3" style={{ animation: 'fadeSlideUp .35s ease both' }}>
                         <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0"><Hourglass className="w-5 h-5 text-slate-500" /></div>
@@ -702,7 +783,6 @@ export default function SessionDetailPage() {
                     </div>
                 )}
 
-                {/* Banner "chờ xác nhận guest wallet" — hiện khi admin đã trừ ví user nhưng còn guest pending */}
                 {myReg && hasPendingGuestWallet && myReg.payment_status === 'confirmed' && (
                     <button
                         onClick={() => {
@@ -727,22 +807,35 @@ export default function SessionDetailPage() {
                     </button>
                 )}
 
-                {myReg && myReg.payment_status === 'confirmed' && !hasPendingGuestWallet && (
-                    <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0"><CheckCircle2 className="w-5 h-5 text-emerald-600" /></div>
-                        <div className="flex-1">
-                            <p className="text-sm font-semibold text-gray-900">Đã thanh toán thành công</p>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                                <p className="text-xs text-gray-500">Số tiền đã đóng: <span className="font-semibold text-emerald-600">{fmt(myReg.amount_override ?? 0)}</span></p>
-                                {myReg.payment_method === 'wallet' && (
-                                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold">
-                                        <Wallet className="w-2.5 h-2.5" /> Ví BNB
-                                    </span>
-                                )}
+                {myReg && myReg.payment_status === 'confirmed' && !hasPendingGuestWallet && (() => {
+                    const groupedGuests = myGuests.filter(
+                        (g: any) => g.payment_method === 'grouped_with_host' || g.payment_method === 'wallet_grouped'
+                    );
+                    const groupedGuestsTotal = groupedGuests.reduce((s: number, g: any) => s + (g.amount_override ?? 0), 0);
+                    const paidTotal = (myReg.amount_override ?? 0) + groupedGuestsTotal;
+
+                    return (
+                        <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0"><CheckCircle2 className="w-5 h-5 text-emerald-600" /></div>
+                            <div className="flex-1">
+                                <p className="text-sm font-semibold text-gray-900">Đã thanh toán thành công</p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                    <p className="text-xs text-gray-500">
+                                        Số tiền đã đóng: <span className="font-semibold text-emerald-600">{fmt(paidTotal)}</span>
+                                        {groupedGuestsTotal > 0 && (
+                                            <span className="text-gray-400"> (gồm cả {groupedGuests.map((g: any) => g.guest_full_name).join(', ')})</span>
+                                        )}
+                                    </p>
+                                    {myReg.payment_method === 'wallet' && (
+                                        <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold">
+                                            <Wallet className="w-2.5 h-2.5" /> Ví BNB
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    );
+                })()}
 
                 {myReg && myReg.payment_status === 'rejected' && (
                     <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3">
@@ -936,14 +1029,17 @@ export default function SessionDetailPage() {
                                                             onClick={async () => {
                                                                 setSubmittingPay(true);
                                                                 try {
-                                                                    await walletApi.payRegistration(myReg.id);
                                                                     if (myGuests.length > 0) {
-                                                                        await walletApi.confirmGuestPayment(myReg.id, payType === 'grouped' ? 'grouped' : 'separate');
+                                                                        await walletApi.confirmGuestPayment(
+                                                                            myReg.id,
+                                                                            payType === 'grouped' ? 'grouped' : 'separate',
+                                                                        );
+                                                                    } else {
+                                                                        await walletApi.payRegistration(myReg.id);
                                                                     }
                                                                     toast.success('Đã thanh toán bằng ví BNB!');
                                                                     closePayModal();
-                                                                    fetchSession();
-                                                                    fetchRegistrations();
+                                                                    router.push(`/sessions/${id}/bill?method=wallet`);
                                                                 } catch (err: any) {
                                                                     toast.error(err?.response?.data?.message ?? 'Thanh toán thất bại');
                                                                 } finally {
@@ -1000,7 +1096,7 @@ export default function SessionDetailPage() {
                                                         });
                                                         toast.success('Đã ghi nhận, chờ admin xác nhận!');
                                                         closePayModal();
-                                                        fetchSession();
+                                                        router.push(`/sessions/${id}/bill?method=transfer`);
                                                     } catch {
                                                         toast.error('Gửi thất bại');
                                                     } finally {
@@ -1079,7 +1175,7 @@ export default function SessionDetailPage() {
                                                                 await registrationsApi.requestCash(myReg.id, { pay_type: payType, grouped_amount: payType === 'grouped' ? groupedAmount : undefined });
                                                                 toast.success('Đã thông báo admin!');
                                                                 closePayModal();
-                                                                fetchSession();
+                                                                router.push(`/sessions/${id}/bill?method=cash`);
                                                             } catch { toast.error('Gửi thất bại'); }
                                                             finally { setSendingCash(false); }
                                                         }} disabled={sendingCash} className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">
@@ -1112,7 +1208,7 @@ export default function SessionDetailPage() {
                         }}
                     />
                 )}
-            </div>
+            </div >
         </>
     );
 }

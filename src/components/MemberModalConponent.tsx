@@ -10,12 +10,22 @@ import {
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-const SKILL_LABEL: Record<string, string> = {
+const GUEST_SKILL_LABEL: Record<string, string> = {
+  yeu: "Yếu",
+  trung_binh_yeu: "TB yếu",
+  trung_binh: "TB",
+  trung_binh_cong: "TB+",
+  ban_chuyen: "Bán chuyên",
+  chuyen_nghiep: "Chuyên nghiệp",
+};
+
+// Enum của thành viên có tài khoản (users.level) — khác bộ giá trị với guest
+const LEVEL_LABELS: Record<string, string> = {
   yeu: "Yếu",
   tb_yeu: "TB yếu",
   tb: "TB",
   tb_plus: "TB+",
-  ban_chuyen: "Bán chuyên",
+  ban_chuyen: "Bán chuyên (BC)",
   chuyen_nghiep: "Chuyên nghiệp",
 };
 
@@ -154,7 +164,9 @@ export function MembersModal({
             {(skillLevel || u?.level) && (
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                 🎯{" "}
-                {SKILL_LABEL[skillLevel ?? u?.level] ?? skillLevel ?? u?.level}
+                {skillLevel
+                  ? (GUEST_SKILL_LABEL[skillLevel] ?? skillLevel)
+                  : (LEVEL_LABELS[u?.level] ?? u?.level)}
               </span>
             )}
             {!m.is_guest &&

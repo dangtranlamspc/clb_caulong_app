@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { notificationsApi, walletApi, registrationsApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { useNotificationsRealtimeStore } from '@/store/notifications-realtime.store';
 
 const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     payment_added: { icon: Wallet, cls: 'text-blue-600', bg: 'bg-blue-50' },
@@ -133,21 +134,29 @@ export function NotificationBell() {
         };
     }, []);
 
+    // useEffect(() => {
+    //     if (!user?.id) return;
+    //     const channel = supabase
+    //         .channel(`notifications:${user.id}`)
+    //         .on('broadcast', { event: 'new_notification' }, ({ payload }) => {
+    //             setItems(prev => [payload, ...prev]);
+    //             setUnread(c => c + 1);
+    //             toast(payload.title, { icon: '🔔' });
+    //         })
+    //         .subscribe();
+    //     channelRef.current = channel;
+    //     return () => {
+    //         if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null; }
+    //     };
+    // }, [user?.id]);
+
+    const lastNotification = useNotificationsRealtimeStore(s => s.lastNotification);
     useEffect(() => {
-        if (!user?.id) return;
-        const channel = supabase
-            .channel(`notifications:${user.id}`)
-            .on('broadcast', { event: 'new_notification' }, ({ payload }) => {
-                setItems(prev => [payload, ...prev]);
-                setUnread(c => c + 1);
-                toast(payload.title, { icon: '🔔' });
-            })
-            .subscribe();
-        channelRef.current = channel;
-        return () => {
-            if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null; }
-        };
-    }, [user?.id]);
+        if (!lastNotification) return;
+        setItems(prev => [lastNotification, ...prev]);
+        setUnread(c => c + 1);
+        toast(lastNotification.title, { icon: '🔔' });
+    }, [lastNotification]);
 
     const updatePanelPos = () => {
         if (!btnRef.current) return;

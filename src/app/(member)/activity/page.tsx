@@ -53,6 +53,11 @@ const SESSION_STATUS_CFG: Record<
     dotCls: "bg-blue-400",
     badgeCls: "bg-blue-50 text-blue-600 border-blue-200",
   },
+  waiting_admin_finish: {
+    label: "Chờ admin hoàn thành",
+    dotCls: "bg-purple-400",
+    badgeCls: "bg-purple-50 text-purple-600 border-purple-200",
+  },
   cancelled: {
     label: "Đã hủy",
     dotCls: "bg-red-400",
@@ -315,15 +320,17 @@ function EnergyBar({
   filled,
   max,
   status,
+  dimmed = false,
 }: {
   filled: number;
   max: number;
   status?: string;
+  dimmed?: boolean;
 }) {
   const ratio = max > 0 ? filled / max : 0;
   const pct = Math.round(Math.min(1, ratio) * 100);
   const isFull = ratio >= 1;
-  const isCompleted = status === "completed";
+  const isCompleted = status === "completed" || dimmed;
   const isStatic = isFull || isCompleted;
 
   const gradient = isCompleted
@@ -363,7 +370,8 @@ function EnergyBar({
   );
 }
 
-function energyTextCls(ratio: number) {
+function energyTextCls(ratio: number, dimmed = false) {
+  if (dimmed) return "text-gray-400 font-medium";
   if (ratio >= 1) return "text-red-500 font-medium";
   if (ratio >= 0.6) return "text-amber-500 font-medium";
   return "text-emerald-600";
@@ -418,7 +426,7 @@ function SessionsTab() {
           !s.my_registration?.payment_reference,
       );
       setPendingBills(bills);
-    } catch {}
+    } catch { }
   }, []);
 
   useEffect(() => {
@@ -532,18 +540,28 @@ function SessionsTab() {
           </div>
         ) : (
           sessions.map((s, idx) => {
-            const cfg = SESSION_STATUS_CFG[s.status] ?? SESSION_STATUS_CFG.open;
+            const cfg =
+              s.status === "waiting_payment" && s.all_paid
+                ? SESSION_STATUS_CFG.waiting_admin_finish
+                : (SESSION_STATUS_CFG[s.status] ?? SESSION_STATUS_CFG.open);
             const myReg = s.my_registration;
+            const showRegisteredBadge =
+              myReg && !(s.status === "waiting_payment" && s.all_paid);
+            const cornerBadgeLabel = showRegisteredBadge
+              ? "Bạn đã đăng ký"
+              : s.status === "waiting_payment" && !myReg && !s.all_paid
+                ? "Chờ admin chốt thanh toán"
+                : cfg.label;
             const effectiveStatus =
               myReg?.participation_status === "pending_approval"
                 ? "pending_approval"
                 : myReg?.participation_status === "awaiting_checkin"
                   ? "awaiting_checkin"
                   : myReg?.payment_status === "pending" &&
-                      myReg?.amount_override == null
+                    myReg?.amount_override == null
                     ? "awaiting_finish"
                     : myReg?.payment_status === "pending" &&
-                        myReg?.payment_reference
+                      myReg?.payment_reference
                       ? "pending_review"
                       : myReg?.payment_status;
             const regCfg = effectiveStatus
@@ -554,29 +572,8 @@ function SessionsTab() {
             const ratio = s.max_slots > 0 ? filled / s.max_slots : 0;
             const isFull = s.available_slots <= 0;
             const canRegister = s.status === "open" && !isFull && !myReg;
-            const priceDisplay = (() => {
-              if (s.price_male && s.price_female) {
-                const g = user?.gender;
-                if (g === "male")
-                  return {
-                    text: `${s.price_male.toLocaleString("vi-VN")}đ`,
-                    sub: "(Nam)",
-                  };
-                if (g === "female")
-                  return {
-                    text: `${s.price_female.toLocaleString("vi-VN")}đ`,
-                    sub: "(Nữ)",
-                  };
-                return {
-                  text: `${s.price_male.toLocaleString("vi-VN")}đ / ${s.price_female.toLocaleString("vi-VN")}đ`,
-                  sub: "Nam / Nữ",
-                };
-              }
-              return {
-                text: `${(s.price_per_slot ?? 0).toLocaleString("vi-VN")}đ`,
-                sub: "/slot",
-              };
-            })();
+
+            const slotDimmed = Boolean(myReg?.amount_override) || s.status === "waiting_payment";
 
             return (
               <Link key={s.id} href={`/sessions/${s.id}`} className="block">
@@ -592,18 +589,16 @@ function SessionsTab() {
                       {s.title}
                     </h3>
                     <span
-                      className={`flex-shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
-                        myReg
-                          ? "bg-blue-50 text-blue-600 border-blue-200"
-                          : cfg.badgeCls
-                      }`}
+                      className={`flex-shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${showRegisteredBadge
+                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                        : cfg.badgeCls
+                        }`}
                     >
                       <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          myReg ? "bg-blue-400" : cfg.dotCls
-                        }`}
+                        className={`w-1.5 h-1.5 rounded-full ${showRegisteredBadge ? "bg-blue-400" : cfg.dotCls
+                          }`}
                       />
-                      {myReg ? "Bạn đã đăng ký" : cfg.label}
+                      {cornerBadgeLabel}
                       {s.status === "completed" && <Lock className="w-3 h-3" />}
                     </span>
                   </div>
@@ -633,7 +628,7 @@ function SessionsTab() {
                         <Zap className="w-3 h-3" />
                         Chỗ trống
                       </span>
-                      <span className={`text-xs ${energyTextCls(ratio)}`}>
+                      <span className={`text-xs ${energyTextCls(ratio, slotDimmed)}`}>
                         {isFull
                           ? "Hết chỗ"
                           : `Còn ${s.available_slots} / ${s.max_slots}`}
@@ -643,26 +638,27 @@ function SessionsTab() {
                       filled={filled}
                       max={s.max_slots}
                       status={s.status}
+                      dimmed={slotDimmed}
                     />
                   </div>
                   <div className="flex items-center justify-between pt-3 border-t border-gray-50 gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                      {myReg && regCfg ? (
-                        <span
-                          className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${regCfg.cls}`}
-                        >
-                          <RegIcon className="w-3.5 h-3.5" />
-                          {regCfg.label}
-                        </span>
-                      ) : isFull ? (
-                        <span className="text-xs text-gray-400">
-                          Đã hết chỗ
-                        </span>
-                      ) : !canRegister ? (
-                        <span className="text-xs text-gray-400">
-                          {cfg.label}
-                        </span>
-                      ) : null}
+                      {myReg ? (
+                        regCfg && (
+                          <span
+                            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${regCfg.cls}`}
+                          >
+                            <RegIcon className="w-3.5 h-3.5" />
+                            {regCfg.label}
+                          </span>
+                        )
+                      ) : (
+                        isFull && (
+                          <span className="text-xs text-gray-400">
+                            Đã hết chỗ
+                          </span>
+                        )
+                      )}
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -783,7 +779,7 @@ function MatchesTab({
     }
   }, [filter, onActiveMatchChange]);
 
-  const fetchMatchesRef = useRef<() => Promise<void>>(async () => {});
+  const fetchMatchesRef = useRef<() => Promise<void>>(async () => { });
   useEffect(() => {
     fetchMatchesRef.current = fetchMatches;
   }, [fetchMatches]);
@@ -985,7 +981,7 @@ function MatchesTab({
                     <div className="flex-shrink-0 text-center">
                       {(m.status === "approved" ||
                         m.status === "pending_approval") &&
-                      m.sets?.length > 0 ? (
+                        m.sets?.length > 0 ? (
                         (() => {
                           const s = m.sets[0];
                           const myScore = isTeamA ? s.score_a : s.score_b;
@@ -1040,11 +1036,11 @@ function MatchesTab({
                     <span className="text-[10px] text-gray-400">
                       {m.played_at
                         ? format(new Date(m.played_at), "EEE dd/MM/yyyy", {
-                            locale: vi,
-                          })
+                          locale: vi,
+                        })
                         : format(new Date(m.created_at), "dd/MM/yyyy", {
-                            locale: vi,
-                          })}
+                          locale: vi,
+                        })}
                     </span>
                     <ChevronRight className="w-4 h-4 text-gray-300" />
                   </div>
@@ -1289,8 +1285,8 @@ function EventsTab() {
                           {isDeadline ? "Ngày chốt ds đăng kí: " : ""}
                           {dateValue
                             ? format(new Date(dateValue), "dd/MM/yyyy", {
-                                locale: vi,
-                              })
+                              locale: vi,
+                            })
                             : "—"}
                         </span>
                       </div>
@@ -1308,13 +1304,12 @@ function EventsTab() {
                           )}
                         </span>
                         <span
-                          className={`text-xs ${
-                            isFull
-                              ? "text-red-500 font-medium"
-                              : ratio >= 0.6
-                                ? "text-amber-500 font-medium"
-                                : "text-emerald-600"
-                          }`}
+                          className={`text-xs ${isFull
+                            ? "text-red-500 font-medium"
+                            : ratio >= 0.6
+                              ? "text-amber-500 font-medium"
+                              : "text-emerald-600"
+                            }`}
                         >
                           {isFull
                             ? "Đã đầy"
