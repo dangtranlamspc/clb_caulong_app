@@ -113,7 +113,13 @@ const SESSION_FILTER_TABS = [
   { value: "open", label: "Mở", dot: "bg-emerald-400" },
   { value: "full", label: "Đầy", dot: "bg-amber-400" },
   { value: "waiting_payment", label: "Chờ TT", dot: "bg-blue-400" },
+  {
+    value: "waiting_admin_confirm",
+    label: "Chờ admin chốt thanh toán",
+    dot: "bg-indigo-400",
+  },
   { value: "completed", label: "Xong", dot: "bg-gray-400" },
+  { value: "cancelled", label: "Đã hủy", dot: "bg-red-400" },
 ];
 
 const MATCH_STATUS_CFG: Record<
@@ -408,7 +414,13 @@ function SessionsTab() {
     setLoading(true);
     try {
       const params: any = { limit: 30 };
-      if (filter && filter !== "waiting_payment") params.status = filter;
+      if (
+        filter &&
+        filter !== "waiting_payment" &&
+        filter !== "waiting_admin_confirm"
+      ) {
+        params.status = filter;
+      }
 
       const { data } = await sessionsApi.list(params);
       let list = data.data ?? [];
@@ -416,6 +428,10 @@ function SessionsTab() {
       if (filter === "waiting_payment") {
         list = list.filter(
           (s: any) => s.my_registration?.payment_status === "pending",
+        );
+      } else if (filter === "waiting_admin_confirm") {
+        list = list.filter(
+          (s: any) => s.status === "waiting_payment" && !s.all_paid,
         );
       }
 
@@ -440,7 +456,7 @@ function SessionsTab() {
           !s.my_registration?.payment_reference,
       );
       setPendingBills(bills);
-    } catch { }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -592,10 +608,10 @@ function SessionsTab() {
                 : myReg?.participation_status === "awaiting_checkin"
                   ? "awaiting_checkin"
                   : myReg?.payment_status === "pending" &&
-                    myReg?.amount_override == null
+                      myReg?.amount_override == null
                     ? "awaiting_finish"
                     : myReg?.payment_status === "pending" &&
-                      myReg?.payment_reference
+                        myReg?.payment_reference
                       ? "pending_review"
                       : myReg?.payment_status;
             const regCfg = effectiveStatus
@@ -607,13 +623,18 @@ function SessionsTab() {
             const isFull = s.available_slots <= 0;
             const canRegister = s.status === "open" && !isFull && !myReg;
 
-            const slotDimmed = Boolean(myReg?.amount_override) || s.status === "waiting_payment";
+            const slotDimmed =
+              Boolean(myReg?.amount_override) ||
+              s.status === "waiting_payment" ||
+              s.status === "cancelled";
 
             return (
               <Link key={s.id} href={`/sessions/${s.id}`} className="block">
                 <div
-                  className={`bg-white rounded-2xl p-4 border transition-all active:scale-[0.99] ${myReg ? "border-blue-100" : "border-transparent"} ${s.status === "completed" ? "opacity-55 grayscale-[0.3]" : ""}`}
+                  className={`bg-white rounded-2xl p-4 border shadow-md transition-all active:scale-[0.99] ${myReg ? "border-blue-100" : "border-transparent"} ${s.status === "completed" ? "opacity-55 grayscale-[0.3]" : ""}`}
                   style={{
+                    boxShadow:
+                      "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
                     animation: "fadeSlideUp .35s ease both",
                     animationDelay: `${idx * 50}ms`,
                   }}
@@ -623,14 +644,16 @@ function SessionsTab() {
                       {s.title}
                     </h3>
                     <span
-                      className={`flex-shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${showRegisteredBadge
-                        ? "bg-blue-50 text-blue-600 border-blue-200"
-                        : cfg.badgeCls
-                        }`}
+                      className={`flex-shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
+                        showRegisteredBadge
+                          ? "bg-blue-50 text-blue-600 border-blue-200"
+                          : cfg.badgeCls
+                      }`}
                     >
                       <span
-                        className={`w-1.5 h-1.5 rounded-full ${showRegisteredBadge ? "bg-blue-400" : cfg.dotCls
-                          }`}
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          showRegisteredBadge ? "bg-blue-400" : cfg.dotCls
+                        }`}
                       />
                       {cornerBadgeLabel}
                       {s.status === "completed" && <Lock className="w-3 h-3" />}
@@ -662,7 +685,9 @@ function SessionsTab() {
                         <Zap className="w-3 h-3" />
                         Chỗ trống
                       </span>
-                      <span className={`text-xs ${energyTextCls(ratio, slotDimmed)}`}>
+                      <span
+                        className={`text-xs ${energyTextCls(ratio, slotDimmed)}`}
+                      >
                         {isFull
                           ? "Hết chỗ"
                           : `Còn ${s.available_slots} / ${s.max_slots}`}
@@ -677,22 +702,20 @@ function SessionsTab() {
                   </div>
                   <div className="flex items-center justify-between pt-3 border-t border-gray-50 gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                      {myReg ? (
-                        regCfg && (
-                          <span
-                            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${regCfg.cls}`}
-                          >
-                            <RegIcon className="w-3.5 h-3.5" />
-                            {regCfg.label}
-                          </span>
-                        )
-                      ) : (
-                        isFull && (
-                          <span className="text-xs text-gray-400">
-                            Đã hết chỗ
-                          </span>
-                        )
-                      )}
+                      {myReg
+                        ? regCfg && (
+                            <span
+                              className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${regCfg.cls}`}
+                            >
+                              <RegIcon className="w-3.5 h-3.5" />
+                              {regCfg.label}
+                            </span>
+                          )
+                        : isFull && (
+                            <span className="text-xs text-gray-400">
+                              Đã hết chỗ
+                            </span>
+                          )}
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -894,7 +917,7 @@ function MatchesTab({
     }
   }, [filter, onActiveMatchChange]);
 
-  const fetchMatchesRef = useRef<() => Promise<void>>(async () => { });
+  const fetchMatchesRef = useRef<() => Promise<void>>(async () => {});
   useEffect(() => {
     fetchMatchesRef.current = fetchMatches;
   }, [fetchMatches]);
@@ -1037,8 +1060,10 @@ function MatchesTab({
             return (
               <Link key={m.id} href={`/matches/${m.id}`} className="block mb-1">
                 <div
-                  className={`bg-white rounded-2xl p-4 shadow border transition-all active:scale-[0.99] ${isPendingMe ? "border-blue-200 border-[1.5px]" : "border-gray-100"}`}
+                  className={`bg-white rounded-2xl p-4 shadow-md border transition-all active:scale-[0.99] ${isPendingMe ? "border-blue-200 border-[1.5px]" : "border-gray-100"}`}
                   style={{
+                    boxShadow:
+                      "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
                     animation: "fadeSlideUp .35s ease both",
                     animationDelay: `${idx * 50}ms`,
                   }}
@@ -1096,7 +1121,7 @@ function MatchesTab({
                     <div className="flex-shrink-0 text-center">
                       {(m.status === "approved" ||
                         m.status === "pending_approval") &&
-                        m.sets?.length > 0 ? (
+                      m.sets?.length > 0 ? (
                         (() => {
                           const s = m.sets[0];
                           const myScore = isTeamA ? s.score_a : s.score_b;
@@ -1151,11 +1176,11 @@ function MatchesTab({
                     <span className="text-[10px] text-gray-400">
                       {m.played_at
                         ? format(new Date(m.played_at), "EEE dd/MM/yyyy", {
-                          locale: vi,
-                        })
+                            locale: vi,
+                          })
                         : format(new Date(m.created_at), "dd/MM/yyyy", {
-                          locale: vi,
-                        })}
+                            locale: vi,
+                          })}
                     </span>
                     <ChevronRight className="w-4 h-4 text-gray-300" />
                   </div>
@@ -1364,8 +1389,10 @@ function EventsTab() {
             return (
               <Link key={a.id} href={`/events/${a.id}`} className="block">
                 <div
-                  className="bg-white rounded-2xl p-4 border border-transparent active:scale-[0.99] active:bg-gray-50 transition-all"
+                  className="bg-white rounded-2xl p-4 border border-transparent shadow-md active:scale-[0.99] active:bg-gray-50 transition-all"
                   style={{
+                    boxShadow:
+                      "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
                     animation: "fadeSlideUp .35s ease both",
                     animationDelay: `${idx * 50}ms`,
                   }}
@@ -1400,8 +1427,8 @@ function EventsTab() {
                           {isDeadline ? "Ngày chốt ds đăng kí: " : ""}
                           {dateValue
                             ? format(new Date(dateValue), "dd/MM/yyyy", {
-                              locale: vi,
-                            })
+                                locale: vi,
+                              })
                             : "—"}
                         </span>
                       </div>
@@ -1419,12 +1446,13 @@ function EventsTab() {
                           )}
                         </span>
                         <span
-                          className={`text-xs ${isFull
-                            ? "text-red-500 font-medium"
-                            : ratio >= 0.6
-                              ? "text-amber-500 font-medium"
-                              : "text-emerald-600"
-                            }`}
+                          className={`text-xs ${
+                            isFull
+                              ? "text-red-500 font-medium"
+                              : ratio >= 0.6
+                                ? "text-amber-500 font-medium"
+                                : "text-emerald-600"
+                          }`}
                         >
                           {isFull
                             ? "Đã đầy"

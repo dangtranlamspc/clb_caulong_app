@@ -38,9 +38,9 @@ const LEVEL_LABELS: Record<string, string> = {
 
 const GUEST_SKILL_LABELS: Record<string, string> = {
   yeu: "Yếu",
-  tb_yeu: "TB yếu",
-  tb: "TB",
-  tb_plus: "TB+",
+  trung_binh_yeu: "TB yếu",
+  trung_binh: "TB",
+  trung_binh_cong: "TB+",
   ban_chuyen: "Bán chuyên (BC)",
   chuyen_nghiep: "Chuyên nghiệp",
 };
@@ -130,7 +130,12 @@ export default function HomePage() {
       profileApi.getMe(),
     ])
       .then(([s, r, st, rk, bd, me]) => {
-        setUpcoming(s.data.data ?? []);
+        const sortedUpcoming = [...(s.data.data ?? [])].sort(
+          (a: any, b: any) =>
+            new Date(b.scheduled_at).getTime() -
+            new Date(a.scheduled_at).getTime(),
+        );
+        setUpcoming(sortedUpcoming);
         setMyRegs(r.data.data ?? []);
         setMyStats(st.data);
         setMyRank(rk.data);
@@ -865,15 +870,16 @@ export default function HomePage() {
                                 p.level_label}
                             </span>
                           )}
-                          {p.tier ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
-                              💎 {p.tier} · {p.total_points ?? 0}đ
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-400 border border-gray-100">
-                              Chưa có rank
-                            </span>
-                          )}
+                          {!p.is_guest &&
+                            (p.tier ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
+                                💎 {p.tier} · {p.total_points ?? 0}đ
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-400 border border-gray-100">
+                                Chưa có rank
+                              </span>
+                            ))}
                         </div>
                       </div>
                     </div>
