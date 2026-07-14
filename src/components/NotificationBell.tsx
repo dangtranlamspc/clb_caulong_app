@@ -134,22 +134,6 @@ export function NotificationBell() {
         };
     }, []);
 
-    // useEffect(() => {
-    //     if (!user?.id) return;
-    //     const channel = supabase
-    //         .channel(`notifications:${user.id}`)
-    //         .on('broadcast', { event: 'new_notification' }, ({ payload }) => {
-    //             setItems(prev => [payload, ...prev]);
-    //             setUnread(c => c + 1);
-    //             toast(payload.title, { icon: '🔔' });
-    //         })
-    //         .subscribe();
-    //     channelRef.current = channel;
-    //     return () => {
-    //         if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null; }
-    //     };
-    // }, [user?.id]);
-
     const lastNotification = useNotificationsRealtimeStore(s => s.lastNotification);
     useEffect(() => {
         if (!lastNotification) return;

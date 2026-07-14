@@ -390,6 +390,20 @@ function SessionsTab() {
   const [pendingBills, setPendingBills] = useState<any[]>([]);
   const [payModalSession, setPayModalSession] = useState<any>(null);
 
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
+
+  const openSheet = () => {
+    setSheetOpen(true);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => setSheetVisible(true)),
+    );
+  };
+  const closeSheet = () => {
+    setSheetVisible(false);
+    setTimeout(() => setSheetOpen(false), 300);
+  };
+
   const fetchSessions = useCallback(async () => {
     setLoading(true);
     try {
@@ -465,24 +479,44 @@ function SessionsTab() {
     };
   }, [user?.id, fetchSessions, fetchPendingBills]);
 
+  useEffect(() => {
+    document.body.style.overflow = sheetOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sheetOpen]);
+
+  const activeOpt =
+    SESSION_FILTER_TABS.find((o) => o.value === filter) ??
+    SESSION_FILTER_TABS[0];
+
   return (
     <div className="space-y-4">
-      <div className="flex gap-1.5">
-        {SESSION_FILTER_TABS.map(({ value, label, dot }) => (
-          <button
-            key={value}
-            onClick={() => setFilter(value)}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${filter === value ? "bg-blue-600 text-white shadow-sm shadow-blue-200" : "bg-white text-gray-500 border border-gray-200 hover:border-gray-300"}`}
-          >
-            {dot && (
-              <span
-                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot}`}
-              />
-            )}
-            {label}
-          </button>
-        ))}
-      </div>
+      <button
+        type="button"
+        onClick={openSheet}
+        className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-2.5 hover:border-gray-300 active:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-2.5">
+          <SlidersHorizontal className="w-4 h-4 text-gray-400" />
+          {activeOpt.dot && (
+            <span
+              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeOpt.dot}`}
+            />
+          )}
+          <span className="text-sm text-gray-700 font-medium">
+            {activeOpt.label}
+          </span>
+          {filter && (
+            <span className="text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full">
+              Đang lọc
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1 text-xs text-gray-400">
+          Lọc <ChevronDown className="w-3.5 h-3.5" />
+        </div>
+      </button>
 
       {pendingBills.length > 0 && (
         <div className="space-y-2">
@@ -729,6 +763,87 @@ function SessionsTab() {
           }}
         />
       )}
+
+      {sheetOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex flex-col justify-end"
+            style={{
+              background: sheetVisible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+              backdropFilter: sheetVisible ? "blur(2px)" : "none",
+              transition: "background .3s, backdrop-filter .3s",
+            }}
+            onClick={(e) => e.target === e.currentTarget && closeSheet()}
+          >
+            <div
+              className="w-full bg-white rounded-t-2xl"
+              style={{
+                maxWidth: 480,
+                margin: "0 auto",
+                transform: sheetVisible ? "translateY(0)" : "translateY(100%)",
+                transition: "transform .3s cubic-bezier(0.32,0.72,0,1)",
+                paddingBottom: "env(safe-area-inset-bottom)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-9 h-1 bg-gray-200 rounded-full" />
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <span className="text-sm font-semibold text-gray-900">
+                  Lọc theo trạng thái
+                </span>
+                <button
+                  onClick={closeSheet}
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                  <X className="w-3.5 h-3.5 text-gray-500" />
+                </button>
+              </div>
+              <div className="py-2">
+                {SESSION_FILTER_TABS.map((opt) => {
+                  const isActive = filter === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setFilter(opt.value);
+                        closeSheet();
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-3 transition-colors text-left ${isActive ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {opt.dot && (
+                          <span
+                            className={`w-2 h-2 rounded-full flex-shrink-0 ${opt.dot}`}
+                          />
+                        )}
+                        <span
+                          className={`text-sm font-medium ${isActive ? "text-blue-700" : "text-gray-700"}`}
+                        >
+                          {opt.label}
+                        </span>
+                      </div>
+                      {isActive && (
+                        <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="px-4 pt-3 pb-8 border-t border-gray-100">
+                <button
+                  onClick={closeSheet}
+                  className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
+                >
+                  Xong
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
