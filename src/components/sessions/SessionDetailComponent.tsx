@@ -291,6 +291,8 @@ export default function SessionDetailPage() {
         "grouped" | "separate" | null
     >(null);
 
+    const [showAllRegsModal, setShowAllRegsModal] = useState(false);
+
     const [guestConfirmPayload, setGuestConfirmPayload] = useState<{
         hostRegistrationId: string;
         guestNames: string;
@@ -568,6 +570,63 @@ export default function SessionDetailPage() {
                                     ? "Đã hủy"
                                     : effectiveStatus;
 
+
+    const regRoots = registrations.filter((m: any) => !m.host_registration_id);
+    const regGuestsOf = (hostId: string) =>
+        registrations.filter((m: any) => m.host_registration_id === hostId);
+
+    const renderRegPerson = (m: any, opts?: { nested?: boolean }) => {
+        const u = m.users;
+        const fullName = u?.full_name ?? m.guest_full_name ?? "?";
+        const gender = u?.gender ?? m.guest_gender;
+        const skillLevel = m.is_guest ? m.guest_skill_level : null;
+        const parts = fullName.trim().split(" ").filter(Boolean);
+        const initials =
+            parts.length >= 2
+                ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+                : fullName.slice(0, 2).toUpperCase();
+        return (
+            <li
+                key={m.id}
+                className={`flex items-center gap-3 ${opts?.nested ? "py-2 pl-6" : "py-2.5"}`}
+                style={{ animation: "fadeSlideUp .3s ease both" }}
+            >
+                {opts?.nested && (
+                    <span className="w-3 h-px bg-gray-200 flex-shrink-0 -ml-3 mr-[-2px]" />
+                )}
+                {u?.avatar_url ? (
+                    <img
+                        src={u.avatar_url}
+                        alt={fullName}
+                        className={`rounded-full object-cover flex-shrink-0 ${opts?.nested ? "w-7 h-7" : "w-9 h-9"}`}
+                    />
+                ) : (
+                    <div
+                        className={`rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${opts?.nested ? "w-7 h-7 text-[10px] bg-purple-100 text-purple-700" : "w-9 h-9 text-xs bg-blue-100 text-blue-700"}`}
+                    >
+                        {initials}
+                    </div>
+                )}
+                <div className="flex-1 min-w-0">
+                    <p
+                        className={`font-medium text-gray-900 truncate ${opts?.nested ? "text-xs" : "text-sm"}`}
+                    >
+                        {fullName}
+                        {m.is_guest && (
+                            <span className="text-xs text-gray-400 ml-1">(khách)</span>
+                        )}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                        {gender === "male" ? "Nam" : gender === "female" ? "Nữ" : ""}
+                        {skillLevel && (
+                            <span> · {SKILL_LABEL[skillLevel] ?? skillLevel}</span>
+                        )}
+                    </p>
+                </div>
+            </li>
+        );
+    };
+
     return (
         <>
             <style>{`
@@ -739,94 +798,33 @@ export default function SessionDetailPage() {
                                 Chưa có ai đăng ký buổi này
                             </p>
                         ) : (
-                            (() => {
-                                const roots = registrations.filter(
-                                    (m: any) => !m.host_registration_id,
-                                );
-                                const guestsOf = (hostId: string) =>
-                                    registrations.filter(
-                                        (m: any) => m.host_registration_id === hostId,
-                                    );
-                                const renderPerson = (m: any, opts?: { nested?: boolean }) => {
-                                    const u = m.users;
-                                    const fullName = u?.full_name ?? m.guest_full_name ?? "?";
-                                    const gender = u?.gender ?? m.guest_gender;
-                                    const skillLevel = m.is_guest ? m.guest_skill_level : null;
-                                    const parts = fullName.trim().split(" ").filter(Boolean);
-                                    const initials =
-                                        parts.length >= 2
-                                            ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-                                            : fullName.slice(0, 2).toUpperCase();
-                                    return (
-                                        <li
-                                            key={m.id}
-                                            className={`flex items-center gap-3 ${opts?.nested ? "py-2 pl-6" : "py-2.5"}`}
-                                            style={{ animation: "fadeSlideUp .3s ease both" }}
-                                        >
-                                            {opts?.nested && (
-                                                <span className="w-3 h-px bg-gray-200 flex-shrink-0 -ml-3 mr-[-2px]" />
-                                            )}
-                                            {u?.avatar_url ? (
-                                                <img
-                                                    src={u.avatar_url}
-                                                    alt={fullName}
-                                                    className={`rounded-full object-cover flex-shrink-0 ${opts?.nested ? "w-7 h-7" : "w-9 h-9"}`}
-                                                />
-                                            ) : (
-                                                <div
-                                                    className={`rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${opts?.nested ? "w-7 h-7 text-[10px] bg-purple-100 text-purple-700" : "w-9 h-9 text-xs bg-blue-100 text-blue-700"}`}
-                                                >
-                                                    {initials}
-                                                </div>
-                                            )}
-                                            <div className="flex-1 min-w-0">
-                                                <p
-                                                    className={`font-medium text-gray-900 truncate ${opts?.nested ? "text-xs" : "text-sm"}`}
-                                                >
-                                                    {fullName}
-                                                    {m.is_guest && (
-                                                        <span className="text-xs text-gray-400 ml-1">
-                                                            (khách)
-                                                        </span>
-                                                    )}
-                                                </p>
-                                                <p className="text-xs text-gray-400">
-                                                    {gender === "male"
-                                                        ? "Nam"
-                                                        : gender === "female"
-                                                            ? "Nữ"
-                                                            : ""}
-                                                    {skillLevel && (
-                                                        <span>
-                                                            {" "}
-                                                            · {SKILL_LABEL[skillLevel] ?? skillLevel}
-                                                        </span>
-                                                    )}
-                                                </p>
+                            <>
+                                <ul className="divide-y divide-gray-50">
+                                    {regRoots.slice(0, 3).map((root: any) => {
+                                        const guests = regGuestsOf(root.id);
+                                        return (
+                                            <div key={root.id}>
+                                                {renderRegPerson(root)}
+                                                {guests.length > 0 && (
+                                                    <ul>
+                                                        {guests.map((g: any) =>
+                                                            renderRegPerson(g, { nested: true }),
+                                                        )}
+                                                    </ul>
+                                                )}
                                             </div>
-                                        </li>
-                                    );
-                                };
-                                return (
-                                    <ul className="divide-y divide-gray-50">
-                                        {roots.map((root: any) => {
-                                            const guests = guestsOf(root.id);
-                                            return (
-                                                <div key={root.id}>
-                                                    {renderPerson(root)}
-                                                    {guests.length > 0 && (
-                                                        <ul>
-                                                            {guests.map((g: any) =>
-                                                                renderPerson(g, { nested: true }),
-                                                            )}
-                                                        </ul>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </ul>
-                                );
-                            })()
+                                        );
+                                    })}
+                                </ul>
+                                {regRoots.length > 3 && (
+                                    <button
+                                        onClick={() => setShowAllRegsModal(true)}
+                                        className="w-full mt-2 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-600 transition-colors"
+                                    >
+                                        Xem tất cả ({registrations.length} người)
+                                    </button>
+                                )}
+                            </>
                         )}
                     </div>
 
@@ -2069,6 +2067,57 @@ export default function SessionDetailPage() {
                                                     </div>
                                                 );
                                             })()}
+                                    </div>
+                                </div>
+                            </div>,
+                            document.body,
+                        )}
+
+                    {showAllRegsModal &&
+                        createPortal(
+                            <div
+                                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4"
+                                onClick={(e) => e.target === e.currentTarget && setShowAllRegsModal(false)}
+                            >
+                                <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[85vh] flex flex-col">
+                                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+                                        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                            <Users className="w-4 h-4 text-blue-600" />
+                                            Đã đăng ký ({registrations.length})
+                                        </h3>
+                                        <button
+                                            onClick={() => setShowAllRegsModal(false)}
+                                            className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                                        >
+                                            <XIcon className="w-4 h-4 text-gray-500" />
+                                        </button>
+                                    </div>
+                                    <div className="px-5 py-2 overflow-y-auto">
+                                        <ul className="divide-y divide-gray-50">
+                                            {regRoots.map((root: any) => {
+                                                const guests = regGuestsOf(root.id);
+                                                return (
+                                                    <div key={root.id}>
+                                                        {renderRegPerson(root)}
+                                                        {guests.length > 0 && (
+                                                            <ul>
+                                                                {guests.map((g: any) =>
+                                                                    renderRegPerson(g, { nested: true }),
+                                                                )}
+                                                            </ul>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </ul>
+                                    </div>
+                                    <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
+                                        <button
+                                            onClick={() => setShowAllRegsModal(false)}
+                                            className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
+                                        >
+                                            Đóng
+                                        </button>
                                     </div>
                                 </div>
                             </div>,
