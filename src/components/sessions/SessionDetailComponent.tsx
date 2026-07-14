@@ -292,6 +292,7 @@ export default function SessionDetailPage() {
     >(null);
 
     const [showAllRegsModal, setShowAllRegsModal] = useState(false);
+    const [allRegsModalVisible, setAllRegsModalVisible] = useState(false);
 
     const [guestConfirmPayload, setGuestConfirmPayload] = useState<{
         hostRegistrationId: string;
@@ -299,6 +300,10 @@ export default function SessionDetailPage() {
         guestTotal: number;
         deadline: string;
     } | null>(null);
+
+    const [showAmountsModal, setShowAmountsModal] = useState(false);
+    const [amountsModalVisible, setAmountsModalVisible] = useState(false);
+
 
     const fetchSession = async () => {
         try {
@@ -319,8 +324,12 @@ export default function SessionDetailPage() {
                     ? "Đã trừ ví cho khách đi cùng"
                     : "Khách đi cùng sẽ tự thanh toán tiền mặt",
             );
-            fetchSession();
-            fetchRegistrations();
+            if (mode === "grouped") {
+                router.push(`/sessions/${id}/bill?method=wallet`);
+            } else {
+                fetchSession();
+                fetchRegistrations();
+            }
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? "Có lỗi xảy ra");
         } finally {
@@ -353,19 +362,29 @@ export default function SessionDetailPage() {
             })
             .on(
                 "postgres_changes",
-                { event: "*", schema: "public", table: "registrations", filter: `session_id=eq.${id}` },
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "registrations",
+                    filter: `session_id=eq.${id}`,
+                },
                 () => {
                     fetchSession();
                     fetchRegistrations();
-                }
+                },
             )
             .on(
                 "postgres_changes",
-                { event: "*", schema: "public", table: "sessions", filter: `id=eq.${id}` },
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "sessions",
+                    filter: `id=eq.${id}`,
+                },
                 () => {
                     fetchSession();
                     fetchRegistrations();
-                }
+                },
             )
             .subscribe();
         return () => {
@@ -429,6 +448,30 @@ export default function SessionDetailPage() {
             setCancelPhase("idle");
             toast.error(err?.response?.data?.message ?? "Không thể hủy");
         }
+    };
+
+    const openAmountsModal = () => {
+        setShowAmountsModal(true);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => setAmountsModalVisible(true));
+        });
+    };
+
+    const closeAmountsModal = () => {
+        setAmountsModalVisible(false);
+        setTimeout(() => setShowAmountsModal(false), 200);
+    };
+
+    const openAllRegsModal = () => {
+        setShowAllRegsModal(true);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => setAllRegsModalVisible(true));
+        });
+    };
+
+    const closeAllRegsModal = () => {
+        setAllRegsModalVisible(false);
+        setTimeout(() => setShowAllRegsModal(false), 200);
     };
 
     const openPayModal = () => {
@@ -530,11 +573,16 @@ export default function SessionDetailPage() {
     const filledSlots = (session.max_slots ?? 0) - (session.available_slots ?? 0);
     const slotRatio = session.max_slots > 0 ? filledSlots / session.max_slots : 0;
     const slotPct = Math.round(Math.min(1, slotRatio) * 100);
-    const slotBarColor = isFull
-        ? "#ef4444"
-        : slotRatio >= 0.6
-            ? "#f59e0b"
-            : "#22c55e";
+
+    const slotDimmed = session.status === "waiting_payment" || session.status === "completed";
+
+    const slotBarColor = slotDimmed
+        ? "#9ca3af"
+        : isFull
+            ? "#ef4444"
+            : slotRatio >= 0.6
+                ? "#f59e0b"
+                : "#22c55e";
 
     const statusPillCls =
         myReg && (effectiveStatus === "open" || effectiveStatus === "full")
@@ -569,7 +617,6 @@ export default function SessionDetailPage() {
                                 : effectiveStatus === "cancelled"
                                     ? "Đã hủy"
                                     : effectiveStatus;
-
 
     const regRoots = registrations.filter((m: any) => !m.host_registration_id);
     const regGuestsOf = (hostId: string) =>
@@ -627,6 +674,236 @@ export default function SessionDetailPage() {
         );
     };
 
+    const renderPersonAmounts = () => (
+        <div className="space-y-2">
+            {registrations
+                .filter(
+                    (r) =>
+                        !r.host_registration_id &&
+                        r.participation_status === "confirmed",
+                )
+                .map((r: any) => {
+                    const guests = registrations.filter(
+                        (g) =>
+                            g.host_registration_id === r.id &&
+                            g.participation_status === "confirmed",
+                    );
+                    const name = r.users?.full_name ?? r.guest_full_name ?? "?";
+                    const isMe = r.id === myReg?.id;
+                    const gender = r.users?.gender ?? r.guest_gender;
+                    const defaultPrice =
+                        gender === "female"
+                            ? (session.price_female ?? session.price_per_slot ?? 0)
+                            : (session.price_male ?? session.price_per_slot ?? 0);
+
+                    const guestDefaultPrice = (g: any) => {
+                        const gGender = g.guest_gender;
+                        return gGender === "female"
+                            ? (session.price_female ?? session.price_per_slot ?? 0)
+                            : (session.price_male ?? session.price_per_slot ?? 0);
+                    };
+                    const groupedWithHostGuests = guests.filter(
+                        (g: any) => g.payment_method === "grouped_with_host",
+                    );
+                    const groupedWithHostTotal = groupedWithHostGuests.reduce(
+                        (s: number, g: any) =>
+                            s + (g.amount_override ?? guestDefaultPrice(g)),
+                        0,
+                    );
+
+                    const hostOwnAmount = r.amount_override ?? defaultPrice;
+                    const amount = hostOwnAmount + groupedWithHostTotal;
+
+                    const combinedBaseAmount =
+                        (r.base_amount ?? 0) +
+                        groupedWithHostGuests.reduce(
+                            (s: number, g: any) => s + (g.base_amount ?? 0),
+                            0,
+                        );
+                    const combinedOtherFeeAmount =
+                        (r.other_fee_amount ?? 0) +
+                        groupedWithHostGuests.reduce(
+                            (s: number, g: any) => s + (g.other_fee_amount ?? 0),
+                            0,
+                        );
+                    const combinedOtherFeeNote = [
+                        r.other_fee_note,
+                        ...groupedWithHostGuests.map((g: any) => g.other_fee_note),
+                    ]
+                        .filter(Boolean)
+                        .join(", ");
+                    const hasBreakdown =
+                        r.base_amount != null && combinedOtherFeeAmount > 0;
+
+                    const allGuestsTotal = guests.reduce((s: number, g: any) => {
+                        const gDefaultPrice = guestDefaultPrice(g);
+                        const gAmount = g.amount_override ?? gDefaultPrice;
+                        return s + gAmount;
+                    }, 0);
+                    const groupTotal = hostOwnAmount + allGuestsTotal;
+
+                    return (
+                        <div
+                            key={r.id}
+                            className={`rounded-xl px-3 py-2.5 ${isMe ? "bg-blue-50 border border-blue-100" : "bg-gray-50"}`}
+                        >
+                            <div className="flex justify-between items-center">
+                                <span
+                                    className={`text-sm font-medium ${isMe ? "text-blue-700" : "text-gray-700"}`}
+                                >
+                                    {name}{" "}
+                                    {isMe && (
+                                        <span className="text-xs font-normal text-blue-400">
+                                            (bạn)
+                                        </span>
+                                    )}
+                                    {(() => {
+                                        const badge = getPaymentMethodBadge(r);
+                                        if (!badge) return null;
+                                        return (
+                                            <span
+                                                className={`ml-1.5 inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${badge.cls}`}
+                                            >
+                                                {badge.icon} {badge.label}
+                                            </span>
+                                        );
+                                    })()}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    {r.payment_status === "confirmed" ? (
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                    ) : (
+                                        <Hourglass className="w-3.5 h-3.5 text-amber-400" />
+                                    )}
+                                    <span
+                                        className={`text-sm font-bold ${isMe ? "text-blue-600" : "text-gray-900"}`}
+                                    >
+                                        {fmt(amount)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {hasBreakdown && (
+                                <p className="text-[11px] text-gray-400 mt-1">
+                                    Sân + cầu:{" "}
+                                    <span className="font-medium text-gray-500">
+                                        {fmt(combinedBaseAmount)}
+                                    </span>
+                                    {" + "}
+                                    <span className="font-medium text-amber-600">
+                                        {fmt(combinedOtherFeeAmount)}
+                                    </span>
+                                    {combinedOtherFeeNote && (
+                                        <span className="italic"> ({combinedOtherFeeNote})</span>
+                                    )}
+                                    {" = "}
+                                    <span
+                                        className={`font-semibold ${isMe ? "text-blue-600" : "text-gray-600"}`}
+                                    >
+                                        {fmt(amount)}
+                                    </span>
+                                </p>
+                            )}
+
+                            {guests.map((g: any) => {
+                                const gGender = g.guest_gender;
+                                const gDefaultPrice =
+                                    gGender === "female"
+                                        ? (session.price_female ?? session.price_per_slot ?? 0)
+                                        : (session.price_male ?? session.price_per_slot ?? 0);
+                                const gAmount = g.amount_override ?? gDefaultPrice;
+                                const gHasBreakdown =
+                                    g.base_amount != null &&
+                                    g.other_fee_amount != null &&
+                                    g.other_fee_amount > 0;
+                                const isGuestPaid = g.payment_status === "confirmed";
+                                const isPendingWallet =
+                                    g.payment_method === "wallet_pending_confirm";
+                                const isGroupedWithHost =
+                                    g.payment_method === "grouped_with_host";
+                                const gBadge = getPaymentMethodBadge(g);
+                                return (
+                                    <div
+                                        key={g.id}
+                                        className="mt-2 pl-3 border-l-2 border-purple-100"
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-purple-600 flex flex-wrap items-center gap-1">
+                                                + {g.guest_full_name}
+                                                <span className="text-gray-400">(đi cùng)</span>
+                                                {isPendingWallet && (
+                                                    <span className="text-amber-500">
+                                                        · chờ xác nhận
+                                                    </span>
+                                                )}
+                                                {gBadge && (
+                                                    <span
+                                                        className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${gBadge.cls}`}
+                                                    >
+                                                        {gBadge.icon} {gBadge.label}
+                                                    </span>
+                                                )}
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                {isGroupedWithHost ? (
+                                                    <span className="text-[11px] text-gray-400 italic">
+                                                        đã gộp vào {name}
+                                                    </span>
+                                                ) : (
+                                                    <>
+                                                        {isGuestPaid ? (
+                                                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                                        ) : (
+                                                            <Hourglass className="w-3 h-3 text-amber-400" />
+                                                        )}
+                                                        <span className="text-xs font-semibold text-gray-600">
+                                                            {fmt(gAmount)}
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {gHasBreakdown && !isGroupedWithHost && (
+                                            <p className="text-[11px] text-gray-400 mt-0.5">
+                                                Sân + cầu:{" "}
+                                                <span className="font-medium text-gray-500">
+                                                    {fmt(g.base_amount)}
+                                                </span>
+                                                {" + "}
+                                                <span className="font-medium text-amber-600">
+                                                    {fmt(g.other_fee_amount)}
+                                                </span>
+                                                {g.other_fee_note && (
+                                                    <span className="italic"> ({g.other_fee_note})</span>
+                                                )}
+                                                {" = "}
+                                                <span className="font-semibold text-gray-600">
+                                                    {fmt(gAmount)}
+                                                </span>
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+
+                            {guests.length > 0 && (
+                                <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200/70">
+                                    <span className="text-xs font-semibold text-gray-500">
+                                        Tổng cộng
+                                    </span>
+                                    <span
+                                        className={`text-sm font-bold ${isMe ? "text-blue-600" : "text-gray-900"}`}
+                                    >
+                                        {fmt(groupTotal)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+        </div>
+    );
+
     return (
         <>
             <style>{`
@@ -655,7 +932,10 @@ export default function SessionDetailPage() {
                         onClick={() => {
                             sessionStorage.setItem("activity:return-tab", "sessions");
                             const doNavigate = () => router.push("/activity");
-                            if (typeof document !== "undefined" && (document as any).startViewTransition) {
+                            if (
+                                typeof document !== "undefined" &&
+                                (document as any).startViewTransition
+                            ) {
                                 (document as any).startViewTransition(doNavigate);
                             } else {
                                 doNavigate();
@@ -750,7 +1030,14 @@ export default function SessionDetailPage() {
                                     Chỗ trống
                                 </span>
                                 <span
-                                    className={`text-xs font-semibold ${isFull ? "text-red-500" : slotRatio >= 0.6 ? "text-amber-500" : "text-emerald-600"}`}
+                                    className={`text-xs font-semibold ${slotDimmed
+                                        ? "text-gray-400"
+                                        : isFull
+                                            ? "text-red-500"
+                                            : slotRatio >= 0.6
+                                                ? "text-amber-500"
+                                                : "text-emerald-600"
+                                        }`}
                                 >
                                     {isFull
                                         ? "Đã hết chỗ"
@@ -773,60 +1060,7 @@ export default function SessionDetailPage() {
                     </div>
 
                     {/* Registrations list */}
-                    <div
-                        className="bg-white rounded-2xl p-5 shadow-sm"
-                        style={{ animation: "fadeSlideUp .35s ease both", animationDelay: "40ms" }}
-                    >
-                        <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <Users className="w-4 h-4 text-blue-600" />
-                            Đã đăng ký ({registrations.length})
-                        </h3>
-                        {loadingRegs ? (
-                            <div className="space-y-3">
-                                {[...Array(3)].map((_, i) => (
-                                    <div key={i} className="flex items-center gap-3 animate-pulse">
-                                        <div className="w-9 h-9 rounded-full bg-gray-100" />
-                                        <div className="flex-1 space-y-1.5">
-                                            <div className="h-3 bg-gray-100 rounded w-2/3" />
-                                            <div className="h-2.5 bg-gray-100 rounded w-1/3" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : registrations.length === 0 ? (
-                            <p className="text-sm text-gray-400 text-center py-6">
-                                Chưa có ai đăng ký buổi này
-                            </p>
-                        ) : (
-                            <>
-                                <ul className="divide-y divide-gray-50">
-                                    {regRoots.slice(0, 3).map((root: any) => {
-                                        const guests = regGuestsOf(root.id);
-                                        return (
-                                            <div key={root.id}>
-                                                {renderRegPerson(root)}
-                                                {guests.length > 0 && (
-                                                    <ul>
-                                                        {guests.map((g: any) =>
-                                                            renderRegPerson(g, { nested: true }),
-                                                        )}
-                                                    </ul>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </ul>
-                                {regRoots.length > 3 && (
-                                    <button
-                                        onClick={() => setShowAllRegsModal(true)}
-                                        className="w-full mt-2 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-600 transition-colors"
-                                    >
-                                        Xem tất cả ({registrations.length} người)
-                                    </button>
-                                )}
-                            </>
-                        )}
-                    </div>
+
 
                     {/* Chi phí buổi */}
                     {(session.status === "waiting_payment" ||
@@ -931,250 +1165,20 @@ export default function SessionDetailPage() {
                                         </span>
                                     </div>
                                 </div>
-                                {registrations.filter(
-                                    (r) => r.participation_status === "confirmed",
-                                ).length > 0 && (
-                                        <div className="border-t border-gray-100 pt-3">
-                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                                                Số tiền từng người
-                                            </p>
-                                            <div className="space-y-2">
-                                                {registrations
-                                                    .filter(
-                                                        (r) =>
-                                                            !r.host_registration_id &&
-                                                            r.participation_status === "confirmed",
-                                                    )
-                                                    .map((r: any) => {
-                                                        const guests = registrations.filter(
-                                                            (g) =>
-                                                                g.host_registration_id === r.id &&
-                                                                g.participation_status === "confirmed",
-                                                        );
-                                                        const name =
-                                                            r.users?.full_name ?? r.guest_full_name ?? "?";
-                                                        const isMe = r.id === myReg?.id;
-                                                        const gender = r.users?.gender ?? r.guest_gender;
-                                                        const defaultPrice =
-                                                            gender === "female"
-                                                                ? (session.price_female ??
-                                                                    session.price_per_slot ??
-                                                                    0)
-                                                                : (session.price_male ??
-                                                                    session.price_per_slot ??
-                                                                    0);
-
-                                                        const guestDefaultPrice = (g: any) => {
-                                                            const gGender = g.guest_gender;
-                                                            return gGender === "female"
-                                                                ? (session.price_female ??
-                                                                    session.price_per_slot ??
-                                                                    0)
-                                                                : (session.price_male ??
-                                                                    session.price_per_slot ??
-                                                                    0);
-                                                        };
-                                                        const groupedWithHostGuests = guests.filter(
-                                                            (g: any) => g.payment_method === "grouped_with_host",
-                                                        );
-                                                        const groupedWithHostTotal =
-                                                            groupedWithHostGuests.reduce(
-                                                                (s: number, g: any) =>
-                                                                    s + (g.amount_override ?? guestDefaultPrice(g)),
-                                                                0,
-                                                            );
-
-                                                        const hostOwnAmount = r.amount_override ?? defaultPrice;
-                                                        const amount = hostOwnAmount + groupedWithHostTotal;
-
-                                                        const combinedBaseAmount =
-                                                            (r.base_amount ?? 0) +
-                                                            groupedWithHostGuests.reduce(
-                                                                (s: number, g: any) => s + (g.base_amount ?? 0),
-                                                                0,
-                                                            );
-                                                        const combinedOtherFeeAmount =
-                                                            (r.other_fee_amount ?? 0) +
-                                                            groupedWithHostGuests.reduce(
-                                                                (s: number, g: any) =>
-                                                                    s + (g.other_fee_amount ?? 0),
-                                                                0,
-                                                            );
-                                                        const combinedOtherFeeNote = [
-                                                            r.other_fee_note,
-                                                            ...groupedWithHostGuests.map(
-                                                                (g: any) => g.other_fee_note,
-                                                            ),
-                                                        ]
-                                                            .filter(Boolean)
-                                                            .join(", ");
-                                                        const hasBreakdown =
-                                                            r.base_amount != null && combinedOtherFeeAmount > 0;
-                                                        return (
-                                                            <div
-                                                                key={r.id}
-                                                                className={`rounded-xl px-3 py-2.5 ${isMe ? "bg-blue-50 border border-blue-100" : "bg-gray-50"}`}
-                                                            >
-                                                                <div className="flex justify-between items-center">
-                                                                    <span
-                                                                        className={`text-sm font-medium ${isMe ? "text-blue-700" : "text-gray-700"}`}
-                                                                    >
-                                                                        {name}{" "}
-                                                                        {isMe && (
-                                                                            <span className="text-xs font-normal text-blue-400">
-                                                                                (bạn)
-                                                                            </span>
-                                                                        )}
-                                                                        {(() => {
-                                                                            const badge = getPaymentMethodBadge(r);
-                                                                            if (!badge) return null;
-                                                                            return (
-                                                                                <span
-                                                                                    className={`ml-1.5 inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${badge.cls}`}
-                                                                                >
-                                                                                    {badge.icon} {badge.label}
-                                                                                </span>
-                                                                            );
-                                                                        })()}
-                                                                    </span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        {r.payment_status === "confirmed" ? (
-                                                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                                                                        ) : (
-                                                                            <Hourglass className="w-3.5 h-3.5 text-amber-400" />
-                                                                        )}
-                                                                        <span
-                                                                            className={`text-sm font-bold ${isMe ? "text-blue-600" : "text-gray-900"}`}
-                                                                        >
-                                                                            {fmt(amount)}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-
-                                                                {hasBreakdown && (
-                                                                    <p className="text-[11px] text-gray-400 mt-1">
-                                                                        Sân + cầu:{" "}
-                                                                        <span className="font-medium text-gray-500">
-                                                                            {fmt(combinedBaseAmount)}
-                                                                        </span>
-                                                                        {" + "}
-                                                                        <span className="font-medium text-amber-600">
-                                                                            {fmt(combinedOtherFeeAmount)}
-                                                                        </span>
-                                                                        {combinedOtherFeeNote && (
-                                                                            <span className="italic">
-                                                                                {" "}
-                                                                                ({combinedOtherFeeNote})
-                                                                            </span>
-                                                                        )}
-                                                                        {" = "}
-                                                                        <span
-                                                                            className={`font-semibold ${isMe ? "text-blue-600" : "text-gray-600"}`}
-                                                                        >
-                                                                            {fmt(amount)}
-                                                                        </span>
-                                                                    </p>
-                                                                )}
-
-                                                                {guests.map((g: any) => {
-                                                                    const gGender = g.guest_gender;
-                                                                    const gDefaultPrice =
-                                                                        gGender === "female"
-                                                                            ? (session.price_female ??
-                                                                                session.price_per_slot ??
-                                                                                0)
-                                                                            : (session.price_male ??
-                                                                                session.price_per_slot ??
-                                                                                0);
-                                                                    const gAmount =
-                                                                        g.amount_override ?? gDefaultPrice;
-                                                                    const gHasBreakdown =
-                                                                        g.base_amount != null &&
-                                                                        g.other_fee_amount != null &&
-                                                                        g.other_fee_amount > 0;
-                                                                    const isGuestPaid =
-                                                                        g.payment_status === "confirmed";
-                                                                    const isPendingWallet =
-                                                                        g.payment_method === "wallet_pending_confirm";
-                                                                    const isGroupedWithHost =
-                                                                        g.payment_method === "grouped_with_host";
-                                                                    const gBadge = getPaymentMethodBadge(g);
-                                                                    return (
-                                                                        <div
-                                                                            key={g.id}
-                                                                            className="mt-2 pl-3 border-l-2 border-purple-100"
-                                                                        >
-                                                                            <div className="flex justify-between items-center">
-                                                                                <span className="text-xs text-purple-600 flex flex-wrap items-center gap-1">
-                                                                                    + {g.guest_full_name}
-                                                                                    <span className="text-gray-400">
-                                                                                        (đi cùng)
-                                                                                    </span>
-                                                                                    {isPendingWallet && (
-                                                                                        <span className="text-amber-500">
-                                                                                            · chờ xác nhận
-                                                                                        </span>
-                                                                                    )}
-                                                                                    {gBadge && (
-                                                                                        <span
-                                                                                            className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${gBadge.cls}`}
-                                                                                        >
-                                                                                            {gBadge.icon} {gBadge.label}
-                                                                                        </span>
-                                                                                    )}
-                                                                                </span>
-                                                                                <div className="flex items-center gap-2">
-                                                                                    {isGroupedWithHost ? (
-                                                                                        <span className="text-[11px] text-gray-400 italic">
-                                                                                            đã gộp vào {name}
-                                                                                        </span>
-                                                                                    ) : (
-                                                                                        <>
-                                                                                            {isGuestPaid ? (
-                                                                                                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                                                                                            ) : (
-                                                                                                <Hourglass className="w-3 h-3 text-amber-400" />
-                                                                                            )}
-                                                                                            <span className="text-xs font-semibold text-gray-600">
-                                                                                                {fmt(gAmount)}
-                                                                                            </span>
-                                                                                        </>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                            {gHasBreakdown && !isGroupedWithHost && (
-                                                                                <p className="text-[11px] text-gray-400 mt-0.5">
-                                                                                    Sân + cầu:{" "}
-                                                                                    <span className="font-medium text-gray-500">
-                                                                                        {fmt(g.base_amount)}
-                                                                                    </span>
-                                                                                    {" + "}
-                                                                                    <span className="font-medium text-amber-600">
-                                                                                        {fmt(g.other_fee_amount)}
-                                                                                    </span>
-                                                                                    {g.other_fee_note && (
-                                                                                        <span className="italic">
-                                                                                            {" "}
-                                                                                            ({g.other_fee_note})
-                                                                                        </span>
-                                                                                    )}
-                                                                                    {" = "}
-                                                                                    <span className="font-semibold text-gray-600">
-                                                                                        {fmt(gAmount)}
-                                                                                    </span>
-                                                                                </p>
-                                                                            )}
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        );
-                                                    })}
-                                            </div>
-                                        </div>
+                                {registrations.filter((r) => r.participation_status === "confirmed")
+                                    .length > 0 && (
+                                        <button
+                                            onClick={openAmountsModal}
+                                            className="w-full py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-700 transition-colors flex items-center justify-center gap-1.5"
+                                        >
+                                            <Users className="w-3.5 h-3.5" />
+                                            Mỗi người cần thanh toán
+                                        </button>
                                     )}
                             </div>
                         )}
+
+
 
                     {myReg && myReg.participation_status === "pending_approval" && (
                         <div
@@ -1195,118 +1199,97 @@ export default function SessionDetailPage() {
                         </div>
                     )}
 
-                    {myReg && myReg.participation_status === "awaiting_checkin" && (
-                        <div
-                            className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3"
-                            style={{ animation: "fadeSlideUp .35s ease both" }}
-                        >
-                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                                <Hourglass className="w-5 h-5 text-slate-500" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold text-gray-900">
-                                    Đang chờ điểm danh
-                                </p>
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                    Admin sẽ điểm danh khi buổi bắt đầu. Sau khi buổi kết thúc, số
-                                    tiền cần thanh toán sẽ hiện ở đây.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {myReg &&
-                        myReg.participation_status === "confirmed" &&
-                        myReg.payment_status === "pending" &&
-                        !myReg.amount_override && (
-                            <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                                    <Hourglass className="w-5 h-5 text-blue-500" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-900">
-                                        Đã điểm danh có mặt
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-0.5">
-                                        Số tiền cần thanh toán sẽ được admin thông báo sau khi buổi
-                                        kết thúc.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
                     {myReg &&
                         hasPendingGuestWallet &&
-                        myReg.payment_method === "wallet_pending_confirm" && (
-                            <div
-                                className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 space-y-3"
-                                style={{ animation: "fadeSlideUp .35s ease both" }}
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                                        <Wallet className="w-4.5 h-4.5 text-amber-600" />
+                        myReg.payment_method === "wallet_pending_confirm" &&
+                        (() => {
+                            const pendingGuests = myGuests.filter(
+                                (g: any) => g.payment_method === "wallet_pending_confirm",
+                            );
+                            const pendingGuestsTotal = pendingGuests.reduce(
+                                (s: number, g: any) => s + (g.amount_override ?? 0),
+                                0,
+                            );
+                            const groupTotal = soloAmount + pendingGuestsTotal;
+
+                            return (
+                                <div
+                                    className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 space-y-3"
+                                    style={{ animation: "fadeSlideUp .35s ease both" }}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                                            <Wallet className="w-4.5 h-4.5 text-amber-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-amber-800">
+                                                Cần xác nhận thanh toán cho khách đi cùng
+                                            </p>
+                                            <p className="text-xs text-amber-600 mt-0.5">
+                                                Chọn trừ ví chung hay để khách tự thanh toán tiền mặt.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-amber-800">
-                                            Cần xác nhận thanh toán cho khách đi cùng
-                                        </p>
-                                        <p className="text-xs text-amber-600 mt-0.5">
-                                            Bạn có khách đi cùng (
-                                            {myGuests
-                                                .filter(
-                                                    (g: any) =>
-                                                        g.payment_method === "wallet_pending_confirm",
-                                                )
-                                                .map((g: any) => g.guest_full_name)
-                                                .join(", ")}
-                                            ) cần thanh toán{" "}
-                                            <strong>
-                                                {fmt(
-                                                    myGuests
-                                                        .filter(
-                                                            (g: any) =>
-                                                                g.payment_method ===
-                                                                "wallet_pending_confirm",
-                                                        )
-                                                        .reduce(
-                                                            (s: number, g: any) =>
-                                                                s + (g.amount_override ?? 0),
-                                                            0,
-                                                        ),
-                                                )}
-                                            </strong>
-                                            . Chọn trừ ví chung hay để họ tự thanh toán tiền mặt.
-                                        </p>
+
+                                    <div className="bg-white/70 rounded-xl px-3 py-2.5 space-y-1.5">
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-600">Phần của bạn</span>
+                                            <span className="font-semibold text-gray-900">
+                                                {fmt(soloAmount)}
+                                            </span>
+                                        </div>
+                                        {pendingGuests.map((g: any) => (
+                                            <div
+                                                key={g.id}
+                                                className="flex justify-between items-center text-sm"
+                                            >
+                                                <span className="text-purple-600">
+                                                    + {g.guest_full_name}
+                                                </span>
+                                                <span className="font-semibold text-gray-700">
+                                                    {fmt(g.amount_override ?? 0)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between items-center text-sm pt-1.5 border-t border-amber-100">
+                                            <span className="font-semibold text-amber-700">
+                                                Tổng cộng
+                                            </span>
+                                            <span className="font-bold text-amber-700">
+                                                {fmt(groupTotal)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleInlineGuestConfirm("grouped")}
+                                            disabled={guestConfirmSubmitting !== null}
+                                            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                        >
+                                            {guestConfirmSubmitting === "grouped" ? (
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            ) : (
+                                                <Wallet className="w-3.5 h-3.5" />
+                                            )}
+                                            Gộp vào ví
+                                        </button>
+                                        <button
+                                            onClick={() => handleInlineGuestConfirm("separate")}
+                                            disabled={guestConfirmSubmitting !== null}
+                                            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 transition-colors"
+                                        >
+                                            {guestConfirmSubmitting === "separate" ? (
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            ) : (
+                                                <span>💵</span>
+                                            )}
+                                            Khách tự trả
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handleInlineGuestConfirm("grouped")}
-                                        disabled={guestConfirmSubmitting !== null}
-                                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                                    >
-                                        {guestConfirmSubmitting === "grouped" ? (
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                        ) : (
-                                            <Wallet className="w-3.5 h-3.5" />
-                                        )}
-                                        Gộp vào ví
-                                    </button>
-                                    <button
-                                        onClick={() => handleInlineGuestConfirm("separate")}
-                                        disabled={guestConfirmSubmitting !== null}
-                                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 transition-colors"
-                                    >
-                                        {guestConfirmSubmitting === "separate" ? (
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                        ) : (
-                                            <span>💵</span>
-                                        )}
-                                        Khách tự trả
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                     {myReg &&
                         myReg.payment_status === "confirmed" &&
@@ -1321,7 +1304,8 @@ export default function SessionDetailPage() {
                                 (s: number, g: any) => s + (g.amount_override ?? 0),
                                 0,
                             );
-                            const paidTotal = (myReg.amount_override ?? 0) + groupedGuestsTotal;
+                            const paidTotal =
+                                (myReg.amount_override ?? 0) + groupedGuestsTotal;
 
                             return (
                                 <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3">
@@ -1375,6 +1359,159 @@ export default function SessionDetailPage() {
                             </div>
                         </div>
                     )}
+
+                    <div
+                        className="bg-white rounded-2xl p-5 shadow-sm"
+                        style={{
+                            animation: "fadeSlideUp .35s ease both",
+                            animationDelay: "40ms",
+                        }}
+                    >
+                        <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <Users className="w-4 h-4 text-blue-600" />
+                            Đã đăng ký ({registrations.length})
+                        </h3>
+                        {loadingRegs ? (
+                            <div className="space-y-3">
+                                {[...Array(3)].map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className="flex items-center gap-3 animate-pulse"
+                                    >
+                                        <div className="w-9 h-9 rounded-full bg-gray-100" />
+                                        <div className="flex-1 space-y-1.5">
+                                            <div className="h-3 bg-gray-100 rounded w-2/3" />
+                                            <div className="h-2.5 bg-gray-100 rounded w-1/3" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : registrations.length === 0 ? (
+                            <p className="text-sm text-gray-400 text-center py-6">
+                                Chưa có ai đăng ký buổi này
+                            </p>
+                        ) : (
+                            <>
+                                <ul className="divide-y divide-gray-50">
+                                    {regRoots.slice(0, 3).map((root: any) => {
+                                        const guests = regGuestsOf(root.id);
+                                        return (
+                                            <div key={root.id}>
+                                                {renderRegPerson(root)}
+                                                {guests.length > 0 && (
+                                                    <ul>
+                                                        {guests.map((g: any) =>
+                                                            renderRegPerson(g, { nested: true }),
+                                                        )}
+                                                    </ul>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </ul>
+                                {regRoots.length > 3 && (
+                                    <button
+                                        onClick={openAllRegsModal}
+                                        className="w-full mt-2 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-600 transition-colors"
+                                    >
+                                        Xem tất cả ({registrations.length} người)
+                                    </button>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    {myReg && myReg.participation_status === "awaiting_checkin" && (
+                        <div
+                            className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3"
+                            style={{ animation: "fadeSlideUp .35s ease both" }}
+                        >
+                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                                <Hourglass className="w-5 h-5 text-slate-500" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-900">
+                                    Đang chờ điểm danh
+                                </p>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    Admin sẽ điểm danh khi buổi bắt đầu. Sau khi buổi kết thúc, số
+                                    tiền cần thanh toán sẽ hiện ở đây.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {myReg &&
+                        myReg.participation_status === "confirmed" &&
+                        myReg.payment_status === "pending" &&
+                        !myReg.amount_override && (
+                            <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                    <Hourglass className="w-5 h-5 text-blue-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900">
+                                        Đã điểm danh có mặt
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                        Số tiền cần thanh toán sẽ được admin thông báo sau khi buổi
+                                        kết thúc.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                    {showAmountsModal &&
+                        createPortal(
+                            <div
+                                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                                style={{
+                                    background: "rgba(0,0,0,0.4)",
+                                    backdropFilter: "blur(2px)",
+                                    opacity: amountsModalVisible ? 1 : 0,
+                                    transition: "opacity 200ms ease-out",
+                                }}
+                                onClick={closeAmountsModal}
+                            >
+                                <div
+                                    className="w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[85vh] flex flex-col"
+                                    style={{
+                                        transform: amountsModalVisible
+                                            ? "scale(1) translateY(0)"
+                                            : "scale(0.95) translateY(8px)",
+                                        opacity: amountsModalVisible ? 1 : 0,
+                                        transition:
+                                            "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+                                        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                            <Users className="w-4 h-4 text-blue-600" />
+                                            Số tiền từng người
+                                        </h3>
+                                        <button
+                                            onClick={closeAmountsModal}
+                                            className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                                        >
+                                            <XIcon className="w-4 h-4 text-gray-500" />
+                                        </button>
+                                    </div>
+                                    <div className="px-5 py-4 overflow-y-auto">
+                                        {renderPersonAmounts()}
+                                    </div>
+                                    <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
+                                        <button
+                                            onClick={closeAmountsModal}
+                                            className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
+                                        >
+                                            Đóng
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>,
+                            document.body,
+                        )}
 
                     {showGuestModal &&
                         createPortal(
@@ -1514,7 +1651,8 @@ export default function SessionDetailPage() {
                         {myReg &&
                             myReg.payment_status === "pending" &&
                             !myReg.amount_override &&
-                            !myReg.added_by_user_id && (
+                            !myReg.added_by_user_id &&
+                            myReg.participation_status !== "confirmed" && (
                                 <MorphButton
                                     phase={cancelPhase}
                                     label="Hủy đăng ký"
@@ -1762,8 +1900,8 @@ export default function SessionDetailPage() {
                                                             >
                                                                 <div className="bg-blue-50 rounded-xl p-4">
                                                                     <p className="text-sm font-semibold text-blue-900 mb-1 flex items-center gap-2">
-                                                                        <Wallet className="w-4 h-4" /> Thanh toán bằng
-                                                                        Ví BNB
+                                                                        <Wallet className="w-4 h-4" /> Thanh toán
+                                                                        bằng Ví BNB
                                                                     </p>
                                                                     <p className="text-xs text-blue-600">
                                                                         Số dư ví sẽ bị trừ ngay lập tức. Admin không
@@ -1843,7 +1981,9 @@ export default function SessionDetailPage() {
 
                                                                 const handleCopyContent = () => {
                                                                     navigator.clipboard.writeText(ref);
-                                                                    toast.success("Đã copy nội dung chuyển khoản");
+                                                                    toast.success(
+                                                                        "Đã copy nội dung chuyển khoản",
+                                                                    );
                                                                 };
 
                                                                 const handleSaveQr = async () => {
@@ -1970,8 +2110,8 @@ export default function SessionDetailPage() {
                                                                                 onClick={handleCopyContent}
                                                                                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                                                                             >
-                                                                                <Copy className="w-3.5 h-3.5" /> Sao chép
-                                                                                nội dung
+                                                                                <Copy className="w-3.5 h-3.5" /> Sao
+                                                                                chép nội dung
                                                                             </button>
                                                                             <button
                                                                                 onClick={handleSaveQr}
@@ -2018,7 +2158,8 @@ export default function SessionDetailPage() {
                                                                         💵 Thanh toán tiền mặt
                                                                     </p>
                                                                     <p className="text-xs text-green-600">
-                                                                        Admin sẽ xác nhận sau khi nhận tiền trực tiếp.
+                                                                        Admin sẽ xác nhận sau khi nhận tiền trực
+                                                                        tiếp.
                                                                     </p>
                                                                 </div>
                                                                 <div className="flex gap-2">
@@ -2076,17 +2217,34 @@ export default function SessionDetailPage() {
                     {showAllRegsModal &&
                         createPortal(
                             <div
-                                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4"
-                                onClick={(e) => e.target === e.currentTarget && setShowAllRegsModal(false)}
+                                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                                style={{
+                                    background: "rgba(0,0,0,0.4)",
+                                    backdropFilter: "blur(2px)",
+                                    opacity: allRegsModalVisible ? 1 : 0,
+                                    transition: "opacity 200ms ease-out",
+                                }}
+                                onClick={closeAllRegsModal}
                             >
-                                <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[85vh] flex flex-col">
+                                <div
+                                    className="w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[85vh] flex flex-col"
+                                    style={{
+                                        transform: allRegsModalVisible
+                                            ? "scale(1) translateY(0)"
+                                            : "scale(0.95) translateY(8px)",
+                                        opacity: allRegsModalVisible ? 1 : 0,
+                                        transition:
+                                            "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
                                     <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
                                         <h3 className="font-bold text-gray-900 flex items-center gap-2">
                                             <Users className="w-4 h-4 text-blue-600" />
                                             Đã đăng ký ({registrations.length})
                                         </h3>
                                         <button
-                                            onClick={() => setShowAllRegsModal(false)}
+                                            onClick={closeAllRegsModal}
                                             className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
                                         >
                                             <XIcon className="w-4 h-4 text-gray-500" />
@@ -2113,7 +2271,7 @@ export default function SessionDetailPage() {
                                     </div>
                                     <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
                                         <button
-                                            onClick={() => setShowAllRegsModal(false)}
+                                            onClick={closeAllRegsModal}
                                             className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
                                         >
                                             Đóng
