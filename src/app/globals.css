@@ -7,16 +7,38 @@
     box-sizing: border-box;
   }
 
-  /* Ẩn scrollbar toàn trang nhưng vẫn scroll được */
   html,
   body {
-    -ms-overflow-style: none; /* IE/Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   html::-webkit-scrollbar,
   body::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    display: none;
   }
+}
+
+@keyframes count-rotate-up {
+  0% {
+    transform: rotateX(-90deg) translateY(55%);
+    opacity: 0;
+  }
+  100% {
+    transform: rotateX(0deg) translateY(0%);
+    opacity: 1;
+  }
+}
+
+.count-rotate-wrap {
+  perspective: 400px;
+}
+
+.count-rotate {
+  transform-origin: bottom center;
+  animation: count-rotate-up 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+  backface-visibility: hidden;
+  display: inline-block;
+  will-change: transform, opacity;
 }
 
 @layer components {

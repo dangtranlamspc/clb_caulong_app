@@ -23,6 +23,11 @@ import {
   UserX,
   UserPlus,
   Search,
+  Coins,
+  ChevronDown,
+  ChevronUp,
+  Timer,
+  Hourglass,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { activitiesApi, usersApi } from "@/lib/api";
@@ -36,6 +41,50 @@ const TYPE_META: Record<string, { icon: any; label: string }> = {
   offline_event: { icon: Flame, label: "Offline / Giao lưu" },
   poll: { icon: BarChart3, label: "Bình chọn" },
 };
+
+function TournamentHeroCard({ activity }: { activity: any }) {
+  const maxTeams = activity.detail?.max_teams;
+  const entryFee = activity.detail?.entry_fee_per_person ?? 0;
+
+  return (
+    <div className="rounded-[28px] overflow-hidden bg-gradient-to-br from-violet-600 via-fuchsia-500 to-orange-400 shadow-lg shadow-fuchsia-200/60">
+      <div className="px-5 pt-5 pb-4 flex items-start gap-3">
+        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm ring-2 ring-white/40 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+          {activity.cover_image_url ? (
+            <img src={activity.cover_image_url} className="w-full h-full object-cover" />
+          ) : (
+            activity.emoji ?? "🏆"
+          )}
+        </div>
+        <div className="min-w-0 pt-0.5">
+          <span className="inline-block text-[10px] font-bold uppercase tracking-[0.15em] text-white bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-1">
+            Giải đấu chính thức
+          </span>
+          <p className="text-lg font-black leading-tight text-white truncate mt-1.5">
+            {activity.title}
+          </p>
+        </div>
+      </div>
+
+      {(activity.event_date || activity.location) && (
+        <div className="border-t border-white/20 px-5 py-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-white/85 bg-black/5">
+          {activity.event_date && (
+            <span className="flex items-center gap-1.5">
+              <CalendarDays className="w-3.5 h-3.5" />
+              {format(new Date(activity.event_date), "EEEE, dd/MM/yyyy · HH:mm", { locale: vi })}
+            </span>
+          )}
+          {activity.location && (
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" />
+              {activity.location}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ActivityDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -92,54 +141,58 @@ export default function ActivityDetailPage() {
         </h1>
       </div>
 
-      <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-3xl flex-shrink-0 overflow-hidden">
-            {activity.cover_image_url ? (
-              <img
-                src={activity.cover_image_url}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              (activity.emoji ?? "📌")
+      {activity.type === "tournament" ? (
+        <TournamentHeroCard activity={activity} />
+      ) : (
+        <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-3xl flex-shrink-0 overflow-hidden">
+              {activity.cover_image_url ? (
+                <img
+                  src={activity.cover_image_url}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                (activity.emoji ?? "📌")
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-400 flex items-center gap-1">
+                <Icon className="w-3 h-3" /> {meta?.label}
+              </p>
+              <p className="font-bold text-gray-900 truncate">{activity.title}</p>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 text-sm text-gray-600 border-t border-gray-50 pt-3">
+            {(activity.event_date || activity.deadline) && (
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <span>
+                  {activity.deadline ? "Deadline: " : "Ngày diễn ra: "}
+                  {format(
+                    new Date(activity.deadline ?? activity.event_date),
+                    "EEEE, dd/MM/yyyy HH:mm",
+                    { locale: vi },
+                  )}
+                </span>
+              </div>
+            )}
+            {activity.location && (
+              <div className="flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <span>{activity.location}</span>
+              </div>
             )}
           </div>
-          <div className="min-w-0">
-            <p className="text-xs text-gray-400 flex items-center gap-1">
-              <Icon className="w-3 h-3" /> {meta?.label}
+
+          {activity.description && (
+            <p className="text-sm text-gray-500 border-t border-gray-50 pt-3 whitespace-pre-line">
+              {activity.description}
             </p>
-            <p className="font-bold text-gray-900 truncate">{activity.title}</p>
-          </div>
-        </div>
-
-        <div className="space-y-1.5 text-sm text-gray-600 border-t border-gray-50 pt-3">
-          {(activity.event_date || activity.deadline) && (
-            <div className="flex items-center gap-2">
-              <CalendarDays className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              <span>
-                {activity.deadline ? "Deadline: " : "Ngày diễn ra: "}
-                {format(
-                  new Date(activity.deadline ?? activity.event_date),
-                  "EEEE, dd/MM/yyyy HH:mm",
-                  { locale: vi },
-                )}
-              </span>
-            </div>
-          )}
-          {activity.location && (
-            <div className="flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              <span>{activity.location}</span>
-            </div>
           )}
         </div>
-
-        {activity.description && (
-          <p className="text-sm text-gray-500 border-t border-gray-50 pt-3 whitespace-pre-line">
-            {activity.description}
-          </p>
-        )}
-      </div>
+      )}
 
       {activity.type === "shirt_order" && (
         <ShirtOrderSection
@@ -247,7 +300,7 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
       await activitiesApi.cancelRegistration(activity.id);
       toast.success("Đã huỷ đăng ký");
       onChanged();
-    } catch {}
+    } catch { }
   };
 
   const openPayModal = () => {
@@ -368,11 +421,10 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
                 <button
                   key={s}
                   onClick={() => setSize(s)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                    size === s
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-500 border-gray-200"
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${size === s
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-500 border-gray-200"
+                    }`}
                 >
                   {s}
                 </button>
@@ -700,7 +752,88 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
   );
 }
 
-//  Giải đấu
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function useCountdown(target?: string | null) {
+  const [time, setTime] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    expired: true,
+  });
+
+  useEffect(() => {
+    if (!target) return;
+    const targetMs = new Date(target).getTime();
+
+    const tick = () => {
+      const diff = targetMs - Date.now();
+      if (diff <= 0) {
+        setTime({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
+        return;
+      }
+      setTime({
+        days: Math.floor(diff / 86_400_000),
+        hours: Math.floor((diff % 86_400_000) / 3_600_000),
+        minutes: Math.floor((diff % 3_600_000) / 60_000),
+        seconds: Math.floor((diff % 60_000) / 1000),
+        expired: false,
+      });
+    };
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [target]);
+
+  return time;
+}
+
+function CountBox({
+  value,
+  label,
+  accent,
+  tone = "cool",
+}: {
+  value: number;
+  label: string;
+  accent?: boolean;
+  tone?: "cool" | "warm";
+}) {
+  const display = pad2(value);
+  const numberClass = accent
+    ? tone === "warm"
+      ? "text-rose-600"
+      : "text-indigo-600"
+    : "text-white";
+  const labelClass = accent
+    ? tone === "warm"
+      ? "text-rose-600/70"
+      : "text-indigo-600/70"
+    : "text-white/80";
+  return (
+    <div
+      className={`rounded-2xl py-2.5 text-center border transition-colors ${accent
+        ? "bg-white border-white shadow-sm"
+        : "bg-white/15 border-white/25"
+        }`}
+    >
+      <div className="count-rotate-wrap h-8 flex items-center justify-center">
+        <span
+          key={display}
+          className={`count-rotate text-2xl font-black leading-8 ${numberClass}`}
+        >
+          {display}
+        </span>
+      </div>
+      <p className={`text-[10px] mt-0.5 ${labelClass}`}>{label}</p>
+    </div>
+  );
+}
+
 //  Giải đấu
 function TournamentSection({ activity, myStatus, onChanged }: any) {
   const { user } = useAuthStore();
@@ -709,12 +842,37 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
   const [submitting, setSubmitting] = useState(false);
   const canRegister = activity.status === "open";
 
-  // ── Teammate modal state ──
+  const [showRules, setShowRules] = useState(false);
+
   const [showTeammateModal, setShowTeammateModal] = useState(false);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
+
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [payMethod, setPayMethod] = useState<
+    "choose" | "wallet" | "transfer" | "cash"
+  >("choose");
+  const [submittingPay, setSubmittingPay] = useState(false);
+
+  const startCountdown = useCountdown(activity.event_date);
+  const deadlineCountdown = useCountdown(activity.deadline);
+
+  const entryFee = activity.detail?.entry_fee_per_person ?? 0;
+  const maxTeams = activity.detail?.max_teams ?? null;
+  const slotCount = reg?.player2_user_id ? 2 : 1;
+  const amount = reg?.amount_override ?? entryFee * slotCount;
+
+  const isPaid = reg?.payment_status === "confirmed";
+  const isPendingConfirm = reg && !isPaid && !!reg.payment_reference;
+  const needsPayment = reg && amount > 0 && !isPaid && !isPendingConfirm;
+
+  const PAYMENT_METHOD_LABEL: Record<string, string> = {
+    wallet: "Ví BNB",
+    transfer: "Chuyển khoản",
+    cash: "Tiền mặt",
+  };
 
   const handleCancel = async () => {
     if (!confirm("Huỷ đăng ký giải đấu?")) return;
@@ -722,7 +880,7 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
       await activitiesApi.cancelRegistration(activity.id);
       toast.success("Đã huỷ đăng ký");
       onChanged();
-    } catch {}
+    } catch { }
   };
 
   const openTeammateModal = () => {
@@ -733,7 +891,6 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
     setShowTeammateModal(true);
   };
 
-  // Debounce search
   useEffect(() => {
     if (!showTeammateModal) return;
     if (!search.trim() || search.trim().length < 2) {
@@ -771,65 +928,246 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
     }
   };
 
-  return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-      <h3 className="font-bold text-gray-900">Đăng ký thi đấu</h3>
+  const openPayModal = () => {
+    setPayMethod("choose");
+    setShowPayModal(true);
+  };
 
-      {reg ? (
-        <div className="bg-emerald-50 text-emerald-700 text-sm rounded-xl px-3 py-2.5 flex items-center justify-between gap-2">
-          <span className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Đội:{" "}
-            <strong>{reg.team_name}</strong>
-          </span>
-          <button
-            onClick={handleCancel}
-            className="text-red-500 text-xs font-medium underline flex-shrink-0"
-          >
-            Huỷ
-          </button>
+  const handlePayWallet = async () => {
+    setSubmittingPay(true);
+    try {
+      await activitiesApi.payTournament(activity.id, { method: "wallet" });
+      toast.success("Đã thanh toán bằng ví BNB!");
+      setShowPayModal(false);
+      onChanged();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Thanh toán thất bại");
+    } finally {
+      setSubmittingPay(false);
+    }
+  };
+
+  const handleConfirmTransferred = async (ref: string) => {
+    setSubmittingPay(true);
+    try {
+      await activitiesApi.payTournament(activity.id, {
+        method: "transfer",
+        payment_reference: ref,
+      });
+      toast.success("Đã ghi nhận, chờ admin xác nhận!");
+      setShowPayModal(false);
+      onChanged();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Gửi thất bại");
+    } finally {
+      setSubmittingPay(false);
+    }
+  };
+
+  const handleRequestCash = async () => {
+    setSubmittingPay(true);
+    try {
+      await activitiesApi.payTournament(activity.id, { method: "cash" });
+      toast.success("Đã thông báo admin!");
+      setShowPayModal(false);
+      onChanged();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Gửi thất bại");
+    } finally {
+      setSubmittingPay(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-[28px] p-5 shadow-lg shadow-indigo-200/50 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600">
+        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-white/90">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          {startCountdown.expired ? "Giải đã bắt đầu" : "Giải bắt đầu sau"}
         </div>
-      ) : canRegister ? (
-        <div className="space-y-3">
-          <input
-            value={teamName}
-            onChange={(e) => setTeamName(e.target.value)}
-            placeholder="Tên đội của bạn"
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
-          />
-          <button
-            onClick={openTeammateModal}
-            className="w-full py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm flex items-center justify-center gap-2"
-          >
-            Đăng ký đội
-          </button>
+
+        {!startCountdown.expired ? (
+          <div className="mt-3 grid grid-cols-4 gap-2">
+            <CountBox value={startCountdown.days} label="ngày" tone="cool" />
+            <CountBox value={startCountdown.hours} label="giờ" tone="cool" />
+            <CountBox value={startCountdown.minutes} label="phút" tone="cool" />
+            <CountBox value={startCountdown.seconds} label="giây" tone="cool" accent />
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-white/90">Chúc các đội thi đấu tốt! 🏆</p>
+        )}
+      </div>
+
+      {/* Hạn đăng ký còn */}
+      {activity.deadline && (
+        <div className="rounded-[28px] p-5 shadow-lg shadow-rose-200/50 bg-gradient-to-br from-rose-500 via-pink-500 to-orange-400">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-white/90">
+              <span className="w-1.5 h-1.5 rounded-full bg-white" />
+              {deadlineCountdown.expired ? "Đã hết hạn đăng ký" : "Hạn đăng ký còn"}
+            </div>
+            <span className="text-[11px] text-white/80">
+              {format(new Date(activity.deadline), "dd/MM/yyyy", { locale: vi })}
+            </span>
+          </div>
+
+          {!deadlineCountdown.expired && (
+            <div className="mt-3 grid grid-cols-4 gap-2">
+              <CountBox value={deadlineCountdown.days} label="ngày" tone="warm" />
+              <CountBox value={deadlineCountdown.hours} label="giờ" tone="warm" />
+              <CountBox value={deadlineCountdown.minutes} label="phút" tone="warm" />
+              <CountBox value={deadlineCountdown.seconds} label="giây" tone="warm" accent />
+            </div>
+          )}
         </div>
-      ) : (
-        <p className="text-sm text-gray-400 text-center py-2">
-          Đã đóng đăng ký
-        </p>
       )}
 
-      {/* ── Teammate modal ── */}
+      <div className="bg-white rounded-[28px] p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-gray-900">Đăng ký thi đấu</h3>
+          {entryFee > 0 && (
+            <span className="text-sm font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-transparent">
+              {entryFee.toLocaleString("vi-VN")}đ/người
+            </span>
+          )}
+        </div>
+
+        {reg && (
+          <div className="bg-emerald-50 text-emerald-700 text-sm rounded-2xl px-3 py-2.5 flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Đội:{" "}
+              <strong>{reg.team_name}</strong>
+            </span>
+            {!isPaid && !isPendingConfirm && (
+              <button
+                onClick={handleCancel}
+                className="text-red-500 text-xs font-medium underline flex-shrink-0"
+              >
+                Huỷ
+              </button>
+            )}
+          </div>
+        )}
+
+        {isPaid && (
+          <div className="bg-violet-50 rounded-2xl px-3 py-2.5 flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-violet-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-violet-700 leading-snug">
+              <p className="font-medium">Đã thanh toán lệ phí</p>
+              {reg.payment_method && (
+                <span className="inline-block mt-1 text-xs font-semibold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
+                  {PAYMENT_METHOD_LABEL[reg.payment_method] ?? reg.payment_method}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {isPendingConfirm && (
+          <div className="bg-orange-50 rounded-2xl px-3 py-2.5 flex items-start gap-2.5">
+            <Clock className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-orange-700 leading-snug">
+              <p className="font-medium">
+                Đã gửi yêu cầu thanh toán, đang chờ admin xác nhận
+              </p>
+              {reg.payment_method && (
+                <span className="inline-block mt-1 text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                  {PAYMENT_METHOD_LABEL[reg.payment_method] ?? reg.payment_method}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {needsPayment && (
+          <button
+            onClick={openPayModal}
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:from-violet-500 hover:to-fuchsia-400 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-fuchsia-200"
+          >
+            💳 Thanh toán {fmt(amount)}
+          </button>
+        )}
+
+        {!reg && canRegister && (
+          <div className="space-y-3">
+            <input
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              placeholder="Tên đội của bạn"
+              className="w-full px-4 py-2.5 rounded-2xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-300 focus:border-transparent"
+            />
+            <button
+              onClick={openTeammateModal}
+              className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:from-violet-500 hover:to-fuchsia-400 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md shadow-fuchsia-200"
+            >
+              Đăng ký đội
+            </button>
+          </div>
+        )}
+
+        {!reg && !canRegister && (
+          <p className="text-sm text-gray-400 text-center py-2">
+            Đã đóng đăng ký
+          </p>
+        )}
+
+        {/* ── Số liệu ── */}
+        <div className="flex gap-2 pt-2 border-t border-gray-50">
+          {entryFee > 0 && (
+            <div className="flex-1 rounded-2xl bg-amber-50 px-3 py-2.5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <Coins className="w-4 h-4 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-[10px] text-amber-600/70 uppercase">Lệ phí</p>
+                <p className="text-sm font-bold text-gray-900">{fmt(entryFee)}</p>
+              </div>
+            </div>
+          )}
+          {maxTeams && (
+            <div className="flex-1 rounded-2xl bg-violet-50 px-3 py-2.5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+                <Users className="w-4 h-4 text-violet-600" />
+              </div>
+              <div>
+                <p className="text-[10px] text-violet-600/70 uppercase">Số đội tối đa</p>
+                <p className="text-sm font-bold text-gray-900">{maxTeams}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {activity.description && (
+          <button
+            onClick={() => setShowRules((v) => !v)}
+            className="w-full flex items-center justify-between text-sm font-medium text-gray-600 pt-1"
+          >
+            Xem thể lệ giải
+            {showRules ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
+        )}
+        {showRules && activity.description && (
+          <p className="text-sm text-gray-500 whitespace-pre-line bg-gray-50 rounded-xl p-3">
+            {activity.description}
+          </p>
+        )}
+      </div>
+
       {showTeammateModal &&
         typeof document !== "undefined" &&
         createPortal(
           <div
             className="fixed inset-0 z-[99999] flex flex-col justify-end"
-            style={{
-              background: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(2px)",
-            }}
-            onClick={(e) =>
-              e.target === e.currentTarget && setShowTeammateModal(false)
-            }
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
+            onClick={(e) => e.target === e.currentTarget && setShowTeammateModal(false)}
           >
             <div
               className="w-full bg-white rounded-t-2xl"
-              style={{
-                maxHeight: "90vh",
-                overflowY: "auto",
-                paddingBottom: "env(safe-area-inset-bottom)",
-              }}
+              style={{ maxHeight: "90vh", overflowY: "auto", paddingBottom: "env(safe-area-inset-bottom)" }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-center pt-3 pb-1">
@@ -837,12 +1175,8 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
               </div>
               <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
                 <div>
-                  <p className="text-sm font-bold text-gray-900">
-                    Chọn đồng đội
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Đội: {teamName.trim()}
-                  </p>
+                  <p className="text-sm font-bold text-gray-900">Chọn đồng đội</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Đội: {teamName.trim()}</p>
                 </div>
                 <button
                   onClick={() => setShowTeammateModal(false)}
@@ -854,13 +1188,10 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
 
               <div className="px-5 py-4 space-y-4">
                 {selectedPartner ? (
-                  <div className="flex items-center gap-3 bg-blue-50 rounded-xl px-4 py-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-semibold text-blue-600 overflow-hidden flex-shrink-0">
+                  <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+                    <div className="w-10 h-10 rounded-full bg-[#0F2E22]/10 flex items-center justify-center font-semibold text-[#0F2E22] overflow-hidden flex-shrink-0">
                       {selectedPartner.avatar_url ? (
-                        <img
-                          src={selectedPartner.avatar_url}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={selectedPartner.avatar_url} className="w-full h-full object-cover" />
                       ) : (
                         selectedPartner.full_name?.[0]
                       )}
@@ -869,7 +1200,7 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
                       <p className="text-sm font-semibold text-gray-900 truncate">
                         {selectedPartner.full_name}
                       </p>
-                      <p className="text-xs text-blue-500">Đồng đội</p>
+                      <p className="text-xs text-[#0F2E22]">Đồng đội</p>
                     </div>
                     <button
                       onClick={() => setSelectedPartner(null)}
@@ -908,10 +1239,7 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
                           >
                             <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center font-semibold text-gray-600 overflow-hidden flex-shrink-0">
                               {m.avatar_url ? (
-                                <img
-                                  src={m.avatar_url}
-                                  className="w-full h-full object-cover"
-                                />
+                                <img src={m.avatar_url} className="w-full h-full object-cover" />
                               ) : (
                                 m.full_name?.[0]
                               )}
@@ -937,14 +1265,230 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
                   <button
                     onClick={() => doRegister(selectedPartner?.id)}
                     disabled={submitting || !selectedPartner}
-                    className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40"
+                    className="flex-1 py-2.5 rounded-xl bg-[#0F2E22] text-white text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40"
                   >
-                    {submitting && (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    )}
+                    {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <UserPlus className="w-3.5 h-3.5" /> Xác nhận
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* ── Payment modal ── */}
+      {showPayModal &&
+        reg &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex flex-col justify-end"
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
+            onClick={(e) => e.target === e.currentTarget && setShowPayModal(false)}
+          >
+            <div
+              className="w-full bg-white rounded-t-2xl"
+              style={{ maxHeight: "90vh", overflowY: "auto", paddingBottom: "env(safe-area-inset-bottom)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-9 h-1 rounded-full bg-gray-200" />
+              </div>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">
+                    {payMethod === "choose"
+                      ? "Chọn phương thức thanh toán"
+                      : payMethod === "wallet"
+                        ? "Trừ ví BNB"
+                        : payMethod === "transfer"
+                          ? "Chuyển khoản"
+                          : "Tiền mặt"}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">{activity.title}</p>
+                </div>
+                <button
+                  onClick={() => setShowPayModal(false)}
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                  <XIcon className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="px-5 py-4 space-y-4">
+                <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
+                  <span className="text-sm text-gray-600">Số tiền thanh toán</span>
+                  <span className="text-lg font-black text-red-600">{fmt(amount)}</span>
+                </div>
+
+                {payMethod === "choose" && (
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => setPayMethod("wallet")}
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-[#0F2E22] hover:bg-gray-50 transition-colors text-left"
+                    >
+                      <div className="w-11 h-11 rounded-full bg-[#0F2E22]/10 flex items-center justify-center flex-shrink-0">
+                        <Wallet className="w-5 h-5 text-[#0F2E22]" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">Ví BNB</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Trừ thẳng vào số dư ví — xác nhận ngay lập tức
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => setPayMethod("transfer")}
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-[#C9A227] hover:bg-amber-50 transition-colors text-left"
+                    >
+                      <div className="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center text-xl">
+                        🏦
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">Chuyển khoản</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Quét QR VietQR, xác nhận sau khi chuyển
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => setPayMethod("cash")}
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors text-left"
+                    >
+                      <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center text-xl">
+                        💵
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">Tiền mặt</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Thông báo admin, nộp tiền trực tiếp
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
+                {payMethod === "wallet" && (
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-sm font-semibold text-[#0F2E22] mb-1 flex items-center gap-2">
+                        <Wallet className="w-4 h-4" /> Thanh toán bằng Ví BNB
+                      </p>
+                      <p className="text-xs text-gray-500">Số dư ví sẽ bị trừ ngay lập tức.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPayMethod("choose")}
+                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
+                      >
+                        Quay lại
+                      </button>
+                      <button
+                        onClick={handlePayWallet}
+                        disabled={submittingPay}
+                        className="flex-1 py-2.5 rounded-xl bg-[#0F2E22] text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
+                      >
+                        {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        <Wallet className="w-3.5 h-3.5" /> Xác nhận trừ ví
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {payMethod === "transfer" &&
+                  (() => {
+                    const ref = `DATAOA ${reg.id.slice(0, 8).toUpperCase()}`;
+                    const bankId = process.env.NEXT_PUBLIC_BANK_ID ?? "MB";
+                    const bankAccount = process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "0000000000";
+                    const bankAccountName = process.env.NEXT_PUBLIC_BANK_NAME ?? "CLB CAU LONG";
+                    const bankDisplayName = BANK_DISPLAY_NAMES[bankId] ?? bankId;
+                    const qr = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(ref)}&accountName=${encodeURIComponent(bankAccountName)}`;
+
+                    return (
+                      <div className="space-y-4">
+                        <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
+                          <p className="text-xs text-gray-400">Quét mã QR để thanh toán</p>
+                          <img src={qr} alt="VietQR" className="w-48 h-48 object-contain" />
+                        </div>
+
+                        <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
+                          <div className="flex justify-between px-4 py-2.5">
+                            <span className="text-gray-500">Ngân hàng</span>
+                            <span className="font-semibold text-gray-900">{bankDisplayName}</span>
+                          </div>
+                          <div className="flex justify-between px-4 py-2.5">
+                            <span className="text-gray-500">Số tài khoản</span>
+                            <span className="font-semibold text-gray-900">{bankAccount}</span>
+                          </div>
+                          <div className="flex justify-between px-4 py-2.5">
+                            <span className="text-gray-500">Số tiền</span>
+                            <span className="font-bold text-red-600">{fmt(amount)}</span>
+                          </div>
+                          <div className="px-4 py-2.5">
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Nội dung CK</span>
+                              <span className="font-mono font-semibold text-gray-900">{ref}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(ref);
+                            toast.success("Đã copy nội dung chuyển khoản");
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          <Copy className="w-3.5 h-3.5" /> Sao chép nội dung
+                        </button>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setPayMethod("choose")}
+                            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
+                          >
+                            Quay lại
+                          </button>
+                          <button
+                            onClick={() => handleConfirmTransferred(ref)}
+                            disabled={submittingPay}
+                            className="flex-[2] py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
+                          >
+                            {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Tôi đã chuyển khoản
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                {payMethod === "cash" && (
+                  <div className="space-y-4">
+                    <div className="bg-green-50 rounded-xl p-4">
+                      <p className="text-sm font-semibold text-green-800 mb-1">💵 Thanh toán tiền mặt</p>
+                      <p className="text-xs text-green-600">
+                        Admin sẽ xác nhận sau khi nhận tiền trực tiếp.
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPayMethod("choose")}
+                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
+                      >
+                        Quay lại
+                      </button>
+                      <button
+                        onClick={handleRequestCash}
+                        disabled={submittingPay}
+                        className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Thông báo admin
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>,
@@ -983,7 +1527,7 @@ function OfflineEventSection({ activity, myStatus, onChanged }: any) {
       await activitiesApi.cancelRegistration(activity.id);
       toast.success("Đã huỷ đăng ký");
       onChanged();
-    } catch {}
+    } catch { }
   };
 
   return (
@@ -1104,9 +1648,8 @@ function PollSection({ activity, myStatus, onChanged }: any) {
               key={opt.id}
               onClick={() => canVote && toggleOption(opt.id)}
               disabled={!canVote}
-              className={`w-full text-left rounded-xl border p-3 relative overflow-hidden transition-colors ${
-                isSelected ? "border-blue-400 bg-blue-50" : "border-gray-200"
-              }`}
+              className={`w-full text-left rounded-xl border p-3 relative overflow-hidden transition-colors ${isSelected ? "border-blue-400 bg-blue-50" : "border-gray-200"
+                }`}
             >
               {(hasVoted || !canVote) && (
                 <div
