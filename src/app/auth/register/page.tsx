@@ -7,8 +7,8 @@ import { Eye, EyeOff, Loader2, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi, profileApi } from '@/lib/api';
-import { AvatarCropModal } from '@/components/AvatarCropModal';
-import { AvatarPickerModal } from '@/components/AvatarPickerModal';
+import { AvatarCropModal } from '@/components/avatar/AvatarCropModal';
+import { AvatarPickerModal } from '@/components/avatar/AvatarPickerModal';
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 

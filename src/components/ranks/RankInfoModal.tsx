@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { RankIcon } from '@/components/Rank';
+import { RankIcon } from '@/components/ranks/Rank';
 
 const RANK_ORDER = ['Tân thủ', 'Phong trào', 'Cứng cựa', 'Chủ lực', 'Cao thủ', 'Kiện tướng', 'Đại Kiện Tướng', 'Huyền Thoại'];
 

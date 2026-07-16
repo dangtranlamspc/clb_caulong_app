@@ -29,8 +29,8 @@ import { sessionsApi, matchesApi, activitiesApi } from "@/lib/api";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
-import { PaymentModal } from "@/components/PaymentModal";
-import { MembersModal } from "@/components/MemberModalConponent";
+import { PaymentModal } from "@/components/payments/PaymentModal";
+import { MembersModal } from "@/components/modals/MemberModalConponent";
 
 type MainTab = "sessions" | "matches" | "events";
 

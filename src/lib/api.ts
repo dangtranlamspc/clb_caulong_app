@@ -101,6 +101,7 @@ export const sessionsApi = {
   getParticipants: (id: string) => api.get(`/sessions/${id}/participants`),
 };
 
+
 export const registrationsApi = {
   register: (data: { session_id: string; notes?: string }) =>
     api.post("/registrations", data),
@@ -244,4 +245,70 @@ export const activitiesApi = {
       payment_reference?: string;
     },
   ) => api.post(`/activities/${id}/register/tournament/payment`, data),
+};
+
+
+//admin
+
+export const dashboardAdminApi = {
+  getStats: () => api.get("/users/dashboard"),
+  getMemberTypeCounts: () => api.get("/users/member-type-counts"),
+  getWalletSummary: () => api.get("/wallet/admin/summary"),
+  getMonthlyFinance: (params?: { month?: number; year?: number }) =>
+    api.get("/wallet/admin/monthly-finance", { params }),
+  getFinanceHistory: (params?: { months?: number; year?: number }) =>
+    api.get("/wallet/admin/finance-history", { params }),
+  getFinanceYears: () => api.get("/wallet/admin/finance-years"),
+};
+
+
+export const membersAdminApi = {
+  list: (params?: any) => api.get("/users", { params }),
+  get: (id: string) => api.get(`/users/${id}`),
+  create: (data: any) => api.post("/users", data),
+  update: (id: string, data: any) => api.put(`/users/${id}`, data),
+  updatePassword: (id: string, data: any) =>
+    api.patch(`/users/${id}/password`, data),
+  toggleActive: (id: string) => api.patch(`/users/${id}/toggle-active`),
+  delete: (id: string) => api.delete(`/users/${id}`),
+  export: (params?: any) =>
+    api.get("/users/export", { params, responseType: "blob" }),
+};
+
+export const sessionsAdminApi = {
+  list: (params?: any) => api.get("/sessions", { params }),
+  get: (id: string) => api.get(`/sessions/${id}`),
+  create: (data: any) => api.post("/sessions", data),
+  update: (id: string, data: any) => api.put(`/sessions/${id}`, data),
+  updateStatus: (id: string, data: { status: string }) =>
+    api.patch(`/sessions/${id}/status`, data),
+  delete: (id: string) => api.delete(`/sessions/${id}`),
+  getRegistrations: (id: string) => api.get(`/sessions/${id}/registrations`),
+  getCost: (id: string) => api.get(`/sessions/${id}/cost`),
+  finish: (id: string, data: any) => api.patch(`/sessions/${id}/finish`, data),
+  complete: (id: string) => api.patch(`/sessions/${id}/complete`),
+  rollbackFinish: (id: string) => api.patch(`/sessions/${id}/rollback-finish`),
+};
+
+
+export const registrationsAdminApi = {
+  list: (params?: any) => api.get("/registrations", { params }),
+  approveRegistration: (id: string) =>
+    api.patch(`/registrations/${id}/approve`),
+  rejectRegistrationRequest: (id: string) =>
+    api.patch(`/registrations/${id}/reject-registration`),
+  confirm: (id: string, notes?: string) =>
+    api.patch(`/registrations/${id}/confirm`, { notes }),
+  reject: (id: string, notes?: string) =>
+    api.patch(`/registrations/${id}/reject`, { notes }),
+  setAmount: (id: string, amount: number) =>
+    api.patch(`/registrations/${id}/amount`, { amount }),
+  adminAdd: (data: any) => api.post("/registrations/admin-add", data),
+  addGuest: (id: string, data: any) =>
+    api.post(`/registrations/${id}/guests`, data),
+  checkinPresent: (id: string) =>
+    api.patch(`/registrations/${id}/checkin-present`),
+  checkinAbsent: (id: string) =>
+    api.patch(`/registrations/${id}/checkin-absent`),
+  getAdminDetail: (id: string) => api.get(`/registrations/${id}/admin-detail`),
 };

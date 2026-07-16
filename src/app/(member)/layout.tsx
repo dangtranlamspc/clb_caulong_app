@@ -4,17 +4,18 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '../../store/auth.store';
 import { authApi } from '../../lib/api';
-import { BirthdayModal, useBirthdayGreeting } from '../../components/BirthdayModal';
-import { MatchResultModal } from '../../components/MatchResultModal';
-import { ChallengeModal } from '../../components/ChallengeModal';
+import { BirthdayModal, useBirthdayGreeting } from '../../components/modals/BirthdayModal';
+import { MatchResultModal } from '../../components/matches/MatchResultModal';
+import { ChallengeModal } from '../../components/matches/ChallengeModal';
 import { useMatchResultNotification } from '../../hooks/useMatchResultNotification';
 import { useChallengeNotification } from '../../hooks/useChallengeNotification';
 import toast from 'react-hot-toast';
-import { Home, CalendarDays, ClipboardList, Trophy, UserCircle2, LogOut, BadgePercent, Wallet } from 'lucide-react';
+import { Home, CalendarDays, ClipboardList, Trophy, UserCircle2, LogOut, BadgePercent, Wallet, LayoutDashboard, Menu } from 'lucide-react';
 import { useTeamInviteNotification } from '@/hooks/useTeamInviteNotification';
-import { TeamInviteModal } from '@/components/TeamInviteModal';
-import { NotificationBell } from '@/components/NotificationBell';
+import { TeamInviteModal } from '@/components/matches/TeamInviteModal';
+import { NotificationBell } from '@/components/noti/NotificationBell';
 import { useNotificationsRealtimeStore } from '@/store/notifications-realtime.store';
+import { AdminMenuDrawer } from '@/components/admin/AdminMenuDrawer';
 
 const NAV_ITEMS = [
     { href: '/home', icon: Home, label: 'Trang chủ' },
@@ -130,6 +131,8 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     const pathname = usePathname();
     const { isAuthenticated, logout, user } = useAuthStore();
     const [mounted, setMounted] = useState(false);
+    const [adminDrawerOpen, setAdminDrawerOpen] = useState(false);
+    const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
         if (!user?.id) return;
@@ -222,7 +225,18 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                     style={{ height: 64, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', background: 'rgba(255,255,255,0.07)', borderBottom: '0.5px solid rgba(255,255,255,0.12)' }}
                 >
                     <div className="flex items-center gap-2.5">
-                        <div className="flex-shrink-0 pt-3  ">
+                        {isAdmin && (
+                            <button
+                                onClick={() => setAdminDrawerOpen(true)}
+                                title="Menu quản trị"
+                                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+                                style={{ background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.75)' }}
+                            >
+                                <Menu className="w-4.5 h-4.5" />
+                            </button>
+                        )}
+
+                        <div className="flex-shrink-0 pt-3">
                             <BadmintonLogo size={85} />
                         </div>
                         <div>
@@ -260,6 +274,10 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
 
             {/* ── Bottom nav ── */}
             <BottomNav pathname={pathname} />
+
+            {isAdmin && (
+                <AdminMenuDrawer open={adminDrawerOpen} onClose={() => setAdminDrawerOpen(false)} />
+            )}
         </div>
     );
 }

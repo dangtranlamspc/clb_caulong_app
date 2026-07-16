@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { rankingsApi } from '../../../lib/api';
-import { RankIcon, RankPodiumAvatar } from '@/components/Rank';
-import { RankInfoModal } from '@/components/RankInfoModal';
+import { RankIcon, RankPodiumAvatar } from '@/components/ranks/Rank';
+import { RankInfoModal } from '@/components/ranks/RankInfoModal';
 
 const LEVEL_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
   'Người Mới Tham Gia': { emoji: '🥚', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },

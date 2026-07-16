@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { X, Swords, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
-import { RankPodiumAvatarList, RankPodiumAvatarModal } from '@/components/Rank';
+import { RankPodiumAvatarList, RankPodiumAvatarModal } from '@/components/ranks/Rank';
 
 interface PlayerInfo {
     name: string;
