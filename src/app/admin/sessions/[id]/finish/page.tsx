@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
@@ -271,7 +271,7 @@ export default function SessionFinishPage() {
         ),
       });
       toast.success("Đã kết thúc buổi và gửi hóa đơn thanh toán!");
-      router.push(`/sessions/${id}`);
+      router.push(`/admin/sessions/${id}`);
     } finally {
       setSubmitting(false);
     }
@@ -289,7 +289,7 @@ export default function SessionFinishPage() {
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
         <button
-          onClick={() => router.push(`/sessions/${id}`)}
+          onClick={() => router.push(`/admin/sessions/${id}`)}
           className="p-2 hover:bg-gray-100 rounded-lg"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -380,17 +380,19 @@ export default function SessionFinishPage() {
             return (
               <div
                 key={h.id}
-                className={`rounded-2xl border-2 p-3 space-y-3 transition-colors ${isWalletDeduct
-                  ? "border-blue-200 bg-blue-50/30"
-                  : "border-gray-200 bg-white"
-                  }`}
+                className={`rounded-2xl border-2 p-3 space-y-3 transition-colors ${
+                  isWalletDeduct
+                    ? "border-blue-200 bg-blue-50/30"
+                    : "border-gray-200 bg-white"
+                }`}
               >
                 {/* Khung host */}
                 <div
-                  className={`rounded-xl border p-3 space-y-2 transition-colors ${isWalletDeduct
-                    ? "border-blue-200 bg-blue-50/70"
-                    : "border-gray-200 bg-gray-50/60"
-                    }`}
+                  className={`rounded-xl border p-3 space-y-2 transition-colors ${
+                    isWalletDeduct
+                      ? "border-blue-200 bg-blue-50/70"
+                      : "border-gray-200 bg-gray-50/60"
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
@@ -432,10 +434,11 @@ export default function SessionFinishPage() {
                         title={
                           isWalletDeduct ? "Bỏ trừ ví" : "Trừ thẳng ví BNB"
                         }
-                        className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border-2 transition-all ${isWalletDeduct
-                          ? "bg-blue-600 border-blue-600 text-white"
-                          : "border-gray-200 text-gray-300 hover:border-blue-300 hover:text-blue-400"
-                          }`}
+                        className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border-2 transition-all ${
+                          isWalletDeduct
+                            ? "bg-blue-600 border-blue-600 text-white"
+                            : "border-gray-200 text-gray-300 hover:border-blue-300 hover:text-blue-400"
+                        }`}
                       >
                         <Wallet className="w-4 h-4" />
                       </button>
@@ -460,10 +463,11 @@ export default function SessionFinishPage() {
                               key={val}
                               type="button"
                               onClick={() => setWalletMode(h.id, val as any)}
-                              className={`px-2 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium text-center leading-tight transition-all ${active
-                                ? "bg-blue-600 text-white shadow-sm"
-                                : "text-gray-500 hover:bg-gray-200/70"
-                                }`}
+                              className={`px-2 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium text-center leading-tight transition-all ${
+                                active
+                                  ? "bg-blue-600 text-white shadow-sm"
+                                  : "text-gray-500 hover:bg-gray-200/70"
+                              }`}
                             >
                               {label}
                             </button>
@@ -511,7 +515,7 @@ export default function SessionFinishPage() {
                       <span className="whitespace-nowrap">
                         {fmt(
                           (Number(amounts[h.id]) || 0) +
-                          (Number(otherFees[h.id]) || 0),
+                            (Number(otherFees[h.id]) || 0),
                         )}
                       </span>
                     </div>
@@ -522,23 +526,26 @@ export default function SessionFinishPage() {
                 {guests.length > 0 && (
                   <div className="relative pl-6">
                     <div
-                      className={`absolute left-2 top-0 bottom-4 w-px ${isWalletDeduct ? "bg-blue-300" : "bg-gray-300"
-                        }`}
+                      className={`absolute left-2 top-0 bottom-4 w-px ${
+                        isWalletDeduct ? "bg-blue-300" : "bg-gray-300"
+                      }`}
                     />
 
                     <div className="space-y-3">
                       {guests.map((g: any) => (
                         <div key={g.id} className="relative">
                           <div
-                            className={`absolute -left-4 top-5 w-4 h-px ${isWalletDeduct ? "bg-blue-300" : "bg-gray-300"
-                              }`}
+                            className={`absolute -left-4 top-5 w-4 h-px ${
+                              isWalletDeduct ? "bg-blue-300" : "bg-gray-300"
+                            }`}
                           />
 
                           <div
-                            className={`rounded-xl border p-3 space-y-2 transition-colors ${isWalletDeduct
-                              ? "border-blue-200 bg-blue-50/70"
-                              : "border-purple-100 bg-purple-50/40"
-                              }`}
+                            className={`rounded-xl border p-3 space-y-2 transition-colors ${
+                              isWalletDeduct
+                                ? "border-blue-200 bg-blue-50/70"
+                                : "border-purple-100 bg-purple-50/40"
+                            }`}
                           >
                             <div className="flex items-center gap-3">
                               <p className="flex-1 text-xs text-purple-600 truncate">
@@ -605,7 +612,7 @@ export default function SessionFinishPage() {
                                 <span className="whitespace-nowrap">
                                   {fmt(
                                     (Number(guestAmounts[g.id]) || 0) +
-                                    (Number(otherFees[g.id]) || 0),
+                                      (Number(otherFees[g.id]) || 0),
                                   )}
                                 </span>
                               </div>
@@ -645,17 +652,19 @@ export default function SessionFinishPage() {
         )}
       </div>
 
-      <div className="flex justify-end gap-3">
+      <div className="flex items-center justify-end gap-3">
         <button
-          onClick={() => router.push(`/sessions/${id}`)}
-          className="btn-secondary text-sm"
+          onClick={() => router.push(`/admin/sessions/${id}`)}
+          className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0"
         >
           Hủy
         </button>
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="btn-primary flex items-center gap-2 text-sm"
+          className="px-4 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-semibold
+               flex items-center justify-center gap-2 flex-shrink-0
+               disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {submitting ? (
             <Loader2 className="w-4 h-4 animate-spin" />

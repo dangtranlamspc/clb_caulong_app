@@ -101,7 +101,6 @@ export const sessionsApi = {
   getParticipants: (id: string) => api.get(`/sessions/${id}/participants`),
 };
 
-
 export const registrationsApi = {
   register: (data: { session_id: string; notes?: string }) =>
     api.post("/registrations", data),
@@ -247,7 +246,6 @@ export const activitiesApi = {
   ) => api.post(`/activities/${id}/register/tournament/payment`, data),
 };
 
-
 //admin
 
 export const dashboardAdminApi = {
@@ -261,7 +259,6 @@ export const dashboardAdminApi = {
   getFinanceYears: () => api.get("/wallet/admin/finance-years"),
 };
 
-
 export const membersAdminApi = {
   list: (params?: any) => api.get("/users", { params }),
   get: (id: string) => api.get(`/users/${id}`),
@@ -273,6 +270,8 @@ export const membersAdminApi = {
   delete: (id: string) => api.delete(`/users/${id}`),
   export: (params?: any) =>
     api.get("/users/export", { params, responseType: "blob" }),
+  searchMembers: (q: string) =>
+    api.get("/users/search/members", { params: { q } }),
 };
 
 export const sessionsAdminApi = {
@@ -289,7 +288,6 @@ export const sessionsAdminApi = {
   complete: (id: string) => api.patch(`/sessions/${id}/complete`),
   rollbackFinish: (id: string) => api.patch(`/sessions/${id}/rollback-finish`),
 };
-
 
 export const registrationsAdminApi = {
   list: (params?: any) => api.get("/registrations", { params }),

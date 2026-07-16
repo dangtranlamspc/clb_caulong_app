@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
@@ -246,10 +246,11 @@ export default function SessionsPage() {
                   }))
                 }
                 className={`px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors
-                                    ${query.status === val
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                  }
+                                    ${
+                                      query.status === val
+                                        ? "bg-white text-gray-900 shadow-sm"
+                                        : "text-gray-500 hover:text-gray-700"
+                                    }
                                 `}
               >
                 {lbl}
@@ -259,7 +260,7 @@ export default function SessionsPage() {
 
           {/* Create button */}
           <Link
-            href="/sessions/create"
+            href="/admin/sessions/create"
             className=" flex items-center justify-center w-11 h-11 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0"
           >
             <Plus className="w-5 h-5" />
@@ -287,9 +288,9 @@ export default function SessionsPage() {
                 ? s.pending_action_count > 0
                   ? STATUS_CONFIG.waiting_payment
                   : {
-                    label: "Chờ chốt thanh toán",
-                    cls: "bg-indigo-100 text-indigo-700",
-                  }
+                      label: "Chờ chốt thanh toán",
+                      cls: "bg-indigo-100 text-indigo-700",
+                    }
                 : (STATUS_CONFIG[s.status] ?? STATUS_CONFIG.open);
             const nextActions = STATUS_NEXT[s.status] ?? [];
             const busy = actionId === s.id;
@@ -368,7 +369,7 @@ export default function SessionsPage() {
                   {/* Row 1: Xem + Sửa + Xóa */}
                   <div className="flex gap-1.5">
                     <Link
-                      href={`/sessions/${s.id}`}
+                      href={`/admin/sessions/${s.id}`}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-gray-600 text-sm font-medium transition-colors"
                     >
                       <Eye className="w-4 h-4" /> Xem
@@ -376,7 +377,7 @@ export default function SessionsPage() {
                     {s.status !== "completed" && (
                       <>
                         <Link
-                          href={`/sessions/${s.id}/edit`}
+                          href={`/admin/sessions/${s.id}/edit`}
                           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-blue-600 text-sm font-medium transition-colors"
                         >
                           <Pencil className="w-4 h-4" /> Sửa
@@ -398,7 +399,7 @@ export default function SessionsPage() {
                         to ? (
                           <Link
                             key={to}
-                            href={`/sessions/${s.id}/${to}`}
+                            href={`/admin/sessions/${s.id}/${to}`}
                             className={`flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition-colors ${cls}`}
                           >
                             {label}
