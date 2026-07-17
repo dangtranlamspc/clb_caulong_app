@@ -304,19 +304,18 @@ export default function SessionFormPage() {
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex justify-end gap-3 pt-1">
+        <div className="flex justify-end items-center gap-3 pt-1">
           <button
             type="button"
             onClick={() => router.push(`/sessions/${id ?? ""}`)}
-            className="btn-secondary text-sm"
+            className="btn-secondary text-sm flex-none w-auto"
           >
             Hủy
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary flex items-center gap-2 text-sm"
+            className="btn-primary flex items-center justify-center gap-2 text-sm flex-none w-auto"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />

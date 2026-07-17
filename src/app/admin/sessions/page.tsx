@@ -16,6 +16,7 @@ import {
   PlayCircle,
   Eye,
 } from "lucide-react";
+import { motion, LayoutGroup } from "framer-motion";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -218,56 +219,62 @@ export default function SessionsPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="space-y-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Buổi đánh cầu</h1>
           <p className="text-gray-500 text-sm mt-0.5">{meta.total ?? 0} buổi</p>
         </div>
-
-        {/* Filter + Create */}
         <div className="flex items-center gap-2">
-          {/* Status filter */}
-          <div className="flex-1 flex gap-1 bg-gray-100 rounded-lg p-1 overflow-x-auto scrollbar-hide">
-            {[
-              ["", "Tất cả"],
-              ["open", "Mở"],
-              ["full", "Đầy"],
-              ["completed", "Xong"],
-              ["cancelled", "Hủy"],
-            ].map(([val, lbl]) => (
-              <button
-                key={val}
-                onClick={() =>
-                  setQuery((q) => ({
-                    ...q,
-                    status: val,
-                    page: 1,
-                  }))
-                }
-                className={`px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors
-                                    ${query.status === val
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                  }
-                                `}
-              >
-                {lbl}
-              </button>
-            ))}
-          </div>
+          <LayoutGroup>
+            <div className="flex-1 flex gap-1.5 bg-gray-100 rounded-xl p-1.5 overflow-x-auto scrollbar-hide relative">
+              {[
+                ["", "Tất cả"],
+                ["open", "Mở"],
+                ["full", "Đầy"],
+                ["completed", "Xong"],
+                ["cancelled", "Hủy"],
+              ].map(([val, lbl]) => {
+                const isActive = query.status === val;
+                return (
+                  <button
+                    key={val}
+                    onClick={() =>
+                      setQuery((q) => ({
+                        ...q,
+                        status: val,
+                        page: 1,
+                      }))
+                    }
+                    className="relative flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors"
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="session-status-pill"
+                        className="absolute inset-0 bg-blue-600 rounded-lg shadow-sm shadow-blue-200"
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                    <span
+                      className={`relative z-10 transition-colors ${isActive ? "text-white" : "text-gray-500 hover:text-gray-800"
+                        }`}
+                    >
+                      {lbl}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </LayoutGroup>
 
-          {/* Create button */}
           <Link
             href="/admin/sessions/create"
-            className=" flex items-center justify-center w-11 h-11 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0"
+            className="flex items-center justify-center w-12 h-[46px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0"
           >
             <Plus className="w-5 h-5" />
           </Link>
         </div>
       </div>
 
-      {/* Grid */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (

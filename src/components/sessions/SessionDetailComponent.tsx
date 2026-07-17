@@ -28,6 +28,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { createPortal } from "react-dom";
 import { useNotificationsRealtimeStore } from "@/store/notifications-realtime.store";
 import { walletApi, sessionsApi, registrationsApi, usersApi } from "@/lib/api";
+import { CustomSelect } from "../admin/sessions/CustomSelect";
 
 type ActionPhase = "idle" | "loading" | "success";
 
@@ -269,6 +270,7 @@ export default function SessionDetailPage() {
   const [payType, setPayType] = useState<"solo" | "grouped" | null>(null);
 
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const [guestModalVisible, setGuestModalVisible] = useState(false);
   const [guestTab, setGuestTab] = useState<"account" | "guest">("account");
   const [guestForm, setGuestForm] = useState({
     full_name: "",
@@ -309,6 +311,13 @@ export default function SessionDetailPage() {
 
   const [showAmountsModal, setShowAmountsModal] = useState(false);
   const [amountsModalVisible, setAmountsModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (showGuestModal) {
+      const raf = requestAnimationFrame(() => setGuestModalVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [showGuestModal]);
 
   const fetchSession = async () => {
     try {
@@ -508,12 +517,15 @@ export default function SessionDetailPage() {
   };
 
   const closeGuestModal = () => {
-    setShowGuestModal(false);
-    setGuestForm({ full_name: "", gender: "male", skill_level: "" });
-    setGuestTab("account");
-    setMemberSearch("");
-    setMemberSearchResults([]);
-    setSelectedCompanion(null);
+    setGuestModalVisible(false);
+    setTimeout(() => {
+      setShowGuestModal(false);
+      setGuestForm({ full_name: "", gender: "male", skill_level: "" });
+      setGuestTab("account");
+      setMemberSearch("");
+      setMemberSearchResults([]);
+      setSelectedCompanion(null);
+    }, 200);
   };
 
   const handleAddGuest = async () => {
@@ -1564,10 +1576,25 @@ export default function SessionDetailPage() {
           {showGuestModal &&
             createPortal(
               <div
-                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4"
-                onClick={(e) => e.target === e.currentTarget}
+                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+                style={{
+                  background: guestModalVisible ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)",
+                  transition: "background 250ms ease-out",
+                }}
+                onClick={(e) => e.target === e.currentTarget && closeGuestModal()}
               >
-                <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl">
+                <div
+                  className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl"
+                  style={{
+                    transform: guestModalVisible
+                      ? "translateY(0)"
+                      : "translateY(100%)",
+                    opacity: guestModalVisible ? 1 : 0,
+                    transition:
+                      "transform 280ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                     <h3 className="font-bold text-gray-900">Thêm người đi cùng</h3>
                     <button
@@ -1707,40 +1734,32 @@ export default function SessionDetailPage() {
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Giới tính
                             </label>
-                            <select
+                            <CustomSelect
                               value={guestForm.gender}
-                              onChange={(e) =>
-                                setGuestForm((f) => ({
-                                  ...f,
-                                  gender: e.target.value,
-                                }))
+                              onChange={(val) =>
+                                setGuestForm((f) => ({ ...f, gender: val }))
                               }
-                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
-                            >
-                              <option value="male">Nam</option>
-                              <option value="female">Nữ</option>
-                            </select>
+                              options={[
+                                { value: "male", label: "Nam" },
+                                { value: "female", label: "Nữ" },
+                              ]}
+                            />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Trình độ
                             </label>
-                            <select
+                            <CustomSelect
                               value={guestForm.skill_level}
-                              onChange={(e) =>
-                                setGuestForm((f) => ({
-                                  ...f,
-                                  skill_level: e.target.value,
-                                }))
+                              onChange={(val) =>
+                                setGuestForm((f) => ({ ...f, skill_level: val }))
                               }
-                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
-                            >
-                              {SKILL_OPTIONS.map((o) => (
-                                <option key={o.value} value={o.value}>
-                                  {o.label}
-                                </option>
-                              ))}
-                            </select>
+                              placeholder="-- Chọn --"
+                              options={SKILL_OPTIONS.filter((o) => o.value !== "").map((o) => ({
+                                value: o.value,
+                                label: o.label,
+                              }))}
+                            />
                           </div>
                         </div>
                         <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">

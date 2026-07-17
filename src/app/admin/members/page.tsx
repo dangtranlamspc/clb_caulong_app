@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Search, Plus, Download, Filter, ChevronLeft, ChevronRight,
     Trash2, ToggleLeft, ToggleRight, Eye,
+    PencilIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -286,17 +287,17 @@ export default function AdminMembersPage() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 pt-2.5 border-t border-gray-100">
+                        <div className="flex items-center justify-center gap-2 pt-2.5 border-t border-gray-100">
                             <Link
                                 href={`/admin/members/${user.id}`}
-                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
                             >
-                                <Eye className="w-3.5 h-3.5" /> Xem
+                                <PencilIcon className="w-3.5 h-3.5" /> Chỉnh sửa
                             </Link>
                             <button
                                 onClick={() => handleToggleActive(user.id)}
                                 disabled={actionLoading === user.id}
-                                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-white text-xs font-semibold disabled:opacity-50 ${user.is_active ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-white text-xs font-semibold disabled:opacity-50 ${user.is_active ? 'bg-amber-500' : 'bg-emerald-500'}`}
                             >
                                 {user.is_active ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
                                 {user.is_active ? 'Tạm ẩn' : 'Kích hoạt'}
@@ -304,7 +305,7 @@ export default function AdminMembersPage() {
                             <button
                                 onClick={() => handleDelete(user.id, user.full_name)}
                                 disabled={actionLoading === user.id}
-                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-red-500 text-white text-xs font-semibold disabled:opacity-50"
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-red-500 text-white text-xs font-semibold disabled:opacity-50"
                             >
                                 <Trash2 className="w-3.5 h-3.5" /> Xóa
                             </button>

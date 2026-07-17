@@ -1,7 +1,7 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { ArrowLeft, Save, Loader2, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { membersAdminApi } from '@/lib/api';
 import { CustomSelect } from '@/components/admin/sessions/CustomSelect';
@@ -41,38 +41,70 @@ const ROLE_OPTIONS = [
 const inputCls = 'w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400';
 const labelCls = 'block text-xs font-semibold text-gray-500 mb-1.5';
 
-export default function AdminMemberCreatePage() {
+export default function AdminMemberEditPage() {
     const router = useRouter();
-    const [loading, setLoading] = useState(false);
+    const params = useParams<{ id: string }>();
+    const id = params?.id;
+
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [form, setForm] = useState({
-        full_name: '', email: '', phone: '', password: '',
+        full_name: '', email: '', phone: '',
         date_of_birth: '', gender: '', shirt_size: '',
         level: '', member_type: 'vang_lai', member_subtype: 'thuong', role: 'member',
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const [showPasswordForm, setShowPasswordForm] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [passwordSaving, setPasswordSaving] = useState(false);
+    const [passwordError, setPasswordError] = useState('');
+
     const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+
+    useEffect(() => {
+        if (!id) return;
+        setLoading(true);
+        membersAdminApi.get(id)
+            .then(({ data }) => {
+                setForm({
+                    full_name: data.full_name ?? '',
+                    email: data.email ?? '',
+                    phone: data.phone ?? '',
+                    date_of_birth: data.date_of_birth ? String(data.date_of_birth).slice(0, 10) : '',
+                    gender: data.gender ?? '',
+                    shirt_size: data.shirt_size ?? '',
+                    level: data.level ?? '',
+                    member_type: data.member_type ?? 'vang_lai',
+                    member_subtype: data.member_subtype ?? 'thuong',
+                    role: data.role ?? 'member',
+                });
+            })
+            .catch(() => {
+                toast.error('Không tải được thông tin thành viên');
+                router.push('/admin/members');
+            })
+            .finally(() => setLoading(false));
+    }, [id, router]);
 
     const validate = () => {
         const e: Record<string, string> = {};
         if (!form.full_name.trim()) e.full_name = 'Bắt buộc';
         if (!form.email.trim()) e.email = 'Bắt buộc';
         if (!form.phone.trim()) e.phone = 'Bắt buộc';
-        if (!form.password || form.password.length < 8) e.password = 'Tối thiểu 8 ký tự';
         setErrors(e);
         return Object.keys(e).length === 0;
     };
 
     const onSubmit = async (ev: React.FormEvent) => {
         ev.preventDefault();
-        if (!validate()) return;
-        setLoading(true);
+        if (!id || !validate()) return;
+        setSaving(true);
         try {
             const payload = {
                 full_name: form.full_name,
                 email: form.email,
                 phone: form.phone,
-                password: form.password,
                 date_of_birth: form.date_of_birth || undefined,
                 gender: form.gender || undefined,
                 shirt_size: form.shirt_size || undefined,
@@ -81,15 +113,48 @@ export default function AdminMemberCreatePage() {
                 level: form.level || undefined,
                 role: form.role,
             };
-            await membersAdminApi.create(payload);
-            toast.success('Tạo tài khoản thành công!');
+            await membersAdminApi.update(id, payload);
+            toast.success('Cập nhật thành công!');
             router.push('/admin/members');
         } catch {
             // lỗi đã được xử lý ở interceptor
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
+
+    const onChangePassword = async () => {
+        if (!id) return;
+        if (!newPassword || newPassword.length < 8) {
+            setPasswordError('Tối thiểu 8 ký tự');
+            return;
+        }
+        setPasswordError('');
+        setPasswordSaving(true);
+        try {
+            await membersAdminApi.updatePassword(id, { password: newPassword });
+            toast.success('Đã đổi mật khẩu!');
+            setNewPassword('');
+            setShowPasswordForm(false);
+        } catch {
+            // lỗi đã được xử lý ở interceptor
+        } finally {
+            setPasswordSaving(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="space-y-4">
+                <div className="h-8 bg-gray-200 rounded w-56 animate-pulse" />
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 space-y-4">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="h-10 bg-gray-100 rounded-xl animate-pulse" />
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4">
@@ -97,7 +162,7 @@ export default function AdminMemberCreatePage() {
                 <button onClick={() => router.push('/admin/members')} className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500">
                     <ArrowLeft className="w-4 h-4" />
                 </button>
-                <h1 className="text-lg font-bold text-gray-900">Thêm thành viên mới</h1>
+                <h1 className="text-lg font-bold text-gray-900">Chỉnh sửa thành viên</h1>
             </div>
 
             <form onSubmit={onSubmit} className="bg-white rounded-2xl p-4 border border-gray-100 space-y-4">
@@ -117,12 +182,6 @@ export default function AdminMemberCreatePage() {
                     <label className={labelCls}>Số điện thoại *</label>
                     <input value={form.phone} onChange={(e) => set('phone', e.target.value)} className={inputCls} placeholder="0901234567" />
                     {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
-                </div>
-
-                <div>
-                    <label className={labelCls}>Mật khẩu *</label>
-                    <input value={form.password} onChange={(e) => set('password', e.target.value)} type="password" className={inputCls} placeholder="••••••••" />
-                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -196,12 +255,51 @@ export default function AdminMemberCreatePage() {
                     <button type="button" onClick={() => router.push('/admin/members')} className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-500 bg-gray-100">
                         Hủy
                     </button>
-                    <button type="submit" disabled={loading} className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 flex items-center gap-2 disabled:opacity-60">
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                        Tạo tài khoản
+                    <button type="submit" disabled={saving} className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 flex items-center gap-2 disabled:opacity-60">
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        Lưu thay đổi
                     </button>
                 </div>
             </form>
+
+            {/* Đổi mật khẩu — tách riêng vì là action độc lập */}
+            <div className="bg-white rounded-2xl p-4 border border-gray-100 space-y-3">
+                <button
+                    type="button"
+                    onClick={() => setShowPasswordForm((s) => !s)}
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-700"
+                >
+                    <KeyRound className="w-4 h-4 text-gray-400" />
+                    Đổi mật khẩu
+                </button>
+
+                {showPasswordForm && (
+                    <div className="pt-2 border-t border-gray-100 space-y-2">
+                        <div>
+                            <label className={labelCls}>Mật khẩu mới</label>
+                            <input
+                                value={newPassword}
+                                onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); }}
+                                type="password"
+                                className={inputCls}
+                                placeholder="Tối thiểu 8 ký tự"
+                            />
+                            {passwordError && <p className="text-red-500 text-xs mt-1">{passwordError}</p>}
+                        </div>
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={onChangePassword}
+                                disabled={passwordSaving}
+                                className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 flex items-center gap-2 disabled:opacity-60"
+                            >
+                                {passwordSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+                                Cập nhật mật khẩu
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
