@@ -136,8 +136,9 @@ export const registrationsApi = {
   addGuest: (
     registrationId: string,
     data: {
-      guest_full_name: string;
-      guest_gender: string;
+      user_id?: string;
+      guest_full_name?: string;
+      guest_gender?: string;
       guest_skill_level?: string;
       notes?: string;
     },
@@ -309,4 +310,57 @@ export const registrationsAdminApi = {
   checkinAbsent: (id: string) =>
     api.patch(`/registrations/${id}/checkin-absent`),
   getAdminDetail: (id: string) => api.get(`/registrations/${id}/admin-detail`),
+};
+
+export const matchesAdminApi = {
+  list: (params?: any) => api.get("/matches", { params }),
+  approve: (
+    id: string,
+    data?: { score_a?: number; score_b?: number; note?: string },
+  ) => api.patch(`/matches/${id}/approve`, data ?? {}),
+  reject: (id: string, reason: string) =>
+    api.patch(`/matches/${id}/reject`, { reject_reason: reason }),
+  adminCreate: (data: any) => api.post("/matches/admin-create", data),
+  delete: (id: string) => api.delete(`/matches/${id}`),
+  rollback: (id: string) => api.patch(`/matches/${id}/rollback`),
+  statusCounts: () => api.get("/matches/status-counts"),
+};
+
+
+export const rankingsAdminApi = {
+  leaderboard: (params?: { month?: number; year?: number }) =>
+    api.get("/rankings/leaderboard", { params }),
+  reviceLeaderboard: () => api.get("/rankings/revice"),
+  winRate: () => api.get("/rankings/win-rate"),
+  myStats: () => api.get("/rankings/my-stats"),
+  rankLeaderboard: () => api.get("/rankings/rank-leaderboard"),
+  myRank: () => api.get("/rankings/my-rank"),
+  rankHistory: (limit?: number) =>
+    api.get("/rankings/rank-history", { params: { limit } }),
+  lpChart: (limit?: number) =>
+    api.get("/rankings/lp-chart", { params: { limit } }),
+};
+
+
+export const walletAdminApi = {
+  getSummary: () => api.get("/wallet/admin/summary"),
+  listMembers: (params?: any) => api.get("/wallet/admin/members", { params }),
+  getMemberTransactions: (userId: string, params?: any) =>
+    api.get(`/wallet/admin/users/${userId}/transactions`, { params }),
+  manualTopup: (userId: string, amount: number, note?: string) =>
+    api.post(`/wallet/admin/users/${userId}/topup`, { amount, note }),
+  manualAdjust: (userId: string, amount: number, note?: string) =>
+    api.post(`/wallet/admin/users/${userId}/adjust`, { amount, note }),
+  listTopupRequests: (params?: any) =>
+    api.get("/wallet/admin/topup-requests", { params }),
+  approveTopup: (id: string) =>
+    api.patch(`/wallet/admin/topup-requests/${id}/approve`),
+  rejectTopup: (id: string, reason: string) =>
+    api.patch(`/wallet/admin/topup-requests/${id}/reject`, { reason }),
+  getMonthlyFinance: (params?: { month?: number; year?: number }) =>
+    api.get("/wallet/admin/monthly-finance", { params }),
+  getFinanceHistory: (params?: { months?: number; year?: number }) =>
+    api.get("/wallet/admin/finance-history", { params }),
+  getFinanceYears: () => api.get("/wallet/admin/finance-years"),
+  exportReport: () => api.get("/wallet/admin/export", { responseType: "blob" }),
 };

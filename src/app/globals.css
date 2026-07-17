@@ -55,7 +55,6 @@
     @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
   }
 
-  /* Class tiện ích cho các phần tử scroll riêng (vd: filter tabs) */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -66,10 +65,10 @@
 }
 
 .blend-img {
-  mix-blend-mode: multiply; /* light mode: xóa nền trắng */
+  mix-blend-mode: multiply;
 }
 
 .dark .blend-img {
-  mix-blend-mode: normal; /* dark mode: không blend */
-  filter: invert(1) hue-rotate(180deg); /* đảo màu để xóa nền trắng */
+  mix-blend-mode: normal;
+  filter: invert(1) hue-rotate(180deg);
 }

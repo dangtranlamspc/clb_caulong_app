@@ -10,7 +10,7 @@ import {
   Calculator,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { sessionsAdminApi as sessionsApi } from "@/lib/api";
+import { sessionsAdminApi } from "@/lib/api";
 import { DateTimePicker } from "./DateTimePicker";
 
 function fmt(n: number) {
@@ -49,7 +49,7 @@ export default function SessionFormPage() {
 
   useEffect(() => {
     if (isEdit && id) {
-      sessionsApi
+      sessionsAdminApi
         .get(id)
         .then(({ data }) => {
           setIsCompleted(data.status === "completed");
@@ -94,10 +94,10 @@ export default function SessionFormPage() {
       }
 
       if (isEdit && id) {
-        await sessionsApi.update(id, payload);
+        await sessionsAdminApi.update(id, payload);
         toast.success("Đã cập nhật buổi đánh");
       } else {
-        await sessionsApi.create(payload);
+        await sessionsAdminApi.create(payload);
         toast.success("Tạo buổi đánh thành công");
       }
       router.push(`/sessions/${id ?? ""}`);

@@ -36,16 +36,13 @@ export function SwipeableRow({
 
   return (
     <div className="relative overflow-hidden">
-      <div
-        className="absolute inset-y-0 right-0 flex items-center gap-2 pr-3"
-        style={{ width: ACTION_WIDTH }}
-      >
-        {actions}
-      </div>
-
       <motion.div
-        className="relative bg-white"
-        style={{ x, touchAction: "pan-y" }}
+        className="flex"
+        style={{
+          x,
+          width: `calc(100% + ${ACTION_WIDTH}px)`,
+          touchAction: "pan-y",
+        }}
         drag="x"
         dragConstraints={{ left: -ACTION_WIDTH, right: 0 }}
         dragElastic={0}
@@ -55,7 +52,15 @@ export function SwipeableRow({
           if (open) snapTo(0);
         }}
       >
-        {children}
+        <div className="bg-white min-w-0" style={{ flex: "1 1 auto" }}>
+          {children}
+        </div>
+        <div
+          className="flex overflow-hidden rounded-r-2xl"
+          style={{ width: ACTION_WIDTH, flexShrink: 0 }}
+        >
+          {actions}
+        </div>
       </motion.div>
     </div>
   );

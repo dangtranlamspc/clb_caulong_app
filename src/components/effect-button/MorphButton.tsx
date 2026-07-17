@@ -4,24 +4,38 @@ type ActionPhase = "idle" | "loading" | "success";
 
 export function MorphButton({
   phase,
-  idleIcon,
+  idleIcon = null,
   label,
   colorClass,
-  successColorClass = "bg-green-500 text-white",
+  idleClassName,
+  successColorClass,
+  successClassName,
   idleWidthClass = "min-w-[7rem]",
   onClick,
   disabled,
 }: {
   phase: ActionPhase;
-  idleIcon: React.ReactNode;
+  idleIcon?: React.ReactNode;
   label: string;
-  colorClass: string;
+  /** @deprecated dùng idleClassName */
+  colorClass?: string;
+  idleClassName?: string;
+  /** @deprecated dùng successClassName */
   successColorClass?: string;
+  successClassName?: string;
   idleWidthClass?: string;
   onClick: () => void;
   disabled?: boolean;
 }) {
   const isMorphed = phase === "loading" || phase === "success";
+
+  const resolvedIdleClass =
+    idleClassName ??
+    colorClass ??
+    "bg-blue-600 hover:bg-blue-700 text-white";
+  const resolvedSuccessClass =
+    successClassName ?? successColorClass ?? "bg-green-500 text-white";
+
   return (
     <button
       onClick={onClick}
@@ -30,7 +44,7 @@ export function MorphButton({
                 transition-[width,border-radius,background-color] duration-300 ease-out
                 h-10 flex-shrink-0
                 ${isMorphed ? "w-10 rounded-full p-0" : `${idleWidthClass} rounded-lg px-3 whitespace-nowrap`}
-                ${phase === "success" ? successColorClass : colorClass}
+                ${phase === "success" ? resolvedSuccessClass : resolvedIdleClass}
                 disabled:cursor-not-allowed disabled:opacity-60`}
     >
       {phase === "loading" && (

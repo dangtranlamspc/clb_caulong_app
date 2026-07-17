@@ -19,7 +19,7 @@ import {
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { sessionsAdminApi as sessionsApi } from "@/lib/api";
+import { sessionsAdminApi } from "@/lib/api";
 import { createPortal } from "react-dom";
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
@@ -109,7 +109,7 @@ export default function SessionsPage() {
       const params = Object.fromEntries(
         Object.entries(query).filter(([, v]) => v !== ""),
       );
-      const { data } = await sessionsApi.list(params);
+      const { data } = await sessionsAdminApi.list(params);
       const sorted = [...(data.data ?? [])].sort((a: any, b: any) => {
         const aReopen = a.reopened_at ? new Date(a.reopened_at).getTime() : 0;
         const bReopen = b.reopened_at ? new Date(b.reopened_at).getTime() : 0;
@@ -155,7 +155,7 @@ export default function SessionsPage() {
     closeCancelModal();
     setActionId(id);
     try {
-      await sessionsApi.updateStatus(id, { status: "cancelled" });
+      await sessionsAdminApi.updateStatus(id, { status: "cancelled" });
       toast.success("Đã hủy buổi và xóa toàn bộ đăng ký");
       fetchSessions();
     } finally {
@@ -171,7 +171,7 @@ export default function SessionsPage() {
   const handleStatusChange = async (id: string, next: string) => {
     setActionId(id);
     try {
-      await sessionsApi.updateStatus(id, { status: next });
+      await sessionsAdminApi.updateStatus(id, { status: next });
       toast.success("Đã cập nhật trạng thái");
       fetchSessions();
     } finally {
@@ -188,7 +188,7 @@ export default function SessionsPage() {
       return;
     setActionId(id);
     try {
-      await sessionsApi.complete(id);
+      await sessionsAdminApi.complete(id);
       toast.success("Đã hoàn thành và khoá buổi đánh!");
       fetchSessions();
     } catch (err: any) {
@@ -208,7 +208,7 @@ export default function SessionsPage() {
     closeDeleteModal();
     setActionId(id);
     try {
-      await sessionsApi.delete(id);
+      await sessionsAdminApi.delete(id);
       toast.success("Đã xóa buổi");
       fetchSessions();
     } finally {
@@ -246,11 +246,10 @@ export default function SessionsPage() {
                   }))
                 }
                 className={`px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors
-                                    ${
-                                      query.status === val
-                                        ? "bg-white text-gray-900 shadow-sm"
-                                        : "text-gray-500 hover:text-gray-700"
-                                    }
+                                    ${query.status === val
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                  }
                                 `}
               >
                 {lbl}
@@ -288,9 +287,9 @@ export default function SessionsPage() {
                 ? s.pending_action_count > 0
                   ? STATUS_CONFIG.waiting_payment
                   : {
-                      label: "Chờ chốt thanh toán",
-                      cls: "bg-indigo-100 text-indigo-700",
-                    }
+                    label: "Chờ chốt thanh toán",
+                    cls: "bg-indigo-100 text-indigo-700",
+                  }
                 : (STATUS_CONFIG[s.status] ?? STATUS_CONFIG.open);
             const nextActions = STATUS_NEXT[s.status] ?? [];
             const busy = actionId === s.id;

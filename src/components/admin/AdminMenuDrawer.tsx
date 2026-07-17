@@ -2,27 +2,55 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-    X, Home, LayoutDashboard, Users, CalendarDays, Wallet, Megaphone, ChevronRight,
+    X, Home, LayoutDashboard, Users, CalendarDays, Wallet, Megaphone, ChevronRight, ChevronDown,
+    Swords,
 } from 'lucide-react';
 
-const ADMIN_MENU = [
+type AdminMenuChild = { href: string; label: string };
+type AdminMenuItem = {
+    href?: string;
+    icon: any;
+    label: string;
+    desc: string;
+    iconBg: string;
+    children?: AdminMenuChild[];
+};
+
+export const ADMIN_MENU: AdminMenuItem[] = [
     { href: '/home', icon: Home, label: 'Trang chủ', desc: 'Về trang chính của thành viên', iconBg: 'bg-slate-500' },
     { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard', desc: 'Tổng quan số liệu CLB', iconBg: 'bg-blue-500' },
     { href: '/admin/members', icon: Users, label: 'Quản lý thành viên', desc: 'Danh sách, phân loại, VIP', iconBg: 'bg-emerald-500' },
     { href: '/admin/sessions', icon: CalendarDays, label: 'Buổi đánh', desc: 'Lịch, đăng ký, điểm danh', iconBg: 'bg-violet-500' },
-    { href: '/admin/wallet', icon: Wallet, label: 'Ví / Tài chính', desc: 'Nạp quỹ, thu chi, báo cáo', iconBg: 'bg-amber-500' },
+    { href: '/admin/matches', icon: Swords, label: 'Trận giao hữu', desc: 'Duyệt kết quả, tính điểm rank', iconBg: 'bg-orange-500' },
+    { href: '/admin/rankings', icon: Swords, label: 'BXH', desc: 'Bảng xếp hạng', iconBg: 'bg-orange-500' },
+    {
+        icon: Wallet,
+        label: 'Ví / Tài chính',
+        desc: 'Nạp quỹ, thu chi, báo cáo',
+        iconBg: 'bg-amber-500',
+        children: [
+            { href: '/admin/wallet/deposits', label: 'Duyệt nạp tiền' },
+            { href: '/admin/wallet/summary', label: 'Tổng hợp' },
+        ],
+    },
     { href: '/admin/activities', icon: Megaphone, label: 'Hoạt động', desc: 'Sự kiện, giải đấu, đặt áo', iconBg: 'bg-rose-500' },
 ];
 
 const ANIM_MS = 250;
 
+export const isAdminMenuActive = (href: string, pathname: string) =>
+    href === '/home' ? pathname === href : pathname === href || pathname.startsWith(href + '/');
+
+const isChildActive = (children: AdminMenuChild[] | undefined, pathname: string) =>
+    children?.some((c) => isAdminMenuActive(c.href, pathname)) ?? false;
+
 export function AdminMenuDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
     const router = useRouter();
     const pathname = usePathname();
 
-    // Giữ component mounted thêm ANIM_MS khi đóng, để animation trượt-ra kịp chạy
     const [mounted, setMounted] = useState(open);
     const [closing, setClosing] = useState(false);
+    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         if (open) {
@@ -36,7 +64,7 @@ export function AdminMenuDrawer({ open, onClose }: { open: boolean; onClose: () 
             }, ANIM_MS);
             return () => clearTimeout(t);
         }
-    }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [open]);
 
     if (!mounted) return null;
 
@@ -45,9 +73,11 @@ export function AdminMenuDrawer({ open, onClose }: { open: boolean; onClose: () 
         router.push(href);
     };
 
-    // '/home' chỉ active khi trùng khớp tuyệt đối, các mục /admin/* active cả khi ở route con
-    const isActive = (href: string) =>
-        href === '/home' ? pathname === href : pathname === href || pathname.startsWith(href + '/');
+    const isActive = (href: string) => isAdminMenuActive(href, pathname);
+
+    const toggleMenu = (label: string) => {
+        setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }));
+    };
 
     return (
         <div className="fixed inset-0 z-[60]">
@@ -71,15 +101,71 @@ export function AdminMenuDrawer({ open, onClose }: { open: boolean; onClose: () 
                 </div>
 
                 <div className="p-4 space-y-2.5">
-                    {ADMIN_MENU.map(({ href, icon: Icon, label, desc, iconBg }, idx) => {
-                        const active = isActive(href);
+                    {ADMIN_MENU.map(({ href, icon: Icon, label, desc, iconBg, children }, idx) => {
+                        // ── Mục có con: expand/collapse thay vì điều hướng thẳng ──
+                        if (children) {
+                            const childActive = isChildActive(children, pathname);
+                            const isOpen = openMenus[label] ?? childActive;
+
+                            return (
+                                <div key={label}>
+                                    <button
+                                        onClick={() => toggleMenu(label)}
+                                        className={`w-full rounded-2xl p-3.5 flex items-center gap-3 border shadow-sm active:scale-[0.98] transition-colors text-left ${childActive ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-100'
+                                            }`}
+                                    >
+                                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+                                            <Icon className="w-5 h-5 text-white" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className={`text-sm font-bold ${childActive ? 'text-blue-700' : 'text-gray-900'}`}>{label}</p>
+                                            <p className="text-xs mt-0.5 truncate text-gray-400">{desc}</p>
+                                        </div>
+                                        <ChevronDown
+                                            className={`w-4 h-4 flex-shrink-0 text-gray-300 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
+                                                }`}
+                                        />
+                                    </button>
+
+                                    <div
+                                        className={`grid transition-[grid-template-rows] duration-200 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                                            }`}
+                                    >
+                                        <div className="overflow-hidden">
+                                            <div className="mt-1.5 ml-5 pl-4 border-l-2 border-gray-200 space-y-1.5 py-0.5">
+                                                {children.map((child) => {
+                                                    const active = isActive(child.href);
+                                                    return (
+                                                        <button
+                                                            key={child.href}
+                                                            onClick={() => go(child.href)}
+                                                            className={`relative w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors text-left ${active
+                                                                ? 'bg-blue-500 text-white font-semibold'
+                                                                : 'bg-white border border-gray-100 text-gray-600'
+                                                                }`}
+                                                        >
+                                                            <span className="flex-1">{child.label}</span>
+                                                            <ChevronRight className={`w-3.5 h-3.5 flex-shrink-0 ${active ? 'text-white/80' : 'text-gray-300'}`} />
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {idx === 0 && <div className="h-px bg-gray-200 my-2.5" />}
+                                </div>
+                            );
+                        }
+
+                        // ── Mục thường: link thẳng ──
+                        const active = isActive(href!);
                         return (
                             <div key={href}>
                                 <button
-                                    onClick={() => go(href)}
+                                    onClick={() => go(href!)}
                                     className={`w-full rounded-2xl p-3.5 flex items-center gap-3 border shadow-sm active:scale-[0.98] transition-colors text-left ${active
-                                            ? 'bg-blue-500 border-blue-500'
-                                            : 'bg-white border-gray-100'
+                                        ? 'bg-blue-500 border-blue-500'
+                                        : 'bg-white border-gray-100'
                                         }`}
                                 >
                                     <div
@@ -103,7 +189,6 @@ export function AdminMenuDrawer({ open, onClose }: { open: boolean; onClose: () 
                                         className={`w-4 h-4 flex-shrink-0 ${active ? 'text-white/80' : 'text-gray-300'}`}
                                     />
                                 </button>
-                                {/* Đường kẻ phân tách "Trang chủ" khỏi các mục quản trị bên dưới */}
                                 {idx === 0 && <div className="h-px bg-gray-200 my-2.5" />}
                             </div>
                         );
@@ -112,35 +197,35 @@ export function AdminMenuDrawer({ open, onClose }: { open: boolean; onClose: () 
             </div>
 
             <style jsx>{`
-        @keyframes slide-in-left {
-          from { transform: translateX(-100%); }
-          to { transform: translateX(0); }
-        }
-        @keyframes slide-out-left {
-          from { transform: translateX(0); }
-          to { transform: translateX(-100%); }
-        }
-        .animate-slide-in-left {
-          animation: slide-in-left 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-        }
-        .animate-slide-out-left {
-          animation: slide-out-left 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-        }
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes fade-out {
-          from { opacity: 1; }
-          to { opacity: 0; }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.2s ease-out forwards;
-        }
-        .animate-fade-out {
-          animation: fade-out 0.2s ease-out forwards;
-        }
-      `}</style>
+                @keyframes slide-in-left {
+                from { transform: translateX(-100%); }
+                to { transform: translateX(0); }
+                }
+                @keyframes slide-out-left {
+                from { transform: translateX(0); }
+                to { transform: translateX(-100%); }
+                }
+                .animate-slide-in-left {
+                animation: slide-in-left 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+                }
+                .animate-slide-out-left {
+                animation: slide-out-left 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+                }
+                @keyframes fade-in {
+                from { opacity: 0; }
+                to { opacity: 1; }
+                }
+                @keyframes fade-out {
+                from { opacity: 1; }
+                to { opacity: 0; }
+                }
+                .animate-fade-in {
+                animation: fade-in 0.2s ease-out forwards;
+                }
+                .animate-fade-out {
+                animation: fade-out 0.2s ease-out forwards;
+                }
+            `}</style>
         </div>
     );
 }

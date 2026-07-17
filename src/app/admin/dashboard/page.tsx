@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { Users, Crown, User, UserRound, CalendarDays, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
-import { sessionsApi, rankingsApi, dashboardAdminApi } from '@/lib/api';
+import { sessionsApi, rankingsAdminApi, dashboardAdminApi } from '@/lib/api';
 
 const FINANCE_PERIOD_OPTIONS = [
     { value: 1, label: '1 tháng' }, { value: 3, label: '3 tháng' }, { value: 6, label: '6 tháng' },
@@ -33,7 +33,6 @@ function StatCard({ icon: Icon, iconBg, label, value }: { icon: any; iconBg: str
     );
 }
 
-// Skeleton dạng shimmer — có dải sáng chạy qua thay vì chỉ nhấp nháy phẳng
 function CardSkeleton({ className = 'h-20' }: { className?: string }) {
     return (
         <div className={`relative overflow-hidden bg-gray-100 rounded-2xl ${className}`}>
@@ -42,8 +41,6 @@ function CardSkeleton({ className = 'h-20' }: { className?: string }) {
     );
 }
 
-// Bọc quanh mỗi khối nội dung: khi loading=false, trượt lên nhẹ + fade in,
-// delayMs tạo hiệu ứng xuất hiện lệch nhau (staggered) giữa các khối
 function Reveal({ show, delayMs = 0, children }: { show: boolean; delayMs?: number; children: React.ReactNode }) {
     if (!show) return null;
     return (
@@ -126,7 +123,7 @@ export default function AdminDashboardPage() {
 
     useEffect(() => {
         setLeaderboardLoading(true);
-        rankingsApi.leaderboard()
+        rankingsAdminApi.rankLeaderboard()
             .then(({ data }) => {
                 const rows = (data ?? []) as any[];
                 setLeaderboard(

@@ -81,8 +81,8 @@ export default function BillPage() {
             other_fee_note: myReg?.other_fee_note,
         },
         ...groupedGuests.map((g: any) => ({
-            label: `+ ${g.guest_full_name}`,
-            sub: 'Khách đi cùng',
+            label: `+ ${g.is_guest ? g.guest_full_name : g.users?.full_name}`,
+            sub: g.is_guest ? 'Khách đi cùng' : 'Người đi cùng',
             amount: g.amount_override ?? 0,
             base_amount: g.base_amount,
             other_fee_amount: g.other_fee_amount,

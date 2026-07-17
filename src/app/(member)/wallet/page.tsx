@@ -56,11 +56,10 @@ function QuickAmountBtn({
   return (
     <button
       onClick={onClick}
-      className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${
-        active
+      className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${active
           ? "bg-blue-600 text-white border-blue-600"
           : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
-      }`}
+        }`}
     >
       {smt(value)}
     </button>
@@ -77,7 +76,6 @@ function TopupModal({
   const [step, setStep] = useState<"amount" | "transfer" | "cash">("amount");
   const { user } = useAuthStore();
   const [amount, setAmount] = useState(0);
-  const [payRef, setPayRef] = useState("");
   const [amountDisplay, setAmountDisplay] = useState("");
   const [billUrl, setBillUrl] = useState<string | null>(null);
   const [billPreview, setBillPreview] = useState<string | null>(null);

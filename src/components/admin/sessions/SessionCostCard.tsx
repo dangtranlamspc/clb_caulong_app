@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { sessionsAdminApi as sessionsApi } from "@/lib/api";
+import { sessionsAdminApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 
 function fmt(n: number) {
@@ -16,10 +16,10 @@ export default function SessionCostCard({ sessionId }: Props) {
   const [loading, setLoading] = useState(true);
 
   const fetchCost = useCallback(() => {
-    return sessionsApi
+    return sessionsAdminApi
       .getCost(sessionId)
       .then(({ data }) => setCost(data))
-      .catch(() => {});
+      .catch(() => { });
   }, [sessionId]);
 
   useEffect(() => {

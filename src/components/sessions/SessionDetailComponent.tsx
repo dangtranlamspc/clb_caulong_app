@@ -27,7 +27,7 @@ import { buildTransferNote } from "@/hooks/payment-ref";
 import { useAuthStore } from "@/store/auth.store";
 import { createPortal } from "react-dom";
 import { useNotificationsRealtimeStore } from "@/store/notifications-realtime.store";
-import { walletApi, sessionsApi, registrationsApi } from "@/lib/api";
+import { walletApi, sessionsApi, registrationsApi, usersApi } from "@/lib/api";
 
 type ActionPhase = "idle" | "loading" | "success";
 
@@ -269,12 +269,18 @@ export default function SessionDetailPage() {
   const [payType, setPayType] = useState<"solo" | "grouped" | null>(null);
 
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const [guestTab, setGuestTab] = useState<"account" | "guest">("account");
   const [guestForm, setGuestForm] = useState({
     full_name: "",
     gender: "male",
     skill_level: "",
   });
   const [addingGuest, setAddingGuest] = useState(false);
+
+  const [memberSearch, setMemberSearch] = useState("");
+  const [memberSearchResults, setMemberSearchResults] = useState<any[]>([]);
+  const [searchingMembers, setSearchingMembers] = useState(false);
+  const [selectedCompanion, setSelectedCompanion] = useState<any>(null);
 
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loadingRegs, setLoadingRegs] = useState(true);
@@ -350,6 +356,20 @@ export default function SessionDetailPage() {
     fetchSession();
     fetchRegistrations();
   }, [id]);
+
+  useEffect(() => {
+    if (!showGuestModal || guestTab !== "account") return;
+    const t = setTimeout(async () => {
+      setSearchingMembers(true);
+      try {
+        const { data } = await usersApi.searchMembers(memberSearch.trim());
+        setMemberSearchResults(data ?? []);
+      } finally {
+        setSearchingMembers(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [memberSearch, showGuestModal, guestTab]);
 
   useEffect(() => {
     if (!id) return;
@@ -490,28 +510,55 @@ export default function SessionDetailPage() {
   const closeGuestModal = () => {
     setShowGuestModal(false);
     setGuestForm({ full_name: "", gender: "male", skill_level: "" });
+    setGuestTab("account");
+    setMemberSearch("");
+    setMemberSearchResults([]);
+    setSelectedCompanion(null);
   };
 
   const handleAddGuest = async () => {
-    if (!myReg?.id || !guestForm.full_name.trim()) {
-      toast.error("Vui lòng nhập họ tên khách");
-      return;
-    }
-    setAddingGuest(true);
-    try {
-      await registrationsApi.addGuest(myReg.id, {
-        guest_full_name: guestForm.full_name.trim(),
-        guest_gender: guestForm.gender,
-        guest_skill_level: guestForm.skill_level || undefined,
-      });
-      toast.success(`Đã thêm khách ${guestForm.full_name} đi cùng bạn`);
-      closeGuestModal();
-      fetchSession();
-      fetchRegistrations();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Thêm khách thất bại");
-    } finally {
-      setAddingGuest(false);
+    if (!myReg?.id) return;
+
+    if (guestTab === "account") {
+      if (!selectedCompanion) {
+        toast.error("Vui lòng chọn thành viên đi cùng");
+        return;
+      }
+      setAddingGuest(true);
+      try {
+        await registrationsApi.addGuest(myReg.id, {
+          user_id: selectedCompanion.id,
+        });
+        toast.success(`Đã thêm ${selectedCompanion.full_name} đi cùng bạn`);
+        closeGuestModal();
+        fetchSession();
+        fetchRegistrations();
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message ?? "Thêm thất bại");
+      } finally {
+        setAddingGuest(false);
+      }
+    } else {
+      if (!guestForm.full_name.trim()) {
+        toast.error("Vui lòng nhập họ tên khách");
+        return;
+      }
+      setAddingGuest(true);
+      try {
+        await registrationsApi.addGuest(myReg.id, {
+          guest_full_name: guestForm.full_name.trim(),
+          guest_gender: guestForm.gender,
+          guest_skill_level: guestForm.skill_level || undefined,
+        });
+        toast.success(`Đã thêm khách ${guestForm.full_name} đi cùng bạn`);
+        closeGuestModal();
+        fetchSession();
+        fetchRegistrations();
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message ?? "Thêm khách thất bại");
+      } finally {
+        setAddingGuest(false);
+      }
     }
   };
 
@@ -550,6 +597,10 @@ export default function SessionDetailPage() {
   );
   const soloAmount = myReg?.amount_override ?? 0;
   const groupedAmount = soloAmount + guestTotal;
+
+  const companionName = (g: any) => g.is_guest ? g.guest_full_name : g.users?.full_name;
+  const hasMemberCompanion = myGuests.some((g: any) => !g.is_guest);
+  const companionLabel = hasMemberCompanion ? "người đi cùng" : "khách đi cùng";
 
   const totalOtherFeeFromRegs = registrations.reduce(
     (sum: number, r: any) => sum + (r.other_fee_amount ?? 0),
@@ -950,7 +1001,7 @@ export default function SessionDetailPage() {
                 onClick={() => setShowGuestModal(true)}
                 className="flex items-center gap-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] px-4 py-2.5 rounded-xl shadow-sm shadow-blue-200 transition-all"
               >
-                <UserPlus className="w-4 h-4" /> Thêm khách đi cùng
+                <UserPlus className="w-4 h-4" /> Thêm người đi cùng
               </button>
             )}
         </div>
@@ -979,19 +1030,19 @@ export default function SessionDetailPage() {
 
             {(myReg?.participation_status === "pending_approval" ||
               myReg?.participation_status === "awaiting_checkin") && (
-              <div className="flex items-center gap-1.5 mb-4 -mt-1">
-                {myReg?.participation_status === "pending_approval" && (
-                  <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-50 text-amber-700 flex items-center gap-1">
-                    <Hourglass className="w-3 h-3" /> Chờ admin duyệt
-                  </span>
-                )}
-                {myReg?.participation_status === "awaiting_checkin" && (
-                  <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600 flex items-center gap-1">
-                    <Hourglass className="w-3 h-3" /> Chờ admin điểm danh
-                  </span>
-                )}
-              </div>
-            )}
+                <div className="flex items-center gap-1.5 mb-4 -mt-1">
+                  {myReg?.participation_status === "pending_approval" && (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-50 text-amber-700 flex items-center gap-1">
+                      <Hourglass className="w-3 h-3" /> Chờ admin duyệt
+                    </span>
+                  )}
+                  {myReg?.participation_status === "awaiting_checkin" && (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600 flex items-center gap-1">
+                      <Hourglass className="w-3 h-3" /> Chờ admin điểm danh
+                    </span>
+                  )}
+                </div>
+              )}
 
             <div className="space-y-3 text-sm text-gray-600">
               <div className="flex items-center gap-3">
@@ -1029,15 +1080,14 @@ export default function SessionDetailPage() {
                   Chỗ trống
                 </span>
                 <span
-                  className={`text-xs font-semibold ${
-                    slotDimmed
-                      ? "text-gray-400"
-                      : isFull
-                        ? "text-red-500"
-                        : slotRatio >= 0.6
-                          ? "text-amber-500"
-                          : "text-emerald-600"
-                  }`}
+                  className={`text-xs font-semibold ${slotDimmed
+                    ? "text-gray-400"
+                    : isFull
+                      ? "text-red-500"
+                      : slotRatio >= 0.6
+                        ? "text-amber-500"
+                        : "text-emerald-600"
+                    }`}
                 >
                   {isFull
                     ? "Đã hết chỗ"
@@ -1084,7 +1134,7 @@ export default function SessionDetailPage() {
                       <span className="font-medium">
                         {fmt(
                           (session.shuttle_count ?? 0) *
-                            (session.shuttle_price ?? 0),
+                          (session.shuttle_price ?? 0),
                         )}
                       </span>
                     </div>
@@ -1117,8 +1167,8 @@ export default function SessionDetailPage() {
                               r.payment_method === "grouped_with_host";
                             const hostName = isGroupedGuest
                               ? (registrations.find(
-                                  (h: any) => h.id === r.host_registration_id,
-                                )?.users?.full_name ??
+                                (h: any) => h.id === r.host_registration_id,
+                              )?.users?.full_name ??
                                 registrations.find(
                                   (h: any) => h.id === r.host_registration_id,
                                 )?.guest_full_name)
@@ -1157,9 +1207,9 @@ export default function SessionDetailPage() {
                     <span>
                       {fmt(
                         (session.court_fee ?? 0) +
-                          (session.shuttle_count ?? 0) *
-                            (session.shuttle_price ?? 0) +
-                          totalOtherFeeFromRegs,
+                        (session.shuttle_count ?? 0) *
+                        (session.shuttle_price ?? 0) +
+                        totalOtherFeeFromRegs,
                       )}
                     </span>
                   </div>
@@ -1167,14 +1217,14 @@ export default function SessionDetailPage() {
                 {registrations.filter(
                   (r) => r.participation_status === "confirmed",
                 ).length > 0 && (
-                  <button
-                    onClick={openAmountsModal}
-                    className="w-full py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-700 transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    Mỗi người cần thanh toán
-                  </button>
-                )}
+                    <button
+                      onClick={openAmountsModal}
+                      className="w-full py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-700 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      Mỗi người cần thanh toán
+                    </button>
+                  )}
               </div>
             )}
 
@@ -1519,9 +1569,7 @@ export default function SessionDetailPage() {
               >
                 <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl">
                   <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                    <h3 className="font-bold text-gray-900">
-                      Thêm khách đi cùng
-                    </h3>
+                    <h3 className="font-bold text-gray-900">Thêm người đi cùng</h3>
                     <button
                       onClick={closeGuestModal}
                       className="p-1 text-gray-400 hover:text-gray-600"
@@ -1529,70 +1577,180 @@ export default function SessionDetailPage() {
                       <XIcon className="w-5 h-5" />
                     </button>
                   </div>
-                  <div className="p-5 space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Họ tên *
-                      </label>
-                      <input
-                        autoFocus
-                        value={guestForm.full_name}
-                        onChange={(e) =>
-                          setGuestForm((f) => ({
-                            ...f,
-                            full_name: e.target.value,
-                          }))
-                        }
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                        placeholder="Tên khách đi cùng"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Giới tính
-                        </label>
-                        <select
-                          value={guestForm.gender}
-                          onChange={(e) =>
-                            setGuestForm((f) => ({
-                              ...f,
-                              gender: e.target.value,
-                            }))
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
-                        >
-                          <option value="male">Nam</option>
-                          <option value="female">Nữ</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Trình độ
-                        </label>
-                        <select
-                          value={guestForm.skill_level}
-                          onChange={(e) =>
-                            setGuestForm((f) => ({
-                              ...f,
-                              skill_level: e.target.value,
-                            }))
-                          }
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
-                        >
-                          {SKILL_OPTIONS.map((o) => (
-                            <option key={o.value} value={o.value}>
-                              {o.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
-                      ⓘ Tiền của khách đi cùng sẽ được gộp vào số tiền bạn cần
-                      thanh toán sau khi buổi kết thúc.
-                    </p>
+
+                  <div className="flex gap-1 px-5 pt-3">
+                    {[
+                      ["account", "Có tài khoản"],
+                      ["guest", "Khách không tài khoản"],
+                    ].map(([val, lbl]) => (
+                      <button
+                        key={val}
+                        onClick={() => setGuestTab(val as any)}
+                        className={`flex-1 py-1.5 rounded-lg text-sm font-medium ${guestTab === val
+                          ? "bg-blue-50 text-blue-600"
+                          : "text-gray-400"
+                          }`}
+                      >
+                        {lbl}
+                      </button>
+                    ))}
                   </div>
+
+                  <div className="p-5 space-y-3">
+                    {guestTab === "account" ? (
+                      <>
+                        <div className="relative">
+                          <input
+                            autoFocus
+                            value={memberSearch}
+                            onChange={(e) => {
+                              setMemberSearch(e.target.value);
+                              setSelectedCompanion(null);
+                            }}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                            placeholder="Tìm theo tên hoặc số điện thoại..."
+                          />
+                        </div>
+
+                        {selectedCompanion && (
+                          <div className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl bg-blue-50 border border-blue-200">
+                            <span className="flex-1 text-sm font-medium text-blue-700 truncate">
+                              {selectedCompanion.full_name}
+                            </span>
+                            <button
+                              onClick={() => setSelectedCompanion(null)}
+                              className="w-5 h-5 rounded-full hover:bg-blue-200 flex items-center justify-center flex-shrink-0"
+                            >
+                              <XIcon className="w-3.5 h-3.5 text-blue-600" />
+                            </button>
+                          </div>
+                        )}
+
+                        {!selectedCompanion && (
+                          <div className="max-h-60 overflow-y-auto -mx-1 border border-gray-100 rounded-xl">
+                            {searchingMembers ? (
+                              <p className="text-sm text-gray-400 text-center py-4">
+                                Đang tìm...
+                              </p>
+                            ) : memberSearchResults.length === 0 ? (
+                              <p className="text-sm text-gray-400 text-center py-4">
+                                {memberSearch.trim()
+                                  ? "Không tìm thấy thành viên"
+                                  : "Nhập tên hoặc số điện thoại để tìm"}
+                              </p>
+                            ) : (
+                              <ul className="divide-y divide-gray-50">
+                                {memberSearchResults
+                                  .filter((m: any) => m.id !== user?.id)
+                                  .map((m: any) => (
+                                    <li key={m.id}>
+                                      <button
+                                        onClick={() => setSelectedCompanion(m)}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                                      >
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                          {m.avatar_url ? (
+                                            <img
+                                              src={m.avatar_url}
+                                              alt={m.full_name}
+                                              className="w-full h-full object-cover"
+                                            />
+                                          ) : (
+                                            <span className="text-xs font-semibold text-blue-700">
+                                              {m.full_name?.[0]?.toUpperCase() ?? "?"}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium text-gray-900 truncate">
+                                            {m.full_name}
+                                          </p>
+                                          <p className="text-xs text-gray-400">
+                                            {m.phone}
+                                          </p>
+                                        </div>
+                                      </button>
+                                    </li>
+                                  ))}
+                              </ul>
+                            )}
+                          </div>
+                        )}
+
+                        <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+                          ⓘ {selectedCompanion?.full_name ?? "Thành viên"} sẽ nhận
+                          thông báo được thêm vào buổi. Khi thanh toán, bạn có thể chọn
+                          gộp tiền của họ vào ví của mình hoặc để họ tự thanh toán.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Họ tên *
+                          </label>
+                          <input
+                            autoFocus
+                            value={guestForm.full_name}
+                            onChange={(e) =>
+                              setGuestForm((f) => ({
+                                ...f,
+                                full_name: e.target.value,
+                              }))
+                            }
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                            placeholder="Tên khách đi cùng"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Giới tính
+                            </label>
+                            <select
+                              value={guestForm.gender}
+                              onChange={(e) =>
+                                setGuestForm((f) => ({
+                                  ...f,
+                                  gender: e.target.value,
+                                }))
+                              }
+                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
+                            >
+                              <option value="male">Nam</option>
+                              <option value="female">Nữ</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Trình độ
+                            </label>
+                            <select
+                              value={guestForm.skill_level}
+                              onChange={(e) =>
+                                setGuestForm((f) => ({
+                                  ...f,
+                                  skill_level: e.target.value,
+                                }))
+                              }
+                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
+                            >
+                              {SKILL_OPTIONS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+                          ⓘ Tiền của khách đi cùng sẽ được gộp vào số tiền bạn cần
+                          thanh toán sau khi buổi kết thúc.
+                        </p>
+                      </>
+                    )}
+                  </div>
+
                   <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
                     <button
                       onClick={closeGuestModal}
@@ -1602,13 +1760,16 @@ export default function SessionDetailPage() {
                     </button>
                     <button
                       onClick={handleAddGuest}
-                      disabled={addingGuest || !guestForm.full_name.trim()}
+                      disabled={
+                        addingGuest ||
+                        (guestTab === "account"
+                          ? !selectedCompanion
+                          : !guestForm.full_name.trim())
+                      }
                       className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-1.5"
                     >
-                      {addingGuest && (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      )}{" "}
-                      Thêm khách
+                      {addingGuest && <Loader2 className="w-4 h-4 animate-spin" />}{" "}
+                      Thêm vào buổi
                     </button>
                   </div>
                 </div>
@@ -1617,7 +1778,7 @@ export default function SessionDetailPage() {
             )}
 
           <div
-            className="max-w-lg mx-auto px-4 mt-2 space-y-2"
+            className="max-w-lg mx-auto px-4 mt-2 space-y-2 flex flex-col items-center"
             style={{
               animation: "fadeSlideUp .35s ease both",
               animationDelay: "80ms",
@@ -1752,10 +1913,8 @@ export default function SessionDetailPage() {
                               {fmt(soloAmount)}
                             </p>
                             <p className="text-xs text-gray-400">
-                              Khách đi cùng (
-                              {myGuests
-                                .map((g: any) => g.guest_full_name)
-                                .join(", ")}
+                              {companionLabel.charAt(0).toUpperCase() + companionLabel.slice(1)} (
+                              {myGuests.map(companionName).join(", ")}
                               ) tự thanh toán riêng
                             </p>
                           </div>
@@ -1772,7 +1931,7 @@ export default function SessionDetailPage() {
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-gray-900">
-                              Gộp cả khách đi cùng
+                              Gộp cả {companionLabel}
                             </p>
                             <p className="text-lg font-black text-purple-600 mt-0.5">
                               {fmt(groupedAmount)}
@@ -1782,7 +1941,7 @@ export default function SessionDetailPage() {
                               {myGuests
                                 .map(
                                   (g: any) =>
-                                    `${g.guest_full_name} (${fmt(g.amount_override ?? 0)})`,
+                                    `${companionName(g)} (${fmt(g.amount_override ?? 0)})`,
                                 )
                                 .join(", ")}
                             </p>
@@ -1939,7 +2098,7 @@ export default function SessionDetailPage() {
                                       } catch (err: any) {
                                         toast.error(
                                           err?.response?.data?.message ??
-                                            "Thanh toán thất bại",
+                                          "Thanh toán thất bại",
                                         );
                                       } finally {
                                         setSubmittingPay(false);
