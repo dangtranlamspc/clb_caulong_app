@@ -23,8 +23,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!mounted || user?.role !== 'admin') return null;
 
     const currentPage = ADMIN_MENU
-        .filter((item) => isAdminMenuActive(item.href, pathname ?? ''))
-        .sort((a, b) => b.href.length - a.href.length)[0];
+        .filter((item) => isAdminMenuActive(item.href ?? '', pathname ?? ''))
+        .sort((a, b) => (b.href ?? '').length - (a.href ?? '').length)[0];
 
     const headerTitle = currentPage?.label ?? 'Quản trị';
 
