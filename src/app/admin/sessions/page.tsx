@@ -11,10 +11,9 @@ import {
   ChevronRight,
   Pencil,
   Trash2,
-  CheckCircle,
   XCircle,
-  PlayCircle,
   Eye,
+  Loader2,
 } from "lucide-react";
 import { motion, LayoutGroup } from "framer-motion";
 import toast from "react-hot-toast";
@@ -22,6 +21,8 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { sessionsAdminApi } from "@/lib/api";
 import { createPortal } from "react-dom";
+import SessionFormModal from "@/components/admin/sessions/SessionFormModal";
+import { useRouter } from "next/navigation";
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
   open: { label: "Mở đăng ký", cls: "bg-green-100 text-green-700" },
@@ -86,11 +87,14 @@ const STATUS_NEXT: Record<
 };
 
 export default function SessionsPage() {
+  const router = useRouter();
   const [sessions, setSessions] = useState<any[]>([]);
   const [meta, setMeta] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState({ status: "", page: 1, limit: 15 });
   const [actionId, setActionId] = useState<string | null>(null);
+  const [formTarget, setFormTarget] = useState<{ id?: string } | null>(null);
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
   const [cancelTarget, setCancelTarget] = useState<{
     id: string;
@@ -251,12 +255,19 @@ export default function SessionsPage() {
                       <motion.span
                         layoutId="session-status-pill"
                         className="absolute inset-0 bg-blue-600 rounded-lg shadow-sm shadow-blue-200"
-                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 35,
+                        }}
                       />
                     )}
                     <span
-                      className={`relative z-10 transition-colors ${isActive ? "text-white" : "text-gray-500 hover:text-gray-800"
-                        }`}
+                      className={`relative z-10 transition-colors ${
+                        isActive
+                          ? "text-white"
+                          : "text-gray-500 hover:text-gray-800"
+                      }`}
                     >
                       {lbl}
                     </span>
@@ -266,17 +277,17 @@ export default function SessionsPage() {
             </div>
           </LayoutGroup>
 
-          <Link
-            href="/admin/sessions/create"
+          <button
+            onClick={() => setFormTarget({})}
             className="flex items-center justify-center w-12 h-[46px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0"
           >
             <Plus className="w-5 h-5" />
-          </Link>
+          </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="card h-44 animate-pulse bg-gray-100" />
           ))}
@@ -287,16 +298,16 @@ export default function SessionsPage() {
           <p>Chưa có buổi đánh nào</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
           {sessions.map((s) => {
             const cfg =
               s.status === "waiting_payment"
                 ? s.pending_action_count > 0
                   ? STATUS_CONFIG.waiting_payment
                   : {
-                    label: "Chờ chốt thanh toán",
-                    cls: "bg-indigo-100 text-indigo-700",
-                  }
+                      label: "Chờ chốt thanh toán",
+                      cls: "bg-indigo-100 text-indigo-700",
+                    }
                 : (STATUS_CONFIG[s.status] ?? STATUS_CONFIG.open);
             const nextActions = STATUS_NEXT[s.status] ?? [];
             const busy = actionId === s.id;
@@ -362,7 +373,6 @@ export default function SessionsPage() {
                   </div>
                 </div>
 
-                {/* Price + confirmed count */}
                 <div className="flex items-center justify-between border-t border-gray-100 pt-2">
                   <span className="text-xs text-gray-400">
                     {s.confirmed_count ?? 0} đã xác nhận ·{" "}
@@ -370,30 +380,44 @@ export default function SessionsPage() {
                   </span>
                 </div>
 
-                {/* Actions */}
                 <div className="flex flex-col gap-3 pt-1">
-                  {/* Row 1: Xem + Sửa + Xóa */}
                   <div className="flex gap-1.5">
-                    <Link
-                      href={`/admin/sessions/${s.id}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-gray-600 text-sm font-medium transition-colors"
+                    <button
+                      onClick={() => {
+                        setNavigatingId(s.id);
+                        router.push(`/admin/sessions/${s.id}`);
+                        setTimeout(
+                          () =>
+                            setNavigatingId((cur) =>
+                              cur === s.id ? null : cur,
+                            ),
+                          4000,
+                        );
+                      }}
+                      disabled={navigatingId === s.id}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-gray-600 text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-60"
                     >
-                      <Eye className="w-4 h-4" /> Xem
-                    </Link>
+                      {navigatingId === s.id ? (
+                        <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                      ) : (
+                        <Eye className="w-4 h-4 shrink-0" />
+                      )}
+                      Xem
+                    </button>
                     {s.status !== "completed" && (
                       <>
-                        <Link
-                          href={`/admin/sessions/${s.id}/edit`}
+                        <button
+                          onClick={() => setFormTarget({ id: s.id })}
                           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-blue-600 text-sm font-medium transition-colors"
                         >
                           <Pencil className="w-4 h-4" /> Sửa
-                        </Link>
+                        </button>
                         <button
                           onClick={() => handleDelete(s.id, s.title)}
                           disabled={busy}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-500 text-sm font-medium transition-colors disabled:opacity-40"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-500 text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap"
                         >
-                          <Trash2 className="w-4 h-4" /> Xóa
+                          <Trash2 className="w-4 h-4 shrink-0" /> Xóa
                         </button>
                       </>
                     )}
@@ -415,7 +439,7 @@ export default function SessionsPage() {
                             key="complete"
                             onClick={() => handleComplete(s.id, s.title)}
                             disabled={busy}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 ${cls}`}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap ${cls}`}
                           >
                             {label}
                           </button>
@@ -428,7 +452,7 @@ export default function SessionsPage() {
                                 : handleStatusChange(s.id, next!)
                             }
                             disabled={busy}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 ${cls}`}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap ${cls}`}
                           >
                             {label}
                           </button>
@@ -443,7 +467,6 @@ export default function SessionsPage() {
         </div>
       )}
 
-      {/* Pagination */}
       {meta.total_pages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
@@ -467,6 +490,12 @@ export default function SessionsPage() {
           </div>
         </div>
       )}
+
+      <SessionFormModal
+        target={formTarget}
+        onClose={() => setFormTarget(null)}
+        onSuccess={fetchSessions}
+      />
 
       {deleteTarget &&
         typeof document !== "undefined" &&
@@ -538,7 +567,6 @@ export default function SessionsPage() {
           document.body,
         )}
 
-      {/* ── Cancel confirm modal ── */}
       {cancelTarget &&
         typeof document !== "undefined" &&
         createPortal(

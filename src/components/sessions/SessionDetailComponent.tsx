@@ -68,13 +68,14 @@ function fmt(n: number) {
   return Math.round(n ?? 0).toLocaleString("vi-VN") + "đ";
 }
 
-function getPaymentMethodBadge(reg: any) {
+function getPaymentMethodBadge(reg: any, hostName?: string) {
   const m = reg.payment_method;
-  const isGroupedGuest = reg.is_guest && reg.host_registration_id;
+  // ✅ Bỏ điều kiện reg.is_guest — người đi cùng có tài khoản cũng có host_registration_id
+  const isGroupedGuest = Boolean(reg.host_registration_id);
 
   if (m === "wallet_grouped" && isGroupedGuest) {
     return {
-      label: "Ví BNB của host",
+      label: hostName ? `Ví BNB của ${hostName}` : "Ví BNB",
       icon: <Wallet className="w-2.5 h-2.5" />,
       cls: "bg-blue-100 text-blue-700",
     };
@@ -88,7 +89,7 @@ function getPaymentMethodBadge(reg: any) {
   }
   if (m === "grouped_with_host") {
     return {
-      label: "Chuyển khoản",
+      label: hostName ? `Chuyển khoản (gộp ${hostName})` : "Chuyển khoản",
       icon: <span>🏦</span>,
       cls: "bg-sky-100 text-sky-700",
     };
@@ -423,21 +424,32 @@ export default function SessionDetailPage() {
   const lastNotification = useNotificationsRealtimeStore(
     (s) => s.lastNotification,
   );
+
   useEffect(() => {
     const payload = lastNotification;
-    if (
+    if (!payload) return;
+
+    const isGuestConfirmType =
       payload?.type === "wallet_guest_confirm" ||
-      payload?.data?.type === "wallet_guest_confirm"
-    ) {
-      const data = payload?.data ?? payload;
-      setGuestConfirmPayload({
-        hostRegistrationId: data.host_registration_id,
-        guestNames: data.guest_names,
-        guestTotal: data.guest_total,
-        deadline: data.deadline,
-      });
-    }
-  }, [lastNotification]);
+      payload?.data?.type === "wallet_guest_confirm";
+    if (!isGuestConfirmType) return;
+
+    const data = payload?.data ?? payload;
+
+    if (data.session_id && String(data.session_id) !== String(id)) return;
+
+    const currentMyReg = session?.my_registration;
+
+    if (!currentMyReg || currentMyReg.id !== data.host_registration_id) return;
+    if (currentMyReg.payment_method !== "wallet_pending_confirm") return;
+
+    setGuestConfirmPayload({
+      hostRegistrationId: data.host_registration_id,
+      guestNames: data.guest_names,
+      guestTotal: data.guest_total,
+      deadline: data.deadline,
+    });
+  }, [lastNotification, session, id]);
 
   const handleRegister = async () => {
     setRegisterPhase("loading");
@@ -610,7 +622,8 @@ export default function SessionDetailPage() {
   const soloAmount = myReg?.amount_override ?? 0;
   const groupedAmount = soloAmount + guestTotal;
 
-  const companionName = (g: any) => g.is_guest ? g.guest_full_name : g.users?.full_name;
+  const companionName = (g: any) =>
+    g.is_guest ? g.guest_full_name : g.users?.full_name;
   const hasMemberCompanion = myGuests.some((g: any) => !g.is_guest);
   const companionLabel = hasMemberCompanion ? "người đi cùng" : "khách đi cùng";
 
@@ -870,7 +883,7 @@ export default function SessionDetailPage() {
               )}
 
               {guests.map((g: any) => {
-                const gGender = g.guest_gender;
+                const gGender = g.users?.gender ?? g.guest_gender;
                 const gDefaultPrice =
                   gGender === "female"
                     ? (session.price_female ?? session.price_per_slot ?? 0)
@@ -885,7 +898,10 @@ export default function SessionDetailPage() {
                   g.payment_method === "wallet_pending_confirm";
                 const isGroupedWithHost =
                   g.payment_method === "grouped_with_host";
-                const gBadge = getPaymentMethodBadge(g);
+                const gBadge = getPaymentMethodBadge(g, name);
+                const gDisplayName =
+                  g.users?.full_name ?? g.guest_full_name ?? "?";
+
                 return (
                   <div
                     key={g.id}
@@ -893,7 +909,7 @@ export default function SessionDetailPage() {
                   >
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-purple-600 flex flex-wrap items-center gap-1">
-                        + {g.guest_full_name}
+                        + {gDisplayName}
                         <span className="text-gray-400">(đi cùng)</span>
                         {isPendingWallet && (
                           <span className="text-amber-500">· chờ xác nhận</span>
@@ -1042,19 +1058,19 @@ export default function SessionDetailPage() {
 
             {(myReg?.participation_status === "pending_approval" ||
               myReg?.participation_status === "awaiting_checkin") && (
-                <div className="flex items-center gap-1.5 mb-4 -mt-1">
-                  {myReg?.participation_status === "pending_approval" && (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-50 text-amber-700 flex items-center gap-1">
-                      <Hourglass className="w-3 h-3" /> Chờ admin duyệt
-                    </span>
-                  )}
-                  {myReg?.participation_status === "awaiting_checkin" && (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600 flex items-center gap-1">
-                      <Hourglass className="w-3 h-3" /> Chờ admin điểm danh
-                    </span>
-                  )}
-                </div>
-              )}
+              <div className="flex items-center gap-1.5 mb-4 -mt-1">
+                {myReg?.participation_status === "pending_approval" && (
+                  <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-50 text-amber-700 flex items-center gap-1">
+                    <Hourglass className="w-3 h-3" /> Chờ admin duyệt
+                  </span>
+                )}
+                {myReg?.participation_status === "awaiting_checkin" && (
+                  <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600 flex items-center gap-1">
+                    <Hourglass className="w-3 h-3" /> Chờ admin điểm danh
+                  </span>
+                )}
+              </div>
+            )}
 
             <div className="space-y-3 text-sm text-gray-600">
               <div className="flex items-center gap-3">
@@ -1092,14 +1108,15 @@ export default function SessionDetailPage() {
                   Chỗ trống
                 </span>
                 <span
-                  className={`text-xs font-semibold ${slotDimmed
-                    ? "text-gray-400"
-                    : isFull
-                      ? "text-red-500"
-                      : slotRatio >= 0.6
-                        ? "text-amber-500"
-                        : "text-emerald-600"
-                    }`}
+                  className={`text-xs font-semibold ${
+                    slotDimmed
+                      ? "text-gray-400"
+                      : isFull
+                        ? "text-red-500"
+                        : slotRatio >= 0.6
+                          ? "text-amber-500"
+                          : "text-emerald-600"
+                  }`}
                 >
                   {isFull
                     ? "Đã hết chỗ"
@@ -1146,7 +1163,7 @@ export default function SessionDetailPage() {
                       <span className="font-medium">
                         {fmt(
                           (session.shuttle_count ?? 0) *
-                          (session.shuttle_price ?? 0),
+                            (session.shuttle_price ?? 0),
                         )}
                       </span>
                     </div>
@@ -1179,8 +1196,8 @@ export default function SessionDetailPage() {
                               r.payment_method === "grouped_with_host";
                             const hostName = isGroupedGuest
                               ? (registrations.find(
-                                (h: any) => h.id === r.host_registration_id,
-                              )?.users?.full_name ??
+                                  (h: any) => h.id === r.host_registration_id,
+                                )?.users?.full_name ??
                                 registrations.find(
                                   (h: any) => h.id === r.host_registration_id,
                                 )?.guest_full_name)
@@ -1219,9 +1236,9 @@ export default function SessionDetailPage() {
                     <span>
                       {fmt(
                         (session.court_fee ?? 0) +
-                        (session.shuttle_count ?? 0) *
-                        (session.shuttle_price ?? 0) +
-                        totalOtherFeeFromRegs,
+                          (session.shuttle_count ?? 0) *
+                            (session.shuttle_price ?? 0) +
+                          totalOtherFeeFromRegs,
                       )}
                     </span>
                   </div>
@@ -1229,14 +1246,14 @@ export default function SessionDetailPage() {
                 {registrations.filter(
                   (r) => r.participation_status === "confirmed",
                 ).length > 0 && (
-                    <button
-                      onClick={openAmountsModal}
-                      className="w-full py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-700 transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                      Mỗi người cần thanh toán
-                    </button>
-                  )}
+                  <button
+                    onClick={openAmountsModal}
+                    className="w-full py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-700 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Mỗi người cần thanh toán
+                  </button>
+                )}
               </div>
             )}
 
@@ -1578,10 +1595,14 @@ export default function SessionDetailPage() {
               <div
                 className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
                 style={{
-                  background: guestModalVisible ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)",
+                  background: guestModalVisible
+                    ? "rgba(0,0,0,0.4)"
+                    : "rgba(0,0,0,0)",
                   transition: "background 250ms ease-out",
                 }}
-                onClick={(e) => e.target === e.currentTarget && closeGuestModal()}
+                onClick={(e) =>
+                  e.target === e.currentTarget && closeGuestModal()
+                }
               >
                 <div
                   className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl"
@@ -1596,7 +1617,9 @@ export default function SessionDetailPage() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                    <h3 className="font-bold text-gray-900">Thêm người đi cùng</h3>
+                    <h3 className="font-bold text-gray-900">
+                      Thêm người đi cùng
+                    </h3>
                     <button
                       onClick={closeGuestModal}
                       className="p-1 text-gray-400 hover:text-gray-600"
@@ -1613,10 +1636,11 @@ export default function SessionDetailPage() {
                       <button
                         key={val}
                         onClick={() => setGuestTab(val as any)}
-                        className={`flex-1 py-1.5 rounded-lg text-sm font-medium ${guestTab === val
-                          ? "bg-blue-50 text-blue-600"
-                          : "text-gray-400"
-                          }`}
+                        className={`flex-1 py-1.5 rounded-lg text-sm font-medium ${
+                          guestTab === val
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-400"
+                        }`}
                       >
                         {lbl}
                       </button>
@@ -1684,7 +1708,8 @@ export default function SessionDetailPage() {
                                             />
                                           ) : (
                                             <span className="text-xs font-semibold text-blue-700">
-                                              {m.full_name?.[0]?.toUpperCase() ?? "?"}
+                                              {m.full_name?.[0]?.toUpperCase() ??
+                                                "?"}
                                             </span>
                                           )}
                                         </div>
@@ -1705,9 +1730,10 @@ export default function SessionDetailPage() {
                         )}
 
                         <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
-                          ⓘ {selectedCompanion?.full_name ?? "Thành viên"} sẽ nhận
-                          thông báo được thêm vào buổi. Khi thanh toán, bạn có thể chọn
-                          gộp tiền của họ vào ví của mình hoặc để họ tự thanh toán.
+                          ⓘ {selectedCompanion?.full_name ?? "Thành viên"} sẽ
+                          nhận thông báo được thêm vào buổi. Khi thanh toán, bạn
+                          có thể chọn gộp tiền của họ vào ví của mình hoặc để họ
+                          tự thanh toán.
                         </p>
                       </>
                     ) : (
@@ -1752,10 +1778,15 @@ export default function SessionDetailPage() {
                             <CustomSelect
                               value={guestForm.skill_level}
                               onChange={(val) =>
-                                setGuestForm((f) => ({ ...f, skill_level: val }))
+                                setGuestForm((f) => ({
+                                  ...f,
+                                  skill_level: val,
+                                }))
                               }
                               placeholder="-- Chọn --"
-                              options={SKILL_OPTIONS.filter((o) => o.value !== "").map((o) => ({
+                              options={SKILL_OPTIONS.filter(
+                                (o) => o.value !== "",
+                              ).map((o) => ({
                                 value: o.value,
                                 label: o.label,
                               }))}
@@ -1763,8 +1794,8 @@ export default function SessionDetailPage() {
                           </div>
                         </div>
                         <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
-                          ⓘ Tiền của khách đi cùng sẽ được gộp vào số tiền bạn cần
-                          thanh toán sau khi buổi kết thúc.
+                          ⓘ Tiền của khách đi cùng sẽ được gộp vào số tiền bạn
+                          cần thanh toán sau khi buổi kết thúc.
                         </p>
                       </>
                     )}
@@ -1787,7 +1818,9 @@ export default function SessionDetailPage() {
                       }
                       className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-1.5"
                     >
-                      {addingGuest && <Loader2 className="w-4 h-4 animate-spin" />}{" "}
+                      {addingGuest && (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      )}{" "}
                       Thêm vào buổi
                     </button>
                   </div>
@@ -1932,9 +1965,10 @@ export default function SessionDetailPage() {
                               {fmt(soloAmount)}
                             </p>
                             <p className="text-xs text-gray-400">
-                              {companionLabel.charAt(0).toUpperCase() + companionLabel.slice(1)} (
-                              {myGuests.map(companionName).join(", ")}
-                              ) tự thanh toán riêng
+                              {companionLabel.charAt(0).toUpperCase() +
+                                companionLabel.slice(1)}{" "}
+                              ({myGuests.map(companionName).join(", ")}) tự
+                              thanh toán riêng
                             </p>
                           </div>
                         </button>
@@ -2117,7 +2151,7 @@ export default function SessionDetailPage() {
                                       } catch (err: any) {
                                         toast.error(
                                           err?.response?.data?.message ??
-                                          "Thanh toán thất bại",
+                                            "Thanh toán thất bại",
                                         );
                                       } finally {
                                         setSubmittingPay(false);

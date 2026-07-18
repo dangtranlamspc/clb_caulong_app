@@ -41,43 +41,43 @@ import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import { SwipeableRow } from "@/components/admin/sessions/SwipeableRow";
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: any }> =
-{
-  pendingApproval: {
-    label: "Chờ duyệt",
-    cls: "bg-orange-50 text-orange-600 border-orange-200",
-    icon: Hourglass,
-  },
-  pending: {
-    label: "Chờ thanh toán",
-    cls: "bg-amber-50 text-amber-700 border-amber-200",
-    icon: Hourglass,
-  },
-  pendingReview: {
-    label: "Chờ chốt thanh toán",
-    cls: "bg-blue-50 text-blue-700 border-blue-200",
-    icon: Eye,
-  },
-  confirmed: {
-    label: "Đã xác nhận thanh toán",
-    cls: "bg-green-50 text-green-700 border-green-200",
-    icon: CheckCircle2,
-  },
-  rejected: {
-    label: "Thanh toán bị từ chối",
-    cls: "bg-red-50 text-red-600 border-red-200",
-    icon: XCircle,
-  },
-  awaitingCheckin: {
-    label: "Chờ điểm danh",
-    cls: "bg-slate-50 text-slate-600 border border-slate-200",
-    icon: Hourglass,
-  },
-  awaitingFinish: {
-    label: "Chờ buổi đánh kết thúc",
-    cls: "bg-slate-50 text-slate-600 border border-slate-200",
-    icon: Hourglass,
-  },
-};
+  {
+    pendingApproval: {
+      label: "Chờ duyệt",
+      cls: "bg-orange-50 text-orange-600 border-orange-200",
+      icon: Hourglass,
+    },
+    pending: {
+      label: "Chờ thanh toán",
+      cls: "bg-amber-50 text-amber-700 border-amber-200",
+      icon: Hourglass,
+    },
+    pendingReview: {
+      label: "Chờ chốt thanh toán",
+      cls: "bg-blue-50 text-blue-700 border-blue-200",
+      icon: Eye,
+    },
+    confirmed: {
+      label: "Đã xác nhận thanh toán",
+      cls: "bg-green-50 text-green-700 border-green-200",
+      icon: CheckCircle2,
+    },
+    rejected: {
+      label: "Thanh toán bị từ chối",
+      cls: "bg-red-50 text-red-600 border-red-200",
+      icon: XCircle,
+    },
+    awaitingCheckin: {
+      label: "Chờ điểm danh",
+      cls: "bg-slate-50 text-slate-600 border border-slate-200",
+      icon: Hourglass,
+    },
+    awaitingFinish: {
+      label: "Chờ buổi đánh kết thúc",
+      cls: "bg-slate-50 text-slate-600 border border-slate-200",
+      icon: Hourglass,
+    },
+  };
 
 const SKILL_LABEL: Record<string, string> = {
   yeu: "Yếu",
@@ -98,6 +98,20 @@ const LEVEL_LABELS: Record<string, string> = {
 };
 
 type ActionPhase = "idle" | "loading" | "success";
+
+function useIsDesktop(breakpoint = 768) {
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= breakpoint : false,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${breakpoint}px)`);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    setIsDesktop(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [breakpoint]);
+  return isDesktop;
+}
 
 export default function SessionDetailPage() {
   const params = useParams<{ id: string }>();
@@ -139,11 +153,45 @@ export default function SessionDetailPage() {
   const [rollingBack, setRollingBack] = useState(false);
 
   const [showRollbackModal, setShowRollbackModal] = useState(false);
+
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [reopening, setReopening] = useState(false);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    key: "checkinAll" | "closeList";
+    title: string;
+    message: string;
+  } | null>(null);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+
   const [rollbackModalVisible, setRollbackModalVisible] = useState(false);
 
   const [addModalVisible, setAddModalVisible] = useState(false);
 
   const [expandedHosts, setExpandedHosts] = useState<Set<string>>(new Set());
+
+  const isDesktop = useIsDesktop();
+
+  useEffect(() => {
+    if (confirmModal) {
+      const raf = requestAnimationFrame(() => setConfirmModalVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [confirmModal]);
+
+  useEffect(() => {
+    if (showCancelModal) {
+      const raf = requestAnimationFrame(() => setCancelModalVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [showCancelModal]);
+
+  const closeCancelModal = () => {
+    setCancelModalVisible(false);
+    setTimeout(() => setShowCancelModal(false), 200);
+  };
 
   const toggleHostGuests = (hostId: string) => {
     setExpandedHosts((prev) => {
@@ -152,6 +200,11 @@ export default function SessionDetailPage() {
       else next.add(hostId);
       return next;
     });
+  };
+
+  const closeConfirmModal = () => {
+    setConfirmModalVisible(false);
+    setTimeout(() => setConfirmModal(null), 200);
   };
 
   const fetchAll = async () => {
@@ -173,42 +226,9 @@ export default function SessionDetailPage() {
     fetchAll();
   }, [id]);
 
-  const handleCloseList = async () => {
-    if (awaitingCheckin.length === 0) return;
-    if (
-      !confirm(
-        `Chốt danh sách? ${awaitingCheckin.length} người chưa điểm danh sẽ bị đánh dấu vắng mặt và xoá khỏi buổi này. Hành động này không thể hoàn tác.`,
-      )
-    )
-      return;
-
-    setClosingList(true);
-    try {
-      const results = await Promise.allSettled(
-        awaitingCheckin.map((r) => registrationsAdminApi.checkinAbsent(r.id)),
-      );
-      const succeeded = results.filter((r) => r.status === "fulfilled").length;
-      const failed = results.length - succeeded;
-
-      if (succeeded > 0)
-        toast.success(`Đã chốt danh sách, xoá ${succeeded} người vắng mặt`);
-      if (failed > 0) toast.error(`${failed} người xử lý thất bại`);
-
-      await refreshSilently();
-    } finally {
-      setClosingList(false);
-    }
-  };
-
-  const handleCheckinAllPresent = async () => {
-    if (awaitingCheckin.length === 0) return;
-    if (
-      !confirm(
-        `Điểm danh có mặt cho tất cả ${awaitingCheckin.length} người đang chờ điểm danh?`,
-      )
-    )
-      return;
-
+  const runCheckinAllPresent = async () => {
+    closeConfirmModal();
+    setActionPhase((p) => ({ ...p, checkinAll: "loading" }));
     setCheckingInAll(true);
     try {
       const results = await Promise.allSettled(
@@ -217,14 +237,71 @@ export default function SessionDetailPage() {
       const succeeded = results.filter((r) => r.status === "fulfilled").length;
       const failed = results.length - succeeded;
 
-      if (succeeded > 0)
+      if (succeeded > 0) {
+        setActionPhase((p) => ({ ...p, checkinAll: "success" }));
         toast.success(`Đã điểm danh có mặt cho ${succeeded} người`);
+      }
       if (failed > 0) toast.error(`${failed} người điểm danh thất bại`);
 
       await refreshSilently();
     } finally {
-      setCheckingInAll(false);
+      setTimeout(() => {
+        setActionPhase((p) => {
+          const next = { ...p };
+          delete next.checkinAll;
+          return next;
+        });
+        setCheckingInAll(false);
+      }, 700);
     }
+  };
+
+  const handleCheckinAllPresent = () => {
+    if (awaitingCheckin.length === 0) return;
+    setConfirmModal({
+      key: "checkinAll",
+      title: "Điểm danh tất cả có mặt?",
+      message: `Điểm danh có mặt cho tất cả ${awaitingCheckin.length} người đang chờ điểm danh?`,
+    });
+  };
+
+  const runCloseList = async () => {
+    closeConfirmModal();
+    setActionPhase((p) => ({ ...p, closeList: "loading" }));
+    setClosingList(true);
+    try {
+      const results = await Promise.allSettled(
+        awaitingCheckin.map((r) => registrationsAdminApi.checkinAbsent(r.id)),
+      );
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.length - succeeded;
+
+      if (succeeded > 0) {
+        setActionPhase((p) => ({ ...p, closeList: "success" }));
+        toast.success(`Đã chốt danh sách, xoá ${succeeded} người vắng mặt`);
+      }
+      if (failed > 0) toast.error(`${failed} người xử lý thất bại`);
+
+      await refreshSilently();
+    } finally {
+      setTimeout(() => {
+        setActionPhase((p) => {
+          const next = { ...p };
+          delete next.closeList;
+          return next;
+        });
+        setClosingList(false);
+      }, 700);
+    }
+  };
+
+  const handleCloseList = () => {
+    if (awaitingCheckin.length === 0) return;
+    setConfirmModal({
+      key: "closeList",
+      title: "Chốt danh sách?",
+      message: `${awaitingCheckin.length} người chưa điểm danh sẽ bị đánh dấu vắng mặt và xoá khỏi buổi này. Hành động này không thể hoàn tác.`,
+    });
   };
 
   const handleRollbackFinish = async () => {
@@ -253,6 +330,35 @@ export default function SessionDetailPage() {
       toast.error(err?.response?.data?.message ?? "Hoàn tác thất bại");
     } finally {
       setRollingBack(false);
+    }
+  };
+
+  const handleCancelSession = async () => {
+    if (!id) return;
+    closeCancelModal();
+    setCancelling(true);
+    try {
+      await sessionsAdminApi.updateStatus(id, { status: "cancelled" });
+      toast.success("Đã hủy buổi đánh");
+      refreshSilently();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Hủy buổi thất bại");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleReopenSession = async () => {
+    if (!id) return;
+    setReopening(true);
+    try {
+      await sessionsAdminApi.updateStatus(id, { status: "open" });
+      toast.success("Đã mở lại buổi đánh");
+      refreshSilently();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Mở lại thất bại");
+    } finally {
+      setReopening(false);
     }
   };
 
@@ -581,7 +687,7 @@ export default function SessionDetailPage() {
     pendingReview.length === 0 &&
     rejected.length === 0 &&
     registrations.filter((r) => r.participation_status === "confirmed").length >
-    0;
+      0;
 
   const hostRegs = registrations.filter((r) => !r.host_registration_id);
   const guestsOf = (hostId: string) =>
@@ -597,10 +703,90 @@ export default function SessionDetailPage() {
   const formatVnd = (n: number) =>
     Math.round(n ?? 0).toLocaleString("vi-VN") + "đ";
 
+  function DesktopRowActions({ reg }: { reg: any }) {
+    const displayName = reg.users?.full_name ?? reg.guest_full_name ?? "?";
+    const busy = actionId === reg.id;
+
+    if (reg.participation_status === "pending_approval") {
+      return (
+        <>
+          <MorphButton
+            phase={getPhase(`${reg.id}:approve`)}
+            idleIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+            label="Duyệt"
+            idleWidthClass="w-28"
+            colorClass="bg-blue-500 hover:bg-blue-600 text-white"
+            successClassName="bg-blue-500 text-white"
+            onClick={() => handleApproveRegistration(reg.id)}
+            disabled={busy}
+          />
+          <MorphButton
+            phase={getPhase(`${reg.id}:rejectReg`)}
+            idleIcon={<XCircle className="w-3.5 h-3.5" />}
+            label="Từ chối"
+            idleWidthClass="w-28"
+            colorClass="bg-red-500 hover:bg-red-600 text-white"
+            successClassName="bg-red-500 text-white"
+            onClick={() => handleRejectRegistration(reg.id, displayName)}
+            disabled={busy}
+          />
+        </>
+      );
+    }
+
+    if (reg.participation_status === "awaiting_checkin") {
+      return (
+        <>
+          <MorphButton
+            phase={getPhase(`${reg.id}:present`)}
+            idleIcon={<UserCheck className="w-3.5 h-3.5" />}
+            label="Có mặt"
+            idleWidthClass="w-28"
+            colorClass="bg-green-500 hover:bg-green-600 text-white"
+            successClassName="bg-green-500 text-white"
+            onClick={() => handleCheckinPresent(reg.id)}
+            disabled={busy}
+          />
+          <MorphButton
+            phase={getPhase(`${reg.id}:absent`)}
+            idleIcon={<UserX className="w-3.5 h-3.5" />}
+            label="Vắng mặt"
+            idleWidthClass="w-28"
+            colorClass="bg-red-500 hover:bg-red-600 text-white"
+            successClassName="bg-red-500 text-white"
+            onClick={() => handleCheckinAbsent(reg.id, displayName)}
+            disabled={busy}
+          />
+        </>
+      );
+    }
+
+    return (
+      <>
+        <MorphButton
+          phase={getPhase(`${reg.id}:confirm`)}
+          idleIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+          label="Xác nhận"
+          idleWidthClass="w-28"
+          colorClass="bg-green-500 hover:bg-green-600 text-white"
+          successClassName="bg-green-500 text-white"
+          onClick={() => handleConfirm(reg.id)}
+          disabled={busy}
+        />
+        <button
+          onClick={() => setShowReject(reg.id)}
+          disabled={busy}
+          className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
+        >
+          <XCircle className="w-3.5 h-3.5" /> Từ chối
+        </button>
+      </>
+    );
+  }
+
   const getCanReviewPayment = (reg: any) =>
     Boolean(reg.payment_reference) ||
     (reg.payment_method === "cash" && reg.amount_override != null);
-
 
   function RowActions({ reg }: { reg: any }) {
     const displayName = reg.users?.full_name ?? reg.guest_full_name ?? "?";
@@ -681,9 +867,7 @@ export default function SessionDetailPage() {
           <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
             <XCircle className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[11px] font-medium text-gray-700">
-            Từ chối
-          </span>
+          <span className="text-[11px] font-medium text-gray-700">Từ chối</span>
         </button>
       </>
     );
@@ -761,10 +945,11 @@ export default function SessionDetailPage() {
               </span>
               {user?.member_type && (
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${user.member_type === "co_dinh"
-                    ? "bg-purple-50 text-purple-700 border-purple-200"
-                    : "bg-gray-50 text-gray-500 border-gray-200"
-                    }`}
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${
+                    user.member_type === "co_dinh"
+                      ? "bg-purple-50 text-purple-700 border-purple-200"
+                      : "bg-gray-50 text-gray-500 border-gray-200"
+                  }`}
                 >
                   {user.member_type === "co_dinh" ? "Thành viên" : "Vãng lai"}
                 </span>
@@ -782,14 +967,14 @@ export default function SessionDetailPage() {
               )}
               {reg.is_guest
                 ? reg.guest_skill_level && (
-                  <span>
-                    {SKILL_LABEL[reg.guest_skill_level] ??
-                      reg.guest_skill_level}
-                  </span>
-                )
+                    <span>
+                      {SKILL_LABEL[reg.guest_skill_level] ??
+                        reg.guest_skill_level}
+                    </span>
+                  )
                 : user?.level && (
-                  <span>{LEVEL_LABELS[user.level] ?? user.level}</span>
-                )}
+                    <span>{LEVEL_LABELS[user.level] ?? user.level}</span>
+                  )}
               {reg.payment_reference && (
                 <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">
                   {reg.payment_reference}
@@ -827,22 +1012,21 @@ export default function SessionDetailPage() {
                   </span>
                 )}
 
-
               {(reg.payment_method === "wallet" ||
                 (reg.payment_method === "wallet_grouped" &&
                   !reg.host_registration_id) ||
                 (reg.payment_method === "wallet_pending_confirm" &&
                   !reg.host_registration_id)) && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200 flex items-center gap-1 font-medium">
-                    <Wallet className="w-3 h-3" />
-                    Ví BNB
-                    {reg.payment_method === "wallet_pending_confirm"
-                      ? " (chờ xác nhận)"
-                      : ""}
-                  </span>
-                )}
+                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200 flex items-center gap-1 font-medium">
+                  <Wallet className="w-3 h-3" />
+                  Ví BNB
+                  {reg.payment_method === "wallet_pending_confirm"
+                    ? " (chờ xác nhận)"
+                    : ""}
+                </span>
+              )}
 
-              {reg.points_awarded && (
+              {reg.points_awarded && reg.payment_status === "confirmed" && (
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 font-medium">
                   🏸 Đã cộng điểm
                 </span>
@@ -851,7 +1035,7 @@ export default function SessionDetailPage() {
               <span
                 className={`ml-auto text-xs font-bold whitespace-nowrap ${totalAmount != null ? "text-gray-900" : "text-gray-300 italic font-normal"}`}
               >
-                {totalAmount != null ? formatVnd(totalAmount) : "Chưa có giá"}
+                {totalAmount != null ? formatVnd(totalAmount) : "-"}
               </span>
             </div>
 
@@ -882,19 +1066,34 @@ export default function SessionDetailPage() {
 
   const renderRow = (reg: any, isNested = false, hostName?: string) => {
     const canReviewPayment = getCanReviewPayment(reg);
-    const showSwipeActions =
+    const showActions =
       reg.participation_status === "pending_approval" ||
       reg.participation_status === "awaiting_checkin" ||
       (reg.payment_status === "pending" && canReviewPayment);
 
     return (
       <div key={reg.id}>
-        <SwipeableRow
-          disabled={!showSwipeActions}
-          actions={<RowActions reg={reg} />}
-        >
-          {renderRowContent(reg, isNested, hostName)}
-        </SwipeableRow>
+        {isDesktop ? (
+          <div>
+            {renderRowContent(reg, isNested, hostName)}
+            {showActions && (
+              <div
+                className={`flex justify-end gap-2 border-t border-gray-100 py-2.5 ${
+                  isNested ? "pl-9 pr-3" : "px-4"
+                }`}
+              >
+                <DesktopRowActions reg={reg} />
+              </div>
+            )}
+          </div>
+        ) : (
+          <SwipeableRow
+            disabled={!showActions}
+            actions={<RowActions reg={reg} />}
+          >
+            {renderRowContent(reg, isNested, hostName)}
+          </SwipeableRow>
+        )}
 
         {showReject === reg.id && (
           <div className={`${isNested ? "pl-9 pr-4" : "px-4"} pb-3 flex gap-2`}>
@@ -973,53 +1172,86 @@ export default function SessionDetailPage() {
 
         <div className="flex items-center justify-end gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {awaitingCheckin.length > 0 && (
-            <button
+            <MorphButton
+              phase={getPhase("checkinAll")}
+              idleIcon={<UserCheck className="w-4 h-4" />}
+              label={`All (${awaitingCheckin.length})`}
+              idleWidthClass="w-28"
+              colorClass="bg-green-500 hover:bg-green-600 text-white"
+              successClassName="bg-green-500 text-white"
               onClick={handleCheckinAllPresent}
-              disabled={checkingInAll}
-              className="flex-shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-semibold disabled:opacity-50"
-            >
-              <UserCheck className="w-4 h-4" />
-              All ({awaitingCheckin.length})
-            </button>
+              disabled={closingList}
+            />
           )}
 
           {awaitingCheckin.length > 0 && (
-            <button
+            <MorphButton
+              phase={getPhase("closeList")}
+              idleIcon={<UserX className="w-4 h-4" />}
+              label={`Chốt (${awaitingCheckin.length} vắng)`}
+              idleWidthClass="w-40"
+              colorClass="bg-red-500 hover:bg-red-600 text-white"
+              successClassName="bg-red-500 text-white"
               onClick={handleCloseList}
-              disabled={closingList || checkingInAll}
-              className="flex-shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold disabled:opacity-50"
-            >
-              <UserX className="w-4 h-4" />
-              Chốt ({awaitingCheckin.length} vắng)
-            </button>
+              disabled={checkingInAll}
+            />
           )}
 
           {canAddMember &&
             awaitingCheckin.length === 0 &&
-            pendingApproval.length === 0 && (
+            pendingApproval.length === 0 &&
+            (registrations.length === 0 ? (
+              <button
+                onClick={() => setShowCancelModal(true)}
+                disabled={cancelling}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold flex-shrink-0 disabled:opacity-50"
+              >
+                {cancelling ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <XCircle className="w-4 h-4" />
+                )}
+                Hủy buổi
+              </button>
+            ) : (
               <Link
                 href={`/admin/sessions/${id}/finish`}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-semibold flex-shrink-0"
               >
                 <Calculator className="w-4 h-4" /> Kết thúc
               </Link>
-            )}
+            ))}
+
+          {session.status === "cancelled" && (
+            <button
+              onClick={handleReopenSession}
+              disabled={reopening}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-sm font-semibold flex-shrink-0 disabled:opacity-50"
+            >
+              {reopening ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RotateCcw className="w-4 h-4" />
+              )}
+              Mở lại
+            </button>
+          )}
 
           {(session.status === "waiting_payment" ||
             session.status === "completed") && (
-              <button
-                onClick={() => setShowRollbackModal(true)}
-                disabled={rollingBack}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600 text-sm font-semibold disabled:opacity-50 flex-shrink-0"
-              >
-                {rollingBack ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <RotateCcw className="w-4 h-4" />
-                )}
-                Hoàn tác
-              </button>
-            )}
+            <button
+              onClick={() => setShowRollbackModal(true)}
+              disabled={rollingBack}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600 text-sm font-semibold disabled:opacity-50 flex-shrink-0"
+            >
+              {rollingBack ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RotateCcw className="w-4 h-4" />
+              )}
+              Hoàn tác
+            </button>
+          )}
 
           {canComplete && (
             <button
@@ -1166,67 +1398,103 @@ export default function SessionDetailPage() {
                 const groupTotal =
                   guests.length > 0
                     ? (host.amount_override ?? 0) +
-                    guests.reduce((s, g) => s + (g.amount_override ?? 0), 0)
+                      guests.reduce((s, g) => s + (g.amount_override ?? 0), 0)
                     : null;
                 const isExpanded = expandedHosts.has(host.id);
                 const hostCanReview = getCanReviewPayment(host);
-                const showHostSwipe =
+                const showHostActions =
                   host.participation_status === "pending_approval" ||
                   host.participation_status === "awaiting_checkin" ||
                   (host.payment_status === "pending" && hostCanReview);
+
+                const hostExtras = (
+                  <>
+                    {guests.length > 0 && (
+                      <>
+                        <button
+                          onClick={() => toggleHostGuests(host.id)}
+                          className="w-full flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-100 bg-blue-50/50 hover:bg-blue-50 active:bg-blue-100 transition-colors group"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                              {guests.length}
+                            </span>
+                            <span className="text-sm font-semibold text-blue-700">
+                              {isExpanded ? "Ẩn" : "Hiện"} người đi cùng
+                            </span>
+                          </span>
+                          <ChevronDown
+                            className={`w-4 h-4 text-blue-500 transition-transform duration-300 flex-shrink-0 ${
+                              isExpanded ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+
+                        <div
+                          className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                          style={{
+                            gridTemplateRows: isExpanded ? "1fr" : "0fr",
+                          }}
+                        >
+                          <div className="overflow-hidden">
+                            <div
+                              className="bg-gray-50/70 divide-y divide-gray-100 border-t border-gray-100 transition-opacity duration-300"
+                              style={{ opacity: isExpanded ? 1 : 0 }}
+                            >
+                              {guests.map((g) =>
+                                renderRow(
+                                  g,
+                                  true,
+                                  host.users?.full_name ??
+                                    host.guest_full_name ??
+                                    "host",
+                                ),
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {groupTotal !== null && (
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/40">
+                        <span className="text-xs font-semibold text-gray-500">
+                          Tổng cộng
+                        </span>
+                        <span className="text-sm font-bold text-gray-900">
+                          {formatVnd(groupTotal)}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                );
 
                 return (
                   <div
                     key={host.id}
                     className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden"
                   >
-                    <SwipeableRow
-                      disabled={!showHostSwipe}
-                      actions={<RowActions reg={host} />}
-                    >
+                    {isDesktop ? (
                       <div>
                         {renderRowContent(host, false)}
-
-                        {guests.length > 0 && (
-                          <>
-                            <button
-                              onClick={() => toggleHostGuests(host.id)}
-                              className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 border-t border-gray-100 transition-colors"
-                            >
-                              <ChevronDown
-                                className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""
-                                  }`}
-                              />
-                              {isExpanded ? "Ẩn" : "Hiện"} {guests.length} người
-                              đi cùng
-                            </button>
-
-                            {isExpanded && (
-                              <div className="bg-gray-50/70 divide-y divide-gray-100 border-t border-gray-100">
-                                {guests.map((g) =>
-                                  renderRow(
-                                    g,
-                                    true,
-                                    host.users?.full_name ?? host.guest_full_name ?? "host",
-                                  ),
-                                )}
-                              </div>
-                            )}
-                          </>
-                        )}
-
-                        {groupTotal !== null && (
-                          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/40">
-                            <span className="text-xs font-semibold text-gray-500">
-                              Tổng cộng
-                            </span>
-                            <span className="text-sm font-bold text-gray-900">
-                              {formatVnd(groupTotal)}
-                            </span>
+                        {showHostActions && (
+                          <div className="flex justify-end gap-2 border-t border-gray-100 px-4 py-2.5">
+                            <DesktopRowActions reg={host} />
                           </div>
                         )}
+                        {hostExtras}
                       </div>
-                    </SwipeableRow>
+                    ) : (
+                      <SwipeableRow
+                        disabled={!showHostActions}
+                        actions={<RowActions reg={host} />}
+                      >
+                        <div>
+                          {renderRowContent(host, false)}
+                          {hostExtras}
+                        </div>
+                      </SwipeableRow>
+                    )}
 
                     {showReject === host.id && (
                       <div className="px-4 pb-3 flex gap-2">
@@ -1402,16 +1670,18 @@ export default function SessionDetailPage() {
                                           : [...prev, m],
                                       );
                                     }}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isSelected
-                                      ? "bg-blue-50"
-                                      : "hover:bg-gray-50"
-                                      }`}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                                      isSelected
+                                        ? "bg-blue-50"
+                                        : "hover:bg-gray-50"
+                                    }`}
                                   >
                                     <div
-                                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${isSelected
-                                        ? "bg-blue-600 border-blue-600"
-                                        : "border-gray-300"
-                                        }`}
+                                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${
+                                        isSelected
+                                          ? "bg-blue-600 border-blue-600"
+                                          : "border-gray-300"
+                                      }`}
                                     >
                                       {isSelected && (
                                         <CheckCircle2 className="w-3.5 h-3.5 text-white" />
@@ -1445,10 +1715,11 @@ export default function SessionDetailPage() {
                                       </p>
                                     </div>
                                     <span
-                                      className={`text-[10px] px-2 py-0.5 rounded-full border flex-shrink-0 ${m.member_type === "co_dinh"
-                                        ? "bg-purple-50 text-purple-700 border-purple-200"
-                                        : "bg-gray-50 text-gray-500 border-gray-200"
-                                        }`}
+                                      className={`text-[10px] px-2 py-0.5 rounded-full border flex-shrink-0 ${
+                                        m.member_type === "co_dinh"
+                                          ? "bg-purple-50 text-purple-700 border-purple-200"
+                                          : "bg-gray-50 text-gray-500 border-gray-200"
+                                      }`}
                                     >
                                       {m.member_type === "co_dinh"
                                         ? "Thành viên"
@@ -1477,7 +1748,9 @@ export default function SessionDetailPage() {
                           onChange={setHostRegId}
                           placeholder="-- Không, tính tiền riêng --"
                           options={registrations
-                            .filter((r) => !r.is_guest && !r.host_registration_id)
+                            .filter(
+                              (r) => !r.is_guest && !r.host_registration_id,
+                            )
                             .map((r: any) => ({
                               value: r.id,
                               label: r.users?.full_name ?? "?",
@@ -1485,7 +1758,9 @@ export default function SessionDetailPage() {
                         />
                         {hostRegId && selectedMembers.length > 1 && (
                           <p className="text-[11px] text-amber-600 mt-1">
-                            ⚠️ Bạn đang chọn nhiều thành viên cùng lúc + chọn "đi cùng host" — tất cả {selectedMembers.length} người sẽ được gắn vào cùng 1 host này.
+                            ⚠️ Bạn đang chọn nhiều thành viên cùng lúc + chọn
+                            "đi cùng host" — tất cả {selectedMembers.length}{" "}
+                            người sẽ được gắn vào cùng 1 host này.
                           </p>
                         )}
                       </div>
@@ -1609,6 +1884,91 @@ export default function SessionDetailPage() {
             document.body,
           )}
 
+        {confirmModal &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{
+                background: "rgba(0,0,0,0.4)",
+                backdropFilter: "blur(2px)",
+                opacity: confirmModalVisible ? 1 : 0,
+                transition: "opacity 200ms ease-out",
+              }}
+              onClick={closeConfirmModal}
+            >
+              <div
+                className="bg-white rounded-2xl w-full max-w-md shadow-xl"
+                style={{
+                  transform: confirmModalVisible
+                    ? "scale(1) translateY(0)"
+                    : "scale(0.95) translateY(8px)",
+                  opacity: confirmModalVisible ? 1 : 0,
+                  transition:
+                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        confirmModal.key === "closeList"
+                          ? "bg-red-50"
+                          : "bg-green-50"
+                      }`}
+                    >
+                      {confirmModal.key === "closeList" ? (
+                        <UserX className="w-4 h-4 text-red-500" />
+                      ) : (
+                        <UserCheck className="w-4 h-4 text-green-600" />
+                      )}
+                    </div>
+                    <h3 className="font-bold text-gray-900">
+                      {confirmModal.title}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={closeConfirmModal}
+                    className="p-1 text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-5">
+                  <p className="text-sm text-gray-500">
+                    {confirmModal.message}
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+                  <button
+                    onClick={closeConfirmModal}
+                    className="btn-secondary text-sm"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={() =>
+                      confirmModal.key === "closeList"
+                        ? runCloseList()
+                        : runCheckinAllPresent()
+                    }
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${
+                      confirmModal.key === "closeList"
+                        ? "bg-red-500 hover:bg-red-600"
+                        : "bg-green-500 hover:bg-green-600"
+                    }`}
+                  >
+                    Xác nhận
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )}
+
         {showRollbackModal &&
           typeof document !== "undefined" &&
           createPortal(
@@ -1701,6 +2061,76 @@ export default function SessionDetailPage() {
                       <Loader2 className="w-4 h-4 animate-spin" />
                     )}
                     Xác nhận hoàn tác
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )}
+
+        {showCancelModal &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{
+                background: "rgba(0,0,0,0.4)",
+                backdropFilter: "blur(2px)",
+                opacity: cancelModalVisible ? 1 : 0,
+                transition: "opacity 200ms ease-out",
+              }}
+              onClick={closeCancelModal}
+            >
+              <div
+                className="bg-white rounded-2xl w-full max-w-sm shadow-xl"
+                style={{
+                  transform: cancelModalVisible
+                    ? "scale(1) translateY(0)"
+                    : "scale(0.95) translateY(8px)",
+                  opacity: cancelModalVisible ? 1 : 0,
+                  transition:
+                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                      <XCircle className="w-4 h-4 text-red-500" />
+                    </div>
+                    <h3 className="font-bold text-gray-900">Hủy buổi đánh?</h3>
+                  </div>
+                  <button
+                    onClick={closeCancelModal}
+                    className="p-1 text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-5">
+                  <p className="text-sm text-gray-500">
+                    Hủy buổi{" "}
+                    <strong className="text-gray-700">"{session.title}"</strong>
+                    ? Buổi chưa có ai đăng ký nên có thể hủy an toàn. Bạn có thể
+                    mở lại sau nếu cần.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+                  <button
+                    onClick={closeCancelModal}
+                    className="btn-secondary text-sm"
+                  >
+                    Đóng
+                  </button>
+                  <button
+                    onClick={handleCancelSession}
+                    disabled={cancelling}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    {cancelling && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Xác nhận hủy buổi
                   </button>
                 </div>
               </div>

@@ -17,10 +17,8 @@ export function MorphButton({
   phase: ActionPhase;
   idleIcon?: React.ReactNode;
   label: string;
-  /** @deprecated dùng idleClassName */
   colorClass?: string;
   idleClassName?: string;
-  /** @deprecated dùng successClassName */
   successColorClass?: string;
   successClassName?: string;
   idleWidthClass?: string;
@@ -30,9 +28,7 @@ export function MorphButton({
   const isMorphed = phase === "loading" || phase === "success";
 
   const resolvedIdleClass =
-    idleClassName ??
-    colorClass ??
-    "bg-blue-600 hover:bg-blue-700 text-white";
+    idleClassName ?? colorClass ?? "bg-blue-600 hover:bg-blue-700 text-white";
   const resolvedSuccessClass =
     successClassName ?? successColorClass ?? "bg-green-500 text-white";
 

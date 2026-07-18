@@ -23,6 +23,7 @@ import {
   Megaphone,
   Gift,
   BarChart3,
+  Loader2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { sessionsApi, matchesApi, activitiesApi } from "@/lib/api";
@@ -31,6 +32,7 @@ import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
 import { PaymentModal } from "@/components/payments/PaymentModal";
 import { MembersModal } from "@/components/modals/MemberModalConponent";
+import { useRouter } from "next/navigation";
 
 type MainTab = "sessions" | "matches" | "events";
 
@@ -385,6 +387,7 @@ function energyTextCls(ratio: number, dimmed = false) {
 
 function SessionsTab() {
   const { user } = useAuthStore();
+  const router = useRouter();
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("open");
@@ -395,6 +398,7 @@ function SessionsTab() {
   const fadeIn = useFadeIn(!loading);
   const [pendingBills, setPendingBills] = useState<any[]>([]);
   const [payModalSession, setPayModalSession] = useState<any>(null);
+  const [registeringId, setRegisteringId] = useState<string | null>(null);
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -748,9 +752,43 @@ function SessionsTab() {
                     {canRegister ? (
                       <button
                         type="button"
-                        className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-white bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm shadow-blue-200 active:scale-95 transition-transform"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (registeringId) return;
+                          setRegisteringId(s.id);
+                          setTimeout(() => {
+                            const doNavigate = () =>
+                              router.push(`/sessions/${s.id}`);
+                            if (
+                              typeof document !== "undefined" &&
+                              (document as any).startViewTransition
+                            ) {
+                              (document as any).startViewTransition(doNavigate);
+                            } else {
+                              doNavigate();
+                            }
+                          }, 550);
+                        }}
+                        disabled={registeringId === s.id}
+                        className={`flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white bg-blue-600 shadow-sm shadow-blue-200 active:scale-95 transition-all duration-300 ease-out overflow-hidden ${
+                          registeringId === s.id
+                            ? "w-8 h-8 rounded-full gap-0 p-0"
+                            : "w-[124px] h-8 gap-1 px-3 rounded-lg"
+                        }`}
+                        style={{
+                          transitionTimingFunction:
+                            "cubic-bezier(0.34, 1.56, 0.64, 1)",
+                        }}
                       >
-                        Đăng ký ngay <ChevronRight className="w-3.5 h-4.5" />
+                        {registeringId === s.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            Đăng ký ngay{" "}
+                            <ChevronRight className="w-3.5 h-4.5" />
+                          </>
+                        )}
                       </button>
                     ) : (
                       <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />

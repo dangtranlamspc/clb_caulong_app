@@ -19,7 +19,6 @@ const GUEST_SKILL_LABEL: Record<string, string> = {
   chuyen_nghiep: "Chuyên nghiệp",
 };
 
-// Enum của thành viên có tài khoản (users.level) — khác bộ giá trị với guest
 const LEVEL_LABELS: Record<string, string> = {
   yeu: "Yếu",
   tb_yeu: "TB yếu",
