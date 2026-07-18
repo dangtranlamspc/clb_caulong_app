@@ -245,6 +245,12 @@ export const activitiesApi = {
       payment_reference?: string;
     },
   ) => api.post(`/activities/${id}/register/tournament/payment`, data),
+  registerTournamentPublic: (id: string, data: any) =>
+    api.post(`/activities/${id}/register/tournament/public`, data),
+  payTournamentPublic: (
+    registrationId: string,
+    data: { method: "wallet" | "transfer" | "cash" },
+  ) => api.post(`/registrations/${registrationId}/tournament-payment`, data),
 };
 
 //admin
@@ -326,7 +332,6 @@ export const matchesAdminApi = {
   statusCounts: () => api.get("/matches/status-counts"),
 };
 
-
 export const rankingsAdminApi = {
   leaderboard: (params?: { month?: number; year?: number }) =>
     api.get("/rankings/leaderboard", { params }),
@@ -340,7 +345,6 @@ export const rankingsAdminApi = {
   lpChart: (limit?: number) =>
     api.get("/rankings/lp-chart", { params: { limit } }),
 };
-
 
 export const walletAdminApi = {
   getSummary: () => api.get("/wallet/admin/summary"),
