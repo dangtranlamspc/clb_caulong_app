@@ -218,8 +218,10 @@ export const activitiesApi = {
   list: (params?: any) => api.get("/activities", { params }),
   get: (id: string) => api.get(`/activities/${id}`),
   getMyStatus: (id: string) => api.get(`/activities/${id}/my-status`),
-  registerShirtOrder: (id: string, data: { size: string; quantity?: number }) =>
-    api.post(`/activities/${id}/register/shirt-order`, data),
+  registerShirtOrder: (
+    id: string,
+    data: { gender: "nam" | "nu"; size: string; quantity?: number },
+  ) => api.post(`/activities/${id}/register/shirt-order`, data),
   registerTournament: (
     id: string,
     data: { team_name: string; player2_user_id?: string },
@@ -367,4 +369,40 @@ export const walletAdminApi = {
     api.get("/wallet/admin/finance-history", { params }),
   getFinanceYears: () => api.get("/wallet/admin/finance-years"),
   exportReport: () => api.get("/wallet/admin/export", { responseType: "blob" }),
+};
+
+
+export const eventsAdminApi = {
+  list: (params?: any) => api.get("/admin/activities", { params }),
+  get: (id: string) => api.get(`/admin/activities/${id}`),
+  create: (data: any) => api.post("/admin/activities", data),
+  update: (id: string, data: any) => api.put(`/admin/activities/${id}`, data),
+  updateStatus: (id: string, status: string) =>
+    api.patch(`/admin/activities/${id}/status`, { status }),
+  delete: (id: string) => api.delete(`/admin/activities/${id}`),
+  getRegistrations: (id: string) =>
+    api.get(`/admin/activities/${id}/registrations`),
+  confirmShirtOrder: (regId: string) =>
+    api.patch(`/admin/activities/shirt-order-registrations/${regId}/confirm`),
+  removeRegistration: (type: string, regId: string) =>
+    api.delete(`/admin/activities/${type}/registrations/${regId}`),
+  createPoll: (data: any) => api.post("/admin/activities/polls", data),
+  getPollOptions: (id: string) =>
+    api.get(`/admin/activities/${id}/poll-options`),
+  updatePollOptions: (id: string, options: any[]) =>
+    api.put(`/admin/activities/${id}/poll-options`, { options }),
+  confirmTournamentPayment: (regId: string) =>
+    api.patch(`/admin/activities/tournament-registrations/${regId}/confirm`),
+  drawTeams: (id: string, data: any) =>
+    api.post(`/admin/activities/${id}/tournament/draw-teams`, data),
+};
+
+export const uploadsAdminApi = {
+  upload: (file: File, folder: string = "uploads") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post(`/admin/uploads?folder=${folder}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };

@@ -27,7 +27,7 @@ import {
   Hourglass,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { activitiesApi } from "@/lib/api";
+import { activitiesApi, profileApi } from "@/lib/api";
 import { createPortal } from "react-dom";
 
 const TYPE_META: Record<string, { icon: any; label: string }> = {
@@ -290,10 +290,45 @@ function fmt(n: number) {
 
 function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
   const reg = myStatus?.my_registration;
+
+  const rawSizes = activity.detail?.available_sizes;
+  const sizesByGender: { nam: string[]; nu: string[] } = Array.isArray(rawSizes)
+    ? { nam: rawSizes, nu: rawSizes }
+    : { nam: rawSizes?.nam ?? [], nu: rawSizes?.nu ?? [] };
+
+  const images: string[] = (activity.detail?.images ?? []).map((img: any) =>
+    typeof img === "string" ? img : img.url,
+  );
+
+  const [profileGender, setProfileGender] = useState<"nam" | "nu" | null>(
+    reg?.gender ?? null,
+  );
+  const [loadingProfile, setLoadingProfile] = useState(!reg?.gender);
+
+  useEffect(() => {
+    if (reg?.gender) {
+      setProfileGender(reg.gender);
+      setLoadingProfile(false);
+      return;
+    }
+    profileApi
+      .getMe()
+      .then(({ data }) => {
+        const g = data?.gender === "nu" ? "nu" : "nam";
+        setProfileGender(g);
+      })
+      .catch(() => setProfileGender("nam"))
+      .finally(() => setLoadingProfile(false));
+  }, [reg?.gender]);
+
+  const gender = profileGender ?? "nam";
+
   const [size, setSize] = useState(reg?.size ?? "");
   const [quantity, setQuantity] = useState(reg?.quantity ?? 1);
   const [submitting, setSubmitting] = useState(false);
-  const sizes: string[] = activity.detail?.available_sizes ?? [];
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  const sizes: string[] = sizesByGender[gender] ?? [];
   const price = activity.detail?.price_per_shirt ?? 0;
   const canRegister = activity.status === "open";
 
@@ -326,6 +361,7 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     setSubmitting(true);
     try {
       await activitiesApi.registerShirtOrder(activity.id, {
+        gender,
         size,
         quantity: finalQuantity,
       });
@@ -343,7 +379,7 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
       await activitiesApi.cancelRegistration(activity.id);
       toast.success("Đã huỷ đăng ký");
       onChanged();
-    } catch {}
+    } catch { }
   };
 
   const openPayModal = () => {
@@ -407,10 +443,30 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
         )}
       </div>
 
+      {/* ── Ảnh mẫu áo ── */}
+      {images.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          {images.map((src, i) => (
+            <button
+              key={src + i}
+              onClick={() => setLightboxSrc(src)}
+              className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-gray-200 bg-gray-50"
+            >
+              <img
+                src={src}
+                alt={`Mẫu áo ${i + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </button>
+          ))}
+        </div>
+      )}
+
       {reg && (
         <div className="bg-emerald-50 text-emerald-700 text-sm rounded-xl px-3 py-2 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-          Bạn đã đăng ký: size <strong>{reg.size}</strong> × {reg.quantity} áo
+          Bạn đã đăng ký: {reg.gender === "nu" ? "Nữ" : "Nam"} · size{" "}
+          <strong>{reg.size}</strong> × {reg.quantity} áo
         </div>
       )}
 
@@ -454,76 +510,125 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
       )}
 
       {canRegister ? (
-        <>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-              Chọn size
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {sizes.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSize(s)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                    size === s
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-500 border-gray-200"
+        loadingProfile ? (
+          <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" /> Đang tải hồ sơ...
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span>Giới tính (theo hồ sơ):</span>
+              <span
+                className={`px-2.5 py-1 rounded-full font-semibold ${gender === "nu"
+                  ? "bg-pink-100 text-pink-600"
+                  : "bg-blue-100 text-blue-600"
                   }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-              Số lượng
-              {isLocked && (
-                <span className="text-gray-400 font-normal">
-                  {" "}
-                  (không thể đổi sau khi đã thanh toán)
-                </span>
-              )}
-            </label>
-            <input
-              type="number"
-              min={1}
-              value={isLocked ? reg.quantity : quantity}
-              onChange={(e) => {
-                const val = e.target.value;
-                setQuantity(val === "" ? "" : Number(val));
-              }}
-              onBlur={() => {
-                if (quantity === "" || quantity < 1) setQuantity(1);
-              }}
-              disabled={isLocked}
-              className="w-24 px-3 py-2 rounded-xl border border-gray-200 text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}{" "}
-              {reg ? "Cập nhật" : "Đăng ký"}
-            </button>
-            {reg && !isPaid && (
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2.5 rounded-xl border border-red-200 text-red-500 text-sm font-medium"
               >
-                Huỷ
+                {gender === "nu" ? "Nữ" : "Nam"}
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                Chọn size
+              </label>
+              {sizes.length === 0 ? (
+                <p className="text-sm text-gray-400">
+                  Chưa có size nào cho {gender === "nu" ? "Nữ" : "Nam"}
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {sizes.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setSize(s)}
+                      disabled={isLocked}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${size === s
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-500 border-gray-200"
+                        }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                Số lượng
+                {isLocked && (
+                  <span className="text-gray-400 font-normal">
+                    {" "}
+                    (không thể đổi sau khi đã thanh toán)
+                  </span>
+                )}
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={isLocked ? reg.quantity : quantity}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setQuantity(val === "" ? "" : Number(val));
+                }}
+                onBlur={() => {
+                  if (quantity === "" || quantity < 1) setQuantity(1);
+                }}
+                disabled={isLocked}
+                className="w-24 px-3 py-2 rounded-xl border border-gray-200 text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}{" "}
+                {reg ? "Cập nhật" : "Đăng ký"}
               </button>
-            )}
-          </div>
-        </>
+              {reg && !isPaid && (
+                <button
+                  onClick={handleCancel}
+                  className="px-4 py-2.5 rounded-xl border border-red-200 text-red-500 text-sm font-medium"
+                >
+                  Huỷ
+                </button>
+              )}
+            </div>
+          </>
+        )
       ) : (
         <p className="text-sm text-gray-400 text-center py-2">
           Đã đóng đăng ký
         </p>
       )}
+
+      {/* ── Lightbox xem ảnh full ── */}
+      {lightboxSrc &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4"
+            onClick={() => setLightboxSrc(null)}
+          >
+            <button
+              onClick={() => setLightboxSrc(null)}
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"
+            >
+              <XIcon className="w-5 h-5 text-white" />
+            </button>
+            <img
+              src={lightboxSrc}
+              alt="Ảnh mẫu áo"
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>,
+          document.body,
+        )}
 
       {/* ── Pay modal ── */}
       {showPayModal &&
@@ -860,11 +965,10 @@ function CountBox({
     : "text-white/80";
   return (
     <div
-      className={`rounded-2xl py-2.5 text-center border transition-colors ${
-        accent
-          ? "bg-white border-white shadow-sm"
-          : "bg-white/15 border-white/25"
-      }`}
+      className={`rounded-2xl py-2.5 text-center border transition-colors ${accent
+        ? "bg-white border-white shadow-sm"
+        : "bg-white/15 border-white/25"
+        }`}
     >
       <div className="count-rotate-wrap h-8 flex items-center justify-center">
         <span
@@ -923,7 +1027,7 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
       await activitiesApi.cancelRegistration(activity.id);
       toast.success("Đã huỷ đăng ký");
       onChanged();
-    } catch {}
+    } catch { }
   };
 
   const goToRegisterPage = () => {
@@ -1504,7 +1608,7 @@ function OfflineEventSection({ activity, myStatus, onChanged }: any) {
       await activitiesApi.cancelRegistration(activity.id);
       toast.success("Đã huỷ đăng ký");
       onChanged();
-    } catch {}
+    } catch { }
   };
 
   return (
@@ -1625,9 +1729,8 @@ function PollSection({ activity, myStatus, onChanged }: any) {
               key={opt.id}
               onClick={() => canVote && toggleOption(opt.id)}
               disabled={!canVote}
-              className={`w-full text-left rounded-xl border p-3 relative overflow-hidden transition-colors ${
-                isSelected ? "border-blue-400 bg-blue-50" : "border-gray-200"
-              }`}
+              className={`w-full text-left rounded-xl border p-3 relative overflow-hidden transition-colors ${isSelected ? "border-blue-400 bg-blue-50" : "border-gray-200"
+                }`}
             >
               {(hasVoted || !canVote) && (
                 <div

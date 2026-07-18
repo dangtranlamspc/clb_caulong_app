@@ -49,16 +49,21 @@ const LEVEL_OPTIONS = [
 
 const STEPS = [
   { key: 1, title: "Thông tin cá nhân", sub: "Nhập thông tin đăng ký" },
-  {
-    key: 2,
-    title: "Thi đấu & Thanh toán",
-    sub: "Chọn trình, vai trò & thanh toán",
-  },
-  { key: 3, title: "Hoàn tất", sub: "Xác nhận đăng ký" },
+  { key: 2, title: "Hoàn tất", sub: "Xác nhận & thanh toán" },
 ];
 
 function fmt(n: number) {
   return Math.round(n ?? 0).toLocaleString("vi-VN") + "đ";
+}
+
+function stripVietnameseTones(str: string) {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .trim();
 }
 
 type RegisterForm = {
@@ -103,6 +108,8 @@ function applyMemberToForm(f: RegisterForm, m: any): RegisterForm {
   };
 }
 
+type PaymentOutcome = "confirmed" | "pending_admin" | null;
+
 export default function TournamentRegisterPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -122,6 +129,12 @@ export default function TournamentRegisterPage() {
     "transfer" | "cash" | "wallet" | null
   >(null);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmingTransfer, setConfirmingTransfer] = useState(false);
+
+  const [paymentOutcome, setPaymentOutcome] = useState<PaymentOutcome>(null);
+  const [walletNewBalance, setWalletNewBalance] = useState<number | null>(
+    null,
+  );
 
   const isMember = !!form.member;
   const entryFee = activity?.detail?.entry_fee_per_person ?? 0;
@@ -133,8 +146,6 @@ export default function TournamentRegisterPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Tự động điền thông tin của chính member đang đăng nhập ngay khi vào trang,
-  // để họ không phải tự tìm và chọn bản thân trong modal "Tìm thành viên".
   useEffect(() => {
     profileApi
       .getMe()
@@ -143,7 +154,6 @@ export default function TournamentRegisterPage() {
         setForm((f) => applyMemberToForm(f, data));
       })
       .catch(() => {
-        // Không lấy được hồ sơ (vd. đăng ký khách) — để trống, member tự nhập.
       });
   }, []);
 
@@ -184,13 +194,7 @@ export default function TournamentRegisterPage() {
     if (!form.phone.trim()) return "Vui lòng nhập số điện thoại";
     if (!form.date_of_birth) return "Vui lòng chọn ngày sinh";
     if (!isMember && !form.email.trim()) return "Vui lòng nhập email";
-    return null;
-  };
-
-  const validateStep2 = () => {
     if (!form.level) return "Vui lòng chọn trình độ hiện tại";
-    if (entryFee > 0 && !payMethod)
-      return "Vui lòng chọn phương thức thanh toán";
     return null;
   };
 
@@ -207,46 +211,115 @@ export default function TournamentRegisterPage() {
     setStep((s) => Math.max(s - 1, 1));
   };
 
-  const submitRegistration = async () => {
-    const err = validateStep2();
-    if (err) return toast.error(err);
+  const paymentRef = activity
+    ? `${stripVietnameseTones(activity.title).replace(/\s+/g, "")}_${stripVietnameseTones(
+      form.full_name,
+    ).replace(/\s+/g, "")}`
+    : "";
+
+  const qrUrl =
+    entryFee > 0
+      ? `https://img.vietqr.io/image/${process.env.NEXT_PUBLIC_BANK_ID ?? "TCB"}-${process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "9961060042"}-compact2.png?amount=${entryFee}&addInfo=${encodeURIComponent(paymentRef)}&accountName=${encodeURIComponent(process.env.NEXT_PUBLIC_BANK_NAME ?? "NGO VAN NGOI")}`
+      : "";
+
+  const ensureRegistration = async () => {
+    if (registration) return registration;
+    const payload: any = {
+      role: form.role,
+      level: form.level,
+      notes: form.notes || undefined,
+    };
+    if (form.member) {
+      payload.user_id = form.member.id;
+    } else {
+      payload.guest_full_name = form.full_name;
+      payload.guest_phone = form.phone;
+      payload.guest_date_of_birth = form.date_of_birth;
+      payload.guest_email = form.email;
+      payload.guest_gender = form.gender;
+      payload.guest_address = form.address;
+    }
+    const { data } = await activitiesApi.registerTournamentPublic(id, payload);
+    setRegistration(data.registration);
+    return data.registration;
+  };
+
+  const submitFreeRegistration = async () => {
     setSubmitting(true);
     try {
-      const payload: any = {
-        role: form.role,
-        level: form.level,
-        notes: form.notes || undefined,
-      };
-      if (form.member) {
-        payload.user_id = form.member.id;
-      } else {
-        payload.guest_full_name = form.full_name;
-        payload.guest_phone = form.phone;
-        payload.guest_date_of_birth = form.date_of_birth;
-        payload.guest_email = form.email;
-        payload.guest_gender = form.gender;
-        payload.guest_address = form.address;
-      }
-
-      const { data } = await activitiesApi.registerTournamentPublic(
-        id,
-        payload,
-      );
-      setRegistration(data.registration);
-
-      if (entryFee > 0 && payMethod) {
-        await activitiesApi.payTournamentPublic(data.registration.id, {
-          method: payMethod,
-        });
-      }
-
+      await ensureRegistration();
       toast.success("Đã gửi đăng ký!");
-      setStep(3);
+      setPaymentOutcome(null);
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Đăng ký thất bại");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const payWithWallet = async () => {
+    setSubmitting(true);
+    try {
+      const reg = await ensureRegistration();
+      const { data } = await activitiesApi.payTournamentPublic(reg.id, {
+        method: "wallet",
+      });
+      setWalletNewBalance(data.new_balance ?? null);
+      setPaymentOutcome("confirmed");
+      toast.success("Đã thanh toán bằng Ví BNB!");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Thanh toán thất bại");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const requestCashPayment = async () => {
+    setSubmitting(true);
+    try {
+      const reg = await ensureRegistration();
+      await activitiesApi.payTournamentPublic(reg.id, { method: "cash" });
+      setPaymentOutcome("pending_admin");
+      toast.success("Đã gửi yêu cầu đến BTC!");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Gửi yêu cầu thất bại");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const showTransferQR = async () => {
+    setSubmitting(true);
+    try {
+      await ensureRegistration();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Đăng ký thất bại");
+      setPayMethod(null);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmTransferDone = async () => {
+    if (!registration) return;
+    setConfirmingTransfer(true);
+    try {
+      await activitiesApi.payTournamentPublic(registration.id, {
+        method: "transfer",
+      });
+      setPaymentOutcome("pending_admin");
+      toast.success("Đã gửi thông báo chuyển khoản đến BTC!");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Xác nhận thất bại");
+    } finally {
+      setConfirmingTransfer(false);
+    }
+  };
+
+  const handleSelectPayMethod = (method: "wallet" | "transfer" | "cash") => {
+    setPayMethod(method);
+    setPaymentOutcome(null);
+    if (method === "transfer") showTransferQR();
   };
 
   if (loading) {
@@ -258,9 +331,10 @@ export default function TournamentRegisterPage() {
   }
   if (!activity) return null;
 
-  const paymentRef = form.full_name
-    ? `BnB2026_${form.full_name.replace(/\s+/g, "")}`
-    : "BnB2026_XXXX";
+  const isDone =
+    paymentOutcome === "confirmed" ||
+    paymentOutcome === "pending_admin" ||
+    (entryFee === 0 && !!registration);
 
   return (
     <div className="min-h-screen bg-[#F4F6FA] p-4 md:p-8">
@@ -288,19 +362,17 @@ export default function TournamentRegisterPage() {
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                      step >= s.key
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-400"
-                    }`}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${step >= s.key
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-400"
+                      }`}
                   >
                     {s.key}
                   </div>
                   <div className="hidden sm:block">
                     <p
-                      className={`text-sm font-semibold ${
-                        step >= s.key ? "text-gray-900" : "text-gray-400"
-                      }`}
+                      className={`text-sm font-semibold ${step >= s.key ? "text-gray-900" : "text-gray-400"
+                        }`}
                     >
                       {s.title}
                     </p>
@@ -309,9 +381,8 @@ export default function TournamentRegisterPage() {
                 </div>
                 {i < STEPS.length - 1 && (
                   <div
-                    className={`flex-1 h-0.5 mx-3 ${
-                      step > s.key ? "bg-blue-600" : "bg-gray-100"
-                    }`}
+                    className={`flex-1 h-0.5 mx-3 ${step > s.key ? "bg-blue-600" : "bg-gray-100"
+                      }`}
                   />
                 )}
               </div>
@@ -444,226 +515,318 @@ export default function TournamentRegisterPage() {
                     ))}
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Trình độ hiện tại <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {LEVEL_OPTIONS.map((lv) => (
+                      <button
+                        key={lv.value}
+                        type="button"
+                        onClick={() =>
+                          setForm((f) => ({ ...f, level: lv.value as any }))
+                        }
+                        className={`relative rounded-2xl border-2 p-3 text-center transition-colors ${form.level === lv.value
+                          ? "border-blue-500 bg-blue-50/40"
+                          : "border-gray-200"
+                          }`}
+                      >
+                        {form.level === lv.value && (
+                          <span className="absolute top-2 right-2 w-4 h-4 rounded bg-blue-600 flex items-center justify-center">
+                            <CheckCircle2 className="w-3 h-3 text-white" />
+                          </span>
+                        )}
+                        <span
+                          className="w-9 h-9 mx-auto rounded-full flex items-center justify-center text-sm font-bold mb-1.5"
+                          style={{ background: lv.bg, color: lv.color }}
+                        >
+                          {lv.value}
+                        </span>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {lv.label}
+                        </p>
+                        <p className="text-xs text-gray-400">{lv.sub}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Vai trò đăng ký <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {(
+                      [
+                        {
+                          value: "nam",
+                          label: "Vận động viên Nam",
+                          sub: "Đăng ký thi đấu nội dung nam",
+                        },
+                        {
+                          value: "nu",
+                          label: "Vận động viên Nữ",
+                          sub: "Đăng ký thi đấu nội dung nữ",
+                        },
+                      ] as const
+                    ).map((r) => (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, role: r.value }))}
+                        className={`flex items-center gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors ${form.role === r.value
+                          ? "border-blue-500 bg-blue-50/40"
+                          : "border-gray-200"
+                          }`}
+                      >
+                        <span
+                          className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${r.value === "nam"
+                            ? "bg-blue-50 text-blue-600"
+                            : "bg-pink-50 text-pink-600"
+                            }`}
+                        >
+                          {r.value === "nam" ? "♂" : "♀"}
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {r.label}
+                          </p>
+                          <p className="text-xs text-gray-400">{r.sub}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Ghi chú thêm (nếu có)
+                  </label>
+                  <textarea
+                    className="input-field"
+                    rows={3}
+                    maxLength={200}
+                    placeholder="Nhập ghi chú thêm..."
+                    value={form.notes}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, notes: e.target.value }))
+                    }
+                  />
+                  <p className="text-xs text-gray-400 mt-1 text-right">
+                    {form.notes.length}/200
+                  </p>
+                </div>
               </div>
             )}
 
             {step === 2 && (
-              <>
-                <div className="bg-white rounded-2xl p-5 shadow-sm space-y-5">
-                  <SectionTitle icon="🏸" title="Thông tin thi đấu" />
+              <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
+                <SectionTitle icon="💳" title="Hoàn tất đăng ký" />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Trình độ hiện tại <span className="text-red-500">*</span>
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {LEVEL_OPTIONS.map((lv) => (
-                        <button
-                          key={lv.value}
-                          type="button"
-                          onClick={() =>
-                            setForm((f) => ({ ...f, level: lv.value as any }))
-                          }
-                          className={`relative rounded-2xl border-2 p-3 text-center transition-colors ${
-                            form.level === lv.value
-                              ? "border-blue-500 bg-blue-50/40"
-                              : "border-gray-200"
-                          }`}
-                        >
-                          {form.level === lv.value && (
-                            <span className="absolute top-2 right-2 w-4 h-4 rounded bg-blue-600 flex items-center justify-center">
-                              <CheckCircle2 className="w-3 h-3 text-white" />
-                            </span>
-                          )}
-                          <span
-                            className="w-9 h-9 mx-auto rounded-full flex items-center justify-center text-sm font-bold mb-1.5"
-                            style={{ background: lv.bg, color: lv.color }}
-                          >
-                            {lv.value}
-                          </span>
-                          <p className="text-sm font-semibold text-gray-800">
-                            {lv.label}
-                          </p>
-                          <p className="text-xs text-gray-400">{lv.sub}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Vai trò đăng ký <span className="text-red-500">*</span>
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {(
-                        [
-                          {
-                            value: "nam",
-                            label: "Vận động viên Nam",
-                            sub: "Đăng ký thi đấu nội dung nam",
-                          },
-                          {
-                            value: "nu",
-                            label: "Vận động viên Nữ",
-                            sub: "Đăng ký thi đấu nội dung nữ",
-                          },
-                        ] as const
-                      ).map((r) => (
-                        <button
-                          key={r.value}
-                          type="button"
-                          onClick={() =>
-                            setForm((f) => ({ ...f, role: r.value }))
-                          }
-                          className={`flex items-center gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors ${
-                            form.role === r.value
-                              ? "border-blue-500 bg-blue-50/40"
-                              : "border-gray-200"
-                          }`}
-                        >
-                          <span
-                            className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
-                              r.value === "nam"
-                                ? "bg-blue-50 text-blue-600"
-                                : "bg-pink-50 text-pink-600"
-                            }`}
-                          >
-                            {r.value === "nam" ? "♂" : "♀"}
-                          </span>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">
-                              {r.label}
-                            </p>
-                            <p className="text-xs text-gray-400">{r.sub}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Ghi chú thêm (nếu có)
-                    </label>
-                    <textarea
-                      className="input-field"
-                      rows={3}
-                      maxLength={200}
-                      placeholder="Nhập ghi chú thêm..."
-                      value={form.notes}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, notes: e.target.value }))
-                      }
-                    />
-                    <p className="text-xs text-gray-400 mt-1 text-right">
-                      {form.notes.length}/200
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-                  <SectionTitle icon="💳" title="Thanh toán lệ phí" />
-
-                  {entryFee > 0 ? (
-                    <>
-                      <div className="bg-amber-50 rounded-xl px-4 py-3 text-sm text-amber-700">
-                        Lệ phí thi đấu: <strong>{fmt(entryFee)}</strong>/người.
-                        Vui lòng hoàn tất thanh toán để xác nhận đăng ký.
+                {entryFee === 0 ? (
+                  isDone ? (
+                    <div className="text-center py-6 space-y-3">
+                      <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 flex items-center justify-center">
+                        <CheckCircle2 className="w-7 h-7 text-emerald-600" />
                       </div>
+                      <h3 className="font-bold text-gray-900 text-lg">
+                        Đăng ký thành công!
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Cảm ơn bạn đã đăng ký tham gia giải đấu.
+                      </p>
+                      <button
+                        onClick={() => router.push(`/events/${id}`)}
+                        className="mt-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+                      >
+                        Về trang giải đấu
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-500">
+                        Giải đấu này không thu lệ phí. Bấm xác nhận để hoàn tất
+                        đăng ký.
+                      </p>
+                      <button
+                        onClick={submitFreeRegistration}
+                        disabled={submitting}
+                        className="w-full px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        {submitting && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
+                        Xác nhận đăng ký
+                      </button>
+                    </div>
+                  )
+                ) : paymentOutcome === "confirmed" ? (
+                  <div className="text-center py-6 space-y-3">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 flex items-center justify-center">
+                      <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+                    </div>
+                    <h3 className="font-bold text-gray-900 text-lg">
+                      Đã thanh toán thành công!
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Đã trừ {fmt(entryFee)} từ Ví BNB của bạn.
+                      {walletNewBalance != null &&
+                        ` Số dư còn lại: ${fmt(walletNewBalance)}.`}
+                    </p>
+                    <button
+                      onClick={() => router.push(`/events/${id}`)}
+                      className="mt-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+                    >
+                      Về trang giải đấu
+                    </button>
+                  </div>
+                ) : paymentOutcome === "pending_admin" ? (
+                  <div className="text-center py-6 space-y-3">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-amber-50 flex items-center justify-center">
+                      <CheckCircle2 className="w-7 h-7 text-amber-600" />
+                    </div>
+                    <h3 className="font-bold text-gray-900 text-lg">
+                      Đã gửi yêu cầu thành công!
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      BTC sẽ kiểm tra và xác nhận thanh toán của bạn trong thời
+                      gian sớm nhất.
+                    </p>
+                    <button
+                      onClick={() => router.push(`/events/${id}`)}
+                      className="mt-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+                    >
+                      Về trang giải đấu
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-amber-50 rounded-xl px-4 py-3 text-sm text-amber-700">
+                      Lệ phí thi đấu: <strong>{fmt(entryFee)}</strong>/người.
+                      Vui lòng hoàn tất thanh toán để xác nhận đăng ký.
+                    </div>
 
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 mb-2">
-                          Phương thức thanh toán
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        Phương thức thanh toán
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {isMember && (
+                          <PaymentOption
+                            active={payMethod === "wallet"}
+                            icon={<Wallet className="w-5 h-5" />}
+                            label="Ví BNB"
+                            sub="Trừ thẳng số dư ví"
+                            onClick={() => handleSelectPayMethod("wallet")}
+                          />
+                        )}
+                        <PaymentOption
+                          active={payMethod === "transfer"}
+                          icon={<Landmark className="w-5 h-5" />}
+                          label="Chuyển khoản"
+                          sub="Quét QR chuyển khoản ngân hàng"
+                          onClick={() => handleSelectPayMethod("transfer")}
+                        />
+                        <PaymentOption
+                          active={payMethod === "cash"}
+                          icon={<Banknote className="w-5 h-5" />}
+                          label="Thanh toán tiền mặt"
+                          sub="Thanh toán trực tiếp cho BTC"
+                          onClick={() => handleSelectPayMethod("cash")}
+                        />
+                      </div>
+                      {!isMember && (
+                        <p className="text-xs text-gray-400 mt-2">
+                          Đăng ký khách (không có tài khoản) chỉ hỗ trợ chuyển
+                          khoản hoặc tiền mặt.
                         </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {isMember && (
-                            <PaymentOption
-                              active={payMethod === "wallet"}
-                              icon={<Wallet className="w-5 h-5" />}
-                              label="Ví BNB"
-                              sub="Trừ thẳng số dư ví"
-                              onClick={() => setPayMethod("wallet")}
-                            />
-                          )}
-                          <PaymentOption
-                            active={payMethod === "transfer"}
-                            icon={<Landmark className="w-5 h-5" />}
-                            label="Chuyển khoản"
-                            sub="Chuyển khoản qua tài khoản ngân hàng"
-                            onClick={() => setPayMethod("transfer")}
-                          />
-                          <PaymentOption
-                            active={payMethod === "cash"}
-                            icon={<Banknote className="w-5 h-5" />}
-                            label="Thanh toán tiền mặt"
-                            sub="Thanh toán trực tiếp cho BTC"
-                            onClick={() => setPayMethod("cash")}
-                          />
-                        </div>
-                        {!isMember && (
-                          <p className="text-xs text-gray-400 mt-2">
-                            Đăng ký khách (không có tài khoản) chỉ hỗ trợ chuyển
-                            khoản hoặc tiền mặt.
-                          </p>
+                      )}
+                    </div>
+
+                    {payMethod === "wallet" && (
+                      <button
+                        onClick={payWithWallet}
+                        disabled={submitting}
+                        className="w-full px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        {submitting && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
+                        Thanh toán {fmt(entryFee)} từ Ví BNB
+                      </button>
+                    )}
+
+                    {payMethod === "transfer" && (
+                      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                        {submitting && !registration ? (
+                          <div className="flex justify-center py-6">
+                            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex justify-center">
+                              <img
+                                src={qrUrl}
+                                alt="QR chuyển khoản"
+                                className="w-48 h-48 rounded-lg border border-gray-200 bg-white"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-xs text-gray-400">
+                                  Nội dung chuyển khoản
+                                </p>
+                                <p className="font-mono font-semibold text-red-600">
+                                  {paymentRef}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(paymentRef);
+                                  toast.success("Đã copy nội dung chuyển khoản");
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-white flex-shrink-0"
+                              >
+                                <Copy className="w-3.5 h-3.5" /> Sao chép
+                              </button>
+                            </div>
+                            <button
+                              onClick={confirmTransferDone}
+                              disabled={confirmingTransfer || !registration}
+                              className="w-full px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                            >
+                              {confirmingTransfer && (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              )}
+                              Tôi đã chuyển khoản
+                            </button>
+                          </>
                         )}
                       </div>
+                    )}
 
-                      {payMethod === "transfer" && (
-                        <div className="bg-gray-50 rounded-xl p-3.5 flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-xs text-gray-400">
-                              Nội dung chuyển khoản
-                            </p>
-                            <p className="font-mono font-semibold text-red-600">
-                              {paymentRef}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(paymentRef);
-                              toast.success("Đã copy nội dung chuyển khoản");
-                            }}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-white"
-                          >
-                            <Copy className="w-3.5 h-3.5" /> Sao chép
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      Giải đấu này không thu lệ phí.
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-
-            {step === 3 && (
-              <div className="bg-white rounded-2xl p-8 shadow-sm text-center space-y-3">
-                <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 flex items-center justify-center">
-                  <CheckCircle2 className="w-7 h-7 text-emerald-600" />
-                </div>
-                <h3 className="font-bold text-gray-900 text-lg">
-                  Đăng ký thành công!
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {payMethod === "cash" || payMethod === "transfer"
-                    ? "BTC sẽ xác nhận thanh toán của bạn trong thời gian sớm nhất."
-                    : "Cảm ơn bạn đã đăng ký tham gia giải đấu."}
-                </p>
-                <button
-                  onClick={() => router.push(`/events/${id}`)}
-                  className="mt-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
-                >
-                  Về trang giải đấu
-                </button>
+                    {payMethod === "cash" && (
+                      <button
+                        onClick={requestCashPayment}
+                        disabled={submitting}
+                        className="w-full px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        {submitting && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
+                        Gửi yêu cầu thanh toán tiền mặt
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
             {/* Nav buttons */}
-            {step < 3 && (
+            {step === 1 && (
               <div className="flex items-center justify-between">
                 <button
                   onClick={goBack}
@@ -671,28 +834,26 @@ export default function TournamentRegisterPage() {
                 >
                   ← Quay lại
                 </button>
-                {step < 2 ? (
-                  <button
-                    onClick={goNext}
-                    className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold flex items-center gap-1.5"
-                  >
-                    Tiếp tục <ChevronRight className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={submitRegistration}
-                    disabled={submitting}
-                    className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Xác nhận đăng ký
-                  </button>
-                )}
+                <button
+                  onClick={goNext}
+                  className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold flex items-center gap-1.5"
+                >
+                  Tiếp tục <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {step === 2 && !isDone && (
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={goBack}
+                  className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-white"
+                >
+                  ← Quay lại
+                </button>
               </div>
             )}
           </div>
 
-          {/* ── Cột phải: sidebar ── */}
           <div className="space-y-5">
             <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
               <p className="font-bold text-gray-900 text-sm">
@@ -712,10 +873,10 @@ export default function TournamentRegisterPage() {
                 value={
                   activity.event_date
                     ? format(
-                        new Date(activity.event_date),
-                        "HH:mm - dd/MM/yyyy",
-                        { locale: vi },
-                      )
+                      new Date(activity.event_date),
+                      "HH:mm - dd/MM/yyyy",
+                      { locale: vi },
+                    )
                     : "—"
                 }
               />
@@ -927,9 +1088,8 @@ function PaymentOption({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-start gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors ${
-        active ? "border-blue-500 bg-blue-50/40" : "border-gray-200"
-      }`}
+      className={`flex items-start gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors ${active ? "border-blue-500 bg-blue-50/40" : "border-gray-200"
+        }`}
     >
       <span className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
         {icon}
@@ -962,8 +1122,3 @@ function SidebarRow({
     </div>
   );
 }
-
-// Bỏ STEPS Thi đấu và thanh toán lun , đưa ra Thông tin các nhân lun và còn 2 bước Thông tin các nhân và Hoàn tất thôi
-// Ở bước hoàn tất nếu member chọn thanh toán qua ngân hàng thì hiện qr, nội dung chuyển khoản : Title giải đấu_Họ và tên ( tạo qr sử dụng như bên Paymentmodal) copy được --> Bấm tôi đã chuyển khoản --> gửi đến admin xác nhận
-// Còn nếu thanh toán bằng ví BNB thì từ thẳng vào BNB và lưu lại lịch sử
-// Nếu member chọn thanh toán tiền mặt thì hiện gửi yêu cầu đến BTC thành công --> bên admin sẽ check và appoved xác nhận đăng kí

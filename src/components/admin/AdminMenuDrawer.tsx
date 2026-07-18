@@ -33,7 +33,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
             { href: '/admin/wallet/summary', label: 'Tổng hợp' },
         ],
     },
-    { href: '/admin/activities', icon: Megaphone, label: 'Hoạt động', desc: 'Sự kiện, giải đấu, đặt áo', iconBg: 'bg-rose-500' },
+    { href: '/admin/events', icon: Megaphone, label: 'Hoạt động', desc: 'Sự kiện, giải đấu, đặt áo', iconBg: 'bg-rose-500' },
 ];
 
 const ANIM_MS = 250;
