@@ -66,7 +66,7 @@ export default function AdminLayout({
         <span className="text-white font-bold text-sm">{headerTitle}</span>
       </header>
 
-      <main className="w-full max-w-lg lg:max-w-5xl xl:max-w-6xl mx-auto px-4 lg:px-6 py-5">
+      <main className="w-full px-4 lg:px-8 py-5">
         {children}
       </main>
 

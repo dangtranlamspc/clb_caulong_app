@@ -11,13 +11,39 @@ import {
   ChevronRight,
   ChevronLeft,
   RotateCcw,
-  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import toast from "react-hot-toast";
 import { eventsAdminApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
+
+function useCountUp(target: number, duration = 900) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    let startTime: number | null = null;
+    let raf: number;
+
+    const animate = (timestamp: number) => {
+      if (startTime === null) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(target * eased);
+      if (progress < 1) {
+        raf = requestAnimationFrame(animate);
+      } else {
+        setValue(target);
+      }
+    };
+
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+
+  return value;
+}
 
 const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
   A: { bg: "#e6f7ee", text: "#1a9e5c" },
@@ -35,11 +61,27 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Đã huỷ",
 };
 
+const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  draft: { bg: "#f3f4f6", text: "#6b7280", border: "#e5e7eb" },
+  open: { bg: "#e6f7ee", text: "#1a9e5c", border: "#c8ecd9" },
+  closed: { bg: "#fff2df", text: "#c8790f", border: "#fbe3bb" },
+  ongoing: { bg: "#e3f7fb", text: "#0f9db0", border: "#bfeef6" },
+  completed: { bg: "#eef2ff", text: "#4f46e5", border: "#d6ddfb" },
+  cancelled: { bg: "#fdecec", text: "#dc2626", border: "#f9cfcf" },
+};
+
 const GENDER_OPTIONS = [
   { value: "", label: "Tất cả" },
   { value: "nam", label: "Nam" },
   { value: "nu", label: "Nữ" },
 ];
+
+const ROLES_OPTIONS = [
+  { value: "", label: "Tất cả" },
+  { value: "nam", label: "VĐV Nam" },
+  { value: "nu", label: "VĐV Nữ" },
+];
+
 
 const LEVEL_OPTIONS = [
   { value: "", label: "Tất cả" },
@@ -47,6 +89,13 @@ const LEVEL_OPTIONS = [
   { value: "B+", label: "Trình B+" },
   { value: "B", label: "Trình B" },
   { value: "C", label: "Trình C" },
+];
+
+const LEVEL_SELECT_OPTIONS = [
+  { value: "A", label: "A" },
+  { value: "B+", label: "B+" },
+  { value: "B", label: "B" },
+  { value: "C", label: "C" },
 ];
 
 const PAYMENT_OPTIONS = [
@@ -70,6 +119,293 @@ function levelPillStyle(level?: string | null) {
     : { background: "#f3f4f6", color: "#6b7280" };
 }
 
+function SkeletonStatCard() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 animate-pulse">
+      <div className="flex items-start justify-between mb-3">
+        <div className="h-3 bg-gray-100 rounded w-16" />
+        <div className="w-9 h-9 rounded-xl bg-gray-100" />
+      </div>
+      <div className="h-7 bg-gray-100 rounded w-10 mb-2" />
+      <div className="h-3 bg-gray-100 rounded w-12" />
+    </div>
+  );
+}
+
+function SkeletonTableRow() {
+  return (
+    <tr className="animate-pulse">
+      <td className="px-4 py-3.5">
+        <div className="h-4 bg-gray-100 rounded w-4" />
+      </td>
+      <td className="px-4 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-full bg-gray-100 flex-shrink-0" />
+          <div className="space-y-1.5">
+            <div className="h-3.5 bg-gray-100 rounded w-28" />
+            <div className="h-3 bg-gray-100 rounded w-20" />
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3.5">
+        <div className="h-3.5 bg-gray-100 rounded w-10" />
+      </td>
+      <td className="px-4 py-3.5">
+        <div className="h-6 bg-gray-100 rounded-lg w-10" />
+      </td>
+      <td className="px-4 py-3.5">
+        <div className="h-5 bg-gray-100 rounded-full w-16" />
+      </td>
+      <td className="px-4 py-3.5">
+        <div className="h-3.5 bg-gray-100 rounded w-20" />
+      </td>
+      <td className="px-4 py-3.5">
+        <div className="h-3.5 bg-gray-100 rounded w-24" />
+      </td>
+      <td className="px-4 py-3.5">
+        <div className="h-6 bg-gray-100 rounded-full w-24" />
+      </td>
+      <td className="px-4 py-3.5 text-right">
+        <div className="h-4 bg-gray-100 rounded w-16 ml-auto" />
+      </td>
+    </tr>
+  );
+}
+
+function SkeletonFilterBar() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 animate-pulse">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+        <div className="md:col-span-2 h-10 bg-gray-100 rounded-lg" />
+        <div className="h-10 bg-gray-100 rounded-lg" />
+        <div className="h-10 bg-gray-100 rounded-lg" />
+        <div className="h-10 bg-gray-100 rounded-lg" />
+        <div className="h-10 bg-gray-100 rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonRightPanel() {
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse space-y-3">
+        <div className="h-4 bg-gray-100 rounded w-40" />
+        <div className="h-3 bg-gray-100 rounded w-full" />
+        <div className="h-3 bg-gray-100 rounded w-3/4" />
+        <div className="space-y-2 pt-2">
+          <div className="h-3 bg-gray-100 rounded w-32" />
+          <div className="h-3 bg-gray-100 rounded w-28" />
+          <div className="h-3 bg-gray-100 rounded w-36" />
+        </div>
+        <div className="h-10 bg-gray-100 rounded-lg mt-3" />
+      </div>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse">
+        <div className="h-4 bg-gray-100 rounded w-44 mb-4" />
+        <div className="flex items-center gap-5">
+          <div className="w-24 h-24 rounded-full bg-gray-100 flex-shrink-0" />
+          <div className="space-y-2">
+            <div className="h-3 bg-gray-100 rounded w-16" />
+            <div className="h-3 bg-gray-100 rounded w-16" />
+            <div className="h-3 bg-gray-100 rounded w-16" />
+            <div className="h-3 bg-gray-100 rounded w-16" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RegistrationDetailModal({
+  reg,
+  mode,
+  editLevel,
+  editRole,
+  editNotes,
+  onEditLevel,
+  onEditRole,
+  onEditNotes,
+  onClose,
+  onSave,
+  onConfirmPayment,
+}: {
+  reg: any;
+  mode: "view" | "edit";
+  editLevel: string;
+  editRole: string;
+  editNotes: string;
+  onEditLevel: (v: string) => void;
+  onEditRole: (v: string) => void;
+  onEditNotes: (v: string) => void;
+  onClose: () => void;
+  onSave: () => void;
+  onConfirmPayment: (id: string) => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const currentRole = mode === "edit" ? editRole : reg.role;
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">
+            {mode === "edit" ? "Chỉnh sửa đăng ký" : "Chi tiết đăng ký"}
+          </h3>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-5 space-y-5">
+          {/* Avatar giữa, tên bên dưới */}
+          <div className="flex flex-col items-center text-center gap-2">
+            <img
+              src={
+                reg.users?.avatar_url ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(reg.users?.full_name ?? "?")}`
+              }
+              className="w-20 h-20 rounded-full object-cover ring-4 ring-gray-50"
+              alt=""
+            />
+            <div>
+              <p className="font-semibold text-gray-900">
+                {reg.users?.full_name ?? reg.guest_full_name ?? "—"}
+              </p>
+              <p className="text-xs text-gray-400">
+                {reg.users?.email ?? reg.guest_email ?? ""}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Vai trò</p>
+              {mode === "edit" ? (
+                <CustomSelect
+                  value={editRole}
+                  onChange={onEditRole}
+                  options={ROLES_OPTIONS.filter((o) => o.value)}
+                />
+              ) : (
+                <span
+                  className={`inline-block text-xs font-semibold px-2 py-1 rounded-full ${reg.role === "nam"
+                    ? "bg-blue-50 text-blue-600"
+                    : "bg-pink-50 text-pink-600"
+                    }`}
+                >
+                  {reg.role === "nam" ? "VĐV Nam" : "VĐV Nữ"}
+                </span>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Trình độ</p>
+              {currentRole === "nam" ? (
+                mode === "edit" ? (
+                  <CustomSelect
+                    value={editLevel}
+                    onChange={onEditLevel}
+                    options={LEVEL_SELECT_OPTIONS}
+                  />
+                ) : (
+                  <span
+                    className="inline-block text-xs font-semibold rounded-lg px-2.5 py-1.5"
+                    style={levelPillStyle(reg.level)}
+                  >
+                    {reg.level ?? "—"}
+                  </span>
+                )
+              ) : (
+                <span className="text-gray-400 text-sm">—</span>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">SĐT</p>
+              <p className="text-gray-800">
+                {reg.users?.phone ?? reg.guest_phone ?? "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Ngày đăng ký</p>
+              <p className="text-gray-800">
+                {reg.created_at
+                  ? format(new Date(reg.created_at), "dd/MM/yyyy HH:mm", { locale: vi })
+                  : "—"}
+              </p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-xs text-gray-400 mb-1">Thanh toán</p>
+              <button
+                disabled={mode === "view"}
+                onClick={() =>
+                  reg.payment_status !== "confirmed" && onConfirmPayment(reg.id)
+                }
+                className={`text-xs font-semibold px-2.5 py-1.5 rounded-full transition-colors ${reg.payment_status === "confirmed"
+                  ? "bg-green-50 text-green-700"
+                  : "bg-amber-50 text-amber-600 hover:bg-amber-100"
+                  } ${mode === "view" ? "cursor-default" : ""}`}
+              >
+                {reg.payment_status === "confirmed" ? "Đã thanh toán" : "Chưa thanh toán"}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-gray-400 mb-1">Ghi chú</p>
+            {mode === "edit" ? (
+              <textarea
+                value={editNotes}
+                onChange={(e) => onEditNotes(e.target.value)}
+                rows={3}
+                className="input-field w-full resize-none"
+                placeholder="Ghi chú thêm..."
+              />
+            ) : (
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                {reg.notes || "Không có ghi chú"}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            {mode === "edit" ? "Huỷ" : "Đóng"}
+          </button>
+          {mode === "edit" && (
+            <button
+              onClick={onSave}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold transition-colors"
+            >
+              Lưu thay đổi
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TournamentRegistrationsPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
@@ -87,8 +423,40 @@ export default function TournamentRegistrationsPage() {
   const [page, setPage] = useState(1);
 
   const [drawContent, setDrawContent] = useState("nam");
-  const [teamCount, setTeamCount] = useState("8");
+  const [teamCount, setTeamCount] = useState("7");
   const [drawing, setDrawing] = useState(false);
+
+  const [modalReg, setModalReg] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<"view" | "edit">("view");
+  const [editLevel, setEditLevel] = useState("");
+  const [editRole, setEditRole] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+
+  const openModal = (r: any, mode: "view" | "edit") => {
+    setModalReg(r);
+    setModalMode(mode);
+    setEditLevel(r.level ?? "");
+    setEditRole(r.role ?? "nam");
+    setEditNotes(r.notes ?? "");
+  };
+
+  const closeModal = () => setModalReg(null);
+
+  const handleSaveEdit = () => {
+    if (!modalReg) return;
+    if (editRole === "nam" && editLevel && editLevel !== modalReg.level) {
+      handleLevelChange(modalReg.id, editLevel);
+    }
+    setRegistrations((prev) =>
+      prev.map((r) =>
+        r.id === modalReg.id
+          ? { ...r, notes: editNotes, role: editRole, level: editRole === "nam" ? editLevel : null }
+          : r,
+      ),
+    );
+    toast.success("Đã lưu thay đổi (tạm thời, chưa lưu server)");
+    closeModal();
+  };
 
   const load = async () => {
     if (!id) return;
@@ -109,7 +477,6 @@ export default function TournamentRegistrationsPage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
@@ -173,7 +540,6 @@ export default function TournamentRegistrationsPage() {
   };
 
   const handleLevelChange = async (regId: string, level: string) => {
-    // Optimistic update — cần thêm API admin cập nhật level cho 1 đăng ký nếu muốn lưu thật.
     setRegistrations((prev) =>
       prev.map((r) => (r.id === regId ? { ...r, level } : r)),
     );
@@ -186,7 +552,7 @@ export default function TournamentRegistrationsPage() {
       await eventsAdminApi.removeRegistration("tournament", regId);
       toast.success("Đã xoá đăng ký");
       load();
-    } catch {}
+    } catch { }
   };
 
   const handleConfirmPayment = async (regId: string) => {
@@ -194,7 +560,7 @@ export default function TournamentRegistrationsPage() {
       await eventsAdminApi.confirmTournamentPayment(regId);
       toast.success("Đã xác nhận thanh toán");
       load();
-    } catch {}
+    } catch { }
   };
 
   const handleDrawTeams = async () => {
@@ -213,21 +579,77 @@ export default function TournamentRegistrationsPage() {
     }
   };
 
+
   if (loading) {
     return (
-      <div className="p-10 flex justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      <div className="w-full p-6 space-y-5 bg-gray-50 min-h-screen">
+        <div className="flex items-center gap-1.5 animate-pulse">
+          <div className="h-3.5 bg-gray-100 rounded w-16" />
+          <ChevronRight className="w-3.5 h-3.5 text-gray-200" />
+          <div className="h-3.5 bg-gray-100 rounded w-32" />
+          <ChevronRight className="w-3.5 h-3.5 text-gray-200" />
+          <div className="h-3.5 bg-gray-100 rounded w-24" />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="h-7 bg-gray-100 rounded w-56" />
+            <div className="h-5 bg-gray-100 rounded-full w-24" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-9 bg-gray-100 rounded-lg w-32" />
+            <div className="h-9 bg-gray-100 rounded-lg w-24" />
+            <div className="h-9 bg-gray-100 rounded-lg w-40" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
+          <div className="space-y-4 min-w-0">
+            <SkeletonFilterBar />
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                    <tr>
+                      <th className="text-left px-4 py-3">STT</th>
+                      <th className="text-left px-4 py-3">Vận động viên</th>
+                      <th className="text-left px-4 py-3">Giới tính</th>
+                      <th className="text-left px-4 py-3">Trình hiện tại</th>
+                      <th className="text-left px-4 py-3">Vai trò</th>
+                      <th className="text-left px-4 py-3">SĐT</th>
+                      <th className="text-left px-4 py-3">Ngày đăng ký</th>
+                      <th className="text-left px-4 py-3">Thanh toán</th>
+                      <th className="text-right px-4 py-3">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <SkeletonTableRow key={i} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <SkeletonRightPanel />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full p-6 space-y-5">
-      {/* Breadcrumb */}
+    <div className="w-full p-6 space-y-5 bg-gray-50 min-h-screen">
       <div className="flex items-center gap-1.5 text-sm text-gray-400">
         <button
           onClick={() => router.push("/activities")}
-          className="hover:text-gray-600"
+          className="hover:text-gray-600 transition-colors"
         >
           Giải đấu
         </button>
@@ -237,30 +659,32 @@ export default function TournamentRegistrationsPage() {
         <span className="text-gray-900 font-medium">Quản lý đăng ký</span>
       </div>
 
-      {/* Title row */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-900">
             Vận động viên đăng ký
           </h1>
-          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-orange-50 text-orange-600">
+          <span
+            className="text-xs font-semibold px-3 py-1.5 rounded-full border"
+            style={{
+              background: STATUS_COLORS[activity?.status]?.bg ?? "#f3f4f6",
+              color: STATUS_COLORS[activity?.status]?.text ?? "#6b7280",
+              borderColor: STATUS_COLORS[activity?.status]?.border ?? "#e5e7eb",
+            }}
+          >
             {STATUS_LABEL[activity?.status] ?? activity?.status}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm">
             <Download className="w-4 h-4" /> Xuất danh sách
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">
+          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm">
             <Filter className="w-4 h-4" /> Bộ lọc
-          </button>
-          <button className="btn-primary flex items-center gap-2 text-sm px-4 py-2 font-medium">
-            <Users className="w-4 h-4" /> Chia đội theo trình độ
           </button>
         </div>
       </div>
 
-      {/* Stats cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
         <StatCard
           label="Tổng số đăng ký"
@@ -272,61 +696,60 @@ export default function TournamentRegistrationsPage() {
         <StatCard
           label="Nam"
           value={stats.nam}
-          sub={`(${stats.namPct}%)`}
+          subPercent={Number(stats.namPct)}
           iconBg="#eef5fe"
           icon="♂"
         />
         <StatCard
           label="Nữ"
           value={stats.nu}
-          sub={`(${stats.nuPct}%)`}
+          subPercent={Number(stats.nuPct)}
           iconBg="#fdf0f4"
           icon="♀"
         />
         <StatCard
           label="Trình A"
           value={stats.A}
-          sub={`(${levelPct(stats.A)}%)`}
+          subPercent={Number(levelPct(stats.A))}
           pillLevel="A"
         />
         <StatCard
           label="Trình B+"
           value={stats["B+"]}
-          sub={`(${levelPct(stats["B+"])}%)`}
+          subPercent={Number(levelPct(stats["B+"]))}
           pillLevel="B+"
         />
         <StatCard
           label="Trình B"
           value={stats.B}
-          sub={`(${levelPct(stats.B)}%)`}
+          subPercent={Number(levelPct(stats.B))}
           pillLevel="B"
         />
         <StatCard
           label="Trình C"
           value={stats.C}
-          sub={`(${levelPct(stats.C)}%)`}
+          subPercent={Number(levelPct(stats.C))}
           pillLevel="C"
         />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
-        {/* Left: filters + table */}
         <div className="space-y-4 min-w-0">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
-              <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-gray-500 mb-1">
-                  &nbsp;
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+              <div className="md:col-span-3">
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                  Tìm kiếm
                 </label>
                 <input
                   className="input-field"
-                  placeholder="Tìm kiếm tên, SĐT, email..."
+                  placeholder="Tên, SĐT, email..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                   Giới tính
                 </label>
                 <CustomSelect
@@ -335,8 +758,8 @@ export default function TournamentRegistrationsPage() {
                   options={GENDER_OPTIONS}
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                   Trình độ
                 </label>
                 <CustomSelect
@@ -345,67 +768,69 @@ export default function TournamentRegistrationsPage() {
                   options={LEVEL_OPTIONS}
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                   Vai trò
                 </label>
                 <CustomSelect
                   value={roleFilter}
                   onChange={setRoleFilter}
-                  options={GENDER_OPTIONS}
+                  options={ROLES_OPTIONS}
                 />
               </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-500 mb-1 whitespace-nowrap">
-                    Thanh toán
-                  </label>
-                  <CustomSelect
-                    value={paymentFilter}
-                    onChange={setPaymentFilter}
-                    options={PAYMENT_OPTIONS}
-                  />
-                </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                  Thanh toán
+                </label>
+                <CustomSelect
+                  value={paymentFilter}
+                  onChange={setPaymentFilter}
+                  options={PAYMENT_OPTIONS}
+                />
+              </div>
+              <div className="md:col-span-1">
                 <button
                   onClick={clearFilters}
-                  className="mb-0.5 flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 self-end"
+                  title="Xoá lọc"
+                  className="w-full h-[42px] flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" /> Xóa lọc
+                  <RotateCcw className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {/* Desktop: Table view */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                <thead className="bg-gray-50/80 text-gray-500 text-[11px] uppercase tracking-wide">
                   <tr>
-                    <th className="text-left px-4 py-3">STT</th>
-                    <th className="text-left px-4 py-3">Vận động viên</th>
-                    <th className="text-left px-4 py-3">Giới tính</th>
-                    <th className="text-left px-4 py-3">Trình hiện tại</th>
-                    <th className="text-left px-4 py-3">Vai trò</th>
-                    <th className="text-left px-4 py-3">SĐT</th>
-                    <th className="text-left px-4 py-3">Ngày đăng ký</th>
-                    <th className="text-left px-4 py-3">Thanh toán</th>
-                    <th className="text-right px-4 py-3">Thao tác</th>
+                    <th className="text-left px-4 py-3.5 font-semibold">STT</th>
+                    <th className="text-left px-4 py-3.5 font-semibold">Vận động viên</th>
+                    <th className="text-left px-4 py-3.5 font-semibold">Giới tính</th>
+                    <th className="text-left px-4 py-3.5 font-semibold">Trình độ</th>
+                    <th className="text-left px-4 py-3.5 font-semibold">Vai trò</th>
+                    <th className="text-left px-4 py-3.5 font-semibold">SĐT</th>
+                    <th className="text-left px-4 py-3.5 font-semibold">Ngày ĐK</th>
+                    <th className="text-left px-4 py-3.5 font-semibold">Thanh toán</th>
+                    <th className="text-right px-4 py-3.5 font-semibold">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {pageItems.map((r, i) => (
-                    <tr key={r.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-400">
+                    <tr key={r.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="px-4 py-3.5 text-gray-400">
                         {(page - 1) * PAGE_SIZE + i + 1}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2.5">
                           <img
                             src={
                               r.users?.avatar_url ||
                               `https://ui-avatars.com/api/?name=${encodeURIComponent(r.users?.full_name ?? "?")}`
                             }
-                            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                            className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-50"
                             alt=""
                           />
                           <div className="min-w-0">
@@ -418,83 +843,75 @@ export default function TournamentRegistrationsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">
+                      <td className="px-4 py-3.5 text-gray-600">
                         {r.role === "nam" ? "Nam" : "Nữ"}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5">
                         {r.role === "nam" ? (
-                          <select
-                            value={r.level ?? ""}
-                            onChange={(e) =>
-                              handleLevelChange(r.id, e.target.value)
-                            }
-                            className="text-xs font-semibold rounded-lg px-2.5 py-1 border-0 outline-none cursor-pointer"
-                            style={levelPillStyle(r.level)}
-                          >
-                            {["A", "B+", "B", "C"].map((lv) => (
-                              <option key={lv} value={lv}>
-                                {lv}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="w-20">
+                            <CustomSelect
+                              value={r.level ?? ""}
+                              onChange={(val) => handleLevelChange(r.id, val)}
+                              options={LEVEL_SELECT_OPTIONS}
+                            />
+                          </div>
                         ) : (
                           <span
-                            className="text-xs font-semibold rounded-lg px-2.5 py-1"
+                            className="text-xs font-semibold rounded-lg px-2.5 py-1.5"
                             style={levelPillStyle(null)}
                           >
                             —
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5">
                         <span
-                          className={`text-xs font-medium px-2 py-1 rounded-full ${
-                            r.role === "nam"
-                              ? "bg-blue-50 text-blue-600"
-                              : "bg-pink-50 text-pink-600"
-                          }`}
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-full ${r.role === "nam"
+                            ? "bg-blue-50 text-blue-600"
+                            : "bg-pink-50 text-pink-600"
+                            }`}
                         >
-                          VĐV {r.role === "nam" ? "Nam" : "Nữ"}
+                          {r.role === "nam" ? "VĐV Nam" : "VĐV Nữ"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">
+                      <td className="px-4 py-3.5 text-gray-600">
                         {r.users?.phone ?? "—"}
                       </td>
-                      <td className="px-4 py-3 text-gray-500">
+                      <td className="px-4 py-3.5 text-gray-500">
                         {r.created_at
-                          ? format(new Date(r.created_at), "dd/MM/yyyy HH:mm", {
-                              locale: vi,
-                            })
+                          ? format(new Date(r.created_at), "dd/MM/yyyy HH:mm", { locale: vi })
                           : "—"}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5">
                         <button
                           onClick={() =>
-                            r.payment_status !== "confirmed" &&
-                            handleConfirmPayment(r.id)
+                            r.payment_status !== "confirmed" && handleConfirmPayment(r.id)
                           }
-                          className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                            r.payment_status === "confirmed"
-                              ? "bg-green-50 text-green-700"
-                              : "bg-amber-50 text-amber-600 hover:bg-amber-100"
-                          }`}
+                          className={`text-xs font-semibold px-2.5 py-1.5 rounded-full transition-colors ${r.payment_status === "confirmed"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-amber-50 text-amber-600 hover:bg-amber-100"
+                            }`}
                         >
-                          {r.payment_status === "confirmed"
-                            ? "Đã thanh toán"
-                            : "Chưa thanh toán"}
+                          {r.payment_status === "confirmed" ? "Đã thanh toán" : "Chưa thanh toán"}
                         </button>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center justify-end gap-1">
-                          <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600">
+                          <button
+                            onClick={() => openModal(r, "view")}
+                            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-blue-600">
+                          <button
+                            onClick={() => openModal(r, "edit")}
+                            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                          >
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteReg(r.id)}
-                            className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                            className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -504,10 +921,8 @@ export default function TournamentRegistrationsPage() {
                   ))}
                   {pageItems.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={9}
-                        className="text-center py-10 text-gray-400"
-                      >
+                      <td colSpan={9} className="text-center py-14 text-gray-400">
+                        <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
                         Không có vận động viên nào phù hợp bộ lọc
                       </td>
                     </tr>
@@ -516,7 +931,128 @@ export default function TournamentRegistrationsPage() {
               </table>
             </div>
 
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
+            {/* Mobile: List/Card view */}
+            <div className="md:hidden divide-y divide-gray-50">
+              {pageItems.map((r, i) => (
+                <div key={r.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img
+                        src={
+                          r.users?.avatar_url ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(r.users?.full_name ?? "?")}`
+                        }
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-50"
+                        alt=""
+                      />
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
+                          {r.users?.full_name ?? "—"}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {r.users?.email ?? ""}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-300 flex-shrink-0">
+                      #{(page - 1) * PAGE_SIZE + i + 1}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-y-2 gap-x-3 text-xs">
+                    <div>
+                      <p className="text-gray-400 mb-0.5">Giới tính</p>
+                      <p className="text-gray-700 font-medium">
+                        {r.role === "nam" ? "Nam" : "Nữ"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-0.5">Vai trò</p>
+                      <span
+                        className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${r.role === "nam"
+                          ? "bg-blue-50 text-blue-600"
+                          : "bg-pink-50 text-pink-600"
+                          }`}
+                      >
+                        {r.role === "nam" ? "VĐV Nam" : "VĐV Nữ"}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-0.5">Trình độ</p>
+                      {r.role === "nam" ? (
+                        <CustomSelect
+                          value={r.level ?? ""}
+                          onChange={(val) => handleLevelChange(r.id, val)}
+                          options={LEVEL_SELECT_OPTIONS}
+                        />
+                      ) : (
+                        <span
+                          className="inline-block text-xs font-semibold rounded-lg px-2 py-1"
+                          style={levelPillStyle(null)}
+                        >
+                          —
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-0.5">SĐT</p>
+                      <p className="text-gray-700">{r.users?.phone ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-0.5">Ngày ĐK</p>
+                      <p className="text-gray-700">
+                        {r.created_at
+                          ? format(new Date(r.created_at), "dd/MM/yyyy HH:mm", { locale: vi })
+                          : "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-0.5">Thanh toán</p>
+                      <button
+                        onClick={() =>
+                          r.payment_status !== "confirmed" && handleConfirmPayment(r.id)
+                        }
+                        className={`text-xs font-semibold px-2 py-1 rounded-full transition-colors ${r.payment_status === "confirmed"
+                          ? "bg-green-50 text-green-700"
+                          : "bg-amber-50 text-amber-600 hover:bg-amber-100"
+                          }`}
+                      >
+                        {r.payment_status === "confirmed" ? "Đã thanh toán" : "Chưa thanh toán"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-1 pt-1 border-t border-gray-50">
+                    <button
+                      onClick={() => openModal(r, "view")}
+                      className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => openModal(r, "edit")}
+                      className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteReg(r.id)}
+                      className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {pageItems.length === 0 && (
+                <div className="text-center py-14 text-gray-400">
+                  <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  Không có vận động viên nào phù hợp bộ lọc
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3.5 border-t border-gray-100 text-sm text-gray-500">
               <span>
                 Hiển thị {(page - 1) * PAGE_SIZE + 1} -{" "}
                 {Math.min(page * PAGE_SIZE, filtered.length)} trong tổng số{" "}
@@ -526,7 +1062,7 @@ export default function TournamentRegistrationsPage() {
                 <button
                   disabled={page === 1}
                   onClick={() => setPage((p) => p - 1)}
-                  className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40"
+                  className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -536,11 +1072,10 @@ export default function TournamentRegistrationsPage() {
                     <button
                       key={p}
                       onClick={() => setPage(p)}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium ${
-                        page === p
-                          ? "bg-blue-600 text-white"
-                          : "border border-gray-200 text-gray-600 hover:bg-gray-50"
-                      }`}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${page === p
+                        ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                        : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                        }`}
                     >
                       {p}
                     </button>
@@ -552,7 +1087,7 @@ export default function TournamentRegistrationsPage() {
                 {totalPages > 4 && (
                   <button
                     onClick={() => setPage(totalPages)}
-                    className="w-8 h-8 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50"
+                    className="w-8 h-8 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
                   >
                     {totalPages}
                   </button>
@@ -560,7 +1095,7 @@ export default function TournamentRegistrationsPage() {
                 <button
                   disabled={page === totalPages}
                   onClick={() => setPage((p) => p + 1)}
-                  className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40"
+                  className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -569,25 +1104,32 @@ export default function TournamentRegistrationsPage() {
           </div>
         </div>
 
-        {/* Right: draw teams panel */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="font-bold text-gray-900 mb-1">
-              Chia đội theo trình độ
-            </h3>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                <Users className="w-4 h-4 text-emerald-600" />
+              </div>
+              <h3 className="font-bold text-gray-900">
+                Chia đội theo trình độ
+              </h3>
+            </div>
             <p className="text-xs text-gray-400 mb-4 leading-relaxed">
               Hệ thống sẽ tự động chia các vận động viên thành các đội cân bằng
               theo trình độ đã chọn.
             </p>
 
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-semibold text-gray-700 mb-2 block">
               Chọn nội dung chia đội
             </label>
             <div className="space-y-2 mb-4">
               {DRAW_CONTENT_OPTIONS.map((opt) => (
                 <label
                   key={opt.value}
-                  className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                  className={`flex items-center gap-2 text-sm px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${drawContent === opt.value
+                    ? "border-blue-200 bg-blue-50/50 text-blue-700 font-medium"
+                    : "border-gray-100 text-gray-700 hover:bg-gray-50"
+                    }`}
                 >
                   <input
                     type="radio"
@@ -601,7 +1143,7 @@ export default function TournamentRegistrationsPage() {
               ))}
             </div>
 
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
               Số lượng đội
             </label>
             <div className="flex items-center gap-2 mb-4">
@@ -612,26 +1154,42 @@ export default function TournamentRegistrationsPage() {
                 value={teamCount}
                 onChange={(e) => setTeamCount(e.target.value)}
               />
-              <span className="text-sm text-gray-500">đội</span>
+              <span className="text-sm text-gray-500 flex-shrink-0">đội</span>
             </div>
 
             <button
               disabled={drawing}
               onClick={handleDrawTeams}
-              className="btn-primary w-full disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
             >
-              {drawing ? "Đang chia..." : "Chia đội ngay"}
+              {drawing ? "Đang chia..." : "Chia đội theo trình độ"}
             </button>
           </div>
 
           <LevelDonutCard stats={stats} />
 
-          <div className="bg-blue-50 rounded-xl p-4 text-xs text-blue-700 leading-relaxed">
-            Lưu ý: Hệ thống sẽ ưu tiên cân bằng số lượng và trình độ giữa các
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-xs text-blue-700 leading-relaxed">
+            💡 Lưu ý: Hệ thống sẽ ưu tiên cân bằng số lượng và trình độ giữa các
             đội.
           </div>
         </div>
       </div>
+
+      {modalReg && (
+        <RegistrationDetailModal
+          reg={modalReg}
+          mode={modalMode}
+          editLevel={editLevel}
+          editRole={editRole}
+          editNotes={editNotes}
+          onEditLevel={setEditLevel}
+          onEditRole={setEditRole}
+          onEditNotes={setEditNotes}
+          onClose={closeModal}
+          onSave={handleSaveEdit}
+          onConfirmPayment={handleConfirmPayment}
+        />
+      )}
     </div>
   );
 }
@@ -640,40 +1198,49 @@ function StatCard({
   label,
   value,
   sub,
+  subPercent,
   icon,
   iconBg,
   pillLevel,
 }: {
   label: string;
   value: number;
-  sub: string;
+  sub?: string;
+  subPercent?: number;
   icon?: string;
   iconBg?: string;
   pillLevel?: string;
 }) {
   const pill = pillLevel ? LEVEL_COLORS[pillLevel] : null;
+  const animatedValue = useCountUp(value);
+  const animatedPercent = useCountUp(subPercent ?? 0);
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
-      <div className="flex items-start justify-between mb-2">
-        <p className="text-xs text-gray-400">{label}</p>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-2.5">
+        <p className="text-xs text-gray-400 font-medium">{label}</p>
         {pill ? (
           <span
-            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
             style={{ background: pill.bg, color: pill.text }}
           >
             {pillLevel}
           </span>
         ) : (
           <span
-            className="w-7 h-7 rounded-full flex items-center justify-center text-sm"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
             style={{ background: iconBg }}
           >
             {icon}
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+      <p className="text-2xl font-bold text-gray-900 tabular-nums">
+        {Math.round(animatedValue)}
+      </p>
+      <p className="text-xs text-gray-400 mt-0.5 tabular-nums">
+        {subPercent !== undefined ? `(${animatedPercent.toFixed(2)}%)` : sub}
+      </p>
     </div>
   );
 }
@@ -691,7 +1258,7 @@ function LevelDonutCard({ stats }: { stats: any }) {
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <h3 className="font-bold text-gray-900 mb-4 text-sm">
         Thống kê phân bố trình độ
       </h3>
