@@ -96,7 +96,8 @@ export const profileApi = {
 export const sessionsApi = {
   list: (params?: any) => api.get("/sessions", { params }),
   get: (id: string) => api.get(`/sessions/${id}`),
-  getAllCosts: () => api.get("/sessions/costs/summary"),
+  getAllCosts: (params?: { month?: number; year?: number }) =>
+    api.get("/sessions/costs/summary", { params }),
   getCostDetail: (id: string) => api.get(`/sessions/${id}/cost-detail`),
   getParticipants: (id: string) => api.get(`/sessions/${id}/participants`),
 };
@@ -370,7 +371,6 @@ export const walletAdminApi = {
   getFinanceYears: () => api.get("/wallet/admin/finance-years"),
   exportReport: () => api.get("/wallet/admin/export", { responseType: "blob" }),
 };
-
 
 export const eventsAdminApi = {
   list: (params?: any) => api.get("/admin/activities", { params }),

@@ -570,6 +570,32 @@ export default function HomePage() {
                   ? Math.min(100, Math.round((filled! / total) * 100))
                   : 0;
 
+                const slotStatus: "plenty" | "low" | "full" = isFull
+                  ? "full"
+                  : pct >= 80
+                    ? "low"
+                    : "plenty";
+
+                const STATUS_STYLE = {
+                  plenty: {
+                    text: "text-emerald-600",
+                    barBg:
+                      "bg-gradient-to-r from-blue-400 via-emerald-400 to-emerald-500",
+                    animate: true,
+                  },
+                  low: {
+                    text: "text-amber-600",
+                    barBg:
+                      "bg-gradient-to-r from-amber-400 via-orange-400 to-orange-500",
+                    animate: true,
+                  },
+                  full: {
+                    text: "text-red-500",
+                    barBg: "bg-red-500",
+                    animate: false,
+                  },
+                }[slotStatus];
+
                 return (
                   <Link key={s.id} href={`/sessions/${s.id}`}>
                     <div
@@ -601,7 +627,6 @@ export default function HomePage() {
                             )}
                           </div>
 
-                          {/* Thanh năng lượng slot */}
                           {total ? (
                             <div className="mt-3 max-w-[220px]">
                               <div className="flex items-center justify-between mb-1">
@@ -609,26 +634,31 @@ export default function HomePage() {
                                   Đã đăng ký
                                 </span>
                                 <span
-                                  className={`text-[10px] font-bold ${isFull ? "text-red-500" : "text-emerald-600"}`}
+                                  className={`text-[10px] font-bold ${STATUS_STYLE.text}`}
                                 >
                                   {filled}/{total}
                                 </span>
                               </div>
                               <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                                 <div
-                                  className={`h-full rounded-full ${isFull ? "bg-gradient-to-r from-red-400 to-red-500" : "bg-gradient-to-r from-blue-400 via-emerald-400 to-emerald-500"}`}
+                                  className={`h-full rounded-full ${STATUS_STYLE.barBg}`}
                                   style={{
                                     width: `${pct}%`,
-                                    backgroundSize: "200% 100%",
-                                    animation:
-                                      "energyFlow 2s linear infinite, growBar 0.8s ease-out",
+                                    backgroundSize: STATUS_STYLE.animate
+                                      ? "200% 100%"
+                                      : "100% 100%",
+                                    animation: STATUS_STYLE.animate
+                                      ? "energyFlow 2s linear infinite, growBar 0.8s ease-out"
+                                      : "growBar 0.8s ease-out",
                                   }}
                                 />
                               </div>
                             </div>
                           ) : (
                             <span
-                              className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${isFull ? "text-red-400" : "text-emerald-500"}`}
+                              className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${
+                                isFull ? "text-red-400" : "text-emerald-500"
+                              }`}
                             >
                               <Users className="w-3 h-3" />
                               {isFull

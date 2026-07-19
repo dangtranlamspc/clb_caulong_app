@@ -72,3 +72,11 @@
   mix-blend-mode: normal;
   filter: invert(1) hue-rotate(180deg);
 }
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

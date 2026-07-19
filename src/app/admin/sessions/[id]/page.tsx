@@ -149,6 +149,7 @@ export default function SessionDetailPage() {
 
   const [checkingInAll, setCheckingInAll] = useState(false);
   const [closingList, setClosingList] = useState(false);
+  const [completingSession, setCompletingSession] = useState(false);
 
   const [rollingBack, setRollingBack] = useState(false);
 
@@ -159,11 +160,20 @@ export default function SessionDetailPage() {
   const [cancelling, setCancelling] = useState(false);
   const [reopening, setReopening] = useState(false);
 
+  const [finishing, setFinishing] = useState(false);
+
+  // const [confirmModal, setConfirmModal] = useState<{
+  //   key: "checkinAll" | "closeList";
+  //   title: string;
+  //   message: string;
+  // } | null>(null);
+
   const [confirmModal, setConfirmModal] = useState<{
-    key: "checkinAll" | "closeList";
+    key: "checkinAll" | "closeList" | "completeSession";
     title: string;
     message: string;
   } | null>(null);
+
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
 
   const [rollbackModalVisible, setRollbackModalVisible] = useState(false);
@@ -301,6 +311,47 @@ export default function SessionDetailPage() {
       key: "closeList",
       title: "Chốt danh sách?",
       message: `${awaitingCheckin.length} người chưa điểm danh sẽ bị đánh dấu vắng mặt và xoá khỏi buổi này. Hành động này không thể hoàn tác.`,
+    });
+  };
+
+  const runCompleteSession = async () => {
+    if (!id) return;
+    closeConfirmModal();
+    setActionPhase((p) => ({ ...p, completeSession: "loading" }));
+    setCompletingSession(true);
+    try {
+      await sessionsAdminApi.complete(id);
+      setActionPhase((p) => ({ ...p, completeSession: "success" }));
+      toast.success("Đã hoàn thành và khoá buổi đánh!");
+      await refreshSilently();
+    } catch (err: any) {
+      setActionPhase((p) => {
+        const next = { ...p };
+        delete next.completeSession;
+        return next;
+      });
+      toast.error(err?.response?.data?.message ?? "Thất bại");
+    } finally {
+      setTimeout(() => {
+        setActionPhase((p) => {
+          const next = { ...p };
+          delete next.completeSession;
+          return next;
+        });
+        setCompletingSession(false);
+      }, 700);
+    }
+  };
+
+  const handleCompleteSession = () => {
+    const msg =
+      pending.length > 0
+        ? `Xác nhận hoàn thành buổi đánh? ${pending.length} người đang "Chờ thanh toán" sẽ được tự động chuyển sang "Đã xác nhận thanh toán" + "Tiền mặt". Buổi sẽ bị khoá lại.`
+        : "Xác nhận hoàn thành buổi đánh? Buổi sẽ bị khoá lại.";
+    setConfirmModal({
+      key: "completeSession",
+      title: "Hoàn thành buổi đánh?",
+      message: msg,
     });
   };
 
@@ -1214,12 +1265,45 @@ export default function SessionDetailPage() {
                 Hủy buổi
               </button>
             ) : (
-              <Link
-                href={`/admin/sessions/${id}/finish`}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-semibold flex-shrink-0"
+              <button
+                type="button"
+                onClick={() => {
+                  if (finishing) return;
+                  setFinishing(true);
+                  setTimeout(() => {
+                    const doNavigate = () =>
+                      router.push(`/admin/sessions/${id}/finish`);
+                    if (
+                      typeof document !== "undefined" &&
+                      (document as any).startViewTransition
+                    ) {
+                      (document as any).startViewTransition(doNavigate);
+                    } else {
+                      doNavigate();
+                    }
+                  }, 750);
+                }}
+                disabled={finishing}
+                className={`flex-shrink-0 flex items-center justify-center text-sm font-semibold text-white bg-green-500 hover:bg-green-600 shadow-sm active:scale-95 overflow-hidden ${
+                  finishing
+                    ? "w-9 h-9 rounded-full gap-0 p-0"
+                    : "w-auto h-9 gap-1.5 px-3 rounded-lg"
+                }`}
+                style={{
+                  transitionProperty:
+                    "width, height, border-radius, padding, gap",
+                  transitionDuration: "550ms",
+                  transitionTimingFunction: "cubic-bezier(0.65, 0, 0.35, 1)",
+                }}
               >
-                <Calculator className="w-4 h-4" /> Kết thúc
-              </Link>
+                {finishing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Calculator className="w-4 h-4" /> Kết thúc
+                  </>
+                )}
+              </button>
             ))}
 
           {session.status === "cancelled" && (
@@ -1253,7 +1337,7 @@ export default function SessionDetailPage() {
             </button>
           )}
 
-          {canComplete && (
+          {/* {canComplete && (
             <button
               onClick={async () => {
                 if (!id) return;
@@ -1274,6 +1358,19 @@ export default function SessionDetailPage() {
             >
               <CheckCircle2 className="w-4 h-4" /> Hoàn thành
             </button>
+          )} */}
+
+          {canComplete && (
+            <MorphButton
+              phase={getPhase("completeSession")}
+              idleIcon={<CheckCircle2 className="w-4 h-4" />}
+              label="Hoàn thành"
+              idleWidthClass="w-32"
+              colorClass="bg-emerald-500 hover:bg-emerald-600 text-white"
+              successClassName="bg-emerald-500 text-white"
+              onClick={handleCompleteSession}
+              disabled={completingSession}
+            />
           )}
 
           {canAddMember && (
@@ -1911,7 +2008,7 @@ export default function SessionDetailPage() {
               >
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                   <div className="flex items-center gap-2">
-                    <div
+                    {/* <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                         confirmModal.key === "closeList"
                           ? "bg-red-50"
@@ -1920,6 +2017,23 @@ export default function SessionDetailPage() {
                     >
                       {confirmModal.key === "closeList" ? (
                         <UserX className="w-4 h-4 text-red-500" />
+                      ) : (
+                        <UserCheck className="w-4 h-4 text-green-600" />
+                      )}
+                    </div> */}
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        confirmModal.key === "closeList"
+                          ? "bg-red-50"
+                          : confirmModal.key === "completeSession"
+                            ? "bg-emerald-50"
+                            : "bg-green-50"
+                      }`}
+                    >
+                      {confirmModal.key === "closeList" ? (
+                        <UserX className="w-4 h-4 text-red-500" />
+                      ) : confirmModal.key === "completeSession" ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       ) : (
                         <UserCheck className="w-4 h-4 text-green-600" />
                       )}
@@ -1949,7 +2063,7 @@ export default function SessionDetailPage() {
                   >
                     Hủy
                   </button>
-                  <button
+                  {/* <button
                     onClick={() =>
                       confirmModal.key === "closeList"
                         ? runCloseList()
@@ -1959,6 +2073,24 @@ export default function SessionDetailPage() {
                       confirmModal.key === "closeList"
                         ? "bg-red-500 hover:bg-red-600"
                         : "bg-green-500 hover:bg-green-600"
+                    }`}
+                  >
+                    Xác nhận
+                  </button> */}
+                  <button
+                    onClick={() =>
+                      confirmModal.key === "closeList"
+                        ? runCloseList()
+                        : confirmModal.key === "completeSession"
+                          ? runCompleteSession()
+                          : runCheckinAllPresent()
+                    }
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${
+                      confirmModal.key === "closeList"
+                        ? "bg-red-500 hover:bg-red-600"
+                        : confirmModal.key === "completeSession"
+                          ? "bg-emerald-500 hover:bg-emerald-600"
+                          : "bg-green-500 hover:bg-green-600"
                     }`}
                   >
                     Xác nhận
