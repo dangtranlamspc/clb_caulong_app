@@ -259,7 +259,6 @@ function RegistrationDetailModal({
       }}
     >
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h3 className="font-bold text-gray-900">
             {mode === "edit" ? "Chỉnh sửa đăng ký" : "Chi tiết đăng ký"}
@@ -272,9 +271,7 @@ function RegistrationDetailModal({
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-5 space-y-5">
-          {/* Avatar giữa, tên bên dưới */}
           <div className="flex flex-col items-center text-center gap-2">
             <img
               src={

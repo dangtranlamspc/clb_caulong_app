@@ -225,7 +225,7 @@ const initialForm: TournamentFormState = {
     rules: defaultRules(),
 };
 
-export default function TournamentFormPage({
+export default function TournamentForm({
     activityId,
     onSaved,
     onClose,
@@ -598,8 +598,8 @@ export default function TournamentFormPage({
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
                         className={`pb-3 text-sm font-medium whitespace-nowrap border-b-2 -mb-px ${activeTab === tab.key
-                                ? "border-blue-600 text-blue-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700"
+                            ? "border-blue-600 text-blue-600"
+                            : "border-transparent text-gray-500 hover:text-gray-700"
                             }`}
                     >
                         {tab.label}
@@ -688,8 +688,8 @@ export default function TournamentFormPage({
                                                     type="button"
                                                     onClick={() => handleTeamSizeChange(size as 4 | 6)}
                                                     className={`px-3 py-1.5 font-medium ${form.team_size === size
-                                                            ? "bg-blue-600 text-white"
-                                                            : "bg-white text-gray-500 hover:bg-gray-50"
+                                                        ? "bg-blue-600 text-white"
+                                                        : "bg-white text-gray-500 hover:bg-gray-50"
                                                         }`}
                                                 >
                                                     {size} người

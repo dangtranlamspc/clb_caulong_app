@@ -225,18 +225,10 @@ const initialForm: TournamentFormState = {
     rules: defaultRules(),
 };
 
-export default function TournamentFormPage({
-    activityId,
-    onSaved,
-    onClose,
-}: {
-    activityId?: string;
-    onSaved?: () => void;
-    onClose?: () => void;
-} = {}) {
+export default function TournamentFormPage() {
     const params = useParams<{ id: string }>();
     const router = useRouter();
-    const id = activityId ?? params?.id;
+    const id = params?.id;
 
     const [activeTab, setActiveTab] = useState<TabKey>("info");
     const [form, setForm] = useState<TournamentFormState>(initialForm);
@@ -535,8 +527,7 @@ export default function TournamentFormPage({
             else await eventsAdminApi.create(payload);
 
             toast.success("Đã lưu giải đấu");
-            if (onSaved) onSaved();
-            else router.push("/activities");
+            router.push("/admin/events");
         } catch {
         } finally {
             setSaving(false);
@@ -544,8 +535,7 @@ export default function TournamentFormPage({
     };
 
     const handleClose = () => {
-        if (onClose) onClose();
-        else router.push("/admin/events");
+        router.push("/admin/events");
     };
 
     if (loading)
