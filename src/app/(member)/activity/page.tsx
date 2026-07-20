@@ -460,7 +460,7 @@ function SessionsTab() {
           !s.my_registration?.payment_reference,
       );
       setPendingBills(bills);
-    } catch {}
+    } catch { }
   }, []);
 
   useEffect(() => {
@@ -612,17 +612,20 @@ function SessionsTab() {
                 : myReg?.participation_status === "awaiting_checkin"
                   ? "awaiting_checkin"
                   : myReg?.payment_status === "pending" &&
-                      myReg?.amount_override == null
+                    myReg?.amount_override == null
                     ? "awaiting_finish"
                     : myReg?.payment_status === "pending" &&
-                        myReg?.payment_reference
+                      myReg?.payment_reference
                       ? "pending_review"
                       : myReg?.payment_status;
             const regCfg = effectiveStatus
               ? (REG_CFG[effectiveStatus] ?? REG_CFG.pending)
               : null;
             const RegIcon = regCfg?.icon;
-            const filled = (s.max_slots ?? 0) - (s.available_slots ?? 0);
+            const filled = s.approved_count ?? Math.max(
+              0,
+              (s.max_slots ?? 0) - (s.available_slots ?? 0),
+            );
             const ratio = s.max_slots > 0 ? filled / s.max_slots : 0;
             const isFull = s.available_slots <= 0;
             const canRegister = s.status === "open" && !isFull && !myReg;
@@ -648,16 +651,14 @@ function SessionsTab() {
                       {s.title}
                     </h3>
                     <span
-                      className={`flex-shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
-                        showRegisteredBadge
-                          ? "bg-blue-50 text-blue-600 border-blue-200"
-                          : cfg.badgeCls
-                      }`}
+                      className={`flex-shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${showRegisteredBadge
+                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                        : cfg.badgeCls
+                        }`}
                     >
                       <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          showRegisteredBadge ? "bg-blue-400" : cfg.dotCls
-                        }`}
+                        className={`w-1.5 h-1.5 rounded-full ${showRegisteredBadge ? "bg-blue-400" : cfg.dotCls
+                          }`}
                       />
                       {cornerBadgeLabel}
                       {s.status === "completed" && <Lock className="w-3 h-3" />}
@@ -708,18 +709,18 @@ function SessionsTab() {
                     <div className="flex items-center gap-2 min-w-0 flex-wrap">
                       {myReg
                         ? regCfg && (
-                            <span
-                              className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${regCfg.cls}`}
-                            >
-                              <RegIcon className="w-3.5 h-3.5" />
-                              {regCfg.label}
-                            </span>
-                          )
+                          <span
+                            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${regCfg.cls}`}
+                          >
+                            <RegIcon className="w-3.5 h-3.5" />
+                            {regCfg.label}
+                          </span>
+                        )
                         : isFull && (
-                            <span className="text-xs text-gray-400">
-                              Đã hết chỗ
-                            </span>
-                          )}
+                          <span className="text-xs text-gray-400">
+                            Đã hết chỗ
+                          </span>
+                        )}
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -771,11 +772,10 @@ function SessionsTab() {
                           }, 550);
                         }}
                         disabled={registeringId === s.id}
-                        className={`flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white bg-blue-600 shadow-sm shadow-blue-200 active:scale-95 transition-all duration-300 ease-out overflow-hidden ${
-                          registeringId === s.id
-                            ? "w-8 h-8 rounded-full gap-0 p-0"
-                            : "w-[124px] h-8 gap-1 px-3 rounded-lg"
-                        }`}
+                        className={`flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white bg-blue-600 shadow-sm shadow-blue-200 active:scale-95 transition-all duration-300 ease-out overflow-hidden ${registeringId === s.id
+                          ? "w-8 h-8 rounded-full gap-0 p-0"
+                          : "w-[124px] h-8 gap-1 px-3 rounded-lg"
+                          }`}
                         style={{
                           transitionTimingFunction:
                             "cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -955,7 +955,7 @@ function MatchesTab({
     }
   }, [filter, onActiveMatchChange]);
 
-  const fetchMatchesRef = useRef<() => Promise<void>>(async () => {});
+  const fetchMatchesRef = useRef<() => Promise<void>>(async () => { });
   useEffect(() => {
     fetchMatchesRef.current = fetchMatches;
   }, [fetchMatches]);
@@ -1159,7 +1159,7 @@ function MatchesTab({
                     <div className="flex-shrink-0 text-center">
                       {(m.status === "approved" ||
                         m.status === "pending_approval") &&
-                      m.sets?.length > 0 ? (
+                        m.sets?.length > 0 ? (
                         (() => {
                           const s = m.sets[0];
                           const myScore = isTeamA ? s.score_a : s.score_b;
@@ -1214,11 +1214,11 @@ function MatchesTab({
                     <span className="text-[10px] text-gray-400">
                       {m.played_at
                         ? format(new Date(m.played_at), "EEE dd/MM/yyyy", {
-                            locale: vi,
-                          })
+                          locale: vi,
+                        })
                         : format(new Date(m.created_at), "dd/MM/yyyy", {
-                            locale: vi,
-                          })}
+                          locale: vi,
+                        })}
                     </span>
                     <ChevronRight className="w-4 h-4 text-gray-300" />
                   </div>
@@ -1465,8 +1465,8 @@ function EventsTab() {
                           {isDeadline ? "Ngày chốt ds đăng kí: " : ""}
                           {dateValue
                             ? format(new Date(dateValue), "dd/MM/yyyy", {
-                                locale: vi,
-                              })
+                              locale: vi,
+                            })
                             : "—"}
                         </span>
                       </div>
@@ -1484,13 +1484,12 @@ function EventsTab() {
                           )}
                         </span>
                         <span
-                          className={`text-xs ${
-                            isFull
-                              ? "text-red-500 font-medium"
-                              : ratio >= 0.6
-                                ? "text-amber-500 font-medium"
-                                : "text-emerald-600"
-                          }`}
+                          className={`text-xs ${isFull
+                            ? "text-red-500 font-medium"
+                            : ratio >= 0.6
+                              ? "text-amber-500 font-medium"
+                              : "text-emerald-600"
+                            }`}
                         >
                           {isFull
                             ? "Đã đầy"

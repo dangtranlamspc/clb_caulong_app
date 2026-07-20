@@ -111,13 +111,22 @@ export default function SessionsPage() {
       );
       const { data } = await sessionsAdminApi.list(params);
       const sorted = [...(data.data ?? [])].sort((a: any, b: any) => {
-        const aReopen = a.reopened_at ? new Date(a.reopened_at).getTime() : 0;
-        const bReopen = b.reopened_at ? new Date(b.reopened_at).getTime() : 0;
-        if (aReopen !== bReopen) return bReopen - aReopen;
+        // const aReopen = a.reopened_at ? new Date(a.reopened_at).getTime() : 0;
+        // const bReopen = b.reopened_at ? new Date(b.reopened_at).getTime() : 0;
+        // if (aReopen !== bReopen) return bReopen - aReopen;
 
-        const aTime = new Date(a.created_at ?? a.scheduled_at).getTime();
-        const bTime = new Date(b.created_at ?? b.scheduled_at).getTime();
-        return bTime - aTime;
+        // const aTime = new Date(a.created_at ?? a.scheduled_at).getTime();
+        // const bTime = new Date(b.created_at ?? b.scheduled_at).getTime();
+        // return bTime - aTime;
+
+        const aTime = new Date(a.scheduled_at).getTime();
+        const bTime = new Date(b.scheduled_at).getTime();
+
+        if (aTime !== bTime) return bTime - aTime;
+
+        const aCreated = new Date(a.created_at).getTime();
+        const bCreated = new Date(b.created_at).getTime();
+        return bCreated - aCreated;
       });
       setSessions(sorted);
       setMeta(data.meta);

@@ -134,9 +134,14 @@ export function NotificationBell() {
         };
     }, []);
 
+    const lastNotifiedIdRef = useRef<string | null>(null);
     const lastNotification = useNotificationsRealtimeStore(s => s.lastNotification);
+
     useEffect(() => {
         if (!lastNotification) return;
+        if (lastNotifiedIdRef.current === lastNotification.id) return;
+        lastNotifiedIdRef.current = lastNotification.id;
+
         setItems(prev => [lastNotification, ...prev]);
         setUnread(c => c + 1);
         toast(lastNotification.title, { icon: '🔔' });

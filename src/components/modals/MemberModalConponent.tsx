@@ -100,9 +100,13 @@ export function MembersModal({
     setTimeout(onClose, 300);
   };
 
-  const roots = members.filter((m: any) => !m.host_registration_id);
+  const approvedMembers = members.filter(
+    (m: any) => m.participation_status !== "pending_approval",
+  );
+
+  const roots = approvedMembers.filter((m: any) => !m.host_registration_id);
   const guestsOf = (hostId: string) =>
-    members.filter((m: any) => m.host_registration_id === hostId);
+    approvedMembers.filter((m: any) => m.host_registration_id === hostId);
 
   const renderPerson = (m: any, opts?: { nested?: boolean }) => {
     const u = m.users;
@@ -250,7 +254,7 @@ export function MembersModal({
                 </div>
               ))}
             </div>
-          ) : members.length === 0 ? (
+          ) : approvedMembers.length === 0 ? (
             <div className="py-12 text-center">
               <Users className="w-8 h-8 mx-auto text-gray-200 mb-2" />
               <p className="text-sm text-gray-400">Chưa có thành viên nào</p>
