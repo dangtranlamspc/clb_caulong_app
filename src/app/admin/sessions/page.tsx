@@ -66,16 +66,16 @@ const STATUS_NEXT: Record<
   ],
   waiting_payment: [
     {
-      label: "Đánh dấu hoàn thành",
+      label: "Hoàn thành",
       action: "complete",
-      cls: "bg-emerald-50 hover:bg-emerald-100 text-emerald-600",
+      cls: "bg-emerald-500 hover:bg-emerald-600 text-white",
     },
   ],
   cancelled: [
     {
       label: "Mở lại",
       next: "open",
-      cls: "bg-blue-50 hover:bg-blue-100 text-blue-600",
+      cls: "bg-blue-500 hover:bg-blue-600 text-white",
     },
   ],
   completed: [],
