@@ -257,7 +257,6 @@ export default function TournamentRegistrationsPage() {
 
     return (
         <div className="w-full p-4 sm:p-6 space-y-5">
-            {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 text-sm text-gray-400 overflow-x-auto whitespace-nowrap">
                 <button
                     onClick={() => router.push("/activities")}
@@ -271,7 +270,6 @@ export default function TournamentRegistrationsPage() {
                 <span className="text-gray-900 font-medium">Quản lý đăng ký</span>
             </div>
 
-            {/* Title row */}
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3 flex-wrap">
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -298,7 +296,6 @@ export default function TournamentRegistrationsPage() {
                 </div>
             </div>
 
-            {/* Stats cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
                 <StatCard
                     label="Tổng số đăng ký"
@@ -348,10 +345,7 @@ export default function TournamentRegistrationsPage() {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
-                {/* Left: filters + table */}
                 <div className="space-y-4 min-w-0">
-                    {/* Bộ lọc: Giới tính & Trình độ thu hẹp lại (2 cột) để nhường chỗ
-              cho Thanh toán rộng hơn (3 cột) + nút Xóa lọc riêng 1 cột. */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4">
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-12 gap-3 items-end">
                             <div className="col-span-2 sm:col-span-3 lg:col-span-3">
@@ -417,7 +411,6 @@ export default function TournamentRegistrationsPage() {
                         </div>
                     </div>
 
-                    {/* ── Desktop/tablet: bảng ── */}
                     <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
@@ -562,7 +555,6 @@ export default function TournamentRegistrationsPage() {
                         />
                     </div>
 
-                    {/* ── Mobile: danh sách dạng thẻ ── */}
                     <div className="md:hidden space-y-3">
                         {pageItems.length === 0 && (
                             <div className="bg-white rounded-xl border border-gray-200 text-center py-10 text-gray-400 text-sm">
@@ -680,7 +672,6 @@ export default function TournamentRegistrationsPage() {
                     </div>
                 </div>
 
-                {/* Right: draw teams panel */}
                 <div className="space-y-4">
                     <div className="bg-white rounded-xl border border-gray-200 p-5">
                         <h3 className="font-bold text-gray-900 mb-1">
@@ -744,8 +735,6 @@ export default function TournamentRegistrationsPage() {
                 </div>
             </div>
 
-            {/* Modal xác nhận thanh toán — dành cho chuyển khoản & tiền mặt (ví BNB
-          đã tự động xác nhận ngay khi thanh toán nên hiếm khi cần bấm ở đây). */}
             {confirmTarget && (
                 <div
                     className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center sm:justify-center"

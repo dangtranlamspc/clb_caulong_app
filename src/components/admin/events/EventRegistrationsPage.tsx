@@ -151,7 +151,6 @@ export default function EventRegistrationsPage({
     );
 }
 
-// ============ Đặt áo ============
 function getPaymentMethodBadge(r: any) {
     if (r.payment_method === "wallet") {
         return { label: "Ví BNB", cls: "bg-blue-100 text-blue-700" };
@@ -269,8 +268,6 @@ function ShirtOrderTable({
         </table>
     );
 }
-
-//Giải đấu
 
 function fmt(n: number) {
     return Math.round(n ?? 0).toLocaleString("vi-VN") + "đ";
@@ -392,7 +389,6 @@ function TournamentTable({
     );
 }
 
-// ============ Offline / BBQ ============
 function OfflineEventTable({ registrations, onRemove }: any) {
     return (
         <table className="w-full text-sm">
@@ -445,7 +441,6 @@ function OfflineEventTable({ registrations, onRemove }: any) {
     );
 }
 
-// ============ Bình chọn ============
 function PollResults({ regData }: any) {
     const options = regData.options ?? [];
     const votes = regData.votes ?? [];
