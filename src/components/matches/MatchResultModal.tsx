@@ -217,7 +217,6 @@ export function MatchResultModal({ result, onClose }: Props) {
                 }}
                 onClick={e => e.stopPropagation()}
             >
-                {/* ── Background gradient ── */}
                 <div
                     className="absolute inset-0"
                     style={{
@@ -227,7 +226,6 @@ export function MatchResultModal({ result, onClose }: Props) {
                     }}
                 />
 
-                {/* Ambient glow */}
                 <div
                     className="absolute pointer-events-none"
                     style={{
@@ -239,12 +237,9 @@ export function MatchResultModal({ result, onClose }: Props) {
                     }}
                 />
 
-                {/* Particles */}
                 {isWinner ? <Confetti /> : <RainDrops />}
 
-                {/* ── Content ── */}
                 <div className="relative px-6 pt-7 pb-6">
-                    {/* Close */}
                     <button
                         onClick={handleClose}
                         className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center"
@@ -252,10 +247,7 @@ export function MatchResultModal({ result, onClose }: Props) {
                     >
                         <X className="w-3.5 h-3.5" />
                     </button>
-
-                    {/* Icon & headline */}
                     <div className="flex flex-col items-center text-center gap-3">
-                        {/* ── Trophy / Swords icon ── */}
                         <div
                             className="w-20 h-20 rounded-full flex items-center justify-center"
                             style={{
@@ -295,13 +287,10 @@ export function MatchResultModal({ result, onClose }: Props) {
                             className="flex items-center gap-4 px-5 py-3 rounded-2xl w-full justify-center"
                             style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                         >
-                            {/* Đội mình */}
                             <div className="flex flex-col items-center gap-1 mr-6">
                                 <ResultAvatarGroup players={mePlayers} isWinner={isWinner} />
-                                {/* <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Bạn</span> */}
                             </div>
 
-                            {/* Score */}
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <span
                                     className="font-black"
@@ -326,15 +315,8 @@ export function MatchResultModal({ result, onClose }: Props) {
                                 </span>
                             </div>
 
-                            {/* Đội đối thủ */}
                             <div className="flex flex-col items-center gap-1 ml-6">
                                 <ResultAvatarGroup players={oppPlayers} isWinner={!isWinner} />
-                                {/* <span
-                                    className="text-[10px] max-w-[72px] truncate text-center"
-                                    style={{ color: 'rgba(255,255,255,0.35)' }}
-                                >
-                                    {oppLabel}
-                                </span> */}
                             </div>
                         </div>
 
@@ -343,7 +325,6 @@ export function MatchResultModal({ result, onClose }: Props) {
                             <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{oppLabel}</span>
                         </p>
 
-                        {/* Quote card */}
                         <div
                             className="w-full rounded-xl px-4 py-3 mt-1 text-center text-sm leading-relaxed"
                             style={{
@@ -357,7 +338,6 @@ export function MatchResultModal({ result, onClose }: Props) {
                         </div>
                     </div>
 
-                    {/* CTA */}
                     <button
                         onClick={handleClose}
                         className="mt-5 w-full py-3 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 active:scale-[0.98]"

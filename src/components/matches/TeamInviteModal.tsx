@@ -53,7 +53,6 @@ export function TeamInviteModal({ invite, onClose }: Props) {
                         <X className="w-3.5 h-3.5" />
                     </button>
 
-                    {/* Icon */}
                     <div className="flex flex-col items-center text-center gap-2 pt-1">
                         <div
                             className="w-16 h-16 rounded-2xl flex items-center justify-center"
@@ -77,7 +76,6 @@ export function TeamInviteModal({ invite, onClose }: Props) {
                         </div>
                     </div>
 
-                    {/* Info card */}
                     <div
                         className="rounded-xl p-4 space-y-2"
                         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}

@@ -186,17 +186,14 @@ export function ChallengeModal({ challenge, onAccept, onReject, onClose }: Props
                 }}
                 onClick={e => e.stopPropagation()}
             >
-                {/* Ambient glows */}
                 <div className="pointer-events-none absolute" style={{ top: -60, left: '30%', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)' }} />
                 <div className="pointer-events-none absolute" style={{ bottom: -40, right: -20, width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)' }} />
 
                 <Shuttlecocks />
 
-                {/* ── Top accent bar ── */}
                 <div style={{ height: 3, background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4)' }} />
 
                 <div className="relative px-5 pt-5 pb-6 space-y-5">
-                    {/* Close */}
                     {!isBusy && (
                         <button
                             onClick={() => animateClose(onClose)}
@@ -207,7 +204,6 @@ export function ChallengeModal({ challenge, onAccept, onReject, onClose }: Props
                         </button>
                     )}
 
-                    {/* Header */}
                     <div className="flex flex-col items-center text-center gap-2 pt-1">
                         <div
                             className="w-16 h-16 rounded-2xl flex items-center justify-center"
@@ -230,7 +226,6 @@ export function ChallengeModal({ challenge, onAccept, onReject, onClose }: Props
                         </div>
                     </div>
 
-                    {/* Challenge card */}
                     <div
                         className="rounded-xl p-4 space-y-3"
                         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -293,7 +288,6 @@ export function ChallengeModal({ challenge, onAccept, onReject, onClose }: Props
                         </div>
                     </div>
 
-                    {/* Meta info */}
                     <div className="flex items-center justify-center gap-3">
                         <span
                             className="text-xs font-semibold px-3 py-1 rounded-full"
@@ -309,7 +303,6 @@ export function ChallengeModal({ challenge, onAccept, onReject, onClose }: Props
                         </span>
                     </div>
 
-                    {/* Note */}
                     {note && (
                         <div
                             className="rounded-xl px-4 py-2.5 text-sm italic"
@@ -323,7 +316,6 @@ export function ChallengeModal({ challenge, onAccept, onReject, onClose }: Props
                         </div>
                     )}
 
-                    {/* Action buttons */}
                     <div className="grid grid-cols-2 gap-3 pt-1">
                         <button
                             onClick={handleReject}
