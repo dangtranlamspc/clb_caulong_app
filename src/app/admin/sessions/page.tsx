@@ -47,21 +47,16 @@ const STATUS_NEXT: Record<
 > = {
   open: [
     {
-      label: "Kết thúc",
-      to: "finish",
-      cls: "bg-green-500 hover:bg-green-600 text-white",
-    },
-    {
       label: "Hủy buổi",
       next: "cancelled",
-      cls: "bg-red-50 hover:bg-red-100 text-red-600",
+      cls: "bg-red-500 hover:bg-red-600 text-white",
     },
   ],
   full: [
     {
-      label: "Mở lại",
-      next: "open",
-      cls: "bg-blue-50 hover:bg-blue-100 text-blue-600",
+      label: "Hủy buổi",
+      next: "cancelled",
+      cls: "bg-red-500 hover:bg-red-600 text-white",
     },
     {
       label: "Kết thúc",
@@ -263,11 +258,10 @@ export default function SessionsPage() {
                       />
                     )}
                     <span
-                      className={`relative z-10 transition-colors ${
-                        isActive
-                          ? "text-white"
-                          : "text-gray-500 hover:text-gray-800"
-                      }`}
+                      className={`relative z-10 transition-colors ${isActive
+                        ? "text-white"
+                        : "text-gray-500 hover:text-gray-800"
+                        }`}
                     >
                       {lbl}
                     </span>
@@ -305,9 +299,9 @@ export default function SessionsPage() {
                 ? s.pending_action_count > 0
                   ? STATUS_CONFIG.waiting_payment
                   : {
-                      label: "Chờ chốt thanh toán",
-                      cls: "bg-indigo-100 text-indigo-700",
-                    }
+                    label: "Chờ chốt thanh toán",
+                    cls: "bg-indigo-100 text-indigo-700",
+                  }
                 : (STATUS_CONFIG[s.status] ?? STATUS_CONFIG.open);
             const nextActions = STATUS_NEXT[s.status] ?? [];
             const busy = actionId === s.id;
@@ -395,7 +389,7 @@ export default function SessionsPage() {
                         );
                       }}
                       disabled={navigatingId === s.id}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-gray-600 text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-60"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-60"
                     >
                       {navigatingId === s.id ? (
                         <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
@@ -408,18 +402,20 @@ export default function SessionsPage() {
                       <>
                         <button
                           onClick={() => setFormTarget({ id: s.id })}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-blue-600 text-sm font-medium transition-colors"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium transition-colors"
                         >
                           <Pencil className="w-4 h-4" /> Sửa
                         </button>
-                        <button
-                          onClick={() => handleDelete(s.id, s.title)}
-                          disabled={busy}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-500 text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap"
-                        >
-                          <Trash2 className="w-4 h-4 shrink-0" /> Xóa
-                        </button>
                       </>
+                    )}
+                    {s.status === "cancelled" && (
+                      <button
+                        onClick={() => handleDelete(s.id, s.title)}
+                        disabled={busy}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-500 text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap"
+                      >
+                        <Trash2 className="w-4 h-4 shrink-0" /> Xóa
+                      </button>
                     )}
                   </div>
 
