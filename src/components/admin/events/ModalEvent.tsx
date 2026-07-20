@@ -41,10 +41,9 @@ export default function ModalEvent({
                 backdropFilter: visible ? "blur(2px)" : "none",
                 transition: "background .2s ease, backdrop-filter .2s ease",
             }}
-            onClick={(e) => e.target === e.currentTarget && onClose()}
         >
             <div
-                className={`w-full ${maxWidth} bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto relative`}
+                className={`w-full ${maxWidth} bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-auto hide-scrollbar relative`}
                 style={{
                     transform: visible ? "scale(1) translateY(0)" : "scale(0.95) translateY(12px)",
                     opacity: visible ? 1 : 0,
@@ -52,12 +51,14 @@ export default function ModalEvent({
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <button
-                    onClick={onClose}
-                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 z-10"
-                >
-                    <X className="w-4 h-4" />
-                </button>
+                <div className="sticky top-0 z-20 h-0">
+                    <button
+                        onClick={onClose}
+                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 shadow-sm"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
                 {children}
             </div>
         </div>,

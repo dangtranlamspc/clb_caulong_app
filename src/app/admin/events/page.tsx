@@ -24,6 +24,7 @@ import ModalEvent from "@/components/admin/events/ModalEvent";
 import EventTypePicker from "@/components/admin/events/EventTypePicker";
 import EventRegistrationsPage from "@/components/admin/events/EventRegistrationsPage";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
+import AdminAddShirtOrderModal from "@/components/admin/events/form/AdminAddShirtOrderModal";
 
 const TYPE_LABEL: Record<string, string> = {
     shirt_order: "👕 Đặt áo",
@@ -148,9 +149,9 @@ export default function ActivitiesListPage() {
         type: string;
     } | null>(null);
 
-    const [viewingRegistrationsId, setViewingRegistrationsId] = useState<
-        string | null
-    >(null);
+    // const [viewingRegistrationsId, setViewingRegistrationsId] = useState<
+    //     string | null
+    // >(null);
 
     const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
     const tabsWrapRef = useRef<HTMLDivElement>(null);
@@ -158,6 +159,10 @@ export default function ActivitiesListPage() {
         left: 0,
         width: 0,
     });
+
+    const [selectedActivity, setSelectedActivity] = useState<any>(null);
+    const [showRegistrations, setShowRegistrations] = useState(false);
+    const [showAddRegistration, setShowAddRegistration] = useState(false);
 
     const ALL_TAB_KEYS = ["", ...TYPE_OPTIONS.map((o) => o.value)];
 
@@ -224,12 +229,20 @@ export default function ActivitiesListPage() {
         setEditingActivity({ id: a.id, type: a.type });
     };
 
+    // const handleViewRegistrations = (a: any) => {
+    //     if (a.type === "tournament") {
+    //         router.push(`/admin/events/${a.id}/registrations/tournament`);
+    //         return;
+    //     }
+    //     setViewingRegistrationsId(a.id);
+    // };
+
     const handleViewRegistrations = (a: any) => {
         if (a.type === "tournament") {
             router.push(`/admin/events/${a.id}/registrations/tournament`);
             return;
         }
-        setViewingRegistrationsId(a.id);
+        openRegistrations(a);
     };
 
     const handleFormSaved = () => {
@@ -246,6 +259,33 @@ export default function ActivitiesListPage() {
     const EditingForm = editingActivity
         ? FORM_COMPONENT[editingActivity.type]
         : null;
+
+    const openRegistrations = async (activity: any) => {
+        setSelectedActivity(activity);
+        setShowRegistrations(true);
+        try {
+            const { data: full } = await eventsAdminApi.get(activity.id);
+            setSelectedActivity(full);
+        } catch {
+            // giữ nguyên activity cũ nếu fetch lỗi
+        }
+    };
+
+    const closeAll = () => {
+        setShowRegistrations(false);
+        setShowAddRegistration(false);
+        setSelectedActivity(null);
+    };
+
+    const handleOpenAddRegistration = () => {
+        setShowRegistrations(false);
+        setTimeout(() => setShowAddRegistration(true), 200);
+    };
+
+    const handleBackToRegistrations = () => {
+        setShowAddRegistration(false);
+        setTimeout(() => setShowRegistrations(true), 200);
+    };
 
     return (
         <div className="space-y-4">
@@ -519,14 +559,30 @@ export default function ActivitiesListPage() {
             </ModalEvent>
 
             <ModalEvent
-                open={!!viewingRegistrationsId}
-                onClose={() => setViewingRegistrationsId(null)}
-                maxWidth="max-w-3xl"
+                open={showRegistrations}
+                onClose={closeAll}
+                maxWidth="max-w-6xl"
             >
-                {viewingRegistrationsId && (
+                {selectedActivity && (
                     <EventRegistrationsPage
-                        activityId={viewingRegistrationsId}
-                        onClose={() => setViewingRegistrationsId(null)}
+                        activityId={selectedActivity.id}
+                        onClose={closeAll}
+                        onAddRegistration={handleOpenAddRegistration}
+                    />
+                )}
+            </ModalEvent>
+
+            <ModalEvent
+                open={showAddRegistration}
+                onClose={handleBackToRegistrations}
+                maxWidth="max-w-lg"
+            >
+                {selectedActivity && (
+                    <AdminAddShirtOrderModal
+                        activityId={selectedActivity.id}
+                        activity={selectedActivity}
+                        onCancel={handleBackToRegistrations}
+                        onSuccess={handleBackToRegistrations}
                     />
                 )}
             </ModalEvent>

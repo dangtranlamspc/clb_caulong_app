@@ -219,9 +219,18 @@ export const activitiesApi = {
   list: (params?: any) => api.get("/activities", { params }),
   get: (id: string) => api.get(`/activities/${id}`),
   getMyStatus: (id: string) => api.get(`/activities/${id}/my-status`),
+  // registerShirtOrder: (
+  //   id: string,
+  //   data: { gender: "nam" | "nu"; size: string; quantity?: number },
+  // ) => api.post(`/activities/${id}/register/shirt-order`, data),
   registerShirtOrder: (
     id: string,
-    data: { gender: "nam" | "nu"; size: string; quantity?: number },
+    data: {
+      shirt_type_id: string;
+      gender: "nam" | "nu";
+      size: string;
+      quantity?: number;
+    },
   ) => api.post(`/activities/${id}/register/shirt-order`, data),
   registerTournament: (
     id: string,
@@ -233,10 +242,12 @@ export const activitiesApi = {
   ) => api.post(`/activities/${id}/register/offline-event`, data),
   vote: (id: string, optionIds: string[]) =>
     api.post(`/activities/${id}/vote`, { option_ids: optionIds }),
-  cancelRegistration: (id: string) => api.delete(`/activities/${id}/register`),
+  cancelRegistration: (id: string, params?: { registration_id?: string }) =>
+    api.delete(`/activities/${id}/register`, { params }),
   payShirtOrder: (
     activityId: string,
     data: {
+      registration_id?: string;
       method: "wallet" | "transfer" | "cash";
       payment_reference?: string;
     },
@@ -395,6 +406,23 @@ export const eventsAdminApi = {
     api.patch(`/admin/activities/tournament-registrations/${regId}/confirm`),
   drawTeams: (id: string, data: any) =>
     api.post(`/admin/activities/${id}/tournament/draw-teams`, data),
+  adminAddShirtOrderRegistration: (
+    activityId: string,
+    data: {
+      user_id?: string;
+      guest_full_name?: string;
+      guest_phone?: string;
+      shirt_type_id: string;
+      gender: "nam" | "nu";
+      size: string;
+      quantity?: number;
+      payment_method?: "wallet" | "transfer" | "cash";
+    },
+  ) =>
+    api.post(
+      `/admin/activities/${activityId}/shirt-order-registrations`,
+      data,
+    ),
 };
 
 export const uploadsAdminApi = {

@@ -92,8 +92,6 @@ const emptyForm: RegisterForm = {
   notes: "",
 };
 
-// Áp thông tin 1 thành viên (member) vào form đăng ký — dùng chung cho cả
-// auto-fill lúc vào trang lẫn khi chọn từ ô tìm kiếm.
 function applyMemberToForm(f: RegisterForm, m: any): RegisterForm {
   return {
     ...f,
@@ -151,7 +149,7 @@ export default function TournamentRegisterPage() {
         if (!data) return;
         setForm((f) => applyMemberToForm(f, data));
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -210,8 +208,8 @@ export default function TournamentRegisterPage() {
 
   const paymentRef = activity
     ? `${stripVietnameseTones(activity.title).replace(/\s+/g, "")}_${stripVietnameseTones(
-        form.full_name,
-      ).replace(/\s+/g, "")}`
+      form.full_name,
+    ).replace(/\s+/g, "")}`
     : "";
 
   const qrUrl =
@@ -359,19 +357,17 @@ export default function TournamentRegisterPage() {
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                      step >= s.key
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${step >= s.key
                         ? "bg-blue-600 text-white"
                         : "bg-gray-100 text-gray-400"
-                    }`}
+                      }`}
                   >
                     {s.key}
                   </div>
                   <div className="hidden sm:block">
                     <p
-                      className={`text-sm font-semibold ${
-                        step >= s.key ? "text-gray-900" : "text-gray-400"
-                      }`}
+                      className={`text-sm font-semibold ${step >= s.key ? "text-gray-900" : "text-gray-400"
+                        }`}
                     >
                       {s.title}
                     </p>
@@ -380,9 +376,8 @@ export default function TournamentRegisterPage() {
                 </div>
                 {i < STEPS.length - 1 && (
                   <div
-                    className={`flex-1 h-0.5 mx-3 ${
-                      step > s.key ? "bg-blue-600" : "bg-gray-100"
-                    }`}
+                    className={`flex-1 h-0.5 mx-3 ${step > s.key ? "bg-blue-600" : "bg-gray-100"
+                      }`}
                   />
                 )}
               </div>
@@ -528,11 +523,10 @@ export default function TournamentRegisterPage() {
                         onClick={() =>
                           setForm((f) => ({ ...f, level: lv.value as any }))
                         }
-                        className={`relative rounded-2xl border-2 p-3 text-center transition-colors ${
-                          form.level === lv.value
+                        className={`relative rounded-2xl border-2 p-3 text-center transition-colors ${form.level === lv.value
                             ? "border-blue-500 bg-blue-50/40"
                             : "border-gray-200"
-                        }`}
+                          }`}
                       >
                         {form.level === lv.value && (
                           <span className="absolute top-2 right-2 w-4 h-4 rounded bg-blue-600 flex items-center justify-center">
@@ -579,18 +573,16 @@ export default function TournamentRegisterPage() {
                         onClick={() =>
                           setForm((f) => ({ ...f, role: r.value }))
                         }
-                        className={`flex items-center gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors ${
-                          form.role === r.value
+                        className={`flex items-center gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors ${form.role === r.value
                             ? "border-blue-500 bg-blue-50/40"
                             : "border-gray-200"
-                        }`}
+                          }`}
                       >
                         <span
-                          className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            r.value === "nam"
+                          className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${r.value === "nam"
                               ? "bg-blue-50 text-blue-600"
                               : "bg-pink-50 text-pink-600"
-                          }`}
+                            }`}
                         >
                           {r.value === "nam" ? "♂" : "♀"}
                         </span>
@@ -880,10 +872,10 @@ export default function TournamentRegisterPage() {
                 value={
                   activity.event_date
                     ? format(
-                        new Date(activity.event_date),
-                        "HH:mm - dd/MM/yyyy",
-                        { locale: vi },
-                      )
+                      new Date(activity.event_date),
+                      "HH:mm - dd/MM/yyyy",
+                      { locale: vi },
+                    )
                     : "—"
                 }
               />
@@ -1095,9 +1087,8 @@ function PaymentOption({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-start gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors ${
-        active ? "border-blue-500 bg-blue-50/40" : "border-gray-200"
-      }`}
+      className={`flex items-start gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors ${active ? "border-blue-500 bg-blue-50/40" : "border-gray-200"
+        }`}
     >
       <span className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
         {icon}
