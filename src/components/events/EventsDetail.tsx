@@ -270,7 +270,6 @@ export default function EventsDetailPage() {
   );
 }
 
-// Đặt áo
 const BANK_DISPLAY_NAMES: Record<string, string> = {
   MB: "MB Bank",
   VCB: "Vietcombank",
@@ -288,668 +287,202 @@ function fmt(n: number) {
   return Math.round(n ?? 0).toLocaleString("vi-VN") + "đ";
 }
 
-// function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
-//   const reg = myStatus?.my_registration;
 
-//   const rawSizes = activity.detail?.available_sizes;
-//   const sizesByGender: { nam: string[]; nu: string[] } = Array.isArray(rawSizes)
-//     ? { nam: rawSizes, nu: rawSizes }
-//     : { nam: rawSizes?.nam ?? [], nu: rawSizes?.nu ?? [] };
+const COLOR_SWATCH_MAP: Record<string, string> = {
+  "xanh dương": "#2563eb",
+  "xanh nước biển": "#1d4ed8",
+  "xanh navy": "#1e3a8a",
+  "xanh lá cây": "#16a34a",
+  "xanh lá": "#16a34a",
+  "xanh ngọc": "#0d9488",
+  "xanh": "#2563eb",
+  "trắng": "#ffffff",
+  "đen": "#111827",
+  "đỏ": "#dc2626",
+  "vàng": "#eab308",
+  "cam": "#f97316",
+  "tím": "#9333ea",
+  "hồng": "#ec4899",
+  "xám": "#9ca3af",
+  "nâu": "#92400e",
+  "be": "#d6c7a1",
+  "bạc": "#c0c0c0",
+};
 
-//   const images: string[] = (activity.detail?.images ?? []).map((img: any) =>
-//     typeof img === "string" ? img : img.url,
-//   );
-
-//   const [profileGender, setProfileGender] = useState<"nam" | "nu" | null>(
-//     reg?.gender ?? null,
-//   );
-//   const [loadingProfile, setLoadingProfile] = useState(!reg?.gender);
-
-//   useEffect(() => {
-//     if (reg?.gender) {
-//       setProfileGender(reg.gender);
-//       setLoadingProfile(false);
-//       return;
-//     }
-//     profileApi
-//       .getMe()
-//       .then(({ data }) => {
-//         const g = data?.gender === "nu" ? "nu" : "nam";
-//         setProfileGender(g);
-//       })
-//       .catch(() => setProfileGender("nam"))
-//       .finally(() => setLoadingProfile(false));
-//   }, [reg?.gender]);
-
-//   const gender = profileGender ?? "nam";
-
-//   const [size, setSize] = useState(reg?.size ?? "");
-//   const [quantity, setQuantity] = useState(reg?.quantity ?? 1);
-//   const [submitting, setSubmitting] = useState(false);
-//   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
-
-//   const sizes: string[] = sizesByGender[gender] ?? [];
-//   const price = activity.detail?.price_per_shirt ?? 0;
-//   const canRegister = activity.status === "open";
-
-//   const [showPayModal, setShowPayModal] = useState(false);
-//   const [payMethod, setPayMethod] = useState<
-//     "choose" | "wallet" | "transfer" | "cash"
-//   >("choose");
-//   const [submittingPay, setSubmittingPay] = useState(false);
-
-//   const amount = price * (reg?.quantity ?? (quantity || 1));
-
-//   const isPaid = reg?.payment_status === "confirmed";
-//   const isPendingConfirm = reg && !isPaid && !!reg.payment_reference;
-//   const isLocked = isPaid || isPendingConfirm;
-//   const needsPayment = reg && price > 0 && !isPaid && !isPendingConfirm;
-
-//   const PAYMENT_METHOD_LABEL: Record<string, string> = {
-//     wallet: "Ví BNB",
-//     transfer: "Chuyển khoản",
-//     cash: "Tiền mặt",
-//   };
-
-//   const handleSubmit = async () => {
-//     if (!size) return toast.error("Vui lòng chọn size");
-//     const finalQuantity = isLocked
-//       ? reg.quantity
-//       : quantity === "" || quantity < 1
-//         ? 1
-//         : quantity;
-//     setSubmitting(true);
-//     try {
-//       await activitiesApi.registerShirtOrder(activity.id, {
-//         gender,
-//         size,
-//         quantity: finalQuantity,
-//       });
-//       toast.success(reg ? "Đã cập nhật đăng ký" : "Đã đăng ký đặt áo");
-//       onChanged();
-//     } catch {
-//     } finally {
-//       setSubmitting(false);
-//     }
-//   };
-
-//   const handleCancel = async () => {
-//     if (!confirm("Huỷ đăng ký đặt áo?")) return;
-//     try {
-//       await activitiesApi.cancelRegistration(activity.id);
-//       toast.success("Đã huỷ đăng ký");
-//       onChanged();
-//     } catch { }
-//   };
-
-//   const openPayModal = () => {
-//     setPayMethod("choose");
-//     setShowPayModal(true);
-//   };
-
-//   const handlePayWallet = async () => {
-//     setSubmittingPay(true);
-//     try {
-//       await activitiesApi.payShirtOrder(activity.id, { method: "wallet" });
-//       toast.success("Đã thanh toán bằng ví BNB!");
-//       setShowPayModal(false);
-//       onChanged();
-//     } catch (err: any) {
-//       toast.error(err?.response?.data?.message ?? "Thanh toán thất bại");
-//     } finally {
-//       setSubmittingPay(false);
-//     }
-//   };
-
-//   const handleConfirmTransferred = async (ref: string) => {
-//     setSubmittingPay(true);
-//     try {
-//       await activitiesApi.payShirtOrder(activity.id, {
-//         method: "transfer",
-//         payment_reference: ref,
-//       });
-//       toast.success("Đã ghi nhận, chờ admin xác nhận!");
-//       setShowPayModal(false);
-//       onChanged();
-//     } catch (err: any) {
-//       toast.error(err?.response?.data?.message ?? "Gửi thất bại");
-//     } finally {
-//       setSubmittingPay(false);
-//     }
-//   };
-
-//   const handleRequestCash = async () => {
-//     setSubmittingPay(true);
-//     try {
-//       await activitiesApi.payShirtOrder(activity.id, { method: "cash" });
-//       toast.success("Đã thông báo admin!");
-//       setShowPayModal(false);
-//       onChanged();
-//     } catch (err: any) {
-//       toast.error(err?.response?.data?.message ?? "Gửi thất bại");
-//     } finally {
-//       setSubmittingPay(false);
-//     }
-//   };
-
-//   return (
-//     <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-//       <div className="flex items-center justify-between">
-//         <h3 className="font-bold text-gray-900">Đăng ký đặt áo</h3>
-//         {price > 0 && (
-//           <span className="text-sm font-semibold text-blue-600">
-//             {price.toLocaleString("vi-VN")}đ/áo
-//           </span>
-//         )}
-//       </div>
-
-//       {/* ── Ảnh mẫu áo ── */}
-//       {images.length > 0 && (
-//         <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-//           {images.map((src, i) => (
-//             <button
-//               key={src + i}
-//               onClick={() => setLightboxSrc(src)}
-//               className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-gray-200 bg-gray-50"
-//             >
-//               <img
-//                 src={src}
-//                 alt={`Mẫu áo ${i + 1}`}
-//                 className="w-full h-full object-cover"
-//               />
-//             </button>
-//           ))}
-//         </div>
-//       )}
-
-//       {reg && (
-//         <div className="bg-emerald-50 text-emerald-700 text-sm rounded-xl px-3 py-2 flex items-center gap-2">
-//           <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-//           Bạn đã đăng ký: {reg.gender === "nu" ? "Nữ" : "Nam"} · size{" "}
-//           <strong>{reg.size}</strong> × {reg.quantity} áo
-//         </div>
-//       )}
-
-//       {isPaid && (
-//         <div className="bg-blue-50 rounded-xl px-3 py-2.5 flex items-start gap-2.5">
-//           <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-//           <div className="text-sm text-blue-700 leading-snug">
-//             <p className="font-medium">Đã thanh toán</p>
-//             {reg.payment_method && (
-//               <span className="inline-block mt-1 text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-//                 {PAYMENT_METHOD_LABEL[reg.payment_method] ?? reg.payment_method}
-//               </span>
-//             )}
-//           </div>
-//         </div>
-//       )}
-
-//       {isPendingConfirm && (
-//         <div className="bg-orange-50 rounded-xl px-3 py-2.5 flex items-start gap-2.5">
-//           <Clock className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
-//           <div className="text-sm text-orange-700 leading-snug">
-//             <p className="font-medium">
-//               Đã gửi yêu cầu thanh toán, đang chờ admin xác nhận
-//             </p>
-//             {reg.payment_method && (
-//               <span className="inline-block mt-1 text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
-//                 {PAYMENT_METHOD_LABEL[reg.payment_method] ?? reg.payment_method}
-//               </span>
-//             )}
-//           </div>
-//         </div>
-//       )}
-
-//       {needsPayment && (
-//         <button
-//           onClick={openPayModal}
-//           className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm flex items-center justify-center gap-2"
-//         >
-//           💳 Thanh toán {fmt(amount)}
-//         </button>
-//       )}
-
-//       {canRegister ? (
-//         loadingProfile ? (
-//           <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
-//             <Loader2 className="w-4 h-4 animate-spin" /> Đang tải hồ sơ...
-//           </div>
-//         ) : (
-//           <>
-//             <div className="flex items-center gap-2 text-xs text-gray-500">
-//               <span>Giới tính (theo hồ sơ):</span>
-//               <span
-//                 className={`px-2.5 py-1 rounded-full font-semibold ${gender === "nu"
-//                   ? "bg-pink-100 text-pink-600"
-//                   : "bg-blue-100 text-blue-600"
-//                   }`}
-//               >
-//                 {gender === "nu" ? "Nữ" : "Nam"}
-//               </span>
-//             </div>
-
-//             <div>
-//               <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-//                 Chọn size
-//               </label>
-//               {sizes.length === 0 ? (
-//                 <p className="text-sm text-gray-400">
-//                   Chưa có size nào cho {gender === "nu" ? "Nữ" : "Nam"}
-//                 </p>
-//               ) : (
-//                 <div className="flex flex-wrap gap-2">
-//                   {sizes.map((s) => (
-//                     <button
-//                       key={s}
-//                       onClick={() => setSize(s)}
-//                       disabled={isLocked}
-//                       className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${size === s
-//                         ? "bg-blue-600 text-white border-blue-600"
-//                         : "bg-white text-gray-500 border-gray-200"
-//                         }`}
-//                     >
-//                       {s}
-//                     </button>
-//                   ))}
-//                 </div>
-//               )}
-//             </div>
-
-//             <div>
-//               <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-//                 Số lượng
-//                 {isLocked && (
-//                   <span className="text-gray-400 font-normal">
-//                     {" "}
-//                     (không thể đổi sau khi đã thanh toán)
-//                   </span>
-//                 )}
-//               </label>
-//               <input
-//                 type="number"
-//                 min={1}
-//                 value={isLocked ? reg.quantity : quantity}
-//                 onChange={(e) => {
-//                   const val = e.target.value;
-//                   setQuantity(val === "" ? "" : Number(val));
-//                 }}
-//                 onBlur={() => {
-//                   if (quantity === "" || quantity < 1) setQuantity(1);
-//                 }}
-//                 disabled={isLocked}
-//                 className="w-24 px-3 py-2 rounded-xl border border-gray-200 text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-//               />
-//             </div>
-//             <div className="flex gap-2">
-//               <button
-//                 onClick={handleSubmit}
-//                 disabled={submitting}
-//                 className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-//               >
-//                 {submitting && <Loader2 className="w-4 h-4 animate-spin" />}{" "}
-//                 {reg ? "Cập nhật" : "Đăng ký"}
-//               </button>
-//               {reg && !isPaid && (
-//                 <button
-//                   onClick={handleCancel}
-//                   className="px-4 py-2.5 rounded-xl border border-red-200 text-red-500 text-sm font-medium"
-//                 >
-//                   Huỷ
-//                 </button>
-//               )}
-//             </div>
-//           </>
-//         )
-//       ) : (
-//         <p className="text-sm text-gray-400 text-center py-2">
-//           Đã đóng đăng ký
-//         </p>
-//       )}
-
-//       {/* ── Lightbox xem ảnh full ── */}
-//       {lightboxSrc &&
-//         typeof document !== "undefined" &&
-//         createPortal(
-//           <div
-//             className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4"
-//             onClick={() => setLightboxSrc(null)}
-//           >
-//             <button
-//               onClick={() => setLightboxSrc(null)}
-//               className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"
-//             >
-//               <XIcon className="w-5 h-5 text-white" />
-//             </button>
-//             <img
-//               src={lightboxSrc}
-//               alt="Ảnh mẫu áo"
-//               className="max-w-full max-h-full object-contain rounded-lg"
-//               onClick={(e) => e.stopPropagation()}
-//             />
-//           </div>,
-//           document.body,
-//         )}
-
-//       {/* ── Pay modal ── */}
-//       {showPayModal &&
-//         reg &&
-//         typeof document !== "undefined" &&
-//         createPortal(
-//           <div
-//             className="fixed inset-0 z-[99999] flex flex-col justify-end"
-//             style={{
-//               background: "rgba(0,0,0,0.5)",
-//               backdropFilter: "blur(2px)",
-//             }}
-//             onClick={(e) =>
-//               e.target === e.currentTarget && setShowPayModal(false)
-//             }
-//           >
-//             <div
-//               className="w-full bg-white rounded-t-2xl"
-//               style={{
-//                 maxHeight: "90vh",
-//                 overflowY: "auto",
-//                 paddingBottom: "env(safe-area-inset-bottom)",
-//               }}
-//               onClick={(e) => e.stopPropagation()}
-//             >
-//               <div className="flex justify-center pt-3 pb-1">
-//                 <div className="w-9 h-1 rounded-full bg-gray-200" />
-//               </div>
-//               <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-//                 <div>
-//                   <p className="text-sm font-bold text-gray-900">
-//                     {payMethod === "choose"
-//                       ? "Chọn phương thức thanh toán"
-//                       : payMethod === "wallet"
-//                         ? "Trừ ví BNB"
-//                         : payMethod === "transfer"
-//                           ? "Chuyển khoản"
-//                           : "Tiền mặt"}
-//                   </p>
-//                   <p className="text-xs text-gray-400 mt-0.5">
-//                     {activity.title}
-//                   </p>
-//                 </div>
-//                 <button
-//                   onClick={() => setShowPayModal(false)}
-//                   className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
-//                 >
-//                   <XIcon className="w-4 h-4 text-gray-500" />
-//                 </button>
-//               </div>
-
-//               <div className="px-5 py-4 space-y-4">
-//                 <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
-//                   <span className="text-sm text-gray-600">
-//                     Số tiền thanh toán
-//                   </span>
-//                   <span className="text-lg font-black text-red-600">
-//                     {fmt(amount)}
-//                   </span>
-//                 </div>
-
-//                 {payMethod === "choose" && (
-//                   <div className="space-y-3">
-//                     <button
-//                       onClick={() => setPayMethod("wallet")}
-//                       className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
-//                     >
-//                       <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-//                         <Wallet className="w-5 h-5 text-blue-600" />
-//                       </div>
-//                       <div>
-//                         <p className="text-sm font-semibold text-gray-900">
-//                           Ví BNB
-//                         </p>
-//                         <p className="text-xs text-gray-400 mt-0.5">
-//                           Trừ thẳng vào số dư ví — xác nhận ngay lập tức
-//                         </p>
-//                       </div>
-//                     </button>
-
-//                     <button
-//                       onClick={() => setPayMethod("transfer")}
-//                       className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
-//                     >
-//                       <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-xl">
-//                         🏦
-//                       </div>
-//                       <div>
-//                         <p className="text-sm font-semibold text-gray-900">
-//                           Chuyển khoản
-//                         </p>
-//                         <p className="text-xs text-gray-400 mt-0.5">
-//                           Quét QR VietQR, xác nhận sau khi chuyển
-//                         </p>
-//                       </div>
-//                     </button>
-
-//                     <button
-//                       onClick={() => setPayMethod("cash")}
-//                       className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors text-left"
-//                     >
-//                       <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center text-xl">
-//                         💵
-//                       </div>
-//                       <div>
-//                         <p className="text-sm font-semibold text-gray-900">
-//                           Tiền mặt
-//                         </p>
-//                         <p className="text-xs text-gray-400 mt-0.5">
-//                           Thông báo admin, nộp tiền trực tiếp
-//                         </p>
-//                       </div>
-//                     </button>
-//                   </div>
-//                 )}
-
-//                 {payMethod === "wallet" && (
-//                   <div className="space-y-4">
-//                     <div className="bg-blue-50 rounded-xl p-4">
-//                       <p className="text-sm font-semibold text-blue-900 mb-1 flex items-center gap-2">
-//                         <Wallet className="w-4 h-4" /> Thanh toán bằng Ví BNB
-//                       </p>
-//                       <p className="text-xs text-blue-600">
-//                         Số dư ví sẽ bị trừ ngay lập tức.
-//                       </p>
-//                     </div>
-//                     <div className="flex gap-2">
-//                       <button
-//                         onClick={() => setPayMethod("choose")}
-//                         className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
-//                       >
-//                         Quay lại
-//                       </button>
-//                       <button
-//                         onClick={handlePayWallet}
-//                         disabled={submittingPay}
-//                         className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
-//                       >
-//                         {submittingPay && (
-//                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-//                         )}
-//                         <Wallet className="w-3.5 h-3.5" /> Xác nhận trừ ví
-//                       </button>
-//                     </div>
-//                   </div>
-//                 )}
-
-//                 {payMethod === "transfer" &&
-//                   (() => {
-//                     const ref = `DATAOA ${reg.id.slice(0, 8).toUpperCase()}`;
-//                     const bankId = process.env.NEXT_PUBLIC_BANK_ID ?? "MB";
-//                     const bankAccount =
-//                       process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "0000000000";
-//                     const bankAccountName =
-//                       process.env.NEXT_PUBLIC_BANK_NAME ?? "CLB CAU LONG";
-//                     const bankDisplayName =
-//                       BANK_DISPLAY_NAMES[bankId] ?? bankId;
-//                     const qr = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(ref)}&accountName=${encodeURIComponent(bankAccountName)}`;
-
-//                     return (
-//                       <div className="space-y-4">
-//                         <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
-//                           <p className="text-xs text-gray-400">
-//                             Quét mã QR để thanh toán
-//                           </p>
-//                           <img
-//                             src={qr}
-//                             alt="VietQR"
-//                             className="w-48 h-48 object-contain"
-//                           />
-//                         </div>
-
-//                         <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
-//                           <div className="flex justify-between px-4 py-2.5">
-//                             <span className="text-gray-500">Ngân hàng</span>
-//                             <span className="font-semibold text-gray-900">
-//                               {bankDisplayName}
-//                             </span>
-//                           </div>
-//                           <div className="flex justify-between px-4 py-2.5">
-//                             <span className="text-gray-500">Số tài khoản</span>
-//                             <span className="font-semibold text-gray-900">
-//                               {bankAccount}
-//                             </span>
-//                           </div>
-//                           <div className="flex justify-between px-4 py-2.5">
-//                             <span className="text-gray-500">Số tiền</span>
-//                             <span className="font-bold text-red-600">
-//                               {fmt(amount)}
-//                             </span>
-//                           </div>
-//                           <div className="px-4 py-2.5">
-//                             <div className="flex justify-between">
-//                               <span className="text-gray-500">Nội dung CK</span>
-//                               <span className="font-mono font-semibold text-gray-900">
-//                                 {ref}
-//                               </span>
-//                             </div>
-//                           </div>
-//                         </div>
-
-//                         <button
-//                           onClick={() => {
-//                             navigator.clipboard.writeText(ref);
-//                             toast.success("Đã copy nội dung chuyển khoản");
-//                           }}
-//                           className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
-//                         >
-//                           <Copy className="w-3.5 h-3.5" /> Sao chép nội dung
-//                         </button>
-
-//                         <div className="flex gap-2">
-//                           <button
-//                             onClick={() => setPayMethod("choose")}
-//                             className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
-//                           >
-//                             Quay lại
-//                           </button>
-//                           <button
-//                             onClick={() => handleConfirmTransferred(ref)}
-//                             disabled={submittingPay}
-//                             className="flex-[2] py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
-//                           >
-//                             {submittingPay && (
-//                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-//                             )}{" "}
-//                             Tôi đã chuyển khoản
-//                           </button>
-//                         </div>
-//                       </div>
-//                     );
-//                   })()}
-
-//                 {payMethod === "cash" && (
-//                   <div className="space-y-4">
-//                     <div className="bg-green-50 rounded-xl p-4">
-//                       <p className="text-sm font-semibold text-green-800 mb-1">
-//                         💵 Thanh toán tiền mặt
-//                       </p>
-//                       <p className="text-xs text-green-600">
-//                         Admin sẽ xác nhận sau khi nhận tiền trực tiếp.
-//                       </p>
-//                     </div>
-//                     <div className="flex gap-2">
-//                       <button
-//                         onClick={() => setPayMethod("choose")}
-//                         className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
-//                       >
-//                         Quay lại
-//                       </button>
-//                       <button
-//                         onClick={handleRequestCash}
-//                         disabled={submittingPay}
-//                         className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
-//                       >
-//                         {submittingPay && (
-//                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-//                         )}{" "}
-//                         Thông báo admin
-//                       </button>
-//                     </div>
-//                   </div>
-//                 )}
-//               </div>
-//             </div>
-//           </div>,
-//           document.body,
-//         )}
-//     </div>
-//   );
-// }
-
+function colorSwatchFromName(name?: string) {
+  if (!name) return "#9ca3af";
+  const lower = name.toLowerCase();
+  const keys = Object.keys(COLOR_SWATCH_MAP).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (lower.includes(key)) return COLOR_SWATCH_MAP[key];
+  }
+  return "#9ca3af";
+}
 
 function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
   const shirtTypes: any[] = activity.detail?.shirt_types ?? [];
   const myRegistrations: any[] = myStatus?.my_registrations ?? [];
   const canRegister = activity.status === "open";
 
-  const [profileGender, setProfileGender] = useState<"nam" | "nu" | null>(
-    null,
+  const [selectedTypeId, setSelectedTypeId] = useState<string | null>(
+    shirtTypes[0]?.id ?? null,
   );
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const selectedType = shirtTypes.find((t) => t.id === selectedTypeId) ?? shirtTypes[0];
 
-  useEffect(() => {
-    profileApi
-      .getMe()
-      .then(({ data }) => {
-        const g = data?.gender === "nu" ? "nu" : "nam";
-        setProfileGender(g);
-      })
-      .catch(() => setProfileGender("nam"))
-      .finally(() => setLoadingProfile(false));
-  }, []);
-
-  const gender = profileGender ?? "nam";
-
-  const [payTarget, setPayTarget] = useState<{ reg: any; type: any } | null>(
-    null,
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(
+    selectedType?.colors?.[0]?.id ?? null,
   );
-  const [payMethod, setPayMethod] = useState<
-    "choose" | "wallet" | "transfer" | "cash"
-  >("choose");
-  const [submittingPay, setSubmittingPay] = useState(false);
+
+  const [selectedGender, setSelectedGender] = useState<"nam" | "nu">("nam");
+
+  // 🆕 Nhiều size cùng lúc: key = size, value = quantity đang chọn trong form (chưa submit)
+  const [sizeQuantities, setSizeQuantities] = useState<Record<string, number>>({});
+
+  const [submitting, setSubmitting] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [lightboxVisible, setLightboxVisible] = useState(false);
 
-  const openPayModal = (reg: any, type: any) => {
-    setPayTarget({ reg, type });
-    setPayMethod("choose");
+  // Các registration hiện có của loại áo + giới tính đang chọn
+  const regsForTypeGender = myRegistrations.filter(
+    (r: any) => r.shirt_type_id === selectedType?.id && r.gender === selectedGender,
+  );
+
+  // Size đã bị khoá (đã thanh toán / đang chờ xác nhận) → không cho sửa/xoá
+  const lockedSizes = new Set(
+    regsForTypeGender
+      .filter((r: any) => r.payment_status === "confirmed" || !!r.payment_reference)
+      .map((r: any) => r.size),
+  );
+
+  // Khi đổi mẫu áo hoặc giới tính → nạp lại sizeQuantities từ registration hiện có (chỉ những cái chưa bị khoá vẫn hiện để chỉnh sửa được, cái đã khoá thì hiển thị riêng, không cho sửa)
+  useEffect(() => {
+    const init: Record<string, number> = {};
+    regsForTypeGender.forEach((r: any) => {
+      if (!lockedSizes.has(r.size)) {
+        init[r.size] = r.quantity ?? 1;
+      }
+    });
+    setSizeQuantities(init);
+    setSelectedColorId(selectedType?.colors?.[0]?.id ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedType?.id, selectedGender]);
+
+  const activeColor =
+    (selectedType?.colors ?? []).find((c: any) => c.id === selectedColorId) ??
+    selectedType?.colors?.[0];
+
+  const activeColorImage = (() => {
+    const img = activeColor?.images?.[0];
+    return img ? (typeof img === "string" ? img : img.url) : null;
+  })();
+
+  const namSizes: string[] = selectedType?.available_sizes?.nam ?? [];
+  const nuSizes: string[] = selectedType?.available_sizes?.nu ?? [];
+  const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
+
+  const sortSizes = (arr: string[]) =>
+    [...arr].sort((a, b) => {
+      const ia = SIZE_ORDER.indexOf(a);
+      const ib = SIZE_ORDER.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+
+  const sizesForGender = sortSizes(selectedGender === "nam" ? namSizes : nuSizes);
+
+  // Bật/tắt 1 size trong form
+  const toggleSize = (s: string) => {
+    if (lockedSizes.has(s)) return;
+    setSizeQuantities((prev) => {
+      const next = { ...prev };
+      if (next[s] != null) {
+        delete next[s];
+      } else {
+        next[s] = 1;
+      }
+      return next;
+    });
   };
-  const closePayModal = () => setPayTarget(null);
+
+  const changeQty = (s: string, delta: number) => {
+    setSizeQuantities((prev) => {
+      const current = prev[s] ?? 1;
+      const nextQty = Math.max(1, current + delta);
+      return { ...prev, [s]: nextQty };
+    });
+  };
+
+  const selectedSizeList = Object.keys(sizeQuantities);
+
+  const handleSubmit = async () => {
+    if (!selectedType) return;
+    if (selectedSizeList.length === 0) return toast.error("Vui lòng chọn ít nhất 1 size");
+    setSubmitting(true);
+    try {
+      // Gửi lần lượt từng size đã chọn (mỗi size là 1 dòng đăng ký riêng)
+      for (const s of selectedSizeList) {
+        await activitiesApi.registerShirtOrder(activity.id, {
+          shirt_type_id: selectedType.id,
+          gender: selectedGender,
+          size: s,
+          quantity: sizeQuantities[s] < 1 ? 1 : sizeQuantities[s],
+        });
+      }
+      toast.success(`Đã thêm ${selectedSizeList.length} size vào đơn hàng`);
+      onChanged();
+    } catch {
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCancel = async (reg: any) => {
+    if (!confirm("Xoá sản phẩm này khỏi đơn hàng?")) return;
+    try {
+      await activitiesApi.cancelRegistration(activity.id, { registration_id: reg.id });
+      toast.success("Đã xoá khỏi đơn hàng");
+      onChanged();
+    } catch { }
+  };
+
+  const openLightbox = (src: string) => {
+    setLightboxSrc(src);
+    requestAnimationFrame(() => setLightboxVisible(true));
+  };
+
+  const closeLightbox = () => {
+    setLightboxVisible(false);
+    setTimeout(() => setLightboxSrc(null), 200);
+  };
+
+  const [payingReg, setPayingReg] = useState<any | null>(null);
+  const [payMethod, setPayMethod] = useState<"wallet" | "transfer" | "cash">("transfer");
+  const [submittingPay, setSubmittingPay] = useState(false);
+
+  const priceOf = (r: any) => {
+    const t = shirtTypes.find((x) => x.id === r.shirt_type_id);
+    return (t?.price_per_shirt ?? 0) * (r.quantity ?? 1);
+  };
+
+  const subtotal = myRegistrations.reduce((s: number, r: any) => s + priceOf(r), 0);
+
+  const openPay = (reg: any) => {
+    setPayingReg(reg);
+    setPayMethod("transfer");
+  };
 
   const handlePayWallet = async () => {
-    if (!payTarget) return;
+    if (!payingReg) return;
     setSubmittingPay(true);
     try {
       await activitiesApi.payShirtOrder(activity.id, {
-        registration_id: payTarget.reg.id,
+        registration_id: payingReg.id,
         method: "wallet",
       });
-      toast.success("Đã thanh toán bằng ví BNB!");
-      closePayModal();
+      toast.success("Đã thanh toán bằng ví BnB!");
+      setPayingReg(null);
       onChanged();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Thanh toán thất bại");
@@ -959,16 +492,16 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
   };
 
   const handleConfirmTransferred = async (ref: string) => {
-    if (!payTarget) return;
+    if (!payingReg) return;
     setSubmittingPay(true);
     try {
       await activitiesApi.payShirtOrder(activity.id, {
-        registration_id: payTarget.reg.id,
+        registration_id: payingReg.id,
         method: "transfer",
         payment_reference: ref,
       });
       toast.success("Đã ghi nhận, chờ admin xác nhận!");
-      closePayModal();
+      setPayingReg(null);
       onChanged();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Gửi thất bại");
@@ -978,15 +511,15 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
   };
 
   const handleRequestCash = async () => {
-    if (!payTarget) return;
+    if (!payingReg) return;
     setSubmittingPay(true);
     try {
       await activitiesApi.payShirtOrder(activity.id, {
-        registration_id: payTarget.reg.id,
+        registration_id: payingReg.id,
         method: "cash",
       });
       toast.success("Đã thông báo admin!");
-      closePayModal();
+      setPayingReg(null);
       onChanged();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Gửi thất bại");
@@ -1003,573 +536,465 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     );
   }
 
-  const payAmount = payTarget
-    ? (payTarget.type.price_per_shirt ?? 0) * (payTarget.reg.quantity ?? 1)
-    : 0;
+  const payAmount = payingReg ? priceOf(payingReg) : 0;
 
   return (
-    <div className="space-y-3">
-      {!loadingProfile && (
-        <div className="bg-white rounded-2xl px-4 py-3 shadow-sm flex items-center gap-2 text-xs text-gray-500">
-          <span>Giới tính (theo hồ sơ):</span>
-          <span
-            className={`px-2.5 py-1 rounded-full font-semibold ${gender === "nu"
-              ? "bg-pink-100 text-pink-600"
-              : "bg-blue-100 text-blue-600"
-              }`}
-          >
-            {gender === "nu" ? "Nữ" : "Nam"}
-          </span>
-        </div>
-      )}
+    <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-gray-900">1. Chọn mẫu áo</h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {shirtTypes.map((type) => {
+                const images: string[] = (type.colors ?? []).flatMap((c: any) =>
+                  (c.images ?? []).map((img: any) => (typeof img === "string" ? img : img.url)),
+                );
+                const active = selectedType?.id === type.id;
+                const already = myRegistrations.some((r: any) => r.shirt_type_id === type.id);
+                const previewSrc = active ? (activeColorImage ?? images[0]) : images[0];
 
-      {shirtTypes.map((type) => {
-        const reg = myRegistrations.find(
-          (r: any) => r.shirt_type_id === type.id,
-        );
-        return (
-          <ShirtTypeCard
-            key={type.id}
-            activity={activity}
-            type={type}
-            reg={reg}
-            gender={gender}
-            loadingProfile={loadingProfile}
-            canRegister={canRegister}
-            onChanged={onChanged}
-            onPay={() => openPayModal(reg, type)}
-            onLightbox={setLightboxSrc}
-          />
-        );
-      })}
+                return (
+                  <div
+                    key={type.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedTypeId(type.id)}
+                    onKeyDown={(e) => e.key === "Enter" && setSelectedTypeId(type.id)}
+                    className={`relative text-left rounded-2xl border-2 p-2.5 transition-colors cursor-pointer ${active ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white"
+                      }`}
+                  >
+                    {active && (
+                      <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center z-10">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                      </span>
+                    )}
+                    {already && (
+                      <span className="absolute top-2 left-2 text-[9px] font-bold uppercase bg-emerald-500 text-white px-1.5 py-0.5 rounded-full z-10">
+                        Đã chọn
+                      </span>
+                    )}
 
-      {/* ── Lightbox xem ảnh full ── */}
-      {lightboxSrc &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4"
-            onClick={() => setLightboxSrc(null)}
-          >
-            <button
-              onClick={() => setLightboxSrc(null)}
-              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"
-            >
-              <XIcon className="w-5 h-5 text-white" />
-            </button>
-            <img
-              src={lightboxSrc}
-              alt="Ảnh mẫu áo"
-              className="max-w-full max-h-full object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>,
-          document.body,
-        )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (previewSrc) openLightbox(previewSrc);
+                      }}
+                      className="w-full aspect-square rounded-xl bg-gray-50 overflow-hidden flex items-center justify-center mb-2"
+                    >
+                      {previewSrc ? (
+                        <img src={previewSrc} className="w-full h-full object-cover" />
+                      ) : (
+                        <Shirt className="w-8 h-8 text-gray-300" />
+                      )}
+                    </button>
 
-      {/* ── Pay modal (dùng chung cho mọi loại áo) ── */}
-      {payTarget &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[99999] flex flex-col justify-end"
-            style={{
-              background: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(2px)",
-            }}
-            onClick={(e) => e.target === e.currentTarget && closePayModal()}
-          >
-            <div
-              className="w-full bg-white rounded-t-2xl"
-              style={{
-                maxHeight: "90vh",
-                overflowY: "auto",
-                paddingBottom: "env(safe-area-inset-bottom)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-9 h-1 rounded-full bg-gray-200" />
-              </div>
-              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-                <div>
-                  <p className="text-sm font-bold text-gray-900">
-                    {payMethod === "choose"
-                      ? "Chọn phương thức thanh toán"
-                      : payMethod === "wallet"
-                        ? "Trừ ví BNB"
-                        : payMethod === "transfer"
-                          ? "Chuyển khoản"
-                          : "Tiền mặt"}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {payTarget.type.name} — {activity.title}
-                  </p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{type.name}</p>
+                    {(type.price_per_shirt ?? 0) > 0 && (
+                      <p className="text-xs font-medium text-blue-600 mt-0.5">
+                        {fmt(type.price_per_shirt)}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {(selectedType?.colors ?? []).length > 0 && (
+              <div>
+                <p className="text-[11px] font-medium text-gray-400 mb-2">Màu sắc</p>
+                <div className="flex flex-wrap gap-3">
+                  {(selectedType.colors ?? []).map((c: any) => {
+                    const isActive = activeColor?.id === c.id;
+                    const swatch = colorSwatchFromName(c.name);
+                    const isLightSwatch =
+                      swatch.toLowerCase() === "#ffffff" || swatch.toLowerCase() === "#eab308";
+
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => setSelectedColorId(c.id)}
+                        className="flex flex-col items-center gap-1"
+                        title={c.name}
+                      >
+                        <span
+                          className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all ${isActive ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200"
+                            }`}
+                          style={{
+                            backgroundColor: swatch,
+                            boxShadow:
+                              swatch.toLowerCase() === "#ffffff"
+                                ? "inset 0 0 0 1px rgba(0,0,0,0.08)"
+                                : undefined,
+                          }}
+                        >
+                          {isActive && (
+                            <CheckCircle2
+                              className={`w-4 h-4 ${isLightSwatch ? "text-gray-700" : "text-white"}`}
+                            />
+                          )}
+                        </span>
+                        <span className="text-[10px] text-gray-500 max-w-[64px] truncate">
+                          {c.name}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── 2. Thông tin đặt áo: chọn nhiều size ── */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
+            <h3 className="font-bold text-gray-900">2. Thông tin đặt áo</h3>
+
+            {!canRegister && regsForTypeGender.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-2">Đã đóng đăng ký</p>
+            ) : (
+              <>
+                {/* Chọn giới tính */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                    Giới tính
+                  </label>
+                  <div className="flex gap-2">
+                    {(["nam", "nu"] as const).map((g) => (
+                      <button
+                        key={g}
+                        onClick={() => setSelectedGender(g)}
+                        disabled={!canRegister}
+                        className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${selectedGender === g
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-600 border-gray-200"
+                          }`}
+                      >
+                        {g === "nam" ? "Nam" : "Nữ"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 🆕 Chọn nhiều size, mỗi size có số lượng riêng */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                    Size áo (có thể chọn nhiều size)
+                  </label>
+                  {sizesForGender.length === 0 ? (
+                    <p className="text-sm text-gray-400">
+                      Chưa có size nào được cấu hình cho giới tính này
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {sizesForGender.map((s) => {
+                        const isLocked = lockedSizes.has(s);
+                        const isSelected = sizeQuantities[s] != null;
+                        return (
+                          <button
+                            key={s}
+                            onClick={() => toggleSize(s)}
+                            disabled={isLocked || !canRegister}
+                            className={`relative w-11 h-11 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isSelected
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : isLocked
+                                ? "bg-blue-50 text-blue-400 border-blue-100"
+                                : "bg-white text-gray-600 border-gray-200"
+                              }`}
+                          >
+                            {s}
+                            {isLocked && (
+                              <CheckCircle2 className="w-3 h-3 text-blue-400 absolute -top-1 -right-1 bg-white rounded-full" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {lockedSizes.size > 0 && (
+                    <p className="text-[11px] text-gray-400 mt-1.5">
+                      Size có dấu ✓ đã thanh toán / chờ xác nhận, không thể đổi.
+                    </p>
+                  )}
+                </div>
+
+                {/* Danh sách size đã chọn + số lượng từng size */}
+                {selectedSizeList.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="block text-xs font-semibold text-gray-500">
+                      Số lượng theo từng size
+                    </label>
+                    {sortSizes(selectedSizeList).map((s) => (
+                      <div
+                        key={s}
+                        className="flex items-center justify-between rounded-xl border border-gray-200 px-3 py-2"
+                      >
+                        <span className="text-sm font-semibold text-gray-800">Size {s}</span>
+                        <div className="inline-flex items-center rounded-xl border border-gray-200 overflow-hidden">
+                          <button
+                            onClick={() => changeQty(s, -1)}
+                            disabled={!canRegister}
+                            className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+                          >
+                            −
+                          </button>
+                          <span className="w-9 text-center text-sm font-semibold">
+                            {sizeQuantities[s]}
+                          </span>
+                          <button
+                            onClick={() => changeQty(s, 1)}
+                            disabled={!canRegister}
+                            className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {canRegister && (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting || selectedSizeList.length === 0}
+                    className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Thêm vào đơn hàng
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ───── Cột phải: đơn hàng + thanh toán (không đổi) ───── */}
+        <div className="space-y-4 lg:sticky lg:top-20">
+          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
+            <h3 className="font-bold text-gray-900">Đơn hàng của bạn</h3>
+
+            {myRegistrations.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">Chưa có sản phẩm nào</p>
+            ) : (
+              <div className="space-y-2.5">
+                {myRegistrations.map((reg: any) => {
+                  const type = shirtTypes.find((t) => t.id === reg.shirt_type_id);
+                  const images: string[] = (type?.colors ?? []).flatMap((c: any) =>
+                    (c.images ?? []).map((img: any) => (typeof img === "string" ? img : img.url)),
+                  );
+                  const paid = reg.payment_status === "confirmed";
+                  const pending = !paid && !!reg.payment_reference;
+                  const amount = (type?.price_per_shirt ?? 0) * (reg.quantity ?? 1);
+
+                  return (
+                    <div
+                      key={reg.id}
+                      className="flex gap-3 rounded-xl border border-gray-100 p-3"
+                    >
+                      <div className="w-14 h-14 rounded-lg bg-gray-50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        {images[0] ? (
+                          <img src={images[0]} className="w-full h-full object-cover" />
+                        ) : (
+                          <Shirt className="w-5 h-5 text-gray-300" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {type?.name ?? "—"}
+                          </p>
+                          {!paid && !pending && (
+                            <button
+                              onClick={() => handleCancel(reg)}
+                              className="text-gray-300 hover:text-red-500 flex-shrink-0"
+                            >
+                              <XIcon className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {reg.gender === "nu" ? "Nữ" : "Nam"} · Size {reg.size} × {reg.quantity}
+                        </p>
+                        <div className="flex items-center justify-between mt-1.5">
+                          <span className="text-sm font-bold text-gray-900">{fmt(amount)}</span>
+                          {paid ? (
+                            <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                              Đã thanh toán
+                            </span>
+                          ) : pending ? (
+                            <span className="text-[11px] font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
+                              Chờ xác nhận
+                            </span>
+                          ) : amount > 0 ? (
+                            <button
+                              onClick={() => openPay(reg)}
+                              className="text-[11px] font-bold text-white bg-red-500 hover:bg-red-600 px-2.5 py-1 rounded-full"
+                            >
+                              Thanh toán
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {myRegistrations.length > 0 && (
+              <div className="border-t border-gray-100 pt-3 flex items-center justify-between">
+                <span className="text-sm text-gray-500">Tổng cộng</span>
+                <span className="text-lg font-black text-gray-900">{fmt(subtotal)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* ── Panel thanh toán (không đổi) ── */}
+          {payingReg && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-gray-900">Thanh toán</h3>
                 <button
-                  onClick={closePayModal}
+                  onClick={() => setPayingReg(null)}
                   className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
                 >
                   <XIcon className="w-4 h-4 text-gray-500" />
                 </button>
               </div>
 
-              <div className="px-5 py-4 space-y-4">
-                <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
-                  <span className="text-sm text-gray-600">
-                    Số tiền thanh toán
-                  </span>
-                  <span className="text-lg font-black text-red-600">
-                    {fmt(payAmount)}
-                  </span>
-                </div>
-
-                {payMethod === "choose" && (
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => setPayMethod("wallet")}
-                      className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
-                    >
-                      <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                        <Wallet className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          Ví BNB
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          Trừ thẳng vào số dư ví — xác nhận ngay lập tức
-                        </p>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => setPayMethod("transfer")}
-                      className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
-                    >
-                      <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-xl">
-                        🏦
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          Chuyển khoản
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          Quét QR VietQR, xác nhận sau khi chuyển
-                        </p>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => setPayMethod("cash")}
-                      className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors text-left"
-                    >
-                      <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center text-xl">
-                        💵
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          Tiền mặt
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          Thông báo admin, nộp tiền trực tiếp
-                        </p>
-                      </div>
-                    </button>
-                  </div>
-                )}
-
-                {payMethod === "wallet" && (
-                  <div className="space-y-4">
-                    <div className="bg-blue-50 rounded-xl p-4">
-                      <p className="text-sm font-semibold text-blue-900 mb-1 flex items-center gap-2">
-                        <Wallet className="w-4 h-4" /> Thanh toán bằng Ví BNB
-                      </p>
-                      <p className="text-xs text-blue-600">
-                        Số dư ví sẽ bị trừ ngay lập tức.
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setPayMethod("choose")}
-                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
-                      >
-                        Quay lại
-                      </button>
-                      <button
-                        onClick={handlePayWallet}
-                        disabled={submittingPay}
-                        className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
-                      >
-                        {submittingPay && (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        )}
-                        <Wallet className="w-3.5 h-3.5" /> Xác nhận trừ ví
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {payMethod === "transfer" &&
-                  (() => {
-                    const ref = `DATAOA ${payTarget.reg.id.slice(0, 8).toUpperCase()}`;
-                    const bankId = process.env.NEXT_PUBLIC_BANK_ID ?? "MB";
-                    const bankAccount =
-                      process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "0000000000";
-                    const bankAccountName =
-                      process.env.NEXT_PUBLIC_BANK_NAME ?? "CLB CAU LONG";
-                    const bankDisplayName =
-                      BANK_DISPLAY_NAMES[bankId] ?? bankId;
-                    const qr = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${payAmount}&addInfo=${encodeURIComponent(ref)}&accountName=${encodeURIComponent(bankAccountName)}`;
-
-                    return (
-                      <div className="space-y-4">
-                        <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
-                          <p className="text-xs text-gray-400">
-                            Quét mã QR để thanh toán
-                          </p>
-                          <img
-                            src={qr}
-                            alt="VietQR"
-                            className="w-48 h-48 object-contain"
-                          />
-                        </div>
-
-                        <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
-                          <div className="flex justify-between px-4 py-2.5">
-                            <span className="text-gray-500">Ngân hàng</span>
-                            <span className="font-semibold text-gray-900">
-                              {bankDisplayName}
-                            </span>
-                          </div>
-                          <div className="flex justify-between px-4 py-2.5">
-                            <span className="text-gray-500">Số tài khoản</span>
-                            <span className="font-semibold text-gray-900">
-                              {bankAccount}
-                            </span>
-                          </div>
-                          <div className="flex justify-between px-4 py-2.5">
-                            <span className="text-gray-500">Số tiền</span>
-                            <span className="font-bold text-red-600">
-                              {fmt(payAmount)}
-                            </span>
-                          </div>
-                          <div className="px-4 py-2.5">
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">Nội dung CK</span>
-                              <span className="font-mono font-semibold text-gray-900">
-                                {ref}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(ref);
-                            toast.success("Đã copy nội dung chuyển khoản");
-                          }}
-                          className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          <Copy className="w-3.5 h-3.5" /> Sao chép nội dung
-                        </button>
-
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setPayMethod("choose")}
-                            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
-                          >
-                            Quay lại
-                          </button>
-                          <button
-                            onClick={() => handleConfirmTransferred(ref)}
-                            disabled={submittingPay}
-                            className="flex-[2] py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
-                          >
-                            {submittingPay && (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            )}{" "}
-                            Tôi đã chuyển khoản
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                {payMethod === "cash" && (
-                  <div className="space-y-4">
-                    <div className="bg-green-50 rounded-xl p-4">
-                      <p className="text-sm font-semibold text-green-800 mb-1">
-                        💵 Thanh toán tiền mặt
-                      </p>
-                      <p className="text-xs text-green-600">
-                        Admin sẽ xác nhận sau khi nhận tiền trực tiếp.
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setPayMethod("choose")}
-                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
-                      >
-                        Quay lại
-                      </button>
-                      <button
-                        onClick={handleRequestCash}
-                        disabled={submittingPay}
-                        className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
-                      >
-                        {submittingPay && (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        )}{" "}
-                        Thông báo admin
-                      </button>
-                    </div>
-                  </div>
-                )}
+              <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
+                <span className="text-sm text-gray-600">Số tiền</span>
+                <span className="text-lg font-black text-red-600">{fmt(payAmount)}</span>
               </div>
-            </div>
-          </div>,
-          document.body,
-        )}
-    </div>
-  );
-}
 
-function ShirtTypeCard({
-  activity,
-  type,
-  reg,
-  gender,
-  loadingProfile,
-  canRegister,
-  onChanged,
-  onPay,
-  onLightbox,
-}: any) {
-  const images: string[] = (type.images ?? []).map((img: any) =>
-    typeof img === "string" ? img : img.url,
-  );
-  const sizes: string[] = type.available_sizes?.[gender] ?? [];
-  const price = type.price_per_shirt ?? 0;
+              <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+                {(["wallet", "transfer", "cash"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setPayMethod(m)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${payMethod === m ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
+                      }`}
+                  >
+                    {m === "wallet" ? "Ví BnB" : m === "transfer" ? "Chuyển khoản" : "Tiền mặt"}
+                  </button>
+                ))}
+              </div>
 
-  const [size, setSize] = useState(reg?.size ?? "");
-  const [quantity, setQuantity] = useState<number | "">(reg?.quantity ?? 1);
-  const [submitting, setSubmitting] = useState(false);
+              {payMethod === "wallet" && (
+                <div className="space-y-3">
+                  <div className="bg-blue-50 rounded-xl p-4 text-xs text-blue-600">
+                    Số dư ví sẽ bị trừ ngay lập tức khi xác nhận.
+                  </div>
+                  <button
+                    onClick={handlePayWallet}
+                    disabled={submittingPay}
+                    className="w-full py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  >
+                    {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <Wallet className="w-3.5 h-3.5" /> Xác nhận trừ ví
+                  </button>
+                </div>
+              )}
 
-  const isPaid = reg?.payment_status === "confirmed";
-  const isPendingConfirm = reg && !isPaid && !!reg.payment_reference;
-  const isLocked = isPaid || isPendingConfirm;
-  const needsPayment = reg && price > 0 && !isPaid && !isPendingConfirm;
-  const amount = price * (reg?.quantity ?? (quantity || 1));
+              {payMethod === "transfer" &&
+                (() => {
+                  const ref = `DATAOA ${payingReg.id.slice(0, 8).toUpperCase()}`;
+                  const bankId = process.env.NEXT_PUBLIC_BANK_ID ?? "MB";
+                  const bankAccount = process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "0000000000";
+                  const bankAccountName = process.env.NEXT_PUBLIC_BANK_NAME ?? "CLB CAU LONG";
+                  const bankDisplayName = BANK_DISPLAY_NAMES[bankId] ?? bankId;
+                  const qr = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${payAmount}&addInfo=${encodeURIComponent(
+                    ref,
+                  )}&accountName=${encodeURIComponent(bankAccountName)}`;
 
-  const PAYMENT_METHOD_LABEL: Record<string, string> = {
-    wallet: "Ví BNB",
-    transfer: "Chuyển khoản",
-    cash: "Tiền mặt",
-  };
+                  return (
+                    <div className="space-y-3">
+                      <div className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center gap-2">
+                        <p className="text-xs text-gray-400">Quét mã QR để thanh toán</p>
+                        <img src={qr} alt="VietQR" className="w-40 h-40 object-contain" />
+                      </div>
+                      <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
+                        <div className="flex justify-between px-4 py-2.5">
+                          <span className="text-gray-500">Ngân hàng</span>
+                          <span className="font-semibold text-gray-900">{bankDisplayName}</span>
+                        </div>
+                        <div className="flex justify-between px-4 py-2.5">
+                          <span className="text-gray-500">Số tài khoản</span>
+                          <span className="font-semibold text-gray-900">{bankAccount}</span>
+                        </div>
+                        <div className="px-4 py-2.5 flex justify-between items-center">
+                          <span className="text-gray-500">Nội dung CK</span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(ref);
+                              toast.success("Đã copy nội dung chuyển khoản");
+                            }}
+                            className="font-mono font-semibold text-gray-900 flex items-center gap-1.5"
+                          >
+                            {ref} <Copy className="w-3 h-3 text-gray-400" />
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleConfirmTransferred(ref)}
+                        disabled={submittingPay}
+                        className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
+                      >
+                        {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        Tôi đã chuyển khoản
+                      </button>
+                    </div>
+                  );
+                })()}
 
-  const handleSubmit = async () => {
-    if (!size) return toast.error("Vui lòng chọn size");
-    const finalQuantity = isLocked
-      ? reg.quantity
-      : quantity === "" || (quantity as number) < 1
-        ? 1
-        : quantity;
-    setSubmitting(true);
-    try {
-      await activitiesApi.registerShirtOrder(activity.id, {
-        shirt_type_id: type.id,
-        gender,
-        size,
-        quantity: finalQuantity,
-      });
-      toast.success(reg ? "Đã cập nhật đăng ký" : `Đã đăng ký ${type.name}`);
-      onChanged();
-    } catch {
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleCancel = async () => {
-    if (!confirm(`Huỷ đăng ký "${type.name}"?`)) return;
-    try {
-      await activitiesApi.cancelRegistration(activity.id, {
-        registration_id: reg.id,
-      });
-      toast.success("Đã huỷ đăng ký");
-      onChanged();
-    } catch { }
-  };
-
-  return (
-    <div
-      className="bg-white rounded-2xl p-5 space-y-4"
-      style={{ boxShadow: "0 10px 25px -8px rgba(0,0,0,0.15)" }}
-    >
-      <div className="flex items-center justify-between">
-        <h3 className="font-bold text-gray-900">{type.name}</h3>
-        {price > 0 && (
-          <span className="text-sm font-semibold text-blue-600">
-            {price.toLocaleString("vi-VN")}đ/áo
-          </span>
-        )}
-      </div>
-
-      {images.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-          {images.map((src, i) => (
-            <button
-              key={src + i}
-              onClick={() => onLightbox(src)}
-              className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-gray-200 bg-gray-50"
-            >
-              <img
-                src={src}
-                alt={`${type.name} ${i + 1}`}
-                className="w-full h-full object-cover"
-              />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {reg && (
-        <div className="bg-emerald-50 text-emerald-700 text-sm rounded-xl px-3 py-2 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-          Bạn đã đăng ký: {reg.gender === "nu" ? "Nữ" : "Nam"} · size{" "}
-          <strong>{reg.size}</strong> × {reg.quantity} áo
-        </div>
-      )}
-
-      {isPaid && (
-        <div className="bg-blue-50 rounded-xl px-3 py-2.5 flex items-start gap-2.5">
-          <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-700 leading-snug">
-            <p className="font-medium">Đã thanh toán</p>
-            {reg.payment_method && (
-              <span className="inline-block mt-1 text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                {PAYMENT_METHOD_LABEL[reg.payment_method] ?? reg.payment_method}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {isPendingConfirm && (
-        <div className="bg-orange-50 rounded-xl px-3 py-2.5 flex items-start gap-2.5">
-          <Clock className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-orange-700 leading-snug">
-            <p className="font-medium">
-              Đã gửi yêu cầu thanh toán, đang chờ admin xác nhận
-            </p>
-            {reg.payment_method && (
-              <span className="inline-block mt-1 text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
-                {PAYMENT_METHOD_LABEL[reg.payment_method] ?? reg.payment_method}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {needsPayment && (
-        <button
-          onClick={onPay}
-          className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm flex items-center justify-center gap-2"
-        >
-          💳 Thanh toán {fmt(amount)}
-        </button>
-      )}
-
-      {canRegister ? (
-        loadingProfile ? (
-          <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" /> Đang tải hồ sơ...
-          </div>
-        ) : (
-          <>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                Chọn size
-              </label>
-              {sizes.length === 0 ? (
-                <p className="text-sm text-gray-400">
-                  Chưa có size nào cho {gender === "nu" ? "Nữ" : "Nam"}
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {sizes.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setSize(s)}
-                      disabled={isLocked}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${size === s
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-500 border-gray-200"
-                        }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
+              {payMethod === "cash" && (
+                <div className="space-y-3">
+                  <div className="bg-green-50 rounded-xl p-4 text-xs text-green-600">
+                    Admin sẽ xác nhận sau khi bạn nộp tiền mặt trực tiếp.
+                  </div>
+                  <button
+                    onClick={handleRequestCash}
+                    disabled={submittingPay}
+                    className="w-full py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Thông báo admin
+                  </button>
                 </div>
               )}
             </div>
+          )}
+        </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                Số lượng
-                {isLocked && (
-                  <span className="text-gray-400 font-normal">
-                    {" "}
-                    (không thể đổi sau khi đã thanh toán)
-                  </span>
-                )}
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={isLocked ? reg.quantity : quantity}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setQuantity(val === "" ? "" : Number(val));
-                }}
-                onBlur={() => {
-                  if (quantity === "" || (quantity as number) < 1)
-                    setQuantity(1);
-                }}
-                disabled={isLocked}
-                className="w-24 px-3 py-2 rounded-xl border border-gray-200 text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            <div className="flex gap-2">
+        {lightboxSrc &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div
+              className={`fixed inset-0 z-[99999] flex items-center justify-center p-4 transition-opacity duration-200 ease-out ${lightboxVisible ? "bg-black/80 opacity-100" : "bg-black/0 opacity-0"
+                }`}
+              onClick={closeLightbox}
+            >
               <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                onClick={closeLightbox}
+                className={`absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 ${lightboxVisible ? "opacity-100 scale-100" : "opacity-0 scale-75"
+                  }`}
               >
-                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}{" "}
-                {reg ? "Cập nhật" : "Đăng ký"}
+                <XIcon className="w-5 h-5 text-white" />
               </button>
-              {reg && !isPaid && (
-                <button
-                  onClick={handleCancel}
-                  className="px-4 py-2.5 rounded-xl border border-red-200 text-red-500 text-sm font-medium"
-                >
-                  Huỷ
-                </button>
-              )}
-            </div>
-          </>
-        )
-      ) : (
-        !reg && (
-          <p className="text-sm text-gray-400 text-center py-2">
-            Đã đóng đăng ký
-          </p>
-        )
-      )}
-    </div>
+              <img
+                src={lightboxSrc}
+                alt="Ảnh mẫu áo"
+                className={`max-w-full max-h-full object-contain rounded-lg transition-all duration-200 ease-out ${lightboxVisible ? "opacity-100 scale-100" : "opacity-0 scale-90"
+                  }`}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>,
+            document.body,
+          )}
+      </div>
+    </div >
   );
 }
 
@@ -1662,7 +1087,6 @@ const TOURNAMENT_LEVEL_LABEL: Record<string, string> = {
   C: "Trình C",
 };
 
-//  Giải đấu — đăng ký cá nhân theo role + trình độ
 function TournamentSection({ activity, myStatus, onChanged }: any) {
   const router = useRouter();
   const reg = myStatus?.my_registration;

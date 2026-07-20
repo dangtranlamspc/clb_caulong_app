@@ -2,24 +2,41 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { X, ImagePlus, Loader2, Plus, Trash2 } from "lucide-react";
+import { X, ImagePlus, Loader2, Plus, Trash2, Palette } from "lucide-react";
 import toast from "react-hot-toast";
 import { eventsAdminApi, uploadsAdminApi } from "@/lib/api";
 
 const ALL_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"];
-const MAX_IMAGES_PER_TYPE = 8;
+const MAX_IMAGES_PER_COLOR = 8;
 const MAX_SHIRT_TYPES = 6;
+const MAX_COLORS_PER_TYPE = 6;
 const ALLOWED_MIME = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 const genId = () => "st_" + Math.random().toString(36).slice(2, 10);
+const genColorId = () => "cl_" + Math.random().toString(36).slice(2, 10);
+
+interface ShirtImage {
+    url: string;
+    path?: string;
+}
+
+interface ColorState {
+    id: string;
+    name: string;
+    images: ShirtImage[];
+}
 
 interface ShirtTypeState {
     id: string;
     name: string;
     price_per_shirt: string;
-    images: { url: string; path?: string }[];
+    colors: ColorState[];
     available_sizes: { nam: string[]; nu: string[] };
+}
+
+function newColor(name = "Mặc định"): ColorState {
+    return { id: genColorId(), name, images: [] };
 }
 
 function newShirtType(name = ""): ShirtTypeState {
@@ -27,7 +44,7 @@ function newShirtType(name = ""): ShirtTypeState {
         id: genId(),
         name,
         price_per_shirt: "",
-        images: [],
+        colors: [newColor()],
         available_sizes: {
             nam: ["S", "M", "L", "XL"],
             nu: ["S", "M", "L"],
@@ -40,6 +57,9 @@ const DEFAULT_SHIRT_TYPES = [
     newShirtType("Loại áo 2"),
     newShirtType("Loại áo 3"),
 ];
+
+// composite key used for file input refs / upload-in-progress tracking
+const fileKey = (typeId: string, colorId: string) => `${typeId}:${colorId}`;
 
 export default function ShirtOrderFormPage({
     activityId,
@@ -64,7 +84,7 @@ export default function ShirtOrderFormPage({
     const [shirtTypes, setShirtTypes] = useState<ShirtTypeState[]>(
         DEFAULT_SHIRT_TYPES,
     );
-    const [uploadingId, setUploadingId] = useState<string | null>(null);
+    const [uploadingKey, setUploadingKey] = useState<string | null>(null);
     const [loading, setLoading] = useState(!!id);
     const [saving, setSaving] = useState(false);
     const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -85,18 +105,38 @@ export default function ShirtOrderFormPage({
                 const rawTypes = data.detail?.shirt_types;
                 if (Array.isArray(rawTypes) && rawTypes.length > 0) {
                     setShirtTypes(
-                        rawTypes.map((t: any) => ({
-                            id: t.id ?? genId(),
-                            name: t.name ?? "",
-                            price_per_shirt: String(t.price_per_shirt ?? ""),
-                            images: (t.images ?? []).map((img: any) =>
-                                typeof img === "string" ? { url: img } : img,
-                            ),
-                            available_sizes: {
-                                nam: t.available_sizes?.nam ?? [],
-                                nu: t.available_sizes?.nu ?? [],
-                            },
-                        })),
+                        rawTypes.map((t: any) => {
+                            const rawColors = t.colors;
+                            const colors: ColorState[] =
+                                Array.isArray(rawColors) && rawColors.length > 0
+                                    ? rawColors.map((c: any) => ({
+                                        id: c.id ?? genColorId(),
+                                        name: c.name ?? "Mặc định",
+                                        images: (c.images ?? []).map((img: any) =>
+                                            typeof img === "string" ? { url: img } : img,
+                                        ),
+                                    }))
+                                    : [
+                                        {
+                                            id: genColorId(),
+                                            name: "Mặc định",
+                                            // fallback for legacy data that stored images directly on the type
+                                            images: (t.images ?? []).map((img: any) =>
+                                                typeof img === "string" ? { url: img } : img,
+                                            ),
+                                        },
+                                    ];
+                            return {
+                                id: t.id ?? genId(),
+                                name: t.name ?? "",
+                                price_per_shirt: String(t.price_per_shirt ?? ""),
+                                colors,
+                                available_sizes: {
+                                    nam: t.available_sizes?.nam ?? [],
+                                    nu: t.available_sizes?.nu ?? [],
+                                },
+                            };
+                        }),
                     );
                 } else {
                     const rawSizes = data.detail?.available_sizes;
@@ -109,9 +149,15 @@ export default function ShirtOrderFormPage({
                                 price_per_shirt: String(
                                     data.detail?.price_per_shirt ?? "",
                                 ),
-                                images: legacyImages.map((img: any) =>
-                                    typeof img === "string" ? { url: img } : img,
-                                ),
+                                colors: [
+                                    {
+                                        id: genColorId(),
+                                        name: "Mặc định",
+                                        images: legacyImages.map((img: any) =>
+                                            typeof img === "string" ? { url: img } : img,
+                                        ),
+                                    },
+                                ],
                                 available_sizes: Array.isArray(rawSizes)
                                     ? { nam: rawSizes, nu: rawSizes }
                                     : {
@@ -169,14 +215,64 @@ export default function ShirtOrderFormPage({
         setShirtTypes((prev) => prev.filter((t) => t.id !== typeId));
     };
 
-    const handleFilesSelected = async (typeId: string, fileList: FileList | null) => {
+    // ── Màu sắc ──
+    const addColor = (typeId: string) => {
+        setShirtTypes((prev) =>
+            prev.map((t) => {
+                if (t.id !== typeId) return t;
+                if (t.colors.length >= MAX_COLORS_PER_TYPE) {
+                    toast.error(`Tối đa ${MAX_COLORS_PER_TYPE} màu mỗi loại áo`);
+                    return t;
+                }
+                return {
+                    ...t,
+                    colors: [...t.colors, newColor(`Màu ${t.colors.length + 1}`)],
+                };
+            }),
+        );
+    };
+
+    const removeColor = (typeId: string, colorId: string) => {
+        setShirtTypes((prev) =>
+            prev.map((t) => {
+                if (t.id !== typeId) return t;
+                if (t.colors.length <= 1) {
+                    toast.error("Cần ít nhất 1 màu cho mỗi loại áo");
+                    return t;
+                }
+                return { ...t, colors: t.colors.filter((c) => c.id !== colorId) };
+            }),
+        );
+    };
+
+    const updateColorName = (typeId: string, colorId: string, name: string) => {
+        setShirtTypes((prev) =>
+            prev.map((t) =>
+                t.id !== typeId
+                    ? t
+                    : {
+                        ...t,
+                        colors: t.colors.map((c) =>
+                            c.id === colorId ? { ...c, name } : c,
+                        ),
+                    },
+            ),
+        );
+    };
+
+    const handleFilesSelected = async (
+        typeId: string,
+        colorId: string,
+        fileList: FileList | null,
+    ) => {
         if (!fileList || fileList.length === 0) return;
         const files = Array.from(fileList);
         const type = shirtTypes.find((t) => t.id === typeId);
-        if (!type) return;
+        const color = type?.colors.find((c) => c.id === colorId);
+        if (!type || !color) return;
 
-        if (type.images.length + files.length > MAX_IMAGES_PER_TYPE) {
-            toast.error(`Chỉ được tối đa ${MAX_IMAGES_PER_TYPE} ảnh mỗi loại áo`);
+        if (color.images.length + files.length > MAX_IMAGES_PER_COLOR) {
+            toast.error(`Chỉ được tối đa ${MAX_IMAGES_PER_COLOR} ảnh mỗi màu`);
             return;
         }
 
@@ -194,9 +290,10 @@ export default function ShirtOrderFormPage({
         }
         if (validFiles.length === 0) return;
 
-        setUploadingId(typeId);
+        const key = fileKey(typeId, colorId);
+        setUploadingKey(key);
         try {
-            const uploaded: { url: string; path: string }[] = [];
+            const uploaded: ShirtImage[] = [];
             for (const file of validFiles) {
                 try {
                     const { data } = await uploadsAdminApi.upload(file, "uploads");
@@ -205,23 +302,41 @@ export default function ShirtOrderFormPage({
                 }
             }
             if (uploaded.length) {
-                updateShirtType(typeId, {
-                    images: [...type.images, ...uploaded],
-                });
+                setShirtTypes((prev) =>
+                    prev.map((t) =>
+                        t.id !== typeId
+                            ? t
+                            : {
+                                ...t,
+                                colors: t.colors.map((c) =>
+                                    c.id !== colorId
+                                        ? c
+                                        : { ...c, images: [...c.images, ...uploaded] },
+                                ),
+                            },
+                    ),
+                );
             }
         } finally {
-            setUploadingId(null);
-            const inputEl = fileInputRefs.current[typeId];
+            setUploadingKey(null);
+            const inputEl = fileInputRefs.current[key];
             if (inputEl) inputEl.value = "";
         }
     };
 
-    const removeImage = (typeId: string, index: number) => {
+    const removeImage = (typeId: string, colorId: string, index: number) => {
         setShirtTypes((prev) =>
             prev.map((t) =>
-                t.id === typeId
-                    ? { ...t, images: t.images.filter((_, i) => i !== index) }
-                    : t,
+                t.id !== typeId
+                    ? t
+                    : {
+                        ...t,
+                        colors: t.colors.map((c) =>
+                            c.id !== colorId
+                                ? c
+                                : { ...c, images: c.images.filter((_, i) => i !== index) },
+                        ),
+                    },
             ),
         );
     };
@@ -242,6 +357,14 @@ export default function ShirtOrderFormPage({
                 return toast.error(
                     `Loại áo "${t.name}" cần chọn ít nhất 1 size (Nam hoặc Nữ)`,
                 );
+            if (!t.colors.length)
+                return toast.error(`Loại áo "${t.name}" cần ít nhất 1 màu`);
+            for (const c of t.colors) {
+                if (!c.name.trim())
+                    return toast.error(
+                        `Vui lòng nhập tên màu cho loại áo "${t.name}"`,
+                    );
+            }
         }
 
         setSaving(true);
@@ -258,7 +381,11 @@ export default function ShirtOrderFormPage({
                         id: t.id,
                         name: t.name.trim(),
                         price_per_shirt: Number(t.price_per_shirt) || 0,
-                        images: t.images.map((img) => img.url),
+                        colors: t.colors.map((c) => ({
+                            id: c.id,
+                            name: c.name.trim(),
+                            images: c.images,
+                        })),
                         available_sizes: t.available_sizes,
                     })),
                 },
@@ -290,21 +417,21 @@ export default function ShirtOrderFormPage({
         );
 
     return (
-        <div className="max-w-lg mx-auto space-y-4 p-6">
+        <div className="w-full space-y-4 p-6 pt-10">
             <h1 className="text-xl font-bold text-gray-900 pr-8">👕 Đặt áo nhóm</h1>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tiêu đề
-                </label>
-                <input
-                    className="input-field"
-                    value={form.title}
-                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                />
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <div className="lg:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tiêu đề
+                    </label>
+                    <input
+                        className="input-field"
+                        value={form.title}
+                        onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                    />
+                </div>
 
-            <div className="grid grid-cols-2 gap-3">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Deadline đăng ký
@@ -365,7 +492,7 @@ export default function ShirtOrderFormPage({
                 </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 items-start">
                 {shirtTypes.map((t, idx) => (
                     <div
                         key={t.id}
@@ -450,65 +577,112 @@ export default function ShirtOrderFormPage({
                             </div>
                         </div>
 
+                        {/* ── Màu sắc, mỗi màu có ảnh riêng ── */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                                Ảnh mẫu ({t.images.length}/{MAX_IMAGES_PER_TYPE})
-                            </label>
-                            <div className="grid grid-cols-4 gap-2">
-                                {t.images.map((img, index) => (
-                                    <div
-                                        key={img.url + index}
-                                        className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-white"
-                                    >
-                                        <img
-                                            src={img.url}
-                                            alt={`Ảnh ${index + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeImage(t.id, index)}
-                                            className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <X size={12} />
-                                        </button>
-                                    </div>
-                                ))}
-
-                                {t.images.length < MAX_IMAGES_PER_TYPE && (
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            fileInputRefs.current[t.id]?.click()
-                                        }
-                                        disabled={uploadingId === t.id}
-                                        className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors disabled:opacity-50 bg-white"
-                                    >
-                                        {uploadingId === t.id ? (
-                                            <Loader2 size={18} className="animate-spin" />
-                                        ) : (
-                                            <>
-                                                <ImagePlus size={18} />
-                                                <span className="text-[10px] mt-1">
-                                                    Thêm ảnh
-                                                </span>
-                                            </>
-                                        )}
-                                    </button>
-                                )}
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                                    <Palette className="w-3.5 h-3.5" /> Màu sắc (
+                                    {t.colors.length}/{MAX_COLORS_PER_TYPE})
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => addColor(t.id)}
+                                    disabled={t.colors.length >= MAX_COLORS_PER_TYPE}
+                                    className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:opacity-40"
+                                >
+                                    <Plus className="w-3.5 h-3.5" /> Thêm màu
+                                </button>
                             </div>
-                            <input
-                                ref={(el) => {
-                                    fileInputRefs.current[t.id] = el;
-                                }}
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                                multiple
-                                className="hidden"
-                                onChange={(e) =>
-                                    handleFilesSelected(t.id, e.target.files)
-                                }
-                            />
+
+                            <div className="space-y-3">
+                                {t.colors.map((c, cIdx) => {
+                                    const key = fileKey(t.id, c.id);
+                                    return (
+                                        <div
+                                            key={c.id}
+                                            className="rounded-lg border border-gray-200 bg-white p-3 space-y-2"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    className="input-field flex-1 text-sm"
+                                                    placeholder={`Tên màu ${cIdx + 1}`}
+                                                    value={c.name}
+                                                    onChange={(e) =>
+                                                        updateColorName(t.id, c.id, e.target.value)
+                                                    }
+                                                />
+                                                {t.colors.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeColor(t.id, c.id)}
+                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <p className="text-[11px] text-gray-400 mb-1">
+                                                    Ảnh ({c.images.length}/{MAX_IMAGES_PER_COLOR})
+                                                </p>
+                                                <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5">
+                                                    {c.images.map((img, index) => (
+                                                        <div
+                                                            key={img.url + index}
+                                                            className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
+                                                        >
+                                                            <img
+                                                                src={img.url}
+                                                                alt={`${c.name} ${index + 1}`}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    removeImage(t.id, c.id, index)
+                                                                }
+                                                                className="absolute top-0.5 right-0.5 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <X size={10} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+
+                                                    {c.images.length < MAX_IMAGES_PER_COLOR && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                fileInputRefs.current[key]?.click()
+                                                            }
+                                                            disabled={uploadingKey === key}
+                                                            className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors disabled:opacity-50 bg-white"
+                                                        >
+                                                            {uploadingKey === key ? (
+                                                                <Loader2 size={14} className="animate-spin" />
+                                                            ) : (
+                                                                <ImagePlus size={14} />
+                                                            )}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    ref={(el) => {
+                                                        fileInputRefs.current[key] = el;
+                                                    }}
+                                                    type="file"
+                                                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                                    multiple
+                                                    className="hidden"
+                                                    onChange={(e) =>
+                                                        handleFilesSelected(t.id, c.id, e.target.files)
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -516,7 +690,7 @@ export default function ShirtOrderFormPage({
 
             <button
                 onClick={handleSubmit}
-                disabled={saving || uploadingId !== null}
+                disabled={saving || uploadingKey !== null}
                 className="btn-primary w-full disabled:opacity-50"
             >
                 {saving ? "Đang lưu..." : "Lưu hoạt động"}

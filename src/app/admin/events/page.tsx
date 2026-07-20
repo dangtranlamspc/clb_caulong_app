@@ -74,6 +74,13 @@ const TYPE_OPTIONS = Object.entries(TYPE_LABEL).map(([value, label]) => ({
     label,
 }));
 
+const TYPE_MODAL_WIDTH: Record<string, string> = {
+    shirt_order: "max-w-5xl",
+    birthday: "max-w-lg",
+    offline_event: "max-w-lg",
+    poll: "max-w-lg",
+};
+
 const TYPE_FILTER_OPTIONS = [
     { value: "", label: "Tất cả loại hoạt động" },
     ...TYPE_OPTIONS,
@@ -148,10 +155,6 @@ export default function ActivitiesListPage() {
         id: string;
         type: string;
     } | null>(null);
-
-    // const [viewingRegistrationsId, setViewingRegistrationsId] = useState<
-    //     string | null
-    // >(null);
 
     const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
     const tabsWrapRef = useRef<HTMLDivElement>(null);
@@ -229,14 +232,6 @@ export default function ActivitiesListPage() {
         setEditingActivity({ id: a.id, type: a.type });
     };
 
-    // const handleViewRegistrations = (a: any) => {
-    //     if (a.type === "tournament") {
-    //         router.push(`/admin/events/${a.id}/registrations/tournament`);
-    //         return;
-    //     }
-    //     setViewingRegistrationsId(a.id);
-    // };
-
     const handleViewRegistrations = (a: any) => {
         if (a.type === "tournament") {
             router.push(`/admin/events/${a.id}/registrations/tournament`);
@@ -267,7 +262,6 @@ export default function ActivitiesListPage() {
             const { data: full } = await eventsAdminApi.get(activity.id);
             setSelectedActivity(full);
         } catch {
-            // giữ nguyên activity cũ nếu fetch lỗi
         }
     };
 
@@ -536,7 +530,11 @@ export default function ActivitiesListPage() {
                 <EventTypePicker onSelect={handleTypeSelect} />
             </ModalEvent>
 
-            <ModalEvent open={!!selectedType} onClose={() => setSelectedType(null)}>
+            <ModalEvent
+                open={!!selectedType}
+                onClose={() => setSelectedType(null)}
+                maxWidth={selectedType ? (TYPE_MODAL_WIDTH[selectedType] ?? "max-w-lg") : "max-w-lg"}
+            >
                 {SelectedForm && (
                     <SelectedForm
                         onSaved={handleFormSaved}
@@ -548,6 +546,11 @@ export default function ActivitiesListPage() {
             <ModalEvent
                 open={!!editingActivity}
                 onClose={() => setEditingActivity(null)}
+                maxWidth={
+                    editingActivity
+                        ? (TYPE_MODAL_WIDTH[editingActivity.type] ?? "max-w-lg")
+                        : "max-w-lg"
+                }
             >
                 {EditingForm && editingActivity && (
                     <EditingForm

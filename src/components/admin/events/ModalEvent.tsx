@@ -43,7 +43,7 @@ export default function ModalEvent({
             }}
         >
             <div
-                className={`w-full ${maxWidth} bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-auto hide-scrollbar relative`}
+                className={`w-full ${maxWidth} bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-hidden relative flex flex-col`}
                 style={{
                     transform: visible ? "scale(1) translateY(0)" : "scale(0.95) translateY(12px)",
                     opacity: visible ? 1 : 0,
@@ -51,15 +51,15 @@ export default function ModalEvent({
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="sticky top-0 z-20 h-0">
-                    <button
-                        onClick={onClose}
-                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 shadow-sm"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
+                <button
+                    onClick={onClose}
+                    className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 shadow-sm"
+                >
+                    <X className="w-4 h-4" />
+                </button>
+                <div className="overflow-y-auto hide-scrollbar">
+                    {children}
                 </div>
-                {children}
             </div>
         </div>,
         document.body,
