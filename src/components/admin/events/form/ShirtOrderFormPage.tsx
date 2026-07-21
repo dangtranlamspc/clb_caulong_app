@@ -120,7 +120,6 @@ export default function ShirtOrderFormPage({
                                         {
                                             id: genColorId(),
                                             name: "Mặc định",
-                                            // fallback for legacy data that stored images directly on the type
                                             images: (t.images ?? []).map((img: any) =>
                                                 typeof img === "string" ? { url: img } : img,
                                             ),

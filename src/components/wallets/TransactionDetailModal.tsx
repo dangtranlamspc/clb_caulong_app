@@ -1,7 +1,7 @@
 import { Loader2, Users, XIcon } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { registrationsApi } from "@/lib/api";
+import { activitiesApi, registrationsApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { smt, txIcon } from "@/lib/wallet-helpers";
@@ -38,16 +38,40 @@ export function TransactionDetailModal({
     setTimeout(onClose, 250);
   };
 
-  const canLoadDetail =
+  const isSessionPayment =
     tx.type === "session_payment" &&
     tx.reference_type === "registration" &&
     tx.reference_id;
 
+  const isShirtOrder =
+    tx.reference_type === "shirt_order_registration" && tx.reference_id;
+
+  const canLoadDetail = isSessionPayment || isShirtOrder;
+
+  // const canLoadDetail =
+  //   tx.type === "session_payment" &&
+  //   tx.reference_type === "registration" &&
+  //   tx.reference_id;
+
+  // useEffect(() => {
+  //   if (!canLoadDetail) return;
+  //   setLoadingDetail(true);
+  //   registrationsApi
+  //     .getDetail(tx.reference_id)
+  //     .then(({ data }) => setDetail(data))
+  //     .catch(() => setDetail(null))
+  //     .finally(() => setLoadingDetail(false));
+  // }, [tx.reference_id]);
+
   useEffect(() => {
     if (!canLoadDetail) return;
     setLoadingDetail(true);
-    registrationsApi
-      .getDetail(tx.reference_id)
+
+    const request = isShirtOrder
+      ? activitiesApi.getShirtOrderRegistrationDetail(tx.reference_id)
+      : registrationsApi.getDetail(tx.reference_id);
+
+    request
       .then(({ data }) => setDetail(data))
       .catch(() => setDetail(null))
       .finally(() => setLoadingDetail(false));
@@ -63,6 +87,8 @@ export function TransactionDetailModal({
   );
 
   if (typeof document === "undefined") return null;
+
+  const shirtReg = isShirtOrder ? detail?.registration : null;
 
   return createPortal(
     <div
@@ -160,7 +186,7 @@ export function TransactionDetailModal({
             </div>
           </div>
 
-          {canLoadDetail && (
+          {isSessionPayment && (
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
                 Chi tiết khoản thanh toán
@@ -287,6 +313,72 @@ export function TransactionDetailModal({
                     </span>
                     <span className="font-bold text-gray-900">
                       {smt(myBase + myOtherFee + guestsTotal)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+
+          {isShirtOrder && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                Chi tiết đơn đặt áo
+              </p>
+
+              {loadingDetail ? (
+                <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+                </div>
+              ) : !shirtReg ? (
+                <p className="text-sm text-gray-400 text-center py-4">
+                  Không tải được chi tiết
+                </p>
+              ) : (
+                <div className="rounded-xl bg-white border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] divide-y divide-gray-50 overflow-hidden">
+                  <div className="flex justify-between px-4 py-2.5 text-sm">
+                    <span className="text-gray-500">Loại áo</span>
+                    <span className="font-medium text-gray-800">
+                      {shirtReg.shirt_type_name}
+                    </span>
+                  </div>
+                  {shirtReg.color_name && (
+                    <div className="flex justify-between px-4 py-2.5 text-sm">
+                      <span className="text-gray-500">Màu sắc</span>
+                      <span className="font-medium text-gray-800">
+                        {shirtReg.color_name}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between px-4 py-2.5 text-sm">
+                    <span className="text-gray-500">Size</span>
+                    <span className="font-medium text-gray-800">{shirtReg.size}</span>
+                  </div>
+                  {(shirtReg.jersey_number || shirtReg.print_name) && (
+                    <div className="flex justify-between px-4 py-2.5 text-sm">
+                      <span className="text-gray-500">Số áo / Tên in</span>
+                      <span className="font-medium text-gray-800 text-right">
+                        {shirtReg.jersey_number && `Số ${shirtReg.jersey_number}`}
+                        {shirtReg.jersey_number && shirtReg.print_name && " · "}
+                        {shirtReg.print_name && `"${shirtReg.print_name}"`}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between px-4 py-2.5 text-sm">
+                    <span className="text-gray-500">Số lượng</span>
+                    <span className="font-medium text-gray-800">{shirtReg.quantity}</span>
+                  </div>
+                  <div className="flex justify-between px-4 py-2.5 text-sm">
+                    <span className="text-gray-500">Đơn giá</span>
+                    <span className="font-medium text-gray-800">
+                      {smt(shirtReg.unit_price)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between px-4 py-3 text-sm bg-gray-50">
+                    <span className="font-semibold text-gray-700">Thành tiền</span>
+                    <span className="font-bold text-gray-900">
+                      {smt(shirtReg.total_amount)}
                     </span>
                   </div>
                 </div>

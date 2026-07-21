@@ -439,7 +439,6 @@ export default function ActivitiesListPage() {
                         </table>
                     </div>
 
-                    {/* Mobile cards */}
                     <div className="md:hidden space-y-3">
                         {loading ? (
                             Array.from({ length: 4 }).map((_, i) => <SkeletonMobileCard key={i} />)
@@ -564,7 +563,7 @@ export default function ActivitiesListPage() {
             <ModalEvent
                 open={showRegistrations}
                 onClose={closeAll}
-                maxWidth="max-w-6xl"
+                maxWidth="max-w-[1400px]"
             >
                 {selectedActivity && (
                     <EventRegistrationsPage
@@ -578,7 +577,7 @@ export default function ActivitiesListPage() {
             <ModalEvent
                 open={showAddRegistration}
                 onClose={handleBackToRegistrations}
-                maxWidth="max-w-lg"
+                maxWidth="max-w-lg lg:max-w-6xl"
             >
                 {selectedActivity && (
                     <AdminAddShirtOrderModal

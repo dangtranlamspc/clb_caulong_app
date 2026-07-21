@@ -10,7 +10,6 @@ import {
   Users,
   Loader2,
   CheckCircle2,
-  XCircle,
   BarChart3,
   Gift,
   Shirt,
@@ -23,8 +22,7 @@ import {
   Coins,
   ChevronDown,
   ChevronUp,
-  Timer,
-  Hourglass,
+  ShoppingCart,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { activitiesApi, profileApi } from "@/lib/api";
@@ -93,6 +91,7 @@ export default function EventsDetailPage() {
   const [myStatus, setMyStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+
   const fetchAll = async () => {
     try {
       const [{ data: a }, { data: s }] = await Promise.all([
@@ -109,6 +108,8 @@ export default function EventsDetailPage() {
   useEffect(() => {
     fetchAll();
   }, [id]);
+
+
 
   const handleBack = () => {
     sessionStorage.setItem("activity:return-tab", "events");
@@ -128,7 +129,7 @@ export default function EventsDetailPage() {
             paddingTop: "env(safe-area-inset-top)",
           }}
         >
-          <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
+          <div className="max-w-lg lg:max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
             <button
               onClick={handleBack}
               className="p-2 -ml-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
@@ -139,7 +140,7 @@ export default function EventsDetailPage() {
           </div>
         </div>
 
-        <div className="max-w-lg mx-auto px-4 pt-4 pb-8 space-y-4">
+        <div className="max-w-lg lg:max-w-3xl mx-auto px-4 pt-4 pb-8 space-y-4">
           <div className="bg-white rounded-2xl h-40 animate-pulse" />
           <div className="bg-white rounded-2xl h-56 animate-pulse" />
         </div>
@@ -153,7 +154,6 @@ export default function EventsDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F4F6FA] pb-[calc(env(safe-area-inset-bottom)+32px)]">
-      {/* ── Sticky header ── */}
       <div
         className="sticky top-0 z-30"
         style={{
@@ -164,7 +164,7 @@ export default function EventsDetailPage() {
           paddingTop: "env(safe-area-inset-top)",
         }}
       >
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
+        <div className="max-w-lg lg:max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
           <button
             onClick={handleBack}
             className="p-2 -ml-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
@@ -174,11 +174,16 @@ export default function EventsDetailPage() {
           <h1 className="text-base font-bold text-gray-900 truncate flex-1">
             {activity.title}
           </h1>
+          {activity.type === "shirt_order" && (
+            <div
+              id="shirt-cart-slot-desktop"
+              className="hidden lg:flex items-center flex-shrink-0"
+            />
+          )}
         </div>
       </div>
 
-      {/* ── Content ── */}
-      <div className="max-w-lg mx-auto px-4 pt-4 space-y-4">
+      <div className="max-w-lg lg:max-w-3xl mx-auto px-4 pt-4 space-y-4">
         {activity.type === "tournament" ? (
           <TournamentHeroCard activity={activity} />
         ) : (
@@ -323,6 +328,14 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
   const shirtTypes: any[] = activity.detail?.shirt_types ?? [];
   const myRegistrations: any[] = myStatus?.my_registrations ?? [];
   const canRegister = activity.status === "open";
+  const [desktopCartSlot, setDesktopCartSlot] = useState<HTMLElement | null>(null);
+  const [placingOrder, setPlacingOrder] = useState(false);
+
+  const [cartVisible, setCartVisible] = useState(false);
+
+  useEffect(() => {
+    setDesktopCartSlot(document.getElementById("shirt-cart-slot-desktop"));
+  }, []);
 
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(
     shirtTypes[0]?.id ?? null,
@@ -335,36 +348,76 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
 
   const [selectedGender, setSelectedGender] = useState<"nam" | "nu">("nam");
 
-  // 🆕 Nhiều size cùng lúc: key = size, value = quantity đang chọn trong form (chưa submit)
   const [sizeQuantities, setSizeQuantities] = useState<Record<string, number>>({});
 
-  const [submitting, setSubmitting] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [lightboxVisible, setLightboxVisible] = useState(false);
 
-  // Các registration hiện có của loại áo + giới tính đang chọn
+  const [showPayPanel, setShowPayPanel] = useState(false);
+  const [payPanelVisible, setPayPanelVisible] = useState(false);
+
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [checkingOut, setCheckingOut] = useState(false);
+
+  const [cartOpen, setCartOpen] = useState(false);
+
+  const [showConfirmPanel, setShowConfirmPanel] = useState(false);
+  const [confirmPanelVisible, setConfirmPanelVisible] = useState(false);
+  const [payMethod, setPayMethod] = useState<"choose" | "wallet" | "transfer" | "cash">("choose");
+
+  const [submittingPay, setSubmittingPay] = useState(false);
+
+  const TRANSITION_MS = 280;
+
+  type CartItem = {
+    cart_id: string;
+    shirt_type_id: string;
+    shirt_type_name: string;
+    color_id?: string | null;
+    color_name?: string | null;
+    image?: string | null;
+    gender: "nam" | "nu";
+    size: string;
+    quantity: number;
+    unit_price: number;
+  };
+
+
+
   const regsForTypeGender = myRegistrations.filter(
     (r: any) => r.shirt_type_id === selectedType?.id && r.gender === selectedGender,
   );
 
-  // Size đã bị khoá (đã thanh toán / đang chờ xác nhận) → không cho sửa/xoá
   const lockedSizes = new Set(
     regsForTypeGender
       .filter((r: any) => r.payment_status === "confirmed" || !!r.payment_reference)
       .map((r: any) => r.size),
   );
 
-  // Khi đổi mẫu áo hoặc giới tính → nạp lại sizeQuantities từ registration hiện có (chỉ những cái chưa bị khoá vẫn hiện để chỉnh sửa được, cái đã khoá thì hiển thị riêng, không cho sửa)
+  const openCart = () => {
+    setCartOpen(true);
+    requestAnimationFrame(() => setCartVisible(true));
+  };
+
+  const closeCart = () => {
+    setCartVisible(false);
+    setTimeout(() => setCartOpen(false), 250);
+  };
+
+  const cartSizesForCurrent = new Set(
+    cart
+      .filter(
+        (c) =>
+          c.shirt_type_id === selectedType?.id &&
+          c.gender === selectedGender &&
+          c.color_id === selectedColorId,
+      )
+      .map((c) => c.size),
+  );
+
   useEffect(() => {
-    const init: Record<string, number> = {};
-    regsForTypeGender.forEach((r: any) => {
-      if (!lockedSizes.has(r.size)) {
-        init[r.size] = r.quantity ?? 1;
-      }
-    });
-    setSizeQuantities(init);
+    setSizeQuantities({});
     setSelectedColorId(selectedType?.colors?.[0]?.id ?? null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedType?.id, selectedGender]);
 
   const activeColor =
@@ -392,7 +445,6 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
 
   const sizesForGender = sortSizes(selectedGender === "nam" ? namSizes : nuSizes);
 
-  // Bật/tắt 1 size trong form
   const toggleSize = (s: string) => {
     if (lockedSizes.has(s)) return;
     setSizeQuantities((prev) => {
@@ -416,25 +468,67 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
 
   const selectedSizeList = Object.keys(sizeQuantities);
 
-  const handleSubmit = async () => {
+  const handlePlaceOrder = async () => {
     if (!selectedType) return;
     if (selectedSizeList.length === 0) return toast.error("Vui lòng chọn ít nhất 1 size");
-    setSubmitting(true);
+
+    setPlacingOrder(true);
     try {
-      // Gửi lần lượt từng size đã chọn (mỗi size là 1 dòng đăng ký riêng)
       for (const s of selectedSizeList) {
         await activitiesApi.registerShirtOrder(activity.id, {
           shirt_type_id: selectedType.id,
+          color_id: activeColor?.id ?? undefined,
           gender: selectedGender,
           size: s,
           quantity: sizeQuantities[s] < 1 ? 1 : sizeQuantities[s],
         });
       }
-      toast.success(`Đã thêm ${selectedSizeList.length} size vào đơn hàng`);
+      toast.success(`Đã đặt hàng ${selectedSizeList.length} sản phẩm`);
+      setSizeQuantities({});
       onChanged();
-    } catch {
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Đặt hàng thất bại, vui lòng thử lại");
     } finally {
-      setSubmitting(false);
+      setPlacingOrder(false);
+    }
+  };
+
+  const changeCartQty = (cartId: string, delta: number) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.cart_id === cartId
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+          : item,
+      ),
+    );
+  };
+
+  const removeCartItem = (cartId: string) => {
+    setCart((prev) => prev.filter((item) => item.cart_id !== cartId));
+  };
+
+  const cartTotal = cart.reduce((s, item) => s + item.unit_price * item.quantity, 0);
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
+    setCheckingOut(true);
+    try {
+      for (const item of cart) {
+        await activitiesApi.registerShirtOrder(activity.id, {
+          shirt_type_id: item.shirt_type_id,
+          color_id: item.color_id ?? undefined,
+          gender: item.gender,
+          size: item.size,
+          quantity: item.quantity,
+        });
+      }
+      toast.success(`Đã đặt hàng ${cart.length} sản phẩm`);
+      setCart([]);
+      onChanged();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Đặt hàng thất bại, vui lòng thử lại");
+    } finally {
+      setCheckingOut(false);
     }
   };
 
@@ -457,9 +551,43 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     setTimeout(() => setLightboxSrc(null), 200);
   };
 
-  const [payingReg, setPayingReg] = useState<any | null>(null);
-  const [payMethod, setPayMethod] = useState<"wallet" | "transfer" | "cash">("transfer");
-  const [submittingPay, setSubmittingPay] = useState(false);
+  const openCombinedPay = () => {
+    closeCart();
+    setTimeout(() => {
+      setShowPayPanel(true);
+      requestAnimationFrame(() => setPayPanelVisible(true));
+    }, TRANSITION_MS);
+  };
+
+  const closePayPanel = () => {
+    setPayPanelVisible(false);
+    setTimeout(() => setShowPayPanel(false), TRANSITION_MS);
+  };
+
+  const selectPayMethod = (method: "wallet" | "transfer" | "cash") => {
+    setPayPanelVisible(false);
+    setTimeout(() => {
+      setShowPayPanel(false);
+      setPayMethod(method);
+      setShowConfirmPanel(true);
+      requestAnimationFrame(() => setConfirmPanelVisible(true));
+    }, TRANSITION_MS);
+  };
+
+  const closeConfirmPanel = () => {
+    setConfirmPanelVisible(false);
+    setTimeout(() => setShowConfirmPanel(false), TRANSITION_MS);
+  };
+
+  const backToChooseMethod = () => {
+    setConfirmPanelVisible(false);
+    setTimeout(() => {
+      setShowConfirmPanel(false);
+      setShowPayPanel(true);
+      requestAnimationFrame(() => setPayPanelVisible(true));
+    }, TRANSITION_MS);
+  };
+
 
   const priceOf = (r: any) => {
     const t = shirtTypes.find((x) => x.id === r.shirt_type_id);
@@ -467,22 +595,24 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
   };
 
   const subtotal = myRegistrations.reduce((s: number, r: any) => s + priceOf(r), 0);
+  const grandTotal = cartTotal + subtotal;
 
-  const openPay = (reg: any) => {
-    setPayingReg(reg);
-    setPayMethod("transfer");
-  };
+  const unpaidRegs = myRegistrations.filter(
+    (r: any) => r.payment_status !== "confirmed" && !r.payment_reference && priceOf(r) > 0,
+  );
+  const unpaidTotal = unpaidRegs.reduce((s: number, r: any) => s + priceOf(r), 0);
 
-  const handlePayWallet = async () => {
-    if (!payingReg) return;
+
+
+  const handlePayWalletAll = async () => {
+    if (unpaidRegs.length === 0) return;
     setSubmittingPay(true);
     try {
-      await activitiesApi.payShirtOrder(activity.id, {
-        registration_id: payingReg.id,
-        method: "wallet",
-      });
-      toast.success("Đã thanh toán bằng ví BnB!");
-      setPayingReg(null);
+      for (const reg of unpaidRegs) {
+        await activitiesApi.payShirtOrder(activity.id, { registration_id: reg.id, method: "wallet" });
+      }
+      toast.success(`Đã thanh toán ${fmt(unpaidTotal)} từ ví cho ${unpaidRegs.length} sản phẩm`);
+      closeConfirmPanel();
       onChanged();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Thanh toán thất bại");
@@ -491,17 +621,15 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     }
   };
 
-  const handleConfirmTransferred = async (ref: string) => {
-    if (!payingReg) return;
+  const handleConfirmTransferredAll = async (ref: string) => {
+    if (unpaidRegs.length === 0) return;
     setSubmittingPay(true);
     try {
-      await activitiesApi.payShirtOrder(activity.id, {
-        registration_id: payingReg.id,
-        method: "transfer",
-        payment_reference: ref,
-      });
-      toast.success("Đã ghi nhận, chờ admin xác nhận!");
-      setPayingReg(null);
+      for (const reg of unpaidRegs) {
+        await activitiesApi.payShirtOrder(activity.id, { registration_id: reg.id, method: "transfer", payment_reference: ref });
+      }
+      toast.success("Đã ghi nhận chuyển khoản, chờ admin xác nhận!");
+      closeConfirmPanel();
       onChanged();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Gửi thất bại");
@@ -510,16 +638,15 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     }
   };
 
-  const handleRequestCash = async () => {
-    if (!payingReg) return;
+  const handleRequestCashAll = async () => {
+    if (unpaidRegs.length === 0) return;
     setSubmittingPay(true);
     try {
-      await activitiesApi.payShirtOrder(activity.id, {
-        registration_id: payingReg.id,
-        method: "cash",
-      });
+      for (const reg of unpaidRegs) {
+        await activitiesApi.payShirtOrder(activity.id, { registration_id: reg.id, method: "cash" });
+      }
       toast.success("Đã thông báo admin!");
-      setPayingReg(null);
+      closeConfirmPanel();
       onChanged();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Gửi thất bại");
@@ -536,465 +663,845 @@ function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     );
   }
 
-  const payAmount = payingReg ? priceOf(payingReg) : 0;
+  const totalCartCount = cart.length + myRegistrations.length;
 
   return (
-    <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-gray-900">1. Chọn mẫu áo</h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {shirtTypes.map((type) => {
-                const images: string[] = (type.colors ?? []).flatMap((c: any) =>
-                  (c.images ?? []).map((img: any) => (typeof img === "string" ? img : img.url)),
-                );
-                const active = selectedType?.id === type.id;
-                const already = myRegistrations.some((r: any) => r.shirt_type_id === type.id);
-                const previewSrc = active ? (activeColorImage ?? images[0]) : images[0];
+    <div className="space-y-4">
+      <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-gray-900">1. Chọn mẫu áo</h3>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {shirtTypes.map((type) => {
+            const images: string[] = (type.colors ?? []).flatMap((c: any) =>
+              (c.images ?? []).map((img: any) => (typeof img === "string" ? img : img.url)),
+            );
+            const active = selectedType?.id === type.id;
+            const alreadyInCartOrOrder =
+              cart.some((c) => c.shirt_type_id === type.id) ||
+              myRegistrations.some((r: any) => r.shirt_type_id === type.id);
+            const previewSrc = active ? (activeColorImage ?? images[0]) : images[0];
+
+            return (
+              <div
+                key={type.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedTypeId(type.id)}
+                onKeyDown={(e) => e.key === "Enter" && setSelectedTypeId(type.id)}
+                className={`relative text-left rounded-2xl border-2 p-2 w-[104px] sm:w-[140px] lg:w-[160px] flex-shrink-0 transition-colors cursor-pointer ${active ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white"
+                  }`}
+              >
+                {active && (
+                  <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center z-10">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                  </span>
+                )}
+                {alreadyInCartOrOrder && (
+                  <span className="absolute top-1.5 left-1.5 text-[8px] font-bold uppercase bg-emerald-500 text-white px-1.5 py-0.5 rounded-full z-10">
+                    Đã chọn
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (previewSrc) openLightbox(previewSrc);
+                  }}
+                  className="w-full aspect-square rounded-xl bg-gray-50 overflow-hidden flex items-center justify-center mb-2"
+                >
+                  {previewSrc ? (
+                    <img src={previewSrc} className="w-full h-full object-cover" />
+                  ) : (
+                    <Shirt className="w-7 h-7 text-gray-300" />
+                  )}
+                </button>
+
+                <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{type.name}</p>
+                {(type.price_per_shirt ?? 0) > 0 && (
+                  <p className="text-[11px] sm:text-sm font-medium text-blue-600 mt-0.5">
+                    {fmt(type.price_per_shirt)}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {(selectedType?.colors ?? []).length > 0 && (
+          <div>
+            <p className="text-[11px] font-medium text-gray-400 mb-2">Màu sắc</p>
+            <div className="flex flex-wrap gap-3">
+              {(selectedType.colors ?? []).map((c: any) => {
+                const isActive = activeColor?.id === c.id;
+                const swatch = colorSwatchFromName(c.name);
+                const isLightSwatch =
+                  swatch.toLowerCase() === "#ffffff" || swatch.toLowerCase() === "#eab308";
 
                 return (
-                  <div
-                    key={type.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedTypeId(type.id)}
-                    onKeyDown={(e) => e.key === "Enter" && setSelectedTypeId(type.id)}
-                    className={`relative text-left rounded-2xl border-2 p-2.5 transition-colors cursor-pointer ${active ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white"
-                      }`}
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedColorId(c.id)}
+                    className="flex flex-col items-center gap-1"
+                    title={c.name}
                   >
-                    {active && (
-                      <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center z-10">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                      </span>
-                    )}
-                    {already && (
-                      <span className="absolute top-2 left-2 text-[9px] font-bold uppercase bg-emerald-500 text-white px-1.5 py-0.5 rounded-full z-10">
-                        Đã chọn
-                      </span>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (previewSrc) openLightbox(previewSrc);
+                    <span
+                      className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all ${isActive ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200"
+                        }`}
+                      style={{
+                        backgroundColor: swatch,
+                        boxShadow:
+                          swatch.toLowerCase() === "#ffffff"
+                            ? "inset 0 0 0 1px rgba(0,0,0,0.08)"
+                            : undefined,
                       }}
-                      className="w-full aspect-square rounded-xl bg-gray-50 overflow-hidden flex items-center justify-center mb-2"
                     >
-                      {previewSrc ? (
-                        <img src={previewSrc} className="w-full h-full object-cover" />
-                      ) : (
-                        <Shirt className="w-8 h-8 text-gray-300" />
+                      {isActive && (
+                        <CheckCircle2
+                          className={`w-4 h-4 ${isLightSwatch ? "text-gray-700" : "text-white"}`}
+                        />
                       )}
-                    </button>
-
-                    <p className="text-sm font-semibold text-gray-900 truncate">{type.name}</p>
-                    {(type.price_per_shirt ?? 0) > 0 && (
-                      <p className="text-xs font-medium text-blue-600 mt-0.5">
-                        {fmt(type.price_per_shirt)}
-                      </p>
-                    )}
-                  </div>
+                    </span>
+                    <span className="text-[10px] text-gray-500 max-w-[64px] truncate">
+                      {c.name}
+                    </span>
+                  </button>
                 );
               })}
             </div>
+          </div>
+        )}
+      </div>
 
-            {(selectedType?.colors ?? []).length > 0 && (
-              <div>
-                <p className="text-[11px] font-medium text-gray-400 mb-2">Màu sắc</p>
-                <div className="flex flex-wrap gap-3">
-                  {(selectedType.colors ?? []).map((c: any) => {
-                    const isActive = activeColor?.id === c.id;
-                    const swatch = colorSwatchFromName(c.name);
-                    const isLightSwatch =
-                      swatch.toLowerCase() === "#ffffff" || swatch.toLowerCase() === "#eab308";
+      <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="font-bold text-gray-900">2. Thông tin đặt áo</h3>
 
+        {!canRegister && regsForTypeGender.length === 0 && cart.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-2">Đã đóng đăng ký</p>
+        ) : (
+          <>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                Giới tính
+              </label>
+              <div className="flex gap-2">
+                {(["nam", "nu"] as const).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setSelectedGender(g)}
+                    disabled={!canRegister}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${selectedGender === g
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-600 border-gray-200"
+                      }`}
+                  >
+                    {g === "nam" ? "Nam" : "Nữ"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                Size áo (có thể chọn nhiều size)
+              </label>
+              {sizesForGender.length === 0 ? (
+                <p className="text-sm text-gray-400">
+                  Chưa có size nào được cấu hình cho giới tính này
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {sizesForGender.map((s) => {
+                    const isLocked = lockedSizes.has(s);
+                    const isInCart = cartSizesForCurrent.has(s);
+                    const isSelected = sizeQuantities[s] != null;
                     return (
                       <button
-                        key={c.id}
-                        onClick={() => setSelectedColorId(c.id)}
-                        className="flex flex-col items-center gap-1"
-                        title={c.name}
+                        key={s}
+                        onClick={() => toggleSize(s)}
+                        disabled={isLocked || !canRegister}
+                        className={`relative w-11 h-11 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isSelected
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : isLocked
+                            ? "bg-blue-50 text-blue-400 border-blue-100"
+                            : isInCart
+                              ? "bg-amber-50 text-amber-500 border-amber-200"
+                              : "bg-white text-gray-600 border-gray-200"
+                          }`}
                       >
-                        <span
-                          className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all ${isActive ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200"
-                            }`}
-                          style={{
-                            backgroundColor: swatch,
-                            boxShadow:
-                              swatch.toLowerCase() === "#ffffff"
-                                ? "inset 0 0 0 1px rgba(0,0,0,0.08)"
-                                : undefined,
-                          }}
-                        >
-                          {isActive && (
-                            <CheckCircle2
-                              className={`w-4 h-4 ${isLightSwatch ? "text-gray-700" : "text-white"}`}
-                            />
-                          )}
-                        </span>
-                        <span className="text-[10px] text-gray-500 max-w-[64px] truncate">
-                          {c.name}
-                        </span>
+                        {s}
+                        {isLocked && (
+                          <CheckCircle2 className="w-3 h-3 text-blue-400 absolute -top-1 -right-1 bg-white rounded-full" />
+                        )}
+                        {isInCart && !isLocked && (
+                          <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-amber-400 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                            +
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+              {lockedSizes.size > 0 && (
+                <p className="text-[11px] text-gray-400 mt-1.5">
+                  Size có dấu ✓ đã thanh toán / chờ xác nhận, không thể đổi.
+                </p>
+              )}
+              {cartSizesForCurrent.size > 0 && (
+                <p className="text-[11px] text-amber-500 mt-1">
+                  Size có dấu + đã có trong giỏ hàng (chưa gửi đơn).
+                </p>
+              )}
+            </div>
 
-          {/* ── 2. Thông tin đặt áo: chọn nhiều size ── */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-            <h3 className="font-bold text-gray-900">2. Thông tin đặt áo</h3>
-
-            {!canRegister && regsForTypeGender.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-2">Đã đóng đăng ký</p>
-            ) : (
-              <>
-                {/* Chọn giới tính */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                    Giới tính
-                  </label>
-                  <div className="flex gap-2">
-                    {(["nam", "nu"] as const).map((g) => (
-                      <button
-                        key={g}
-                        onClick={() => setSelectedGender(g)}
-                        disabled={!canRegister}
-                        className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${selectedGender === g
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-white text-gray-600 border-gray-200"
-                          }`}
-                      >
-                        {g === "nam" ? "Nam" : "Nữ"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 🆕 Chọn nhiều size, mỗi size có số lượng riêng */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                    Size áo (có thể chọn nhiều size)
-                  </label>
-                  {sizesForGender.length === 0 ? (
-                    <p className="text-sm text-gray-400">
-                      Chưa có size nào được cấu hình cho giới tính này
-                    </p>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {sizesForGender.map((s) => {
-                        const isLocked = lockedSizes.has(s);
-                        const isSelected = sizeQuantities[s] != null;
-                        return (
-                          <button
-                            key={s}
-                            onClick={() => toggleSize(s)}
-                            disabled={isLocked || !canRegister}
-                            className={`relative w-11 h-11 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isSelected
-                              ? "bg-blue-600 text-white border-blue-600"
-                              : isLocked
-                                ? "bg-blue-50 text-blue-400 border-blue-100"
-                                : "bg-white text-gray-600 border-gray-200"
-                              }`}
-                          >
-                            {s}
-                            {isLocked && (
-                              <CheckCircle2 className="w-3 h-3 text-blue-400 absolute -top-1 -right-1 bg-white rounded-full" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {lockedSizes.size > 0 && (
-                    <p className="text-[11px] text-gray-400 mt-1.5">
-                      Size có dấu ✓ đã thanh toán / chờ xác nhận, không thể đổi.
-                    </p>
-                  )}
-                </div>
-
-                {/* Danh sách size đã chọn + số lượng từng size */}
-                {selectedSizeList.length > 0 && (
-                  <div className="space-y-2">
-                    <label className="block text-xs font-semibold text-gray-500">
-                      Số lượng theo từng size
-                    </label>
-                    {sortSizes(selectedSizeList).map((s) => (
-                      <div
-                        key={s}
-                        className="flex items-center justify-between rounded-xl border border-gray-200 px-3 py-2"
-                      >
-                        <span className="text-sm font-semibold text-gray-800">Size {s}</span>
-                        <div className="inline-flex items-center rounded-xl border border-gray-200 overflow-hidden">
-                          <button
-                            onClick={() => changeQty(s, -1)}
-                            disabled={!canRegister}
-                            className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-40"
-                          >
-                            −
-                          </button>
-                          <span className="w-9 text-center text-sm font-semibold">
-                            {sizeQuantities[s]}
-                          </span>
-                          <button
-                            onClick={() => changeQty(s, 1)}
-                            disabled={!canRegister}
-                            className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-40"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {canRegister && (
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting || selectedSizeList.length === 0}
-                    className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+            {/* Danh sách size đang chọn + số lượng từng size */}
+            {selectedSizeList.length > 0 && (
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-gray-500">
+                  Số lượng theo từng size
+                </label>
+                {sortSizes(selectedSizeList).map((s) => (
+                  <div
+                    key={s}
+                    className="flex items-center justify-between rounded-xl border border-gray-200 px-3 py-2"
                   >
-                    {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Thêm vào đơn hàng
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* ───── Cột phải: đơn hàng + thanh toán (không đổi) ───── */}
-        <div className="space-y-4 lg:sticky lg:top-20">
-          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
-            <h3 className="font-bold text-gray-900">Đơn hàng của bạn</h3>
-
-            {myRegistrations.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">Chưa có sản phẩm nào</p>
-            ) : (
-              <div className="space-y-2.5">
-                {myRegistrations.map((reg: any) => {
-                  const type = shirtTypes.find((t) => t.id === reg.shirt_type_id);
-                  const images: string[] = (type?.colors ?? []).flatMap((c: any) =>
-                    (c.images ?? []).map((img: any) => (typeof img === "string" ? img : img.url)),
-                  );
-                  const paid = reg.payment_status === "confirmed";
-                  const pending = !paid && !!reg.payment_reference;
-                  const amount = (type?.price_per_shirt ?? 0) * (reg.quantity ?? 1);
-
-                  return (
-                    <div
-                      key={reg.id}
-                      className="flex gap-3 rounded-xl border border-gray-100 p-3"
-                    >
-                      <div className="w-14 h-14 rounded-lg bg-gray-50 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        {images[0] ? (
-                          <img src={images[0]} className="w-full h-full object-cover" />
-                        ) : (
-                          <Shirt className="w-5 h-5 text-gray-300" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
-                            {type?.name ?? "—"}
-                          </p>
-                          {!paid && !pending && (
-                            <button
-                              onClick={() => handleCancel(reg)}
-                              className="text-gray-300 hover:text-red-500 flex-shrink-0"
-                            >
-                              <XIcon className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {reg.gender === "nu" ? "Nữ" : "Nam"} · Size {reg.size} × {reg.quantity}
-                        </p>
-                        <div className="flex items-center justify-between mt-1.5">
-                          <span className="text-sm font-bold text-gray-900">{fmt(amount)}</span>
-                          {paid ? (
-                            <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                              Đã thanh toán
-                            </span>
-                          ) : pending ? (
-                            <span className="text-[11px] font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
-                              Chờ xác nhận
-                            </span>
-                          ) : amount > 0 ? (
-                            <button
-                              onClick={() => openPay(reg)}
-                              className="text-[11px] font-bold text-white bg-red-500 hover:bg-red-600 px-2.5 py-1 rounded-full"
-                            >
-                              Thanh toán
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
+                    <span className="text-sm font-semibold text-gray-800">Size {s}</span>
+                    <div className="inline-flex items-center rounded-xl border border-gray-200 overflow-hidden">
+                      <button
+                        onClick={() => changeQty(s, -1)}
+                        disabled={!canRegister}
+                        className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+                      >
+                        −
+                      </button>
+                      <span className="w-9 text-center text-sm font-semibold">
+                        {sizeQuantities[s]}
+                      </span>
+                      <button
+                        onClick={() => changeQty(s, 1)}
+                        disabled={!canRegister}
+                        className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+                      >
+                        +
+                      </button>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             )}
 
-            {myRegistrations.length > 0 && (
-              <div className="border-t border-gray-100 pt-3 flex items-center justify-between">
-                <span className="text-sm text-gray-500">Tổng cộng</span>
-                <span className="text-lg font-black text-gray-900">{fmt(subtotal)}</span>
-              </div>
+            {canRegister && (
+              <button
+                onClick={handlePlaceOrder}
+                disabled={selectedSizeList.length === 0 || placingOrder}
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {placingOrder && <Loader2 className="w-4 h-4 animate-spin" />}
+                Đặt hàng
+              </button>
             )}
-          </div>
+          </>
+        )}
+      </div>
 
-          {/* ── Panel thanh toán (không đổi) ── */}
-          {payingReg && (
-            <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-gray-900">Thanh toán</h3>
+      {totalCartCount > 0 && (
+        <button
+          onClick={openCart}
+          className="fixed z-40 bottom-[calc(env(safe-area-inset-bottom)+20px)] right-5 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-300/50 flex items-center justify-center text-white transition-transform active:scale-95 lg:hidden"
+        >
+          <ShoppingCart className="w-6 h-6" />
+          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center">
+            {totalCartCount}
+          </span>
+        </button>
+      )}
+
+      {totalCartCount > 0 &&
+        desktopCartSlot &&
+        createPortal(
+          <button
+            onClick={openCart}
+            className="relative flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Giỏ hàng
+            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+              {totalCartCount}
+            </span>
+          </button>,
+          desktopCartSlot,
+        )}
+
+
+      {cartOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className={`fixed inset-0 z-[99998] flex flex-col justify-end transition-opacity duration-300 ease-out ${cartVisible ? "opacity-100" : "opacity-0"
+              }`}
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
+            onClick={(e) => e.target === e.currentTarget && closeCart()}
+          >
+            <div
+              className={`w-full bg-white rounded-t-2xl transition-transform duration-300 ease-out ${cartVisible ? "translate-y-0" : "translate-y-full"
+                }`}
+              style={{
+                maxHeight: "88vh",
+                overflowY: "auto",
+                paddingBottom: "env(safe-area-inset-bottom)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-white">
+                <div className="w-9 h-1 rounded-full bg-gray-200" />
+              </div>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 sticky top-3 bg-white z-10">
+                <p className="text-base font-bold text-gray-900">Giỏ hàng của bạn</p>
                 <button
-                  onClick={() => setPayingReg(null)}
+                  onClick={closeCart}
                   className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
                 >
                   <XIcon className="w-4 h-4 text-gray-500" />
                 </button>
               </div>
 
-              <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
-                <span className="text-sm text-gray-600">Số tiền</span>
-                <span className="text-lg font-black text-red-600">{fmt(payAmount)}</span>
+              <div className="px-5 py-4 space-y-4">
+                {totalCartCount === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-10">
+                    Chưa có sản phẩm nào
+                  </p>
+                ) : (
+                  <>
+                    {/* Trong giỏ - chưa gửi API */}
+                    {cart.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          Trong giỏ ({cart.length})
+                        </p>
+                        {cart.map((item) => (
+                          <div
+                            key={item.cart_id}
+                            className="flex gap-3 rounded-xl border border-amber-100 bg-amber-50/40 p-3"
+                          >
+                            <div className="w-14 h-14 rounded-lg bg-white overflow-hidden flex-shrink-0 flex items-center justify-center">
+                              {item.image ? (
+                                <img src={item.image} className="w-full h-full object-cover" />
+                              ) : (
+                                <Shirt className="w-5 h-5 text-gray-300" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-semibold text-gray-900 truncate">
+                                  {item.shirt_type_name}
+                                </p>
+                                <button
+                                  onClick={() => removeCartItem(item.cart_id)}
+                                  className="text-gray-300 hover:text-red-500 flex-shrink-0"
+                                >
+                                  <XIcon className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                {item.gender === "nu" ? "Nữ" : "Nam"} · Size {item.size}
+                                {item.color_name ? ` · ${item.color_name}` : ""}
+                              </p>
+                              <div className="flex items-center justify-between mt-1.5">
+                                <div className="inline-flex items-center rounded-lg border border-gray-200 overflow-hidden">
+                                  <button
+                                    onClick={() => changeCartQty(item.cart_id, -1)}
+                                    className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-xs"
+                                  >
+                                    −
+                                  </button>
+                                  <span className="w-7 text-center text-xs font-semibold">
+                                    {item.quantity}
+                                  </span>
+                                  <button
+                                    onClick={() => changeCartQty(item.cart_id, 1)}
+                                    className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-xs"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                                <span className="text-sm font-bold text-gray-900">
+                                  {fmt(item.unit_price * item.quantity)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between px-1 pt-1">
+                          <span className="text-sm text-gray-500">Tạm tính</span>
+                          <span className="font-bold text-gray-900">{fmt(cartTotal)}</span>
+                        </div>
+                        <button
+                          onClick={handleCheckout}
+                          disabled={checkingOut}
+                          className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          {checkingOut && <Loader2 className="w-4 h-4 animate-spin" />}
+                          Đặt hàng ({cart.length} sản phẩm)
+                        </button>
+                      </div>
+                    )}
+
+                    {myRegistrations.length > 0 && (() => {
+                      // ── Gộp theo LOẠI ÁO (shirt_type_id) — bỏ qua khác biệt màu/size ──
+                      const groupedByType = new Map<string, {
+                        shirt_type_id: string;
+                        variants: any[]; // các registration gốc thuộc loại áo này
+                      }>();
+
+                      for (const reg of myRegistrations) {
+                        const key = reg.shirt_type_id;
+                        if (!groupedByType.has(key)) {
+                          groupedByType.set(key, { shirt_type_id: key, variants: [] });
+                        }
+                        groupedByType.get(key)!.variants.push(reg);
+                      }
+                      const typeGroups = Array.from(groupedByType.values());
+
+                      return (
+                        <div className="space-y-2 pt-2 border-t border-gray-100">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            Đã đặt ({myRegistrations.length})
+                          </p>
+                          {typeGroups.map((group) => {
+                            const type = shirtTypes.find((t) => t.id === group.shirt_type_id);
+                            const images: string[] = (type?.colors ?? []).flatMap((c: any) =>
+                              (c.images ?? []).map((img: any) =>
+                                typeof img === "string" ? img : img.url,
+                              ),
+                            );
+                            const groupTotal = group.variants.reduce(
+                              (sum: number, r: any) => sum + priceOf(r),
+                              0,
+                            );
+                            const groupQuantity = group.variants.reduce(
+                              (sum: number, r: any) => sum + (r.quantity ?? 1),
+                              0,
+                            );
+                            const allPaid = group.variants.every((r: any) => r.payment_status === "confirmed");
+                            const anyPending = group.variants.some(
+                              (r: any) => r.payment_status !== "confirmed" && !!r.payment_reference,
+                            );
+                            const anyUnpaid = group.variants.some(
+                              (r: any) => r.payment_status !== "confirmed" && !r.payment_reference,
+                            );
+
+                            return (
+                              <div
+                                key={group.shirt_type_id}
+                                className="flex gap-3 rounded-xl border border-gray-100 p-3"
+                              >
+                                <div className="w-14 h-14 rounded-lg bg-gray-50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                  {images[0] ? (
+                                    <img src={images[0]} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <Shirt className="w-5 h-5 text-gray-300" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-sm font-semibold text-gray-900 truncate">
+                                      {type?.name ?? "—"} <span className="text-gray-400 font-normal">× {groupQuantity}</span>
+                                    </p>
+                                  </div>
+
+                                  {/* Danh sách từng biến thể (màu/size) trong loại áo này */}
+                                  <div className="mt-1 space-y-1">
+                                    {group.variants.map((r: any) => {
+                                      const paid = r.payment_status === "confirmed";
+                                      const pending = !paid && !!r.payment_reference;
+                                      return (
+                                        <div
+                                          key={r.id}
+                                          className="flex items-center justify-between gap-2 text-xs"
+                                        >
+                                          <span className="text-gray-400">
+                                            {r.gender === "nu" ? "Nữ" : "Nam"} · Size {r.size} × {r.quantity}
+                                            {r.color_name ? ` · ${r.color_name}` : ""}
+                                          </span>
+                                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                                            <span className="text-gray-500 font-medium">{fmt(priceOf(r))}</span>
+                                            {!paid && !pending && (
+                                              <button
+                                                onClick={() => handleCancel(r)}
+                                                className="text-gray-300 hover:text-red-500"
+                                              >
+                                                <XIcon className="w-3.5 h-3.5" />
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+
+                                  <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-gray-50">
+                                    <span className="text-sm font-bold text-gray-900">
+                                      {fmt(groupTotal)}
+                                    </span>
+                                    {allPaid ? (
+                                      <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                                        Đã thanh toán
+                                      </span>
+                                    ) : anyPending ? (
+                                      <span className="text-[11px] font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
+                                        Chờ xác nhận
+                                      </span>
+                                    ) : anyUnpaid ? (
+                                      <span className="text-[11px] font-semibold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+                                        Chưa thanh toán
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          <div className="flex items-center justify-between px-1 pt-1">
+                            <span className="text-sm text-gray-500">Tổng đã đặt</span>
+                            <span className="font-bold text-gray-900">{fmt(subtotal)}</span>
+                          </div>
+
+                          {unpaidRegs.length > 0 && (
+                            <button
+                              onClick={openCombinedPay}
+                              className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-orange-200"
+                            >
+                              💳 Thanh toán tất cả ({fmt(unpaidTotal)})
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {cart.length > 0 && myRegistrations.length > 0 && (
+                      <div className="flex items-center justify-between px-1 pt-2 border-t border-gray-100">
+                        <span className="text-sm text-gray-600 font-medium">Tổng cộng</span>
+                        <span className="text-lg font-black text-gray-900">
+                          {fmt(grandTotal)}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {showPayPanel &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className={`fixed inset-0 z-[99999] flex flex-col justify-end transition-opacity duration-300 ease-out ${payPanelVisible ? "opacity-100" : "opacity-0"
+              }`}
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
+            onClick={(e) => e.target === e.currentTarget && closePayPanel()}
+          >
+            <div
+              className={`w-full bg-white rounded-t-2xl transition-transform duration-300 ease-out ${payPanelVisible ? "translate-y-0" : "translate-y-full"
+                }`}
+              style={{
+                maxHeight: "90vh",
+                overflowY: "auto",
+                paddingBottom: "env(safe-area-inset-bottom)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-9 h-1 rounded-full bg-gray-200" />
+              </div>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Chọn phương thức thanh toán</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Thanh toán gộp {unpaidRegs.length} sản phẩm · {activity.title}
+                  </p>
+                </div>
+                <button
+                  onClick={closePayPanel}
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                  <XIcon className="w-4 h-4 text-gray-500" />
+                </button>
               </div>
 
-              <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-                {(["wallet", "transfer", "cash"] as const).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setPayMethod(m)}
-                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${payMethod === m ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
-                      }`}
-                  >
-                    {m === "wallet" ? "Ví BnB" : m === "transfer" ? "Chuyển khoản" : "Tiền mặt"}
-                  </button>
-                ))}
-              </div>
+              <div className="px-5 py-4 space-y-4">
+                <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
+                  <span className="text-sm text-gray-600">Tổng tiền thanh toán</span>
+                  <span className="text-lg font-black text-red-600">{fmt(unpaidTotal)}</span>
+                </div>
 
-              {payMethod === "wallet" && (
                 <div className="space-y-3">
-                  <div className="bg-blue-50 rounded-xl p-4 text-xs text-blue-600">
-                    Số dư ví sẽ bị trừ ngay lập tức khi xác nhận.
-                  </div>
                   <button
-                    onClick={handlePayWallet}
-                    disabled={submittingPay}
-                    className="w-full py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
+                    onClick={() => selectPayMethod("wallet")}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-[#0F2E22] hover:bg-gray-50 transition-colors text-left"
                   >
-                    {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    <Wallet className="w-3.5 h-3.5" /> Xác nhận trừ ví
+                    <div className="w-11 h-11 rounded-full bg-[#0F2E22]/10 flex items-center justify-center flex-shrink-0">
+                      <Wallet className="w-5 h-5 text-[#0F2E22]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Ví BnB</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Trừ thẳng vào số dư ví — xác nhận ngay lập tức
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => selectPayMethod("transfer")}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-[#C9A227] hover:bg-amber-50 transition-colors text-left"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center text-xl">
+                      🏦
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Chuyển khoản</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Quét QR VietQR, xác nhận sau khi chuyển
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => selectPayMethod("cash")}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors text-left"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center text-xl">
+                      💵
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Tiền mặt</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Thông báo admin, nộp tiền trực tiếp
+                      </p>
+                    </div>
                   </button>
                 </div>
-              )}
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
 
-              {payMethod === "transfer" &&
-                (() => {
-                  const ref = `DATAOA ${payingReg.id.slice(0, 8).toUpperCase()}`;
-                  const bankId = process.env.NEXT_PUBLIC_BANK_ID ?? "MB";
-                  const bankAccount = process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "0000000000";
-                  const bankAccountName = process.env.NEXT_PUBLIC_BANK_NAME ?? "CLB CAU LONG";
-                  const bankDisplayName = BANK_DISPLAY_NAMES[bankId] ?? bankId;
-                  const qr = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${payAmount}&addInfo=${encodeURIComponent(
-                    ref,
-                  )}&accountName=${encodeURIComponent(bankAccountName)}`;
+      {showConfirmPanel &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className={`fixed inset-0 z-[99999] flex flex-col justify-end transition-opacity duration-300 ease-out ${confirmPanelVisible ? "opacity-100" : "opacity-0"
+              }`}
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
+            onClick={(e) => e.target === e.currentTarget && closeConfirmPanel()}
+          >
+            <div
+              className={`w-full bg-white rounded-t-2xl transition-transform duration-300 ease-out ${confirmPanelVisible ? "translate-y-0" : "translate-y-full"
+                }`}
+              style={{
+                maxHeight: "90vh",
+                overflowY: "auto",
+                paddingBottom: "env(safe-area-inset-bottom)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-9 h-1 rounded-full bg-gray-200" />
+              </div>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">
+                    {payMethod === "wallet"
+                      ? "Trừ ví BnB"
+                      : payMethod === "transfer"
+                        ? "Chuyển khoản"
+                        : "Tiền mặt"}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Thanh toán gộp {unpaidRegs.length} sản phẩm · {activity.title}
+                  </p>
+                </div>
+                <button
+                  onClick={closeConfirmPanel}
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                  <XIcon className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
 
-                  return (
-                    <div className="space-y-3">
-                      <div className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center gap-2">
-                        <p className="text-xs text-gray-400">Quét mã QR để thanh toán</p>
-                        <img src={qr} alt="VietQR" className="w-40 h-40 object-contain" />
-                      </div>
-                      <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
-                        <div className="flex justify-between px-4 py-2.5">
-                          <span className="text-gray-500">Ngân hàng</span>
-                          <span className="font-semibold text-gray-900">{bankDisplayName}</span>
+              <div className="px-5 py-4 space-y-4">
+                <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
+                  <span className="text-sm text-gray-600">Tổng tiền thanh toán</span>
+                  <span className="text-lg font-black text-red-600">{fmt(unpaidTotal)}</span>
+                </div>
+
+                {payMethod === "wallet" && (
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-sm font-semibold text-[#0F2E22] mb-1 flex items-center gap-2">
+                        <Wallet className="w-4 h-4" /> Thanh toán bằng Ví BnB
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Ví sẽ bị trừ lần lượt cho {unpaidRegs.length} sản phẩm, tổng {fmt(unpaidTotal)}.
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={backToChooseMethod}
+                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
+                      >
+                        Quay lại
+                      </button>
+                      <button
+                        onClick={handlePayWalletAll}
+                        disabled={submittingPay}
+                        className="flex-1 py-2.5 rounded-xl bg-[#0F2E22] text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
+                      >
+                        {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        <Wallet className="w-3.5 h-3.5" /> Xác nhận trừ ví
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {payMethod === "transfer" &&
+                  (() => {
+                    const ref = `DATAOA GOP-${activity.id.slice(0, 4).toUpperCase()}-${Date.now()
+                      .toString(36)
+                      .toUpperCase()}`;
+                    const bankId = process.env.NEXT_PUBLIC_BANK_ID ?? "MB";
+                    const bankAccount = process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "0000000000";
+                    const bankAccountName = process.env.NEXT_PUBLIC_BANK_NAME ?? "CLB CAU LONG";
+                    const bankDisplayName = BANK_DISPLAY_NAMES[bankId] ?? bankId;
+                    const qr = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${unpaidTotal}&addInfo=${encodeURIComponent(
+                      ref,
+                    )}&accountName=${encodeURIComponent(bankAccountName)}`;
+
+                    return (
+                      <div className="space-y-4">
+                        <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
+                          <p className="text-xs text-gray-400">
+                            Quét mã QR để thanh toán {unpaidRegs.length} sản phẩm
+                          </p>
+                          <img src={qr} alt="VietQR" className="w-48 h-48 object-contain" />
                         </div>
-                        <div className="flex justify-between px-4 py-2.5">
-                          <span className="text-gray-500">Số tài khoản</span>
-                          <span className="font-semibold text-gray-900">{bankAccount}</span>
+
+                        <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
+                          <div className="flex justify-between px-4 py-2.5">
+                            <span className="text-gray-500">Ngân hàng</span>
+                            <span className="font-semibold text-gray-900">{bankDisplayName}</span>
+                          </div>
+                          <div className="flex justify-between px-4 py-2.5">
+                            <span className="text-gray-500">Số tài khoản</span>
+                            <span className="font-semibold text-gray-900">{bankAccount}</span>
+                          </div>
+                          <div className="flex justify-between px-4 py-2.5">
+                            <span className="text-gray-500">Số tiền</span>
+                            <span className="font-bold text-red-600">{fmt(unpaidTotal)}</span>
+                          </div>
+                          <div className="px-4 py-2.5">
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Nội dung CK</span>
+                              <span className="font-mono font-semibold text-gray-900">{ref}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="px-4 py-2.5 flex justify-between items-center">
-                          <span className="text-gray-500">Nội dung CK</span>
+
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(ref);
+                            toast.success("Đã copy nội dung chuyển khoản");
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          <Copy className="w-3.5 h-3.5" /> Sao chép nội dung
+                        </button>
+
+                        <div className="flex gap-2">
                           <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(ref);
-                              toast.success("Đã copy nội dung chuyển khoản");
-                            }}
-                            className="font-mono font-semibold text-gray-900 flex items-center gap-1.5"
+                            onClick={backToChooseMethod}
+                            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
                           >
-                            {ref} <Copy className="w-3 h-3 text-gray-400" />
+                            Quay lại
+                          </button>
+                          <button
+                            onClick={() => handleConfirmTransferredAll(ref)}
+                            disabled={submittingPay}
+                            className="flex-[2] py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
+                          >
+                            {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}{" "}
+                            Tôi đã chuyển khoản
                           </button>
                         </div>
                       </div>
+                    );
+                  })()}
+
+                {payMethod === "cash" && (
+                  <div className="space-y-4">
+                    <div className="bg-green-50 rounded-xl p-4">
+                      <p className="text-sm font-semibold text-green-800 mb-1">
+                        💵 Thanh toán tiền mặt
+                      </p>
+                      <p className="text-xs text-green-600">
+                        Admin sẽ xác nhận sau khi nhận đủ tiền mặt cho {unpaidRegs.length} sản phẩm ({fmt(unpaidTotal)}).
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
                       <button
-                        onClick={() => handleConfirmTransferred(ref)}
-                        disabled={submittingPay}
-                        className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
+                        onClick={backToChooseMethod}
+                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
                       >
-                        {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                        Tôi đã chuyển khoản
+                        Quay lại
+                      </button>
+                      <button
+                        onClick={handleRequestCashAll}
+                        disabled={submittingPay}
+                        className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}{" "}
+                        Thông báo admin
                       </button>
                     </div>
-                  );
-                })()}
-
-              {payMethod === "cash" && (
-                <div className="space-y-3">
-                  <div className="bg-green-50 rounded-xl p-4 text-xs text-green-600">
-                    Admin sẽ xác nhận sau khi bạn nộp tiền mặt trực tiếp.
                   </div>
-                  <button
-                    onClick={handleRequestCash}
-                    disabled={submittingPay}
-                    className="w-full py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
-                  >
-                    {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    Thông báo admin
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          )}
-        </div>
+          </div>,
+          document.body,
+        )}
 
-        {lightboxSrc &&
-          typeof document !== "undefined" &&
-          createPortal(
-            <div
-              className={`fixed inset-0 z-[99999] flex items-center justify-center p-4 transition-opacity duration-200 ease-out ${lightboxVisible ? "bg-black/80 opacity-100" : "bg-black/0 opacity-0"
-                }`}
+      {lightboxSrc &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className={`fixed inset-0 z-[99999] flex items-center justify-center p-4 transition-opacity duration-200 ease-out ${lightboxVisible ? "bg-black/80 opacity-100" : "bg-black/0 opacity-0"
+              }`}
+            onClick={closeLightbox}
+          >
+            <button
               onClick={closeLightbox}
+              className={`absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 ${lightboxVisible ? "opacity-100 scale-100" : "opacity-0 scale-75"
+                }`}
             >
-              <button
-                onClick={closeLightbox}
-                className={`absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 ${lightboxVisible ? "opacity-100 scale-100" : "opacity-0 scale-75"
-                  }`}
-              >
-                <XIcon className="w-5 h-5 text-white" />
-              </button>
-              <img
-                src={lightboxSrc}
-                alt="Ảnh mẫu áo"
-                className={`max-w-full max-h-full object-contain rounded-lg transition-all duration-200 ease-out ${lightboxVisible ? "opacity-100 scale-100" : "opacity-0 scale-90"
-                  }`}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>,
-            document.body,
-          )}
-      </div>
-    </div >
+              <XIcon className="w-5 h-5 text-white" />
+            </button>
+            <img
+              src={lightboxSrc}
+              alt="Ảnh mẫu áo"
+              className={`max-w-full max-h-full object-contain rounded-lg transition-all duration-200 ease-out ${lightboxVisible ? "opacity-100 scale-100" : "opacity-0 scale-90"
+                }`}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>,
+          document.body,
+        )}
+    </div>
   );
 }
 
@@ -1404,7 +1911,6 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
         )}
       </div>
 
-      {/* ── Payment modal ── */}
       {showPayModal &&
         reg &&
         typeof document !== "undefined" &&
@@ -1675,7 +2181,7 @@ function TournamentSection({ activity, myStatus, onChanged }: any) {
   );
 }
 
-//  Offline / BBQ
+
 function OfflineEventSection({ activity, myStatus, onChanged }: any) {
   const reg = myStatus?.my_registration;
   const [guestCount, setGuestCount] = useState(reg?.guest_count ?? 0);

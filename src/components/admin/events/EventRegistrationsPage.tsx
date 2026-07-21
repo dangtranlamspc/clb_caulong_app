@@ -1,6 +1,6 @@
 "use client";
 
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -9,20 +9,15 @@ import {
     Users,
     Trash2,
     CheckCircle2,
+    XCircle,
     Phone,
     BarChart3,
     FileSpreadsheet,
     UserPlus
 } from "lucide-react";
-import { eventsAdminApi } from "@/lib/api"; // TODO: chỉnh lại path cho đúng vị trí api.ts trong project
+import { eventsAdminApi } from "@/lib/api";
 
-const TYPE_LABEL: Record<string, string> = {
-    shirt_order: "👕 Đặt áo",
-    tournament: "🏆 Giải đấu",
-    birthday: "🎂 Sinh nhật",
-    offline_event: "🔥 Offline",
-    poll: "📊 Bình chọn",
-};
+type PaymentFilter = "all" | "unpaid" | "paid";
 
 export default function EventRegistrationsPage({
     activityId,
@@ -34,12 +29,12 @@ export default function EventRegistrationsPage({
     onAddRegistration?: () => void;
 } = {}) {
     const params = useParams<{ id: string }>();
-    const router = useRouter();
     const id = activityId ?? params?.id;
 
     const [activity, setActivity] = useState<any>(null);
     const [regData, setRegData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("all");
 
     const fetchAll = async () => {
         try {
@@ -58,14 +53,24 @@ export default function EventRegistrationsPage({
         fetchAll();
     }, [id]);
 
-    const handleConfirmPayment = async (regId: string, type: string) => {
+    const handleConfirmPayment = async (regId: string | string[], type: string) => {
+        const ids = Array.isArray(regId) ? regId : [regId];
         try {
             if (type === "shirt_order") {
-                await eventsAdminApi.confirmShirtOrder(regId);
+                await Promise.all(ids.map((id) => eventsAdminApi.confirmShirtOrder(id)));
             } else if (type === "tournament") {
-                await eventsAdminApi.confirmTournamentPayment(regId);
+                await eventsAdminApi.confirmTournamentPayment(ids[0]);
             }
             toast.success("Đã xác nhận thanh toán");
+            fetchAll();
+        } catch { }
+    };
+    const handleRejectPayment = async (regId: string | string[], label: string) => {
+        const ids = Array.isArray(regId) ? regId : [regId];
+        if (!confirm(`Từ chối yêu cầu thanh toán của "${label}"?`)) return;
+        try {
+            await Promise.all(ids.map((id) => eventsAdminApi.rejectShirtOrder(id)));
+            toast.success("Đã từ chối yêu cầu thanh toán");
             fetchAll();
         } catch { }
     };
@@ -89,6 +94,22 @@ export default function EventRegistrationsPage({
     if (!activity || !regData) return null;
 
     const registrations = regData.registrations ?? [];
+
+    const totalCollected =
+        activity.type === "shirt_order"
+            ? registrations
+                .filter((r: any) => {
+                    if (paymentFilter === "paid") return r.payment_status === "confirmed";
+                    if (paymentFilter === "unpaid") return r.payment_status !== "confirmed";
+                    return true;
+                })
+                .filter((r: any) => r.payment_status === "confirmed")
+                .reduce(
+                    (sum: number, r: any) =>
+                        sum + (r.total_amount ?? (r.unit_price ?? 0) * (r.quantity ?? 1)),
+                    0,
+                )
+            : 0;
 
     return (
         <div className="w-full mx-auto">
@@ -124,6 +145,40 @@ export default function EventRegistrationsPage({
             </div>
 
             <div className="p-6 space-y-4">
+                {activity.type === "shirt_order" && registrations.length > 0 && (
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+                            {(
+                                [
+                                    { value: "all", label: "Tất cả" },
+                                    { value: "unpaid", label: "Chưa thanh toán" },
+                                    { value: "paid", label: "Đã thanh toán" },
+                                ] as { value: PaymentFilter; label: string }[]
+                            ).map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => setPaymentFilter(opt.value)}
+                                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${paymentFilter === opt.value
+                                        ? "bg-white shadow-sm text-blue-600"
+                                        : "text-gray-500 hover:text-gray-700"
+                                        }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
+                            <span className="text-xs font-medium text-emerald-600">
+                                Tổng thu (đã xác nhận)
+                            </span>
+                            <span className="text-sm font-bold text-emerald-700 whitespace-nowrap">
+                                {fmt(totalCollected)}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
                 {activity.type === "poll" ? (
                     <PollResults regData={regData} />
                 ) : (
@@ -136,12 +191,11 @@ export default function EventRegistrationsPage({
                         ) : activity.type === "shirt_order" ? (
                             <ShirtOrderTable
                                 registrations={registrations}
-                                onConfirm={(regId: string) =>
-                                    handleConfirmPayment(regId, "shirt_order")
-                                }
-                                onRemove={(regId: string, label: string) =>
-                                    handleRemove("shirt_order", regId, label)
-                                }
+                                paymentFilter={paymentFilter}
+                                shirtTypes={activity.detail?.shirt_types ?? []}
+                                onConfirm={(regIds: string[]) => handleConfirmPayment(regIds, "shirt_order")}
+                                onReject={handleRejectPayment}
+                                onRemove={(regId: string, label: string) => handleRemove("shirt_order", regId, label)}
                             />
                         ) : activity.type === "tournament" ? (
                             <TournamentTable
@@ -183,30 +237,153 @@ function getPaymentMethodBadge(r: any) {
     return null;
 }
 
+function paymentStatusBadge(r: any) {
+    if (r.payment_status === "confirmed") {
+        return { label: "Đã xác nhận", cls: "bg-green-50 text-green-700", showIcon: true };
+    }
+    if (r.payment_method) {
+        return { label: "Chờ xác nhận", cls: "bg-orange-50 text-orange-600", showIcon: false };
+    }
+    return { label: "Chưa thanh toán", cls: "bg-gray-100 text-gray-400", showIcon: false };
+}
+
 function ShirtOrderTable({
     registrations,
+    paymentFilter,
+    shirtTypes,
     onConfirm,
+    onReject,
     onRemove,
 }: {
     registrations: any[];
-    onConfirm: (regId: string) => void;
+    paymentFilter: PaymentFilter;
+    shirtTypes: any[];
+    onConfirm: (regIds: string[]) => void;
+    onReject: (regId: string | string[], label: string) => void;
     onRemove: (regId: string, label: string) => void;
 }) {
+
+    const imgSrc = (img: any) => (img ? (typeof img === "string" ? img : img.url) : null);
+
+    const getShirtImage = (shirtTypeId?: string, colorId?: string) => {
+        const type = shirtTypes.find((t: any) => t.id === shirtTypeId);
+        if (!type) return null;
+        const colors: any[] = type.colors ?? [];
+        const color = colorId ? colors.find((c: any) => c.id === colorId) : colors[0];
+        const img = color?.images?.[0] ?? type.images?.[0];
+        return imgSrc(img);
+    };
+
+    const filteredRegistrations = registrations.filter((r) => {
+        if (paymentFilter === "paid") return r.payment_status === "confirmed";
+        if (paymentFilter === "unpaid") return r.payment_status !== "confirmed";
+        return true;
+    });
+
     const groups = new Map<string, any[]>();
-    for (const r of registrations) {
+    for (const r of filteredRegistrations) {
         const key = r.user_id ?? r.id;
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key)!.push(r);
     }
     const groupList = Array.from(groups.values());
 
-    const rowsWithMeta: { reg: any; isFirstOfGroup: boolean; rowSpan: number }[] = [];
+    if (filteredRegistrations.length === 0) {
+        return (
+            <div className="py-16 text-center text-gray-400">
+                <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>Không có đăng ký phù hợp với bộ lọc</p>
+            </div>
+        );
+    }
+
+    const rowsWithMeta: {
+        reg: any;
+        isFirstOfGroup: boolean;
+        rowSpan: number;
+        groupRegs: any[];
+        showTypeCell: boolean;
+        typeCellSpan: number;
+        showColorCell: boolean;
+        colorCellSpan: number;
+        colorGroupQuantity: number;
+        showSizeCell: boolean;
+        sizeCellSpan: number;
+    }[] = [];
+
     groupList.forEach((groupRegs) => {
+        groupRegs.sort((a, b) => {
+            const t = (a.shirt_type_name ?? "").localeCompare(b.shirt_type_name ?? "");
+            if (t !== 0) return t;
+            const c = (a.color_name ?? "").localeCompare(b.color_name ?? "");
+            if (c !== 0) return c;
+            return (a.size ?? "").localeCompare(b.size ?? "");
+        });
+
         groupRegs.forEach((r, idx) => {
+            const sameTypeAsPrev =
+                idx > 0 && groupRegs[idx - 1].shirt_type_name === r.shirt_type_name;
+            let typeCellSpan = 1;
+            if (!sameTypeAsPrev) {
+                for (let i = idx + 1; i < groupRegs.length; i++) {
+                    if (groupRegs[i].shirt_type_name === r.shirt_type_name) typeCellSpan++;
+                    else break;
+                }
+            }
+
+            const sameColorAsPrev =
+                idx > 0 &&
+                groupRegs[idx - 1].shirt_type_name === r.shirt_type_name &&
+                groupRegs[idx - 1].color_name === r.color_name;
+            let colorCellSpan = 1;
+            if (!sameColorAsPrev) {
+                for (let i = idx + 1; i < groupRegs.length; i++) {
+                    if (
+                        groupRegs[i].shirt_type_name === r.shirt_type_name &&
+                        groupRegs[i].color_name === r.color_name
+                    )
+                        colorCellSpan++;
+                    else break;
+                }
+            }
+
+            let colorGroupQuantity = 0;
+            if (!sameColorAsPrev) {
+                for (let i = idx; i < idx + colorCellSpan; i++) {
+                    colorGroupQuantity += Number(groupRegs[i].quantity ?? 1);
+                }
+            }
+
+            const sameSizeAsPrev =
+                idx > 0 &&
+                groupRegs[idx - 1].shirt_type_name === r.shirt_type_name &&
+                groupRegs[idx - 1].color_name === r.color_name &&
+                groupRegs[idx - 1].size === r.size;
+            let sizeCellSpan = 1;
+            if (!sameSizeAsPrev) {
+                for (let i = idx + 1; i < groupRegs.length; i++) {
+                    if (
+                        groupRegs[i].shirt_type_name === r.shirt_type_name &&
+                        groupRegs[i].color_name === r.color_name &&
+                        groupRegs[i].size === r.size
+                    )
+                        sizeCellSpan++;
+                    else break;
+                }
+            }
+
             rowsWithMeta.push({
                 reg: r,
                 isFirstOfGroup: idx === 0,
                 rowSpan: groupRegs.length,
+                groupRegs,
+                showTypeCell: !sameTypeAsPrev,
+                typeCellSpan,
+                showColorCell: !sameColorAsPrev,
+                colorCellSpan,
+                colorGroupQuantity,
+                showSizeCell: !sameSizeAsPrev,
+                sizeCellSpan,
             });
         });
     });
@@ -214,52 +391,76 @@ function ShirtOrderTable({
     return (
         <>
             <div className="hidden md:block overflow-x-auto">
-                <table className="w-full min-w-[880px] text-sm border border-gray-200 border-collapse">
+                <table className="w-full min-w-[1260px] text-sm border border-gray-200 border-collapse">
                     <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                         <tr>
-                            <th className="text-left px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
                                 Thành viên
                             </th>
-                            <th className="text-left px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
                                 Loại áo
                             </th>
-                            <th className="text-left px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                                Màu sắc
+                            </th>
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
                                 Size
                             </th>
-                            <th className="text-left px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                                Số áo
+                            </th>
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                                Tên in
+                            </th>
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
                                 SL
                             </th>
-                            <th className="text-right px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
                                 Đơn giá
                             </th>
-                            <th className="text-right px-4 py-3 border border-gray-200 whitespace-nowrap">
-                                Thành tiền
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                                Tổng tiền
                             </th>
-                            <th className="text-left px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
                                 Thanh toán
                             </th>
-                            <th className="px-4 py-3 border border-gray-200 w-10"></th>
+                            <th className="px-4 py-3 border border-gray-200 w-24">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {rowsWithMeta.map(({ reg: r, isFirstOfGroup, rowSpan }) => {
-                            const badge = getPaymentMethodBadge(r);
-                            const isConfirmed = r.payment_status === "confirmed";
-                            const hasPendingRequest =
-                                !isConfirmed &&
-                                (r.payment_method === "transfer" || r.payment_method === "cash");
+                        {rowsWithMeta.map(({
+                            reg: r,
+                            isFirstOfGroup,
+                            rowSpan,
+                            groupRegs,
+                            showTypeCell,
+                            typeCellSpan,
+                            showColorCell,
+                            colorCellSpan,
+                            colorGroupQuantity,
+                            showSizeCell,
+                            sizeCellSpan,
+                        }) => {
                             const unitPrice = r.unit_price ?? 0;
-                            const totalAmount =
-                                r.total_amount ?? unitPrice * (r.quantity ?? 1);
+                            const totalAmount = r.total_amount ?? unitPrice * (r.quantity ?? 1);
+                            const groupTotal = groupRegs.reduce(
+                                (sum: number, g: any) =>
+                                    sum + (g.total_amount ?? (g.unit_price ?? 0) * (g.quantity ?? 1)),
+                                0,
+                            );
+                            const statusBadge = paymentStatusBadge(r);
+                            const methodBadge = getPaymentMethodBadge(r);
+                            const canConfirmReject =
+                                !r.registered_by_admin && r.payment_status !== "confirmed" && !!r.payment_method;
 
                             return (
                                 <tr key={r.id} className="hover:bg-gray-50">
                                     {isFirstOfGroup && (
                                         <td
                                             rowSpan={rowSpan}
-                                            className="px-4 py-3 border border-gray-200 align-middle"
+                                            className="px-4 py-3 border border-gray-200 align-middle text-center"
                                         >
-                                            <div className="flex items-center gap-2.5">
+                                            <div className="flex items-center justify-center gap-2.5">
                                                 <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center font-semibold text-blue-600 overflow-hidden flex-shrink-0">
                                                     {r.users?.avatar_url ? (
                                                         <img
@@ -270,7 +471,7 @@ function ShirtOrderTable({
                                                         r.users?.full_name?.[0]
                                                     )}
                                                 </div>
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 text-left">
                                                     <p className="font-medium text-gray-900 truncate">
                                                         {r.users?.full_name ?? r.guest_full_name ?? "—"}
                                                     </p>
@@ -283,57 +484,119 @@ function ShirtOrderTable({
                                             </div>
                                         </td>
                                     )}
-                                    <td className="px-4 py-3 border border-gray-200 text-gray-600 whitespace-nowrap">
-                                        {r.shirt_type_name ?? "—"}
+
+                                    {showTypeCell && (
+                                        <td
+                                            rowSpan={typeCellSpan}
+                                            className="px-4 py-3 border border-gray-200 text-gray-600 whitespace-nowrap text-center align-middle"
+                                        >
+                                            {r.shirt_type_name ?? "—"}
+                                        </td>
+                                    )}
+                                    {showColorCell && (
+                                        <td
+                                            rowSpan={colorCellSpan}
+                                            className="px-4 py-3 border border-gray-200 text-gray-600 whitespace-nowrap text-center align-middle"
+                                        >
+                                            {r.color_name ?? "—"}
+                                        </td>
+                                    )}
+                                    {showSizeCell && (
+                                        <td
+                                            rowSpan={sizeCellSpan}
+                                            className="px-4 py-3 border border-gray-200 font-medium text-gray-700 text-center align-middle"
+                                        >
+                                            {r.size}
+                                        </td>
+                                    )}
+                                    <td className="px-4 py-3 border border-gray-200 text-gray-600 text-center">
+                                        {r.jersey_number || "—"}
                                     </td>
-                                    <td className="px-4 py-3 border border-gray-200 font-medium text-gray-700">
-                                        {r.size}
+                                    <td className="px-4 py-3 border border-gray-200 text-gray-600 text-center">
+                                        {r.print_name || "—"}
                                     </td>
-                                    <td className="px-4 py-3 border border-gray-200 text-gray-500">
-                                        {r.quantity}
-                                    </td>
-                                    <td className="px-4 py-3 border border-gray-200 text-right text-gray-600 whitespace-nowrap">
-                                        {fmt(unitPrice)}
-                                    </td>
-                                    <td className="px-4 py-3 border border-gray-200 text-right font-semibold text-gray-900 whitespace-nowrap">
-                                        {fmt(totalAmount)}
-                                    </td>
-                                    <td className="px-4 py-3 border border-gray-200">
-                                        <div className="flex flex-wrap items-center gap-1.5">
-                                            {isConfirmed ? (
-                                                <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-50 text-green-700 flex items-center gap-1 whitespace-nowrap">
-                                                    <CheckCircle2 className="w-3 h-3" /> Đã xác nhận
-                                                </span>
-                                            ) : hasPendingRequest ? (
-                                                <button
-                                                    onClick={() => onConfirm(r.id)}
-                                                    className="text-xs px-2 py-1 rounded-full font-medium bg-orange-50 text-orange-600 hover:bg-orange-100 whitespace-nowrap"
-                                                >
-                                                    Chờ xác nhận
-                                                </button>
-                                            ) : (
-                                                <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-400 whitespace-nowrap">
-                                                    Chưa thanh toán
-                                                </span>
-                                            )}
-                                            {badge && (
-                                                <span
-                                                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${badge.cls}`}
-                                                >
-                                                    {badge.label}
-                                                </span>
-                                            )}
-                                            {r.payment_reference &&
-                                                r.payment_reference !== "TIEN_MAT" && (
-                                                    <span className="text-[10px] text-gray-400 font-mono whitespace-nowrap">
-                                                        {r.payment_reference}
+                                    {showColorCell && (
+                                        <td rowSpan={colorCellSpan} className="px-4 py-3 border border-gray-200 text-gray-700 font-semibold text-center align-middle">
+                                            {colorGroupQuantity}
+                                        </td>
+                                    )}
+                                    {showColorCell && (
+                                        <td rowSpan={colorCellSpan} className="px-4 py-3 border border-gray-200 text-gray-600 whitespace-nowrap text-center align-middle">
+                                            {fmt(unitPrice)}
+                                        </td>
+                                    )}
+
+                                    {isFirstOfGroup && (
+                                        <td
+                                            rowSpan={rowSpan}
+                                            className="px-4 py-3 border border-gray-200 align-middle font-bold text-gray-900 whitespace-nowrap text-center"
+                                        >
+                                            {fmt(groupTotal)}
+                                        </td>
+                                    )}
+
+                                    {isFirstOfGroup && (() => {
+                                        const groupIds = groupRegs.map((g: any) => g.id);
+                                        const repReg = groupRegs.find((g: any) => g.payment_method) ?? groupRegs[0];
+                                        const statusBadge = paymentStatusBadge(repReg);
+                                        const methodBadge = getPaymentMethodBadge(repReg);
+                                        const canConfirmReject =
+                                            !repReg.registered_by_admin && repReg.payment_status !== "confirmed" && !!repReg.payment_method;
+                                        const label = repReg.users?.full_name ?? repReg.guest_full_name ?? "";
+
+                                        return (
+                                            <td rowSpan={rowSpan} className="px-4 py-3 border border-gray-200 align-middle text-center">
+                                                <div className="flex flex-col items-center gap-1.5">
+                                                    <span
+                                                        className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 whitespace-nowrap ${statusBadge.cls}`}
+                                                    >
+                                                        {statusBadge.showIcon && <CheckCircle2 className="w-3 h-3" />}
+                                                        {statusBadge.label}
                                                     </span>
-                                                )}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3 border border-gray-200 text-right">
+                                                    {repReg.registered_by_admin && (
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-600 whitespace-nowrap">
+                                                            Admin thêm
+                                                        </span>
+                                                    )}
+                                                    {methodBadge && (
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${methodBadge.cls}`}>
+                                                            {methodBadge.label}
+                                                        </span>
+                                                    )}
+                                                    {repReg.payment_reference &&
+                                                        repReg.payment_reference !== "TIEN_MAT" &&
+                                                        repReg.payment_reference !== "WALLET" && (
+                                                            <span className="text-[10px] text-gray-400 font-mono whitespace-nowrap">
+                                                                {repReg.payment_reference}
+                                                            </span>
+                                                        )}
+                                                    {canConfirmReject && (
+                                                        <div className="flex items-center justify-center gap-2 pt-1.5">
+                                                            <button
+                                                                onClick={() => onConfirm(groupIds)}
+                                                                title="Xác nhận thanh toán"
+                                                                className="p-2 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600 border border-gray-200 hover:border-green-200"
+                                                            >
+                                                                <CheckCircle2 className="w-5 h-5" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => onReject(groupIds, label)}
+                                                                title="Từ chối thanh toán"
+                                                                className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200"
+                                                            >
+                                                                <XCircle className="w-5 h-5" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        );
+                                    })()}
+
+                                    <td className="px-4 py-3 border border-gray-200 text-center">
                                         <button
                                             onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
+                                            title="Xoá đăng ký"
                                             className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
                                         >
                                             <Trash2 className="w-4 h-4" />
@@ -349,6 +612,44 @@ function ShirtOrderTable({
             <div className="md:hidden space-y-3 p-4">
                 {groupList.map((groupRegs) => {
                     const first = groupRegs[0];
+
+                    const colorBuckets = new Map<string, { shirt_type_name: string; color_name?: string; shirt_type_id?: string; color_id?: string; unitPrice: number; totalQty: number; items: any[] }>();
+                    for (const r of groupRegs) {
+                        const key = `${r.shirt_type_name ?? "—"}|${r.color_name ?? "—"}`;
+                        if (!colorBuckets.has(key)) {
+                            colorBuckets.set(key, {
+                                shirt_type_name: r.shirt_type_name ?? "—",
+                                color_name: r.color_name,
+                                shirt_type_id: r.shirt_type_id,
+                                color_id: r.color_id,
+                                unitPrice: r.unit_price ?? 0,
+                                totalQty: 0,
+                                items: [],
+                            });
+                        }
+                        const bucket = colorBuckets.get(key)!;
+                        bucket.totalQty += Number(r.quantity ?? 1);
+                        bucket.items.push(r);
+                    }
+                    const buckets = Array.from(colorBuckets.values());
+
+                    const memberStatusBadge = paymentStatusBadge(
+                        groupRegs.find((g: any) => g.payment_method) ?? groupRegs[0],
+                    );
+                    const memberMethodBadge = getPaymentMethodBadge(
+                        groupRegs.find((g: any) => g.payment_method) ?? groupRegs[0],
+                    );
+                    const memberTotal = groupRegs.reduce(
+                        (sum: number, g: any) =>
+                            sum + (g.total_amount ?? (g.unit_price ?? 0) * (g.quantity ?? 1)),
+                        0,
+                    );
+                    const repReg = groupRegs.find((g: any) => g.payment_method) ?? groupRegs[0];
+                    const canConfirmReject =
+                        !repReg.registered_by_admin && repReg.payment_status !== "confirmed" && !!repReg.payment_method;
+                    const groupIds = groupRegs.map((g: any) => g.id);
+                    const memberLabel = repReg.users?.full_name ?? repReg.guest_full_name ?? "";
+
                     return (
                         <div
                             key={first.user_id ?? first.id}
@@ -379,92 +680,90 @@ function ShirtOrderTable({
                             </div>
 
                             <div className="space-y-2">
-                                {groupRegs.map((r: any) => {
-                                    const badge = getPaymentMethodBadge(r);
-                                    const isConfirmed = r.payment_status === "confirmed";
-                                    const hasPendingRequest =
-                                        !isConfirmed &&
-                                        (r.payment_method === "transfer" ||
-                                            r.payment_method === "cash");
-                                    const unitPrice = r.unit_price ?? 0;
-                                    const totalAmount =
-                                        r.total_amount ?? unitPrice * (r.quantity ?? 1);
-
+                                {buckets.map((bucket, bIdx) => {
+                                    const imageUrl = getShirtImage(bucket.shirt_type_id, bucket.color_id);
                                     return (
-                                        <div
-                                            key={r.id}
-                                            className="rounded-xl border border-gray-200 p-3 space-y-2"
-                                        >
-                                            <div className="flex items-center justify-between gap-2">
-                                                <p className="text-sm font-semibold text-gray-900">
-                                                    {r.shirt_type_name ?? "—"}
-                                                </p>
-                                                <button
-                                                    onClick={() =>
-                                                        onRemove(r.id, r.users?.full_name ?? "")
-                                                    }
-                                                    className="p-1 -m-1 text-gray-400 hover:text-red-500"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-
-                                            <div className="flex items-center gap-3 text-xs text-gray-500">
-                                                <span>
-                                                    Size <strong className="text-gray-700">{r.size}</strong>
-                                                </span>
-                                                <span>
-                                                    SL <strong className="text-gray-700">{r.quantity}</strong>
-                                                </span>
-                                                <span>
-                                                    Đơn giá{" "}
-                                                    <strong className="text-gray-700">
-                                                        {fmt(unitPrice)}
-                                                    </strong>
-                                                </span>
-                                            </div>
-
-                                            <div className="flex items-center justify-between pt-1 border-t border-gray-50">
-                                                <div className="flex flex-wrap items-center gap-1.5">
-                                                    {isConfirmed ? (
-                                                        <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-50 text-green-700 flex items-center gap-1">
-                                                            <CheckCircle2 className="w-3 h-3" /> Đã xác nhận
-                                                        </span>
-                                                    ) : hasPendingRequest ? (
-                                                        <button
-                                                            onClick={() => onConfirm(r.id)}
-                                                            className="text-xs px-2 py-1 rounded-full font-medium bg-orange-50 text-orange-600 hover:bg-orange-100"
-                                                        >
-                                                            Chờ xác nhận
-                                                        </button>
+                                        <div key={bIdx} className="rounded-xl border border-gray-200 p-3 space-y-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0 flex items-center justify-center">
+                                                    {imageUrl ? (
+                                                        <img src={imageUrl} alt={bucket.color_name ?? ""} className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-400">
-                                                            Chưa thanh toán
-                                                        </span>
-                                                    )}
-                                                    {badge && (
-                                                        <span
-                                                            className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${badge.cls}`}
-                                                        >
-                                                            {badge.label}
-                                                        </span>
+                                                        <span className="text-[9px] text-gray-300">No img</span>
                                                     )}
                                                 </div>
-                                                <span className="text-sm font-semibold text-gray-900">
-                                                    {fmt(totalAmount)}
-                                                </span>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm font-semibold text-gray-900 truncate">
+                                                        {bucket.shirt_type_name}
+                                                        {bucket.color_name ? ` · ${bucket.color_name}` : ""}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        SL <strong className="text-gray-700">{bucket.totalQty}</strong>
+                                                        {" · "}Đơn giá <strong className="text-gray-700">{fmt(bucket.unitPrice)}</strong>
+                                                    </p>
+                                                </div>
                                             </div>
 
-                                            {r.payment_reference &&
-                                                r.payment_reference !== "TIEN_MAT" && (
-                                                    <p className="text-[10px] text-gray-400 font-mono">
-                                                        {r.payment_reference}
-                                                    </p>
-                                                )}
+                                            <div className="space-y-1.5 pt-1.5 border-t border-gray-100">
+                                                {bucket.items.map((r: any) => (
+                                                    <div key={r.id} className="flex items-center justify-between gap-2 text-xs">
+                                                        <span className="text-gray-500">
+                                                            Size <strong className="text-gray-700">{r.size}</strong>
+                                                            {r.jersey_number && <> · Số <strong className="text-gray-700">{r.jersey_number}</strong></>}
+                                                            {r.print_name && <> · Tên <strong className="text-gray-700">"{r.print_name}"</strong></>}
+                                                            {" · SL "}
+                                                            <strong className="text-gray-700">{r.quantity}</strong>
+                                                        </span>
+                                                        <button
+                                                            onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
+                                                            className="p-1 -m-1 text-gray-300 hover:text-red-500 flex-shrink-0"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     );
                                 })}
                             </div>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${memberStatusBadge.cls}`}>
+                                        {memberStatusBadge.showIcon && <CheckCircle2 className="w-3 h-3" />}
+                                        {memberStatusBadge.label}
+                                    </span>
+                                    {repReg.registered_by_admin && (
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-600">
+                                            Admin thêm
+                                        </span>
+                                    )}
+                                    {memberMethodBadge && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${memberMethodBadge.cls}`}>
+                                            {memberMethodBadge.label}
+                                        </span>
+                                    )}
+                                </div>
+                                <span className="text-sm font-bold text-gray-900">{fmt(memberTotal)}</span>
+                            </div>
+
+                            {canConfirmReject && (
+                                <div className="flex items-center justify-center gap-2 pt-1">
+                                    <button
+                                        onClick={() => onConfirm(groupIds)}
+                                        className="flex-1 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-1.5"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4" /> Xác nhận
+                                    </button>
+                                    <button
+                                        onClick={() => onReject(groupIds, memberLabel)}
+                                        className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5"
+                                    >
+                                        <XCircle className="w-4 h-4" /> Từ chối
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -479,21 +778,128 @@ function fmt(n: number) {
 
 function exportToExcel(activity: any, regData: any) {
     let rows: any[] = [];
+    let merges: XLSX.Range[] = [];
+    let rowGroupIndex: number[] = [];
 
     if (activity.type === "shirt_order") {
-        rows = (regData.registrations ?? []).map((r: any) => ({
-            "Thành viên": r.users?.full_name ?? "—",
-            "SĐT": r.users?.phone ?? "—",
-            "Loại áo": r.shirt_type_name ?? "—",
-            "Size": r.size,
-            "Số lượng": r.quantity,
-            "Đơn giá": r.unit_price ?? 0,
-            "Thành tiền": r.total_amount ?? (r.unit_price ?? 0) * (r.quantity ?? 1),
-            "Trạng thái TT":
-                r.payment_status === "confirmed" ? "Đã xác nhận" : "Chưa xác nhận",
-            "Phương thức": r.payment_method ?? "—",
-            "Mã tham chiếu": r.payment_reference ?? "—",
-        }));
+        const registrations = regData.registrations ?? [];
+
+        const groups = new Map<string, any[]>();
+        for (const r of registrations) {
+            const key = r.user_id ?? r.id;
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key)!.push(r);
+        }
+        const groupList = Array.from(groups.values());
+
+        let currentRowIndex = 0;
+        groupList.forEach((groupRegs, groupIdx) => {
+            groupRegs.sort((a, b) => {
+                const t = (a.shirt_type_name ?? "").localeCompare(b.shirt_type_name ?? "");
+                if (t !== 0) return t;
+                const c = (a.color_name ?? "").localeCompare(b.color_name ?? "");
+                if (c !== 0) return c;
+                return (a.size ?? "").localeCompare(b.size ?? "");
+            });
+
+            const groupTotal = groupRegs.reduce(
+                (sum: number, g: any) =>
+                    sum + (g.total_amount ?? (g.unit_price ?? 0) * (g.quantity ?? 1)),
+                0,
+            );
+
+            const startRow = currentRowIndex + 1;
+            const endRow = currentRowIndex + groupRegs.length;
+
+            if (groupRegs.length > 1) {
+                const memberLevelCols = [0, 1, 9, 10, 11, 12, 13];
+                for (const c of memberLevelCols) {
+                    merges.push({ s: { r: startRow, c }, e: { r: endRow, c } });
+                }
+            }
+
+            let typeCursor = 0;
+            while (typeCursor < groupRegs.length) {
+                let span = 1;
+                while (
+                    typeCursor + span < groupRegs.length &&
+                    groupRegs[typeCursor + span].shirt_type_name === groupRegs[typeCursor].shirt_type_name
+                ) {
+                    span++;
+                }
+                if (span > 1) {
+                    merges.push({
+                        s: { r: startRow + typeCursor, c: 2 },
+                        e: { r: startRow + typeCursor + span - 1, c: 2 },
+                    });
+                }
+                typeCursor += span;
+            }
+
+            // ── Merge theo Màu sắc + gộp SL/Đơn giá (liên tiếp cùng type + color) ──
+            let colorCursor = 0;
+            while (colorCursor < groupRegs.length) {
+                let span = 1;
+                while (
+                    colorCursor + span < groupRegs.length &&
+                    groupRegs[colorCursor + span].shirt_type_name === groupRegs[colorCursor].shirt_type_name &&
+                    groupRegs[colorCursor + span].color_name === groupRegs[colorCursor].color_name
+                ) {
+                    span++;
+                }
+                if (span > 1) {
+                    // Màu sắc (col 3), SL (col 7), Đơn giá (col 8)
+                    for (const c of [3, 7, 8]) {
+                        merges.push({
+                            s: { r: startRow + colorCursor, c },
+                            e: { r: startRow + colorCursor + span - 1, c },
+                        });
+                    }
+                }
+                colorCursor += span;
+            }
+
+            // ── Build rows: SL hiển thị tổng theo nhóm màu ở dòng đầu, các dòng còn lại trong nhóm để trống ──
+            let cIdx = 0;
+            while (cIdx < groupRegs.length) {
+                let span = 1;
+                while (
+                    cIdx + span < groupRegs.length &&
+                    groupRegs[cIdx + span].shirt_type_name === groupRegs[cIdx].shirt_type_name &&
+                    groupRegs[cIdx + span].color_name === groupRegs[cIdx].color_name
+                ) {
+                    span++;
+                }
+                const colorGroupQty = groupRegs
+                    .slice(cIdx, cIdx + span)
+                    .reduce((s: number, g: any) => s + Number(g.quantity ?? 1), 0);
+
+                for (let i = cIdx; i < cIdx + span; i++) {
+                    const r = groupRegs[i];
+                    rows.push({
+                        "Thành viên": r.users?.full_name ?? r.guest_full_name ?? "—",
+                        "SĐT": r.users?.phone ?? r.guest_phone ?? "—",
+                        "Loại áo": r.shirt_type_name ?? "—",
+                        "Màu sắc": r.color_name ?? "—",
+                        "Size": r.size,
+                        "Số áo": r.jersey_number ?? "—",
+                        "Tên in": r.print_name ?? "—",
+                        "SL": i === cIdx ? colorGroupQty : "",
+                        "Đơn giá": i === cIdx ? (r.unit_price ?? 0) : "",
+                        "Tổng tiền (theo thành viên)": groupTotal,
+                        "Trạng thái TT":
+                            r.payment_status === "confirmed" ? "Đã xác nhận" : "Chưa xác nhận",
+                        "Phương thức": r.payment_method ?? "—",
+                        "Mã tham chiếu": r.payment_reference ?? "—",
+                        "Nguồn": r.registered_by_admin ? "Admin thêm" : "Tự đăng ký",
+                    });
+                    rowGroupIndex.push(groupIdx);
+                }
+                cIdx += span;
+            }
+
+            currentRowIndex += groupRegs.length;
+        });
     } else if (activity.type === "tournament") {
         rows = (regData.registrations ?? []).map((r: any) => ({
             "Đội": r.team_name,
@@ -531,6 +937,59 @@ function exportToExcel(activity: any, regData: any) {
     }
 
     const ws = XLSX.utils.json_to_sheet(rows);
+    if (merges.length > 0) {
+        ws["!merges"] = merges;
+    }
+
+    const HEADER_FILL = "FFDDEBF7";
+    const ROW_FILL_EVEN = "FFFFFFFF";
+    const ROW_FILL_ODD = "FFF2F2F2";
+    const BORDER_STYLE = {
+        top: { style: "thin", color: { rgb: "FFB0B0B0" } },
+        bottom: { style: "thin", color: { rgb: "FFB0B0B0" } },
+        left: { style: "thin", color: { rgb: "FFB0B0B0" } },
+        right: { style: "thin", color: { rgb: "FFB0B0B0" } },
+    };
+
+    const range = XLSX.utils.decode_range(ws["!ref"]!);
+    for (let R = range.s.r; R <= range.e.r; R++) {
+        const isHeader = R === 0;
+        const dataRowIdx = R - 1;
+        const groupIdx = dataRowIdx >= 0 ? rowGroupIndex[dataRowIdx] : 0;
+        const rowFill = isHeader
+            ? HEADER_FILL
+            : (groupIdx % 2 === 0 ? ROW_FILL_ODD : ROW_FILL_EVEN);
+
+        for (let C = range.s.c; C <= range.e.c; C++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+            let cell = ws[cellAddress];
+            if (!cell) {
+                cell = { t: "s", v: "" };
+                ws[cellAddress] = cell;
+            }
+            cell.s = {
+                ...(cell.s ?? {}),
+                alignment: {
+                    horizontal: "center",
+                    vertical: "center",
+                    wrapText: true,
+                },
+                font: isHeader ? { bold: true } : (cell.s?.font ?? {}),
+                fill: { fgColor: { rgb: rowFill } },
+                border: BORDER_STYLE,
+            };
+        }
+    }
+
+    const colWidths = Object.keys(rows[0]).map((key, colIdx) => {
+        const maxLen = Math.max(
+            key.length,
+            ...rows.map((r: any) => String(r[Object.keys(rows[0])[colIdx]] ?? "").length),
+        );
+        return { wch: Math.min(Math.max(maxLen + 2, 10), 40) };
+    });
+    ws["!cols"] = colWidths;
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Danh sách");
     XLSX.writeFile(wb, `${activity.title}.xlsx`);

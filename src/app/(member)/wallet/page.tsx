@@ -57,8 +57,8 @@ function QuickAmountBtn({
     <button
       onClick={onClick}
       className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${active
-          ? "bg-blue-600 text-white border-blue-600"
-          : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+        ? "bg-blue-600 text-white border-blue-600"
+        : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
         }`}
     >
       {smt(value)}
@@ -137,6 +137,7 @@ function TopupModal({
       setSubmitting(false);
     }
   };
+
 
   return createPortal(
     <div

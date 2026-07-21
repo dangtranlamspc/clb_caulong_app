@@ -219,17 +219,16 @@ export const activitiesApi = {
   list: (params?: any) => api.get("/activities", { params }),
   get: (id: string) => api.get(`/activities/${id}`),
   getMyStatus: (id: string) => api.get(`/activities/${id}/my-status`),
-  // registerShirtOrder: (
-  //   id: string,
-  //   data: { gender: "nam" | "nu"; size: string; quantity?: number },
-  // ) => api.post(`/activities/${id}/register/shirt-order`, data),
   registerShirtOrder: (
     id: string,
     data: {
       shirt_type_id: string;
+      color_id?: string;
       gender: "nam" | "nu";
       size: string;
       quantity?: number;
+      jersey_number?: string;
+      print_name?: string;
     },
   ) => api.post(`/activities/${id}/register/shirt-order`, data),
   registerTournament: (
@@ -265,6 +264,8 @@ export const activitiesApi = {
     registrationId: string,
     data: { method: "wallet" | "transfer" | "cash" },
   ) => api.post(`/registrations/${registrationId}/tournament-payment`, data),
+  getShirtOrderRegistrationDetail: (regId: string) =>
+    api.get(`/activities/shirt-order-registrations/${regId}`),
 };
 
 //admin
@@ -413,9 +414,12 @@ export const eventsAdminApi = {
       guest_full_name?: string;
       guest_phone?: string;
       shirt_type_id: string;
+      color_id?: string;
       gender: "nam" | "nu";
       size: string;
       quantity?: number;
+      jersey_number?: string;
+      print_name?: string;
       payment_method?: "wallet" | "transfer" | "cash";
     },
   ) =>
@@ -423,6 +427,8 @@ export const eventsAdminApi = {
       `/admin/activities/${activityId}/shirt-order-registrations`,
       data,
     ),
+  rejectShirtOrder: (regId: string) =>
+    api.patch(`/admin/activities/shirt-order-registrations/${regId}/reject`),
 };
 
 export const uploadsAdminApi = {
