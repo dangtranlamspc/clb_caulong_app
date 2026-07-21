@@ -33,6 +33,7 @@ import { createPortal } from "react-dom";
 import { PaymentModal } from "@/components/payments/PaymentModal";
 import { MembersModal } from "@/components/modals/MemberModalConponent";
 import { useRouter } from "next/navigation";
+import { EventSkeleton, MatchSkeleton, SessionSkeleton, SkeletonList } from "@/components/skeletons/Skeleton";
 
 type MainTab = "sessions" | "matches" | "events";
 
@@ -232,96 +233,6 @@ function useFadeIn(trigger: boolean) {
     return () => clearTimeout(t);
   }, [trigger]);
   return visible;
-}
-
-function SessionSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl p-4 overflow-hidden relative">
-      <div
-        className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite]"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)",
-        }}
-      />
-      <div className="flex justify-between mb-3">
-        <div className="space-y-2 flex-1">
-          <div className="h-4 bg-gray-100 rounded-lg w-3/5" />
-          <div className="h-3 bg-gray-100 rounded-lg w-2/5" />
-        </div>
-        <div className="h-5 w-16 bg-gray-100 rounded-lg ml-4" />
-      </div>
-      <div className="flex gap-4 mb-3">
-        <div className="h-3 bg-gray-100 rounded w-28" />
-        <div className="h-3 bg-gray-100 rounded w-20" />
-      </div>
-      <div className="h-2 bg-gray-100 rounded-full w-full mb-1" />
-      <div className="flex justify-between mt-3 pt-3 border-t border-gray-50">
-        <div className="h-3 bg-gray-100 rounded w-24" />
-        <div className="h-3 bg-gray-100 rounded w-6" />
-      </div>
-    </div>
-  );
-}
-
-function MatchSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl p-4 overflow-hidden relative">
-      <div
-        className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite]"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)",
-        }}
-      />
-      <div className="flex justify-between mb-3">
-        <div className="h-3 bg-gray-100 rounded w-24" />
-        <div className="h-3 bg-gray-100 rounded w-16" />
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="flex-1 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gray-100" />
-            <div className="h-3.5 bg-gray-100 rounded w-24" />
-          </div>
-        </div>
-        <div className="h-6 w-12 bg-gray-100 rounded" />
-        <div className="flex-1 space-y-1.5 flex flex-col items-end">
-          <div className="flex items-center gap-2">
-            <div className="h-3.5 bg-gray-100 rounded w-24" />
-            <div className="w-7 h-7 rounded-full bg-gray-100" />
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-between mt-3 pt-2 border-t border-gray-50">
-        <div className="h-3 bg-gray-100 rounded w-20" />
-        <div className="h-3 bg-gray-100 rounded w-4" />
-      </div>
-    </div>
-  );
-}
-
-function EventSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl p-4 overflow-hidden relative">
-      <div
-        className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite]"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)",
-        }}
-      />
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-gray-100 flex-shrink-0" />
-        <div className="flex-1 space-y-2">
-          <div className="h-3.5 bg-gray-100 rounded w-3/5" />
-          <div className="h-3 bg-gray-100 rounded w-2/5" />
-          <div className="h-3 bg-gray-100 rounded w-1/3" />
-        </div>
-        <div className="h-5 w-16 bg-gray-100 rounded-lg flex-shrink-0" />
-      </div>
-    </div>
-  );
 }
 
 function EnergyBar({
@@ -573,17 +484,18 @@ function SessionsTab() {
         style={{ opacity: fadeIn ? 1 : 0, transition: "opacity 0.3s ease" }}
       >
         {loading ? (
-          [...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              style={{
-                animationDelay: `${i * 60}ms`,
-                animation: "fadeSlideUp .3s ease both",
-              }}
-            >
-              <SessionSkeleton />
-            </div>
-          ))
+          // [...Array(4)].map((_, i) => (
+          //   <div
+          //     key={i}
+          //     style={{
+          //       animationDelay: `${i * 60}ms`,
+          //       animation: "fadeSlideUp .3s ease both",
+          //     }}
+          //   >
+          //     <SessionSkeleton />
+          //   </div>
+          // ))
+          <SkeletonList count={4} Component={SessionSkeleton} />
         ) : sessions.length === 0 ? (
           <div
             className="bg-white rounded-2xl py-14 text-center"
@@ -1050,17 +962,18 @@ function MatchesTab({
         style={{ opacity: fadeIn ? 1 : 0, transition: "opacity 0.3s ease" }}
       >
         {loading ? (
-          [...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              style={{
-                animation: "fadeSlideUp .3s ease both",
-                animationDelay: `${i * 60}ms`,
-              }}
-            >
-              <MatchSkeleton />
-            </div>
-          ))
+          // [...Array(4)].map((_, i) => (
+          //   <div
+          //     key={i}
+          //     style={{
+          //       animation: "fadeSlideUp .3s ease both",
+          //       animationDelay: `${i * 60}ms`,
+          //     }}
+          //   >
+          //     <MatchSkeleton />
+          //   </div>
+          // ))
+          <SkeletonList count={4} Component={MatchSkeleton} />
         ) : matches.length === 0 ? (
           <div
             className="bg-white rounded-2xl py-14 text-center border border-dashed border-gray-200"
@@ -1312,12 +1225,32 @@ function MatchesTab({
 }
 
 function EventsTab() {
+  const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
+  const [checkingId, setCheckingId] = useState<string | null>(null);
   const fadeIn = useFadeIn(!loading);
+
+
+  const handleShirtOrderClick = async (activityId: string) => {
+    if (checkingId) return;
+    setCheckingId(activityId);
+    try {
+      const { data } = await activitiesApi.getMyStatus(activityId);
+      const hasOrdered =
+        Array.isArray(data?.my_registrations) && data.my_registrations.length > 0;
+      router.push(
+        hasOrdered ? `/events/${activityId}/history` : `/events/${activityId}`,
+      );
+    } catch {
+      router.push(`/events/${activityId}`);
+    } finally {
+      setCheckingId(null);
+    }
+  };
 
   const openSheet = () => {
     setSheetOpen(true);
@@ -1385,17 +1318,18 @@ function EventsTab() {
         style={{ opacity: fadeIn ? 1 : 0, transition: "opacity 0.3s ease" }}
       >
         {loading ? (
-          [...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              style={{
-                animationDelay: `${i * 60}ms`,
-                animation: "fadeSlideUp .3s ease both",
-              }}
-            >
-              <EventSkeleton />
-            </div>
-          ))
+          // [...Array(4)].map((_, i) => (
+          //   <div
+          //     key={i}
+          //     style={{
+          //       animationDelay: `${i * 60}ms`,
+          //       animation: "fadeSlideUp .3s ease both",
+          //     }}
+          //   >
+          //     <EventSkeleton />
+          //   </div>
+          // ))
+          <SkeletonList count={4} Component={EventSkeleton} />
         ) : items.length === 0 ? (
           <div
             className="bg-white rounded-2xl py-14 text-center border border-dashed border-gray-200"
@@ -1423,95 +1357,117 @@ function EventsTab() {
             const hasCapacity = maxCapacity != null && maxCapacity > 0;
             const ratio = hasCapacity ? participantCount / maxCapacity : 0;
             const isFull = hasCapacity && participantCount >= maxCapacity;
+            const isChecking = checkingId === a.id;
+
+            const cardContent = (
+              <div
+                className={`bg-white rounded-2xl p-4 border border-transparent shadow-md active:scale-[0.99] active:bg-gray-50 transition-all relative ${isChecking ? "opacity-60 pointer-events-none" : ""
+                  }`}
+                style={{
+                  boxShadow:
+                    "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
+                  animation: "fadeSlideUp .35s ease both",
+                  animationDelay: `${idx * 50}ms`,
+                }}
+              >
+                {isChecking && ( // MỚI: overlay loading nhẹ khi đang check
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-2xl z-10">
+                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                  </div>
+                )}
+
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                    {a.cover_image_url ? (
+                      <img
+                        src={a.cover_image_url}
+                        alt={a.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      (a.emoji ?? "📌")
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold text-gray-900 leading-snug break-words">
+                        {a.title}
+                      </p>
+                      <span
+                        className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${cfg.cls}`}
+                      >
+                        {overrideLabel ?? cfg.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                      <CalendarDays className="w-3 h-3 flex-shrink-0" />
+                      <span>
+                        {isDeadline ? "Ngày chốt ds đăng kí: " : ""}
+                        {dateValue
+                          ? format(new Date(dateValue), "dd/MM/yyyy", {
+                            locale: vi,
+                          })
+                          : "—"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {hasCapacity ? (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="flex items-center gap-1 text-xs text-gray-400">
+                        <ParticipantIcon className="w-3 h-3" />
+                        {getEventParticipantLabel(a.type, 0).replace(/^0\s*/, "")}
+                      </span>
+                      <span
+                        className={`text-xs ${isFull
+                          ? "text-red-500 font-medium"
+                          : ratio >= 0.6
+                            ? "text-amber-500 font-medium"
+                            : "text-emerald-600"
+                          }`}
+                      >
+                        {isFull ? "Đã đầy" : `${participantCount} / ${maxCapacity}`}
+                      </span>
+                    </div>
+                    <EnergyBar
+                      filled={participantCount}
+                      max={maxCapacity}
+                      status={a.status}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-50 text-xs text-gray-400">
+                    <ParticipantIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{getEventParticipantLabel(a.type, participantCount)}</span>
+                    <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
+                  </div>
+                )}
+              </div>
+            );
+
+            if (a.type === "shirt_order") {
+              return (
+                <div
+                  key={a.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleShirtOrderClick(a.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") handleShirtOrderClick(a.id);
+                  }}
+                  className="block cursor-pointer"
+                >
+                  {cardContent}
+                </div>
+              );
+            }
 
             return (
               <Link key={a.id} href={`/events/${a.id}`} className="block">
-                <div
-                  className="bg-white rounded-2xl p-4 border border-transparent shadow-md active:scale-[0.99] active:bg-gray-50 transition-all"
-                  style={{
-                    boxShadow:
-                      "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
-                    animation: "fadeSlideUp .35s ease both",
-                    animationDelay: `${idx * 50}ms`,
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
-                      {a.cover_image_url ? (
-                        <img
-                          src={a.cover_image_url}
-                          alt={a.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        (a.emoji ?? "📌")
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-gray-900 leading-snug break-words">
-                          {a.title}
-                        </p>
-                        <span
-                          className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${cfg.cls}`}
-                        >
-                          {overrideLabel ?? cfg.label}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
-                        <CalendarDays className="w-3 h-3 flex-shrink-0" />
-                        <span>
-                          {isDeadline ? "Ngày chốt ds đăng kí: " : ""}
-                          {dateValue
-                            ? format(new Date(dateValue), "dd/MM/yyyy", {
-                              locale: vi,
-                            })
-                            : "—"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {hasCapacity ? (
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="flex items-center gap-1 text-xs text-gray-400">
-                          <ParticipantIcon className="w-3 h-3" />
-                          {getEventParticipantLabel(a.type, 0).replace(
-                            /^0\s*/,
-                            "",
-                          )}
-                        </span>
-                        <span
-                          className={`text-xs ${isFull
-                            ? "text-red-500 font-medium"
-                            : ratio >= 0.6
-                              ? "text-amber-500 font-medium"
-                              : "text-emerald-600"
-                            }`}
-                        >
-                          {isFull
-                            ? "Đã đầy"
-                            : `${participantCount} / ${maxCapacity}`}
-                        </span>
-                      </div>
-                      <EnergyBar
-                        filled={participantCount}
-                        max={maxCapacity}
-                        status={a.status}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-50 text-xs text-gray-400">
-                      <ParticipantIcon className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>
-                        {getEventParticipantLabel(a.type, participantCount)}
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
-                    </div>
-                  )}
-                </div>
+                {cardContent}
               </Link>
             );
           })

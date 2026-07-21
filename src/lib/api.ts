@@ -241,8 +241,8 @@ export const activitiesApi = {
   ) => api.post(`/activities/${id}/register/offline-event`, data),
   vote: (id: string, optionIds: string[]) =>
     api.post(`/activities/${id}/vote`, { option_ids: optionIds }),
-  cancelRegistration: (id: string, params?: { registration_id?: string }) =>
-    api.delete(`/activities/${id}/register`, { params }),
+  // cancelRegistration: (id: string, params?: { registration_id?: string }) =>
+  //   api.delete(`/activities/${id}/register`, { params }),
   payShirtOrder: (
     activityId: string,
     data: {
@@ -266,6 +266,13 @@ export const activitiesApi = {
   ) => api.post(`/registrations/${registrationId}/tournament-payment`, data),
   getShirtOrderRegistrationDetail: (regId: string) =>
     api.get(`/activities/shirt-order-registrations/${regId}`),
+  cancelRegistration(activityId: string, registrationId?: string) {
+    return api.delete(`/activities/${activityId}/register`, {
+      params: {
+        registration_id: registrationId,
+      },
+    });
+  }
 };
 
 //admin
@@ -429,6 +436,11 @@ export const eventsAdminApi = {
     ),
   rejectShirtOrder: (regId: string) =>
     api.patch(`/admin/activities/shirt-order-registrations/${regId}/reject`),
+
+  approveCancelRequest: (regId: string) =>
+    api.patch(`/admin/activities/shirt-order-registrations/${regId}/approve-cancel`),
+  rejectCancelRequest: (regId: string, reason?: string) =>
+    api.patch(`/admin/activities/shirt-order-registrations/${regId}/reject-cancel`, { reason }),
 };
 
 export const uploadsAdminApi = {

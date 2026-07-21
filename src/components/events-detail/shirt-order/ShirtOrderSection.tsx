@@ -18,6 +18,9 @@ const TRANSITION_MS = 280;
 export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
   const shirtTypes: any[] = activity.detail?.shirt_types ?? [];
   const myRegistrations: any[] = myStatus?.my_registrations ?? [];
+  const pendingRegistrations = myRegistrations.filter(
+    (r: any) => r.payment_status !== "confirmed",
+  );
   const canRegister = activity.status === "open";
   const [desktopCartSlot, setDesktopCartSlot] = useState<HTMLElement | null>(null);
   const [placingOrder, setPlacingOrder] = useState(false);
@@ -264,7 +267,8 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     return (t?.price_per_shirt ?? 0) * (r.quantity ?? 1);
   };
 
-  const subtotal = myRegistrations.reduce((s: number, r: any) => s + priceOf(r), 0);
+  // const subtotal = myRegistrations.reduce((s: number, r: any) => s + priceOf(r), 0);
+  const subtotal = pendingRegistrations.reduce((s: number, r: any) => s + priceOf(r), 0);
   const grandTotal = cartTotal + subtotal;
 
   const unpaidRegs = myRegistrations.filter(
@@ -335,7 +339,9 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     );
   }
 
-  const totalCartCount = cart.length + myRegistrations.length;
+  // const totalCartCount = cart.length + myRegistrations.length;
+
+  const totalCartCount = cart.length + pendingRegistrations.length;
 
   return (
     <div className="space-y-4">
@@ -389,7 +395,8 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
         cartTotal={cartTotal}
         handleCheckout={handleCheckout}
         checkingOut={checkingOut}
-        myRegistrations={myRegistrations}
+        myRegistrations={pendingRegistrations}
+        // myRegistrations={myRegistrations}
         shirtTypes={shirtTypes}
         priceOf={priceOf}
         handleCancel={handleCancel}

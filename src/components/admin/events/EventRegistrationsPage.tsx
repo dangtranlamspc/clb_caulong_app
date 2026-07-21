@@ -49,6 +49,24 @@ export default function EventRegistrationsPage({
         }
     };
 
+    const handleApproveCancel = async (regId: string) => {
+        try {
+            await eventsAdminApi.approveCancelRequest(regId);
+            toast.success("Đã duyệt huỷ và hoàn tiền");
+            fetchAll();
+        } catch { }
+    };
+
+    const handleRejectCancel = async (regId: string, label: string) => {
+        if (!confirm(`Từ chối yêu cầu huỷ của "${label}"?`)) return;
+        try {
+            await eventsAdminApi.rejectCancelRequest(regId);
+            toast.success("Đã từ chối yêu cầu huỷ");
+            fetchAll();
+        } catch { }
+    };
+
+
     useEffect(() => {
         fetchAll();
     }, [id]);
@@ -196,6 +214,8 @@ export default function EventRegistrationsPage({
                                 onConfirm={(regIds: string[]) => handleConfirmPayment(regIds, "shirt_order")}
                                 onReject={handleRejectPayment}
                                 onRemove={(regId: string, label: string) => handleRemove("shirt_order", regId, label)}
+                                onApproveCancel={handleApproveCancel}
+                                onRejectCancel={handleRejectCancel}
                             />
                         ) : activity.type === "tournament" ? (
                             <TournamentTable
@@ -254,6 +274,8 @@ function ShirtOrderTable({
     onConfirm,
     onReject,
     onRemove,
+    onApproveCancel,
+    onRejectCancel,
 }: {
     registrations: any[];
     paymentFilter: PaymentFilter;
@@ -261,7 +283,11 @@ function ShirtOrderTable({
     onConfirm: (regIds: string[]) => void;
     onReject: (regId: string | string[], label: string) => void;
     onRemove: (regId: string, label: string) => void;
+    onApproveCancel: (regId: string) => void;
+    onRejectCancel: (regId: string, label: string) => void;
 }) {
+
+
 
     const imgSrc = (img: any) => (img ? (typeof img === "string" ? img : img.url) : null);
 
@@ -583,6 +609,30 @@ function ShirtOrderTable({
                                                                 onClick={() => onReject(groupIds, label)}
                                                                 title="Từ chối thanh toán"
                                                                 className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200"
+                                                            >
+                                                                <XCircle className="w-5 h-5" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {repReg.cancel_requested_at && (
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-red-50 text-red-600 whitespace-nowrap">
+                                                            Yêu cầu huỷ
+                                                        </span>
+                                                    )}
+                                                    {repReg.cancel_requested_at && (
+                                                        <div className="flex items-center justify-center gap-2 pt-1.5">
+                                                            <button
+                                                                onClick={() => onApproveCancel(repReg.id)}
+                                                                className="p-2 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600 border border-gray-200 hover:border-green-200"
+                                                                title="Duyệt huỷ & hoàn tiền"
+                                                            >
+                                                                <CheckCircle2 className="w-5 h-5" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => onRejectCancel(repReg.id, label)}
+                                                                className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200"
+                                                                title="Từ chối yêu cầu huỷ"
                                                             >
                                                                 <XCircle className="w-5 h-5" />
                                                             </button>
