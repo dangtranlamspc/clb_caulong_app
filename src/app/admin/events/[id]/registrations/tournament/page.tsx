@@ -486,6 +486,9 @@ export default function TournamentRegistrationsPage() {
     const nu = registrations.filter((r) => r.role === "nu").length;
     const byLevel = (lv: string) =>
       registrations.filter((r) => r.role === "nam" && r.level === lv).length;
+    const revenue = registrations
+      .filter((r) => r.payment_status === "confirmed")
+      .reduce((sum, r) => sum + (r.amount_override ?? 0), 0);
     return {
       total,
       nam,
@@ -496,6 +499,7 @@ export default function TournamentRegistrationsPage() {
       "B+": byLevel("B+"),
       B: byLevel("B"),
       C: byLevel("C"),
+      revenue,
     };
   }, [registrations]);
 
@@ -673,6 +677,12 @@ export default function TournamentRegistrationsPage() {
           </span>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 border border-green-100 text-sm">
+            <span className="text-green-600 font-medium">Doanh thu:</span>
+            <span className="text-green-700 font-bold tabular-nums">
+              {stats.revenue.toLocaleString("vi-VN")}đ
+            </span>
+          </div>
           <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm">
             <Download className="w-4 h-4" /> Xuất danh sách
           </button>

@@ -13,7 +13,8 @@ import {
     Phone,
     BarChart3,
     FileSpreadsheet,
-    UserPlus
+    UserPlus,
+    Link2
 } from "lucide-react";
 import { eventsAdminApi } from "@/lib/api";
 
@@ -144,6 +145,14 @@ export default function EventRegistrationsPage({
                         </p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
+                        {activity.type === "shirt_order" && (
+                            <button
+                                onClick={() => handleCopyPublicLink(activity.id)}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap"
+                            >
+                                <Link2 className="w-4 h-4" /> Tạo link công khai
+                            </button>
+                        )}
                         {activity.type === "shirt_order" && onAddRegistration && (
                             <button
                                 onClick={onAddRegistration}
@@ -637,30 +646,6 @@ function ShirtOrderTable({
                                                             </button>
                                                         </div>
                                                     )}
-
-                                                    {/* {cancelReg && (
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-red-50 text-red-600 whitespace-nowrap">
-                                                            Yêu cầu huỷ
-                                                        </span>
-                                                    )}
-                                                    {cancelReg && (
-                                                        <div className="flex items-center justify-center gap-2 pt-1.5">
-                                                            <button
-                                                                onClick={() => onApproveCancel(cancelReg.id)}
-                                                                className="p-2 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600 border border-gray-200 hover:border-green-200"
-                                                                title="Duyệt huỷ & hoàn tiền"
-                                                            >
-                                                                <CheckCircle2 className="w-5 h-5" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => onRejectCancel(cancelReg.id, cancelLabel)}
-                                                                className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200"
-                                                                title="Từ chối yêu cầu huỷ"
-                                                            >
-                                                                <XCircle className="w-5 h-5" />
-                                                            </button>
-                                                        </div>
-                                                    )} */}
                                                 </div>
                                             </td>
                                         );
@@ -907,6 +892,14 @@ function ShirtOrderTable({
             </div>
         </>
     );
+}
+
+function handleCopyPublicLink(activityId: string) {
+    const url = `${window.location.origin}/dat-ao/${activityId}`;
+    navigator.clipboard
+        .writeText(url)
+        .then(() => toast.success("Đã sao chép link đặt áo công khai"))
+        .catch(() => toast.error("Không thể sao chép link"));
 }
 
 function fmt(n: number) {

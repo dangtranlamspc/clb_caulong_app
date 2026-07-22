@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { Users, Crown, User, UserRound, CalendarDays, Wallet, Flame, BadgeCheck } from 'lucide-react';
+import { Users, Crown, User, UserRound, CalendarDays, Wallet, Flame, BadgeCheck, Megaphone, Calendar, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
-import { sessionsApi, rankingsAdminApi, dashboardAdminApi } from '@/lib/api';
+import { sessionsApi, rankingsAdminApi, dashboardAdminApi, eventsAdminApi } from '@/lib/api';
 import { CustomSelect } from '@/components/admin/sessions/CustomSelect';
 
 const FINANCE_PERIOD_OPTIONS = [
@@ -25,6 +26,72 @@ const ATTENDANCE_TIERS = [
     { min: 81, max: 130, icon: '💎', label: 'Trụ Cột Sân' },
     { min: 131, max: Infinity, icon: '👑', label: 'Lão Làng Sân Cầu' },
 ];
+
+const ACTIVITY_TYPE_DEFAULT_IMAGE: Record<string, string> = {
+    shirt_order: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/T-shirt/3D/t-shirt_3d.png',
+    tournament: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Trophy/3D/trophy_3d.png',
+    birthday: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Birthday%20cake/3D/birthday_cake_3d.png',
+    offline_event: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Fire/3D/fire_3d.png',
+    poll: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Bar%20chart/3D/bar_chart_3d.png',
+};
+
+const ACTIVITY_TYPE_ICON_BG: Record<string, string> = {
+    shirt_order: 'bg-blue-50',
+    tournament: 'bg-amber-50',
+    birthday: 'bg-pink-50',
+    offline_event: 'bg-orange-50',
+    poll: 'bg-purple-50',
+};
+
+const ACTIVITY_STATUS_CFG: Record<string, string> = {
+    draft: 'bg-gray-50 text-gray-500',
+    open: ' bg-green-50 text-green-700',
+    upcoming: 'bg-purple-50 text-purple-600',
+    ongoing: 'bg-blue-50 text-blue-600',
+    closed: 'bg-orange-50 text-orange-600',
+    completed: 'bg-slate-50 text-slate-500',
+    cancelled: 'bg-red-50 text-red-500',
+};
+
+const ACTIVITY_STATUS_LABEL: Record<string, string> = {
+    draft: 'Nháp',
+    open: 'Mở đăng ký',
+    upcoming: 'Sắp diễn ra',
+    ongoing: 'Đang diễn ra',
+    closed: 'Đã đóng đăng ký',
+    completed: 'Đã kết thúc',
+    cancelled: 'Đã huỷ',
+};
+
+function activityMetaLine(a: any) {
+    const dateLabel = a.deadline
+        ? `Deadline: ${format(new Date(a.deadline), 'dd/MM/yyyy')}`
+        : a.event_date
+            ? format(new Date(a.event_date), 'dd/MM/yyyy')
+            : null;
+
+    const countLabel =
+        a.registrations_count != null
+            ? `${a.registrations_count} người đã đăng ký`
+            : null;
+
+    return { dateLabel, countLabel };
+}
+
+function ActivityThumbnail({ src, emoji }: { src?: string | null; emoji: string }) {
+    const [err, setErr] = useState(false);
+    if (src && !err) {
+        return (
+            <img
+                src={src}
+                alt=""
+                className="w-full h-full object-cover"
+                onError={() => setErr(true)}
+            />
+        );
+    }
+    return <span className="text-3xl">{emoji}</span>;
+}
 
 function getAttendanceTier(totalSessions: number) {
     return ATTENDANCE_TIERS.find((t) => totalSessions >= t.min && totalSessions <= t.max) ?? ATTENDANCE_TIERS[0];
@@ -120,6 +187,7 @@ type AttendanceLeaderRow = {
 };
 
 export default function AdminDashboardPage() {
+    const router = useRouter();
     const [statsLoading, setStatsLoading] = useState(true);
     const [totalMembers, setTotalMembers] = useState(0);
     const [memberBreakdown, setMemberBreakdown] = useState({ vip: 0, thuong: 0, vang_lai: 0 });
@@ -147,6 +215,9 @@ export default function AdminDashboardPage() {
     const [financeChartData, setFinanceChartData] = useState<{ month: string; Thu: number; Chi: number }[]>([]);
     const [financeChartLoading, setFinanceChartLoading] = useState(true);
 
+    const [activitiesLoading, setActivitiesLoading] = useState(true);
+    const [recentActivities, setRecentActivities] = useState<any[]>([]);
+
     useEffect(() => {
         setStatsLoading(true);
         dashboardAdminApi.getMemberTypeCounts()
@@ -156,6 +227,14 @@ export default function AdminDashboardPage() {
             })
             .catch(() => { })
             .finally(() => setStatsLoading(false));
+    }, []);
+
+    useEffect(() => {
+        setActivitiesLoading(true);
+        eventsAdminApi.list({ limit: 5 })
+            .then(({ data }) => setRecentActivities(data?.data ?? []))
+            .catch(() => setRecentActivities([]))
+            .finally(() => setActivitiesLoading(false));
     }, []);
 
     useEffect(() => {
@@ -321,6 +400,82 @@ export default function AdminDashboardPage() {
                 </Reveal>
             )}
 
+
+            {/* Hoạt động mới nhất */}
+            {activitiesLoading ? (
+                <CardSkeleton className="h-40" />
+            ) : (
+                <Reveal show delayMs={120}>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                            <div className="flex items-center gap-2">
+                                <Megaphone className="w-4 h-4 text-purple-500" />
+                                <h3 className="text-[11px] font-bold text-gray-500 uppercase">Hoạt động mới nhất</h3>
+                            </div>
+                            <button
+                                onClick={() => router.push('/admin/events')}
+                                className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                            >
+                                Xem tất cả →
+                            </button>
+                        </div>
+
+                        {recentActivities.length === 0 ? (
+                            <div className="bg-white rounded-2xl p-6 border border-gray-100 text-center text-gray-400 text-sm">
+                                Chưa có hoạt động nào
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {recentActivities.map((a: any, idx: number) => {
+                                    const { dateLabel, countLabel } = activityMetaLine(a);
+                                    return (
+                                        <button
+                                            key={a.id}
+                                            onClick={() => router.push('/admin/events')}
+                                            className="w-full flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow text-left animate-reveal"
+                                            style={{ animationDelay: `${idx * 40}ms` }}
+                                        >
+                                            <div
+                                                className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden ${ACTIVITY_TYPE_ICON_BG[a.type] ?? 'bg-gray-50'}`}
+                                            >
+                                                <ActivityThumbnail
+                                                    src={a.cover_image_url ?? ACTIVITY_TYPE_DEFAULT_IMAGE[a.type]}
+                                                    emoji={a.emoji ?? '📌'}
+                                                />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-semibold text-gray-900 truncate flex items-center gap-1">
+                                                    {a.title}
+                                                </p>
+                                                {dateLabel && (
+                                                    <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-1">
+                                                        <Calendar className="w-3 h-3 flex-shrink-0" />
+                                                        {dateLabel}
+                                                    </p>
+                                                )}
+                                                {countLabel && (
+                                                    <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
+                                                        <Users className="w-3 h-3 flex-shrink-0" />
+                                                        {countLabel}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <span
+                                                className={`text-[11px] px-2.5 py-1 rounded-full font-medium flex-shrink-0 whitespace-nowrap ${ACTIVITY_STATUS_CFG[a.status] ?? 'bg-gray-50 text-gray-500'}`}
+                                            >
+                                                {ACTIVITY_STATUS_LABEL[a.status] ?? a.status}
+                                            </span>
+                                            <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </Reveal>
+            )}
+
+
             {/* Biểu đồ thu chi */}
             <div className="bg-white rounded-2xl p-4 border border-gray-100">
                 <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
@@ -476,7 +631,10 @@ export default function AdminDashboardPage() {
                     </Reveal>
                 )}
 
-                <button className="mt-3 text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                <button
+                    onClick={() => router.push('/admin/rankings')}
+                    className="mt-3 text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                >
                     Xem đầy đủ bảng xếp hạng →
                 </button>
             </div>

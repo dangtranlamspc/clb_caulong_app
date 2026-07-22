@@ -270,7 +270,8 @@ export const activitiesApi = {
         registration_id: registrationId,
       },
     });
-  }
+  },
+
 };
 
 //admin
@@ -439,6 +440,8 @@ export const eventsAdminApi = {
     api.patch(`/admin/activities/shirt-order-registrations/${regId}/approve-cancel`),
   rejectCancelRequest: (regId: string, reason?: string) =>
     api.patch(`/admin/activities/shirt-order-registrations/${regId}/reject-cancel`, { reason }),
+  getOverview: (params?: { month?: number; year?: number }) =>
+    api.get("/admin/activities/overview", { params }),
 };
 
 export const uploadsAdminApi = {
@@ -446,6 +449,24 @@ export const uploadsAdminApi = {
     const formData = new FormData();
     formData.append("file", file);
     return api.post(`/admin/uploads?folder=${folder}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+};
+
+
+export const guestShirtOrderApi = {
+  getActivity: (id: string) => api.get(`/activities/${id}/public`),
+  checkJerseyNumber: (id: string, number: string) =>
+    api.get(`/activities/${id}/shirt-order/check-number`, {
+      params: { number },
+    }),
+  submitOrder: (id: string, data: any) =>
+    api.post(`/activities/${id}/register/shirt-order/guest-cart`, data),
+  uploadPaymentProof: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post(`/uploads/public?folder=payment-proofs`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },

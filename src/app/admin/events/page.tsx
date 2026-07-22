@@ -25,6 +25,7 @@ import EventTypePicker from "@/components/admin/events/EventTypePicker";
 import EventRegistrationsPage from "@/components/admin/events/EventRegistrationsPage";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import AdminAddShirtOrderModal from "@/components/admin/events/form/AdminAddShirtOrderModal";
+import ActivitiesOverview from "@/components/admin/events/ActivitiesOverview";
 
 const TYPE_LABEL: Record<string, string> = {
     shirt_order: "👕 Đặt áo",
@@ -41,6 +42,30 @@ const TYPE_ICON_BG: Record<string, string> = {
     offline_event: "bg-orange-50",
     poll: "bg-purple-50",
 };
+
+
+const TYPE_DEFAULT_IMAGE: Record<string, string> = {
+    shirt_order: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/T-shirt/3D/t-shirt_3d.png',
+    tournament: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Trophy/3D/trophy_3d.png',
+    birthday: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Birthday%20cake/3D/birthday_cake_3d.png',
+    offline_event: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Fire/3D/fire_3d.png',
+    poll: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Bar%20chart/3D/bar_chart_3d.png',
+};
+
+function ActivityThumbnail({ src, emoji }: { src?: string | null; emoji: string }) {
+    const [err, setErr] = useState(false);
+    if (src && !err) {
+        return (
+            <img
+                src={src}
+                alt=""
+                className="w-full h-full object-cover"
+                onError={() => setErr(true)}
+            />
+        );
+    }
+    return <span>{emoji}</span>;
+}
 
 const STATUS_CFG: Record<string, string> = {
     draft: "bg-gray-50 text-gray-500",
@@ -85,6 +110,9 @@ const TYPE_FILTER_OPTIONS = [
     { value: "", label: "Tất cả loại hoạt động" },
     ...TYPE_OPTIONS,
 ];
+
+
+
 
 function SkeletonTableRow() {
     return (
@@ -166,8 +194,6 @@ export default function ActivitiesListPage() {
     const [selectedActivity, setSelectedActivity] = useState<any>(null);
     const [showRegistrations, setShowRegistrations] = useState(false);
     const [showAddRegistration, setShowAddRegistration] = useState(false);
-
-    const ALL_TAB_KEYS = ["", ...TYPE_OPTIONS.map((o) => o.value)];
 
     useEffect(() => {
         const el = tabRefs.current[typeFilter];
@@ -283,7 +309,6 @@ export default function ActivitiesListPage() {
 
     return (
         <div className="space-y-4">
-            {/* Header */}
             <div className="flex items-center justify-between gap-3">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Hoạt động</h1>
@@ -299,6 +324,8 @@ export default function ActivitiesListPage() {
                     <span className="hidden sm:inline">Tạo hoạt động</span>
                 </button>
             </div>
+
+            <ActivitiesOverview />
 
             <div
                 ref={tabsWrapRef}
@@ -357,7 +384,6 @@ export default function ActivitiesListPage() {
                 </div>
             ) : (
                 <>
-                    {/* Desktop table */}
                     <div className="hidden md:block card !p-0 overflow-hidden">
                         <table className="w-full text-sm">
                             <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
@@ -382,7 +408,17 @@ export default function ActivitiesListPage() {
                                     items.map((a) => (
                                         <tr key={a.id} className="hover:bg-gray-50">
                                             <td className="px-4 py-3 font-medium text-gray-900">
-                                                {a.emoji} {a.title}
+                                                <div className="flex items-center gap-2.5">
+                                                    <div
+                                                        className={`w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0 overflow-hidden ${TYPE_ICON_BG[a.type] ?? "bg-gray-50"}`}
+                                                    >
+                                                        <ActivityThumbnail
+                                                            src={a.cover_image_url ?? TYPE_DEFAULT_IMAGE[a.type]}
+                                                            emoji={a.emoji ?? "📌"}
+                                                        />
+                                                    </div>
+                                                    <span>{a.title}</span>
+                                                </div>
                                             </td>
                                             <td className="px-4 py-3 text-gray-500">
                                                 {TYPE_LABEL[a.type]}
@@ -450,9 +486,12 @@ export default function ActivitiesListPage() {
                                 >
                                     <div className="p-4 flex items-start gap-3">
                                         <div
-                                            className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${TYPE_ICON_BG[a.type] ?? "bg-gray-50"}`}
+                                            className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 overflow-hidden ${TYPE_ICON_BG[a.type] ?? "bg-gray-50"}`}
                                         >
-                                            {a.emoji}
+                                            <ActivityThumbnail
+                                                src={a.cover_image_url ?? TYPE_DEFAULT_IMAGE[a.type]}
+                                                emoji={a.emoji ?? "📌"}
+                                            />
                                         </div>
                                         <div className="min-w-0 flex-1 pt-0.5">
                                             <div className="flex items-start justify-between gap-2">
@@ -465,9 +504,6 @@ export default function ActivitiesListPage() {
                                                     {STATUS_LABEL[a.status] ?? a.status}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-gray-400 mt-0.5">
-                                                {TYPE_LABEL[a.type]}
-                                            </p>
 
                                             {(a.deadline || a.event_date) && (
                                                 <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mt-2">

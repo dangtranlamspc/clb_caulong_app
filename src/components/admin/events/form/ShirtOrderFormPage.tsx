@@ -58,7 +58,6 @@ const DEFAULT_SHIRT_TYPES = [
     newShirtType("Loại áo 3"),
 ];
 
-// composite key used for file input refs / upload-in-progress tracking
 const fileKey = (typeId: string, colorId: string) => `${typeId}:${colorId}`;
 
 export default function ShirtOrderFormPage({
