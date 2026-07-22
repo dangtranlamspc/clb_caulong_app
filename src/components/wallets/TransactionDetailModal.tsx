@@ -48,20 +48,11 @@ export function TransactionDetailModal({
 
   const canLoadDetail = isSessionPayment || isShirtOrder;
 
-  // const canLoadDetail =
-  //   tx.type === "session_payment" &&
-  //   tx.reference_type === "registration" &&
-  //   tx.reference_id;
-
-  // useEffect(() => {
-  //   if (!canLoadDetail) return;
-  //   setLoadingDetail(true);
-  //   registrationsApi
-  //     .getDetail(tx.reference_id)
-  //     .then(({ data }) => setDetail(data))
-  //     .catch(() => setDetail(null))
-  //     .finally(() => setLoadingDetail(false));
-  // }, [tx.reference_id]);
+  const shirtOrderLabel = isShirtOrder
+    ? tx.amount > 0
+      ? "Hoàn tiền đặt áo"
+      : "Thanh toán đặt áo"
+    : null;
 
   useEffect(() => {
     if (!canLoadDetail) return;
@@ -153,7 +144,7 @@ export function TransactionDetailModal({
               {smt(tx.amount)}
             </p>
             <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
-              {TX_TYPE_LABEL[tx.type] ?? tx.type}
+              {shirtOrderLabel ?? TX_TYPE_LABEL[tx.type] ?? tx.type}
             </span>
           </div>
 

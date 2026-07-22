@@ -257,6 +257,26 @@ function getPaymentMethodBadge(r: any) {
     return null;
 }
 
+function rowBgClass(r: any) {
+    if (r.cancel_requested_at) {
+        return "bg-red-100 hover:bg-red-200/70";
+    }
+    if (r.payment_status === "confirmed") {
+        return "bg-green-100 hover:bg-green-200/70";
+    }
+    return "bg-yellow-100 hover:bg-yellow-200/70";
+}
+
+function bucketBgClass(items: any[]) {
+    if (items.some((r: any) => r.cancel_requested_at)) {
+        return "bg-red-100 border-red-200";
+    }
+    if (items.every((r: any) => r.payment_status === "confirmed")) {
+        return "bg-green-100 border-green-200";
+    }
+    return "bg-yellow-100 border-yellow-200";
+}
+
 function paymentStatusBadge(r: any) {
     if (r.payment_status === "confirmed") {
         return { label: "Đã xác nhận", cls: "bg-green-50 text-green-700", showIcon: true };
@@ -427,6 +447,9 @@ function ShirtOrderTable({
                                 Loại áo
                             </th>
                             <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                                Form áo
+                            </th>
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
                                 Màu sắc
                             </th>
                             <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
@@ -468,19 +491,14 @@ function ShirtOrderTable({
                             sizeCellSpan,
                         }) => {
                             const unitPrice = r.unit_price ?? 0;
-                            const totalAmount = r.total_amount ?? unitPrice * (r.quantity ?? 1);
                             const groupTotal = groupRegs.reduce(
                                 (sum: number, g: any) =>
                                     sum + (g.total_amount ?? (g.unit_price ?? 0) * (g.quantity ?? 1)),
                                 0,
                             );
-                            const statusBadge = paymentStatusBadge(r);
-                            const methodBadge = getPaymentMethodBadge(r);
-                            const canConfirmReject =
-                                !r.registered_by_admin && r.payment_status !== "confirmed" && !!r.payment_method;
 
                             return (
-                                <tr key={r.id} className="hover:bg-gray-50">
+                                <tr key={r.id} className={rowBgClass(r)}>
                                     {isFirstOfGroup && (
                                         <td
                                             rowSpan={rowSpan}
@@ -519,6 +537,16 @@ function ShirtOrderTable({
                                             {r.shirt_type_name ?? "—"}
                                         </td>
                                     )}
+                                    <td className="px-4 py-3 border border-gray-200 text-center">
+                                        <span
+                                            className={`text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${r.gender === "nu"
+                                                ? "bg-pink-50 text-pink-600"
+                                                : "bg-blue-50 text-blue-600"
+                                                }`}
+                                        >
+                                            {r.gender === "nu" ? "Nữ" : "Nam"}
+                                        </span>
+                                    </td>
                                     {showColorCell && (
                                         <td
                                             rowSpan={colorCellSpan}
@@ -570,12 +598,13 @@ function ShirtOrderTable({
                                             !repReg.registered_by_admin && repReg.payment_status !== "confirmed" && !!repReg.payment_method;
                                         const label = repReg.users?.full_name ?? repReg.guest_full_name ?? "";
 
+                                        const cancelReg = groupRegs.find((g: any) => g.cancel_requested_at);
+                                        const cancelLabel = cancelReg?.users?.full_name ?? cancelReg?.guest_full_name ?? "";
+
                                         return (
                                             <td rowSpan={rowSpan} className="px-4 py-3 border border-gray-200 align-middle text-center">
                                                 <div className="flex flex-col items-center gap-1.5">
-                                                    <span
-                                                        className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 whitespace-nowrap ${statusBadge.cls}`}
-                                                    >
+                                                    <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 whitespace-nowrap ${statusBadge.cls}`}>
                                                         {statusBadge.showIcon && <CheckCircle2 className="w-3 h-3" />}
                                                         {statusBadge.label}
                                                     </span>
@@ -598,59 +627,77 @@ function ShirtOrderTable({
                                                         )}
                                                     {canConfirmReject && (
                                                         <div className="flex items-center justify-center gap-2 pt-1.5">
-                                                            <button
-                                                                onClick={() => onConfirm(groupIds)}
-                                                                title="Xác nhận thanh toán"
-                                                                className="p-2 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600 border border-gray-200 hover:border-green-200"
-                                                            >
+                                                            <button onClick={() => onConfirm(groupIds)} title="Xác nhận thanh toán"
+                                                                className="p-2 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600 border border-gray-200 hover:border-green-200">
                                                                 <CheckCircle2 className="w-5 h-5" />
                                                             </button>
-                                                            <button
-                                                                onClick={() => onReject(groupIds, label)}
-                                                                title="Từ chối thanh toán"
-                                                                className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200"
-                                                            >
+                                                            <button onClick={() => onReject(groupIds, label)} title="Từ chối thanh toán"
+                                                                className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200">
                                                                 <XCircle className="w-5 h-5" />
                                                             </button>
                                                         </div>
                                                     )}
 
-                                                    {repReg.cancel_requested_at && (
+                                                    {/* {cancelReg && (
                                                         <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-red-50 text-red-600 whitespace-nowrap">
                                                             Yêu cầu huỷ
                                                         </span>
                                                     )}
-                                                    {repReg.cancel_requested_at && (
+                                                    {cancelReg && (
                                                         <div className="flex items-center justify-center gap-2 pt-1.5">
                                                             <button
-                                                                onClick={() => onApproveCancel(repReg.id)}
+                                                                onClick={() => onApproveCancel(cancelReg.id)}
                                                                 className="p-2 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600 border border-gray-200 hover:border-green-200"
                                                                 title="Duyệt huỷ & hoàn tiền"
                                                             >
                                                                 <CheckCircle2 className="w-5 h-5" />
                                                             </button>
                                                             <button
-                                                                onClick={() => onRejectCancel(repReg.id, label)}
+                                                                onClick={() => onRejectCancel(cancelReg.id, cancelLabel)}
                                                                 className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200"
                                                                 title="Từ chối yêu cầu huỷ"
                                                             >
                                                                 <XCircle className="w-5 h-5" />
                                                             </button>
                                                         </div>
-                                                    )}
+                                                    )} */}
                                                 </div>
                                             </td>
                                         );
                                     })()}
 
                                     <td className="px-4 py-3 border border-gray-200 text-center">
-                                        <button
-                                            onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
-                                            title="Xoá đăng ký"
-                                            className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        {r.cancel_requested_at ? (
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold whitespace-nowrap">
+                                                    Yêu cầu huỷ
+                                                </span>
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button
+                                                        onClick={() => onApproveCancel(r.id)}
+                                                        title="Duyệt huỷ & hoàn tiền"
+                                                        className="p-1.5 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600"
+                                                    >
+                                                        <CheckCircle2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => onRejectCancel(r.id, r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                        title="Từ chối yêu cầu huỷ"
+                                                        className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                                                    >
+                                                        <XCircle className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
+                                                title="Xoá đăng ký"
+                                                className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             );
@@ -695,6 +742,8 @@ function ShirtOrderTable({
                         0,
                     );
                     const repReg = groupRegs.find((g: any) => g.payment_method) ?? groupRegs[0];
+                    const cancelReg = groupRegs.find((g: any) => g.cancel_requested_at);
+                    const cancelLabel = cancelReg?.users?.full_name ?? cancelReg?.guest_full_name ?? "";
                     const canConfirmReject =
                         !repReg.registered_by_admin && repReg.payment_status !== "confirmed" && !!repReg.payment_method;
                     const groupIds = groupRegs.map((g: any) => g.id);
@@ -733,7 +782,7 @@ function ShirtOrderTable({
                                 {buckets.map((bucket, bIdx) => {
                                     const imageUrl = getShirtImage(bucket.shirt_type_id, bucket.color_id);
                                     return (
-                                        <div key={bIdx} className="rounded-xl border border-gray-200 p-3 space-y-2">
+                                        <div key={bIdx} className={`rounded-xl border p-3 space-y-2 ${bucketBgClass(bucket.items)}`}>
                                             <div className="flex items-center gap-3">
                                                 <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0 flex items-center justify-center">
                                                     {imageUrl ? (
@@ -756,20 +805,53 @@ function ShirtOrderTable({
 
                                             <div className="space-y-1.5 pt-1.5 border-t border-gray-100">
                                                 {bucket.items.map((r: any) => (
-                                                    <div key={r.id} className="flex items-center justify-between gap-2 text-xs">
-                                                        <span className="text-gray-500">
-                                                            Size <strong className="text-gray-700">{r.size}</strong>
-                                                            {r.jersey_number && <> · Số <strong className="text-gray-700">{r.jersey_number}</strong></>}
-                                                            {r.print_name && <> · Tên <strong className="text-gray-700">"{r.print_name}"</strong></>}
-                                                            {" · SL "}
-                                                            <strong className="text-gray-700">{r.quantity}</strong>
-                                                        </span>
-                                                        <button
-                                                            onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
-                                                            className="p-1 -m-1 text-gray-300 hover:text-red-500 flex-shrink-0"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
+                                                    <div
+                                                        key={r.id}
+                                                        className="flex items-center justify-between gap-2 text-xs rounded-lg px-1.5 py-1 -mx-1.5"
+                                                    >
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-gray-500">
+                                                                <strong className={r.gender === "nu" ? "text-pink-600" : "text-blue-600"}>
+                                                                    {r.gender === "nu" ? "Nữ" : "Nam"}
+                                                                </strong>
+                                                                {" · "}Size <strong className="text-gray-700">{r.size}</strong>
+                                                                {r.jersey_number && <> · Số <strong className="text-gray-700">{r.jersey_number}</strong></>}
+                                                                {r.print_name && <> · Tên <strong className="text-gray-700">"{r.print_name}"</strong></>}
+                                                                {" · SL "}
+                                                                <strong className="text-gray-700">{r.quantity}</strong>
+                                                            </span>
+                                                            {r.cancel_requested_at && (
+                                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold w-fit">
+                                                                    Yêu cầu huỷ
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {r.cancel_requested_at ? (
+                                                            <div className="flex items-center gap-1 flex-shrink-0">
+                                                                <button
+                                                                    onClick={() => onApproveCancel(r.id)}
+                                                                    className="p-1 -m-1 text-gray-400 hover:text-green-600"
+                                                                    title="Duyệt huỷ & hoàn tiền"
+                                                                >
+                                                                    <CheckCircle2 className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => onRejectCancel(r.id, r.users?.full_name ?? "")}
+                                                                    className="p-1 -m-1 text-gray-400 hover:text-red-500"
+                                                                    title="Từ chối yêu cầu huỷ"
+                                                                >
+                                                                    <XCircle className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
+                                                                className="p-1 -m-1 text-gray-300 hover:text-red-500 flex-shrink-0"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -798,22 +880,27 @@ function ShirtOrderTable({
                                 <span className="text-sm font-bold text-gray-900">{fmt(memberTotal)}</span>
                             </div>
 
-                            {canConfirmReject && (
-                                <div className="flex items-center justify-center gap-2 pt-1">
-                                    <button
-                                        onClick={() => onConfirm(groupIds)}
-                                        className="flex-1 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-1.5"
-                                    >
-                                        <CheckCircle2 className="w-4 h-4" /> Xác nhận
-                                    </button>
-                                    <button
-                                        onClick={() => onReject(groupIds, memberLabel)}
-                                        className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5"
-                                    >
-                                        <XCircle className="w-4 h-4" /> Từ chối
-                                    </button>
+                            {/* {cancelReg && (
+                                <div className="flex flex-col gap-1.5 pt-1">
+                                    <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-red-50 text-red-600 w-fit">
+                                        Yêu cầu huỷ: {cancelReg.color_name ?? cancelReg.size ?? ""}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => onApproveCancel(cancelReg.id)}
+                                            className="flex-1 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-1.5"
+                                        >
+                                            <CheckCircle2 className="w-4 h-4" /> Duyệt huỷ
+                                        </button>
+                                        <button
+                                            onClick={() => onRejectCancel(cancelReg.id, cancelLabel)}
+                                            className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5"
+                                        >
+                                            <XCircle className="w-4 h-4" /> Từ chối
+                                        </button>
+                                    </div>
                                 </div>
-                            )}
+                            )} */}
                         </div>
                     );
                 })}
@@ -862,7 +949,7 @@ function exportToExcel(activity: any, regData: any) {
             const endRow = currentRowIndex + groupRegs.length;
 
             if (groupRegs.length > 1) {
-                const memberLevelCols = [0, 1, 9, 10, 11, 12, 13];
+                const memberLevelCols = [0, 1, 10, 11, 12, 13, 14, 15];
                 for (const c of memberLevelCols) {
                     merges.push({ s: { r: startRow, c }, e: { r: endRow, c } });
                 }
@@ -886,7 +973,6 @@ function exportToExcel(activity: any, regData: any) {
                 typeCursor += span;
             }
 
-            // ── Merge theo Màu sắc + gộp SL/Đơn giá (liên tiếp cùng type + color) ──
             let colorCursor = 0;
             while (colorCursor < groupRegs.length) {
                 let span = 1;
@@ -898,8 +984,7 @@ function exportToExcel(activity: any, regData: any) {
                     span++;
                 }
                 if (span > 1) {
-                    // Màu sắc (col 3), SL (col 7), Đơn giá (col 8)
-                    for (const c of [3, 7, 8]) {
+                    for (const c of [4, 8, 9]) {
                         merges.push({
                             s: { r: startRow + colorCursor, c },
                             e: { r: startRow + colorCursor + span - 1, c },
@@ -909,7 +994,6 @@ function exportToExcel(activity: any, regData: any) {
                 colorCursor += span;
             }
 
-            // ── Build rows: SL hiển thị tổng theo nhóm màu ở dòng đầu, các dòng còn lại trong nhóm để trống ──
             let cIdx = 0;
             while (cIdx < groupRegs.length) {
                 let span = 1;
@@ -930,6 +1014,7 @@ function exportToExcel(activity: any, regData: any) {
                         "Thành viên": r.users?.full_name ?? r.guest_full_name ?? "—",
                         "SĐT": r.users?.phone ?? r.guest_phone ?? "—",
                         "Loại áo": r.shirt_type_name ?? "—",
+                        "Form áo": r.gender === "nu" ? "Nữ" : "Nam",
                         "Màu sắc": r.color_name ?? "—",
                         "Size": r.size,
                         "Số áo": r.jersey_number ?? "—",
@@ -939,6 +1024,9 @@ function exportToExcel(activity: any, regData: any) {
                         "Tổng tiền (theo thành viên)": groupTotal,
                         "Trạng thái TT":
                             r.payment_status === "confirmed" ? "Đã xác nhận" : "Chưa xác nhận",
+                        "Trạng thái huỷ": r.cancel_requested_at
+                            ? "Đang chờ duyệt huỷ"
+                            : "—",
                         "Phương thức": r.payment_method ?? "—",
                         "Mã tham chiếu": r.payment_reference ?? "—",
                         "Nguồn": r.registered_by_admin ? "Admin thêm" : "Tự đăng ký",
