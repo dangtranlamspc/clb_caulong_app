@@ -241,8 +241,6 @@ export const activitiesApi = {
   ) => api.post(`/activities/${id}/register/offline-event`, data),
   vote: (id: string, optionIds: string[]) =>
     api.post(`/activities/${id}/vote`, { option_ids: optionIds }),
-  // cancelRegistration: (id: string, params?: { registration_id?: string }) =>
-  //   api.delete(`/activities/${id}/register`, { params }),
   payShirtOrder: (
     activityId: string,
     data: {

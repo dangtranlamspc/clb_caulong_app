@@ -205,11 +205,10 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
       setCheckingOut(false);
     }
   };
-
   const handleCancel = async (reg: any) => {
     if (!confirm("Xoá sản phẩm này khỏi đơn hàng?")) return;
     try {
-      await activitiesApi.cancelRegistration(activity.id, { registration_id: reg.id });
+      await activitiesApi.cancelRegistration(activity.id, reg.id);
       toast.success("Đã xoá khỏi đơn hàng");
       onChanged();
     } catch { }
