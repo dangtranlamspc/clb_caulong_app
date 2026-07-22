@@ -30,110 +30,165 @@ export function ShirtTypePicker({
 }) {
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-bold text-gray-900">1. Chọn mẫu áo</h3>
-      </div>
-      <div className="flex flex-wrap gap-3">
+      <h3 className="font-bold text-gray-900">1. Chọn mẫu áo</h3>
+
+      {/* Tabs chọn mẫu áo */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {shirtTypes.map((type) => {
-          const images: string[] = (type.colors ?? []).flatMap((c: any) =>
-            (c.images ?? []).map((img: any) => (typeof img === "string" ? img : img.url)),
-          );
           const active = selectedType?.id === type.id;
           const alreadyInCartOrOrder =
             cart.some((c) => c.shirt_type_id === type.id) ||
             myRegistrations.some((r: any) => r.shirt_type_id === type.id);
-          const previewSrc = active ? (activeColorImage ?? images[0]) : images[0];
-
           return (
-            <div
+            <button
               key={type.id}
-              role="button"
-              tabIndex={0}
               onClick={() => setSelectedTypeId(type.id)}
-              onKeyDown={(e) => e.key === "Enter" && setSelectedTypeId(type.id)}
-              className={`relative text-left rounded-2xl border-2 p-2 w-[104px] sm:w-[140px] lg:w-[160px] flex-shrink-0 transition-colors cursor-pointer ${active ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white"
+              className={`relative flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap tab-btn ${active
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-200 tab-btn-active"
+                  : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                 }`}
             >
-              {active && (
-                <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center z-10">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                </span>
-              )}
+              {type.name}
               {alreadyInCartOrOrder && (
-                <span className="absolute top-1.5 left-1.5 text-[8px] font-bold uppercase bg-emerald-500 text-white px-1.5 py-0.5 rounded-full z-10">
-                  Đã chọn
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center">
+                  ✓
                 </span>
               )}
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (previewSrc) openLightbox(previewSrc);
-                }}
-                className="w-full aspect-square rounded-xl bg-gray-50 overflow-hidden flex items-center justify-center mb-2"
-              >
-                {previewSrc ? (
-                  <img src={previewSrc} className="w-full h-full object-cover" />
-                ) : (
-                  <Shirt className="w-7 h-7 text-gray-300" />
-                )}
-              </button>
-
-              <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{type.name}</p>
-              {(type.price_per_shirt ?? 0) > 0 && (
-                <p className="text-[11px] sm:text-sm font-medium text-blue-600 mt-0.5">
-                  {fmt(type.price_per_shirt)}
-                </p>
-              )}
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {(selectedType?.colors ?? []).length > 0 && (
-        <div>
-          <p className="text-[11px] font-medium text-gray-400 mb-2">Màu sắc</p>
-          <div className="flex flex-wrap gap-3">
-            {(selectedType.colors ?? []).map((c: any) => {
-              const isActive = activeColor?.id === c.id;
-              const swatch = colorSwatchFromName(c.name);
-              const isLightSwatch =
-                swatch.toLowerCase() === "#ffffff" || swatch.toLowerCase() === "#eab308";
+      {/* Ảnh preview lớn + thông tin + màu sắc */}
+      {selectedType && (
+        <div className="flex flex-col-reverse sm:flex-row gap-5">
+          <div className="flex-1 space-y-3">
+            <div>
+              <p className="text-lg font-bold text-gray-900">{selectedType.name}</p>
+              {(selectedType.price_per_shirt ?? 0) > 0 && (
+                <p className="text-blue-600 font-bold">{fmt(selectedType.price_per_shirt)}</p>
+              )}
+            </div>
 
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedColorId(c.id)}
-                  className="flex flex-col items-center gap-1"
-                  title={c.name}
-                >
-                  <span
-                    className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all ${isActive ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200"
-                      }`}
-                    style={{
-                      backgroundColor: swatch,
-                      boxShadow:
-                        swatch.toLowerCase() === "#ffffff"
-                          ? "inset 0 0 0 1px rgba(0,0,0,0.08)"
-                          : undefined,
-                    }}
-                  >
-                    {isActive && (
-                      <CheckCircle2
-                        className={`w-4 h-4 ${isLightSwatch ? "text-gray-700" : "text-white"}`}
-                      />
-                    )}
-                  </span>
-                  <span className="text-[10px] text-gray-500 max-w-[64px] truncate">
-                    {c.name}
-                  </span>
-                </button>
-              );
-            })}
+            {(selectedType.colors ?? []).length > 0 && (
+              <div>
+                <p className="text-[11px] font-medium text-gray-400 mb-2">Màu sắc</p>
+                <div className="flex flex-wrap gap-3">
+                  {(selectedType.colors ?? []).map((c: any) => {
+                    const isActive = activeColor?.id === c.id;
+                    const swatch = colorSwatchFromName(c.name);
+                    const isLightSwatch =
+                      swatch.toLowerCase() === "#ffffff" || swatch.toLowerCase() === "#eab308";
+
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => setSelectedColorId(c.id)}
+                        className="flex flex-col items-center gap-1"
+                        title={c.name}
+                      >
+                        <span
+                          className={`color-dot relative w-10 h-10 rounded-full border-2 flex items-center justify-center shadow-sm transition-colors ${isActive
+                              ? "border-blue-500 ring-2 ring-blue-200 color-dot-pop"
+                              : "border-gray-200"
+                            }`}
+                          style={{
+                            backgroundColor: swatch,
+                            boxShadow:
+                              swatch.toLowerCase() === "#ffffff"
+                                ? "inset 0 0 0 1px rgba(0,0,0,0.08)"
+                                : undefined,
+                          }}
+                        >
+                          {isActive && (
+                            <CheckCircle2
+                              className={`w-4 h-4 ${isLightSwatch ? "text-gray-700" : "text-white"}`}
+                            />
+                          )}
+                        </span>
+                        <span
+                          className={`text-[10px] max-w-[64px] truncate ${isActive ? "text-blue-600 font-semibold" : "text-gray-500"
+                            }`}
+                        >
+                          {c.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
+
+          <button
+            type="button"
+            onClick={() => activeColorImage && openLightbox(activeColorImage)}
+            className="w-full sm:w-[320px] aspect-[16/10] rounded-xl bg-gray-50 overflow-hidden flex items-center justify-center flex-shrink-0 cursor-zoom-in"
+          >
+            {activeColorImage ? (
+              <img
+                key={activeColorImage}
+                src={activeColorImage}
+                className="w-full h-full object-contain shirt-image-pop"
+                alt=""
+              />
+            ) : (
+              <Shirt className="w-10 h-10 text-gray-300" />
+            )}
+          </button>
         </div>
       )}
+
+      <style jsx>{`
+        .tab-btn {
+          transition: background-color 0.25s ease, color 0.25s ease,
+            box-shadow 0.25s ease, transform 0.2s ease;
+        }
+        .tab-btn:active {
+          transform: scale(0.96);
+        }
+        .tab-btn-active {
+          animation: tabPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .color-dot-pop {
+          animation: colorPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .shirt-image-pop {
+          animation: imageFadeIn 0.3s ease-out;
+        }
+        @keyframes tabPop {
+          0% {
+            transform: scale(0.92);
+          }
+          60% {
+            transform: scale(1.04);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+        @keyframes colorPop {
+          0% {
+            transform: scale(0.8);
+          }
+          55% {
+            transform: scale(1.18);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+        @keyframes imageFadeIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.94);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 }

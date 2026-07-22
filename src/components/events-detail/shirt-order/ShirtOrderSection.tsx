@@ -68,11 +68,10 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     (r: any) => r.shirt_type_id === selectedType?.id && r.gender === selectedGender,
   );
 
-  const lockedSizes = new Set(
-    regsForTypeGender
-      .filter((r: any) => r.payment_status === "confirmed" || !!r.payment_reference)
-      .map((r: any) => r.size),
-  );
+  const sizeOrderCounts: Record<string, number> = {};
+  regsForTypeGender.forEach((r: any) => {
+    sizeOrderCounts[r.size] = (sizeOrderCounts[r.size] ?? 0) + (r.quantity ?? 1);
+  });
 
   const openCart = () => {
     setCartOpen(true);
@@ -116,7 +115,6 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
   const sizesForGender = sortSizes(selectedGender === "nam" ? namSizes : nuSizes);
 
   const toggleSize = (s: string) => {
-    if (lockedSizes.has(s)) return;
     setSizeQuantities((prev) => {
       const next = { ...prev };
       if (next[s] != null) {
@@ -266,7 +264,6 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     return (t?.price_per_shirt ?? 0) * (r.quantity ?? 1);
   };
 
-  // const subtotal = myRegistrations.reduce((s: number, r: any) => s + priceOf(r), 0);
   const subtotal = pendingRegistrations.reduce((s: number, r: any) => s + priceOf(r), 0);
   const grandTotal = cartTotal + subtotal;
 
@@ -338,8 +335,6 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
     );
   }
 
-  // const totalCartCount = cart.length + myRegistrations.length;
-
   const totalCartCount = cart.length + pendingRegistrations.length;
 
   return (
@@ -364,7 +359,7 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
         selectedGender={selectedGender}
         setSelectedGender={setSelectedGender}
         sizesForGender={sizesForGender}
-        lockedSizes={lockedSizes}
+        sizeOrderCounts={sizeOrderCounts}
         cartSizesForCurrent={cartSizesForCurrent}
         sizeQuantities={sizeQuantities}
         toggleSize={toggleSize}
@@ -395,7 +390,6 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
         handleCheckout={handleCheckout}
         checkingOut={checkingOut}
         myRegistrations={pendingRegistrations}
-        // myRegistrations={myRegistrations}
         shirtTypes={shirtTypes}
         priceOf={priceOf}
         handleCancel={handleCancel}

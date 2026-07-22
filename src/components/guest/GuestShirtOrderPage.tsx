@@ -11,12 +11,14 @@ import {
     Loader2,
     UploadCloud,
     Info,
+    ChevronLeft,
 } from "lucide-react";
 import { differenceInCalendarDays, format } from "date-fns";
 import { vi } from "date-fns/locale";
 import toast from "react-hot-toast";
 import { guestShirtOrderApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
+import { createPortal } from "react-dom";
 
 const SHIPPING_FEE = 20000;
 const FREE_SHIP_THRESHOLD = 500000;
@@ -93,7 +95,6 @@ export const COLOR_SWATCH_MAP: Record<string, string> = {
     "bạc": "#c0c0c0",
 };
 
-
 function getColorHex(name?: string): string | null {
     if (!name) return null;
     const normalized = name.trim().toLowerCase();
@@ -114,37 +115,78 @@ function getTypeImage(type: any, colorId?: string): string | null {
     return imgSrc(img);
 }
 
-function Stepper() {
-    const steps = [
-        "Chọn sản phẩm",
-        "Thông tin & tuỳ chọn",
-        "Thanh toán",
-        "Xác nhận",
-    ];
+const STEP_LABELS = [
+    "Chọn sản phẩm",
+    "Thông tin & tuỳ chọn",
+    "Xác nhận",
+    "Thanh toán",
+];
+
+function Stepper({ currentStep }: { currentStep: number }) {
     return (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            {steps.map((s, i) => (
-                <div key={s} className="flex items-center gap-2 flex-shrink-0">
-                    <div
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${i === 0
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-100 text-gray-400"
-                            }`}
-                    >
-                        <span
-                            className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${i === 0 ? "bg-white text-blue-600" : "bg-gray-200"
-                                }`}
-                        >
-                            {i + 1}
+        <>
+            <div className="sm:hidden">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                            {currentStep}
                         </span>
-                        {s}
+                        <span className="text-sm font-semibold text-gray-900">
+                            {STEP_LABELS[currentStep - 1]}
+                        </span>
                     </div>
-                    {i < steps.length - 1 && (
-                        <div className="w-6 h-px bg-gray-200 flex-shrink-0" />
-                    )}
+                    <span className="text-xs text-gray-400 flex-shrink-0">
+                        Bước {currentStep}/{STEP_LABELS.length}
+                    </span>
                 </div>
-            ))}
-        </div>
+                <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                    <div
+                        className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
+                        style={{
+                            width: `${(currentStep / STEP_LABELS.length) * 100}%`,
+                        }}
+                    />
+                </div>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 overflow-x-auto pb-1">
+                {STEP_LABELS.map((s, i) => {
+                    const stepNum = i + 1;
+                    const isActive = stepNum === currentStep;
+                    const isDone = stepNum < currentStep;
+                    return (
+                        <div key={s} className="flex items-center gap-2 flex-shrink-0">
+                            <div
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${isActive
+                                    ? "bg-blue-600 text-white"
+                                    : isDone
+                                        ? "bg-blue-50 text-blue-600"
+                                        : "bg-gray-100 text-gray-400"
+                                    }`}
+                            >
+                                <span
+                                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isActive
+                                        ? "bg-white text-blue-600"
+                                        : isDone
+                                            ? "bg-blue-100 text-blue-600"
+                                            : "bg-gray-200"
+                                        }`}
+                                >
+                                    {isDone ? <CheckCircle2 className="w-3.5 h-3.5" /> : stepNum}
+                                </span>
+                                {s}
+                            </div>
+                            {i < STEP_LABELS.length - 1 && (
+                                <div
+                                    className={`w-6 h-px flex-shrink-0 ${isDone ? "bg-blue-200" : "bg-gray-200"
+                                        }`}
+                                />
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </>
     );
 }
 
@@ -155,23 +197,31 @@ function ImageLightbox({
     src: string;
     onClose: () => void;
 }) {
+    const [closing, setClosing] = useState(false);
+
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
+            if (e.key === "Escape") handleClose();
         };
         document.addEventListener("keydown", onKey);
         return () => document.removeEventListener("keydown", onKey);
-    }, [onClose]);
+    }, []);
+
+    const handleClose = () => {
+        setClosing(true);
+        setTimeout(onClose, 200);
+    };
 
     return (
         <div
-            className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80"
+            className={`fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 lightbox-backdrop ${closing ? "lightbox-backdrop-out" : "lightbox-backdrop-in"
+                }`}
             onMouseDown={(e) => {
-                if (e.target === e.currentTarget) onClose();
+                if (e.target === e.currentTarget) handleClose();
             }}
         >
             <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
             >
                 ✕
@@ -179,8 +229,60 @@ function ImageLightbox({
             <img
                 src={src}
                 alt=""
-                className="max-w-full max-h-[90vh] object-contain rounded-lg"
+                className={`max-w-full max-h-[90vh] object-contain rounded-lg lightbox-image ${closing ? "lightbox-image-out" : "lightbox-image-in"
+                    }`}
             />
+
+            <style jsx>{`
+                .lightbox-backdrop-in {
+                    animation: backdropIn 0.2s ease-out;
+                }
+                .lightbox-backdrop-out {
+                    animation: backdropOut 0.2s ease-in forwards;
+                }
+                .lightbox-image-in {
+                    animation: imageIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                .lightbox-image-out {
+                    animation: imageOut 0.2s ease-in forwards;
+                }
+                @keyframes backdropIn {
+                    from {
+                        opacity: 0;
+                    }
+                    to {
+                        opacity: 1;
+                    }
+                }
+                @keyframes backdropOut {
+                    from {
+                        opacity: 1;
+                    }
+                    to {
+                        opacity: 0;
+                    }
+                }
+                @keyframes imageIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+                @keyframes imageOut {
+                    from {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                    to {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                }
+            `}</style>
         </div>
     );
 }
@@ -194,6 +296,8 @@ export default function GuestShirtOrderPage({
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState<any>(null);
+
+    const [step, setStep] = useState(1);
 
     const [buyerName, setBuyerName] = useState("");
     const [buyerPhone, setBuyerPhone] = useState("");
@@ -242,7 +346,6 @@ export default function GuestShirtOrderPage({
                 color_id: firstType.colors?.[0]?.id,
             }));
         }
-
     }, [shirtTypes.length]);
 
     const availableSizes: string[] = useMemo(() => {
@@ -279,16 +382,9 @@ export default function GuestShirtOrderPage({
         return null;
     };
 
-    const handleAddToCart = () => {
-        const err = validateCurrentItem();
-        if (err) {
-            toast.error(err);
-            return;
-        }
-        setCart((prev) => [...prev, current]);
-        toast.success("Đã thêm áo vào đơn hàng");
-        resetCurrentItem();
-    };
+    const canProceedStep1 =
+        !!current.shirt_type_id &&
+        (!selectedType?.colors?.length || !!current.color_id);
 
     const handleRemoveFromCart = (localId: string) => {
         setCart((prev) => prev.filter((i) => i.localId !== localId));
@@ -328,6 +424,42 @@ export default function GuestShirtOrderPage({
             return;
         }
         setProofPreview(URL.createObjectURL(file));
+    };
+
+    const validateStep2 = (): boolean => {
+        if (!buyerName.trim() || !buyerPhone.trim()) {
+            toast.error("Vui lòng nhập họ tên và số điện thoại");
+            return false;
+        }
+        const err = validateCurrentItem();
+        if (err) {
+            toast.error(err);
+            return false;
+        }
+        return true;
+    };
+
+    const handleContinueToReview = () => {
+        if (!validateStep2()) return;
+        setCart((prev) => [...prev, current]);
+        resetCurrentItem();
+        setStep(3);
+    };
+
+    const handleAddAnotherFromStep2 = () => {
+        if (!validateStep2()) return;
+        setCart((prev) => [...prev, current]);
+        resetCurrentItem();
+        toast.success("Đã thêm áo vào đơn hàng");
+        setStep(1);
+    };
+
+    const handleGoToPayment = () => {
+        if (cart.length === 0) {
+            toast.error("Vui lòng chọn ít nhất 1 áo");
+            return;
+        }
+        setStep(4);
     };
 
     const buildFinalCart = (): CartItem[] => {
@@ -488,410 +620,759 @@ export default function GuestShirtOrderPage({
                     </div>
                 </div>
 
-                <Stepper />
+                <Stepper currentStep={step} />
 
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-                    {/* LEFT */}
                     <div className="space-y-5 min-w-0">
-                        {/* 1. Chọn mẫu áo */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                            <h2 className="font-bold text-gray-900 mb-3">1. Chọn mẫu áo</h2>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {shirtTypes.map((t) => (
-                                    <button
-                                        key={t.id}
-                                        onClick={() =>
-                                            setCurrent((c) => ({
-                                                ...c,
-                                                shirt_type_id: t.id,
-                                                color_id: t.colors?.[0]?.id,
-                                                size: "",
-                                            }))
+                        {step === 1 && (
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                                <h2 className="font-bold text-gray-900 mb-3">
+                                    1. Chọn mẫu áo
+                                </h2>
+
+                                <div className="flex items-center gap-2 overflow-x-auto pb-1 mb-5">
+                                    {shirtTypes.map((t) => {
+                                        const activeTab = current.shirt_type_id === t.id;
+                                        return (
+                                            <button
+                                                key={t.id}
+                                                onClick={() =>
+                                                    setCurrent((c) => ({
+                                                        ...c,
+                                                        shirt_type_id: t.id,
+                                                        color_id: t.colors?.[0]?.id,
+                                                        size: "",
+                                                    }))
+                                                }
+                                                className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap tab-btn ${activeTab
+                                                    ? "bg-blue-600 text-white shadow-md shadow-blue-200 tab-btn-active"
+                                                    : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                                    }`}
+                                            >
+                                                {t.name}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <style jsx>{`
+                                    .tab-btn {
+                                        transition: background-color 0.25s ease, color 0.25s ease,
+                                            box-shadow 0.25s ease, transform 0.2s ease;
+                                    }
+                                    .tab-btn:active {
+                                        transform: scale(0.96);
+                                    }
+                                    .tab-btn-active {
+                                        animation: tabPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+                                    }
+                                    @keyframes tabPop {
+                                        0% {
+                                            transform: scale(0.92);
                                         }
-                                        className={`relative rounded-xl border-2 p-3 text-left transition-colors ${current.shirt_type_id === t.id
-                                            ? "border-blue-500 bg-blue-50/40"
-                                            : "border-gray-100 hover:border-gray-200"
-                                            }`}
-                                    >
-                                        {current.shirt_type_id === t.id && (
-                                            <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                            </span>
-                                        )}
-                                        <div className="aspect-square rounded-lg bg-gray-50 mb-2 overflow-hidden flex items-center justify-center">
-                                            {getTypeImage(t) ? (
+                                        60% {
+                                            transform: scale(1.04);
+                                        }
+                                        100% {
+                                            transform: scale(1);
+                                        }
+                                    }
+                                `}</style>
+
+                                {selectedType && (
+                                    <div className="flex flex-col-reverse sm:flex-row gap-5">
+                                        <div className="flex-1 space-y-4">
+                                            <div>
+                                                <p className="text-lg font-bold text-gray-900">
+                                                    {selectedType.name}
+                                                </p>
+                                                <p className="text-blue-600 font-bold">
+                                                    {formatCurrency(selectedType.price_per_shirt ?? 0)}
+                                                </p>
+                                            </div>
+
+                                            {selectedType.colors?.length > 0 && (
+                                                <div>
+                                                    <p className="text-sm text-gray-500 mb-2">
+                                                        Màu sắc
+                                                    </p>
+                                                    <div className="flex items-center gap-3 flex-wrap">
+                                                        {selectedType.colors.map((c: any) => {
+                                                            const hex = getColorHex(c.name);
+                                                            const isSelected = current.color_id === c.id;
+                                                            return (
+                                                                <button
+                                                                    key={c.id}
+                                                                    onClick={() =>
+                                                                        setCurrent((cur) => ({
+                                                                            ...cur,
+                                                                            color_id: c.id,
+                                                                        }))
+                                                                    }
+                                                                    title={c.name}
+                                                                    className="flex flex-col items-center gap-1.5"
+                                                                >
+                                                                    <span
+                                                                        className={`color-dot relative w-11 h-11 rounded-full border-2 flex items-center justify-center shadow-sm ${isSelected
+                                                                            ? "border-blue-500 color-dot-pop"
+                                                                            : "border-gray-200"
+                                                                            }`}
+                                                                        style={{
+                                                                            background: hex ?? "#e5e7eb",
+                                                                        }}
+                                                                    >
+                                                                        {isSelected && (
+                                                                            <CheckCircle2
+                                                                                className="w-4 h-4 drop-shadow"
+                                                                                style={{
+                                                                                    color:
+                                                                                        hex === "#ffffff"
+                                                                                            ? "#2563eb"
+                                                                                            : "#ffffff",
+                                                                                }}
+                                                                            />
+                                                                        )}
+                                                                    </span>
+                                                                    <span
+                                                                        className={`text-[11px] max-w-[64px] truncate ${isSelected
+                                                                            ? "text-blue-600 font-semibold"
+                                                                            : "text-gray-500"
+                                                                            }`}
+                                                                    >
+                                                                        {c.name}
+                                                                    </span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div
+                                            className="w-full sm:w-[420px] aspect-[16/10] rounded-xl bg-gray-50 overflow-hidden flex items-center justify-center flex-shrink-0 cursor-zoom-in"
+                                            onClick={() =>
+                                                getTypeImage(selectedType, current.color_id) &&
+                                                setLightboxOpen(true)
+                                            }
+                                        >
+                                            {getTypeImage(selectedType, current.color_id) ? (
                                                 <img
-                                                    src={getTypeImage(t) as string}
-                                                    className="w-full h-full object-cover"
+                                                    src={
+                                                        getTypeImage(
+                                                            selectedType,
+                                                            current.color_id,
+                                                        ) as string
+                                                    }
+                                                    className="w-full h-full object-contain"
+                                                    alt=""
+                                                />
+                                            ) : (
+                                                <span className="text-5xl">👕</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex justify-end mt-6">
+                                    <button
+                                        onClick={() => setStep(2)}
+                                        disabled={!canProceedStep1}
+                                        className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Tiếp tục
+                                    </button>
+                                </div>
+
+                                <style jsx>{`
+                                    .color-dot-pop {
+                                        animation: colorPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                                    }
+                                    @keyframes colorPop {
+                                        0% {
+                                            transform: scale(0.8);
+                                        }
+                                        55% {
+                                            transform: scale(1.18);
+                                        }
+                                        100% {
+                                            transform: scale(1);
+                                        }
+                                    }
+                                `}</style>
+                            </div>
+                        )}
+
+                        {/* STEP 2 — Thông tin đặt áo */}
+                        {step === 2 && (
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </button>
+                                    <h2 className="font-bold text-gray-900">
+                                        2. Thông tin đặt áo
+                                    </h2>
+                                </div>
+
+                                {selectedType && (
+                                    <div className="flex items-center gap-4 bg-blue-50/50 border border-blue-100 rounded-xl p-3">
+                                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg bg-white overflow-hidden flex items-center justify-center flex-shrink-0">
+                                            {getTypeImage(selectedType, current.color_id) ? (
+                                                <img
+                                                    src={
+                                                        getTypeImage(
+                                                            selectedType,
+                                                            current.color_id,
+                                                        ) as string
+                                                    }
+                                                    className="w-full h-full object-contain"
                                                     alt=""
                                                 />
                                             ) : (
                                                 <span className="text-3xl">👕</span>
                                             )}
                                         </div>
-                                        <p className="text-sm font-semibold text-gray-900 truncate">
-                                            {t.name}
-                                        </p>
-                                        <p className="text-sm text-blue-600 font-bold">
-                                            {formatCurrency(t.price_per_shirt ?? 0)}
-                                        </p>
-                                        {t.colors?.length > 0 && (
-                                            <p className="text-xs text-gray-400 mt-0.5">
-                                                {t.colors.length} màu
+                                        <div className="text-sm">
+                                            <p className="font-semibold text-gray-900">
+                                                {selectedType.name}
+                                            </p>
+                                            <p className="text-blue-600 font-bold text-xs">
+                                                {formatCurrency(selectedType.price_per_shirt ?? 0)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                            Người mua
+                                        </label>
+                                        <input
+                                            className="input-field"
+                                            placeholder="Họ và tên"
+                                            value={buyerName}
+                                            onChange={(e) => setBuyerName(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                            SĐT
+                                        </label>
+                                        <input
+                                            className="input-field"
+                                            placeholder="09xxxxxxxx"
+                                            value={buyerPhone}
+                                            onChange={(e) => setBuyerPhone(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                            Giới tính
+                                        </label>
+                                        <CustomSelect
+                                            value={buyerGender}
+                                            onChange={setBuyerGender}
+                                            options={GENDER_OPTIONS}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                            Trình
+                                        </label>
+                                        <CustomSelect
+                                            value={buyerLevel}
+                                            onChange={setBuyerLevel}
+                                            options={LEVEL_OPTIONS}
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-2">
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                            Nickname
+                                        </label>
+                                        <input
+                                            className="input-field"
+                                            placeholder="Nickname CLB"
+                                            value={buyerNickname}
+                                            onChange={(e) => setBuyerNickname(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <hr className="border-gray-100" />
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                            Form áo
+                                        </label>
+                                        <div className="flex items-center gap-4 h-[42px]">
+                                            {FORM_OPTIONS.filter(
+                                                (o) =>
+                                                    selectedType?.available_sizes?.[o.value]?.length >
+                                                    0,
+                                            ).map((o) => (
+                                                <label
+                                                    key={o.value}
+                                                    className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer"
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="form"
+                                                        checked={current.gender === o.value}
+                                                        onChange={() =>
+                                                            setCurrent((c) => ({
+                                                                ...c,
+                                                                gender: o.value as any,
+                                                                size: "",
+                                                            }))
+                                                        }
+                                                        className="accent-blue-600"
+                                                    />
+                                                    {o.label}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                            Size áo
+                                        </label>
+                                        <CustomSelect
+                                            value={current.size}
+                                            onChange={(v) => setCurrent((c) => ({ ...c, size: v }))}
+                                            options={availableSizes.map((s) => ({
+                                                value: s,
+                                                label: s,
+                                            }))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                            Tên in sau lưng
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                className="input-field"
+                                                placeholder="Tên in áo"
+                                                value={current.print_name}
+                                                onChange={(e) =>
+                                                    setCurrent((c) => ({
+                                                        ...c,
+                                                        print_name: e.target.value,
+                                                    }))
+                                                }
+                                            />
+                                            <button
+                                                onClick={handleGetNickname}
+                                                className="px-3 rounded-lg border border-blue-200 text-blue-600 text-xs font-semibold whitespace-nowrap hover:bg-blue-50 transition-colors"
+                                            >
+                                                Lấy nickname
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                            Số áo
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                className="input-field"
+                                                placeholder="VD: 08"
+                                                value={current.jersey_number}
+                                                onChange={(e) => {
+                                                    setCurrent((c) => ({
+                                                        ...c,
+                                                        jersey_number: e.target.value,
+                                                    }));
+                                                    setCheckResult(null);
+                                                }}
+                                            />
+                                            <button
+                                                onClick={handleCheckJerseyNumber}
+                                                disabled={checking}
+                                                className="px-3 rounded-lg border border-blue-200 text-blue-600 text-xs font-semibold whitespace-nowrap hover:bg-blue-50 transition-colors disabled:opacity-50"
+                                            >
+                                                {checking ? "..." : "Kiểm tra"}
+                                            </button>
+                                        </div>
+                                        {checkResult && (
+                                            <p
+                                                className={`text-xs mt-1.5 flex items-center gap-1 ${checkResult.available
+                                                    ? "text-green-600"
+                                                    : "text-red-500"
+                                                    }`}
+                                            >
+                                                {checkResult.available ? (
+                                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                                ) : (
+                                                    <XCircle className="w-3.5 h-3.5" />
+                                                )}
+                                                {checkResult.available
+                                                    ? "Số áo này chưa có ai sử dụng"
+                                                    : "Số áo này đã có người sử dụng"}
                                             </p>
                                         )}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {selectedType?.colors?.length > 0 && (
-                                <div className="mt-4">
-                                    {getTypeImage(selectedType, current.color_id) && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setLightboxOpen(true)}
-                                            className="w-full aspect-[4/3] max-h-72 rounded-xl bg-gray-50 overflow-hidden mb-3 flex items-center justify-center border border-gray-100 cursor-zoom-in hover:opacity-95 transition-opacity"
-                                        >
-                                            <img
-                                                src={
-                                                    getTypeImage(
-                                                        selectedType,
-                                                        current.color_id,
-                                                    ) as string
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                            Số lượng
+                                        </label>
+                                        <div className="flex items-center gap-2 h-[42px]">
+                                            <button
+                                                onClick={() =>
+                                                    setCurrent((c) => ({
+                                                        ...c,
+                                                        quantity: Math.max(1, c.quantity - 1),
+                                                    }))
                                                 }
-                                                alt=""
-                                                className="w-full h-full object-contain"
-                                            />
-                                        </button>
-                                    )}
-                                    <p className="text-sm text-gray-500 mb-2">
-                                        Màu sắc: {selectedType.name}
-                                    </p>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        {selectedType.colors.map((c: any) => {
-                                            const hex = getColorHex(c.name);
-                                            const thumb = imgSrc(c.images?.[0]);
-                                            return (
-                                                <button
-                                                    key={c.id}
-                                                    onClick={() =>
-                                                        setCurrent((cur) => ({ ...cur, color_id: c.id }))
-                                                    }
-                                                    title={c.name}
-                                                    className={`flex flex-col items-center gap-1 group`}
-                                                >
-                                                    <span
-                                                        className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 flex items-center justify-center bg-gray-50 ${current.color_id === c.id
-                                                            ? "border-blue-500"
-                                                            : "border-gray-200 group-hover:border-gray-300"
-                                                            }`}
-                                                    >
-                                                        {thumb ? (
-                                                            <img
-                                                                src={thumb}
-                                                                alt={c.name}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : hex ? (
-                                                            <span
-                                                                className="w-full h-full"
-                                                                style={{ background: hex }}
-                                                            />
-                                                        ) : (
-                                                            <span className="text-lg">👕</span>
-                                                        )}
-                                                        {current.color_id === c.id && (
-                                                            <span className="absolute inset-0 bg-blue-500/10 flex items-center justify-center">
-                                                                <CheckCircle2 className="w-4 h-4 text-blue-600 drop-shadow" />
-                                                            </span>
-                                                        )}
-                                                        {hex && thumb && (
-                                                            <span
-                                                                className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full ring-2 ring-white"
-                                                                style={{ background: hex }}
-                                                                title={c.name}
-                                                            />
-                                                        )}
-                                                    </span>
-                                                    <span
-                                                        className={`text-[11px] max-w-[56px] truncate ${current.color_id === c.id
-                                                            ? "text-blue-600 font-semibold"
-                                                            : "text-gray-500"
-                                                            }`}
-                                                    >
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
+                                                className="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                                            >
+                                                <Minus className="w-3.5 h-3.5" />
+                                            </button>
+                                            <span className="w-8 text-center font-semibold">
+                                                {current.quantity}
+                                            </span>
+                                            <button
+                                                onClick={() =>
+                                                    setCurrent((c) => ({
+                                                        ...c,
+                                                        quantity: c.quantity + 1,
+                                                    }))
+                                                }
+                                                className="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                                            >
+                                                <Plus className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            )}
-                        </div>
 
-                        {/* 2. Thông tin đặt áo */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-                            <h2 className="font-bold text-gray-900">2. Thông tin đặt áo</h2>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        Ghi chú cho đơn hàng (nếu có)
+                                    </label>
+                                    <textarea
+                                        rows={3}
+                                        maxLength={300}
+                                        className="input-field w-full resize-none"
+                                        placeholder="Nhập ghi chú của bạn..."
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                    />
+                                    <p className="text-[11px] text-gray-300 text-right mt-1">
+                                        {notes.length}/300
+                                    </p>
+                                </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        Người mua
-                                    </label>
-                                    <input
-                                        className="input-field"
-                                        placeholder="Họ và tên"
-                                        value={buyerName}
-                                        onChange={(e) => setBuyerName(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        SĐT
-                                    </label>
-                                    <input
-                                        className="input-field"
-                                        placeholder="09xxxxxxxx"
-                                        value={buyerPhone}
-                                        onChange={(e) => setBuyerPhone(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        Giới tính
-                                    </label>
-                                    <CustomSelect
-                                        value={buyerGender}
-                                        onChange={setBuyerGender}
-                                        options={GENDER_OPTIONS}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        Trình
-                                    </label>
-                                    <CustomSelect
-                                        value={buyerLevel}
-                                        onChange={setBuyerLevel}
-                                        options={LEVEL_OPTIONS}
-                                    />
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        Nickname
-                                    </label>
-                                    <input
-                                        className="input-field"
-                                        placeholder="Nickname CLB"
-                                        value={buyerNickname}
-                                        onChange={(e) => setBuyerNickname(e.target.value)}
-                                    />
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2">
+                                    <button
+                                        onClick={handleAddAnotherFromStep2}
+                                        className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-blue-300 text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
+                                    >
+                                        <Plus className="w-4 h-4" /> Thêm sản phẩm khác
+                                    </button>
+                                    <button
+                                        onClick={handleContinueToReview}
+                                        className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+                                    >
+                                        Tiếp tục
+                                    </button>
                                 </div>
                             </div>
+                        )}
 
-                            <hr className="border-gray-100" />
+                        {/* STEP 3 — Xác nhận */}
+                        {step === 3 && (
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </button>
+                                    <h2 className="font-bold text-gray-900">
+                                        3. Xác nhận sản phẩm đặt áo
+                                    </h2>
+                                </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        Mẫu áo
-                                    </label>
-                                    <CustomSelect
-                                        value={current.shirt_type_id}
-                                        onChange={(v) =>
-                                            setCurrent((c) => {
-                                                const nt = shirtTypes.find((t) => t.id === v);
-                                                return {
-                                                    ...c,
-                                                    shirt_type_id: v,
-                                                    color_id: nt?.colors?.[0]?.id,
-                                                    size: "",
-                                                };
-                                            })
-                                        }
-                                        options={shirtTypes.map((t) => ({
-                                            value: t.id,
-                                            label: t.name,
-                                        }))}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        Form áo
-                                    </label>
-                                    <div className="flex items-center gap-4 h-[42px]">
-                                        {FORM_OPTIONS.filter(
-                                            (o) =>
-                                                selectedType?.available_sizes?.[o.value]?.length > 0,
-                                        ).map((o) => (
-                                            <label
-                                                key={o.value}
-                                                className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer"
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="form"
-                                                    checked={current.gender === o.value}
-                                                    onChange={() =>
-                                                        setCurrent((c) => ({
-                                                            ...c,
-                                                            gender: o.value as any,
-                                                            size: "",
-                                                        }))
-                                                    }
-                                                    className="accent-blue-600"
-                                                />
-                                                {o.label}
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        Size áo
-                                    </label>
-                                    <CustomSelect
-                                        value={current.size}
-                                        onChange={(v) => setCurrent((c) => ({ ...c, size: v }))}
-                                        options={availableSizes.map((s) => ({
-                                            value: s,
-                                            label: s,
-                                        }))}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        Tên in sau lưng
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            className="input-field"
-                                            placeholder="Tên in áo"
-                                            value={current.print_name}
-                                            onChange={(e) =>
-                                                setCurrent((c) => ({
-                                                    ...c,
-                                                    print_name: e.target.value,
-                                                }))
-                                            }
-                                        />
-                                        <button
-                                            onClick={handleGetNickname}
-                                            className="px-3 rounded-lg border border-blue-200 text-blue-600 text-xs font-semibold whitespace-nowrap hover:bg-blue-50 transition-colors"
-                                        >
-                                            Lấy nickname
-                                        </button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        Số áo
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            className="input-field"
-                                            placeholder="VD: 08"
-                                            value={current.jersey_number}
-                                            onChange={(e) => {
-                                                setCurrent((c) => ({
-                                                    ...c,
-                                                    jersey_number: e.target.value,
-                                                }));
-                                                setCheckResult(null);
-                                            }}
-                                        />
-                                        <button
-                                            onClick={handleCheckJerseyNumber}
-                                            disabled={checking}
-                                            className="px-3 rounded-lg border border-blue-200 text-blue-600 text-xs font-semibold whitespace-nowrap hover:bg-blue-50 transition-colors disabled:opacity-50"
-                                        >
-                                            {checking ? "..." : "Kiểm tra"}
-                                        </button>
-                                    </div>
-                                    {checkResult && (
-                                        <p
-                                            className={`text-xs mt-1.5 flex items-center gap-1 ${checkResult.available
-                                                ? "text-green-600"
-                                                : "text-red-500"
-                                                }`}
-                                        >
-                                            {checkResult.available ? (
-                                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                            ) : (
-                                                <XCircle className="w-3.5 h-3.5" />
-                                            )}
-                                            {checkResult.available
-                                                ? "Số áo này chưa có ai sử dụng"
-                                                : "Số áo này đã có người sử dụng"}
+                                <div className="space-y-2">
+                                    {cart.length === 0 && (
+                                        <p className="text-xs text-gray-400 text-center py-6">
+                                            Chưa có áo nào trong đơn.
                                         </p>
                                     )}
+                                    {cart.map((item) => {
+                                        const type = shirtTypes.find(
+                                            (t) => t.id === item.shirt_type_id,
+                                        );
+                                        const color = type?.colors?.find(
+                                            (c: any) => c.id === item.color_id,
+                                        );
+                                        return (
+                                            <div
+                                                key={item.localId}
+                                                className="flex items-start gap-3 bg-gray-50 rounded-xl p-3"
+                                            >
+                                                <div className="w-14 h-14 rounded-lg bg-white overflow-hidden flex items-center justify-center flex-shrink-0">
+                                                    {getTypeImage(type, item.color_id) ? (
+                                                        <img
+                                                            src={
+                                                                getTypeImage(type, item.color_id) as string
+                                                            }
+                                                            className="w-full h-full object-cover"
+                                                            alt=""
+                                                        />
+                                                    ) : (
+                                                        <span className="text-2xl">👕</span>
+                                                    )}
+                                                </div>
+                                                <div className="text-xs space-y-0.5 flex-1">
+                                                    <p className="font-semibold text-gray-900 text-sm">
+                                                        {type?.name}
+                                                        {color?.name ? ` - ${color.name}` : ""}
+                                                    </p>
+                                                    <p className="text-gray-500">
+                                                        {item.gender === "nam"
+                                                            ? "Nam"
+                                                            : item.gender === "nu"
+                                                                ? "Nữ"
+                                                                : "Oversize"}{" "}
+                                                        - Size {item.size}
+                                                    </p>
+                                                    {item.print_name && (
+                                                        <p className="text-gray-500">
+                                                            Tên in: {item.print_name}
+                                                        </p>
+                                                    )}
+                                                    {item.jersey_number && (
+                                                        <p className="text-gray-500">
+                                                            Số áo: {item.jersey_number}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-gray-500">
+                                                        Số lượng: {item.quantity}
+                                                    </p>
+                                                    <p className="text-blue-600 font-bold">
+                                                        {formatCurrency(priceFor(item))}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleRemoveFromCart(item.localId)}
+                                                    className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                        Số lượng
-                                    </label>
-                                    <div className="flex items-center gap-2 h-[42px]">
-                                        <button
-                                            onClick={() =>
-                                                setCurrent((c) => ({
-                                                    ...c,
-                                                    quantity: Math.max(1, c.quantity - 1),
-                                                }))
-                                            }
-                                            className="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
-                                        >
-                                            <Minus className="w-3.5 h-3.5" />
-                                        </button>
-                                        <span className="w-8 text-center font-semibold">
-                                            {current.quantity}
-                                        </span>
-                                        <button
-                                            onClick={() =>
-                                                setCurrent((c) => ({ ...c, quantity: c.quantity + 1 }))
-                                            }
-                                            className="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
-                                        >
-                                            <Plus className="w-3.5 h-3.5" />
-                                        </button>
+
+                                <button
+                                    onClick={() => setStep(1)}
+                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-dashed border-blue-300 text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" /> Chọn thêm áo
+                                </button>
+
+                                <div className="flex justify-end pt-2">
+                                    <button
+                                        onClick={handleGoToPayment}
+                                        disabled={cart.length === 0}
+                                        className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Tiếp tục thanh toán
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 4 && (
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setStep(3)}
+                                        className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </button>
+                                    <h2 className="font-bold text-gray-900">4. Thanh toán</h2>
+                                </div>
+
+                                <div className="flex bg-gray-100 rounded-lg p-1">
+                                    <button
+                                        onClick={() => setPaymentMethod("transfer")}
+                                        className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${paymentMethod === "transfer"
+                                            ? "bg-white shadow-sm text-blue-600"
+                                            : "text-gray-500"
+                                            }`}
+                                    >
+                                        Chuyển khoản
+                                    </button>
+                                    <button
+                                        onClick={() => setPaymentMethod("cash")}
+                                        className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${paymentMethod === "cash"
+                                            ? "bg-white shadow-sm text-blue-600"
+                                            : "text-gray-500"
+                                            }`}
+                                    >
+                                        Tiền mặt
+                                    </button>
+                                </div>
+
+                                {paymentMethod === "transfer" && bankInfo && (
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                                            {bankInfo.bank_name ?? "Ngân hàng"}
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-500">Số tài khoản</span>
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(
+                                                        bankInfo.account_number,
+                                                    );
+                                                    toast.success("Đã sao chép");
+                                                }}
+                                                className="flex items-center gap-1 font-semibold text-gray-900"
+                                            >
+                                                {bankInfo.account_number}
+                                                <Copy className="w-3 h-3 text-gray-400" />
+                                            </button>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-500">Tên tài khoản</span>
+                                            <span className="font-semibold text-gray-900">
+                                                {bankInfo.account_name}
+                                            </span>
+                                        </div>
+                                        {qrUrl && (
+                                            <div className="flex justify-center py-2">
+                                                <img
+                                                    src={qrUrl}
+                                                    alt="QR chuyển khoản"
+                                                    className="w-44 h-44 rounded-lg border border-gray-100"
+                                                />
+                                            </div>
+                                        )}
+                                        <div className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2">
+                                            <span className="text-gray-500">Nội dung CK</span>
+                                            <button
+                                                onClick={() => {
+                                                    const ref = `DATAOA ${activityId
+                                                        .slice(0, 8)
+                                                        .toUpperCase()}`;
+                                                    navigator.clipboard.writeText(ref);
+                                                    toast.success("Đã sao chép");
+                                                }}
+                                                className="flex items-center gap-1 font-semibold text-gray-900"
+                                            >
+                                                DATAOA {activityId.slice(0, 8).toUpperCase()}
+                                                <Copy className="w-3 h-3 text-gray-400" />
+                                            </button>
+                                        </div>
+                                        <p className="text-[11px] text-gray-400">
+                                            Vui lòng nhập đúng nội dung để được xác nhận thanh toán
+                                            nhanh nhất
+                                        </p>
+
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-500 mb-1.5">
+                                                Ảnh chuyển khoản
+                                            </p>
+                                            <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-gray-200 rounded-xl py-5 cursor-pointer hover:border-blue-300 transition-colors">
+                                                {proofPreview ? (
+                                                    <img
+                                                        src={proofPreview}
+                                                        className="max-h-32 rounded-lg"
+                                                        alt=""
+                                                    />
+                                                ) : (
+                                                    <>
+                                                        <UploadCloud className="w-6 h-6 text-gray-300" />
+                                                        <span className="text-xs text-gray-400">
+                                                            Tải lên ảnh chuyển khoản
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-300">
+                                                            JPG, PNG tối đa 5MB
+                                                        </span>
+                                                    </>
+                                                )}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) =>
+                                                        handleProofChange(e.target.files?.[0] ?? null)
+                                                    }
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {paymentMethod === "transfer" && !bankInfo && (
+                                    <p className="text-xs text-gray-400">
+                                        BTC chưa cấu hình thông tin chuyển khoản cho hoạt động
+                                        này. Vui lòng liên hệ BTC hoặc chọn thanh toán tiền mặt.
+                                    </p>
+                                )}
+
+                                {paymentMethod === "cash" && (
+                                    <p className="text-xs text-gray-400">
+                                        Bạn sẽ thanh toán trực tiếp bằng tiền mặt khi nhận áo.
+                                        BTC sẽ liên hệ xác nhận đơn hàng.
+                                    </p>
+                                )}
+
+                                <label className="flex items-center gap-2 text-sm text-gray-600 pt-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={agree}
+                                        onChange={(e) => setAgree(e.target.checked)}
+                                        className="accent-blue-600"
+                                    />
+                                    Tôi đã kiểm tra kỹ thông tin đơn hàng
+                                </label>
+
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={submitting || uploadingProof}
+                                    className="w-full px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
+                                >
+                                    {submitting || uploadingProof
+                                        ? "Đang xử lý..."
+                                        : "Xác nhận đặt áo"}
+                                </button>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100 mt-2">
+                                    <div className="text-xs text-gray-500 pt-4">
+                                        Cần hỗ trợ? Liên hệ BTC qua Zalo hoặc SĐT:{" "}
+                                        {bankInfo?.support_phone ?? "—"}
+                                    </div>
+                                    <div className="text-xs text-gray-500 pt-4">
+                                        Thời gian hỗ trợ: 8:00 - 22:00 (Tất cả các ngày)
+                                    </div>
+                                    <div className="text-xs text-gray-500 pt-4">
+                                        Lưu ý: Đơn đã xác nhận thanh toán sẽ không thể sửa
                                     </div>
                                 </div>
                             </div>
-
-                            <button
-                                onClick={handleAddToCart}
-                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-dashed border-blue-300 text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
-                            >
-                                <Plus className="w-4 h-4" /> Thêm áo khác
-                            </button>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                                    Ghi chú cho đơn hàng (nếu có)
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    maxLength={300}
-                                    className="input-field w-full resize-none"
-                                    placeholder="Nhập ghi chú của bạn..."
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                />
-                                <p className="text-[11px] text-gray-300 text-right mt-1">
-                                    {notes.length}/300
-                                </p>
-                            </div>
-                        </div>
+                        )}
                     </div>
 
-                    {/* RIGHT */}
                     <div className="space-y-4">
-                        {/* Order summary */}
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                             <h3 className="font-bold text-gray-900 mb-3">Đơn hàng của bạn</h3>
                             <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                                 {cart.length === 0 && (
                                     <p className="text-xs text-gray-400 text-center py-4">
-                                        Chưa có áo nào trong đơn. Điền thông tin bên trái rồi bấm
-                                        "Thêm áo khác", hoặc bấm Xác nhận để đặt áo hiện tại.
+                                        Chưa có áo nào trong đơn.
                                     </p>
                                 )}
                                 {cart.map((item) => {
@@ -915,16 +1396,6 @@ export default function GuestShirtOrderPage({
                                                             : "Oversize"}{" "}
                                                     - {item.size}
                                                 </p>
-                                                {item.print_name && (
-                                                    <p className="text-gray-500">
-                                                        Tên in: {item.print_name}
-                                                    </p>
-                                                )}
-                                                {item.jersey_number && (
-                                                    <p className="text-gray-500">
-                                                        Số áo: {item.jersey_number}
-                                                    </p>
-                                                )}
                                                 <p className="text-gray-500">
                                                     Số lượng: {item.quantity}
                                                 </p>
@@ -932,32 +1403,20 @@ export default function GuestShirtOrderPage({
                                                     {formatCurrency(priceFor(item))}
                                                 </p>
                                             </div>
-                                            <button
-                                                onClick={() => handleRemoveFromCart(item.localId)}
-                                                className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
+                                            {step === 3 && (
+                                                <button
+                                                    onClick={() => handleRemoveFromCart(item.localId)}
+                                                    className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                         </div>
                                     );
                                 })}
                             </div>
-                            <button
-                                onClick={() => {
-                                    const err = validateCurrentItem();
-                                    if (err) {
-                                        toast.error(err);
-                                        return;
-                                    }
-                                    handleAddToCart();
-                                }}
-                                className="w-full flex items-center justify-center gap-1.5 mt-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition-colors"
-                            >
-                                <Plus className="w-3.5 h-3.5" /> Thêm sản phẩm khác
-                            </button>
                         </div>
 
-                        {/* Totals */}
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2">
                             <h3 className="font-bold text-gray-900 mb-1">
                                 Tóm tắt đơn hàng
@@ -997,179 +1456,16 @@ export default function GuestShirtOrderPage({
                                 </p>
                             )}
                         </div>
-
-                        {/* Payment */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-                            <h3 className="font-bold text-gray-900">Thanh toán</h3>
-                            <div className="flex bg-gray-100 rounded-lg p-1">
-                                <button
-                                    onClick={() => setPaymentMethod("transfer")}
-                                    className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${paymentMethod === "transfer"
-                                        ? "bg-white shadow-sm text-blue-600"
-                                        : "text-gray-500"
-                                        }`}
-                                >
-                                    Chuyển khoản
-                                </button>
-                                <button
-                                    onClick={() => setPaymentMethod("cash")}
-                                    className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${paymentMethod === "cash"
-                                        ? "bg-white shadow-sm text-blue-600"
-                                        : "text-gray-500"
-                                        }`}
-                                >
-                                    Tiền mặt
-                                </button>
-                            </div>
-
-                            {paymentMethod === "transfer" && bankInfo && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-                                        {bankInfo.bank_name ?? "Ngân hàng"}
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">Số tài khoản</span>
-                                        <button
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(
-                                                    bankInfo.account_number,
-                                                );
-                                                toast.success("Đã sao chép");
-                                            }}
-                                            className="flex items-center gap-1 font-semibold text-gray-900"
-                                        >
-                                            {bankInfo.account_number}
-                                            <Copy className="w-3 h-3 text-gray-400" />
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">Tên tài khoản</span>
-                                        <span className="font-semibold text-gray-900">
-                                            {bankInfo.account_name}
-                                        </span>
-                                    </div>
-                                    {qrUrl && (
-                                        <div className="flex justify-center py-2">
-                                            <img
-                                                src={qrUrl}
-                                                alt="QR chuyển khoản"
-                                                className="w-44 h-44 rounded-lg border border-gray-100"
-                                            />
-                                        </div>
-                                    )}
-                                    <div className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2">
-                                        <span className="text-gray-500">Nội dung CK</span>
-                                        <button
-                                            onClick={() => {
-                                                const ref = `DATAOA ${activityId
-                                                    .slice(0, 8)
-                                                    .toUpperCase()}`;
-                                                navigator.clipboard.writeText(ref);
-                                                toast.success("Đã sao chép");
-                                            }}
-                                            className="flex items-center gap-1 font-semibold text-gray-900"
-                                        >
-                                            DATAOA {activityId.slice(0, 8).toUpperCase()}
-                                            <Copy className="w-3 h-3 text-gray-400" />
-                                        </button>
-                                    </div>
-                                    <p className="text-[11px] text-gray-400">
-                                        Vui lòng nhập đúng nội dung để được xác nhận thanh toán
-                                        nhanh nhất
-                                    </p>
-
-                                    <div>
-                                        <p className="text-xs font-semibold text-gray-500 mb-1.5">
-                                            Ảnh chuyển khoản
-                                        </p>
-                                        <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-gray-200 rounded-xl py-5 cursor-pointer hover:border-blue-300 transition-colors">
-                                            {proofPreview ? (
-                                                <img
-                                                    src={proofPreview}
-                                                    className="max-h-32 rounded-lg"
-                                                    alt=""
-                                                />
-                                            ) : (
-                                                <>
-                                                    <UploadCloud className="w-6 h-6 text-gray-300" />
-                                                    <span className="text-xs text-gray-400">
-                                                        Tải lên ảnh chuyển khoản
-                                                    </span>
-                                                    <span className="text-[10px] text-gray-300">
-                                                        JPG, PNG tối đa 5MB
-                                                    </span>
-                                                </>
-                                            )}
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={(e) =>
-                                                    handleProofChange(e.target.files?.[0] ?? null)
-                                                }
-                                            />
-                                        </label>
-                                    </div>
-                                </div>
-                            )}
-
-                            {paymentMethod === "transfer" && !bankInfo && (
-                                <p className="text-xs text-gray-400">
-                                    BTC chưa cấu hình thông tin chuyển khoản cho hoạt động này.
-                                    Vui lòng liên hệ BTC hoặc chọn thanh toán tiền mặt.
-                                </p>
-                            )}
-
-                            {paymentMethod === "cash" && (
-                                <p className="text-xs text-gray-400">
-                                    Bạn sẽ thanh toán trực tiếp bằng tiền mặt khi nhận áo. BTC
-                                    sẽ liên hệ xác nhận đơn hàng.
-                                </p>
-                            )}
-                        </div>
                     </div>
                 </div>
 
-                {/* Footer actions */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                    <label className="flex items-center gap-2 text-sm text-gray-600">
-                        <input
-                            type="checkbox"
-                            checked={agree}
-                            onChange={(e) => setAgree(e.target.checked)}
-                            className="accent-blue-600"
-                        />
-                        Tôi đã kiểm tra kỹ thông tin đơn hàng
-                    </label>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={submitting || uploadingProof}
-                        className="w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
-                    >
-                        {submitting || uploadingProof
-                            ? "Đang xử lý..."
-                            : "Xác nhận đặt áo"}
-                    </button>
-                </div>
-
-                {/* Support footer */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100 mt-2">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 pt-4">
-                        Cần hỗ trợ? Liên hệ BTC qua Zalo hoặc SĐT: {bankInfo?.support_phone ?? "—"}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 pt-4">
-                        Thời gian hỗ trợ: 8:00 - 22:00 (Tất cả các ngày)
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 pt-4">
-                        Lưu ý: Đơn đã xác nhận thanh toán sẽ không thể sửa
-                    </div>
-                </div>
                 {lightboxOpen &&
-                    getTypeImage(selectedType, current.color_id) && (
+                    getTypeImage(selectedType, current.color_id) && createPortal(
                         <ImageLightbox
                             src={getTypeImage(selectedType, current.color_id) as string}
                             onClose={() => setLightboxOpen(false)}
-                        />
+                        />,
+                        document.body,
                     )}
             </div>
         </div>
