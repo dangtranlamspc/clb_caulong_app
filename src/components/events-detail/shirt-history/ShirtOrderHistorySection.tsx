@@ -35,6 +35,8 @@ export function ShirtOrderHistorySection({
 }) {
     const router = useRouter();
 
+    const canModify = activity.status === "open";
+
     const priceOf = (r: any) => {
         const t = shirtTypes.find((x) => x.id === r.shirt_type_id);
         return (t?.price_per_shirt ?? 0) * (r.quantity ?? 1);
@@ -58,8 +60,7 @@ export function ShirtOrderHistorySection({
 
     return (
         <div className="min-h-screen bg-gray-50/60 md:bg-transparent">
-            <div className="max-w-2xl mx-auto px-4 md:px-0 pt-4 pb-28 md:pb-8 space-y-4">
-                {/* Header */}
+            <div className={`max-w-2xl mx-auto px-4 md:px-0 pt-4 ${canModify ? "pb-28 md:pb-8" : "pb-8"} space-y-4`}>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => router.back()}
@@ -176,7 +177,7 @@ export function ShirtOrderHistorySection({
                                                                     {cfg.label}
                                                                 </span>
 
-                                                                {!waitingCancel && (
+                                                                {!waitingCancel && canModify && (
                                                                     <button
                                                                         onClick={() => onCancel(r.id)}
                                                                         className="text-[10px] font-semibold px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors whitespace-nowrap"
@@ -217,28 +218,38 @@ export function ShirtOrderHistorySection({
                     )}
                 </div>
 
-                <Link
-                    href={`/events/${activity.id}`}
-                    className="hidden md:block"
-                >
-                    <button className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm shadow-blue-200 transition-all">
-                        <Plus className="w-4 h-4" />
-                        Mua thêm
-                    </button>
-                </Link>
+                {canModify && (
+                    <Link
+                        href={`/events/${activity.id}`}
+                        className="hidden md:block"
+                    >
+                        <button className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm shadow-blue-200 transition-all">
+                            <Plus className="w-4 h-4" />
+                            Mua thêm
+                        </button>
+                    </Link>
+                )}
             </div>
 
-            <div
-                className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-gray-100 px-4 pt-3"
-                style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
-            >
-                <Link href={`/events/${activity.id}`} className="block">
-                    <button className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm shadow-blue-200 transition-all">
-                        <Plus className="w-4 h-4" />
-                        Mua thêm
-                    </button>
-                </Link>
-            </div>
+            {canModify && (
+                <div
+                    className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-gray-100 px-4 pt-3"
+                    style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+                >
+                    <Link href={`/events/${activity.id}`} className="block">
+                        <button className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm shadow-blue-200 transition-all">
+                            <Plus className="w-4 h-4" />
+                            Mua thêm
+                        </button>
+                    </Link>
+                </div>
+            )}
+
+            {!canModify && (
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-gray-500">
+                    Hoạt động đã đóng đăng ký, không thể thêm hoặc hủy đơn đặt áo.
+                </div>
+            )}
         </div>
     );
 }

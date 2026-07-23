@@ -32,34 +32,24 @@ export function ShirtTypePicker({
     <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
       <h3 className="font-bold text-gray-900">1. Chọn mẫu áo</h3>
 
-      {/* Tabs chọn mẫu áo */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {shirtTypes.map((type) => {
           const active = selectedType?.id === type.id;
-          const alreadyInCartOrOrder =
-            cart.some((c) => c.shirt_type_id === type.id) ||
-            myRegistrations.some((r: any) => r.shirt_type_id === type.id);
           return (
             <button
               key={type.id}
               onClick={() => setSelectedTypeId(type.id)}
               className={`relative flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap tab-btn ${active
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-200 tab-btn-active"
-                  : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-200 tab-btn-active"
+                : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                 }`}
             >
               {type.name}
-              {alreadyInCartOrOrder && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center">
-                  ✓
-                </span>
-              )}
             </button>
           );
         })}
       </div>
 
-      {/* Ảnh preview lớn + thông tin + màu sắc */}
       {selectedType && (
         <div className="flex flex-col-reverse sm:flex-row gap-5">
           <div className="flex-1 space-y-3">
@@ -89,8 +79,8 @@ export function ShirtTypePicker({
                       >
                         <span
                           className={`color-dot relative w-10 h-10 rounded-full border-2 flex items-center justify-center shadow-sm transition-colors ${isActive
-                              ? "border-blue-500 ring-2 ring-blue-200 color-dot-pop"
-                              : "border-gray-200"
+                            ? "border-blue-500 ring-2 ring-blue-200 color-dot-pop"
+                            : "border-gray-200"
                             }`}
                           style={{
                             backgroundColor: swatch,

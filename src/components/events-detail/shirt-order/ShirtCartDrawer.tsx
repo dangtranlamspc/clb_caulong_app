@@ -19,6 +19,8 @@ export function ShirtCartDrawer({
   shirtTypes,
   priceOf,
   handleCancel,
+  changeRegistrationQty,
+  updatingQtyId,
   subtotal,
   unpaidRegsCount,
   unpaidTotal,
@@ -39,6 +41,8 @@ export function ShirtCartDrawer({
   shirtTypes: any[];
   priceOf: (r: any) => number;
   handleCancel: (reg: any) => void;
+  changeRegistrationQty: (regId: string, delta: number) => void;
+  updatingQtyId?: string | null;
   subtotal: number;
   unpaidRegsCount: number;
   unpaidTotal: number;
@@ -218,20 +222,50 @@ export function ShirtCartDrawer({
                             {group.variants.map((r: any) => {
                               const paid = r.payment_status === "confirmed";
                               const pending = !paid && !!r.payment_reference;
+                              const canEditQty = !paid && !pending;
+                              const isUpdating = updatingQtyId === r.id;
+
                               return (
                                 <div
                                   key={r.id}
                                   className="flex items-center justify-between gap-2 text-xs"
                                 >
                                   <span className="text-gray-400">
-                                    {r.gender === "nu" ? "Nữ" : "Nam"} · Size {r.size} × {r.quantity}
+                                    {r.gender === "nu" ? "Nữ" : "Nam"} · Size {r.size}
                                     {r.color_name ? ` · ${r.color_name}` : ""}
                                   </span>
                                   <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    {canEditQty ? (
+                                      <div className="inline-flex items-center rounded-lg border border-gray-200 overflow-hidden">
+                                        <button
+                                          onClick={() => changeRegistrationQty(r.id, -1)}
+                                          disabled={isUpdating || r.quantity <= 1}
+                                          className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-xs disabled:opacity-30"
+                                        >
+                                          −
+                                        </button>
+                                        <span className="w-7 text-center text-xs font-semibold">
+                                          {isUpdating ? (
+                                            <Loader2 className="w-3 h-3 animate-spin mx-auto" />
+                                          ) : (
+                                            r.quantity
+                                          )}
+                                        </span>
+                                        <button
+                                          onClick={() => changeRegistrationQty(r.id, 1)}
+                                          disabled={isUpdating}
+                                          className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-xs disabled:opacity-30"
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <span className="text-gray-400">× {r.quantity}</span>
+                                    )}
                                     <span className="text-gray-500 font-medium">
                                       {fmt(priceOf(r))}
                                     </span>
-                                    {!paid && !pending && (
+                                    {canEditQty && (
                                       <button
                                         onClick={() => handleCancel(r)}
                                         className="text-gray-300 hover:text-red-500"

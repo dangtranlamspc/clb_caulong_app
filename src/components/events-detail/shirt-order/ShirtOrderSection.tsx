@@ -64,6 +64,25 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
 
   const [submittingPay, setSubmittingPay] = useState(false);
 
+  const [updatingQtyId, setUpdatingQtyId] = useState<string | null>(null);
+
+  const changeRegistrationQty = async (regId: string, delta: number) => {
+    const reg = myRegistrations.find((r: any) => r.id === regId);
+    if (!reg) return;
+    const newQty = (reg.quantity ?? 1) + delta;
+    if (newQty < 1) return;
+
+    setUpdatingQtyId(regId);
+    try {
+      await activitiesApi.updateShirtOrderQuantity(activity.id, regId, newQty);
+      await onChanged();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message ?? "Cập nhật số lượng thất bại");
+    } finally {
+      setUpdatingQtyId(null);
+    }
+  };
+
   const regsForTypeGender = myRegistrations.filter(
     (r: any) => r.shirt_type_id === selectedType?.id && r.gender === selectedGender,
   );
@@ -393,6 +412,8 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
         shirtTypes={shirtTypes}
         priceOf={priceOf}
         handleCancel={handleCancel}
+        changeRegistrationQty={changeRegistrationQty}
+        updatingQtyId={updatingQtyId}
         subtotal={subtotal}
         unpaidRegsCount={unpaidRegs.length}
         unpaidTotal={unpaidTotal}

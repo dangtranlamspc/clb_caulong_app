@@ -1370,7 +1370,7 @@ function EventsTab() {
                   animationDelay: `${idx * 50}ms`,
                 }}
               >
-                {isChecking && ( // MỚI: overlay loading nhẹ khi đang check
+                {isChecking && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-2xl z-10">
                     <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
                   </div>

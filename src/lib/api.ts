@@ -271,6 +271,8 @@ export const activitiesApi = {
       },
     });
   },
+  updateShirtOrderQuantity: (activityId: string, regId: string, quantity: number) =>
+    api.patch(`/activities/${activityId}/register/shirt-order/${regId}/quantity`, { quantity }),
 
 };
 
@@ -442,6 +444,12 @@ export const eventsAdminApi = {
     api.patch(`/admin/activities/shirt-order-registrations/${regId}/reject-cancel`, { reason }),
   getOverview: (params?: { month?: number; year?: number }) =>
     api.get("/admin/activities/overview", { params }),
+  finalizeShirtOrder: (activityId: string) =>
+    api.post(`/admin/activities/${activityId}/shirt-order/finalize`),
+  reopenActivity: (activityId: string) =>
+    api.post(`/admin/activities/${activityId}/reopen`),
+  reopenActivityWithDeadline: (activityId: string, deadline: string) =>
+    api.post(`/admin/activities/${activityId}/reopen-with-deadline`, { deadline }),
 };
 
 export const uploadsAdminApi = {

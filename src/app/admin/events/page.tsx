@@ -599,7 +599,7 @@ export default function ActivitiesListPage() {
             <ModalEvent
                 open={showRegistrations}
                 onClose={closeAll}
-                maxWidth="max-w-[1400px]"
+                maxWidth="max-w-[1500px] w-[95vw]"
             >
                 {selectedActivity && (
                     <EventRegistrationsPage

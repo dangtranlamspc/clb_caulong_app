@@ -14,9 +14,12 @@ import {
     BarChart3,
     FileSpreadsheet,
     UserPlus,
-    Link2
+    Link2,
+    Lock,
+    RotateCcw
 } from "lucide-react";
 import { eventsAdminApi } from "@/lib/api";
+import { createPortal } from "react-dom";
 
 type PaymentFilter = "all" | "unpaid" | "paid";
 
@@ -36,6 +39,12 @@ export default function EventRegistrationsPage({
     const [regData, setRegData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("all");
+
+    const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+    const [finalizing, setFinalizing] = useState(false);
+    const [showReopenDeadlineModal, setShowReopenDeadlineModal] = useState(false);
+    const [newDeadline, setNewDeadline] = useState("");
+    const [reopening, setReopening] = useState(false);
 
     const fetchAll = async () => {
         try {
@@ -65,6 +74,46 @@ export default function EventRegistrationsPage({
             toast.success("Đã từ chối yêu cầu huỷ");
             fetchAll();
         } catch { }
+    };
+
+    const handleFinalize = async () => {
+        setFinalizing(true);
+        try {
+            await eventsAdminApi.finalizeShirtOrder(id!);
+            toast.success("Đã chốt danh sách");
+            setShowFinalizeModal(false);
+            fetchAll();
+        } catch {
+            toast.error("Chốt danh sách thất bại");
+        } finally {
+            setFinalizing(false);
+        }
+    };
+
+    const handleReopen = async () => {
+        try {
+            await eventsAdminApi.reopenActivity(id!);
+            toast.success("Đã mở lại đăng ký");
+            fetchAll();
+        } catch { }
+    };
+
+    const handleReopenWithDeadline = async () => {
+        if (!newDeadline) {
+            toast.error("Vui lòng chọn hạn đăng ký mới");
+            return;
+        }
+        setReopening(true);
+        try {
+            await eventsAdminApi.reopenActivityWithDeadline(id!, newDeadline);
+            toast.success("Đã mở lại hoạt động");
+            setShowReopenDeadlineModal(false);
+            fetchAll();
+        } catch {
+            toast.error("Mở lại hoạt động thất bại");
+        } finally {
+            setReopening(false);
+        }
     };
 
 
@@ -145,20 +194,44 @@ export default function EventRegistrationsPage({
                         </p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
-                        {activity.type === "shirt_order" && (
+                        {activity.type === "shirt_order" && activity.status !== "closed" && (
+                            <>
+                                <button
+                                    onClick={() => handleCopyPublicLink(activity.id)}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap"
+                                >
+                                    <Link2 className="w-4 h-4" /> Tạo link công khai
+                                </button>
+                                {onAddRegistration && (
+                                    <button
+                                        onClick={onAddRegistration}
+                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium whitespace-nowrap"
+                                    >
+                                        <UserPlus className="w-4 h-4" /> Thêm đăng ký
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setShowFinalizeModal(true)}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium whitespace-nowrap"
+                                >
+                                    <Lock className="w-4 h-4" /> Chốt danh sách
+                                </button>
+                            </>
+                        )}
+                        {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason !== "deadline" && (
                             <button
-                                onClick={() => handleCopyPublicLink(activity.id)}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap"
+                                onClick={handleReopen}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
                             >
-                                <Link2 className="w-4 h-4" /> Tạo link công khai
+                                <RotateCcw className="w-4 h-4" /> Mở đăng ký
                             </button>
                         )}
-                        {activity.type === "shirt_order" && onAddRegistration && (
+                        {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason === "deadline" && (
                             <button
-                                onClick={onAddRegistration}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium whitespace-nowrap"
+                                onClick={() => setShowReopenDeadlineModal(true)}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
                             >
-                                <UserPlus className="w-4 h-4" /> Thêm đăng ký
+                                <RotateCcw className="w-4 h-4" /> Mở lại hoạt động
                             </button>
                         )}
                         <button
@@ -171,7 +244,7 @@ export default function EventRegistrationsPage({
                 </div>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="px-4 py-6 space-y-4">
                 {activity.type === "shirt_order" && registrations.length > 0 && (
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit">
@@ -248,6 +321,91 @@ export default function EventRegistrationsPage({
                         ) : null}
                     </div>
                 )}
+
+                {showFinalizeModal && createPortal(
+                    <div className="fixed inset-0 z-[99999] bg-black/40 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+                            <div className="px-5 py-4 border-b border-gray-100">
+                                <h2 className="font-bold text-gray-900">Chốt danh sách đặt áo</h2>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Các đăng ký chưa xác nhận bên dưới sẽ được xử lý khi bấm "Chốt":
+                                    thành viên sẽ tự động bị trừ ví, khách chưa thanh toán sẽ được đánh dấu đỏ.
+                                </p>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-5 space-y-2">
+                                {registrations
+                                    .filter((r: any) => r.payment_status !== "confirmed")
+                                    .map((r: any) => (
+                                        <div key={r.id} className="flex items-center justify-between text-sm border border-gray-100 rounded-lg px-3 py-2">
+                                            <div>
+                                                <p className="font-medium text-gray-900">
+                                                    {r.users?.full_name ?? r.guest_full_name ?? "—"}
+                                                </p>
+                                                <p className="text-xs text-gray-400">
+                                                    {r.user_id ? "Thành viên · sẽ trừ ví" : "Khách · sẽ đánh dấu chưa thanh toán"}
+                                                </p>
+                                            </div>
+                                            <span className="font-semibold text-gray-700">
+                                                {fmt(r.total_amount ?? (r.unit_price ?? 0) * (r.quantity ?? 1))}
+                                            </span>
+                                        </div>
+                                    ))}
+                                {registrations.filter((r: any) => r.payment_status !== "confirmed").length === 0 && (
+                                    <p className="text-center text-gray-400 py-8">Không còn đơn nào chưa xác nhận</p>
+                                )}
+                            </div>
+                            <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">
+                                <button
+                                    onClick={() => setShowFinalizeModal(false)}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                                >
+                                    Huỷ
+                                </button>
+                                <button
+                                    onClick={handleFinalize}
+                                    disabled={finalizing}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-60"
+                                >
+                                    {finalizing ? "Đang chốt..." : "Chốt danh sách"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>,
+                    document.body
+                )}
+
+                {showReopenDeadlineModal && createPortal(
+                    <div className="fixed inset-0 z-[99999] bg-black/40 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
+                            <h2 className="font-bold text-gray-900">Mở lại hoạt động</h2>
+                            <p className="text-sm text-gray-500">
+                                Hoạt động đã đóng do hết hạn đăng ký. Vui lòng chọn hạn mới để mở lại.
+                            </p>
+                            <input
+                                type="datetime-local"
+                                value={newDeadline}
+                                onChange={(e) => setNewDeadline(e.target.value)}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            />
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    onClick={() => setShowReopenDeadlineModal(false)}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                                >
+                                    Huỷ
+                                </button>
+                                <button
+                                    onClick={handleReopenWithDeadline}
+                                    disabled={reopening}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60"
+                                >
+                                    {reopening ? "Đang cập nhật..." : "Cập nhật & mở lại"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>,
+                    document.body
+                )}
             </div>
         </div>
     );
@@ -267,7 +425,7 @@ function getPaymentMethodBadge(r: any) {
 }
 
 function rowBgClass(r: any) {
-    if (r.cancel_requested_at) {
+    if (r.cancel_requested_at || r.payment_status === "rejected" || r.finalized_as_unpaid) {
         return "bg-red-100 hover:bg-red-200/70";
     }
     if (r.payment_status === "confirmed") {
@@ -277,7 +435,7 @@ function rowBgClass(r: any) {
 }
 
 function bucketBgClass(items: any[]) {
-    if (items.some((r: any) => r.cancel_requested_at)) {
+    if (items.some((r: any) => r.cancel_requested_at || r.payment_status === "rejected" || r.finalized_as_unpaid)) {
         return "bg-red-100 border-red-200";
     }
     if (items.every((r: any) => r.payment_status === "confirmed")) {
@@ -290,10 +448,55 @@ function paymentStatusBadge(r: any) {
     if (r.payment_status === "confirmed") {
         return { label: "Đã xác nhận", cls: "bg-green-50 text-green-700", showIcon: true };
     }
+    if (r.payment_status === "rejected") {
+        return { label: "Đã từ chối", cls: "bg-red-50 text-red-600", showIcon: false };
+    }
     if (r.payment_method) {
         return { label: "Chờ xác nhận", cls: "bg-orange-50 text-orange-600", showIcon: false };
     }
     return { label: "Chưa thanh toán", cls: "bg-gray-100 text-gray-400", showIcon: false };
+}
+
+function paymentKey(r: any) {
+    return [
+        r.payment_status ?? "",
+        r.payment_method ?? "",
+        r.payment_reference ?? "",
+        r.registered_by_admin ? "admin" : "self",
+    ].join("|");
+}
+
+function samePaymentGroup(groupRegs: any[]) {
+    if (groupRegs.length === 0) return true;
+    const key = paymentKey(groupRegs[0]);
+    return groupRegs.every((r) => paymentKey(r) === key);
+}
+
+
+function willDeductWallet(regs: any[]) {
+    return regs.some((r: any) => r.user_id && r.registered_by_admin && !r.payment_method);
+}
+
+function handleConfirmClick(
+    onConfirm: (ids: string[]) => void,
+    regs: any[],
+    label: string,
+) {
+    if (willDeductWallet(regs)) {
+        if (
+            !confirm(
+                `Xác nhận thanh toán cho "${label}"?\n\nSố tiền sẽ được TRỪ THẲNG vào ví BNB của thành viên. Hành động này không thể hoàn tác.`,
+            )
+        )
+            return;
+    }
+    onConfirm(regs.map((r: any) => r.id));
+}
+
+function registrantTypeBadge(r: any) {
+    return r.user_id
+        ? { label: "Thành viên", cls: "bg-blue-50 text-blue-600" }
+        : { label: "Khách", cls: "bg-amber-50 text-amber-600" };
 }
 
 function ShirtOrderTable({
@@ -446,11 +649,14 @@ function ShirtOrderTable({
     return (
         <>
             <div className="hidden md:block overflow-x-auto">
-                <table className="w-full min-w-[1260px] text-sm border border-gray-200 border-collapse">
+                <table className="w-full min-w-[1360px] text-sm border border-gray-200 border-collapse">
                     <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                         <tr>
                             <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
                                 Thành viên
+                            </th>
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                                Loại
                             </th>
                             <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
                                 Loại áo
@@ -482,6 +688,9 @@ function ShirtOrderTable({
                             <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
                                 Thanh toán
                             </th>
+                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                                Đã thu
+                            </th>
                             <th className="px-4 py-3 border border-gray-200 w-24">Thao tác</th>
                         </tr>
                     </thead>
@@ -503,6 +712,13 @@ function ShirtOrderTable({
                             const groupTotal = groupRegs.reduce(
                                 (sum: number, g: any) =>
                                     sum + (g.total_amount ?? (g.unit_price ?? 0) * (g.quantity ?? 1)),
+                                0,
+                            );
+                            const groupCollected = groupRegs.reduce(
+                                (sum: number, g: any) =>
+                                    sum + (g.payment_status === "confirmed"
+                                        ? (g.total_amount ?? (g.unit_price ?? 0) * (g.quantity ?? 1))
+                                        : 0),
                                 0,
                             );
 
@@ -535,6 +751,19 @@ function ShirtOrderTable({
                                                     )}
                                                 </div>
                                             </div>
+                                        </td>
+                                    )}
+
+                                    {isFirstOfGroup && (
+                                        <td rowSpan={rowSpan} className="px-4 py-3 border border-gray-200 align-middle text-center">
+                                            {(() => {
+                                                const typeBadge = registrantTypeBadge(r);
+                                                return (
+                                                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${typeBadge.cls}`}>
+                                                        {typeBadge.label}
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                     )}
 
@@ -598,20 +827,25 @@ function ShirtOrderTable({
                                         </td>
                                     )}
 
-                                    {isFirstOfGroup && (() => {
-                                        const groupIds = groupRegs.map((g: any) => g.id);
-                                        const repReg = groupRegs.find((g: any) => g.payment_method) ?? groupRegs[0];
+                                    {(() => {
+                                        const mergePayment = samePaymentGroup(groupRegs);
+                                        if (mergePayment && !isFirstOfGroup) return null;
+
+                                        const targetRegs = mergePayment ? groupRegs : [r];
+                                        const targetIds = targetRegs.map((g: any) => g.id);
+                                        const repReg = targetRegs.find((g: any) => g.payment_method) ?? targetRegs[0];
                                         const statusBadge = paymentStatusBadge(repReg);
                                         const methodBadge = getPaymentMethodBadge(repReg);
                                         const canConfirmReject =
-                                            !repReg.registered_by_admin && repReg.payment_status !== "confirmed" && !!repReg.payment_method;
+                                            repReg.payment_status !== "confirmed" &&
+                                            (!!repReg.payment_method || repReg.registered_by_admin);
                                         const label = repReg.users?.full_name ?? repReg.guest_full_name ?? "";
 
-                                        const cancelReg = groupRegs.find((g: any) => g.cancel_requested_at);
-                                        const cancelLabel = cancelReg?.users?.full_name ?? cancelReg?.guest_full_name ?? "";
-
                                         return (
-                                            <td rowSpan={rowSpan} className="px-4 py-3 border border-gray-200 align-middle text-center">
+                                            <td
+                                                rowSpan={mergePayment ? rowSpan : 1}
+                                                className="px-4 py-3 border border-gray-200 align-middle text-center"
+                                            >
                                                 <div className="flex flex-col items-center gap-1.5">
                                                     <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 whitespace-nowrap ${statusBadge.cls}`}>
                                                         {statusBadge.showIcon && <CheckCircle2 className="w-3 h-3" />}
@@ -635,14 +869,18 @@ function ShirtOrderTable({
                                                             </span>
                                                         )}
                                                     {canConfirmReject && (
-                                                        <div className="flex items-center justify-center gap-2 pt-1.5">
-                                                            <button onClick={() => onConfirm(groupIds)} title="Xác nhận thanh toán"
-                                                                className="p-2 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600 border border-gray-200 hover:border-green-200">
-                                                                <CheckCircle2 className="w-5 h-5" />
+                                                        <div className="flex flex-col items-center gap-1.5 pt-1.5">
+                                                            <button
+                                                                onClick={() => handleConfirmClick(onConfirm, targetRegs, label)}
+                                                                className="py-1 px-3 rounded-lg text-xs font-medium bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-1 whitespace-nowrap"
+                                                            >
+                                                                <CheckCircle2 className="w-3.5 h-3.5" /> Xác nhận
                                                             </button>
-                                                            <button onClick={() => onReject(groupIds, label)} title="Từ chối thanh toán"
-                                                                className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200">
-                                                                <XCircle className="w-5 h-5" />
+                                                            <button
+                                                                onClick={() => onReject(targetIds, label)}
+                                                                className="py-1 px-3 rounded-lg text-xs font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1 whitespace-nowrap"
+                                                            >
+                                                                <XCircle className="w-3.5 h-3.5" /> Từ chối
                                                             </button>
                                                         </div>
                                                     )}
@@ -650,6 +888,17 @@ function ShirtOrderTable({
                                             </td>
                                         );
                                     })()}
+
+                                    {isFirstOfGroup && (
+                                        <td
+                                            rowSpan={rowSpan}
+                                            className="px-4 py-3 border border-gray-200 align-middle text-center whitespace-nowrap"
+                                        >
+                                            <span className={`font-semibold ${groupCollected > 0 ? "text-emerald-600" : "text-gray-300"}`}>
+                                                {groupCollected > 0 ? fmt(groupCollected) : "—"}
+                                            </span>
+                                        </td>
+                                    )}
 
                                     <td className="px-4 py-3 border border-gray-200 text-center">
                                         {r.cancel_requested_at ? (
@@ -694,6 +943,7 @@ function ShirtOrderTable({
             <div className="md:hidden space-y-3 p-4">
                 {groupList.map((groupRegs) => {
                     const first = groupRegs[0];
+                    const mergePayment = samePaymentGroup(groupRegs);
 
                     const colorBuckets = new Map<string, { shirt_type_name: string; color_name?: string; shirt_type_id?: string; color_id?: string; unitPrice: number; totalQty: number; items: any[] }>();
                     for (const r of groupRegs) {
@@ -726,11 +976,11 @@ function ShirtOrderTable({
                             sum + (g.total_amount ?? (g.unit_price ?? 0) * (g.quantity ?? 1)),
                         0,
                     );
-                    const repReg = groupRegs.find((g: any) => g.payment_method) ?? groupRegs[0];
-                    const cancelReg = groupRegs.find((g: any) => g.cancel_requested_at);
-                    const cancelLabel = cancelReg?.users?.full_name ?? cancelReg?.guest_full_name ?? "";
+                    const repReg = groupRegs.find((g: any) => g.payment_status || g.payment_method) ?? groupRegs[0];
                     const canConfirmReject =
-                        !repReg.registered_by_admin && repReg.payment_status !== "confirmed" && !!repReg.payment_method;
+                        mergePayment &&
+                        repReg.payment_status !== "confirmed" &&
+                        (!!repReg.payment_method || repReg.registered_by_admin);
                     const groupIds = groupRegs.map((g: any) => g.id);
                     const memberLabel = repReg.users?.full_name ?? repReg.guest_full_name ?? "";
 
@@ -789,56 +1039,102 @@ function ShirtOrderTable({
                                             </div>
 
                                             <div className="space-y-1.5 pt-1.5 border-t border-gray-100">
-                                                {bucket.items.map((r: any) => (
-                                                    <div
-                                                        key={r.id}
-                                                        className="flex items-center justify-between gap-2 text-xs rounded-lg px-1.5 py-1 -mx-1.5"
-                                                    >
-                                                        <div className="flex flex-col gap-1">
-                                                            <span className="text-gray-500">
-                                                                <strong className={r.gender === "nu" ? "text-pink-600" : "text-blue-600"}>
-                                                                    {r.gender === "nu" ? "Nữ" : "Nam"}
-                                                                </strong>
-                                                                {" · "}Size <strong className="text-gray-700">{r.size}</strong>
-                                                                {r.jersey_number && <> · Số <strong className="text-gray-700">{r.jersey_number}</strong></>}
-                                                                {r.print_name && <> · Tên <strong className="text-gray-700">"{r.print_name}"</strong></>}
-                                                                {" · SL "}
-                                                                <strong className="text-gray-700">{r.quantity}</strong>
-                                                            </span>
-                                                            {r.cancel_requested_at && (
-                                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold w-fit">
-                                                                    Yêu cầu huỷ
-                                                                </span>
+                                                {bucket.items.map((r: any) => {
+                                                    const itemStatusBadge = paymentStatusBadge(r);
+                                                    const itemMethodBadge = getPaymentMethodBadge(r);
+                                                    const itemCanConfirmReject =
+                                                        !mergePayment &&
+                                                        r.payment_status !== "confirmed" &&
+                                                        (!!r.payment_method || r.registered_by_admin);
+
+                                                    return (
+                                                        <div
+                                                            key={r.id}
+                                                            className="flex flex-col gap-1.5 text-xs rounded-lg px-1.5 py-1 -mx-1.5"
+                                                        >
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-gray-500">
+                                                                        <strong className={r.gender === "nu" ? "text-pink-600" : "text-blue-600"}>
+                                                                            {r.gender === "nu" ? "Nữ" : "Nam"}
+                                                                        </strong>
+                                                                        {" · "}Size <strong className="text-gray-700">{r.size}</strong>
+                                                                        {r.jersey_number && <> · Số <strong className="text-gray-700">{r.jersey_number}</strong></>}
+                                                                        {r.print_name && <> · Tên <strong className="text-gray-700">"{r.print_name}"</strong></>}
+                                                                        {" · SL "}
+                                                                        <strong className="text-gray-700">{r.quantity}</strong>
+                                                                    </span>
+                                                                    {r.cancel_requested_at && (
+                                                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold w-fit">
+                                                                            Yêu cầu huỷ
+                                                                        </span>
+                                                                    )}
+                                                                    {!mergePayment && (
+                                                                        <div className="flex flex-wrap items-center gap-1">
+                                                                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1 w-fit ${itemStatusBadge.cls}`}>
+                                                                                {itemStatusBadge.showIcon && <CheckCircle2 className="w-2.5 h-2.5" />}
+                                                                                {itemStatusBadge.label}
+                                                                            </span>
+                                                                            {r.registered_by_admin && (
+                                                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-600 w-fit">
+                                                                                    Admin thêm
+                                                                                </span>
+                                                                            )}
+                                                                            {itemMethodBadge && (
+                                                                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold w-fit ${itemMethodBadge.cls}`}>
+                                                                                    {itemMethodBadge.label}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                {r.cancel_requested_at ? (
+                                                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                                                        <button
+                                                                            onClick={() => onApproveCancel(r.id)}
+                                                                            className="p-1 -m-1 text-gray-400 hover:text-green-600"
+                                                                            title="Duyệt huỷ & hoàn tiền"
+                                                                        >
+                                                                            <CheckCircle2 className="w-4 h-4" />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => onRejectCancel(r.id, r.users?.full_name ?? "")}
+                                                                            className="p-1 -m-1 text-gray-400 hover:text-red-500"
+                                                                            title="Từ chối yêu cầu huỷ"
+                                                                        >
+                                                                            <XCircle className="w-4 h-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
+                                                                        className="p-1 -m-1 text-gray-300 hover:text-red-500 flex-shrink-0"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {itemCanConfirmReject && (
+                                                                <div className="flex items-center gap-2 mt-2">
+                                                                    <button
+                                                                        onClick={() => handleConfirmClick(onConfirm, [r], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                        className="flex-1 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-1.5"
+                                                                    >
+                                                                        <CheckCircle2 className="w-3.5 h-3.5" /> Xác nhận
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => onReject([r.id], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                        className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5"
+                                                                    >
+                                                                        <XCircle className="w-3.5 h-3.5" /> Từ chối
+                                                                    </button>
+                                                                </div>
                                                             )}
                                                         </div>
-
-                                                        {r.cancel_requested_at ? (
-                                                            <div className="flex items-center gap-1 flex-shrink-0">
-                                                                <button
-                                                                    onClick={() => onApproveCancel(r.id)}
-                                                                    className="p-1 -m-1 text-gray-400 hover:text-green-600"
-                                                                    title="Duyệt huỷ & hoàn tiền"
-                                                                >
-                                                                    <CheckCircle2 className="w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => onRejectCancel(r.id, r.users?.full_name ?? "")}
-                                                                    className="p-1 -m-1 text-gray-400 hover:text-red-500"
-                                                                    title="Từ chối yêu cầu huỷ"
-                                                                >
-                                                                    <XCircle className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
-                                                                className="p-1 -m-1 text-gray-300 hover:text-red-500 flex-shrink-0"
-                                                            >
-                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     );
@@ -847,45 +1143,46 @@ function ShirtOrderTable({
 
                             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                                 <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${memberStatusBadge.cls}`}>
-                                        {memberStatusBadge.showIcon && <CheckCircle2 className="w-3 h-3" />}
-                                        {memberStatusBadge.label}
-                                    </span>
-                                    {repReg.registered_by_admin && (
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-600">
-                                            Admin thêm
-                                        </span>
-                                    )}
-                                    {memberMethodBadge && (
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${memberMethodBadge.cls}`}>
-                                            {memberMethodBadge.label}
-                                        </span>
+                                    {mergePayment ? (
+                                        <>
+                                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${memberStatusBadge.cls}`}>
+                                                {memberStatusBadge.showIcon && <CheckCircle2 className="w-3 h-3" />}
+                                                {memberStatusBadge.label}
+                                            </span>
+                                            {repReg.registered_by_admin && (
+                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-600">
+                                                    Admin thêm
+                                                </span>
+                                            )}
+                                            {memberMethodBadge && (
+                                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${memberMethodBadge.cls}`}>
+                                                    {memberMethodBadge.label}
+                                                </span>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <span className="text-[11px] text-gray-400 italic">Nhiều trạng thái thanh toán</span>
                                     )}
                                 </div>
                                 <span className="text-sm font-bold text-gray-900">{fmt(memberTotal)}</span>
                             </div>
 
-                            {/* {cancelReg && (
-                                <div className="flex flex-col gap-1.5 pt-1">
-                                    <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-red-50 text-red-600 w-fit">
-                                        Yêu cầu huỷ: {cancelReg.color_name ?? cancelReg.size ?? ""}
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => onApproveCancel(cancelReg.id)}
-                                            className="flex-1 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-1.5"
-                                        >
-                                            <CheckCircle2 className="w-4 h-4" /> Duyệt huỷ
-                                        </button>
-                                        <button
-                                            onClick={() => onRejectCancel(cancelReg.id, cancelLabel)}
-                                            className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5"
-                                        >
-                                            <XCircle className="w-4 h-4" /> Từ chối
-                                        </button>
-                                    </div>
+                            {canConfirmReject && (
+                                <div className="flex items-center gap-2 pt-1">
+                                    <button
+                                        onClick={() => handleConfirmClick(onConfirm, groupRegs, memberLabel)}
+                                        className="flex-1 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-1.5"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4" /> Xác nhận
+                                    </button>
+                                    <button
+                                        onClick={() => onReject(groupIds, memberLabel)}
+                                        className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5"
+                                    >
+                                        <XCircle className="w-4 h-4" /> Từ chối
+                                    </button>
                                 </div>
-                            )} */}
+                            )}
                         </div>
                     );
                 })}
@@ -910,6 +1207,7 @@ function exportToExcel(activity: any, regData: any) {
     let rows: any[] = [];
     let merges: XLSX.Range[] = [];
     let rowGroupIndex: number[] = [];
+    let rowIsUnpaidFinalized: boolean[] = [];
 
     if (activity.type === "shirt_order") {
         const registrations = regData.registrations ?? [];
@@ -1025,6 +1323,7 @@ function exportToExcel(activity: any, regData: any) {
                         "Nguồn": r.registered_by_admin ? "Admin thêm" : "Tự đăng ký",
                     });
                     rowGroupIndex.push(groupIdx);
+                    rowIsUnpaidFinalized.push(!!r.finalized_as_unpaid);
                 }
                 cIdx += span;
             }
@@ -1087,9 +1386,12 @@ function exportToExcel(activity: any, regData: any) {
         const isHeader = R === 0;
         const dataRowIdx = R - 1;
         const groupIdx = dataRowIdx >= 0 ? rowGroupIndex[dataRowIdx] : 0;
+        const isUnpaidFinalized = dataRowIdx >= 0 ? rowIsUnpaidFinalized[dataRowIdx] : false;
         const rowFill = isHeader
             ? HEADER_FILL
-            : (groupIdx % 2 === 0 ? ROW_FILL_ODD : ROW_FILL_EVEN);
+            : isUnpaidFinalized
+                ? "FFFCE4E4" // đỏ nhạt
+                : (groupIdx % 2 === 0 ? ROW_FILL_ODD : ROW_FILL_EVEN);
 
         for (let C = range.s.c; C <= range.e.c; C++) {
             const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
