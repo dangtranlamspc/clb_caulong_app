@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Loader2, Phone, Mail } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/lib/api';
@@ -21,7 +21,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { data } = await authApi.login(values);
-      setAuth(data.user, data.access_token, data.refresh_token, values.rememberMe);
+      setAuth(data.user);
       toast.success(`Chào mừng, ${data.user.full_name}! 👋`);
       router.replace('/home');
     } catch (err: any) {
@@ -33,12 +33,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl p-8">
+    <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
       <h2 className="text-xl font-bold text-gray-900 mb-1">Đăng nhập</h2>
       <p className="text-gray-500 text-sm mb-6">Chào mừng bạn quay trở lại</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Identifier */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">
             Email hoặc số điện thoại
@@ -59,7 +58,6 @@ export default function LoginPage() {
           )}
         </div>
 
-        {/* Password */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mật khẩu</label>
           <div className="relative">
@@ -82,34 +80,27 @@ export default function LoginPage() {
           )}
         </div>
 
-        {/* Remember me */}
         <label className="flex items-center gap-3 cursor-pointer select-none">
           <div className="relative">
-            <input
-              {...register('rememberMe')}
-              type="checkbox"
-              className="sr-only peer"
-            />
+            <input {...register('rememberMe')} type="checkbox" className="sr-only peer" />
             <div className="w-10 h-6 bg-gray-200 peer-checked:bg-brand-500 rounded-full transition-colors" />
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4" />
           </div>
-          <span className="text-sm text-gray-600">Ghi nhớ đăng nhập <span className="text-gray-400">(7 ngày)</span></span>
+          <span className="text-sm text-gray-600">
+            Ghi nhớ đăng nhập <span className="text-gray-400">(7 ngày)</span>
+          </span>
         </label>
 
-        <button type="submit" disabled={loading} className="btn-primary flex items-center justify-center gap-2 mt-2">
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          type="submit"
+          disabled={loading}
+          className="btn-primary flex items-center justify-center gap-2 mt-2"
+        >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Đăng nhập
-        </button>
+        </motion.button>
       </form>
-
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-500">
-          Chưa có tài khoản?{' '}
-          <Link href="/auth/register" className="text-brand-600 font-semibold hover:underline">
-            Đăng ký ngay
-          </Link>
-        </p>
-      </div>
     </div>
   );
 }

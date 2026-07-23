@@ -8,13 +8,17 @@ import { profileApi } from '../../../../lib/api';
 
 export default function ChangePasswordPage() {
   const [loading, setLoading] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
 
   const onSubmit = async (values: any) => {
     setLoading(true);
     try {
-      await profileApi.updatePassword({ new_password: values.new_password });
+      await profileApi.updatePassword({
+        current_password: values.current_password,
+        new_password: values.new_password,
+      });
       toast.success('Đổi mật khẩu thành công!');
       reset();
     } catch (err: any) {
@@ -42,12 +46,38 @@ export default function ChangePasswordPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mật khẩu hiện tại *</label>
+            <div className="relative">
+              <input
+                {...register('current_password', {
+                  required: 'Vui lòng nhập mật khẩu hiện tại',
+                })}
+                type={showCurrentPw ? 'text' : 'password'}
+                className="input-field pr-12"
+                placeholder="Nhập mật khẩu hiện tại"
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPw(!showCurrentPw)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 p-1"
+              >
+                {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {errors.current_password && (
+              <p className="text-red-500 text-xs mt-1">{errors.current_password.message as string}</p>
+            )}
+          </div>
+
+          <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mật khẩu mới *</label>
             <div className="relative">
               <input
                 {...register('new_password', {
                   required: 'Vui lòng nhập mật khẩu mới',
                   minLength: { value: 8, message: 'Tối thiểu 8 ký tự' },
+                  validate: val => val !== watch('current_password') || 'Mật khẩu mới phải khác mật khẩu hiện tại',
                 })}
                 type={showPw ? 'text' : 'password'}
                 className="input-field pr-12"

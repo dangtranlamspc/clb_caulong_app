@@ -117,7 +117,6 @@ export default function AdminMemberEditPage() {
             toast.success('Cập nhật thành công!');
             router.push('/admin/members');
         } catch {
-            // lỗi đã được xử lý ở interceptor
         } finally {
             setSaving(false);
         }
@@ -132,12 +131,11 @@ export default function AdminMemberEditPage() {
         setPasswordError('');
         setPasswordSaving(true);
         try {
-            await membersAdminApi.updatePassword(id, { password: newPassword });
+            await membersAdminApi.updatePassword(id, { new_password: newPassword });
             toast.success('Đã đổi mật khẩu!');
             setNewPassword('');
             setShowPasswordForm(false);
         } catch {
-            // lỗi đã được xử lý ở interceptor
         } finally {
             setPasswordSaving(false);
         }

@@ -7,13 +7,14 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export const api = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-  const token = Cookies.get("access_token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+// api.interceptors.request.use((config) => {
+//   const token = Cookies.get("access_token");
+//   if (token) config.headers.Authorization = `Bearer ${token}`;
+//   return config;
+// });
 
 api.interceptors.response.use(
   (res) => res,
@@ -30,34 +31,19 @@ api.interceptors.response.use(
 
     if (status === 401 && !isAuthEndpoint && !original._retry) {
       original._retry = true;
-      const refreshToken = Cookies.get("refresh_token");
 
-      if (refreshToken) {
-        try {
-          const { data } = await axios.post(`${BASE_URL}/api/v1/auth/refresh`, {
-            refresh_token: refreshToken,
-          });
-          Cookies.set("access_token", data.access_token, {
-            expires: 1,
-            sameSite: "lax",
-          });
-          if (data.refresh_token) {
-            Cookies.set("refresh_token", data.refresh_token, {
-              expires: 7,
-              sameSite: "lax",
-            });
-          }
-          original.headers.Authorization = `Bearer ${data.access_token}`;
-          return api(original);
-        } catch {
-          Cookies.remove("access_token");
-          Cookies.remove("refresh_token");
-          localStorage.removeItem("member-auth");
-          if (typeof window !== "undefined")
-            window.location.href = "/auth/login";
-        }
-      } else {
-        if (typeof window !== "undefined") window.location.href = "/auth/login";
+      try {
+        await axios.post(
+          `${BASE_URL}/api/v1/auth/refresh`,
+          {},
+          { withCredentials: true },
+        );
+        return api(original);
+      } catch {
+        Cookies.remove("logged_in");
+        localStorage.removeItem("member-auth");
+        if (typeof window !== "undefined")
+          window.location.href = "/auth/login";
       }
     }
 
@@ -76,8 +62,7 @@ export const authApi = {
   register: (data: any) => api.post("/auth/register", data),
   logout: () => api.post("/auth/logout"),
   profile: () => api.get("/auth/profile"),
-  refresh: (token: string) =>
-    api.post("/auth/refresh", { refresh_token: token }),
+  refresh: () => api.post("/auth/refresh"),
 };
 
 export const profileApi = {

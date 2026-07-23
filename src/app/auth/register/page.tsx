@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useForm } from 'react-hook-form';
+import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth.store';
@@ -60,7 +60,7 @@ export default function RegisterPage() {
       const { confirm_password, ...rest } = values;
       const { data } = await authApi.register(rest);
 
-      setAuth(data.user, data.access_token, data.refresh_token, false);
+      setAuth(data.user);
 
       if (avatarFile) {
         try {
@@ -82,7 +82,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl p-8">
+    <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
       <h2 className="text-xl font-bold text-gray-900 mb-1">Tạo tài khoản</h2>
       <p className="text-gray-500 text-sm mb-6">Điền thông tin để đăng ký</p>
 
@@ -269,20 +269,16 @@ export default function RegisterPage() {
           </select>
         </div>
 
-        <button type="submit" disabled={loading} className="btn-primary flex items-center justify-center gap-2 !mt-6">
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          type="submit"
+          disabled={loading}
+          className="btn-primary flex items-center justify-center gap-2 !mt-6"
+        >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Tạo tài khoản
-        </button>
+        </motion.button>
       </form>
-
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-500">
-          Đã có tài khoản?{' '}
-          <Link href="/auth/login" className="text-brand-600 font-semibold hover:underline">
-            Đăng nhập
-          </Link>
-        </p>
-      </div>
 
       {pickerOpen && (
         <AvatarPickerModal

@@ -1,29 +1,43 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { useAuthStore } from '../../store/auth.store';
-import { authApi } from '../../lib/api';
-import { BirthdayModal, useBirthdayGreeting } from '../../components/modals/BirthdayModal';
-import { MatchResultModal } from '../../components/matches/MatchResultModal';
-import { ChallengeModal } from '../../components/matches/ChallengeModal';
-import { useMatchResultNotification } from '../../hooks/useMatchResultNotification';
-import { useChallengeNotification } from '../../hooks/useChallengeNotification';
-import toast from 'react-hot-toast';
-import { Home, CalendarDays, ClipboardList, Trophy, UserCircle2, LogOut, BadgePercent, Wallet, LayoutDashboard, Menu } from 'lucide-react';
-import { useTeamInviteNotification } from '@/hooks/useTeamInviteNotification';
-import { TeamInviteModal } from '@/components/matches/TeamInviteModal';
-import { NotificationBell } from '@/components/noti/NotificationBell';
-import { useNotificationsRealtimeStore } from '@/store/notifications-realtime.store';
-import { AdminMenuDrawer } from '@/components/admin/AdminMenuDrawer';
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import { useAuthStore } from "../../store/auth.store";
+import { authApi } from "../../lib/api";
+import {
+    BirthdayModal,
+    useBirthdayGreeting,
+} from "../../components/modals/BirthdayModal";
+import { MatchResultModal } from "../../components/matches/MatchResultModal";
+import { ChallengeModal } from "../../components/matches/ChallengeModal";
+import { useMatchResultNotification } from "../../hooks/useMatchResultNotification";
+import { useChallengeNotification } from "../../hooks/useChallengeNotification";
+import toast from "react-hot-toast";
+import {
+    Home,
+    CalendarDays,
+    ClipboardList,
+    Trophy,
+    UserCircle2,
+    LogOut,
+    BadgePercent,
+    Wallet,
+    LayoutDashboard,
+    Menu,
+} from "lucide-react";
+import { useTeamInviteNotification } from "@/hooks/useTeamInviteNotification";
+import { TeamInviteModal } from "@/components/matches/TeamInviteModal";
+import { NotificationBell } from "@/components/noti/NotificationBell";
+import { useNotificationsRealtimeStore } from "@/store/notifications-realtime.store";
+import { AdminMenuDrawer } from "@/components/admin/AdminMenuDrawer";
 
 const NAV_ITEMS = [
-    { href: '/home', icon: Home, label: 'Trang chủ' },
-    { href: '/activity', icon: CalendarDays, label: 'Hoạt động' },
-    { href: '/wallet', icon: Wallet, label: 'Ví' },
-    { href: '/cost', icon: BadgePercent, label: 'Chi phí' },
-    { href: '/leaderboard', icon: Trophy, label: 'Xếp hạng' },
-    { href: '/profile', icon: UserCircle2, label: 'Hồ sơ' },
+    { href: "/home", icon: Home, label: "Trang chủ" },
+    { href: "/activity", icon: CalendarDays, label: "Hoạt động" },
+    { href: "/wallet", icon: Wallet, label: "Ví" },
+    { href: "/cost", icon: BadgePercent, label: "Chi phí" },
+    { href: "/leaderboard", icon: Trophy, label: "Xếp hạng" },
+    { href: "/profile", icon: UserCircle2, label: "Hồ sơ" },
 ];
 
 function BadmintonLogo({ size = 26 }: { size?: number }) {
@@ -33,16 +47,27 @@ function BadmintonLogo({ size = 26 }: { size?: number }) {
             width={size}
             height={size}
             alt="BNB Badminton Club"
-            style={{ objectFit: 'contain' }}
+            style={{ objectFit: "contain" }}
         />
     );
 }
 
-
-function UserAvatar({ fullName, avatarUrl }: { fullName?: string; avatarUrl?: string | null }) {
+function UserAvatar({
+    fullName,
+    avatarUrl,
+}: {
+    fullName?: string;
+    avatarUrl?: string | null;
+}) {
     const initials = fullName
-        ? fullName.trim().split(' ').slice(-2).map(w => w[0]).join('').toUpperCase()
-        : '?';
+        ? fullName
+            .trim()
+            .split(" ")
+            .slice(-2)
+            .map((w) => w[0])
+            .join("")
+            .toUpperCase()
+        : "?";
 
     if (avatarUrl) {
         return (
@@ -50,7 +75,7 @@ function UserAvatar({ fullName, avatarUrl }: { fullName?: string; avatarUrl?: st
                 src={avatarUrl}
                 alt={fullName}
                 className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                style={{ border: '1.5px solid rgba(255,255,255,0.25)' }}
+                style={{ border: "1.5px solid rgba(255,255,255,0.25)" }}
             />
         );
     }
@@ -58,29 +83,32 @@ function UserAvatar({ fullName, avatarUrl }: { fullName?: string; avatarUrl?: st
     return (
         <div
             className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 select-none"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #06b6d4)', border: '1.5px solid rgba(255,255,255,0.25)' }}
+            style={{
+                background: "linear-gradient(135deg, #6366f1, #06b6d4)",
+                border: "1.5px solid rgba(255,255,255,0.25)",
+            }}
         >
             {initials}
         </div>
     );
 }
 
-
 function BottomNav({ pathname }: { pathname: string }) {
     return (
         <nav
             className="fixed bottom-0 left-0 right-0 z-40"
             style={{
-                background: '#ffffff',
-                borderTop: '1px solid #e5e7eb',
-                boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
+                background: "#ffffff",
+                borderTop: "1px solid #e5e7eb",
+                boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
             }}
         >
             <div className="max-w-lg mx-auto flex items-stretch">
                 {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
-                    const isActive = href === '/profile'
-                        ? pathname === '/profile'
-                        : pathname.startsWith(href);
+                    const isActive =
+                        href === "/profile"
+                            ? pathname === "/profile"
+                            : pathname.startsWith(href);
 
                     return (
                         <Link
@@ -94,16 +122,16 @@ function BottomNav({ pathname }: { pathname: string }) {
                                 style={{
                                     width: 36,
                                     height: 28,
-                                    background: isActive ? 'rgba(30,58,95,0.1)' : 'transparent',
+                                    background: isActive ? "rgba(30,58,95,0.1)" : "transparent",
                                 }}
                             >
                                 <Icon
                                     style={{
                                         width: 20,
                                         height: 20,
-                                        color: isActive ? '#0e56b5' : '#9ca3af',
+                                        color: isActive ? "#0e56b5" : "#9ca3af",
                                         strokeWidth: isActive ? 2.2 : 1.8,
-                                        transition: 'color 0.2s',
+                                        transition: "color 0.2s",
                                     }}
                                 />
                             </div>
@@ -111,9 +139,9 @@ function BottomNav({ pathname }: { pathname: string }) {
                                 style={{
                                     fontSize: 10,
                                     fontWeight: isActive ? 600 : 400,
-                                    color: isActive ? '#0e56b5' : '#9ca3af',
-                                    transition: 'color 0.2s',
-                                    letterSpacing: '0.01em',
+                                    color: isActive ? "#0e56b5" : "#9ca3af",
+                                    transition: "color 0.2s",
+                                    letterSpacing: "0.01em",
                                 }}
                             >
                                 {label}
@@ -126,13 +154,17 @@ function BottomNav({ pathname }: { pathname: string }) {
     );
 }
 
-export default function MemberLayout({ children }: { children: React.ReactNode }) {
+export default function MemberLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
     const router = useRouter();
     const pathname = usePathname();
     const { isAuthenticated, logout, user } = useAuthStore();
     const [mounted, setMounted] = useState(false);
     const [adminDrawerOpen, setAdminDrawerOpen] = useState(false);
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === "admin";
 
     useEffect(() => {
         if (!user?.id) return;
@@ -142,11 +174,15 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         };
     }, [user?.id]);
 
-    const { show: showBirthday, close: closeBirthday } = useBirthdayGreeting(user ?? null);
+    const { show: showBirthday, close: closeBirthday } = useBirthdayGreeting(
+        user ?? null,
+    );
 
-    const { current: matchResult, dismiss: dismissResult } = useMatchResultNotification();
+    const { current: matchResult, dismiss: dismissResult } =
+        useMatchResultNotification();
 
-    const { current: teamInvite, dismiss: dismissTeamInvite } = useTeamInviteNotification();
+    const { current: teamInvite, dismiss: dismissTeamInvite } =
+        useTeamInviteNotification();
 
     const {
         current: challenge,
@@ -155,17 +191,21 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         dismiss: dismissChallenge,
     } = useChallengeNotification();
 
-    useEffect(() => { setMounted(true); }, []);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
-        if (mounted && !isAuthenticated) router.replace('/auth/login');
+        if (mounted && !isAuthenticated) router.replace("/auth/login");
     }, [mounted, isAuthenticated, router]);
 
     const handleLogout = async () => {
-        try { await authApi.logout(); } catch { }
+        try {
+            await authApi.logout();
+        } catch { }
         logout();
-        toast.success('Đã đăng xuất');
-        router.push('/auth/login');
+        toast.success("Đã đăng xuất");
+        router.push("/auth/login");
     };
 
     if (!mounted) {
@@ -178,13 +218,12 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
 
     if (!isAuthenticated) return null;
 
-    const firstName = user?.full_name?.split(' ').pop() ?? user?.full_name;
+    const firstName = user?.full_name?.split(" ").pop() ?? user?.full_name;
 
     return (
         <div className="min-h-screen bg-[#F4F6FA] pb-24">
-
             <BirthdayModal
-                userName={user?.full_name ?? ''}
+                userName={user?.full_name ?? ""}
                 show={showBirthday}
                 onClose={closeBirthday}
             />
@@ -198,10 +237,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
             )}
 
             {teamInvite && !challenge && !matchResult && (
-                <TeamInviteModal
-                    invite={teamInvite}
-                    onClose={dismissTeamInvite}
-                />
+                <TeamInviteModal invite={teamInvite} onClose={dismissTeamInvite} />
             )}
 
             {matchResult && (
@@ -211,18 +247,210 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                     onClose={dismissResult}
                 />
             )}
-
             <header
                 className="sticky top-0 z-30 overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #0f2744 40%, #1a1035 100%)' }}
+                style={{
+                    background:
+                        "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)"
+                }}
             >
-                <div aria-hidden="true" style={{ position: 'absolute', top: -30, left: -20, width: 120, height: 120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.45), transparent 70%)', pointerEvents: 'none' }} />
-                <div aria-hidden="true" style={{ position: 'absolute', top: -10, right: 30, width: 90, height: 90, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.35), transparent 70%)', pointerEvents: 'none' }} />
-                <div aria-hidden="true" style={{ position: 'absolute', bottom: -20, right: -10, width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,0.3), transparent 70%)', pointerEvents: 'none' }} />
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="aurora-bg"></div>
+
+                    <div className="light-beam beam1"></div>
+                    <div className="light-beam beam2"></div>
+                    <div className="light-beam beam3"></div>
+
+                    {Array.from({ length: 36 }).map((_, i) => (
+                        <span
+                            key={i}
+                            className={`blob blob-${(i % 6) + 1}`}
+                            style={{
+                                left: `${Math.random() * 100}%`,
+                                top: `${Math.random() * 100}%`,
+                                animationDelay: `${Math.random() * -8}s`,
+                                animationDuration: `${4 + Math.random() * 4}s`,
+                            }}
+                        />
+                    ))}
+                </div>
+
+                <style jsx>{`
+                @keyframes auroraMove {
+                    0% {
+                    background-position: 0% 50%;
+                    }
+
+                    50% {
+                    background-position: 100% 50%;
+                    }
+
+                    100% {
+                    background-position: 0% 50%;
+                    }
+                }
+
+                .aurora-bg {
+                    position: absolute;
+                    inset: -30%;
+
+                    background:
+                    radial-gradient(
+                        circle at 10% 20%,
+                        rgba(59, 130, 246, 0.3),
+                        transparent 30%
+                    ),
+                    radial-gradient(
+                        circle at 80% 30%,
+                        rgba(6, 182, 212, 0.3),
+                        transparent 30%
+                    ),
+                    radial-gradient(
+                        circle at 50% 90%,
+                        rgba(139, 92, 246, 0.28),
+                        transparent 35%
+                    ),
+                    linear-gradient(
+                        120deg,
+                        #183153,
+                        #102744,
+                        #0d2340,
+                        #1b1640,
+                        #183153
+                    );
+
+                    background-size: 300% 300%;
+
+                    animation: auroraMove 8s linear infinite;
+                }
+
+                @keyframes blobMove {
+                    0% {
+                    transform: translate(0, 0) scale(1) rotate(0);
+                    }
+
+                    25% {
+                    transform: translate(35px, -20px) scale(1.4) rotate(90deg);
+                    }
+
+                    50% {
+                    transform: translate(-30px, 35px) scale(0.8) rotate(180deg);
+                    }
+
+                    75% {
+                    transform: translate(20px, 25px) scale(1.25) rotate(270deg);
+                    }
+
+                    100% {
+                    transform: translate(0, 0) scale(1) rotate(360deg);
+                    }
+                }
+
+                @keyframes pulse {
+                    0%,
+                    100% {
+                    opacity: 0.35;
+                    filter: blur(28px);
+                    }
+
+                    50% {
+                    opacity: 0.95;
+                    filter: blur(42px);
+                    }
+                }
+
+                .blob {
+                    position: absolute;
+
+                    width: 120px;
+                    height: 120px;
+
+                    border-radius: 999px;
+
+                    animation:
+                    blobMove linear infinite,
+                    pulse ease-in-out infinite;
+
+                    will-change: transform;
+                }
+
+                .blob-1 {
+                    background: #3b82f6;
+                }
+
+                .blob-2 {
+                    background: #06b6d4;
+                }
+
+                .blob-3 {
+                    background: #8b5cf6;
+                }
+
+                .blob-4 {
+                    background: #60a5fa;
+                }
+
+                .blob-5 {
+                    background: rgba(255, 255, 255, 0.18);
+                }
+
+                .blob-6 {
+                    background: #38bdf8;
+                }
+
+                @keyframes beam {
+                    0% {
+                    transform: translateX(-120%) rotate(-15deg);
+                    }
+
+                    100% {
+                    transform: translateX(180%) rotate(-15deg);
+                    }
+                }
+
+                .light-beam {
+                    position: absolute;
+
+                    width: 220px;
+                    height: 320px;
+
+                    background: linear-gradient(
+                    to right,
+                    transparent,
+                    rgba(255, 255, 255, 0.1),
+                    transparent
+                    );
+
+                    filter: blur(18px);
+
+                    animation: beam 5s linear infinite;
+                }
+
+                .beam1 {
+                    top: -120px;
+                    left: -150px;
+                }
+
+                .beam2 {
+                    top: -80px;
+
+                    animation-delay: -2s;
+                }
+
+                .beam3 {
+                    bottom: -120px;
+
+                    animation-delay: -4s;
+                }
+                `}</style>
 
                 <div
                     className="relative max-w-lg mx-auto px-4 flex items-center justify-between"
-                    style={{ height: 64, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', background: 'rgba(255,255,255,0.07)', borderBottom: '0.5px solid rgba(255,255,255,0.12)' }}
+                    style={{
+                        height: 64,
+                        background: "rgba(255,255,255,.02)",
+                        borderBottom: "1px solid rgba(255,255,255,.08)",
+                    }}
                 >
                     <div className="flex items-center gap-2.5">
                         {isAdmin && (
@@ -230,7 +458,11 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                                 onClick={() => setAdminDrawerOpen(true)}
                                 title="Menu quản trị"
                                 className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
-                                style={{ background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.75)' }}
+                                style={{
+                                    background: "rgba(255,255,255,0.07)",
+                                    border: "0.5px solid rgba(255,255,255,0.12)",
+                                    color: "rgba(255,255,255,0.75)",
+                                }}
                             >
                                 <Menu className="w-4.5 h-4.5" />
                             </button>
@@ -240,12 +472,24 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                             <BadmintonLogo size={85} />
                         </div>
                         <div>
-                            <p className="font-bold text-white leading-none" style={{ fontSize: 16, letterSpacing: '-0.01em' }}>
+                            <p
+                                className="font-bold text-white leading-none"
+                                style={{ fontSize: 16, letterSpacing: "-0.01em" }}
+                            >
                                 BNB BADMINTON CLUB
                             </p>
                             <span
                                 className="inline-flex items-center gap-1 font-semibold"
-                                style={{ marginTop: 4, padding: '2px 8px', fontSize: 9, borderRadius: 20, background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.03em' }}
+                                style={{
+                                    marginTop: 4,
+                                    padding: "2px 8px",
+                                    fontSize: 9,
+                                    borderRadius: 20,
+                                    background: "rgba(255,255,255,0.08)",
+                                    border: "0.5px solid rgba(255,255,255,0.14)",
+                                    color: "rgba(255,255,255,0.5)",
+                                    letterSpacing: "0.03em",
+                                }}
                             >
                                 🏸 Mùa giải {new Date().getFullYear()}
                             </span>
@@ -258,9 +502,23 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                             onClick={handleLogout}
                             title="Đăng xuất"
                             className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                            style={{ background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.4)' }}
-                            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(239,68,68,0.2)'; el.style.borderColor = 'rgba(239,68,68,0.35)'; el.style.color = '#fca5a5'; }}
-                            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.07)'; el.style.borderColor = 'rgba(255,255,255,0.12)'; el.style.color = 'rgba(255,255,255,0.4)'; }}
+                            style={{
+                                background: "rgba(255,255,255,0.07)",
+                                border: "0.5px solid rgba(255,255,255,0.12)",
+                                color: "rgba(255,255,255,0.4)",
+                            }}
+                            onMouseEnter={(e) => {
+                                const el = e.currentTarget as HTMLElement;
+                                el.style.background = "rgba(239,68,68,0.2)";
+                                el.style.borderColor = "rgba(239,68,68,0.35)";
+                                el.style.color = "#fca5a5";
+                            }}
+                            onMouseLeave={(e) => {
+                                const el = e.currentTarget as HTMLElement;
+                                el.style.background = "rgba(255,255,255,0.07)";
+                                el.style.borderColor = "rgba(255,255,255,0.12)";
+                                el.style.color = "rgba(255,255,255,0.4)";
+                            }}
                         >
                             <LogOut className="w-4 h-4" />
                         </button>
@@ -268,15 +526,16 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                 </div>
             </header>
 
-            <main className="max-w-lg mx-auto px-4 py-5">
-                {children}
-            </main>
+            <main className="max-w-lg mx-auto px-4 py-5">{children}</main>
 
             {/* ── Bottom nav ── */}
             <BottomNav pathname={pathname} />
 
             {isAdmin && (
-                <AdminMenuDrawer open={adminDrawerOpen} onClose={() => setAdminDrawerOpen(false)} />
+                <AdminMenuDrawer
+                    open={adminDrawerOpen}
+                    onClose={() => setAdminDrawerOpen(false)}
+                />
             )}
         </div>
     );
