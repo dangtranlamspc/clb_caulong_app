@@ -206,13 +206,13 @@ const EVENT_TYPE_STATUS_OVERRIDE: Record<string, Record<string, string>> = {
 function getEventParticipantLabel(type: string, count: number) {
   switch (type) {
     case "tournament":
-      return `${count} đội đã đăng ký`;
+      return `${count} người đã đăng ký`;
     case "birthday":
       return `${count} thành viên`;
     case "poll":
       return `${count} lượt bình chọn`;
     default:
-      return `${count} người đã đăng ký`;
+      return `Đã đăng kí ${count} áo`;
   }
 }
 

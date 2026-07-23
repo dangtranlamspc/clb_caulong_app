@@ -56,6 +56,11 @@ export function ShirtOrderHistorySection({
         0,
     );
 
+    const handleBack = () => {
+        sessionStorage.setItem("activity:return-tab", "events");
+        router.push("/activity");
+    };
+
 
 
     return (
@@ -63,7 +68,7 @@ export function ShirtOrderHistorySection({
             <div className={`max-w-2xl mx-auto px-4 md:px-0 pt-4 ${canModify ? "pb-28 md:pb-8" : "pb-8"} space-y-4`}>
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => router.back()}
+                        onClick={handleBack}
                         className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform hover:border-gray-300"
                     >
                         <ArrowLeft className="w-4 h-4 text-gray-600" />

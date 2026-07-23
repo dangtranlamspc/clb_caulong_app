@@ -19,9 +19,7 @@ import toast from "react-hot-toast";
 import { guestShirtOrderApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import { createPortal } from "react-dom";
-
-const SHIPPING_FEE = 20000;
-const FREE_SHIP_THRESHOLD = 500000;
+import { BANK_DISPLAY_NAMES } from "@/constants/constants";
 
 const FORM_OPTIONS = [
     { value: "nam", label: "Nam" },
@@ -366,8 +364,7 @@ export default function GuestShirtOrderPage({
         () => cart.reduce((sum, i) => sum + priceFor(i), 0),
         [cart, shirtTypes],
     );
-    const shippingFee = subtotal >= FREE_SHIP_THRESHOLD || subtotal === 0 ? 0 : SHIPPING_FEE;
-    const total = subtotal + shippingFee;
+    const total = subtotal;
 
     const resetCurrentItem = () => {
         setCurrent(emptyItem());
@@ -545,35 +542,138 @@ export default function GuestShirtOrderPage({
     }
 
     if (submitted) {
+        const orderedItems = cart.length > 0 ? cart : [];
+
+        const genderLabel = (g: string) =>
+            g === "nam" ? "Nam" : g === "nu" ? "Nữ" : "Oversize";
+
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 max-w-md w-full p-8 text-center space-y-4">
-                    <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto" />
-                    <h1 className="text-xl font-bold text-gray-900">
-                        Đặt áo thành công!
-                    </h1>
-                    <p className="text-sm text-gray-500">
-                        Cảm ơn {buyerName} đã đặt áo cho "{activity.title}". BTC sẽ liên hệ
-                        xác nhận trong thời gian sớm nhất.
-                    </p>
-                    <div className="bg-gray-50 rounded-xl p-4 text-sm text-left space-y-1">
-                        <div className="flex justify-between">
-                            <span className="text-gray-500">Tổng tiền</span>
-                            <span className="font-semibold text-gray-900">
-                                {formatCurrency(submitted.total_amount)}
-                            </span>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
+                <div
+                    className="max-w-sm w-full space-y-4"
+                    style={{ animation: "fadeSlideUp .35s ease both" }}
+                >
+                    <style>{`
+                    @keyframes fadeSlideUp {
+                        from { opacity: 0; transform: translateY(12px); }
+                        to   { opacity: 1; transform: translateY(0); }
+                    }
+                    @keyframes popIn {
+                        0%   { transform: scale(0.6); opacity: 0; }
+                        70%  { transform: scale(1.08); opacity: 1; }
+                        100% { transform: scale(1); }
+                    }
+                    @keyframes confettiFloat {
+                        from { transform: translateY(0) rotate(0deg); opacity: 1; }
+                        to   { transform: translateY(-6px) rotate(20deg); opacity: 0.85; }
+                    }
+                `}</style>
+
+                    <div className="bg-white rounded-3xl shadow-sm p-6 pt-8">
+                        <div className="relative flex flex-col items-center text-center mb-6">
+                            <div className="relative w-20 h-20">
+                                <span
+                                    className="absolute -top-2 -left-3 w-2 h-2 rounded-sm bg-amber-400"
+                                    style={{ animation: "confettiFloat 1.6s ease-in-out infinite alternate" }}
+                                />
+                                <span
+                                    className="absolute -top-3 right-0 w-1.5 h-3 rounded-sm bg-blue-400 rotate-12"
+                                    style={{ animation: "confettiFloat 1.8s ease-in-out infinite alternate-reverse" }}
+                                />
+                                <span
+                                    className="absolute top-1 -right-4 w-2 h-2 rounded-sm bg-rose-400"
+                                    style={{ animation: "confettiFloat 1.4s ease-in-out infinite alternate" }}
+                                />
+                                <span
+                                    className="absolute -bottom-1 -left-4 w-1.5 h-1.5 rounded-full bg-emerald-300"
+                                    style={{ animation: "confettiFloat 2s ease-in-out infinite alternate-reverse" }}
+                                />
+                                <div
+                                    className="w-20 h-20 rounded-full flex items-center justify-center bg-emerald-500"
+                                    style={{ animation: "popIn .5s cubic-bezier(0.34,1.56,0.64,1) both" }}
+                                >
+                                    <CheckCircle2 className="w-10 h-10 text-white" strokeWidth={2.5} />
+                                </div>
+                            </div>
+
+                            <h1 className="text-lg font-bold mt-4 text-emerald-600">
+                                Đặt áo thành công!
+                            </h1>
+                            <p className="text-sm text-gray-400 mt-1.5 leading-relaxed">
+                                Cảm ơn {buyerName} đã đặt áo cho "{activity.title}". BTC sẽ liên
+                                hệ xác nhận trong thời gian sớm nhất.
+                            </p>
                         </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-500">Số lượng áo</span>
-                            <span className="font-semibold text-gray-900">
-                                {submitted.registrations?.length ?? 0}
-                            </span>
+
+                        <div className="border border-gray-100 rounded-2xl overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
+                                <span className="text-sm font-bold text-gray-900">
+                                    Chi tiết đơn hàng
+                                </span>
+                                <span className="text-sm font-bold text-emerald-600">
+                                    {paymentMethod === "transfer" ? "Chuyển khoản" : "Tiền mặt"}
+                                </span>
+                            </div>
+
+                            <div className="divide-y divide-gray-50">
+                                {orderedItems.map((item) => {
+                                    const type = shirtTypes.find(
+                                        (t) => t.id === item.shirt_type_id,
+                                    );
+                                    const color = type?.colors?.find(
+                                        (c: any) => c.id === item.color_id,
+                                    );
+                                    return (
+                                        <div
+                                            key={item.localId}
+                                            className="flex items-center gap-3 px-4 py-3"
+                                        >
+                                            <div className="w-12 h-12 rounded-lg bg-gray-50 overflow-hidden flex items-center justify-center flex-shrink-0">
+                                                {getTypeImage(type, item.color_id) ? (
+                                                    <img
+                                                        src={getTypeImage(type, item.color_id) as string}
+                                                        className="w-full h-full object-cover"
+                                                        alt=""
+                                                    />
+                                                ) : (
+                                                    <span className="text-xl">👕</span>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                    {type?.name ?? "—"}
+                                                </p>
+                                                <p className="text-xs text-gray-400">
+                                                    {genderLabel(item.gender)}
+                                                    {color?.name ? ` · ${color.name}` : ""} · Size{" "}
+                                                    {item.size} × {item.quantity}
+                                                </p>
+                                            </div>
+                                            <span className="text-sm font-semibold text-gray-700 flex-shrink-0">
+                                                {formatCurrency(priceFor(item))}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="flex items-center justify-between px-4 py-3.5 bg-gray-50 border-t border-gray-100">
+                                <span className="text-sm font-bold text-gray-900">
+                                    Tổng cộng
+                                </span>
+                                <span className="text-lg font-black text-emerald-600">
+                                    {formatCurrency(submitted.total_amount ?? total)}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-500">Phương thức</span>
-                            <span className="font-semibold text-gray-900">
-                                {paymentMethod === "transfer" ? "Chuyển khoản" : "Tiền mặt"}
-                            </span>
+
+                        <div className="mt-6">
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="w-full text-center text-sm font-medium text-emerald-600 hover:text-emerald-700"
+                            >
+                                Đặt thêm đơn khác
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -581,14 +681,14 @@ export default function GuestShirtOrderPage({
         );
     }
 
-    const bankInfo = activity.detail?.bank_info;
-    const qrUrl =
-        bankInfo?.bank_code && bankInfo?.account_number
-            ? `https://img.vietqr.io/image/${bankInfo.bank_code}-${bankInfo.account_number
-            }-compact2.png?amount=${total}&addInfo=${encodeURIComponent(
-                `DATAOA ${activityId.slice(0, 8).toUpperCase()}`,
-            )}`
-            : null;
+    const bankId = process.env.NEXT_PUBLIC_BANK_ID ?? "MB";
+    const bankAccount = process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "0000000000";
+    const bankAccountName = process.env.NEXT_PUBLIC_BANK_NAME ?? "CLB CAU LONG";
+    const bankDisplayName = BANK_DISPLAY_NAMES[bankId] ?? bankId;
+    const paymentRef = `DATAO ${(buyerName || "Khach").trim()} ${activity.title}`.trim();
+    const qrUrl = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(
+        paymentRef,
+    )}&accountName=${encodeURIComponent(bankAccountName)}`;
 
     return (
         <div className="min-h-screen bg-gray-50 pb-16">
@@ -1225,60 +1325,68 @@ export default function GuestShirtOrderPage({
                                     </button>
                                 </div>
 
-                                {paymentMethod === "transfer" && bankInfo && (
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-                                            {bankInfo.bank_name ?? "Ngân hàng"}
+                                {paymentMethod === "transfer" && (
+                                    <div className="space-y-4">
+                                        <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
+                                            <p className="text-xs text-gray-400">Quét mã QR để thanh toán</p>
+                                            <img
+                                                src={qrUrl}
+                                                alt="VietQR"
+                                                className="w-48 h-48 object-contain"
+                                            />
                                         </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Số tài khoản</span>
-                                            <button
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(
-                                                        bankInfo.account_number,
-                                                    );
-                                                    toast.success("Đã sao chép");
-                                                }}
-                                                className="flex items-center gap-1 font-semibold text-gray-900"
-                                            >
-                                                {bankInfo.account_number}
-                                                <Copy className="w-3 h-3 text-gray-400" />
-                                            </button>
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Tên tài khoản</span>
-                                            <span className="font-semibold text-gray-900">
-                                                {bankInfo.account_name}
-                                            </span>
-                                        </div>
-                                        {qrUrl && (
-                                            <div className="flex justify-center py-2">
-                                                <img
-                                                    src={qrUrl}
-                                                    alt="QR chuyển khoản"
-                                                    className="w-44 h-44 rounded-lg border border-gray-100"
-                                                />
+
+                                        <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
+                                            <div className="flex justify-between px-4 py-2.5">
+                                                <span className="text-gray-500">Ngân hàng</span>
+                                                <span className="font-semibold text-gray-900">
+                                                    {bankDisplayName}
+                                                </span>
                                             </div>
-                                        )}
-                                        <div className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2">
-                                            <span className="text-gray-500">Nội dung CK</span>
-                                            <button
-                                                onClick={() => {
-                                                    const ref = `DATAOA ${activityId
-                                                        .slice(0, 8)
-                                                        .toUpperCase()}`;
-                                                    navigator.clipboard.writeText(ref);
-                                                    toast.success("Đã sao chép");
-                                                }}
-                                                className="flex items-center gap-1 font-semibold text-gray-900"
-                                            >
-                                                DATAOA {activityId.slice(0, 8).toUpperCase()}
-                                                <Copy className="w-3 h-3 text-gray-400" />
-                                            </button>
+                                            <div className="flex justify-between px-4 py-2.5">
+                                                <span className="text-gray-500">Số tài khoản</span>
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(bankAccount);
+                                                        toast.success("Đã sao chép");
+                                                    }}
+                                                    className="flex items-center gap-1 font-semibold text-gray-900"
+                                                >
+                                                    {bankAccount}
+                                                    <Copy className="w-3 h-3 text-gray-400" />
+                                                </button>
+                                            </div>
+                                            <div className="flex justify-between px-4 py-2.5">
+                                                <span className="text-gray-500">Tên tài khoản</span>
+                                                <span className="font-semibold text-gray-900">
+                                                    {bankAccountName}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between px-4 py-2.5">
+                                                <span className="text-gray-500">Số tiền</span>
+                                                <span className="font-bold text-red-600">
+                                                    {formatCurrency(total)}
+                                                </span>
+                                            </div>
+                                            <div className="px-4 py-2.5">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-500">Nội dung CK</span>
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(paymentRef);
+                                                            toast.success("Đã sao chép");
+                                                        }}
+                                                        className="flex items-center gap-1 font-mono font-semibold text-gray-900"
+                                                    >
+                                                        {paymentRef}
+                                                        <Copy className="w-3 h-3 text-gray-400" />
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                         <p className="text-[11px] text-gray-400">
-                                            Vui lòng nhập đúng nội dung để được xác nhận thanh toán
-                                            nhanh nhất
+                                            Vui lòng nhập đúng nội dung để được xác nhận thanh toán nhanh
+                                            nhất
                                         </p>
 
                                         <div>
@@ -1316,13 +1424,6 @@ export default function GuestShirtOrderPage({
                                     </div>
                                 )}
 
-                                {paymentMethod === "transfer" && !bankInfo && (
-                                    <p className="text-xs text-gray-400">
-                                        BTC chưa cấu hình thông tin chuyển khoản cho hoạt động
-                                        này. Vui lòng liên hệ BTC hoặc chọn thanh toán tiền mặt.
-                                    </p>
-                                )}
-
                                 {paymentMethod === "cash" && (
                                     <p className="text-xs text-gray-400">
                                         Bạn sẽ thanh toán trực tiếp bằng tiền mặt khi nhận áo.
@@ -1351,10 +1452,6 @@ export default function GuestShirtOrderPage({
                                 </button>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100 mt-2">
-                                    <div className="text-xs text-gray-500 pt-4">
-                                        Cần hỗ trợ? Liên hệ BTC qua Zalo hoặc SĐT:{" "}
-                                        {bankInfo?.support_phone ?? "—"}
-                                    </div>
                                     <div className="text-xs text-gray-500 pt-4">
                                         Thời gian hỗ trợ: 8:00 - 22:00 (Tất cả các ngày)
                                     </div>
@@ -1435,12 +1532,6 @@ export default function GuestShirtOrderPage({
                                 <span className="text-gray-500">In số (miễn phí)</span>
                                 <span className="text-gray-800">0đ</span>
                             </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Phí vận chuyển</span>
-                                <span className="text-gray-800">
-                                    {formatCurrency(shippingFee)}
-                                </span>
-                            </div>
                             <hr className="border-gray-100" />
                             <div className="flex justify-between items-center">
                                 <span className="font-bold text-gray-900">Tổng cộng</span>
@@ -1448,13 +1539,6 @@ export default function GuestShirtOrderPage({
                                     {formatCurrency(total)}
                                 </span>
                             </div>
-                            {shippingFee > 0 && (
-                                <p className="text-[11px] text-gray-400 flex items-center gap-1">
-                                    <Info className="w-3 h-3" />
-                                    Miễn phí ship cho đơn hàng từ{" "}
-                                    {formatCurrency(FREE_SHIP_THRESHOLD)}
-                                </p>
-                            )}
                         </div>
                     </div>
                 </div>

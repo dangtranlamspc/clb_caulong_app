@@ -16,7 +16,10 @@ import {
     UserPlus,
     Link2,
     Lock,
-    RotateCcw
+    RotateCcw,
+    RefreshCw,
+    X,
+    Eye
 } from "lucide-react";
 import { eventsAdminApi } from "@/lib/api";
 import { createPortal } from "react-dom";
@@ -45,6 +48,19 @@ export default function EventRegistrationsPage({
     const [showReopenDeadlineModal, setShowReopenDeadlineModal] = useState(false);
     const [newDeadline, setNewDeadline] = useState("");
     const [reopening, setReopening] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const [proofImageUrl, setProofImageUrl] = useState<string | null>(null);
+
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        try {
+            await fetchAll();
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     const fetchAll = async () => {
         try {
@@ -193,26 +209,34 @@ export default function EventRegistrationsPage({
                                 : `${registrations.length} đăng ký`}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:flex-wrap w-full sm:w-auto">
+                        <button
+                            onClick={handleRefresh}
+                            disabled={refreshing}
+                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap disabled:opacity-60"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+                            Làm mới
+                        </button>
                         {activity.type === "shirt_order" && activity.status !== "closed" && (
                             <>
                                 <button
                                     onClick={() => handleCopyPublicLink(activity.id)}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap"
+                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap"
                                 >
                                     <Link2 className="w-4 h-4" /> Tạo link công khai
                                 </button>
                                 {onAddRegistration && (
                                     <button
                                         onClick={onAddRegistration}
-                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium whitespace-nowrap"
+                                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium whitespace-nowrap"
                                     >
                                         <UserPlus className="w-4 h-4" /> Thêm đăng ký
                                     </button>
                                 )}
                                 <button
                                     onClick={() => setShowFinalizeModal(true)}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium whitespace-nowrap"
+                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium whitespace-nowrap"
                                 >
                                     <Lock className="w-4 h-4" /> Chốt danh sách
                                 </button>
@@ -221,7 +245,7 @@ export default function EventRegistrationsPage({
                         {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason !== "deadline" && (
                             <button
                                 onClick={handleReopen}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
                             >
                                 <RotateCcw className="w-4 h-4" /> Mở đăng ký
                             </button>
@@ -229,14 +253,14 @@ export default function EventRegistrationsPage({
                         {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason === "deadline" && (
                             <button
                                 onClick={() => setShowReopenDeadlineModal(true)}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
                             >
                                 <RotateCcw className="w-4 h-4" /> Mở lại hoạt động
                             </button>
                         )}
                         <button
                             onClick={() => exportToExcel(activity, regData)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
+                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap col-span-2 sm:col-span-1"
                         >
                             <FileSpreadsheet className="w-4 h-4" /> Xuất Excel
                         </button>
@@ -280,9 +304,17 @@ export default function EventRegistrationsPage({
                 )}
 
                 {activity.type === "poll" ? (
-                    <PollResults regData={regData} />
+                    <div
+                        className={`transition-all duration-300 ${refreshing ? "opacity-50 grayscale animate-pulse pointer-events-none" : ""
+                            }`}
+                    >
+                        <PollResults regData={regData} />
+                    </div>
                 ) : (
-                    <div className="card !p-0 overflow-hidden">
+                    <div
+                        className={`card !p-0 overflow-hidden transition-all duration-300 ${refreshing ? "opacity-50 grayscale animate-pulse pointer-events-none" : ""
+                            }`}
+                    >
                         {registrations.length === 0 ? (
                             <div className="py-16 text-center text-gray-400">
                                 <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -298,6 +330,7 @@ export default function EventRegistrationsPage({
                                 onRemove={(regId: string, label: string) => handleRemove("shirt_order", regId, label)}
                                 onApproveCancel={handleApproveCancel}
                                 onRejectCancel={handleRejectCancel}
+                                onViewProof={setProofImageUrl}
                             />
                         ) : activity.type === "tournament" ? (
                             <TournamentTable
@@ -320,6 +353,13 @@ export default function EventRegistrationsPage({
                             />
                         ) : null}
                     </div>
+                )}
+
+                {proofImageUrl && (
+                    <ProofImageModal
+                        url={proofImageUrl}
+                        onClose={() => setProofImageUrl(null)}
+                    />
                 )}
 
                 {showFinalizeModal && createPortal(
@@ -411,9 +451,111 @@ export default function EventRegistrationsPage({
     );
 }
 
+function ProofImageModal({
+    url,
+    onClose,
+}: {
+    url: string;
+    onClose: () => void;
+}) {
+    const [closing, setClosing] = useState(false);
+
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") handleClose();
+        };
+        document.addEventListener("keydown", onKey);
+        return () => document.removeEventListener("keydown", onKey);
+    }, []);
+
+    const handleClose = () => {
+        setClosing(true);
+        setTimeout(onClose, 200);
+    };
+
+    return createPortal(
+        <div
+            className={`fixed inset-0 z-[999999] bg-black/70 flex items-center justify-center p-4 proof-backdrop ${closing ? "proof-backdrop-out" : "proof-backdrop-in"
+                }`}
+            onClick={(e) => e.target === e.currentTarget && handleClose()}
+        >
+            <div className="relative max-w-lg w-full">
+                <button
+                    onClick={handleClose}
+                    className="absolute -top-10 right-0 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+                <img
+                    src={url}
+                    alt="Ảnh chuyển khoản"
+                    className={`w-full max-h-[80vh] object-contain rounded-xl bg-white proof-image ${closing ? "proof-image-out" : "proof-image-in"
+                        }`}
+                />
+            </div>
+
+            <style jsx>{`
+                .proof-backdrop-in {
+                    animation: proofBackdropIn 0.2s ease-out;
+                }
+                .proof-backdrop-out {
+                    animation: proofBackdropOut 0.2s ease-in forwards;
+                }
+                .proof-image-in {
+                    animation: proofImageIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                .proof-image-out {
+                    animation: proofImageOut 0.2s ease-in forwards;
+                }
+                @keyframes proofBackdropIn {
+                    from {
+                        opacity: 0;
+                    }
+                    to {
+                        opacity: 1;
+                    }
+                }
+                @keyframes proofBackdropOut {
+                    from {
+                        opacity: 1;
+                    }
+                    to {
+                        opacity: 0;
+                    }
+                }
+                @keyframes proofImageIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+                @keyframes proofImageOut {
+                    from {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                    to {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                }
+            `}</style>
+        </div>,
+        document.body,
+    );
+}
+
 function getPaymentMethodBadge(r: any) {
     if (r.payment_method === "wallet") {
-        return { label: "Ví BNB", cls: "bg-blue-100 text-blue-700" };
+        const name = r.users?.full_name ?? r.guest_full_name ?? "";
+        return {
+            label: name ? `Ví BNB (${name})` : "Ví BNB",
+            cls: "bg-blue-100 text-blue-700",
+        };
     }
     if (r.payment_method === "transfer") {
         return { label: "Chuyển khoản", cls: "bg-sky-100 text-sky-700" };
@@ -508,6 +650,7 @@ function ShirtOrderTable({
     onRemove,
     onApproveCancel,
     onRejectCancel,
+    onViewProof,
 }: {
     registrations: any[];
     paymentFilter: PaymentFilter;
@@ -517,6 +660,7 @@ function ShirtOrderTable({
     onRemove: (regId: string, label: string) => void;
     onApproveCancel: (regId: string) => void;
     onRejectCancel: (regId: string, label: string) => void;
+    onViewProof: (url: string) => void;
 }) {
 
 
@@ -562,6 +706,8 @@ function ShirtOrderTable({
         groupRegs: any[];
         showTypeCell: boolean;
         typeCellSpan: number;
+        showGenderCell: boolean;
+        genderCellSpan: number;
         showColorCell: boolean;
         colorCellSpan: number;
         colorGroupQuantity: number;
@@ -573,6 +719,8 @@ function ShirtOrderTable({
         groupRegs.sort((a, b) => {
             const t = (a.shirt_type_name ?? "").localeCompare(b.shirt_type_name ?? "");
             if (t !== 0) return t;
+            const g = (a.gender ?? "").localeCompare(b.gender ?? "");
+            if (g !== 0) return g;
             const c = (a.color_name ?? "").localeCompare(b.color_name ?? "");
             if (c !== 0) return c;
             return (a.size ?? "").localeCompare(b.size ?? "");
@@ -589,15 +737,33 @@ function ShirtOrderTable({
                 }
             }
 
+            const sameGenderAsPrev =
+                idx > 0 &&
+                groupRegs[idx - 1].shirt_type_name === r.shirt_type_name &&
+                groupRegs[idx - 1].gender === r.gender;
+            let genderCellSpan = 1;
+            if (!sameGenderAsPrev) {
+                for (let i = idx + 1; i < groupRegs.length; i++) {
+                    if (
+                        groupRegs[i].shirt_type_name === r.shirt_type_name &&
+                        groupRegs[i].gender === r.gender
+                    )
+                        genderCellSpan++;
+                    else break;
+                }
+            }
+
             const sameColorAsPrev =
                 idx > 0 &&
                 groupRegs[idx - 1].shirt_type_name === r.shirt_type_name &&
+                groupRegs[idx - 1].gender === r.gender &&
                 groupRegs[idx - 1].color_name === r.color_name;
             let colorCellSpan = 1;
             if (!sameColorAsPrev) {
                 for (let i = idx + 1; i < groupRegs.length; i++) {
                     if (
                         groupRegs[i].shirt_type_name === r.shirt_type_name &&
+                        groupRegs[i].gender === r.gender &&
                         groupRegs[i].color_name === r.color_name
                     )
                         colorCellSpan++;
@@ -615,6 +781,7 @@ function ShirtOrderTable({
             const sameSizeAsPrev =
                 idx > 0 &&
                 groupRegs[idx - 1].shirt_type_name === r.shirt_type_name &&
+                groupRegs[idx - 1].gender === r.gender &&
                 groupRegs[idx - 1].color_name === r.color_name &&
                 groupRegs[idx - 1].size === r.size;
             let sizeCellSpan = 1;
@@ -622,6 +789,7 @@ function ShirtOrderTable({
                 for (let i = idx + 1; i < groupRegs.length; i++) {
                     if (
                         groupRegs[i].shirt_type_name === r.shirt_type_name &&
+                        groupRegs[i].gender === r.gender &&
                         groupRegs[i].color_name === r.color_name &&
                         groupRegs[i].size === r.size
                     )
@@ -637,6 +805,8 @@ function ShirtOrderTable({
                 groupRegs,
                 showTypeCell: !sameTypeAsPrev,
                 typeCellSpan,
+                showGenderCell: !sameGenderAsPrev,
+                genderCellSpan,
                 showColorCell: !sameColorAsPrev,
                 colorCellSpan,
                 colorGroupQuantity,
@@ -702,6 +872,8 @@ function ShirtOrderTable({
                             groupRegs,
                             showTypeCell,
                             typeCellSpan,
+                            showGenderCell,
+                            genderCellSpan,
                             showColorCell,
                             colorCellSpan,
                             colorGroupQuantity,
@@ -737,7 +909,7 @@ function ShirtOrderTable({
                                                             className="w-full h-full object-cover"
                                                         />
                                                     ) : (
-                                                        r.users?.full_name?.[0]
+                                                        getAvatarInitial(r.users?.full_name ?? r.guest_full_name)
                                                     )}
                                                 </div>
                                                 <div className="min-w-0 text-left">
@@ -775,16 +947,21 @@ function ShirtOrderTable({
                                             {r.shirt_type_name ?? "—"}
                                         </td>
                                     )}
-                                    <td className="px-4 py-3 border border-gray-200 text-center">
-                                        <span
-                                            className={`text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${r.gender === "nu"
-                                                ? "bg-pink-50 text-pink-600"
-                                                : "bg-blue-50 text-blue-600"
-                                                }`}
+                                    {showGenderCell && (
+                                        <td
+                                            rowSpan={genderCellSpan}
+                                            className="px-4 py-3 border border-gray-200 text-center align-middle"
                                         >
-                                            {r.gender === "nu" ? "Nữ" : "Nam"}
-                                        </span>
-                                    </td>
+                                            <span
+                                                className={`text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${r.gender === "nu"
+                                                    ? "bg-pink-50 text-pink-600"
+                                                    : "bg-blue-50 text-blue-600"
+                                                    }`}
+                                            >
+                                                {r.gender === "nu" ? "Nữ" : "Nam"}
+                                            </span>
+                                        </td>
+                                    )}
                                     {showColorCell && (
                                         <td
                                             rowSpan={colorCellSpan}
@@ -857,17 +1034,21 @@ function ShirtOrderTable({
                                                         </span>
                                                     )}
                                                     {methodBadge && (
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${methodBadge.cls}`}>
-                                                            {methodBadge.label}
+                                                        <span className="flex items-center gap-1">
+                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${methodBadge.cls}`}>
+                                                                {methodBadge.label}
+                                                            </span>
+                                                            {repReg.payment_proof_url && (
+                                                                <button
+                                                                    onClick={() => onViewProof(repReg.payment_proof_url)}
+                                                                    title="Xem ảnh chuyển khoản"
+                                                                    className="p-0.5 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                                                >
+                                                                    <Eye className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            )}
                                                         </span>
                                                     )}
-                                                    {repReg.payment_reference &&
-                                                        repReg.payment_reference !== "TIEN_MAT" &&
-                                                        repReg.payment_reference !== "WALLET" && (
-                                                            <span className="text-[10px] text-gray-400 font-mono whitespace-nowrap">
-                                                                {repReg.payment_reference}
-                                                            </span>
-                                                        )}
                                                     {canConfirmReject && (
                                                         <div className="flex flex-col items-center gap-1.5 pt-1.5">
                                                             <button
@@ -998,7 +1179,7 @@ function ShirtOrderTable({
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        first.users?.full_name?.[0]
+                                        getAvatarInitial(first.users?.full_name ?? first.guest_full_name)
                                     )}
                                 </div>
                                 <div className="min-w-0">
@@ -1081,8 +1262,19 @@ function ShirtOrderTable({
                                                                                 </span>
                                                                             )}
                                                                             {itemMethodBadge && (
-                                                                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold w-fit ${itemMethodBadge.cls}`}>
-                                                                                    {itemMethodBadge.label}
+                                                                                <span className="flex items-center gap-1">
+                                                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold w-fit ${itemMethodBadge.cls}`}>
+                                                                                        {itemMethodBadge.label}
+                                                                                    </span>
+                                                                                    {r.payment_proof_url && (
+                                                                                        <button
+                                                                                            onClick={() => onViewProof(r.payment_proof_url)}
+                                                                                            title="Xem ảnh chuyển khoản"
+                                                                                            className="p-0.5 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                                                                        >
+                                                                                            <Eye className="w-3 h-3" />
+                                                                                        </button>
+                                                                                    )}
                                                                                 </span>
                                                                             )}
                                                                         </div>
@@ -1155,8 +1347,19 @@ function ShirtOrderTable({
                                                 </span>
                                             )}
                                             {memberMethodBadge && (
-                                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${memberMethodBadge.cls}`}>
-                                                    {memberMethodBadge.label}
+                                                <span className="flex items-center gap-1">
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${memberMethodBadge.cls}`}>
+                                                        {memberMethodBadge.label}
+                                                    </span>
+                                                    {repReg.payment_proof_url && (
+                                                        <button
+                                                            onClick={() => onViewProof(repReg.payment_proof_url)}
+                                                            title="Xem ảnh chuyển khoản"
+                                                            className="p-0.5 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
                                                 </span>
                                             )}
                                         </>
@@ -1203,6 +1406,23 @@ function fmt(n: number) {
     return Math.round(n ?? 0).toLocaleString("vi-VN") + "đ";
 }
 
+function paymentMethodExcelLabel(r: any) {
+    if (r.payment_method === "wallet") {
+        const name = r.users?.full_name ?? r.guest_full_name ?? "—";
+        return `Ví BNB (${name})`;
+    }
+    if (r.payment_method === "transfer") return "Chuyển khoản";
+    if (r.payment_method === "cash") return "Tiền mặt";
+    return "—";
+}
+
+function getAvatarInitial(fullName?: string | null): string {
+    if (!fullName?.trim()) return "?";
+    const words = fullName.trim().split(/\s+/);
+    const lastWord = words[words.length - 1];
+    return lastWord[0]?.toUpperCase() ?? "?";
+}
+
 function exportToExcel(activity: any, regData: any) {
     let rows: any[] = [];
     let merges: XLSX.Range[] = [];
@@ -1225,6 +1445,8 @@ function exportToExcel(activity: any, regData: any) {
             groupRegs.sort((a, b) => {
                 const t = (a.shirt_type_name ?? "").localeCompare(b.shirt_type_name ?? "");
                 if (t !== 0) return t;
+                const g = (a.gender ?? "").localeCompare(b.gender ?? "");
+                if (g !== 0) return g;
                 const c = (a.color_name ?? "").localeCompare(b.color_name ?? "");
                 if (c !== 0) return c;
                 return (a.size ?? "").localeCompare(b.size ?? "");
@@ -1240,7 +1462,7 @@ function exportToExcel(activity: any, regData: any) {
             const endRow = currentRowIndex + groupRegs.length;
 
             if (groupRegs.length > 1) {
-                const memberLevelCols = [0, 1, 10, 11, 12, 13, 14, 15];
+                const memberLevelCols = [0, 1, 10, 11, 12, 13, 14];
                 for (const c of memberLevelCols) {
                     merges.push({ s: { r: startRow, c }, e: { r: endRow, c } });
                 }
@@ -1264,12 +1486,32 @@ function exportToExcel(activity: any, regData: any) {
                 typeCursor += span;
             }
 
+            let genderCursor = 0;
+            while (genderCursor < groupRegs.length) {
+                let span = 1;
+                while (
+                    genderCursor + span < groupRegs.length &&
+                    groupRegs[genderCursor + span].shirt_type_name === groupRegs[genderCursor].shirt_type_name &&
+                    groupRegs[genderCursor + span].gender === groupRegs[genderCursor].gender
+                ) {
+                    span++;
+                }
+                if (span > 1) {
+                    merges.push({
+                        s: { r: startRow + genderCursor, c: 3 },
+                        e: { r: startRow + genderCursor + span - 1, c: 3 },
+                    });
+                }
+                genderCursor += span;
+            }
+
             let colorCursor = 0;
             while (colorCursor < groupRegs.length) {
                 let span = 1;
                 while (
                     colorCursor + span < groupRegs.length &&
                     groupRegs[colorCursor + span].shirt_type_name === groupRegs[colorCursor].shirt_type_name &&
+                    groupRegs[colorCursor + span].gender === groupRegs[colorCursor].gender &&
                     groupRegs[colorCursor + span].color_name === groupRegs[colorCursor].color_name
                 ) {
                     span++;
@@ -1291,6 +1533,7 @@ function exportToExcel(activity: any, regData: any) {
                 while (
                     cIdx + span < groupRegs.length &&
                     groupRegs[cIdx + span].shirt_type_name === groupRegs[cIdx].shirt_type_name &&
+                    groupRegs[cIdx + span].gender === groupRegs[cIdx].gender &&
                     groupRegs[cIdx + span].color_name === groupRegs[cIdx].color_name
                 ) {
                     span++;
@@ -1318,8 +1561,7 @@ function exportToExcel(activity: any, regData: any) {
                         "Trạng thái huỷ": r.cancel_requested_at
                             ? "Đang chờ duyệt huỷ"
                             : "—",
-                        "Phương thức": r.payment_method ?? "—",
-                        "Mã tham chiếu": r.payment_reference ?? "—",
+                        "Phương thức": paymentMethodExcelLabel(r),
                         "Nguồn": r.registered_by_admin ? "Admin thêm" : "Tự đăng ký",
                     });
                     rowGroupIndex.push(groupIdx);

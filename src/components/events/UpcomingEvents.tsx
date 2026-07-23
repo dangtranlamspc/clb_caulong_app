@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -10,6 +11,7 @@ import {
   Users,
   Gift,
   BarChart3,
+  Loader2,
 } from "lucide-react";
 import { activitiesApi } from "@/lib/api";
 
@@ -34,13 +36,13 @@ const TYPE_STATUS_OVERRIDE: Record<string, Record<string, string>> = {
 function getParticipantLabel(type: string, count: number) {
   switch (type) {
     case "tournament":
-      return `${count} đội đã đăng ký`;
+      return `${count} người đã đăng ký`;
     case "birthday":
       return `${count} thành viên`;
     case "poll":
       return `${count} lượt bình chọn`;
     default:
-      return `${count} người đã đăng ký`;
+      return `Đã đăng kí ${count} áo`;
   }
 }
 
@@ -51,8 +53,10 @@ function getParticipantIcon(type: string) {
 }
 
 export function UpcomingEvents() {
+  const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkingId, setCheckingId] = useState<string | null>(null);
 
   useEffect(() => {
     activitiesApi
@@ -60,6 +64,23 @@ export function UpcomingEvents() {
       .then(({ data }) => setItems(data.data ?? []))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleShirtOrderClick = async (activityId: string) => {
+    if (checkingId) return;
+    setCheckingId(activityId);
+    try {
+      const { data } = await activitiesApi.getMyStatus(activityId);
+      const hasOrdered =
+        Array.isArray(data?.my_registrations) && data.my_registrations.length > 0;
+      router.push(
+        hasOrdered ? `/events/${activityId}/history` : `/events/${activityId}`,
+      );
+    } catch {
+      router.push(`/events/${activityId}`);
+    } finally {
+      setCheckingId(null);
+    }
+  };
 
   if (!loading && items.length === 0) return null;
 
@@ -95,59 +116,83 @@ export function UpcomingEvents() {
               const ParticipantIcon = getParticipantIcon(a.type);
               const dateValue = a.deadline ?? a.event_date;
               const isDeadline = Boolean(a.deadline);
+              const isChecking = checkingId === a.id;
+
+              const itemContent = (
+                <div className="flex items-center gap-3 px-4 py-3 active:bg-gray-50 transition-colors relative">
+                  {isChecking && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10">
+                      <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                    </div>
+                  )}
+                  <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                    {a.cover_image_url ? (
+                      <img
+                        src={a.cover_image_url}
+                        alt={a.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      (a.emoji ?? "📌")
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {a.title}
+                    </p>
+                    <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-400">
+                      <CalendarDays className="w-3 h-3 flex-shrink-0" />
+                      <span>
+                        {isDeadline ? "Deadline: " : ""}
+                        {dateValue
+                          ? format(new Date(dateValue), "dd/MM/yyyy", {
+                            locale: vi,
+                          })
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-400">
+                      <ParticipantIcon className="w-3 h-3 flex-shrink-0" />
+                      <span>
+                        {getParticipantLabel(a.type, a.participant_count ?? 0)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <span
+                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${cfg.cls}`}
+                    >
+                      {overrideLabel ?? cfg.label}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-gray-300" />
+                  </div>
+                </div>
+              );
+
+              if (a.type === "shirt_order") {
+                return (
+                  <li key={a.id}>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleShirtOrderClick(a.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ")
+                          handleShirtOrderClick(a.id);
+                      }}
+                      className={`cursor-pointer ${isChecking ? "pointer-events-none" : ""}`}
+                    >
+                      {itemContent}
+                    </div>
+                  </li>
+                );
+              }
 
               return (
                 <li key={a.id}>
-                  <Link href={`/events/${a.id}`}>
-                    <div className="flex items-center gap-3 px-4 py-3 active:bg-gray-50 transition-colors">
-                      <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
-                        {a.cover_image_url ? (
-                          <img
-                            src={a.cover_image_url}
-                            alt={a.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          (a.emoji ?? "📌")
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {a.title}
-                        </p>
-                        <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-400">
-                          <CalendarDays className="w-3 h-3 flex-shrink-0" />
-                          <span>
-                            {isDeadline ? "Deadline: " : ""}
-                            {dateValue
-                              ? format(new Date(dateValue), "dd/MM/yyyy", {
-                                  locale: vi,
-                                })
-                              : "—"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-400">
-                          <ParticipantIcon className="w-3 h-3 flex-shrink-0" />
-                          <span>
-                            {getParticipantLabel(
-                              a.type,
-                              a.participant_count ?? 0,
-                            )}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span
-                          className={`text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${cfg.cls}`}
-                        >
-                          {overrideLabel ?? cfg.label}
-                        </span>
-                        <ChevronRight className="w-4 h-4 text-gray-300" />
-                      </div>
-                    </div>
-                  </Link>
+                  <Link href={`/events/${a.id}`}>{itemContent}</Link>
                 </li>
               );
             })}
