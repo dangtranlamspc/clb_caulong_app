@@ -685,6 +685,11 @@ export default function SessionDetailPage() {
 
   if (!session) return null;
 
+  const isAwaitingFinish = (reg: any) =>
+    reg.payment_status === "pending" &&
+    reg.participation_status === "confirmed" &&
+    reg.amount_override == null;
+
   const allPaid = registrations
     .filter((r) => r.participation_status === "confirmed")
     .every((r) => r.payment_status === "confirmed");
@@ -806,16 +811,34 @@ export default function SessionDetailPage() {
       );
     }
 
+    if (
+      reg.participation_status === "confirmed" &&
+      isAwaitingFinish(reg)
+    ) {
+      return (
+        <MorphButton
+          phase={getPhase(`${reg.id}:absent`)}
+          idleIcon={<UserX className="w-3.5 h-3.5" />}
+          label="Vắng mặt"
+          idleWidthClass="w-28"
+          colorClass="bg-red-500 hover:bg-red-600 text-white"
+          successClassName="bg-red-500 text-white"
+          onClick={() => handleCheckinAbsent(reg.id, displayName)}
+          disabled={busy}
+        />
+      );
+    }
+
     return (
       <>
         <MorphButton
-          phase={getPhase(`${reg.id}:confirm`)}
-          idleIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
-          label="Xác nhận"
+          phase={getPhase(`${reg.id}:absent`)}
+          idleIcon={<UserX className="w-3.5 h-3.5" />}
+          label="Vắng mặt"
           idleWidthClass="w-28"
-          colorClass="bg-green-500 hover:bg-green-600 text-white"
-          successClassName="bg-green-500 text-white"
-          onClick={() => handleConfirm(reg.id)}
+          colorClass="bg-red-500 hover:bg-red-600 text-white"
+          successClassName="bg-red-500 text-white"
+          onClick={() => handleCheckinAbsent(reg.id, displayName)}
           disabled={busy}
         />
         <button
@@ -889,6 +912,25 @@ export default function SessionDetailPage() {
             </span>
           </button>
         </>
+      );
+    }
+
+    if (
+      reg.participation_status === "confirmed" &&
+      isAwaitingFinish(reg)
+    ) {
+      return (
+        <button
+          onClick={() => handleCheckinAbsent(reg.id, displayName)}
+          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-gray-100 active:bg-gray-200 transition-colors rounded-r-2xl"
+        >
+          <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
+            <UserX className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-[11px] font-medium text-gray-700">
+            Vắng mặt
+          </span>
+        </button>
       );
     }
 
@@ -991,8 +1033,8 @@ export default function SessionDetailPage() {
               {user?.member_type && (
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${user.member_type === "co_dinh"
-                      ? "bg-purple-50 text-purple-700 border-purple-200"
-                      : "bg-gray-50 text-gray-500 border-gray-200"
+                    ? "bg-purple-50 text-purple-700 border-purple-200"
+                    : "bg-gray-50 text-gray-500 border-gray-200"
                     }`}
                 >
                   {user.member_type === "co_dinh" ? "Thành viên" : "Vãng lai"}
@@ -1113,6 +1155,7 @@ export default function SessionDetailPage() {
     const showActions =
       reg.participation_status === "pending_approval" ||
       reg.participation_status === "awaiting_checkin" ||
+      isAwaitingFinish(reg) ||
       (reg.payment_status === "pending" && canReviewPayment);
 
     return (
@@ -1277,8 +1320,8 @@ export default function SessionDetailPage() {
                 }}
                 disabled={finishing}
                 className={`flex-shrink-0 flex items-center justify-center text-sm font-semibold text-white bg-green-500 hover:bg-green-600 shadow-sm active:scale-95 overflow-hidden ${finishing
-                    ? "w-9 h-9 rounded-full gap-0 p-0"
-                    : "w-auto h-9 gap-1.5 px-3 rounded-lg"
+                  ? "w-9 h-9 rounded-full gap-0 p-0"
+                  : "w-auto h-9 gap-1.5 px-3 rounded-lg"
                   }`}
                 style={{
                   transitionProperty:
@@ -1493,6 +1536,7 @@ export default function SessionDetailPage() {
                 const showHostActions =
                   host.participation_status === "pending_approval" ||
                   host.participation_status === "awaiting_checkin" ||
+                  isAwaitingFinish(host) ||
                   (host.payment_status === "pending" && hostCanReview);
 
                 const hostExtras = (
@@ -1758,14 +1802,14 @@ export default function SessionDetailPage() {
                                       );
                                     }}
                                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isSelected
-                                        ? "bg-blue-50"
-                                        : "hover:bg-gray-50"
+                                      ? "bg-blue-50"
+                                      : "hover:bg-gray-50"
                                       }`}
                                   >
                                     <div
                                       className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${isSelected
-                                          ? "bg-blue-600 border-blue-600"
-                                          : "border-gray-300"
+                                        ? "bg-blue-600 border-blue-600"
+                                        : "border-gray-300"
                                         }`}
                                     >
                                       {isSelected && (
@@ -1801,8 +1845,8 @@ export default function SessionDetailPage() {
                                     </div>
                                     <span
                                       className={`text-[10px] px-2 py-0.5 rounded-full border flex-shrink-0 ${m.member_type === "co_dinh"
-                                          ? "bg-purple-50 text-purple-700 border-purple-200"
-                                          : "bg-gray-50 text-gray-500 border-gray-200"
+                                        ? "bg-purple-50 text-purple-700 border-purple-200"
+                                        : "bg-gray-50 text-gray-500 border-gray-200"
                                         }`}
                                     >
                                       {m.member_type === "co_dinh"
@@ -2010,10 +2054,10 @@ export default function SessionDetailPage() {
                     </div> */}
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${confirmModal.key === "closeList"
-                          ? "bg-red-50"
-                          : confirmModal.key === "completeSession"
-                            ? "bg-emerald-50"
-                            : "bg-green-50"
+                        ? "bg-red-50"
+                        : confirmModal.key === "completeSession"
+                          ? "bg-emerald-50"
+                          : "bg-green-50"
                         }`}
                     >
                       {confirmModal.key === "closeList" ? (
@@ -2072,10 +2116,10 @@ export default function SessionDetailPage() {
                           : runCheckinAllPresent()
                     }
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${confirmModal.key === "closeList"
-                        ? "bg-red-500 hover:bg-red-600"
-                        : confirmModal.key === "completeSession"
-                          ? "bg-emerald-500 hover:bg-emerald-600"
-                          : "bg-green-500 hover:bg-green-600"
+                      ? "bg-red-500 hover:bg-red-600"
+                      : confirmModal.key === "completeSession"
+                        ? "bg-emerald-500 hover:bg-emerald-600"
+                        : "bg-green-500 hover:bg-green-600"
                       }`}
                   >
                     Xác nhận

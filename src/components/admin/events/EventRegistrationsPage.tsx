@@ -616,7 +616,7 @@ function samePaymentGroup(groupRegs: any[]) {
 
 
 function willDeductWallet(regs: any[]) {
-    return regs.some((r: any) => r.user_id && r.registered_by_admin && !r.payment_method);
+    return regs.some((r: any) => r.user_id && !r.payment_method);
 }
 
 function handleConfirmClick(
