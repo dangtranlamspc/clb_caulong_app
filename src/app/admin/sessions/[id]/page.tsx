@@ -832,13 +832,13 @@ export default function SessionDetailPage() {
     return (
       <>
         <MorphButton
-          phase={getPhase(`${reg.id}:absent`)}
-          idleIcon={<UserX className="w-3.5 h-3.5" />}
-          label="Vắng mặt"
+          phase={getPhase(`${reg.id}:confirm`)}
+          idleIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+          label="Xác nhận"
           idleWidthClass="w-28"
-          colorClass="bg-red-500 hover:bg-red-600 text-white"
-          successClassName="bg-red-500 text-white"
-          onClick={() => handleCheckinAbsent(reg.id, displayName)}
+          colorClass="bg-green-500 hover:bg-green-600 text-white"
+          successClassName="bg-green-500 text-white"
+          onClick={() => handleConfirm(reg.id)}
           disabled={busy}
         />
         <button
@@ -1061,11 +1061,6 @@ export default function SessionDetailPage() {
                 : user?.level && (
                   <span>{LEVEL_LABELS[user.level] ?? user.level}</span>
                 )}
-              {reg.payment_reference && (
-                <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">
-                  {reg.payment_reference}
-                </span>
-              )}
             </div>
 
             <div className="flex items-center gap-1.5 flex-wrap mt-2">
@@ -1082,6 +1077,11 @@ export default function SessionDetailPage() {
                 </span>
               )}
 
+              {reg.payment_method === "bank_transfer" && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 font-medium">
+                  🏦 Chuyển khoản
+                </span>
+              )}
               {reg.payment_method === "wallet_pending_confirm" &&
                 reg.host_registration_id && (
                   <span className="text-[11px] px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 font-medium">
