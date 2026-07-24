@@ -202,10 +202,10 @@ export default function MemberLayout({
     const handleLogout = async () => {
         try {
             await authApi.logout();
-        } catch { }
-        logout();
-        toast.success("Đã đăng xuất");
-        router.push("/auth/login");
+        } finally {
+            useAuthStore.getState().logout();
+            window.location.href = "/auth/login";
+        }
     };
 
     if (!mounted) {

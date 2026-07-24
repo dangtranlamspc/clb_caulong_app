@@ -60,7 +60,7 @@ export default function RegisterPage() {
       const { confirm_password, ...rest } = values;
       const { data } = await authApi.register(rest);
 
-      setAuth(data.user);
+      setAuth(data.user, data.access_token, data.refresh_token);
 
       if (avatarFile) {
         try {

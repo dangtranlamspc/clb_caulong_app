@@ -1,7 +1,6 @@
 'use client';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import Cookies from 'js-cookie';
 
 interface User {
   id: string;
@@ -17,9 +16,12 @@ interface User {
 
 interface AuthState {
   user: User | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
-  setAuth: (user: User) => void;
+  setAuth: (user: User, accessToken: string, refreshToken?: string | null) => void;
   setUser: (user: User) => void;
+  setAccessToken: (token: string) => void;
   logout: () => void;
 }
 
@@ -27,28 +29,36 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      isAuthenticated: typeof window !== 'undefined' ? !!Cookies.get('logged_in') : false,
-      setAuth: (user) => {
-        set({ user, isAuthenticated: true });
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      setAuth: (user, accessToken, refreshToken) => {
+        set({
+          user,
+          accessToken,
+          refreshToken: refreshToken ?? null,
+          isAuthenticated: true,
+        });
       },
       setUser: (user) => set({ user }),
+      setAccessToken: (accessToken) => set({ accessToken }),
       logout: () => {
-        Cookies.remove('logged_in');
-        set({ user: null, isAuthenticated: false });
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+        });
       },
     }),
     {
       name: 'member-auth',
-      partialize: (s) => ({ user: s.user, isAuthenticated: s.isAuthenticated }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          const hasFlag = !!Cookies.get('logged_in');
-          if (!hasFlag) {
-            state.user = null;
-            state.isAuthenticated = false;
-          }
-        }
-      },
-    }
-  )
+      partialize: (s) => ({
+        user: s.user,
+        accessToken: s.accessToken,
+        refreshToken: s.refreshToken,
+        isAuthenticated: s.isAuthenticated,
+      }),
+    },
+  ),
 );

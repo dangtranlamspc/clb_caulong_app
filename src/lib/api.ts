@@ -1,5 +1,5 @@
+import { useAuthStore } from "@/store/auth.store";
 import axios from "axios";
-import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -7,14 +7,38 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export const api = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
   headers: { "Content-Type": "application/json" },
-  withCredentials: true,
 });
 
-// api.interceptors.request.use((config) => {
-//   const token = Cookies.get("access_token");
-//   if (token) config.headers.Authorization = `Bearer ${token}`;
-//   return config;
-// });
+// Gắn access_token vào mọi request
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().accessToken;
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+let refreshPromise: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = useAuthStore.getState().refreshToken;
+  if (!refreshToken) return null;
+
+  try {
+    const { data } = await axios.post(`${BASE_URL}/api/v1/auth/refresh`, {
+      refresh_token: refreshToken,
+    });
+    useAuthStore.getState().setAuth(
+      useAuthStore.getState().user!,
+      data.access_token,
+      data.refresh_token,
+    );
+    return data.access_token;
+  } catch {
+    return null;
+  }
+}
 
 api.interceptors.response.use(
   (res) => res,
@@ -32,18 +56,21 @@ api.interceptors.response.use(
     if (status === 401 && !isAuthEndpoint && !original._retry) {
       original._retry = true;
 
-      try {
-        await axios.post(
-          `${BASE_URL}/api/v1/auth/refresh`,
-          {},
-          { withCredentials: true },
-        );
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+      }
+
+      const newToken = await refreshPromise;
+      if (newToken) {
+        original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
-      } catch {
-        Cookies.remove("logged_in");
-        localStorage.removeItem("member-auth");
-        if (typeof window !== "undefined")
-          window.location.href = "/auth/login";
+      }
+
+      useAuthStore.getState().logout();
+      if (typeof window !== "undefined") {
+        window.location.href = "/auth/login";
       }
     }
 
@@ -62,7 +89,6 @@ export const authApi = {
   register: (data: any) => api.post("/auth/register", data),
   logout: () => api.post("/auth/logout"),
   profile: () => api.get("/auth/profile"),
-  refresh: () => api.post("/auth/refresh"),
 };
 
 export const profileApi = {

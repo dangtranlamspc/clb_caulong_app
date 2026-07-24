@@ -60,12 +60,11 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     try {
-      await authApi.logout();
-    } catch { }
-
-    logout();
-    toast.success("Đã đăng xuất");
-    router.push("/auth/login");
+      await authApi.logout()
+    } finally {
+      useAuthStore.getState().logout();
+      window.location.href = "/auth/login";
+    }
   };
 
   return (

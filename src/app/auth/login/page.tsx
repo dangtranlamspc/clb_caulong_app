@@ -21,7 +21,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { data } = await authApi.login(values);
-      setAuth(data.user);
+      setAuth(data.user, data.access_token, data.refresh_token);
       toast.success(`Chào mừng, ${data.user.full_name}! 👋`);
       router.replace('/home');
     } catch (err: any) {
