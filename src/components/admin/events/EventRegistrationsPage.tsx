@@ -19,7 +19,8 @@ import {
     RotateCcw,
     RefreshCw,
     X,
-    Eye
+    Eye,
+    Wallet
 } from "lucide-react";
 import { eventsAdminApi } from "@/lib/api";
 import { createPortal } from "react-dom";
@@ -1016,6 +1017,11 @@ function ShirtOrderTable({
                                         const canConfirmReject =
                                             repReg.payment_status !== "confirmed" &&
                                             (!!repReg.payment_method || repReg.registered_by_admin);
+                                        const canDeductWallet =
+                                            !canConfirmReject &&
+                                            !!repReg.user_id &&
+                                            repReg.payment_status !== "confirmed" &&
+                                            !repReg.payment_method;
                                         const label = repReg.users?.full_name ?? repReg.guest_full_name ?? "";
 
                                         return (
@@ -1062,6 +1068,16 @@ function ShirtOrderTable({
                                                                 className="py-1 px-3 rounded-lg text-xs font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1 whitespace-nowrap"
                                                             >
                                                                 <XCircle className="w-3.5 h-3.5" /> Từ chối
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {canDeductWallet && (
+                                                        <div className="pt-1.5">
+                                                            <button
+                                                                onClick={() => handleConfirmClick(onConfirm, targetRegs, label)}
+                                                                className="py-1 px-3 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1 whitespace-nowrap"
+                                                            >
+                                                                <Wallet className="w-3.5 h-3.5" /> Trừ vào ví
                                                             </button>
                                                         </div>
                                                     )}
@@ -1162,6 +1178,12 @@ function ShirtOrderTable({
                         mergePayment &&
                         repReg.payment_status !== "confirmed" &&
                         (!!repReg.payment_method || repReg.registered_by_admin);
+                    const canDeductWallet =
+                        mergePayment &&
+                        !canConfirmReject &&
+                        !!repReg.user_id &&
+                        repReg.payment_status !== "confirmed" &&
+                        !repReg.payment_method;
                     const groupIds = groupRegs.map((g: any) => g.id);
                     const memberLabel = repReg.users?.full_name ?? repReg.guest_full_name ?? "";
 
@@ -1227,6 +1249,12 @@ function ShirtOrderTable({
                                                         !mergePayment &&
                                                         r.payment_status !== "confirmed" &&
                                                         (!!r.payment_method || r.registered_by_admin);
+                                                    const itemCanDeductWallet =
+                                                        !mergePayment &&
+                                                        !itemCanConfirmReject &&
+                                                        !!r.user_id &&
+                                                        r.payment_status !== "confirmed" &&
+                                                        !r.payment_method;
 
                                                     return (
                                                         <div
@@ -1324,6 +1352,16 @@ function ShirtOrderTable({
                                                                     </button>
                                                                 </div>
                                                             )}
+                                                            {itemCanDeductWallet && (
+                                                                <div className="mt-2">
+                                                                    <button
+                                                                        onClick={() => handleConfirmClick(onConfirm, [r], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                        className="w-full py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5"
+                                                                    >
+                                                                        <Wallet className="w-3.5 h-3.5" /> Trừ vào ví
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
@@ -1383,6 +1421,16 @@ function ShirtOrderTable({
                                         className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5"
                                     >
                                         <XCircle className="w-4 h-4" /> Từ chối
+                                    </button>
+                                </div>
+                            )}
+                            {canDeductWallet && (
+                                <div className="pt-1">
+                                    <button
+                                        onClick={() => handleConfirmClick(onConfirm, groupRegs, memberLabel)}
+                                        className="w-full py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5"
+                                    >
+                                        <Wallet className="w-4 h-4" /> Trừ vào ví
                                     </button>
                                 </div>
                             )}
