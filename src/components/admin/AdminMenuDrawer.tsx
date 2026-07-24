@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import {
     X, Home, LayoutDashboard, Users, CalendarDays, Wallet, Megaphone, ChevronRight, ChevronDown,
     Swords,
+    BookOpen,
 } from 'lucide-react';
 
 type AdminMenuChild = { href: string; label: string };
@@ -34,6 +35,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
         ],
     },
     { href: '/admin/events', icon: Megaphone, label: 'Hoạt động', desc: 'Sự kiện, giải đấu, đặt áo', iconBg: 'bg-rose-500' },
+    { href: '/admin/handbook', icon: BookOpen, label: 'Sổ tay CLB', desc: 'Quản lý các trang sổ tay', iconBg: 'bg-teal-500' },
 ];
 
 const ANIM_MS = 250;

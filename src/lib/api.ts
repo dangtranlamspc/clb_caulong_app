@@ -490,3 +490,14 @@ export const guestShirtOrderApi = {
     });
   },
 };
+
+
+export const handbookAdminApi = {
+  list: () => api.get("/admin/handbook-pages"),
+  get: (id: string) => api.get(`/admin/handbook-pages/${id}`),
+  create: (data: any) => api.post("/admin/handbook-pages", data),
+  update: (id: string, data: any) => api.patch(`/admin/handbook-pages/${id}`, data),
+  delete: (id: string) => api.delete(`/admin/handbook-pages/${id}`),
+  reorder: (orderedIds: string[]) =>
+    api.patch("/admin/handbook-pages/reorder", { orderedIds }),
+};

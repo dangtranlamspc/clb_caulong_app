@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { rankingsApi } from '../../../lib/api';
-import { RankIcon, RankPodiumAvatar } from '@/components/ranks/Rank';
+import { getTierCardBackground, getTierTheme, RankIcon, RankPodiumAvatar } from '@/components/ranks/Rank';
 import { RankInfoModal } from '@/components/ranks/RankInfoModal';
 
 const LEVEL_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
@@ -73,10 +73,10 @@ function getMemberLevel(user: any) {
   return { line1: 'Chưa có level' };
 }
 
-function EnergyBar({ points, total }: { points: number; total: number }) {
+function EnergyBar({ points, total, tier }: { points: number; total: number; tier: string }) {
   const [animatedWidth, setAnimatedWidth] = useState(0);
   const targetWidth = Math.min(100, (points / total) * 100);
-
+  const theme = getTierTheme(tier);
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimatedWidth(targetWidth), 150);
@@ -85,11 +85,15 @@ function EnergyBar({ points, total }: { points: number; total: number }) {
 
   return (
     <div className="w-full max-w-[220px] mt-1">
-      <div className="relative h-4 w-full rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+      <div
+        className="relative h-4 w-full rounded-full overflow-hidden border"
+        style={{ background: theme.track, borderColor: `${theme.accent}55` }}
+      >
         <div
-          className="h-full rounded-full bg-gradient-to-r from-lime-400 via-green-500 to-emerald-500 relative overflow-hidden"
+          className="h-full rounded-full relative overflow-hidden"
           style={{
             width: `${animatedWidth}%`,
+            background: `linear-gradient(90deg, ${theme.mid}, ${theme.glow}, ${theme.accent})`,
             transition: 'width 700ms ease-out',
             willChange: 'width',
           }}
@@ -97,14 +101,14 @@ function EnergyBar({ points, total }: { points: number; total: number }) {
           <div
             className="absolute top-0 left-0 h-full w-1/2"
             style={{
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)',
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
               animation: 'energy-shimmer 2s linear infinite',
               willChange: 'transform',
             }}
           />
         </div>
 
-        <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/40 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
 
         {animatedWidth > 0 && (
           <div
@@ -112,7 +116,7 @@ function EnergyBar({ points, total }: { points: number; total: number }) {
             style={{
               left: `${animatedWidth}%`,
               transform: 'translate(-50%, -50%)',
-              background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%)',
+              background: `radial-gradient(circle, ${theme.accent} 0%, transparent 70%)`,
               animation: 'energy-pulse 1.5s ease-in-out infinite',
               willChange: 'opacity, transform',
             }}
@@ -162,6 +166,7 @@ export default function ProfilePage() {
   const data = profile || user;
   const tier = myRank?.tier;
   const points = myRank?.points ?? 0;
+  const theme = getTierTheme(tier);
 
   const memberLevel = getMemberLevel(data);
 
@@ -183,7 +188,6 @@ export default function ProfilePage() {
   return (
     <div className="space-y-4">
 
-      {/* ── Hero banner ── */}
       <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 rounded-3xl px-5 py-6 overflow-hidden">
         <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10" />
         <div className="absolute -bottom-10 -left-6 w-24 h-24 rounded-full bg-white/5" />
@@ -226,12 +230,28 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center gap-2">
-        <RankIcon tier={tier} size={280} />
-        <p className="text-sx font-bold text-gray-800">{tier}</p>
-        <p className="text-xs text-gray-400">{points}/{POINTS_PER_TIER} điểm đến hạng tiếp theo</p>
-
-        <EnergyBar points={points} total={POINTS_PER_TIER} />
+      <div
+        className="rounded-2xl p-4 pt-3 shadow-lg flex flex-col items-center justify-start gap-1 relative overflow-hidden"
+        style={{
+          backgroundColor: theme.dark,
+          backgroundImage: getTierCardBackground(tier),
+        }}
+      >
+        <div
+          style={{
+            width: 250,
+            height: 260,
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+          }}
+        >
+          <RankIcon tier={tier} size={280} scale={1.6} offsetY={15} />
+        </div>
+        <p className="text-sx font-bold text-white drop-shadow relative z-10 -mt-2">{tier}</p>
+        <p className="text-xs text-white/70 relative z-10">{points}/{POINTS_PER_TIER} điểm đến hạng tiếp theo</p>
+        <EnergyBar points={points} total={POINTS_PER_TIER} tier={tier} />
       </div>
 
       <div className="grid grid-cols-3 gap-3">

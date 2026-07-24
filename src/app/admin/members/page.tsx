@@ -9,6 +9,10 @@ import {
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { membersAdminApi } from '@/lib/api';
+import GradientBorderButton from '@/components/ui/GradientBorderButton';
+import Modal from '@/components/ui/Modal';
+import MemberForm from '@/components/admin/members/MemberForm';
+import ChangePasswordModal from '@/components/admin/members/ChangePasswordModal';
 
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(s => ({ value: s, label: s }));
 
@@ -127,12 +131,14 @@ function MemberTypeBadge({ user }: { user: any }) {
 function RowActions({
     user,
     actionLoading,
+    onEdit,
     onToggleActive,
     onDelete,
     variant = 'table',
 }: {
     user: any;
     actionLoading: string | null;
+    onEdit: (id: string) => void;
     onToggleActive: (id: string) => void;
     onDelete: (id: string, name: string) => void;
     variant?: 'table' | 'mobile';
@@ -142,12 +148,12 @@ function RowActions({
     if (variant === 'mobile') {
         return (
             <div className="flex items-center gap-2">
-                <Link
-                    href={`/admin/members/${user.id}`}
+                <button
+                    onClick={() => onEdit(user.id)}
                     className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
                 >
                     <Eye className="w-3.5 h-3.5" /> Xem
-                </Link>
+                </button>
                 <button
                     onClick={() => onToggleActive(user.id)}
                     disabled={busy}
@@ -170,13 +176,13 @@ function RowActions({
 
     return (
         <div className="flex items-center justify-end gap-1">
-            <Link
-                href={`/admin/members/${user.id}`}
+            <button
+                onClick={() => onEdit(user.id)}
                 className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 title="Xem / Sửa"
             >
                 <Eye className="w-4 h-4" />
-            </Link>
+            </button>
             <button
                 onClick={() => onToggleActive(user.id)}
                 disabled={busy}
@@ -199,7 +205,6 @@ function RowActions({
 }
 
 export default function AdminMembersPage() {
-    const router = useRouter();
     const searchParams = useSearchParams();
 
     const initialMemberType = searchParams.get('member_type') ?? '';
@@ -219,6 +224,17 @@ export default function AdminMembersPage() {
     const [showFilters, setShowFilters] = useState(!!initialMemberType);
     const [exporting, setExporting] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [formModal, setFormModal] = useState<{ open: boolean; mode: 'create' | 'edit'; memberId: string | null }>({
+        open: false,
+        mode: 'create',
+        memberId: null,
+    });
+    const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+
+
+    const openCreateModal = () => setFormModal({ open: true, mode: 'create', memberId: null });
+    const openEditModal = (id: string) => setFormModal({ open: true, mode: 'edit', memberId: id });
+    const closeFormModal = () => setFormModal((f) => ({ ...f, open: false }));
 
     useEffect(() => {
         const t = setTimeout(() => {
@@ -291,6 +307,17 @@ export default function AdminMembersPage() {
         }
     };
 
+
+    const handleOpenChangePassword = () => {
+        setFormModal((f) => ({ ...f, open: false }));
+        setPasswordModalOpen(true);
+    };
+
+    const handleClosePasswordModal = () => {
+        setPasswordModalOpen(false);
+        setFormModal((f) => ({ ...f, open: true }));
+    };
+
     return (
         <div className="space-y-4">
             {/* Header */}
@@ -300,21 +327,21 @@ export default function AdminMembersPage() {
                     <p className="text-gray-500 text-sm mt-0.5">{meta.total ?? 0} người dùng</p>
                 </div>
                 <div className="flex-1" />
-                <button
+                <GradientBorderButton
                     onClick={handleExport}
                     disabled={exporting}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                    className="relative z-10 flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
                 >
                     <Download className="w-4 h-4" />
                     <span className="hidden sm:inline">{exporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
-                </button>
-                <Link
-                    href="/admin/members/create"
+                </GradientBorderButton>
+                <GradientBorderButton
+                    onClick={openCreateModal}
                     className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium shadow-sm shadow-blue-200 hover:bg-blue-700 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
                     <span className="hidden sm:inline">Thêm mới</span>
-                </Link>
+                </GradientBorderButton>
             </div>
 
             {/* Search + filter */}
@@ -414,6 +441,7 @@ export default function AdminMembersPage() {
                                 <RowActions
                                     user={user}
                                     actionLoading={actionLoading}
+                                    onEdit={openEditModal}
                                     onToggleActive={handleToggleActive}
                                     onDelete={handleDelete}
                                     variant="mobile"
@@ -494,6 +522,7 @@ export default function AdminMembersPage() {
                                         <RowActions
                                             user={user}
                                             actionLoading={actionLoading}
+                                            onEdit={openEditModal}
                                             onToggleActive={handleToggleActive}
                                             onDelete={handleDelete}
                                         />
@@ -528,7 +557,32 @@ export default function AdminMembersPage() {
                         </div>
                     </div>
                 )}
+                <Modal
+                    isOpen={formModal.open}
+                    onClose={closeFormModal}
+                    title={formModal.mode === 'create' ? 'Thêm thành viên mới' : 'Chỉnh sửa thành viên'}
+                >
+                    <MemberForm
+                        key={formModal.mode === 'edit' ? formModal.memberId ?? 'edit' : 'create'}
+                        mode={formModal.mode}
+                        memberId={formModal.memberId ?? undefined}
+                        onSuccess={() => {
+                            closeFormModal();
+                            fetchUsers();
+                        }}
+                        onCancel={closeFormModal}
+                        onOpenChangePassword={formModal.mode === 'edit' ? handleOpenChangePassword : undefined}
+                    />
+                </Modal>
+
+                <ChangePasswordModal
+                    isOpen={passwordModalOpen}
+                    onClose={handleClosePasswordModal}
+                    memberId={formModal.memberId}
+                />
             </div>
         </div>
+
+
     );
 }

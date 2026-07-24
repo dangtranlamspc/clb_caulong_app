@@ -80,3 +80,53 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+
+/* Gradient border hover */
+@property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes rotate-border {
+    to {
+        --angle: 360deg;
+    }
+}
+
+.gradient-border-btn {
+    position: relative;
+    isolation: isolate;
+}
+
+
+
+.gradient-border-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    border-radius: inherit;
+    background: conic-gradient(
+        from var(--angle),
+        #7c3aed, #38bdf8, #34d399, #facc15, #f472b6, #7c3aed
+    );
+    filter: blur(20px);
+    opacity: 0;
+    z-index: 0;
+    transition: opacity 0.4s ease;
+    animation: rotate-border 3s linear infinite;
+    animation-play-state: paused;
+    pointer-events: none;
+}
+
+.gradient-border-wrap.is-cta:hover::before {
+    opacity: 0.75;
+}
+
+@media (hover: hover) and (min-width: 768px) {
+    .gradient-border-wrap:hover::before {
+        opacity: 0.55;
+        animation-play-state: running;
+    }
+}
