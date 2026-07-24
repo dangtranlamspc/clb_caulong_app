@@ -17,7 +17,7 @@ interface MatchResult {
     oppScore: number;
     opponents: PlayerInfo[];
     myTeam?: PlayerInfo[];
-    matchType: 'singles' | 'doubles';
+    matchType: 'singles' | 'doubles' | 'triples';
 }
 
 function shortName(p: any): string {
@@ -38,13 +38,23 @@ const supabase = createClient(
 );
 
 function buildResult(m: any, userId: string): MatchResult | null {
-    const isTeamA = m.player_a1?.id === userId || m.player_a2?.id === userId;
-    const isTeamB = m.player_b1?.id === userId || m.player_b2?.id === userId;
+    const isTeamA =
+        m.player_a1?.id === userId || m.player_a2?.id === userId || m.player_a3?.id === userId;
+    const isTeamB =
+        m.player_b1?.id === userId || m.player_b2?.id === userId || m.player_b3?.id === userId;
     if (!isTeamA && !isTeamB) return null;
 
     const myTeam = isTeamA ? 'A' : 'B';
-    const myPlayers = isTeamA ? [m.player_a1, m.player_a2] : [m.player_b1, m.player_b2];
-    const oppPlayers = isTeamA ? [m.player_b1, m.player_b2] : [m.player_a1, m.player_a2];
+    const myPlayers = isTeamA
+        ? [m.player_a1, m.player_a2, m.player_a3]
+        : [m.player_b1, m.player_b2, m.player_b3];
+    const oppPlayers = isTeamA
+        ? [m.player_b1, m.player_b2, m.player_b3]
+        : [m.player_a1, m.player_a2, m.player_a3];
+
+    let matchType: MatchResult['matchType'] = 'singles';
+    if (m.match_type === 'triples') matchType = 'triples';
+    else if (m.match_type === 'doubles') matchType = 'doubles';
 
     return {
         matchId: m.id,
@@ -53,7 +63,7 @@ function buildResult(m: any, userId: string): MatchResult | null {
         oppScore: isTeamA ? (m.score_b ?? 0) : (m.score_a ?? 0),
         opponents: oppPlayers.filter(Boolean).map(toPlayerInfo),
         myTeam: myPlayers.filter(Boolean).map(toPlayerInfo),
-        matchType: m.match_type === 'doubles' ? 'doubles' : 'singles',
+        matchType,
     };
 }
 

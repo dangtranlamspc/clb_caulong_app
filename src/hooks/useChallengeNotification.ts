@@ -20,7 +20,7 @@ interface ChallengeInfo {
     myTier?: string;
     myAvatar?: string | null;
     myName?: string;
-    matchType: 'singles' | 'doubles';
+    matchType: 'singles' | 'doubles' | 'triples';
     bestOf: number;
     note?: string;
 }
@@ -53,11 +53,11 @@ function toPlayerInfo(p: any): PlayerInfo {
 }
 
 function buildChallenge(m: any, currentUserId?: string): ChallengeInfo {
-    const challengers = [m.player_a1, m.player_a2]
+    const challengers = [m.player_a1, m.player_a2, m.player_a3]
         .filter(Boolean)
         .map(toPlayerInfo);
 
-    const partners = [m.player_b2]
+    const partners = [m.player_b2, m.player_b3]
         .filter(Boolean)
         .map(toPlayerInfo);
 
@@ -66,6 +66,10 @@ function buildChallenge(m: any, currentUserId?: string): ChallengeInfo {
     const myAvatar = me?.avatar_url ?? me?.avatar ?? null;
     const myName = me ? shortName(me) : undefined;
 
+    let matchType: ChallengeInfo['matchType'] = 'singles';
+    if (m.match_type === 'triples') matchType = 'triples';
+    else if (m.match_type === 'doubles') matchType = 'doubles';
+
     return {
         matchId: m.id,
         challengers,
@@ -73,8 +77,8 @@ function buildChallenge(m: any, currentUserId?: string): ChallengeInfo {
         myTier,
         myAvatar,
         myName,
-        matchType: m.match_type === 'doubles' ? 'doubles' : 'singles',
-        bestOf: m.best_of ?? 3,
+        matchType,
+        bestOf: m.best_of ?? 1,
         note: m.note ?? undefined,
     };
 }
@@ -137,13 +141,12 @@ export function useChallengeNotification() {
                             challengers: [{ name: 'Đối thủ' }],
                             partners: [],
                             matchType: 'singles',
-                            bestOf: 3,
+                            bestOf: 1,
                         });
                     }
                 },
             )
             .subscribe((status) => {
-                // console.log('[Realtime] status:', status);
             });
 
         channelRef.current = channel;

@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 function BadmintonLogo({ size = 72 }: { size?: number }) {
   return (
     <img
-      src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782199056/icon_home-fn_z1thtm.png"
+      src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494761/LOGO_TEAM_BNB_BLACK_cjhww8.png"
       width={size}
       height={size}
       alt="BNB Badminton Club"

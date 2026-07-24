@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Search, UserPlus, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { matchesApi, usersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 
-type MatchType = 'singles' | 'doubles';
+type MatchType = 'singles' | 'doubles' | 'triples';
 
 function PlayerPicker({
     label,
@@ -107,19 +107,36 @@ export default function CreateMatchPage() {
 
     const [matchType, setMatchType] = useState<MatchType>('singles');
     const [partnerA, setPartnerA] = useState<any>(null);
+    const [partnerA3, setPartnerA3] = useState<any>(null);
     const [opponentB1, setOpponentB1] = useState<any>(null);
     const [opponentB2, setOpponentB2] = useState<any>(null);
+    const [opponentB3, setOpponentB3] = useState<any>(null);
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+    const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+    useEffect(() => {
+        const el = tabRefs.current[matchType];
+        if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth });
+    }, [matchType]);
 
     const excludeIds = [
         user?.id ?? '',
         partnerA?.id,
+        partnerA3?.id,
         opponentB1?.id,
         opponentB2?.id,
+        opponentB3?.id,
     ].filter(Boolean) as string[];
 
-    const canSubmit = opponentB1 && (matchType === 'singles' || (partnerA && opponentB2));
+    const canSubmit =
+        matchType === 'singles'
+            ? !!opponentB1
+            : matchType === 'doubles'
+                ? !!(partnerA && opponentB1 && opponentB2)
+                : !!(partnerA && partnerA3 && opponentB1 && opponentB2 && opponentB3);
 
     const handleSubmit = async () => {
         if (!canSubmit) return;
@@ -129,9 +146,13 @@ export default function CreateMatchPage() {
                 match_type: matchType,
                 team_b_player1: opponentB1.id,
             };
-            if (matchType === 'doubles') {
+            if (matchType !== 'singles') {
                 payload.team_a_player2 = partnerA.id;
                 payload.team_b_player2 = opponentB2.id;
+            }
+            if (matchType === 'triples') {
+                payload.team_a_player3 = partnerA3.id;
+                payload.team_b_player3 = opponentB3.id;
             }
             if (note.trim()) payload.note = note.trim();
 
@@ -145,49 +166,67 @@ export default function CreateMatchPage() {
         }
     };
 
+    const showPartnerA = matchType !== 'singles';
+    const showPartnerA3 = matchType === 'triples';
+    const showOpponentB2 = matchType !== 'singles';
+    const showOpponentB3 = matchType === 'triples';
+
     return (
         <div className="space-y-5">
-            {/* Header */}
             <div className="flex items-center gap-3">
-                <button onClick={() => router.back()} className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-colors">
+                <button onClick={() => {
+                    sessionStorage.setItem('activity:return-tab', 'matches');
+                    router.push('/activity');
+                }} className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </button>
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900">Tạo trận giao hữu</h1>
-                    <p className="text-xs text-gray-500">Thách đấu thành viên khác trong CLB · 1 set duy nhất</p>
+                    <h1 className="text-xl font-bold text-white"
+                        style={{ textShadow: "0 1px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.8)" }}>Tạo trận giao hữu</h1>
+                    <p className="text-xs text-white mt-0.5"
+                        style={{ textShadow: "0 1px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.7)" }}>Thách đấu thành viên khác trong CLB · 1 set duy nhất</p>
                 </div>
             </div>
 
-            {/* Match type */}
             <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
                 <p className="text-sm font-bold text-gray-700">Hình thức thi đấu</p>
-                <div className="grid grid-cols-2 gap-3">
-                    {(['singles', 'doubles'] as MatchType[]).map((t) => (
+                <div className="relative grid grid-cols-3 gap-2 bg-gray-50 rounded-xl p-1">
+                    <div
+                        className="absolute top-1 bottom-1 bg-blue-600 rounded-lg shadow-sm shadow-blue-200"
+                        style={{
+                            left: indicator.left,
+                            width: indicator.width,
+                            transition: 'left .25s cubic-bezier(.4,0,.2,1), width .25s cubic-bezier(.4,0,.2,1)',
+                        }}
+                    />
+                    {(['singles', 'doubles', 'triples'] as MatchType[]).map((t) => (
                         <button
                             key={t}
+                            ref={(el) => { tabRefs.current[t] = el; }}
                             onClick={() => {
                                 setMatchType(t);
-                                if (t === 'singles') { setPartnerA(null); setOpponentB2(null); }
+                                if (t === 'singles') {
+                                    setPartnerA(null); setOpponentB2(null);
+                                    setPartnerA3(null); setOpponentB3(null);
+                                }
+                                if (t === 'doubles') {
+                                    setPartnerA3(null); setOpponentB3(null);
+                                }
                             }}
-                            className={`py-3 rounded-xl border-2 text-sm font-semibold transition-all ${matchType === t
-                                ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            className={`relative z-10 py-3 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200 ${matchType === t ? 'text-white' : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
-                            {t === 'singles' ? '👤 Đơn (1v1)' : '👥 Đôi (2v2)'}
+                            {t === 'singles' ? '👤 Đơn' : t === 'doubles' ? '👥 Đôi' : '👥 3v3'}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Players */}
             <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
                 <p className="text-sm font-bold text-gray-700">Người chơi</p>
 
-                {/* Team A */}
                 <div className="space-y-2">
                     <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Đội A (của bạn)</p>
-                    {/* Self */}
                     <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
                         <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0">
                             {user?.full_name?.[0]?.toUpperCase()}
@@ -197,16 +236,42 @@ export default function CreateMatchPage() {
                             <p className="text-xs text-blue-500 font-medium">Bạn</p>
                         </div>
                     </div>
-                    {/* Partner A (doubles only) */}
-                    {matchType === 'doubles' && (
-                        <PlayerPicker
-                            label="Đồng đội của bạn"
-                            value={partnerA}
-                            onSelect={setPartnerA}
-                            onClear={() => setPartnerA(null)}
-                            excludeIds={excludeIds}
-                        />
-                    )}
+
+                    <div
+                        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${showPartnerA ? 'overflow-visible' : 'overflow-hidden'}`}
+                        style={{
+                            gridTemplateRows: showPartnerA ? '1fr' : '0fr',
+                            opacity: showPartnerA ? 1 : 0,
+                        }}
+                    >
+                        <div className="min-h-0 pt-2">
+                            <PlayerPicker
+                                label="Đồng đội của bạn"
+                                value={partnerA}
+                                onSelect={setPartnerA}
+                                onClear={() => setPartnerA(null)}
+                                excludeIds={excludeIds}
+                            />
+                        </div>
+                    </div>
+
+                    <div
+                        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${showPartnerA3 ? 'overflow-visible' : 'overflow-hidden'}`}
+                        style={{
+                            gridTemplateRows: showPartnerA3 ? '1fr' : '0fr',
+                            opacity: showPartnerA3 ? 1 : 0,
+                        }}
+                    >
+                        <div className="min-h-0 pt-2">
+                            <PlayerPicker
+                                label="Đồng đội thứ 2 của bạn"
+                                value={partnerA3}
+                                onSelect={setPartnerA3}
+                                onClear={() => setPartnerA3(null)}
+                                excludeIds={excludeIds}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -215,7 +280,6 @@ export default function CreateMatchPage() {
                     <div className="flex-1 h-px bg-gray-100" />
                 </div>
 
-                {/* Team B */}
                 <div className="space-y-2">
                     <p className="text-xs font-semibold text-red-500 uppercase tracking-wide">Đội B (đối thủ)</p>
                     <PlayerPicker
@@ -226,20 +290,47 @@ export default function CreateMatchPage() {
                         excludeIds={excludeIds}
                         required
                     />
-                    {matchType === 'doubles' && (
-                        <PlayerPicker
-                            label="Đồng đội của đối thủ *"
-                            value={opponentB2}
-                            onSelect={setOpponentB2}
-                            onClear={() => setOpponentB2(null)}
-                            excludeIds={excludeIds}
-                            required
-                        />
-                    )}
+
+                    <div
+                        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${showOpponentB2 ? 'overflow-visible' : 'overflow-hidden'}`}
+                        style={{
+                            gridTemplateRows: showOpponentB2 ? '1fr' : '0fr',
+                            opacity: showOpponentB2 ? 1 : 0,
+                        }}
+                    >
+                        <div className="min-h-0 pt-2">
+                            <PlayerPicker
+                                label="Đồng đội của đối thủ *"
+                                value={opponentB2}
+                                onSelect={setOpponentB2}
+                                onClear={() => setOpponentB2(null)}
+                                excludeIds={excludeIds}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div
+                        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${showOpponentB3 ? 'overflow-visible' : 'overflow-hidden'}`}
+                        style={{
+                            gridTemplateRows: showOpponentB3 ? '1fr' : '0fr',
+                            opacity: showOpponentB3 ? 1 : 0,
+                        }}
+                    >
+                        <div className="min-h-0 pt-2">
+                            <PlayerPicker
+                                label="Đồng đội thứ 2 của đối thủ *"
+                                value={opponentB3}
+                                onSelect={setOpponentB3}
+                                onClear={() => setOpponentB3(null)}
+                                excludeIds={excludeIds}
+                                required
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Note */}
             <div className="bg-white rounded-2xl p-4 shadow-sm space-y-2">
                 <p className="text-sm font-bold text-gray-700">Ghi chú <span className="font-normal text-gray-400">(tuỳ chọn)</span></p>
                 <textarea
@@ -251,7 +342,6 @@ export default function CreateMatchPage() {
                 />
             </div>
 
-            {/* Submit */}
             <button
                 onClick={handleSubmit}
                 disabled={!canSubmit || loading}

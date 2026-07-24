@@ -150,8 +150,8 @@ export default function MatchDetailPage() {
         );
     }
 
-    const isTeamA = match.player_a1?.id === user?.id || match.player_a2?.id === user?.id;
-    const isTeamB = match.player_b1?.id === user?.id || match.player_b2?.id === user?.id;
+    const isTeamA = match.player_a1?.id === user?.id || match.player_a2?.id === user?.id || match.player_a3?.id === user?.id;
+    const isTeamB = match.player_b1?.id === user?.id || match.player_b2?.id === user?.id || match.player_b3?.id === user?.id;
     const isCreator = match.created_by === user?.id;
     const isInvited = match.player_b1?.id === user?.id;
     const cfg = STATUS_CFG[match.status] ?? STATUS_CFG.pending_opponent;
@@ -214,7 +214,6 @@ export default function MatchDetailPage() {
                 <ArrowLeft className="w-4 h-4" /> Quay lại
             </button>
 
-            {/* Status banner */}
             <div className={`rounded-2xl px-4 py-3 border flex items-center gap-2 ${cfg.bg}`}>
                 {match.status === 'approved' && <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
                 {match.status === 'pending_approval' && <Hourglass className="w-4 h-4 text-amber-600   flex-shrink-0" />}
@@ -224,11 +223,10 @@ export default function MatchDetailPage() {
                 {match.reject_reason && <span className="text-xs text-red-400 ml-1">— {match.reject_reason}</span>}
             </div>
 
-            {/* Match info card */}
             <div className="bg-white rounded-2xl p-5 shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                     <span className="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full">
-                        {match.match_type === 'doubles' ? '👥 Đôi' : '👤 Đơn'} · 1 set
+                        {match.match_type === 'triples' ? '👥 3v3' : match.match_type === 'doubles' ? '👥 Đôi' : '👤 Đơn'} · 1 set
                     </span>
                     {match.played_at && (
                         <span className="text-xs text-gray-400">
@@ -242,7 +240,7 @@ export default function MatchDetailPage() {
                         <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wide">
                             {isTeamA ? 'Đội A (bạn)' : 'Đội A'}
                         </p>
-                        {[match.player_a1, match.player_a2].filter(Boolean).map((p: any) => (
+                        {[match.player_a1, match.player_a2, match.player_a3].filter(Boolean).map((p: any) => (
                             <div key={p.id} className="flex items-center gap-2 min-w-0">
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{p.full_name}</p>
@@ -282,7 +280,7 @@ export default function MatchDetailPage() {
                         <p className="text-[10px] font-bold text-red-400 uppercase tracking-wide">
                             {isTeamB ? 'Đội B (bạn)' : 'Đội B'}
                         </p>
-                        {[match.player_b1, match.player_b2].filter(Boolean).map((p: any) => (
+                        {[match.player_b1, match.player_b2, match.player_b3].filter(Boolean).map((p: any) => (
                             <div key={p.id} className="flex items-center justify-end gap-2 min-w-0">
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{p.full_name}</p>
@@ -293,7 +291,6 @@ export default function MatchDetailPage() {
                     </div>
                 </div>
 
-                {/* ── Điểm nhận được (approved) ── */}
                 {match.status === 'approved' && (
                     <div className="mt-4 pt-4 border-t border-gray-50">
                         <div className="flex items-center gap-1.5 mb-3">
@@ -315,7 +312,6 @@ export default function MatchDetailPage() {
                 )}
             </div>
 
-            {/* Invited — accept/decline */}
             {match.status === 'pending_opponent' && isInvited && (
                 <div className="space-y-2">
                     <p className="text-sm font-semibold text-center text-gray-600">Bạn có muốn chấp nhận lời thách đấu?</p>
@@ -329,7 +325,6 @@ export default function MatchDetailPage() {
                 </div>
             )}
 
-            {/* Creator waiting */}
             {match.status === 'pending_opponent' && isCreator && (
                 <div className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 text-center">
                     <Hourglass className="w-6 h-6 mx-auto text-gray-400 mb-2" />
@@ -338,7 +333,6 @@ export default function MatchDetailPage() {
                 </div>
             )}
 
-            {/* Enter result */}
             {match.status === 'pending_result' && isCreator && (
                 <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
                     <p className="text-sm font-bold text-gray-900">Nhập tỉ số (1 set)</p>
@@ -351,7 +345,6 @@ export default function MatchDetailPage() {
                         isMe={isTeamA}
                     />
 
-                    {/* Preview điểm */}
                     <div className={`rounded-xl px-4 py-3 border text-center ${!isValidResult ? 'bg-gray-50 border-gray-200' : myScore > oppScore ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
                         {!isValidResult ? (
                             <p className="text-xs text-gray-500">Tỉ số không được hoà, phải có đội thắng</p>
@@ -375,7 +368,6 @@ export default function MatchDetailPage() {
                 </div>
             )}
 
-            {/* Not creator waiting */}
             {match.status === 'pending_result' && !isCreator && (
                 <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-4 text-center">
                     <Clock className="w-6 h-6 mx-auto text-blue-400 mb-2" />

@@ -22,6 +22,12 @@ export function TeamInviteModal({ invite, onClose }: Props) {
 
     const isTeamA = invite.team === 'A';
 
+    const teamALabel = [invite.teamAName, isTeamA ? 'Bạn' : ''].filter(Boolean).join(' & ');
+    const teamBLabel = [invite.teamBName, !isTeamA ? 'Bạn' : ''].filter(Boolean).join(' & ');
+
+    const matchTypeLabel =
+        invite.matchType === 'triples' ? '👥 3v3' : invite.matchType === 'doubles' ? '👥 Đôi' : '👤 Đơn';
+
     return (
         <div
             className="fixed inset-0 z-[9997] flex items-center justify-center px-4"
@@ -70,7 +76,7 @@ export function TeamInviteModal({ invite, onClose }: Props) {
                             </p>
                             <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
                                 {isTeamA
-                                    ? `${invite.creatorName} đã thêm bạn làm đồng đội`
+                                    ? `${invite.teamAName || 'Người tạo trận'} đã thêm bạn làm đồng đội`
                                     : `Bạn được chọn vào đội đối thủ`}
                             </p>
                         </div>
@@ -80,10 +86,10 @@ export function TeamInviteModal({ invite, onClose }: Props) {
                         className="rounded-xl p-4 space-y-2"
                         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                     >
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Đội A</span>
-                            <span className="text-sm font-semibold" style={{ color: '#93c5fd' }}>
-                                {invite.creatorName}{isTeamA ? ' & Bạn' : ''}
+                        <div className="flex justify-between items-center gap-3">
+                            <span className="text-xs flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>Đội A</span>
+                            <span className="text-sm font-semibold text-right" style={{ color: '#93c5fd' }}>
+                                {teamALabel}
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -91,10 +97,10 @@ export function TeamInviteModal({ invite, onClose }: Props) {
                             <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.2)' }}>VS</span>
                             <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
                         </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Đội B</span>
-                            <span className="text-sm font-semibold" style={{ color: '#fca5a5' }}>
-                                {invite.opponentName}{!isTeamA ? ' & Bạn' : ''}
+                        <div className="flex justify-between items-center gap-3">
+                            <span className="text-xs flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>Đội B</span>
+                            <span className="text-sm font-semibold text-right" style={{ color: '#fca5a5' }}>
+                                {teamBLabel}
                             </span>
                         </div>
                     </div>
@@ -102,7 +108,7 @@ export function TeamInviteModal({ invite, onClose }: Props) {
                     <div className="flex items-center justify-center gap-3">
                         <span className="text-xs font-semibold px-3 py-1 rounded-full"
                             style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            👥 Đôi
+                            {matchTypeLabel}
                         </span>
                         <span className="text-xs font-semibold px-3 py-1 rounded-full"
                             style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' }}>

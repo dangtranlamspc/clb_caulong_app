@@ -17,7 +17,7 @@ interface MatchResult {
     opponents?: PlayerInfo[];
     myTeam?: PlayerInfo[];
     opponentNames?: string[];
-    matchType: 'singles' | 'doubles';
+    matchType: 'singles' | 'doubles' | 'triples';
 }
 
 interface Props {
@@ -128,6 +128,8 @@ function ResultAvatarGroup({
         ? 'rgba(245,158,11,0.2)'
         : 'rgba(99,102,241,0.2)';
     const fallbackColor = isWinner ? '#fde68a' : '#a5b4fc';
+    const isMulti = players.length > 1;
+    const avatarSize = players.length >= 3 ? 44 : players.length > 1 ? 56 : 72;
 
     return (
         <div className="flex flex-col items-center gap-7">
@@ -138,14 +140,14 @@ function ResultAvatarGroup({
                             tier={p.tier}
                             avatar={p.avatar}
                             name={p.name}
-                            size={players.length > 1 ? 56 : 72}
+                            size={avatarSize}
                             frameScale={5}
                         />
                     ) : (
                         <div
                             style={{
-                                width: players.length > 1 ? 56 : 72,
-                                height: players.length > 1 ? 56 : 72,
+                                width: avatarSize,
+                                height: avatarSize,
                                 borderRadius: '50%',
                                 background: fallbackBg,
                                 color: fallbackColor,
@@ -154,7 +156,7 @@ function ResultAvatarGroup({
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 fontWeight: 700,
-                                fontSize: players.length > 1 ? 20 : 26,
+                                fontSize: isMulti ? 18 : 26,
                             }}
                         >
                             {p.name?.[0]?.toUpperCase()}
@@ -196,6 +198,9 @@ export function MatchResultModal({ result, onClose }: Props) {
 
     const mePlayers: PlayerInfo[] = myTeam && myTeam.length > 0 ? myTeam : [{ name: 'Bạn ' }]
     const oppPlayers = resolvedOpponents.length > 0 ? resolvedOpponents : [{ name: '?' }];
+
+    const matchTypeLabel =
+        matchType === 'triples' ? '👥 Trận 3v3' : matchType === 'doubles' ? '👥 Trận đôi' : '👤 Trận đơn';
 
     return (
         <div
@@ -279,7 +284,7 @@ export function MatchResultModal({ result, onClose }: Props) {
                                 {isWinner ? '🏆 Chiến thắng!' : 'Thua cuộc 😔'}
                             </p>
                             <p className="mt-1.5 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                                {matchType === 'doubles' ? '👥 Trận đôi' : '👤 Trận đơn'} đã được xác nhận
+                                {matchTypeLabel} đã được xác nhận
                             </p>
                         </div>
 

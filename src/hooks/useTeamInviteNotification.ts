@@ -29,27 +29,43 @@ const supabase = createClient(
 
 export interface TeamInviteInfo {
     matchId: string;
-    creatorName: string;
-    opponentName: string;
-    matchType: 'singles' | 'doubles';
+    /** Tên các đồng đội cùng team (KHÔNG bao gồm chính mình), đã join bằng ' & ' */
+    teamAName: string;
+    teamBName: string;
+    matchType: 'singles' | 'doubles' | 'triples';
     bestOf: number;
     note?: string;
     team: 'A' | 'B';
 }
 
+function shortName(p: any): string {
+    return p?.full_name?.split(' ').pop() ?? p?.full_name ?? '?';
+}
+
 function buildInvite(m: any, userId: string): TeamInviteInfo | null {
-    const isTeamA = m.player_a2?.id === userId;
-    const isTeamB = m.player_b2?.id === userId;
+    const isTeamA = m.player_a2?.id === userId || m.player_a3?.id === userId;
+    const isTeamB = m.player_b2?.id === userId || m.player_b3?.id === userId;
     if (!isTeamA && !isTeamB) return null;
 
-    const creatorName = m.player_a1?.full_name?.split(' ').pop() ?? '?';
-    const opponentName = m.player_b1?.full_name?.split(' ').pop() ?? '?';
+    const teamAName = [m.player_a1, m.player_a2, m.player_a3]
+        .filter(p => p && p.id !== userId)
+        .map(shortName)
+        .join(' & ');
+
+    const teamBName = [m.player_b1, m.player_b2, m.player_b3]
+        .filter(p => p && p.id !== userId)
+        .map(shortName)
+        .join(' & ');
+
+    let matchType: TeamInviteInfo['matchType'] = 'singles';
+    if (m.match_type === 'triples') matchType = 'triples';
+    else if (m.match_type === 'doubles') matchType = 'doubles';
 
     return {
         matchId: m.id,
-        creatorName,
-        opponentName,
-        matchType: m.match_type === 'doubles' ? 'doubles' : 'singles',
+        teamAName,
+        teamBName,
+        matchType,
         bestOf: m.best_of ?? 3,
         note: m.note ?? undefined,
         team: isTeamA ? 'A' : 'B',

@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Search, Plus, Download, Filter, ChevronLeft, ChevronRight,
     Trash2, ToggleLeft, ToggleRight, Eye,
-    PencilIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { membersAdminApi } from '@/lib/api';
+
+const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(s => ({ value: s, label: s }));
 
 const LEVEL_LABEL: Record<string, string> = {
     yeu: 'Yếu', tb_yeu: 'TB yếu', tb: 'TB', tb_plus: 'TB+',
@@ -22,10 +23,28 @@ const ROLE_OPTIONS = [
     { value: 'admin', label: 'Admin' },
 ];
 
+const GENDER_OPTIONS = [
+    { value: '', label: 'Tất cả giới tính' },
+    { value: 'male', label: 'Nam' },
+    { value: 'female', label: 'Nữ' },
+    { value: 'other', label: 'Khác' },
+];
+
+const SHIRT_SIZE_OPTIONS = [
+    { value: '', label: 'Tất cả size' },
+    ...SIZE_OPTIONS,
+];
+
 const MEMBER_TYPE_OPTIONS = [
     { value: '', label: 'Tất cả phân cấp' },
     { value: 'vang_lai', label: 'Vãng lai' },
     { value: 'co_dinh', label: 'Thành viên' },
+];
+
+const MEMBER_SUBTYPE_OPTIONS = [
+    { value: '', label: 'Tất cả loại' },
+    { value: 'thuong', label: 'Thường' },
+    { value: 'vip', label: 'VIP' },
 ];
 
 const LEVEL_OPTIONS = [
@@ -81,11 +100,11 @@ function MemberTypeBadge({ user }: { user: any }) {
     if (user.member_type === 'co_dinh') {
         const isVip = user.member_subtype === 'vip';
         return (
-            <div className="flex flex-col gap-1 items-end">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 w-fit">
+            <div className="flex flex-col gap-1">
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 w-fit">
                     Thành viên
                 </span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit ${isVip ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium w-fit ${isVip ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
                     {isVip ? '⭐ VIP' : 'Thường'}
                 </span>
             </div>
@@ -93,14 +112,88 @@ function MemberTypeBadge({ user }: { user: any }) {
     }
     const isQuen = user.vang_lai_status === 'khach_quen';
     return (
-        <div className="flex flex-col gap-1 items-end">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600 w-fit">
+        <div className="flex flex-col gap-1">
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 w-fit">
                 Vãng lai
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit ${isQuen ? 'bg-emerald-50 text-emerald-700' : 'bg-orange-50 text-orange-600'}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium w-fit ${isQuen ? 'bg-emerald-50 text-emerald-700' : 'bg-orange-50 text-orange-600'}`}>
                 {user.vang_lai_label ?? (isQuen ? 'Khách quen' : 'Khách mới')}
                 {typeof user.attendance_count === 'number' && <span className="opacity-60"> · {user.attendance_count}</span>}
             </span>
+        </div>
+    );
+}
+
+function RowActions({
+    user,
+    actionLoading,
+    onToggleActive,
+    onDelete,
+    variant = 'table',
+}: {
+    user: any;
+    actionLoading: string | null;
+    onToggleActive: (id: string) => void;
+    onDelete: (id: string, name: string) => void;
+    variant?: 'table' | 'mobile';
+}) {
+    const busy = actionLoading === user.id;
+
+    if (variant === 'mobile') {
+        return (
+            <div className="flex items-center gap-2">
+                <Link
+                    href={`/admin/members/${user.id}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+                >
+                    <Eye className="w-3.5 h-3.5" /> Xem
+                </Link>
+                <button
+                    onClick={() => onToggleActive(user.id)}
+                    disabled={busy}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors disabled:opacity-50 ${user.is_active ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'
+                        }`}
+                >
+                    {user.is_active ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
+                    {user.is_active ? 'Tạm ẩn' : 'Kích hoạt'}
+                </button>
+                <button
+                    onClick={() => onDelete(user.id, user.full_name)}
+                    disabled={busy}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-500 text-white text-xs font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                >
+                    <Trash2 className="w-3.5 h-3.5" /> Xóa
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex items-center justify-end gap-1">
+            <Link
+                href={`/admin/members/${user.id}`}
+                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Xem / Sửa"
+            >
+                <Eye className="w-4 h-4" />
+            </Link>
+            <button
+                onClick={() => onToggleActive(user.id)}
+                disabled={busy}
+                className={`p-1.5 rounded-lg transition-colors ${user.is_active ? 'text-gray-400 hover:text-amber-600 hover:bg-amber-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                    }`}
+                title={user.is_active ? 'Tạm ẩn' : 'Kích hoạt'}
+            >
+                {user.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+            </button>
+            <button
+                onClick={() => onDelete(user.id, user.full_name)}
+                disabled={busy}
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Xóa"
+            >
+                <Trash2 className="w-4 h-4" />
+            </button>
         </div>
     );
 }
@@ -115,8 +208,9 @@ export default function AdminMembersPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [meta, setMeta] = useState<any>({});
     const [loading, setLoading] = useState(true);
+    const [searchInput, setSearchInput] = useState('');
     const [query, setQuery] = useState({
-        search: '', role: '', is_active: '',
+        search: '', role: '', gender: '', shirt_size: '', is_active: '',
         member_type: initialMemberType,
         member_subtype: initialMemberSubtype,
         level: '',
@@ -126,6 +220,13 @@ export default function AdminMembersPage() {
     const [exporting, setExporting] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+    useEffect(() => {
+        const t = setTimeout(() => {
+            setQuery((q) => (q.search === searchInput ? q : { ...q, search: searchInput, page: 1 }));
+        }, 400);
+        return () => clearTimeout(t);
+    }, [searchInput]);
+
     const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
@@ -133,6 +234,10 @@ export default function AdminMembersPage() {
             const { data } = await membersAdminApi.list(params);
             setUsers(data.data);
             setMeta(data.meta);
+        } catch (err: any) {
+            if (err?.response?.status === 429) {
+                toast.error('Thao tác quá nhanh, vui lòng thử lại sau vài giây');
+            }
         } finally {
             setLoading(false);
         }
@@ -189,155 +294,241 @@ export default function AdminMembersPage() {
     return (
         <div className="space-y-4">
             {/* Header */}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900">Quản lý thành viên</h1>
-                    <p className="text-gray-400 text-xs mt-0.5">{meta.total ?? 0} người dùng</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Quản lý thành viên</h1>
+                    <p className="text-gray-500 text-sm mt-0.5">{meta.total ?? 0} người dùng</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={handleExport}
-                        disabled={exporting}
-                        className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 disabled:opacity-50"
-                        title="Xuất Excel"
-                    >
-                        <Download className="w-4 h-4" />
-                    </button>
-                    <Link
-                        href="/admin/members/create"
-                        className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-200"
-                        title="Thêm mới"
-                    >
-                        <Plus className="w-4 h-4" />
-                    </Link>
-                </div>
+                <div className="flex-1" />
+                <button
+                    onClick={handleExport}
+                    disabled={exporting}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                >
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">{exporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
+                </button>
+                <Link
+                    href="/admin/members/create"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium shadow-sm shadow-blue-200 hover:bg-blue-700 transition-colors"
+                >
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden sm:inline">Thêm mới</span>
+                </Link>
             </div>
 
             {/* Search + filter */}
-            <div className="bg-white rounded-2xl p-3 border border-gray-100 space-y-3">
-                <div className="flex gap-2">
+            <div className="bg-white rounded-2xl p-4 border border-gray-100 space-y-3">
+                <div className="flex gap-3">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
-                            value={query.search}
-                            onChange={(e) => setQuery((q) => ({ ...q, search: e.target.value, page: 1 }))}
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
                             className="w-full text-sm border border-gray-200 rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-400"
-                            placeholder="Tìm tên, email, SĐT..."
+                            placeholder="Tìm kiếm tên, email, SĐT..."
                         />
                     </div>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`px-3 rounded-xl border flex items-center gap-1.5 text-xs font-medium ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-600' : 'border-gray-200 text-gray-500'}`}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-600' : 'border-gray-200 text-gray-500'}`}
                     >
                         <Filter className="w-4 h-4" />
+                        <span className="hidden sm:inline">Bộ lọc</span>
                     </button>
                 </div>
 
                 {showFilters && (
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-2 border-t border-gray-100">
                         <Select value={query.role} onChange={(v) => setQuery((q) => ({ ...q, role: v, page: 1 }))} options={ROLE_OPTIONS} />
+                        <Select value={query.gender} onChange={(v) => setQuery((q) => ({ ...q, gender: v, page: 1 }))} options={GENDER_OPTIONS} />
+                        <Select value={query.shirt_size} onChange={(v) => setQuery((q) => ({ ...q, shirt_size: v, page: 1 }))} options={SHIRT_SIZE_OPTIONS} />
                         <Select
                             value={query.member_type}
                             onChange={(v) => setQuery((q) => ({ ...q, member_type: v, member_subtype: v === 'co_dinh' ? q.member_subtype : '', page: 1 }))}
                             options={MEMBER_TYPE_OPTIONS}
                         />
+                        {query.member_type === 'co_dinh' && (
+                            <Select
+                                value={query.member_subtype}
+                                onChange={(v) => setQuery((q) => ({ ...q, member_subtype: v, page: 1 }))}
+                                options={MEMBER_SUBTYPE_OPTIONS}
+                            />
+                        )}
                         <Select value={query.level} onChange={(v) => setQuery((q) => ({ ...q, level: v, page: 1 }))} options={LEVEL_OPTIONS} />
                         <Select value={query.is_active} onChange={(v) => setQuery((q) => ({ ...q, is_active: v, page: 1 }))} options={STATUS_OPTIONS} />
                     </div>
                 )}
             </div>
 
-            {/* List */}
-            <div className="space-y-2.5">
-                {loading ? (
-                    [...Array(6)].map((_, i) => (
-                        <div key={i} className="h-24 bg-gray-100 rounded-2xl animate-pulse" />
-                    ))
-                ) : users.length === 0 ? (
-                    <div className="bg-white rounded-2xl py-10 text-center border border-dashed border-gray-200">
-                        <p className="text-gray-400 text-sm">Không tìm thấy dữ liệu</p>
-                    </div>
-                ) : users.map((user) => (
-                    <div key={user.id} className="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm space-y-3">
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <Avatar user={user} sizeClass="w-11 h-11 text-sm" />
-                                <div className="min-w-0">
-                                    <p className="font-semibold text-gray-900 text-sm truncate">{user.full_name}</p>
-                                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                                    {user.phone && <p className="text-xs text-gray-400">{user.phone}</p>}
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                {/* Mobile card view */}
+                <div className="md:hidden bg-gray-50 p-3 space-y-3">
+                    {loading ? (
+                        [...Array(6)].map((_, i) => (
+                            <div key={i} className="p-4 space-y-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse flex-shrink-0" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-4 bg-gray-100 rounded animate-pulse w-2/3" />
+                                        <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
+                                    </div>
                                 </div>
                             </div>
-                            <MemberTypeBadge user={user} />
+                        ))
+                    ) : users.length === 0 ? (
+                        <div className="px-4 py-12 text-center text-gray-400 bg-white rounded-xl border border-gray-100">
+                            Không tìm thấy dữ liệu
                         </div>
-
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
-                                    {user.role === 'admin' ? 'Admin' : 'Thành viên'}
-                                </span>
-                                {user.level && (
-                                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-semibold">
-                                        {LEVEL_LABEL[user.level] ?? user.level}
-                                    </span>
-                                )}
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
-                                    {user.is_active ? 'Hoạt động' : 'Vô hiệu'}
+                    ) : users.map((user) => (
+                        <div key={user.id} className="p-4 space-y-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <Avatar user={user} sizeClass="w-10 h-10 text-sm" />
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-gray-900 truncate">{user.full_name}</p>
+                                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                                        {user.phone && <p className="text-xs text-gray-400">{user.phone}</p>}
+                                    </div>
+                                </div>
+                                <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
+                                    {user.is_active ? 'Hoạt động' : 'Vô hiệu hoá'}
                                 </span>
                             </div>
-                        </div>
 
-                        <div className="flex items-center justify-center gap-2 pt-2.5 border-t border-gray-100">
-                            <Link
-                                href={`/admin/members/${user.id}`}
-                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
-                            >
-                                <PencilIcon className="w-3.5 h-3.5" /> Chỉnh sửa
-                            </Link>
-                            <button
-                                onClick={() => handleToggleActive(user.id)}
-                                disabled={actionLoading === user.id}
-                                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-white text-xs font-semibold disabled:opacity-50 ${user.is_active ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                            >
-                                {user.is_active ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
-                                {user.is_active ? 'Tạm ẩn' : 'Kích hoạt'}
-                            </button>
-                            <button
-                                onClick={() => handleDelete(user.id, user.full_name)}
-                                disabled={actionLoading === user.id}
-                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-red-500 text-white text-xs font-semibold disabled:opacity-50"
-                            >
-                                <Trash2 className="w-3.5 h-3.5" /> Xóa
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
+                                        {user.role === 'admin' ? 'Admin' : 'Thành viên'}
+                                    </span>
+                                    {user.level && (
+                                        <span className="px-2 py-0.5 bg-violet-50 text-violet-700 rounded text-xs font-medium">
+                                            {LEVEL_LABEL[user.level] ?? user.level}
+                                        </span>
+                                    )}
+                                </div>
+                                <MemberTypeBadge user={user} />
+                            </div>
 
-            {/* Pagination */}
-            {meta.total_pages > 1 && (
-                <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 border border-gray-100">
-                    <p className="text-xs text-gray-500">
-                        Trang {meta.page} / {meta.total_pages} ({meta.total})
-                    </p>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setQuery((q) => ({ ...q, page: q.page - 1 }))}
-                            disabled={meta.page <= 1}
-                            className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => setQuery((q) => ({ ...q, page: q.page + 1 }))}
-                            disabled={meta.page >= meta.total_pages}
-                            className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40"
-                        >
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
+                            <div className="pt-2 border-t border-gray-100">
+                                <RowActions
+                                    user={user}
+                                    actionLoading={actionLoading}
+                                    onToggleActive={handleToggleActive}
+                                    onDelete={handleDelete}
+                                    variant="mobile"
+                                />
+                            </div>
+                        </div>
+                    ))}
                 </div>
-            )}
+
+                {/* Desktop table view */}
+                <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600">Họ và tên</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600 hidden md:table-cell">Email</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600 hidden sm:table-cell">SĐT</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600 hidden lg:table-cell">Trình độ</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600">Vai trò</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600 hidden sm:table-cell">Phân cấp</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-600">Trạng thái</th>
+                                <th className="px-4 py-3 text-right font-medium text-gray-600">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {loading ? (
+                                [...Array(8)].map((_, i) => (
+                                    <tr key={i}>
+                                        {[...Array(8)].map((_, j) => (
+                                            <td key={j} className="px-4 py-3">
+                                                <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))
+                            ) : users.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
+                                        Không tìm thấy dữ liệu
+                                    </td>
+                                </tr>
+                            ) : users.map((user) => (
+                                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar user={user} sizeClass="w-9 h-9 text-sm" />
+                                            <div className="min-w-0">
+                                                <p className="font-medium text-gray-900 truncate">{user.full_name}</p>
+                                                <p className="text-xs text-gray-400 md:hidden truncate">{user.email}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-600 hidden md:table-cell">{user.email}</td>
+                                    <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{user.phone}</td>
+                                    <td className="px-4 py-3 hidden lg:table-cell">
+                                        {user.level ? (
+                                            <span className="px-2 py-0.5 bg-violet-50 text-violet-700 rounded text-xs font-medium">
+                                                {LEVEL_LABEL[user.level] ?? user.level}
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs text-gray-300">—</span>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
+                                            {user.role === 'admin' ? 'Admin' : 'Thành viên'}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 hidden sm:table-cell">
+                                        <MemberTypeBadge user={user} />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
+                                            {user.is_active ? 'Hoạt động' : 'Vô hiệu'}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <RowActions
+                                            user={user}
+                                            actionLoading={actionLoading}
+                                            onToggleActive={handleToggleActive}
+                                            onDelete={handleDelete}
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination — chung cho cả mobile & desktop */}
+                {meta.total_pages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+                        <p className="text-sm text-gray-500">
+                            Trang {meta.page} / {meta.total_pages} ({meta.total} kết quả)
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setQuery((q) => ({ ...q, page: q.page - 1 }))}
+                                disabled={meta.page <= 1}
+                                className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => setQuery((q) => ({ ...q, page: q.page + 1 }))}
+                                disabled={meta.page >= meta.total_pages}
+                                className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

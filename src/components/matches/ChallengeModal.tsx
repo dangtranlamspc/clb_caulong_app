@@ -18,7 +18,7 @@ interface ChallengeInfo {
     myTier?: string;
     myAvatar?: string | null;
     myName?: string;
-    matchType: 'singles' | 'doubles';
+    matchType: 'singles' | 'doubles' | 'triples';
     bestOf: number;
     note?: string;
 }
@@ -83,29 +83,50 @@ function pickRandom(arr: string[]) {
 function ChallengeAvatar({
     player,
     colorStyle,
+    size = 40,
 }: {
     player: PlayerInfo;
     colorStyle: React.CSSProperties;
+    size?: number;
 }) {
     const hasTier = Boolean(player.tier);
     return (
-        <div style={{ position: 'relative', width: 40, height: 40, flexShrink: 0 }}>
+        <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
             {hasTier ? (
                 <RankPodiumAvatarModal
                     tier={player.tier!}
                     avatar={player.avatar}
                     name={player.name}
-                    size={40}
+                    size={size}
                     frameScale={5.5}
                 />
             ) : (
                 <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center font-black text-base"
-                    style={colorStyle}
+                    className="rounded-full flex items-center justify-center font-black"
+                    style={{ width: size, height: size, fontSize: size > 32 ? 16 : 13, ...colorStyle }}
                 >
                     {player.name?.[0]?.toUpperCase()}
                 </div>
             )}
+        </div>
+    );
+}
+
+function TeamAvatarStack({
+    players,
+    colorStyle,
+}: {
+    players: PlayerInfo[];
+    colorStyle: React.CSSProperties;
+}) {
+    const size = players.length >= 3 ? 32 : 40;
+    return (
+        <div className="flex items-center" style={{ gap: players.length >= 3 ? -8 : 0 }}>
+            {players.map((p, i) => (
+                <div key={i} style={{ marginLeft: i > 0 ? -10 : 0, zIndex: players.length - i }}>
+                    <ChallengeAvatar player={p} colorStyle={colorStyle} size={size} />
+                </div>
+            ))}
         </div>
     );
 }
@@ -165,6 +186,12 @@ export function ChallengeModal({ challenge, onAccept, onReject, onClose }: Props
         tier: myTier,
         avatar: myAvatar,
     };
+
+    const teamAPlayers = resolvedChallengers.length > 0 ? resolvedChallengers : [{ name: '?' }];
+    const teamBPlayers = [mePlayer, ...resolvedPartners];
+
+    const matchTypeLabel =
+        matchType === 'triples' ? '👥 3v3' : matchType === 'doubles' ? '👥 Đôi' : '👤 Đơn';
 
     return (
         <div
@@ -231,9 +258,9 @@ export function ChallengeModal({ challenge, onAccept, onReject, onClose }: Props
                         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                     >
                         <div className="flex items-center gap-3 ml-4">
-                            <div className="ml-3" style={{ position: 'relative', width: 40, height: 40, flexShrink: 0, overflow: 'visible' }}>
-                                <ChallengeAvatar
-                                    player={resolvedChallengers[0] ?? { name: '?', tier: undefined }}
+                            <div className="ml-3" style={{ position: 'relative', flexShrink: 0, overflow: 'visible' }}>
+                                <TeamAvatarStack
+                                    players={teamAPlayers}
                                     colorStyle={{
                                         background: 'rgba(239,68,68,0.2)',
                                         color: '#fca5a5',
@@ -260,9 +287,9 @@ export function ChallengeModal({ challenge, onAccept, onReject, onClose }: Props
                         </div>
 
                         <div className="flex items-center gap-3 ml-4">
-                            <div className="ml-3" style={{ position: 'relative', width: 40, height: 40, flexShrink: 0, overflow: 'visible' }}>
-                                <ChallengeAvatar
-                                    player={mePlayer}
+                            <div className="ml-3" style={{ position: 'relative', flexShrink: 0, overflow: 'visible' }}>
+                                <TeamAvatarStack
+                                    players={teamBPlayers}
                                     colorStyle={{
                                         background: 'rgba(59,130,246,0.2)',
                                         color: '#93c5fd',
@@ -293,7 +320,7 @@ export function ChallengeModal({ challenge, onAccept, onReject, onClose }: Props
                             className="text-xs font-semibold px-3 py-1 rounded-full"
                             style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' }}
                         >
-                            {matchType === 'doubles' ? '👥 Đôi' : '👤 Đơn'}
+                            {matchTypeLabel}
                         </span>
                         <span
                             className="text-xs font-semibold px-3 py-1 rounded-full"

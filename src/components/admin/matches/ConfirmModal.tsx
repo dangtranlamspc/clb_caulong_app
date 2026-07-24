@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { ActionPhase, MorphButtonMatches } from "./MorphButtonMatches";
 
 export function ConfirmModal({
     open,
@@ -11,6 +12,7 @@ export function ConfirmModal({
     confirmLabel,
     confirmColor = "bg-red-500 hover:bg-red-600",
     loading,
+    phase,
 }: {
     open: boolean;
     onClose: () => void;
@@ -19,7 +21,10 @@ export function ConfirmModal({
     description: string;
     confirmLabel: string;
     confirmColor?: string;
+    /** @deprecated dùng `phase` để có hiệu ứng morph (loading -> success); vẫn giữ để tương thích ngược */
     loading?: boolean;
+    /** idle | loading | success — điều khiển MorphButton của nút xác nhận */
+    phase?: ActionPhase;
 }) {
     const [mounted, setMounted] = useState(false);
     const [visible, setVisible] = useState(false);
@@ -36,6 +41,8 @@ export function ConfirmModal({
     }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (!mounted || typeof document === "undefined") return null;
+
+    const resolvedPhase: ActionPhase = phase ?? (loading ? "loading" : "idle");
 
     return createPortal(
         <div
@@ -57,17 +64,18 @@ export function ConfirmModal({
                 <div className="flex justify-end gap-2 px-5 py-4 border-t border-gray-100">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium transition-colors"
+                        disabled={resolvedPhase !== "idle"}
+                        className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium transition-colors disabled:opacity-50"
                     >
                         Hủy
                     </button>
-                    <button
+                    <MorphButtonMatches
+                        phase={resolvedPhase}
+                        label={confirmLabel}
+                        idleClassName={`${confirmColor} text-white`}
+                        idleWidthClass="min-w-[9rem]"
                         onClick={onConfirm}
-                        disabled={loading}
-                        className={`px-4 py-2 rounded-lg text-white text-sm font-medium disabled:opacity-50 transition-colors ${confirmColor}`}
-                    >
-                        {confirmLabel}
-                    </button>
+                    />
                 </div>
             </div>
         </div>,

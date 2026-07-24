@@ -970,7 +970,9 @@ function MatchesTab({
             const cfg =
               MATCH_STATUS_CFG[m.status] ?? MATCH_STATUS_CFG.pending_opponent;
             const isTeamA =
-              m.player_a1?.id === user?.id || m.player_a2?.id === user?.id;
+              m.player_a1?.id === user?.id ||
+              m.player_a2?.id === user?.id ||
+              m.player_a3?.id === user?.id;
             const myTeam = isTeamA ? "A" : "B";
             const iWon = m.status === "approved" && m.winner_team === myTeam;
             const iLost =
@@ -978,13 +980,18 @@ function MatchesTab({
               m.winner_team &&
               m.winner_team !== myTeam;
             const myNames = isTeamA
-              ? [m.player_a1, m.player_a2].filter(Boolean)
-              : [m.player_b1, m.player_b2].filter(Boolean);
+              ? [m.player_a1, m.player_a2, m.player_a3].filter(Boolean)
+              : [m.player_b1, m.player_b2, m.player_b3].filter(Boolean);
             const oppNames = isTeamA
-              ? [m.player_b1, m.player_b2].filter(Boolean)
-              : [m.player_a1, m.player_a2].filter(Boolean);
+              ? [m.player_b1, m.player_b2, m.player_b3].filter(Boolean)
+              : [m.player_a1, m.player_a2, m.player_a3].filter(Boolean);
             const isPendingMe =
               m.status === "pending_opponent" && m.player_b1?.id === user?.id;
+
+            const avatarSizeCls =
+              myNames.length >= 3 ? "w-9 h-9" : "w-12 h-12";
+            const initialsTextCls =
+              myNames.length >= 3 ? "text-[10px]" : "text-[11px]";
 
             return (
               <Link key={m.id} href={`/matches/${m.id}`} className="block mb-1">
@@ -1011,8 +1018,12 @@ function MatchesTab({
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
-                        {m.match_type === "doubles" ? "👥 Đôi" : "👤 Đơn"} · 1
-                        set
+                        {m.match_type === "triples"
+                          ? "👥 3v3"
+                          : m.match_type === "doubles"
+                            ? "👥 Đôi"
+                            : "👤 Đơn"}{" "}
+                        · 1 set
                       </span>
                       {iWon && (
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
@@ -1034,10 +1045,10 @@ function MatchesTab({
                             <img
                               src={p.avatar_url}
                               alt={p.full_name}
-                              className="w-12 h-12 rounded-full object-cover flex-shrink-0 mb-2"
+                              className={`${avatarSizeCls} rounded-full object-cover flex-shrink-0 mb-2`}
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-[11px] font-bold text-blue-700 flex-shrink-0 mb-2">
+                            <div className={`${avatarSizeCls} rounded-full bg-blue-100 flex items-center justify-center ${initialsTextCls} font-bold text-blue-700 flex-shrink-0 mb-2`}>
                               {p.full_name?.[0]?.toUpperCase()}
                             </div>
                           )}
@@ -1090,10 +1101,10 @@ function MatchesTab({
                             <img
                               src={p.avatar_url}
                               alt={p.full_name}
-                              className="w-12 h-12 rounded-full object-cover flex-shrink-0 mb-2"
+                              className={`${avatarSizeCls} rounded-full object-cover flex-shrink-0 mb-2`}
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-[11px] font-bold text-red-600 flex-shrink-0 mb-2">
+                            <div className={`${avatarSizeCls} rounded-full bg-red-100 flex items-center justify-center ${initialsTextCls} font-bold text-red-600 flex-shrink-0 mb-2`}>
                               {p.full_name?.[0]?.toUpperCase()}
                             </div>
                           )}
