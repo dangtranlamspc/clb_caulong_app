@@ -12,17 +12,14 @@ import { MatchResultModal } from "../../components/matches/MatchResultModal";
 import { ChallengeModal } from "../../components/matches/ChallengeModal";
 import { useMatchResultNotification } from "../../hooks/useMatchResultNotification";
 import { useChallengeNotification } from "../../hooks/useChallengeNotification";
-import toast from "react-hot-toast";
 import {
     Home,
     CalendarDays,
-    ClipboardList,
     Trophy,
     UserCircle2,
     LogOut,
     BadgePercent,
     Wallet,
-    LayoutDashboard,
     Menu,
 } from "lucide-react";
 import { useTeamInviteNotification } from "@/hooks/useTeamInviteNotification";
@@ -43,7 +40,7 @@ const NAV_ITEMS = [
 function BadmintonLogo({ size = 26 }: { size?: number }) {
     return (
         <img
-            src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782199056/icon_home-fn_z1thtm.png"
+            src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494761/LOGO_TEAM_BNB_BLACK_cjhww8.png"
             width={size}
             height={size}
             alt="BNB Badminton Club"
@@ -95,15 +92,17 @@ function UserAvatar({
 
 function BottomNav({ pathname }: { pathname: string }) {
     return (
-        <nav
-            className="fixed bottom-0 left-0 right-0 z-40"
-            style={{
-                background: "#ffffff",
-                borderTop: "1px solid #e5e7eb",
-                boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
-            }}
-        >
-            <div className="max-w-lg mx-auto flex items-stretch">
+        <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-center">
+            <div
+                className="w-full max-w-lg flex items-stretch"
+                style={{
+                    background: "#ffffff",
+                    borderTop: "1px solid #e5e7eb",
+                    boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
+                    borderTopLeftRadius: 24,
+                    borderTopRightRadius: 24,
+                }}
+            >
                 {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
                     const isActive =
                         href === "/profile"
@@ -114,7 +113,7 @@ function BottomNav({ pathname }: { pathname: string }) {
                         <Link
                             key={href}
                             href={href}
-                            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors"
+                            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors min-w-0"
                             style={{ minHeight: 56 }}
                         >
                             <div
@@ -136,12 +135,13 @@ function BottomNav({ pathname }: { pathname: string }) {
                                 />
                             </div>
                             <span
+                                className="whitespace-nowrap"
                                 style={{
-                                    fontSize: 10,
+                                    fontSize: 9.5,
                                     fontWeight: isActive ? 600 : 400,
                                     color: isActive ? "#0e56b5" : "#9ca3af",
                                     transition: "color 0.2s",
-                                    letterSpacing: "0.01em",
+                                    letterSpacing: "-0.01em",
                                 }}
                             >
                                 {label}
@@ -221,7 +221,31 @@ export default function MemberLayout({
     const firstName = user?.full_name?.split(" ").pop() ?? user?.full_name;
 
     return (
-        <div className="min-h-screen bg-[#F4F6FA] pb-24">
+        <div
+            className="app-shell min-h-screen pb-24">
+            <div
+                className="bg-mobile-fixed fixed inset-0 -z-10"
+                style={{
+                    backgroundColor: "#f4f6fa",
+                    backgroundRepeat: "no-repeat",
+                    backgroundSize: "cover",
+                    backgroundPosition: "top center",
+                    backgroundImage:
+                        "url('https://res.cloudinary.com/ds6mtnyyk/image/upload/v1784863586/bg-final_dflmnx.png')",
+                }}
+            />
+            <style
+                dangerouslySetInnerHTML={{
+                    __html: `
+                        @media (max-width: 640px) {
+                            .bg-mobile-fixed {
+                                background-image: url('https://res.cloudinary.com/ds6mtnyyk/image/upload/v1784866917/bg-mb_fr9kzj.png') !important;
+                                background-position: center center !important;
+                            }
+                        }
+                    `,
+                }}
+            />
             <BirthdayModal
                 userName={user?.full_name ?? ""}
                 show={showBirthday}
@@ -247,35 +271,38 @@ export default function MemberLayout({
                     onClose={dismissResult}
                 />
             )}
-            <header
-                className="sticky top-0 z-30 overflow-hidden"
-                style={{
-                    background:
-                        "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)"
-                }}
-            >
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="aurora-bg"></div>
+            <header className="sticky top-0 z-30 flex justify-center">
+                <div
+                    className="relative w-full max-w-lg overflow-hidden"
+                    style={{
+                        background:
+                            "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
+                        borderBottomLeftRadius: 24,
+                        borderBottomRightRadius: 24,
+                    }}
+                >
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                        <div className="aurora-bg"></div>
 
-                    <div className="light-beam beam1"></div>
-                    <div className="light-beam beam2"></div>
-                    <div className="light-beam beam3"></div>
+                        <div className="light-beam beam1"></div>
+                        <div className="light-beam beam2"></div>
+                        <div className="light-beam beam3"></div>
 
-                    {Array.from({ length: 36 }).map((_, i) => (
-                        <span
-                            key={i}
-                            className={`blob blob-${(i % 6) + 1}`}
-                            style={{
-                                left: `${Math.random() * 100}%`,
-                                top: `${Math.random() * 100}%`,
-                                animationDelay: `${Math.random() * -8}s`,
-                                animationDuration: `${4 + Math.random() * 4}s`,
-                            }}
-                        />
-                    ))}
-                </div>
+                        {Array.from({ length: 36 }).map((_, i) => (
+                            <span
+                                key={i}
+                                className={`blob blob-${(i % 6) + 1}`}
+                                style={{
+                                    left: `${Math.random() * 100}%`,
+                                    top: `${Math.random() * 100}%`,
+                                    animationDelay: `${Math.random() * -8}s`,
+                                    animationDuration: `${4 + Math.random() * 4}s`,
+                                }}
+                            />
+                        ))}
+                    </div>
 
-                <style jsx>{`
+                    <style jsx>{`
                 @keyframes auroraMove {
                     0% {
                     background-position: 0% 50%;
@@ -444,84 +471,85 @@ export default function MemberLayout({
                 }
                 `}</style>
 
-                <div
-                    className="relative max-w-lg mx-auto px-4 flex items-center justify-between"
-                    style={{
-                        height: 64,
-                        background: "rgba(255,255,255,.02)",
-                        borderBottom: "1px solid rgba(255,255,255,.08)",
-                    }}
-                >
-                    <div className="flex items-center gap-2.5">
-                        {isAdmin && (
+                    <div
+                        className="relative max-w-lg mx-auto px-4 flex items-center justify-between"
+                        style={{
+                            height: 64,
+                            background: "rgba(255,255,255,.02)",
+                            borderBottom: "1px solid rgba(255,255,255,.08)",
+                        }}
+                    >
+                        <div className="flex items-center gap-2.5">
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setAdminDrawerOpen(true)}
+                                    title="Menu quản trị"
+                                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+                                    style={{
+                                        background: "rgba(255,255,255,0.07)",
+                                        border: "0.5px solid rgba(255,255,255,0.12)",
+                                        color: "rgba(255,255,255,0.75)",
+                                    }}
+                                >
+                                    <Menu className="w-4.5 h-4.5" />
+                                </button>
+                            )}
+
+                            <div className="flex-shrink-0 pt-3">
+                                <BadmintonLogo size={85} />
+                            </div>
+                            <div>
+                                <p
+                                    className="font-bold text-white leading-none"
+                                    style={{ fontSize: 16, letterSpacing: "-0.01em" }}
+                                >
+                                    BNB BADMINTON CLUB
+                                </p>
+                                <span
+                                    className="inline-flex items-center gap-1 font-semibold"
+                                    style={{
+                                        marginTop: 4,
+                                        padding: "2px 8px",
+                                        fontSize: 9,
+                                        borderRadius: 20,
+                                        background: "rgba(255,255,255,0.08)",
+                                        border: "0.5px solid rgba(255,255,255,0.14)",
+                                        color: "rgba(255,255,255,0.5)",
+                                        letterSpacing: "0.03em",
+                                    }}
+                                >
+                                    🏸 Mùa giải {new Date().getFullYear()}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <NotificationBell />
                             <button
-                                onClick={() => setAdminDrawerOpen(true)}
-                                title="Menu quản trị"
-                                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+                                onClick={handleLogout}
+                                title="Đăng xuất"
+                                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
                                 style={{
                                     background: "rgba(255,255,255,0.07)",
                                     border: "0.5px solid rgba(255,255,255,0.12)",
-                                    color: "rgba(255,255,255,0.75)",
+                                    color: "rgba(255,255,255,0.4)",
+                                }}
+                                onMouseEnter={(e) => {
+                                    const el = e.currentTarget as HTMLElement;
+                                    el.style.background = "rgba(239,68,68,0.2)";
+                                    el.style.borderColor = "rgba(239,68,68,0.35)";
+                                    el.style.color = "#fca5a5";
+                                }}
+                                onMouseLeave={(e) => {
+                                    const el = e.currentTarget as HTMLElement;
+                                    el.style.background = "rgba(255,255,255,0.07)";
+                                    el.style.borderColor = "rgba(255,255,255,0.12)";
+                                    el.style.color = "rgba(255,255,255,0.4)";
                                 }}
                             >
-                                <Menu className="w-4.5 h-4.5" />
+                                <LogOut className="w-4 h-4" />
                             </button>
-                        )}
-
-                        <div className="flex-shrink-0 pt-3">
-                            <BadmintonLogo size={85} />
                         </div>
-                        <div>
-                            <p
-                                className="font-bold text-white leading-none"
-                                style={{ fontSize: 16, letterSpacing: "-0.01em" }}
-                            >
-                                BNB BADMINTON CLUB
-                            </p>
-                            <span
-                                className="inline-flex items-center gap-1 font-semibold"
-                                style={{
-                                    marginTop: 4,
-                                    padding: "2px 8px",
-                                    fontSize: 9,
-                                    borderRadius: 20,
-                                    background: "rgba(255,255,255,0.08)",
-                                    border: "0.5px solid rgba(255,255,255,0.14)",
-                                    color: "rgba(255,255,255,0.5)",
-                                    letterSpacing: "0.03em",
-                                }}
-                            >
-                                🏸 Mùa giải {new Date().getFullYear()}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        <NotificationBell />
-                        <button
-                            onClick={handleLogout}
-                            title="Đăng xuất"
-                            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                            style={{
-                                background: "rgba(255,255,255,0.07)",
-                                border: "0.5px solid rgba(255,255,255,0.12)",
-                                color: "rgba(255,255,255,0.4)",
-                            }}
-                            onMouseEnter={(e) => {
-                                const el = e.currentTarget as HTMLElement;
-                                el.style.background = "rgba(239,68,68,0.2)";
-                                el.style.borderColor = "rgba(239,68,68,0.35)";
-                                el.style.color = "#fca5a5";
-                            }}
-                            onMouseLeave={(e) => {
-                                const el = e.currentTarget as HTMLElement;
-                                el.style.background = "rgba(255,255,255,0.07)";
-                                el.style.borderColor = "rgba(255,255,255,0.12)";
-                                el.style.color = "rgba(255,255,255,0.4)";
-                            }}
-                        >
-                            <LogOut className="w-4 h-4" />
-                        </button>
                     </div>
                 </div>
             </header>

@@ -288,7 +288,7 @@ export default function HomePage() {
                 >
                   <Icon className={`w-5 h-5 ${ic}`} />
                 </div>
-                <p className="text-xs font-semibold text-gray-700 leading-tight whitespace-pre-line">
+                <p className="text-xs font-semibold text-gray-700 leading-tight whitespace-pre-line h-8 flex items-center justify-center">
                   {label}
                 </p>
               </div>
@@ -311,7 +311,7 @@ export default function HomePage() {
                 >
                   🎂
                 </div>
-                <h3 className="font-bold text-gray-900 text-sm">
+                <h3 className="font-bold text-white text-sm">
                   Sinh nhật tháng {currentMonth + 1}
                 </h3>
               </div>
@@ -351,25 +351,25 @@ export default function HomePage() {
                     style={{
                       ...(isToday
                         ? {
-                            background:
-                              "linear-gradient(160deg, #fff0f8, #fce7f3)",
-                            border: "1.5px solid #f9a8d4",
-                            boxShadow: "0 4px 16px rgba(248,87,166,0.18)",
-                            animation: `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both, todayPulse 3s ease-in-out 0.5s infinite`,
-                          }
+                          background:
+                            "linear-gradient(160deg, #fff0f8, #fce7f3)",
+                          border: "1.5px solid #f9a8d4",
+                          boxShadow: "0 4px 16px rgba(248,87,166,0.18)",
+                          animation: `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both, todayPulse 3s ease-in-out 0.5s infinite`,
+                        }
                         : isUpcoming
                           ? {
-                              background:
-                                "linear-gradient(160deg, #fff7ed, #ffedd5)",
-                              border: "1px solid #fed7aa",
-                              animation: `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both`,
-                            }
+                            background:
+                              "linear-gradient(160deg, #fff7ed, #ffedd5)",
+                            border: "1px solid #fed7aa",
+                            animation: `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both`,
+                          }
                           : {
-                              background: "white",
-                              border: "1px solid #f3f4f6",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                              animation: `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both`,
-                            }),
+                            background: "white",
+                            border: "1px solid #f3f4f6",
+                            boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                            animation: `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both`,
+                          }),
                     }}
                   >
                     {/* "Hôm nay" label */}
@@ -391,26 +391,26 @@ export default function HomePage() {
                       style={
                         isToday
                           ? {
-                              background: m.avatar_url
-                                ? "transparent"
-                                : "linear-gradient(135deg, #f857a6, #ec4899)",
-                              color: "white",
-                              fontSize: "18px",
-                              boxShadow: "0 3px 10px rgba(248,87,166,0.45)",
-                            }
+                            background: m.avatar_url
+                              ? "transparent"
+                              : "linear-gradient(135deg, #f857a6, #ec4899)",
+                            color: "white",
+                            fontSize: "18px",
+                            boxShadow: "0 3px 10px rgba(248,87,166,0.45)",
+                          }
                           : isUpcoming
                             ? {
-                                background: m.avatar_url
-                                  ? "transparent"
-                                  : "linear-gradient(135deg, #fed7aa, #fdba74)",
-                                color: "#9a3412",
-                              }
+                              background: m.avatar_url
+                                ? "transparent"
+                                : "linear-gradient(135deg, #fed7aa, #fdba74)",
+                              color: "#9a3412",
+                            }
                             : {
-                                background: m.avatar_url
-                                  ? "transparent"
-                                  : "linear-gradient(135deg, #dbeafe, #bfdbfe)",
-                                color: "#1d4ed8",
-                              }
+                              background: m.avatar_url
+                                ? "transparent"
+                                : "linear-gradient(135deg, #dbeafe, #bfdbfe)",
+                              color: "#1d4ed8",
+                            }
                       }
                     >
                       {m.avatar_url ? (
@@ -450,19 +450,19 @@ export default function HomePage() {
                       style={
                         isToday
                           ? {
-                              background:
-                                "linear-gradient(135deg, #f857a6, #ec4899)",
-                              color: "white",
-                            }
+                            background:
+                              "linear-gradient(135deg, #f857a6, #ec4899)",
+                            color: "white",
+                          }
                           : isUpcoming
                             ? {
-                                background: "#fed7aa",
-                                color: "#9a3412",
-                              }
+                              background: "#fed7aa",
+                              color: "#9a3412",
+                            }
                             : {
-                                background: "#f3f4f6",
-                                color: "#6b7280",
-                              }
+                              background: "#f3f4f6",
+                              color: "#6b7280",
+                            }
                       }
                     >
                       🎂 {day}/{currentMonth + 1}
@@ -527,12 +527,11 @@ export default function HomePage() {
 
         <UpcomingEvents />
 
-        {/* Upcoming sessions */}
         <section>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-blue-500" />
-              <h3 className="font-bold text-gray-900 text-sm">
+              <Zap className="w-4 h-4 text-blue-300" />
+              <h3 className="font-bold text-white text-sm">
                 Buổi đang mở đăng ký
               </h3>
             </div>
@@ -656,9 +655,8 @@ export default function HomePage() {
                             </div>
                           ) : (
                             <span
-                              className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${
-                                isFull ? "text-red-400" : "text-emerald-500"
-                              }`}
+                              className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${isFull ? "text-red-400" : "text-emerald-500"
+                                }`}
                             >
                               <Users className="w-3 h-3" />
                               {isFull
@@ -685,11 +683,10 @@ export default function HomePage() {
 
                           {myReg ? (
                             <span
-                              className={`text-[11px] font-semibold px-3 py-1.5 rounded-full border ${
-                                myReg.payment_status === "confirmed"
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                  : "bg-amber-50 text-amber-700 border-amber-200"
-                              }`}
+                              className={`text-[11px] font-semibold px-3 py-1.5 rounded-full border ${myReg.payment_status === "confirmed"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-amber-50 text-amber-700 border-amber-200"
+                                }`}
                             >
                               {myReg.payment_status === "confirmed"
                                 ? "✓ Xác nhận"
@@ -725,106 +722,6 @@ export default function HomePage() {
             </div>
           )}
         </section>
-
-        {/* Recent registrations */}
-        {/* <section className="pb-2">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className="w-4 h-4 text-amber-500" />
-              <h3 className="font-bold text-gray-900 text-sm">
-                Đăng ký gần đây
-              </h3>
-            </div>
-            <Link
-              href="/history"
-              className="text-xs text-blue-600 font-semibold flex items-center gap-0.5"
-            >
-              Tất cả <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {loading ? (
-            <div className="space-y-2">
-              {[...Array(2)].map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-2xl h-16 animate-pulse"
-                />
-              ))}
-            </div>
-          ) : myRegs.length === 0 ? (
-            <div className="bg-white rounded-2xl py-10 text-center border border-dashed border-gray-200">
-              <ClipboardList className="w-8 h-8 mx-auto text-gray-200 mb-2" />
-              <p className="text-gray-400 text-sm">Chưa có đăng ký nào</p>
-              <Link
-                href="/sessions"
-                className="inline-block mt-2 text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1.5 rounded-full"
-              >
-                Đăng ký buổi đầu tiên
-              </Link>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {myRegs.map((reg) => {
-                const cfg = REG_CFG[reg.payment_status] ?? REG_CFG.pending;
-                const Icon = cfg.icon;
-                const sess = reg.sessions;
-                return (
-                  <Link key={reg.id} href={`/sessions/${sess?.id}`}>
-                    <div className="bg-white rounded-2xl px-4 py-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-[0.99] transition-transform">
-                      <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}
-                      >
-                        <Icon className={`w-4 h-4 ${cfg.cls}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {sess?.title ?? "Buổi đánh"}
-                        </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className={`text-xs font-medium ${cfg.cls}`}>
-                            {cfg.label}
-                          </span>
-                          {reg.points_awarded && (
-                            <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                              +1{" "}
-                              <img
-                                src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png"
-                                alt="cầu lông"
-                                className="w-5 h-5 object-contain"
-                                style={{ mixBlendMode: "multiply" }}
-                              />
-                            </span>
-                          )}
-                          {reg.payment_status === "pending" &&
-                            !reg.payment_reference && (
-                              <span className="text-[10px] text-orange-500 font-medium">
-                                Chưa gửi mã
-                              </span>
-                            )}
-                        </div>
-                      </div>
-                      {sess?.scheduled_at && (
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-xs font-semibold text-gray-500">
-                            {format(new Date(sess.scheduled_at), "dd/MM", {
-                              locale: vi,
-                            })}
-                          </p>
-                          <p className="text-[10px] text-gray-400">
-                            {format(new Date(sess.scheduled_at), "HH:mm", {
-                              locale: vi,
-                            })}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </section> */}
         {participantsModal.open && (
           <div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"

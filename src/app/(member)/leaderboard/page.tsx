@@ -706,10 +706,13 @@ export default function LeaderboardPage() {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-yellow-500" /> Bảng xếp hạng
+                <h1
+                    className="text-xl font-bold text-white flex items-center gap-2"
+                    style={{ textShadow: "0 1px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.8)" }}
+                >
+                    <Trophy className="w-5 h-5 text-yellow-400" /> Bảng xếp hạng
                 </h1>
-                <button onClick={fetchAll} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+                <button onClick={fetchAll} className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:bg-white/10 transition-colors">
                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>

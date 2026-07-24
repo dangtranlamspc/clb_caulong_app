@@ -484,17 +484,6 @@ function SessionsTab() {
         style={{ opacity: fadeIn ? 1 : 0, transition: "opacity 0.3s ease" }}
       >
         {loading ? (
-          // [...Array(4)].map((_, i) => (
-          //   <div
-          //     key={i}
-          //     style={{
-          //       animationDelay: `${i * 60}ms`,
-          //       animation: "fadeSlideUp .3s ease both",
-          //     }}
-          //   >
-          //     <SessionSkeleton />
-          //   </div>
-          // ))
           <SkeletonList count={4} Component={SessionSkeleton} />
         ) : sessions.length === 0 ? (
           <div
@@ -502,7 +491,7 @@ function SessionsTab() {
             style={{ animation: "fadeSlideUp .3s ease both" }}
           >
             <CalendarDays className="w-10 h-10 mx-auto text-gray-200 mb-3" />
-            <p className="text-gray-400 text-sm">Không có buổi đánh nào</p>
+            <p className="text-white text-sm">Không có buổi đánh nào</p>
           </div>
         ) : (
           sessions.map((s, idx) => {
@@ -962,17 +951,6 @@ function MatchesTab({
         style={{ opacity: fadeIn ? 1 : 0, transition: "opacity 0.3s ease" }}
       >
         {loading ? (
-          // [...Array(4)].map((_, i) => (
-          //   <div
-          //     key={i}
-          //     style={{
-          //       animation: "fadeSlideUp .3s ease both",
-          //       animationDelay: `${i * 60}ms`,
-          //     }}
-          //   >
-          //     <MatchSkeleton />
-          //   </div>
-          // ))
           <SkeletonList count={4} Component={MatchSkeleton} />
         ) : matches.length === 0 ? (
           <div
@@ -1649,14 +1627,18 @@ export default function ActivityPage() {
     `}</style>
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div
-            style={{ transition: "opacity .2s", opacity: tabVisible ? 1 : 0 }}
-          >
-            <h1 className="text-xl font-bold text-gray-900">
+        <div className="flex items-center justify-between ">
+          <div style={{ transition: "opacity .2s", opacity: tabVisible ? 1 : 0 }}>
+            <h1
+              className="text-xl font-bold text-white"
+              style={{ textShadow: "0 1px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.8)" }}
+            >
               {TAB_META[tab].title}
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p
+              className="text-sm text-white mt-0.5"
+              style={{ textShadow: "0 1px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.7)" }}
+            >
               {TAB_META[tab].subtitle}
             </p>
           </div>

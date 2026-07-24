@@ -438,8 +438,16 @@ export default function WalletPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Ví BNB</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h1
+          className="text-xl font-bold text-white"
+          style={{ textShadow: "0 1px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.8)" }}
+        >
+          Ví BNB
+        </h1>
+        <p
+          className="text-sm text-white/80 mt-0.5"
+          style={{ textShadow: "0 1px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.7)" }}
+        >
           Quản lý số dư và lịch sử giao dịch
         </p>
       </div>
