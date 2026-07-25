@@ -26,6 +26,8 @@ import {
   usersApi,
 } from "@/lib/api";
 import { UpcomingEvents } from "@/components/events/UpcomingEvents";
+import { HandbookEntryCard } from "@/components/handbook/HandbookEntryCard";
+import { HandbookModal } from "@/components/handbook/HandbookModal";
 
 const LEVEL_LABELS: Record<string, string> = {
   yeu: "Yếu",
@@ -119,6 +121,7 @@ export default function HomePage() {
   }>({ open: false, sessionId: null });
   const [participants, setParticipants] = useState<any[]>([]);
   const [participantsLoading, setParticipantsLoading] = useState(false);
+  const [handbookOpen, setHandbookOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -296,9 +299,10 @@ export default function HomePage() {
           ))}
         </div>
 
+        <HandbookEntryCard onClick={() => setHandbookOpen(true)} />
+
         {!loading && birthdays.length > 0 && (
           <section>
-            {/* Header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div
@@ -323,7 +327,6 @@ export default function HomePage() {
               </span>
             </div>
 
-            {/* Cards grid — 4 per row, scrollable */}
             <div className="grid grid-cols-4 gap-2">
               {birthdays.map((m, idx) => {
                 const dob = new Date(m.date_of_birth);
@@ -811,10 +814,12 @@ export default function HomePage() {
                     </div>
                   ))
                 )}
+
               </div>
             </div>
           </div>
         )}
+        <HandbookModal open={handbookOpen} onClose={() => setHandbookOpen(false)} />
       </div>
     </>
   );

@@ -4,23 +4,45 @@ import * as LucideIcons from "lucide-react";
 import { Search, Check } from "lucide-react";
 
 const ICON_OPTIONS = [
-    "check-circle", "calendar", "calendar-days", "wallet", "users", "user", "shield",
-    "shield-check", "alert-triangle", "alert-circle", "info", "star", "award", "trophy",
-    "clock", "map-pin", "phone", "mail", "credit-card", "banknote", "gift", "heart",
-    "flag", "bell", "book-open", "file-text", "clipboard-list", "target", "zap",
-    "smile", "thumbs-up", "x-circle", "help-circle", "lock", "unlock", "home",
-    "settings", "list-checks", "badge-check", "megaphone", "swords",
+    // Người / nhóm
+    "check-circle", "users", "users-round", "user",
+    "user-round", "user-check", "user-round-check",
+    // Cân bằng / mục tiêu / thành tích
+    "scale", "target", "trophy", "award", "medal", "crown", "star", "zap",
+    "trending-up", "activity",
+    // Lịch / thời gian
+    "calendar", "calendar-days", "calendar-check", "calendar-clock", "clock", "timer",
+    // Thiết bị / công nghệ
+    "smartphone", "smartphone-charging", "wallet", "credit-card", "banknote",
+    // Liên lạc
+    "phone", "mail", "message-circle", "headphones", "bell", "megaphone",
+    // Trạng thái / cảnh báo
+    "shield", "shield-check", "alert-triangle", "alert-circle", "info",
+    "help-circle", "lock", "unlock",
+    // Thể thao / hoạt động
+    "swords", "feather", "footprints", "arrow-left-right",
+    // Khác
+    "map-pin", "map", "gift", "heart", "flag", "book-open", "file-text",
+    "clipboard-list", "smile", "thumbs-up", "home", "settings", "list-checks",
+    "badge-check",
+    "badge-alert", "X", "circle-x", "chart-no-axes-combined", "circle-dollar-sign",
+    "flame", "ban", "award", "bell-ring", "shirt", "biceps-flexed", "sport-shoe"
 ];
 
 function toPascalCase(kebab: string) {
     return kebab.split("-").map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join("");
 }
 
-export function LucideIconByName({ name, className }: { name?: string; className?: string }) {
+type LucideIconByNameProps = {
+    name?: string;
+    className?: string;
+} & Omit<LucideIcons.LucideProps, "name">;
+
+export function LucideIconByName({ name, className, ...rest }: LucideIconByNameProps) {
     if (!name) return null;
     const Comp = (LucideIcons as any)[toPascalCase(name)];
     if (!Comp) return null;
-    return <Comp className={className} />;
+    return <Comp className={className} {...rest} />;
 }
 
 export function IconPicker({ value, onChange }: { value?: string; onChange: (name: string) => void }) {

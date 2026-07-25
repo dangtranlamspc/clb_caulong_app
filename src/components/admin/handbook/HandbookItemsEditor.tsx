@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { IconPicker, LucideIconByName } from "./IconPicker";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 
 export type HandbookItem = {
     id: string;
@@ -26,9 +26,11 @@ function genId() {
 export function HandbookItemsEditor({
     items,
     onChange,
+    richText = false,
 }: {
     items: HandbookItem[];
     onChange: (items: HandbookItem[]) => void;
+    richText?: boolean;
 }) {
     const [openPicker, setOpenPicker] = useState<string | null>(null);
 
@@ -62,13 +64,24 @@ export function HandbookItemsEditor({
                             <LucideIconByName name={item.icon} className="w-4.5 h-4.5 text-gray-500" />
                         </button>
 
-                        <textarea
-                            value={item.text}
-                            onChange={(e) => updateItem(item.id, { text: e.target.value })}
-                            placeholder="Nội dung mục..."
-                            rows={2}
-                            className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-400"
-                        />
+                        {richText ? (
+                            <div className="flex-1">
+                                <RichTextEditor
+                                    value={item.text}
+                                    onChange={(html) => updateItem(item.id, { text: html })}
+                                    placeholder="Nội dung mục..."
+                                    minHeight={70}
+                                />
+                            </div>
+                        ) : (
+                            <textarea
+                                value={item.text}
+                                onChange={(e) => updateItem(item.id, { text: e.target.value })}
+                                placeholder="Nội dung mục..."
+                                rows={2}
+                                className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-400"
+                            />
+                        )}
 
                         <button
                             type="button"

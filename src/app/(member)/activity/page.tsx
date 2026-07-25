@@ -301,7 +301,7 @@ function SessionsTab() {
   const router = useRouter();
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("open");
+  const [filter, setFilter] = useState("");
   const [modalSession, setModalSession] = useState<{
     id: string;
     title: string;

@@ -1,16 +1,17 @@
-
 import { useEffect, useState } from "react";
-import { X, FileText, BookOpen as BookOpenIcon, LayoutList } from "lucide-react";
+import { X } from "lucide-react";
 import toast from "react-hot-toast";
 import { handbookAdminApi, uploadsAdminApi } from "@/lib/api";
 import { IconPicker, LucideIconByName } from "./IconPicker";
 import { HandbookItemsEditor, HandbookItem } from "./HandbookItemsEditor";
 
-type PageType = "cover" | "toc" | "content";
+export type HandbookPageMode = "cover" | "toc" | "content";
 
 type HandbookPage = {
     id?: string;
-    type: PageType;
+    type?: HandbookPageMode;
+    parent_id?: string | null;
+    page_code?: string;
     title: string;
     subtitle?: string;
     icon?: string;
@@ -20,12 +21,6 @@ type HandbookPage = {
     is_active?: boolean;
     meta?: Record<string, any>;
 };
-
-const TYPE_OPTIONS: { value: PageType; label: string; desc: string; icon: any }[] = [
-    { value: "cover", label: "Trang bìa", desc: "Trang mở đầu, ảnh nền + tiêu đề", icon: FileText },
-    { value: "toc", label: "Mục lục", desc: "Trang danh sách các mục", icon: LayoutList },
-    { value: "content", label: "Nội dung", desc: "Trang nội dung với các mục chi tiết", icon: BookOpenIcon },
-];
 
 const COLOR_THEMES = [
     { value: "default", label: "Mặc định", className: "bg-slate-500" },
@@ -48,53 +43,106 @@ function Field({ label, children, required }: { label: string; children: React.R
 
 const inputClass = "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-blue-400";
 
+const MODE_TITLE: Record<HandbookPageMode, { create: string; edit: string }> = {
+    cover: { create: "Tạo trang bìa", edit: "Sửa trang bìa" },
+    toc: { create: "Tạo trang mục lục", edit: "Sửa trang mục lục" },
+    content: { create: "Thêm mục nội dung", edit: "Sửa nội dung" },
+};
+
 export function HandbookPageModal({
     open,
     onClose,
     onSaved,
+    mode,
     page,
+    parentId = null,
 }: {
     open: boolean;
     onClose: () => void;
     onSaved: () => void;
+    mode: HandbookPageMode;
     page?: HandbookPage | null;
+    parentId?: string | null;
 }) {
-    const [type, setType] = useState<PageType>("content");
-    const [form, setForm] = useState<HandbookPage>({ type: "content", title: "", items: [] });
+    const [form, setForm] = useState<HandbookPage>({ title: "" });
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [savedId, setSavedId] = useState<string | undefined>(page?.id);
+
+    const [mounted, setMounted] = useState(open);
+    const [closing, setClosing] = useState(false);
 
     useEffect(() => {
         if (open) {
-            if (page) {
-                setType(page.type);
-                setForm({ ...page, items: page.items ?? [] });
-            } else {
-                setType("content");
-                setForm({ type: "content", title: "", items: [] });
-            }
+            setMounted(true);
+            setClosing(false);
+        } else if (mounted) {
+            setClosing(true);
+            const t = setTimeout(() => {
+                setMounted(false);
+                setClosing(false);
+            }, 250);
+            return () => clearTimeout(t);
+        }
+    }, [open]);
+
+    useEffect(() => {
+        if (open) {
+            if (page) setForm({ ...page, items: page.items ?? [] });
+            else setForm({ title: "", items: [], is_active: true });
+            setSavedId(page?.id);
         }
     }, [open, page]);
-    if (!open) return null;
 
-    const isEdit = !!page?.id;
+    if (!mounted) return null;
+
+    const isEdit = !!savedId;
+    const isChildPage = mode === "content" && (isEdit ? !!page?.parent_id : !!parentId);
     const update = (patch: Partial<HandbookPage>) => setForm((f) => ({ ...f, ...patch }));
 
     const handleUploadBackground = async (file: File) => {
         setUploading(true);
         try {
             const { data } = await uploadsAdminApi.upload(file, "handbook");
-            // Response thực tế: { message, url, path } — không lồng trong data.data
             update({
                 background_image_url: data?.url,
                 meta: { ...(form.meta ?? {}), background_path: data?.path },
             });
             toast.success("Tải ảnh nền thành công");
         } catch {
-            // interceptor đã toast lỗi
         } finally {
             setUploading(false);
         }
+    };
+
+    const ALLOWED_KEYS = [
+        "order_index", "page_code", "type", "title", "subtitle", "icon",
+        "color_theme", "background_image_url", "items", "meta", "is_active",
+    ] as const;
+
+    const buildPayload = () => {
+        const payload: any = {};
+        for (const key of ALLOWED_KEYS) {
+            if (form[key as keyof HandbookPage] !== undefined) payload[key] = form[key as keyof HandbookPage];
+        }
+        payload.type = mode;
+        if (mode === "content" && !isEdit) payload.parent_id = parentId;
+        if (mode === "content" && Array.isArray(payload.items)) {
+            payload.items = payload.items.map((it: HandbookItem) => ({
+                id: it.id,
+                icon: it.icon,
+                text: it.text,
+                variant: it.variant,
+                highlight: it.highlight,
+            }));
+        }
+        if (mode !== "content") {
+            delete payload.items;
+            delete payload.page_code;
+            delete payload.color_theme;
+        }
+        if (mode !== "cover") delete payload.background_image_url;
+        return payload;
     };
 
     const handleSave = async () => {
@@ -104,62 +152,66 @@ export function HandbookPageModal({
         }
         setSaving(true);
         try {
-            const payload = { ...form, type };
-            if (isEdit && page?.id) {
-                await handbookAdminApi.update(page.id, payload);
-                toast.success("Đã cập nhật trang sổ tay");
+            const payload = buildPayload();
+            if (isEdit && savedId) {
+                await handbookAdminApi.update(savedId, payload);
+                toast.success("Đã cập nhật trang");
             } else {
-                await handbookAdminApi.create(payload);
-                toast.success("Đã tạo trang sổ tay");
+                const { data } = await handbookAdminApi.create(payload);
+                setSavedId(data?.id);
+                toast.success("Đã tạo trang");
             }
             onSaved();
             onClose();
-        } catch {
-            // interceptor đã toast lỗi
+        } catch (err: any) {
+            console.error("Handbook save failed:", err?.response?.data ?? err);
+            const apiMessage = err?.response?.data?.message;
+            const detail = Array.isArray(apiMessage) ? apiMessage.join(", ") : apiMessage;
+            toast.error(detail || "Lưu trang thất bại, vui lòng thử lại");
         } finally {
             setSaving(false);
         }
     };
 
+    const heading = MODE_TITLE[mode][isEdit ? "edit" : "create"];
+
     return (
         <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center">
-            <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative w-full sm:max-w-lg max-h-[90vh] bg-[#F4F6FA] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col">
+            <div
+                className={`absolute inset-0 bg-black/50 transition-opacity duration-250 ${closing ? "opacity-0" : "opacity-100"}`}
+                style={{ animation: closing ? undefined : "handbookPageFadeIn 0.25s ease-out" }}
+                onClick={onClose}
+            />
+            <div
+                className={`relative w-full sm:max-w-lg max-h-[90vh] bg-[#F4F6FA] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col ${closing ? "animate-handbook-page-out" : "animate-handbook-page-in"
+                    }`}
+            >
                 <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-                    <h2 className="font-bold text-gray-900 text-sm">{isEdit ? "Sửa trang sổ tay" : "Thêm trang sổ tay"}</h2>
+                    <div>
+                        <h2 className="font-bold text-gray-900 text-sm">{heading}</h2>
+                        {isChildPage && <p className="text-[11px] text-gray-400 mt-0.5">Nội dung con — sẽ mở khi bấm vào mục cha</p>}
+                    </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
                 <div className="overflow-y-auto p-4 space-y-4 flex-1">
-                    {!isEdit && (
-                        <Field label="Loại trang" required>
-                            <div className="grid grid-cols-3 gap-2">
-                                {TYPE_OPTIONS.map((t) => {
-                                    const active = type === t.value;
-                                    const Icon = t.icon;
-                                    return (
-                                        <button
-                                            key={t.value}
-                                            type="button"
-                                            onClick={() => setType(t.value)}
-                                            className={`rounded-2xl p-3 border flex flex-col items-center gap-1.5 text-center transition-colors ${active ? "bg-blue-500 border-blue-500 text-white" : "bg-white border-gray-100 text-gray-600"
-                                                }`}
-                                        >
-                                            <Icon className="w-4.5 h-4.5" />
-                                            <span className="text-[11px] font-semibold leading-tight">{t.label}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <p className="text-[11px] text-gray-400 mt-1.5">{TYPE_OPTIONS.find((t) => t.value === type)?.desc}</p>
+                    <div className="grid grid-cols-[1fr,auto] gap-3">
+                        <Field label="Tiêu đề" required>
+                            <input value={form.title} onChange={(e) => update({ title: e.target.value })} placeholder="VD: Quy định chung" className={inputClass} />
                         </Field>
-                    )}
-
-                    <Field label="Tiêu đề" required>
-                        <input value={form.title} onChange={(e) => update({ title: e.target.value })} placeholder="VD: Quy định chung" className={inputClass} />
-                    </Field>
+                        {mode === "content" && (
+                            <Field label="Số mục">
+                                <input
+                                    value={form.page_code ?? ""}
+                                    onChange={(e) => update({ page_code: e.target.value })}
+                                    placeholder={isChildPage ? "3.1" : "03"}
+                                    className={`${inputClass} w-20 text-center`}
+                                />
+                            </Field>
+                        )}
+                    </div>
 
                     <Field label="Phụ đề">
                         <input value={form.subtitle ?? ""} onChange={(e) => update({ subtitle: e.target.value })} placeholder="Mô tả ngắn (không bắt buộc)" className={inputClass} />
@@ -176,7 +228,7 @@ export function HandbookPageModal({
                         </div>
                     </Field>
 
-                    {type === "cover" && (
+                    {mode === "cover" && (
                         <Field label="Ảnh nền">
                             <div className="space-y-2">
                                 {form.background_image_url && (
@@ -201,7 +253,7 @@ export function HandbookPageModal({
                         </Field>
                     )}
 
-                    {type === "content" && (
+                    {mode === "content" && (
                         <>
                             <Field label="Màu chủ đề">
                                 <div className="flex flex-wrap gap-2">
@@ -219,14 +271,18 @@ export function HandbookPageModal({
                             </Field>
 
                             <Field label="Danh sách mục">
-                                <HandbookItemsEditor items={form.items ?? []} onChange={(items) => update({ items })} />
+                                <HandbookItemsEditor
+                                    items={form.items ?? []}
+                                    onChange={(items) => update({ items })}
+                                    richText
+                                />
                             </Field>
                         </>
                     )}
 
-                    {type === "toc" && (
+                    {mode === "toc" && (
                         <p className="text-xs text-gray-400 bg-white rounded-xl border border-gray-100 p-3">
-                            Trang mục lục sẽ tự động liệt kê các trang nội dung theo thứ tự hiển thị.
+                            Danh sách mục lục được lấy tự động từ các mục nội dung cấp 1 (xem ở màn hình quản lý).
                         </p>
                     )}
 
@@ -252,6 +308,26 @@ export function HandbookPageModal({
                     </button>
                 </div>
             </div>
+            <style jsx global>{`
+                @keyframes handbookPageFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes handbookPageSlideUp {
+                    from { transform: translateY(24px) scale(0.98); opacity: 0; }
+                    to { transform: translateY(0) scale(1); opacity: 1; }
+                }
+                @keyframes handbookPageSlideDown {
+                    from { transform: translateY(0) scale(1); opacity: 1; }
+                    to { transform: translateY(24px) scale(0.98); opacity: 0; }
+                }
+                .animate-handbook-page-in {
+                    animation: handbookPageSlideUp 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+                }
+                .animate-handbook-page-out {
+                    animation: handbookPageSlideDown 0.22s ease-in forwards;
+                }
+            `}</style>
         </div>
     );
 }
