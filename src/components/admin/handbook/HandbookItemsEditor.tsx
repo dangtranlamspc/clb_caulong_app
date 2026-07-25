@@ -1,4 +1,4 @@
-"use client";
+
 import { useState } from "react";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { IconPicker, LucideIconByName } from "./IconPicker";

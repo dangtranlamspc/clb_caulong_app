@@ -491,7 +491,7 @@ function SessionsTab() {
             style={{ animation: "fadeSlideUp .3s ease both" }}
           >
             <CalendarDays className="w-10 h-10 mx-auto text-gray-200 mb-3" />
-            <p className="text-white text-sm">Không có buổi đánh nào</p>
+            <p className="text-gray-600 text-sm">Không có buổi đánh nào</p>
           </div>
         ) : (
           sessions.map((s, idx) => {
@@ -1641,13 +1641,13 @@ export default function ActivityPage() {
         <div className="flex items-center justify-between ">
           <div style={{ transition: "opacity .2s", opacity: tabVisible ? 1 : 0 }}>
             <h1
-              className="text-xl font-bold text-white"
+              className="text-xl font-bold text-dark-600"
               style={{ textShadow: "0 1px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.8)" }}
             >
               {TAB_META[tab].title}
             </h1>
             <p
-              className="text-sm text-white mt-0.5"
+              className="text-sm text-dark mt-0.5"
               style={{ textShadow: "0 1px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.7)" }}
             >
               {TAB_META[tab].subtitle}

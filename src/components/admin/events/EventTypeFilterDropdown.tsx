@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 
@@ -58,17 +56,15 @@ export default function EventTypeFilterDropdown({
       <button
         type="button"
         onClick={toggle}
-        className={`w-full flex items-center justify-between gap-2 bg-white border rounded-xl px-4 py-3 text-sm font-medium text-gray-900 transition-colors ${
-          open
+        className={`w-full flex items-center justify-between gap-2 bg-white border rounded-xl px-4 py-3 text-sm font-medium text-gray-900 transition-colors ${open
             ? "border-blue-400 ring-2 ring-blue-100"
             : "border-gray-200 hover:border-gray-300"
-        }`}
+          }`}
       >
         <span className="truncate">{currentLabel}</span>
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-            open ? "rotate-180" : ""
-          }`}
+          className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -91,11 +87,10 @@ export default function EventTypeFilterDropdown({
                 onChange("");
                 close();
               }}
-              className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors ${
-                !value
+              className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors ${!value
                   ? "bg-blue-50 text-blue-700 font-medium"
                   : "text-gray-700 hover:bg-gray-50"
-              }`}
+                }`}
             >
               {allLabel}
               {!value && <Check className="w-4 h-4" />}
@@ -108,11 +103,10 @@ export default function EventTypeFilterDropdown({
                   onChange(opt.value);
                   close();
                 }}
-                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors ${
-                  value === opt.value
+                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors ${value === opt.value
                     ? "bg-blue-50 text-blue-700 font-medium"
                     : "text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 {opt.label}
                 {value === opt.value && <Check className="w-4 h-4" />}

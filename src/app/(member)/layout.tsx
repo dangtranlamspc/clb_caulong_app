@@ -224,27 +224,8 @@ export default function MemberLayout({
         <div
             className="app-shell min-h-screen pb-24">
             <div
-                className="bg-mobile-fixed fixed inset-0 -z-10"
-                style={{
-                    backgroundColor: "#f4f6fa",
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "cover",
-                    backgroundPosition: "top center",
-                    backgroundImage:
-                        "url('https://res.cloudinary.com/ds6mtnyyk/image/upload/v1784863586/bg-final_dflmnx.png')",
-                }}
-            />
-            <style
-                dangerouslySetInnerHTML={{
-                    __html: `
-                        @media (max-width: 640px) {
-                            .bg-mobile-fixed {
-                                background-image: url('https://res.cloudinary.com/ds6mtnyyk/image/upload/v1784866917/bg-mb_fr9kzj.png') !important;
-                                background-position: center center !important;
-                            }
-                        }
-                    `,
-                }}
+                className="fixed inset-0 -z-10"
+                style={{ backgroundColor: "#f4f6fa" }}
             />
             <BirthdayModal
                 userName={user?.full_name ?? ""}

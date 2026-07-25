@@ -1,4 +1,3 @@
-"use client";
 
 import { useEffect, useState } from "react";
 import { Boxes, Package, CheckCircle2, XCircle } from "lucide-react";

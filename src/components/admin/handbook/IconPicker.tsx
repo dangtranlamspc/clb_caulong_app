@@ -1,4 +1,4 @@
-"use client";
+
 import { useState } from "react";
 import * as LucideIcons from "lucide-react";
 import { Search, Check } from "lucide-react";

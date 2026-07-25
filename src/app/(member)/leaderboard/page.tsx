@@ -71,14 +71,14 @@ function GenderSubTabs({ value, onChange }: { value: GenderFilter; onChange: (v:
         { key: 'female', label: 'Nữ' },
     ];
     return (
-        <div className="flex border border-gray-100 rounded-lg bg-gray-50 p-0.5 gap-0.5 mb-3">
+        <div className="flex border border-gray-100 rounded-lg bg-white p-0.5 gap-0.5 mb-3">
             {OPTS.map(({ key, label }) => (
                 <button
                     key={key}
                     onClick={() => onChange(key)}
                     className={`flex-1 py-1.5 text-[11px] font-medium rounded-md transition-all duration-200 ${value === key
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-400 hover:text-gray-600'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-white text-black hover:bg-gray-50'
                         }`}
                 >
                     {label}
@@ -97,16 +97,18 @@ function filterByGender<T extends { gender?: string }>(data: T[], filter: Gender
 function TabContent({ children, tabKey }: { children: React.ReactNode; tabKey: string }) {
     const [visible, setVisible] = useState(false);
     useEffect(() => {
-        const t = setTimeout(() => setVisible(true), 10);
-        return () => clearTimeout(t);
-    }, []);
+        setVisible(false);
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, [tabKey]);
     return (
         <div
             key={tabKey}
             style={{
                 opacity: visible ? 1 : 0,
-                transform: visible ? 'translateY(0)' : 'translateY(12px)',
-                transition: 'opacity 0.25s ease, transform 0.25s ease',
+                transform: visible ? 'translateY(0)' : 'translateY(6px)',
+                transition: 'opacity 0.18s ease, transform 0.18s ease',
+                willChange: 'opacity, transform',
             }}
         >
             {children}
@@ -161,7 +163,8 @@ function RankMedal({ rank }: { rank: number }) {
 function AnimatedRow({ children, index }: { children: React.ReactNode; index: number }) {
     const [visible, setVisible] = useState(false);
     useEffect(() => {
-        const t = setTimeout(() => setVisible(true), index * 40);
+        const delay = Math.min(index * 30, 300);
+        const t = setTimeout(() => setVisible(true), delay);
         return () => clearTimeout(t);
     }, [index]);
     return (
@@ -686,12 +689,7 @@ export default function LeaderboardPage() {
 
     const handleTabChange = (newTab: Tab) => {
         if (newTab === tab) return;
-        setTabLoading(true);
-        setPrevTab(tab);
-        setTimeout(() => {
-            setTab(newTab);
-            setTabLoading(false);
-        }, 150);
+        setTab(newTab);
     };
 
     const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
@@ -707,25 +705,24 @@ export default function LeaderboardPage() {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <h1
-                    className="text-xl font-bold text-white flex items-center gap-2"
+                    className="text-xl font-bold text-dark flex items-center gap-2"
                     style={{ textShadow: "0 1px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.8)" }}
                 >
-                    <Trophy className="w-5 h-5 text-yellow-400" /> Bảng xếp hạng
+                    <Trophy className="w-5 h-5 text-yellow-600" /> Bảng xếp hạng
                 </h1>
                 <button onClick={fetchAll} className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:bg-white/10 transition-colors">
                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>
 
-            {/* Tabs */}
-            <div className="flex border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-100 dark:bg-gray-800 p-1 gap-1">
+            <div className="flex border border-gray-200 rounded-xl bg-white p-1 gap-1">
                 {TABS.map(({ key, label, icon }) => (
                     <button
                         key={key}
                         onClick={() => handleTabChange(key)}
                         className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-1 ${tab === key
-                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm scale-[1.02]'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                            ? 'bg-blue-600 text-white shadow-sm scale-[1.02]'
+                            : 'bg-white text-black hover:bg-gray-50'
                             }`}
                     >
                         {typeof icon === 'string' ? icon : icon} {label}
@@ -733,11 +730,8 @@ export default function LeaderboardPage() {
                 ))}
             </div>
 
-            {/* Content */}
             {loading ? (
                 <SkeletonRows count={6} />
-            ) : tabLoading ? (
-                <SkeletonRows count={4} />
             ) : (
                 <TabContent tabKey={tab}>
                     {tab === 'rank' && <RankTab data={rankData} myStats={myStats} user={user} />}

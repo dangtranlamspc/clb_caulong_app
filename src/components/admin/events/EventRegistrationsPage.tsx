@@ -1,5 +1,3 @@
-"use client";
-
 import * as XLSX from "xlsx-js-style";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";

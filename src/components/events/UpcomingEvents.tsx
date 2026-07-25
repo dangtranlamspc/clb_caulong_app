@@ -89,7 +89,7 @@ export function UpcomingEvents() {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <Megaphone className="w-4 h-4 text-pink-500" />
-          <h3 className="font-bold text-white text-sm">Hoạt động sắp tới</h3>
+          <h3 className="font-bold text-gray-600 text-sm">Hoạt động sắp tới</h3>
         </div>
         <Link
           href="/activities"

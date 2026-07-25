@@ -1,4 +1,4 @@
-"use client";
+
 import { useEffect, useState } from "react";
 import { X, FileText, BookOpen as BookOpenIcon, LayoutList } from "lucide-react";
 import toast from "react-hot-toast";

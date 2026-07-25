@@ -281,7 +281,7 @@ export default function HomePage() {
           ].map(({ href, icon: Icon, label, bg, ic, ring }) => (
             <Link key={href} href={href}>
               <div
-                className={`${bg} rounded-2xl p-3 flex flex-col items-center gap-2 text-center active:scale-95 transition-transform`}
+                className={`${bg} rounded-2xl p-3 flex flex-col items-center gap-2 text-center shadow-lg shadow-black/10 active:scale-95 transition-transform`}
               >
                 <div
                   className={`w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-sm ring-1 ${ring}`}
@@ -311,7 +311,7 @@ export default function HomePage() {
                 >
                   🎂
                 </div>
-                <h3 className="font-bold text-white text-sm">
+                <h3 className="font-bold text-gray-600 text-sm">
                   Sinh nhật tháng {currentMonth + 1}
                 </h3>
               </div>
@@ -372,7 +372,6 @@ export default function HomePage() {
                           }),
                     }}
                   >
-                    {/* "Hôm nay" label */}
                     {isToday && (
                       <span
                         className="absolute top-1.5 right-1.5 text-[7px] font-black px-1.5 py-0.5 rounded-full text-white uppercase tracking-wide"
@@ -531,7 +530,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-blue-300" />
-              <h3 className="font-bold text-white text-sm">
+              <h3 className="font-bold text-gray-600 text-sm">
                 Buổi đang mở đăng ký
               </h3>
             </div>

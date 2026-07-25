@@ -21,9 +21,7 @@ export function ConfirmModal({
     description: string;
     confirmLabel: string;
     confirmColor?: string;
-    /** @deprecated dùng `phase` để có hiệu ứng morph (loading -> success); vẫn giữ để tương thích ngược */
     loading?: boolean;
-    /** idle | loading | success — điều khiển MorphButton của nút xác nhận */
     phase?: ActionPhase;
 }) {
     const [mounted, setMounted] = useState(false);
