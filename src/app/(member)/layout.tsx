@@ -40,7 +40,7 @@ const NAV_ITEMS = [
 function BadmintonLogo({ size = 26 }: { size?: number }) {
     return (
         <img
-            src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494761/LOGO_TEAM_BNB_BLACK_cjhww8.png"
+            src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494767/LOGO_TEAM_BNB_WHITE_hs59vg.png"
             width={size}
             height={size}
             alt="BNB Badminton Club"
@@ -252,7 +252,7 @@ export default function MemberLayout({
                     onClose={dismissResult}
                 />
             )}
-            <header className="sticky top-0 z-30 flex justify-center">
+            {/* <header className="sticky top-0 z-30 flex justify-center">
                 <div
                     className="relative w-full max-w-lg overflow-hidden"
                     style={{
@@ -533,11 +533,103 @@ export default function MemberLayout({
                         </div>
                     </div>
                 </div>
+            </header> */}
+
+            <header className="sticky top-0 z-30 flex justify-center">
+                <div
+                    className="relative w-full max-w-lg overflow-hidden"
+                    style={{
+                        background:
+                            "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
+                        borderBottomLeftRadius: 24,
+                        borderBottomRightRadius: 24,
+                    }}
+                >
+                    <div
+                        className="relative max-w-lg mx-auto px-4 flex items-center justify-between"
+                        style={{
+                            height: 64,
+                            background: "rgba(255,255,255,.02)",
+                            borderBottom: "1px solid rgba(255,255,255,.08)",
+                        }}
+                    >
+                        <div className="flex items-center gap-2.5">
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setAdminDrawerOpen(true)}
+                                    title="Menu quản trị"
+                                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+                                    style={{
+                                        background: "rgba(255,255,255,0.07)",
+                                        border: "0.5px solid rgba(255,255,255,0.12)",
+                                        color: "rgba(255,255,255,0.75)",
+                                    }}
+                                >
+                                    <Menu className="w-4.5 h-4.5" />
+                                </button>
+                            )}
+
+                            <div className="flex-shrink-0 pt-3">
+                                <BadmintonLogo size={85} />
+                            </div>
+                            <div>
+                                <p
+                                    className="font-bold text-white leading-none"
+                                    style={{ fontSize: 16, letterSpacing: "-0.01em" }}
+                                >
+                                    BNB BADMINTON CLUB
+                                </p>
+                                <span
+                                    className="inline-flex items-center gap-1 font-semibold"
+                                    style={{
+                                        marginTop: 4,
+                                        padding: "2px 8px",
+                                        fontSize: 9,
+                                        borderRadius: 20,
+                                        background: "rgba(255,255,255,0.08)",
+                                        border: "0.5px solid rgba(255,255,255,0.14)",
+                                        color: "rgba(255,255,255,0.5)",
+                                        letterSpacing: "0.03em",
+                                    }}
+                                >
+                                    🏸 Mùa giải {new Date().getFullYear()}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <NotificationBell />
+                            <button
+                                onClick={handleLogout}
+                                title="Đăng xuất"
+                                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                                style={{
+                                    background: "rgba(255,255,255,0.07)",
+                                    border: "0.5px solid rgba(255,255,255,0.12)",
+                                    color: "rgba(255,255,255,0.4)",
+                                }}
+                                onMouseEnter={(e) => {
+                                    const el = e.currentTarget as HTMLElement;
+                                    el.style.background = "rgba(239,68,68,0.2)";
+                                    el.style.borderColor = "rgba(239,68,68,0.35)";
+                                    el.style.color = "#fca5a5";
+                                }}
+                                onMouseLeave={(e) => {
+                                    const el = e.currentTarget as HTMLElement;
+                                    el.style.background = "rgba(255,255,255,0.07)";
+                                    el.style.borderColor = "rgba(255,255,255,0.12)";
+                                    el.style.color = "rgba(255,255,255,0.4)";
+                                }}
+                            >
+                                <LogOut className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </header>
 
             <main className="max-w-lg mx-auto px-4 py-5">{children}</main>
 
-            {/* ── Bottom nav ── */}
             <BottomNav pathname={pathname} />
 
             {isAdmin && (

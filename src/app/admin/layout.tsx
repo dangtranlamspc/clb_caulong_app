@@ -8,14 +8,12 @@ import {
   ADMIN_MENU,
   isAdminMenuActive,
 } from "@/components/admin/AdminMenuDrawer";
-import { AuroraHeaderBackground } from "@/components/ui/AuroraHeaderBackground";
 import { authApi } from "@/lib/api";
-import toast from "react-hot-toast";
 
 function BadmintonLogo({ size = 72 }: { size?: number }) {
   return (
     <img
-      src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494761/LOGO_TEAM_BNB_BLACK_cjhww8.png"
+      src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494767/LOGO_TEAM_BNB_WHITE_hs59vg.png"
       width={size}
       height={size}
       alt="BNB Badminton Club"
@@ -70,7 +68,13 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-[#F4F6FA]">
       <header className="sticky top-0 z-30 overflow-hidden bg-transparent">
-        <AuroraHeaderBackground />
+        <div
+          className="absolute inset-0 -z-10"
+          style={{
+            background:
+              "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
+          }}
+        />
 
         <div
           className="relative flex items-center justify-between px-4"
