@@ -89,6 +89,16 @@ export const authApi = {
   register: (data: any) => api.post("/auth/register", data),
   logout: () => api.post("/auth/logout"),
   profile: () => api.get("/auth/profile"),
+  verifyEmail: (payload: { email: string; code: string }) =>
+    api.post('/auth/verify-email', payload),
+  resendCode: (payload: { email: string }) =>
+    api.post('/auth/resend-code', payload),
+  forgotPassword: (payload: { email: string }) =>
+    api.post('/auth/forgot-password', payload),
+  verifyResetCode: (payload: { email: string; code: string }) =>
+    api.post('/auth/verify-reset-code', payload),
+  resetPassword: (payload: { email: string; code: string; new_password: string }) =>
+    api.post('/auth/reset-password', payload),
 };
 
 export const profileApi = {
@@ -313,6 +323,8 @@ export const membersAdminApi = {
     api.get("/users/export", { params, responseType: "blob" }),
   searchMembers: (q: string) =>
     api.get("/users/search/members", { params: { q } }),
+  approve: (id: string) => api.patch(`/users/${id}/approve`),
+  reject: (id: string) => api.patch(`/users/${id}/reject`),
 };
 
 export const sessionsAdminApi = {

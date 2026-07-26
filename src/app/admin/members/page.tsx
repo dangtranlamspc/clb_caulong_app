@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Search, Plus, Download, Filter, ChevronLeft, ChevronRight,
     Trash2, ToggleLeft, ToggleRight, Eye,
+    Check,
+    X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -67,6 +69,13 @@ const STATUS_OPTIONS = [
     { value: 'false', label: 'Vô hiệu hóa' },
 ];
 
+const APPROVAL_STATUS_OPTIONS = [
+    { value: '', label: 'Tất cả duyệt' },
+    { value: 'pending', label: 'Chờ duyệt' },
+    { value: 'approved', label: 'Đã duyệt' },
+    { value: 'rejected', label: 'Đã từ chối' },
+];
+
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
     return (
         <select
@@ -97,6 +106,24 @@ function Avatar({ user, sizeClass = 'w-10 h-10 text-sm' }: { user: any; sizeClas
         <div className={`rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold flex-shrink-0 ${sizeClass}`}>
             {initial}
         </div>
+    );
+}
+
+function ApprovalBadge({ user }: { user: any }) {
+    if (user.email_verified === false) {
+        return (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit bg-sky-50 text-sky-700">
+                ✉️ Chưa xác thực email
+            </span>
+        );
+    }
+    if (!user.approval_status || user.approval_status === 'approved') return null;
+    const isPending = user.approval_status === 'pending';
+    return (
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit ${isPending ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-600'
+            }`}>
+            {isPending ? '⏳ Chờ duyệt' : '✕ Đã từ chối'}
+        </span>
     );
 }
 
@@ -134,6 +161,8 @@ function RowActions({
     onEdit,
     onToggleActive,
     onDelete,
+    onApprove,
+    onReject,
     variant = 'table',
 }: {
     user: any;
@@ -141,41 +170,84 @@ function RowActions({
     onEdit: (id: string) => void;
     onToggleActive: (id: string) => void;
     onDelete: (id: string, name: string) => void;
+    onApprove: (id: string) => void;
+    onReject: (id: string, name: string) => void;
     variant?: 'table' | 'mobile';
 }) {
     const busy = actionLoading === user.id;
+    const canReview = user.approval_status === 'pending' && user.email_verified !== false;
 
     if (variant === 'mobile') {
         return (
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={() => onEdit(user.id)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
-                >
-                    <Eye className="w-3.5 h-3.5" /> Xem
-                </button>
-                <button
-                    onClick={() => onToggleActive(user.id)}
-                    disabled={busy}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors disabled:opacity-50 ${user.is_active ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'
-                        }`}
-                >
-                    {user.is_active ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
-                    {user.is_active ? 'Tạm ẩn' : 'Kích hoạt'}
-                </button>
-                <button
-                    onClick={() => onDelete(user.id, user.full_name)}
-                    disabled={busy}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-500 text-white text-xs font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
-                >
-                    <Trash2 className="w-3.5 h-3.5" /> Xóa
-                </button>
+            <div className="flex flex-col gap-2">
+                {canReview && (
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => onApprove(user.id)}
+                            disabled={busy}
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500 text-white text-xs font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                        >
+                            <Check className="w-3.5 h-3.5" /> Duyệt
+                        </button>
+                        <button
+                            onClick={() => onReject(user.id, user.full_name)}
+                            disabled={busy}
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-500 text-white text-xs font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                        >
+                            <X className="w-3.5 h-3.5" /> Từ chối
+                        </button>
+                    </div>
+                )}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => onEdit(user.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+                    >
+                        <Eye className="w-3.5 h-3.5" /> Xem
+                    </button>
+                    <button
+                        onClick={() => onToggleActive(user.id)}
+                        disabled={busy}
+                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors disabled:opacity-50 ${user.is_active ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'
+                            }`}
+                    >
+                        {user.is_active ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
+                        {user.is_active ? 'Tạm ẩn' : 'Kích hoạt'}
+                    </button>
+                    <button
+                        onClick={() => onDelete(user.id, user.full_name)}
+                        disabled={busy}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-500 text-white text-xs font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" /> Xóa
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="flex items-center justify-end gap-1">
+            {canReview && (
+                <>
+                    <button
+                        onClick={() => onApprove(user.id)}
+                        disabled={busy}
+                        className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                        title="Duyệt"
+                    >
+                        <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => onReject(user.id, user.full_name)}
+                        disabled={busy}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Từ chối"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </>
+            )}
             <button
                 onClick={() => onEdit(user.id)}
                 className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -216,6 +288,7 @@ export default function AdminMembersPage() {
     const [searchInput, setSearchInput] = useState('');
     const [query, setQuery] = useState({
         search: '', role: '', gender: '', shirt_size: '', is_active: '',
+        approval_status: '',
         member_type: initialMemberType,
         member_subtype: initialMemberSubtype,
         level: '',
@@ -230,6 +303,7 @@ export default function AdminMembersPage() {
         memberId: null,
     });
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+    const [rejectConfirm, setRejectConfirm] = useState<{ id: string; name: string } | null>(null);
 
 
     const openCreateModal = () => setFormModal({ open: true, mode: 'create', memberId: null });
@@ -304,6 +378,39 @@ export default function AdminMembersPage() {
             toast.error(err?.response?.data?.message ?? 'Xóa thất bại');
         } finally {
             setActionLoading(null);
+        }
+    };
+
+    const handleApprove = async (id: string) => {
+        setActionLoading(id);
+        try {
+            await membersAdminApi.approve(id);
+            toast.success('Đã duyệt tài khoản');
+            fetchUsers();
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Duyệt thất bại');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleReject = (id: string, name: string) => {
+        setRejectConfirm({ id, name });
+    };
+
+    const confirmReject = async () => {
+        if (!rejectConfirm) return;
+        const { id } = rejectConfirm;
+        setActionLoading(id);
+        try {
+            await membersAdminApi.reject(id);
+            toast.success('Đã từ chối tài khoản đăng ký');
+            fetchUsers();
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Thao tác thất bại');
+        } finally {
+            setActionLoading(null);
+            setRejectConfirm(null);
         }
     };
 
@@ -384,6 +491,7 @@ export default function AdminMembersPage() {
                         )}
                         <Select value={query.level} onChange={(v) => setQuery((q) => ({ ...q, level: v, page: 1 }))} options={LEVEL_OPTIONS} />
                         <Select value={query.is_active} onChange={(v) => setQuery((q) => ({ ...q, is_active: v, page: 1 }))} options={STATUS_OPTIONS} />
+                        <Select value={query.approval_status} onChange={(v) => setQuery((q) => ({ ...q, approval_status: v, page: 1 }))} options={APPROVAL_STATUS_OPTIONS} />
                     </div>
                 )}
             </div>
@@ -433,8 +541,10 @@ export default function AdminMembersPage() {
                                             {LEVEL_LABEL[user.level] ?? user.level}
                                         </span>
                                     )}
+                                    <ApprovalBadge user={user} />
                                 </div>
                                 <MemberTypeBadge user={user} />
+
                             </div>
 
                             <div className="pt-2 border-t border-gray-100">
@@ -444,6 +554,8 @@ export default function AdminMembersPage() {
                                     onEdit={openEditModal}
                                     onToggleActive={handleToggleActive}
                                     onDelete={handleDelete}
+                                    onApprove={handleApprove}
+                                    onReject={handleReject}
                                     variant="mobile"
                                 />
                             </div>
@@ -517,6 +629,7 @@ export default function AdminMembersPage() {
                                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
                                             {user.is_active ? 'Hoạt động' : 'Vô hiệu'}
                                         </span>
+                                        <div className="mt-1"><ApprovalBadge user={user} /></div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <RowActions
@@ -525,6 +638,8 @@ export default function AdminMembersPage() {
                                             onEdit={openEditModal}
                                             onToggleActive={handleToggleActive}
                                             onDelete={handleDelete}
+                                            onApprove={handleApprove}
+                                            onReject={handleReject}
                                         />
                                     </td>
                                 </tr>
@@ -580,6 +695,39 @@ export default function AdminMembersPage() {
                     onClose={handleClosePasswordModal}
                     memberId={formModal.memberId}
                 />
+
+                <Modal
+                    isOpen={!!rejectConfirm}
+                    onClose={() => setRejectConfirm(null)}
+                    title="Từ chối đăng ký"
+                >
+                    <div className="space-y-4">
+                        <p className="text-sm text-gray-600">
+                            Từ chối yêu cầu đăng ký của{' '}
+                            <span className="font-semibold text-gray-900">{rejectConfirm?.name}</span>?
+                            Tài khoản sẽ chuyển sang trạng thái <span className="font-medium text-red-600">Đã từ chối</span> và
+                            bị vô hiệu hóa, không thể đăng nhập.
+                        </p>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button
+                                onClick={() => setRejectConfirm(null)}
+                                className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={confirmReject}
+                                disabled={actionLoading === rejectConfirm?.id}
+                                className="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {actionLoading === rejectConfirm?.id && (
+                                    <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                )}
+                                Xác nhận từ chối
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
             </div>
         </div>
 
