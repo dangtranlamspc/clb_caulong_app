@@ -667,6 +667,7 @@ export default function WalletPage() {
         <TransactionDetailModal
           tx={selectedTx}
           onClose={() => setSelectedTx(null)}
+          transactions={transactions}
         />
       )}
       {showTopupModal && (

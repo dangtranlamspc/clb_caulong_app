@@ -1,6 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -165,7 +164,7 @@ export default function SessionDetailPage() {
   const [confirmModal, setConfirmModal] = useState<{
     key: "checkinAll" | "closeList" | "completeSession";
     title: string;
-    message: string;
+    message: ReactNode;
   } | null>(null);
 
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
@@ -337,10 +336,91 @@ export default function SessionDetailPage() {
     }
   };
 
+  const buildPendingSummary = (): ReactNode => {
+    const pendingIds = new Set(pending.map((r) => r.id));
+
+    const rows = hostRegs
+      .map((host) => {
+        const nestedGuests = guestsOf(host.id).filter((g) =>
+          pendingIds.has(g.id),
+        );
+        const hostPending = pendingIds.has(host.id);
+        if (!hostPending && nestedGuests.length === 0) return null;
+        return { host, hostPending, nestedGuests };
+      })
+      .filter(Boolean) as {
+        host: any;
+        hostPending: boolean;
+        nestedGuests: any[];
+      }[];
+
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-gray-600">
+          Có <strong className="text-gray-900">{pending.length}</strong>{" "}
+          người đang "Chờ thanh toán" sẽ được tự động xác nhận:
+        </p>
+        <ul className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+          {rows.map(({ host, hostPending, nestedGuests }) => {
+            const name = host.is_guest
+              ? host.guest_full_name
+              : host.users?.full_name;
+            const isIndependentGuest = host.is_guest && !host.user_id;
+            const isMember = Boolean(host.user_id) && !host.is_guest;
+
+            return (
+              <li key={host.id} className="text-sm text-gray-700">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-medium text-gray-900">{name}</span>
+
+                  {isIndependentGuest && hostPending && (
+                    <>
+                      <span className="text-gray-400 text-xs">
+                        — Đang chờ thanh toán
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                        💵 Tiền mặt
+                      </span>
+                    </>
+                  )}
+
+                  {isMember && hostPending && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                      <Wallet className="w-2.5 h-2.5" /> Ví BNB
+                    </span>
+                  )}
+                </div>
+
+                {nestedGuests.length > 0 && (
+                  <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-gray-100">
+                    {nestedGuests.map((g) => (
+                      <li
+                        key={g.id}
+                        className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
+                      >
+                        <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                        <span>
+                          {g.is_guest ? g.guest_full_name : g.users?.full_name}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700">
+                          <Wallet className="w-2.5 h-2.5" /> Ví BNB của {name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  };
+
   const handleCompleteSession = () => {
     const msg =
       pending.length > 0
-        ? `Xác nhận hoàn thành buổi đánh? ${pending.length} người đang "Chờ thanh toán" sẽ được tự động chuyển sang "Đã xác nhận thanh toán" + "Tiền mặt". Buổi sẽ bị khoá lại.`
+        ? buildPendingSummary()
         : "Xác nhận hoàn thành buổi đánh? Buổi sẽ bị khoá lại.";
     setConfirmModal({
       key: "completeSession",
@@ -419,7 +499,6 @@ export default function SessionDetailPage() {
         sessionsAdminApi.getRegistrations(id),
       ]);
       if (mySeq !== refreshSeqRef.current) {
-        console.log("[refreshSilently] skipped (stale)", mySeq);
         return;
       }
       setSession(s);
@@ -452,7 +531,6 @@ export default function SessionDetailPage() {
           filter: `session_id=eq.${id}`,
         },
         (payload) => {
-          console.log("[admin] registrations changed:", payload);
           scheduleRefresh();
         },
       )
@@ -467,7 +545,6 @@ export default function SessionDetailPage() {
         () => scheduleRefresh(),
       )
       .subscribe((status, err) => {
-        console.log("[admin] channel status:", status, err);
       });
     return () => {
       supabase.removeChannel(channel);
@@ -1086,7 +1163,7 @@ export default function SessionDetailPage() {
                 reg.host_registration_id && (
                   <span className="text-[11px] px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 font-medium">
                     <Wallet className="w-3 h-3" />
-                    Chờ host quyết định
+                    Chờ {hostName ?? "host"} quyết định
                   </span>
                 )}
 
@@ -1370,29 +1447,6 @@ export default function SessionDetailPage() {
                 Hoàn tác
               </button>
             )}
-
-          {/* {canComplete && (
-            <button
-              onClick={async () => {
-                if (!id) return;
-                const msg =
-                  pending.length > 0
-                    ? `Xác nhận hoàn thành buổi đánh? ${pending.length} người đang "Chờ thanh toán" sẽ được tự động chuyển sang "Đã xác nhận thanh toán" + "Tiền mặt". Buổi sẽ bị khoá lại.`
-                    : "Xác nhận hoàn thành buổi đánh? Buổi sẽ bị khoá lại.";
-                if (!confirm(msg)) return;
-                try {
-                  await sessionsAdminApi.complete(id);
-                  toast.success("Đã hoàn thành và khoá buổi đánh!");
-                  refreshSilently();
-                } catch (err: any) {
-                  toast.error(err?.response?.data?.message ?? "Thất bại");
-                }
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold flex-shrink-0"
-            >
-              <CheckCircle2 className="w-4 h-4" /> Hoàn thành
-            </button>
-          )} */}
 
           {canComplete && (
             <MorphButton
@@ -2080,10 +2134,8 @@ export default function SessionDetailPage() {
                   </button>
                 </div>
 
-                <div className="p-5">
-                  <p className="text-sm text-gray-500">
-                    {confirmModal.message}
-                  </p>
+                <div className="p-5 text-sm text-gray-500">
+                  {confirmModal.message}
                 </div>
 
                 <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
@@ -2093,20 +2145,6 @@ export default function SessionDetailPage() {
                   >
                     Hủy
                   </button>
-                  {/* <button
-                    onClick={() =>
-                      confirmModal.key === "closeList"
-                        ? runCloseList()
-                        : runCheckinAllPresent()
-                    }
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${
-                      confirmModal.key === "closeList"
-                        ? "bg-red-500 hover:bg-red-600"
-                        : "bg-green-500 hover:bg-green-600"
-                    }`}
-                  >
-                    Xác nhận
-                  </button> */}
                   <button
                     onClick={() =>
                       confirmModal.key === "closeList"

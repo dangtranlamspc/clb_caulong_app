@@ -14,6 +14,9 @@ import {
   XCircle,
   Eye,
   Loader2,
+  Wallet,
+  CornerDownRight,
+  CheckCircle2,
 } from "lucide-react";
 import { motion, LayoutGroup } from "framer-motion";
 import toast from "react-hot-toast";
@@ -91,6 +94,15 @@ export default function SessionsPage() {
   const [formTarget, setFormTarget] = useState<{ id?: string } | null>(null);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
+  const [completeTarget, setCompleteTarget] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [completeModalVisible, setCompleteModalVisible] = useState(false);
+  const [completeRegs, setCompleteRegs] = useState<any[]>([]);
+  const [loadingCompleteRegs, setLoadingCompleteRegs] = useState(false);
+  const [completing, setCompleting] = useState(false);
+
   const [cancelTarget, setCancelTarget] = useState<{
     id: string;
     title: string;
@@ -131,6 +143,13 @@ export default function SessionsPage() {
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
+
+  useEffect(() => {
+    if (completeTarget) {
+      const raf = requestAnimationFrame(() => setCompleteModalVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [completeTarget]);
 
   useEffect(() => {
     if (deleteTarget) {
@@ -216,6 +235,132 @@ export default function SessionsPage() {
     } finally {
       setActionId(null);
     }
+  };
+
+  const closeCompleteModal = () => {
+    setCompleteModalVisible(false);
+    setTimeout(() => {
+      setCompleteTarget(null);
+      setCompleteRegs([]);
+    }, 200);
+  };
+
+  const openCompleteModal = async (id: string, title: string) => {
+    setCompleteTarget({ id, title });
+    setLoadingCompleteRegs(true);
+    try {
+      const { data } = await sessionsAdminApi.getRegistrations(id);
+      setCompleteRegs(data ?? []);
+    } catch {
+      setCompleteRegs([]);
+    } finally {
+      setLoadingCompleteRegs(false);
+    }
+  };
+
+  const confirmCompleteSession = async () => {
+    if (!completeTarget) return;
+    const { id } = completeTarget;
+    closeCompleteModal();
+    setActionId(id);
+    setCompleting(true);
+    try {
+      await sessionsAdminApi.complete(id);
+      toast.success("Đã hoàn thành và khoá buổi đánh!");
+      fetchSessions();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Thất bại");
+    } finally {
+      setActionId(null);
+      setCompleting(false);
+    }
+  };
+
+  const completePending = completeRegs.filter(
+    (r) =>
+      r.payment_status === "pending" &&
+      r.participation_status === "confirmed" &&
+      r.amount_override != null &&
+      !r.payment_reference &&
+      r.payment_method !== "cash" &&
+      r.payment_method !== "grouped_with_host" &&
+      r.payment_method !== "wallet_grouped" &&
+      r.payment_method !== "wallet_pending_confirm",
+  );
+
+  const completeHostRegs = completeRegs.filter((r) => !r.host_registration_id);
+  const completeGuestsOf = (hostId: string) =>
+    completeRegs.filter((r) => r.host_registration_id === hostId);
+
+  const buildCompletePendingSummary = () => {
+    const pendingIds = new Set(completePending.map((r) => r.id));
+
+    const rows = completeHostRegs
+      .map((host) => {
+        const nestedGuests = completeGuestsOf(host.id).filter((g) =>
+          pendingIds.has(g.id),
+        );
+        const hostPending = pendingIds.has(host.id);
+        if (!hostPending && nestedGuests.length === 0) return null;
+        return { host, hostPending, nestedGuests };
+      })
+      .filter(Boolean) as { host: any; hostPending: boolean; nestedGuests: any[] }[];
+
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-gray-600">
+          Có <strong className="text-gray-900">{completePending.length}</strong>{" "}
+          người đang "Chờ thanh toán" sẽ được tự động xác nhận:
+        </p>
+        <ul className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+          {rows.map(({ host, hostPending, nestedGuests }) => {
+            const name = host.is_guest ? host.guest_full_name : host.users?.full_name;
+            const isIndependentGuest = host.is_guest && !host.user_id;
+            const isMember = Boolean(host.user_id) && !host.is_guest;
+
+            return (
+              <li key={host.id} className="text-sm text-gray-700">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-medium text-gray-900">{name}</span>
+
+                  {isIndependentGuest && hostPending && (
+                    <>
+                      <span className="text-gray-400 text-xs">— Đang chờ thanh toán</span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                        💵 Tiền mặt
+                      </span>
+                    </>
+                  )}
+
+                  {isMember && hostPending && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                      <Wallet className="w-2.5 h-2.5" /> Ví BNB
+                    </span>
+                  )}
+                </div>
+
+                {nestedGuests.length > 0 && (
+                  <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-gray-100">
+                    {nestedGuests.map((g) => (
+                      <li
+                        key={g.id}
+                        className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
+                      >
+                        <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                        <span>{g.is_guest ? g.guest_full_name : g.users?.full_name}</span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700">
+                          <Wallet className="w-2.5 h-2.5" /> Ví BNB của {name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
   };
 
   return (
@@ -435,7 +580,7 @@ export default function SessionsPage() {
                         ) : action === "complete" ? (
                           <button
                             key="complete"
-                            onClick={() => handleComplete(s.id, s.title)}
+                            onClick={() => openCompleteModal(s.id, s.title)}
                             disabled={busy}
                             className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap ${cls}`}
                           >
@@ -634,6 +779,76 @@ export default function SessionsPage() {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   Xác nhận hủy buổi
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {completeTarget &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{
+              background: "rgba(0,0,0,0.4)",
+              backdropFilter: "blur(2px)",
+              opacity: completeModalVisible ? 1 : 0,
+              transition: "opacity 200ms ease-out",
+            }}
+            onClick={closeCompleteModal}
+          >
+            <div
+              className="bg-white rounded-2xl w-full max-w-md shadow-xl"
+              style={{
+                transform: completeModalVisible
+                  ? "scale(1) translateY(0)"
+                  : "scale(0.95) translateY(8px)",
+                opacity: completeModalVisible ? 1 : 0,
+                transition:
+                  "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <h3 className="font-bold text-gray-900">Hoàn thành buổi đánh?</h3>
+                </div>
+                <button
+                  onClick={closeCompleteModal}
+                  className="p-1 text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-5 text-sm text-gray-500">
+                {loadingCompleteRegs ? (
+                  <div className="flex items-center justify-center py-6 gap-2 text-gray-400">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+                  </div>
+                ) : completePending.length > 0 ? (
+                  buildCompletePendingSummary()
+                ) : (
+                  "Xác nhận hoàn thành buổi đánh? Buổi sẽ bị khoá lại."
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+                <button onClick={closeCompleteModal} className="btn-secondary text-sm">
+                  Hủy
+                </button>
+                <button
+                  onClick={confirmCompleteSession}
+                  disabled={completing || loadingCompleteRegs}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  {completing && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Xác nhận
                 </button>
               </div>
             </div>

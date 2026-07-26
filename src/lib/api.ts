@@ -9,7 +9,6 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Gắn access_token vào mọi request
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
   if (token) {
@@ -74,7 +73,7 @@ api.interceptors.response.use(
       }
     }
 
-    if (!isAuthEndpoint && status !== 401) {
+    if (!isAuthEndpoint && status !== 401 && !original?.skipErrorToast) {
       const msg = error.response?.data?.message;
       const text = Array.isArray(msg) ? msg[0] : msg;
       if (text) toast.error(text);
@@ -165,7 +164,7 @@ export const registrationsApi = {
       notes?: string;
     },
   ) => api.post(`/registrations/${registrationId}/guests`, data),
-  getDetail: (id: string) => api.get(`/registrations/${id}`),
+  getDetail: (id: string) => api.get(`/registrations/${id}`, { skipErrorToast: true } as any),
 };
 
 export const rankingsApi = {
@@ -284,7 +283,9 @@ export const activitiesApi = {
     data: { method: "wallet" | "transfer" | "cash" },
   ) => api.post(`/registrations/${registrationId}/tournament-payment`, data),
   getShirtOrderRegistrationDetail: (regId: string) =>
-    api.get(`/activities/shirt-order-registrations/${regId}`),
+    api.get(`/activities/shirt-order-registrations/${regId}`, {
+      skipErrorToast: true,
+    } as any),
   cancelRegistration(activityId: string, registrationId?: string) {
     return api.delete(`/activities/${activityId}/register`, {
       params: {
@@ -361,7 +362,7 @@ export const registrationsAdminApi = {
     api.patch(`/registrations/${id}/checkin-present`),
   checkinAbsent: (id: string) =>
     api.patch(`/registrations/${id}/checkin-absent`),
-  getAdminDetail: (id: string) => api.get(`/registrations/${id}/admin-detail`),
+  getAdminDetail: (id: string) => api.get(`/registrations/${id}/admin-detail`, { skipErrorToast: true } as any),
 };
 
 export const matchesAdminApi = {

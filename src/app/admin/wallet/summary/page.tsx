@@ -124,11 +124,10 @@ function MemberMobileCard({
     <button
       onClick={onSelect}
       style={{ animationDelay: `${delay}ms` }}
-      className={`w-full flex items-start gap-3 px-4 py-3.5 text-left rounded-2xl bg-white border transition-all duration-150 active:scale-[0.98] animate-row-fade ${
-        active
-          ? "border-blue-300 ring-2 ring-blue-100 shadow-lg"
-          : "border-gray-100 shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.1)]"
-      }`}
+      className={`w-full flex items-start gap-3 px-4 py-3.5 text-left rounded-2xl bg-white border transition-all duration-150 active:scale-[0.98] animate-row-fade ${active
+        ? "border-blue-300 ring-2 ring-blue-100 shadow-lg"
+        : "border-gray-100 shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.1)]"
+        }`}
     >
       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 overflow-hidden">
         {m.avatar_url ? (
@@ -175,11 +174,13 @@ function MemberPanel({
   onClose,
   onChanged,
   onSelectTx,
+  onTransactionsLoaded,
 }: {
   member: any;
   onClose: () => void;
   onChanged: (newBalance?: number) => void;
   onSelectTx: (tx: any) => void;
+  onTransactionsLoaded: (transactions: any[]) => void;
 }) {
   const [showTopup, setShowTopup] = useState(false);
   const [showAdjust, setShowAdjust] = useState(false);
@@ -202,11 +203,13 @@ function MemberPanel({
       const { data } = await walletAdminApi.getMemberTransactions(member.id, {
         limit: 20,
       });
+      const tx = data.data ?? [];
       setTransactions(data.data ?? []);
+      onTransactionsLoaded(tx);
     } finally {
       setLoadingTx(false);
     }
-  }, [member.id]);
+  }, [member.id, onTransactionsLoaded]);
 
   useEffect(() => {
     fetchTx();
@@ -229,10 +232,10 @@ function MemberPanel({
       const { data } = isTopup
         ? await walletAdminApi.manualTopup(member.id, amount, note || undefined)
         : await walletAdminApi.manualAdjust(
-            member.id,
-            amount,
-            note || undefined,
-          );
+          member.id,
+          amount,
+          note || undefined,
+        );
 
       toast.success("Đã cập nhật số dư");
       closeForm();
@@ -320,9 +323,8 @@ function MemberPanel({
       </div>
 
       <div
-        className={`grid transition-[grid-template-rows] duration-300 ease-out flex-shrink-0 ${
-          formOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-        }`}
+        className={`grid transition-[grid-template-rows] duration-300 ease-out flex-shrink-0 ${formOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          }`}
       >
         <div className="overflow-hidden">
           <div className="px-4 sm:px-5 py-3 bg-blue-50 border-b border-blue-100">
@@ -337,11 +339,10 @@ function MemberPanel({
                   <button
                     type="button"
                     onClick={toggleSign}
-                    className={`flex-shrink-0 w-11 rounded-lg border text-base font-bold transition-colors ${
-                      isNegativeAmount
-                        ? "bg-red-50 border-red-300 text-red-600"
-                        : "bg-emerald-50 border-emerald-300 text-emerald-600"
-                    }`}
+                    className={`flex-shrink-0 w-11 rounded-lg border text-base font-bold transition-colors ${isNegativeAmount
+                      ? "bg-red-50 border-red-300 text-red-600"
+                      : "bg-emerald-50 border-emerald-300 text-emerald-600"
+                      }`}
                     title={
                       isNegativeAmount
                         ? "Đang trừ tiền — bấm để đổi thành cộng"
@@ -458,6 +459,7 @@ export default function WalletAdminSummaryPage() {
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("balance");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [memberTransactions, setMemberTransactions] = useState<any[]>([]);
   const perPage = 8;
 
   const [panelMember, setPanelMember] = useState<any | null>(null);
@@ -766,9 +768,8 @@ export default function WalletAdminSummaryPage() {
             </div>
 
             <div
-              className={`transition-opacity duration-200 ${
-                refreshing ? "opacity-50 pointer-events-none" : "opacity-100"
-              }`}
+              className={`transition-opacity duration-200 ${refreshing ? "opacity-50 pointer-events-none" : "opacity-100"
+                }`}
             >
               <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm min-w-[640px]">
@@ -899,7 +900,6 @@ export default function WalletAdminSummaryPage() {
                 </table>
               </div>
 
-              {/* Mobile: card list */}
               <div className="sm:hidden flex flex-col gap-2.5 px-3 py-3">
                 {loading ? (
                   [...Array(5)].map((_, i) => (
@@ -969,9 +969,8 @@ export default function WalletAdminSummaryPage() {
           {panelMember && (
             <>
               <div
-                className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-250 ${
-                  panelOpen ? "opacity-100" : "opacity-0"
-                }`}
+                className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-250 ${panelOpen ? "opacity-100" : "opacity-0"
+                  }`}
                 style={{ touchAction: "none" }}
                 onClick={() => setSelectedMember(null)}
               />
@@ -982,11 +981,10 @@ export default function WalletAdminSummaryPage() {
           transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform
           w-full h-[85dvh] max-h-[85dvh] rounded-t-2xl
           lg:w-[480px] lg:h-[85vh] lg:max-h-[720px] lg:rounded-2xl
-          ${
-            panelOpen
-              ? "translate-y-0 opacity-100 lg:scale-100"
-              : "translate-y-full opacity-0 lg:translate-y-0 lg:scale-95"
-          }`}
+          ${panelOpen
+                      ? "translate-y-0 opacity-100 lg:scale-100"
+                      : "translate-y-full opacity-0 lg:translate-y-0 lg:scale-95"
+                    }`}
                 >
                   <div className="lg:hidden flex justify-center pt-2 pb-1 flex-shrink-0">
                     <span className="w-10 h-1 rounded-full bg-gray-200" />
@@ -1005,6 +1003,7 @@ export default function WalletAdminSummaryPage() {
                         fetchSummary();
                       }}
                       onSelectTx={(tx) => setSelectedTx(tx)}
+                      onTransactionsLoaded={setMemberTransactions}
                     />
                   </div>
                 </div>
@@ -1015,6 +1014,7 @@ export default function WalletAdminSummaryPage() {
             <AdminTransactionDetailModal
               tx={selectedTx}
               onClose={() => setSelectedTx(null)}
+              transactions={memberTransactions}
             />
           )}
         </div>
