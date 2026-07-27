@@ -147,15 +147,19 @@ export function HandbookModal({ open, onClose }: { open: boolean; onClose: () =>
     const canGoBack = view.screen === "page" || (view.screen === "toc" && !!tree?.cover);
 
     return createPortal(
-        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-0 sm:p-4">
             <div
                 className={`absolute inset-0 bg-black/50 transition-opacity duration-250 ${closing ? "opacity-0" : "opacity-100"
                     }`}
                 style={{ animation: closing ? undefined : "handbookFadeIn 0.25s ease-out" }}
             />
             <div
-                className={`relative w-[94%] sm:w-full sm:max-w-md mx-auto h-[94vh] sm:h-[90vh] bg-[#F4F6FA] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col ${closing ? "animate-handbook-out" : "animate-handbook-in"
+                className={`relative w-[94%] sm:w-full sm:max-w-md mx-auto bg-[#F4F6FA] rounded-3xl overflow-hidden flex flex-col ${closing ? "animate-handbook-out" : "animate-handbook-in"
                     }`}
+                style={{
+                    height: "min(94dvh, 100%)",
+                    maxHeight: "94dvh",
+                }}
             >
                 <div
                     className={

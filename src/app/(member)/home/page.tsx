@@ -525,13 +525,13 @@ export default function HomePage() {
           </section>
         )}
 
-        <UpcomingEvents />
-
         <UpcomingSessionsSection
           upcoming={upcoming}
           loading={loading}
           onOpenParticipants={openParticipants}
         />
+
+        <UpcomingEvents />
 
         <HandbookModal open={handbookOpen} onClose={() => setHandbookOpen(false)} />
 
