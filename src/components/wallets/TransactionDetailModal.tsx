@@ -85,9 +85,11 @@ export function TransactionDetailModal({
     typeof t.description === 'string' && tx.title && t.description.includes(tx.title)
   );
 
-
   const isReversed =
     isSessionPayment && (isRefunded || (!loadingDetail && (!reg || reg.payment_status !== "confirmed")));
+
+  const sessionStatus = reg?.sessions?.status;
+  const isSessionCancelled = sessionStatus === "cancelled";
 
   const displaySessionTitle = hasSnapshot
     ? tx.metadata.session_title
@@ -430,7 +432,9 @@ export function TransactionDetailModal({
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-white/70">
               <Ban className="w-6 h-6 text-gray-400" />
               <p className="text-base font-bold text-gray-600 text-center px-6">
-                Buổi đánh đã bị hủy
+                {isSessionCancelled
+                  ? "Buổi đánh đã bị hủy"
+                  : "Hóa đơn đã được hoàn tác"}
               </p>
               <p className="text-sm font-semibold text-emerald-600">
                 Đã hoàn tiền
