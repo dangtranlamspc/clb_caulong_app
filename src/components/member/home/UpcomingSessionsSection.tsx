@@ -13,6 +13,11 @@ import {
     Loader2,
     UserPlus,
     X as XIcon,
+    AlertCircle,
+    CheckCircle2,
+    Clock3,
+    Hourglass,
+    CreditCard,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
@@ -29,7 +34,44 @@ const SKILL_OPTIONS = [
     { value: "chuyen_nghiep", label: "Chuyên nghiệp" },
 ];
 
-// Cùng logic với statusPillLabel / statusPillCls trong SessionDetailPage
+const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
+    pending_approval: {
+        label: "Chờ admin duyệt",
+        icon: Hourglass,
+        cls: "bg-orange-50 text-orange-600 border-orange-200",
+    },
+    awaiting_checkin: {
+        label: "Chờ điểm danh",
+        icon: Hourglass,
+        cls: "bg-slate-50 text-slate-600 border-slate-200",
+    },
+    awaiting_finish: {
+        label: "Chờ buổi đánh kết thúc",
+        icon: Hourglass,
+        cls: "bg-slate-50 text-slate-600 border-slate-200",
+    },
+    // pending: {
+    //     label: "Chờ thanh toán",
+    //     icon: Hourglass,
+    //     cls: "bg-amber-50 text-amber-700 border-amber-200",
+    // },
+    pending_review: {
+        label: "Chờ admin xác nhận",
+        icon: Clock3,
+        cls: "bg-blue-50 text-blue-700 border-blue-200",
+    },
+    confirmed: {
+        label: "Đã xác nhận thanh toán",
+        icon: CheckCircle2,
+        cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    },
+    rejected: {
+        label: "Thanh toán bị từ chối",
+        icon: AlertCircle,
+        cls: "bg-red-50 text-red-500 border-red-200",
+    },
+};
+
 function getSessionStatusBadge(s: any) {
     const myReg = s.my_registration;
     const effectiveStatus = s.status;
@@ -428,6 +470,23 @@ export function UpcomingSessionsSection({
         };
     }, [user?.id, localSessions.map((s) => s.id).join(","), refetchSession]);
 
+    useEffect(() => {
+        if (localSessions.length === 0) return;
+
+        const channels = localSessions.map((s) =>
+            supabase
+                .channel(`session:${s.id}`)
+                .on("broadcast", { event: "session_updated" }, () => {
+                    refetchSession(s.id);
+                })
+                .subscribe(),
+        );
+
+        return () => {
+            channels.forEach((c) => supabase.removeChannel(c));
+        };
+    }, [localSessions.map((s) => s.id).join(","), refetchSession]);
+
     const handleRegister = async (sessionId: string) => {
         if (registeringId) return;
         setRegisteringId(sessionId);
@@ -524,8 +583,31 @@ export function UpcomingSessionsSection({
                         const canRegister = s.status === "open" && !isFull && !myReg;
                         const canAddCompanion =
                             myReg && (s.status === "open" || s.status === "full");
+                        const canPay =
+                            myReg &&
+                            myReg.amount_override > 0 &&
+                            myReg.payment_status === "pending" &&
+                            !myReg.payment_reference &&
+                            myReg.participation_status === "confirmed";
                         const statusBadge = myReg ? getSessionStatusBadge(s) : null;
                         const isRegisteringThis = registeringId === s.id;
+
+                        const effectiveStatus =
+                            myReg?.participation_status === "pending_approval"
+                                ? "pending_approval"
+                                : myReg?.participation_status === "awaiting_checkin"
+                                    ? "awaiting_checkin"
+                                    : myReg?.payment_status === "pending" &&
+                                        myReg?.amount_override == null
+                                        ? "awaiting_finish"
+                                        : myReg?.payment_status === "pending" &&
+                                            myReg?.payment_reference
+                                            ? "pending_review"
+                                            : myReg?.payment_status;
+                        const regCfg = effectiveStatus
+                            ? (REG_CFG[effectiveStatus] ?? REG_CFG.pending)
+                            : null;
+                        const RegIcon = regCfg?.icon;
 
                         return (
                             <div
@@ -541,18 +623,9 @@ export function UpcomingSessionsSection({
                                 <Link href={`/sessions/${s.id}`}>
                                     <div className="flex items-start justify-between gap-3 active:scale-99 transition-transform">
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="font-semibold text-gray-900 text-sm truncate">
-                                                    {s.title}
-                                                </p>
-                                                {statusBadge && (
-                                                    <span
-                                                        className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge.cls}`}
-                                                    >
-                                                        {statusBadge.label}
-                                                    </span>
-                                                )}
-                                            </div>
+                                            <p className="font-semibold text-gray-900 text-sm truncate">
+                                                {s.title}
+                                            </p>
                                             <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2 text-xs text-gray-400">
                                                 <span className="flex items-center gap-1">
                                                     <CalendarDays className="w-3 h-3" />
@@ -603,21 +676,39 @@ export function UpcomingSessionsSection({
                                                 </span>
                                             )}
                                         </div>
+                                        {statusBadge && (
+                                            <span
+                                                className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge.cls}`}
+                                            >
+                                                {statusBadge.label}
+                                            </span>
+                                        )}
                                     </div>
                                 </Link>
 
-                                <div className="flex items-center justify-between mt-5">
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            onOpenParticipants(s.id, s.title);
-                                        }}
-                                        className="h-9 pl-3 pr-3.5 rounded-full bg-blue-50 flex items-center gap-1.5 active:scale-90 transition-transform"
-                                    >
-                                        <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                                        <span className="text-xs font-bold text-blue-600">{filled ?? 0}</span>
-                                    </button>
+                                <div className="flex items-center justify-between mt-5 gap-2">
+                                    <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                onOpenParticipants(s.id, s.title);
+                                            }}
+                                            className="h-9 pl-3 pr-3.5 rounded-full bg-blue-50 flex items-center gap-1.5 active:scale-90 transition-transform flex-shrink-0"
+                                        >
+                                            <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                            <span className="text-xs font-bold text-blue-600">{filled ?? 0}</span>
+                                        </button>
+
+                                        {myReg && regCfg && (
+                                            <span
+                                                className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${regCfg.cls}`}
+                                            >
+                                                <RegIcon className="w-3.5 h-3.5" />
+                                                {regCfg.label}
+                                            </span>
+                                        )}
+                                    </div>
 
                                     {canRegister ? (
                                         <button
@@ -629,8 +720,8 @@ export function UpcomingSessionsSection({
                                             }}
                                             disabled={isRegisteringThis}
                                             className={`flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white bg-blue-600 shadow-sm shadow-blue-200 active:scale-95 transition-all duration-300 ease-out overflow-hidden ${isRegisteringThis
-                                                    ? "w-9 h-9 rounded-full gap-0 p-0"
-                                                    : "w-auto h-9 gap-1.5 px-4 rounded-full"
+                                                ? "w-9 h-9 rounded-full gap-0 p-0"
+                                                : "w-auto h-9 gap-1.5 px-4 rounded-full"
                                                 }`}
                                             style={{
                                                 transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -642,6 +733,14 @@ export function UpcomingSessionsSection({
                                                 "Đăng ký ngay"
                                             )}
                                         </button>
+                                    ) : canPay ? (
+                                        <Link
+                                            href={`/sessions/${s.id}`}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 shadow-sm shadow-red-200 active:scale-95 transition-all px-4 h-9 rounded-full animate-pulse"
+                                        >
+                                            <CreditCard className="w-3.5 h-3.5" /> Thanh toán ngay
+                                        </Link>
                                     ) : canAddCompanion ? (
                                         <button
                                             onClick={(e) => {

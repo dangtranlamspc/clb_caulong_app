@@ -24,9 +24,13 @@ import {
   Gift,
   BarChart3,
   Loader2,
+  Copy,
+  Download,
+  Wallet,
+  XIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
-import { sessionsApi, matchesApi, activitiesApi } from "@/lib/api";
+import { sessionsApi, matchesApi, activitiesApi, registrationsApi, walletApi } from "@/lib/api";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
@@ -34,6 +38,8 @@ import { PaymentModal } from "@/components/member/payments/PaymentModal";
 import { MembersModal } from "@/components/member/modals/MemberModalConponent";
 import { useRouter } from "next/navigation";
 import { EventSkeleton, MatchSkeleton, SessionSkeleton, SkeletonList } from "@/components/skeletons/Skeleton";
+import { buildTransferNote } from "@/hooks/payment-ref";
+import toast from "react-hot-toast";
 
 type MainTab = "sessions" | "matches" | "events";
 
@@ -289,6 +295,23 @@ function EnergyBar({
   );
 }
 
+const BANK_DISPLAY_NAMES: Record<string, string> = {
+  MB: "MB Bank",
+  VCB: "Vietcombank",
+  TCB: "Techcombank",
+  ACB: "ACB",
+  BIDV: "BIDV",
+  VTB: "VietinBank",
+  TPB: "TPBank",
+  STB: "Sacombank",
+  VPB: "VPBank",
+  MSB: "MSB",
+};
+
+function fmt(n: number) {
+  return Math.round(n ?? 0).toLocaleString("vi-VN") + "đ";
+}
+
 function energyTextCls(ratio: number, dimmed = false) {
   if (dimmed) return "text-gray-400 font-medium";
   if (ratio >= 1) return "text-red-500 font-medium";
@@ -296,7 +319,397 @@ function energyTextCls(ratio: number, dimmed = false) {
   return "text-emerald-600";
 }
 
-function SessionsTab() {
+function SessionPaymentModal({
+  session,
+  reg,
+  userFullName,
+  onClose,
+  onSuccess,
+}: {
+  session: any;
+  reg: any;
+  userFullName: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const router = useRouter();
+  const [visible, setVisible] = useState(false);
+  const [loadingGuests, setLoadingGuests] = useState(true);
+  const [myGuests, setMyGuests] = useState<any[]>([]);
+  const [payType, setPayType] = useState<"solo" | "grouped" | null>(null);
+  const [payMethod, setPayMethod] = useState<"choose" | "transfer" | "cash" | "wallet">("choose");
+  const [submittingPay, setSubmittingPay] = useState(false);
+  const [sendingCash, setSendingCash] = useState(false);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  useEffect(() => {
+    setLoadingGuests(true);
+    registrationsApi
+      .listBySession(session.id)
+      .then(({ data }) => {
+        const guests = (data.data ?? []).filter(
+          (r: any) => r.host_registration_id === reg.id,
+        );
+        setMyGuests(guests);
+        if (guests.length === 0) setPayType("solo");
+      })
+      .finally(() => setLoadingGuests(false));
+  }, [session.id, reg.id]);
+
+  const close = () => {
+    setVisible(false);
+    setTimeout(onClose, 250);
+  };
+
+  const guestTotal = myGuests.reduce(
+    (sum: number, g: any) => sum + (g.amount_override ?? 0),
+    0,
+  );
+  const soloAmount = reg.amount_override ?? 0;
+  const groupedAmount = soloAmount + guestTotal;
+
+  const companionName = (g: any) =>
+    g.is_guest ? g.guest_full_name : g.users?.full_name;
+  const hasMemberCompanion = myGuests.some((g: any) => !g.is_guest);
+  const companionLabel = hasMemberCompanion ? "người đi cùng" : "khách đi cùng";
+
+  const goToBill = (method: string) => {
+    close();
+    router.push(`/sessions/${session.id}/bill?method=${method}`);
+  };
+
+  const amt = payType === "grouped" ? groupedAmount : soloAmount;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 flex flex-col justify-end"
+      style={{
+        zIndex: 99999,
+        background: visible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+        backdropFilter: visible ? "blur(2px)" : "none",
+        transition: "background .3s, backdrop-filter .3s",
+      }}
+      onClick={(e) => e.target === e.currentTarget && close()}
+    >
+      <div
+        className="w-full bg-white rounded-t-2xl"
+        style={{
+          maxHeight: "90vh",
+          overflowY: "auto",
+          paddingBottom: "env(safe-area-inset-bottom)",
+          transform: visible ? "translateY(0)" : "translateY(100%)",
+          transition: "transform .3s cubic-bezier(0.32,0.72,0,1)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-9 h-1 rounded-full bg-gray-200" />
+        </div>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+          <div>
+            <p className="text-sm font-bold text-gray-900">
+              {!payType
+                ? "Chọn hình thức thanh toán"
+                : payMethod === "choose"
+                  ? "Chọn phương thức"
+                  : payMethod === "transfer"
+                    ? "Chuyển khoản"
+                    : payMethod === "wallet"
+                      ? "Trừ ví BNB"
+                      : "Tiền mặt"}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">{session.title}</p>
+          </div>
+          <button onClick={close} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
+            <XIcon className="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-4">
+          {loadingGuests ? (
+            <div className="py-10 flex justify-center">
+              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <>
+              {!payType && myGuests.length > 0 && (
+                <div className="space-y-3" style={{ animation: "fadeSlideUp .25s ease both" }}>
+                  <p className="text-xs text-gray-500 font-medium">Bạn muốn thanh toán:</p>
+                  <button
+                    onClick={() => { setPayType("solo"); setPayMethod("choose"); }}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-xl">👤</div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Tiền của riêng tôi</p>
+                      <p className="text-lg font-black text-blue-600 mt-0.5">{fmt(soloAmount)}</p>
+                      <p className="text-xs text-gray-400">
+                        {companionLabel.charAt(0).toUpperCase() + companionLabel.slice(1)} ({myGuests.map(companionName).join(", ")}) tự thanh toán riêng
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => { setPayType("grouped"); setPayMethod("choose"); }}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-purple-400 hover:bg-purple-50 transition-colors text-left"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center text-xl">👥</div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Gộp cả {companionLabel}</p>
+                      <p className="text-lg font-black text-purple-600 mt-0.5">{fmt(groupedAmount)}</p>
+                      <p className="text-xs text-gray-400">
+                        Bao gồm: {myGuests.map((g: any) => `${companionName(g)} (${fmt(g.amount_override ?? 0)})`).join(", ")}
+                      </p>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {payType && (
+                <div key={payType} style={{ animation: "fadeSlideUp .25s ease both" }}>
+                  <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
+                    <span className="text-sm text-gray-600">Số tiền thanh toán</span>
+                    <span className="text-lg font-black text-red-600">{fmt(amt)}</span>
+                  </div>
+
+                  {payMethod === "choose" && (
+                    <div className="space-y-3 mt-4" key="choose" style={{ animation: "fadeSlideUp .25s ease both" }}>
+                      <button
+                        onClick={() => setPayMethod("wallet")}
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                      >
+                        <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <Wallet className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">Ví BNB</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Trừ thẳng vào số dư ví — xác nhận ngay lập tức</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => setPayMethod("transfer")}
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
+                      >
+                        <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-xl">🏦</div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">Chuyển khoản</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Quét QR VietQR, gửi ảnh bill xác nhận</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => setPayMethod("cash")}
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors text-left"
+                      >
+                        <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center text-xl">💵</div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">Tiền mặt</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Thông báo admin, nộp tiền trực tiếp</p>
+                        </div>
+                      </button>
+                      {myGuests.length > 0 && (
+                        <button onClick={() => setPayType(null)} className="w-full py-2 text-xs text-gray-400 hover:text-gray-600">
+                          ← Quay lại chọn kiểu thanh toán
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {payMethod === "wallet" && (
+                    <div className="space-y-4 mt-4" key="wallet" style={{ animation: "fadeSlideUp .25s ease both" }}>
+                      <div className="bg-blue-50 rounded-xl p-4">
+                        <p className="text-sm font-semibold text-blue-900 mb-1 flex items-center gap-2">
+                          <Wallet className="w-4 h-4" /> Thanh toán bằng Ví BNB
+                        </p>
+                        <p className="text-xs text-blue-600">Số dư ví sẽ bị trừ ngay lập tức. Admin không cần duyệt thêm.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => setPayMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                          Quay lại
+                        </button>
+                        <button
+                          onClick={async () => {
+                            setSubmittingPay(true);
+                            try {
+                              if (myGuests.length > 0) {
+                                await walletApi.confirmGuestPayment(reg.id, payType === "grouped" ? "grouped" : "separate");
+                              } else {
+                                await walletApi.payRegistration(reg.id);
+                              }
+                              toast.success("Đã thanh toán bằng ví BNB!");
+                              onSuccess();
+                              goToBill("wallet");
+                            } catch (err: any) {
+                              toast.error(err?.response?.data?.message ?? "Thanh toán thất bại");
+                            } finally {
+                              setSubmittingPay(false);
+                            }
+                          }}
+                          disabled={submittingPay}
+                          className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
+                        >
+                          {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                          <Wallet className="w-3.5 h-3.5" /> Xác nhận trừ ví
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {payMethod === "transfer" && (() => {
+                    const ref = buildTransferNote(userFullName ?? "", session.title, session.scheduled_at);
+                    const bankId = process.env.NEXT_PUBLIC_BANK_ID ?? "MB";
+                    const bankAccount = process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "0000000000";
+                    const bankAccountName = process.env.NEXT_PUBLIC_BANK_NAME ?? "CLB CAU LONG";
+                    const bankDisplayName = BANK_DISPLAY_NAMES[bankId] ?? bankId;
+                    const qr = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${amt}&addInfo=${encodeURIComponent(ref)}&accountName=${encodeURIComponent(bankAccountName)}`;
+
+                    const handleCopyContent = () => {
+                      navigator.clipboard.writeText(ref);
+                      toast.success("Đã copy nội dung chuyển khoản");
+                    };
+                    const handleSaveQr = async () => {
+                      try {
+                        const res = await fetch(qr);
+                        const blob = await res.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `vietqr-${ref}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                      } catch {
+                        toast.error("Không thể lưu ảnh, vui lòng chụp màn hình");
+                      }
+                    };
+                    const handleConfirmTransferred = async () => {
+                      setSubmittingPay(true);
+                      try {
+                        await registrationsApi.submitPayment(reg.id, {
+                          payment_reference: ref,
+                          pay_type: payType as "solo" | "grouped",
+                          grouped_amount: payType === "grouped" ? groupedAmount : undefined,
+                        });
+                        toast.success("Đã ghi nhận, chờ admin xác nhận!");
+                        onSuccess();
+                        goToBill("transfer");
+                      } catch {
+                        toast.error("Gửi thất bại");
+                      } finally {
+                        setSubmittingPay(false);
+                      }
+                    };
+
+                    return (
+                      <div className="space-y-4 mt-4" key="transfer" style={{ animation: "fadeSlideUp .25s ease both" }}>
+                        <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
+                          <p className="text-xs text-gray-400">Quét mã QR để thanh toán</p>
+                          <img src={qr} alt="VietQR" className="w-48 h-48 object-contain"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        </div>
+                        <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
+                          <div className="flex justify-between px-4 py-2.5">
+                            <span className="text-gray-500">Ngân hàng</span>
+                            <span className="font-semibold text-gray-900">{bankDisplayName}</span>
+                          </div>
+                          <div className="flex justify-between px-4 py-2.5">
+                            <span className="text-gray-500">Số tài khoản</span>
+                            <span className="font-semibold text-gray-900">{bankAccount}</span>
+                          </div>
+                          <div className="flex justify-between px-4 py-2.5">
+                            <span className="text-gray-500">Tên tài khoản</span>
+                            <span className="font-semibold text-gray-900">{bankAccountName}</span>
+                          </div>
+                          <div className="flex justify-between px-4 py-2.5">
+                            <span className="text-gray-500">Số tiền</span>
+                            <span className="font-bold text-red-600">{fmt(amt)}</span>
+                          </div>
+                          <div className="px-4 py-2.5">
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Nội dung CK</span>
+                              <span className="font-mono font-semibold text-gray-900">{ref}</span>
+                            </div>
+                            <p className="text-[11px] text-gray-400 mt-1">Nội dung chuyển khoản là bắt buộc</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={handleCopyContent} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            <Copy className="w-3.5 h-3.5" /> Sao chép nội dung
+                          </button>
+                          <button onClick={handleSaveQr} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            <Download className="w-3.5 h-3.5" /> Lưu QR
+                          </button>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => setPayMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                            Quay lại
+                          </button>
+                          <button
+                            onClick={handleConfirmTransferred}
+                            disabled={submittingPay}
+                            className="flex-[2] py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5 transition-colors"
+                          >
+                            {submittingPay && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Tôi đã chuyển khoản
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {payMethod === "cash" && (
+                    <div className="space-y-4 mt-4" key="cash" style={{ animation: "fadeSlideUp .25s ease both" }}>
+                      <div className="bg-green-50 rounded-xl p-4">
+                        <p className="text-sm font-semibold text-green-800 mb-1">💵 Thanh toán tiền mặt</p>
+                        <p className="text-xs text-green-600">Admin sẽ xác nhận sau khi nhận tiền trực tiếp.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => setPayMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                          Quay lại
+                        </button>
+                        <button
+                          onClick={async () => {
+                            setSendingCash(true);
+                            try {
+                              await registrationsApi.requestCash(reg.id, {
+                                pay_type: payType as "solo" | "grouped",
+                                grouped_amount: payType === "grouped" ? groupedAmount : undefined,
+                              });
+                              toast.success("Đã thông báo admin!");
+                              onSuccess();
+                              goToBill("cash");
+                            } catch {
+                              toast.error("Gửi thất bại");
+                            } finally {
+                              setSendingCash(false);
+                            }
+                          }}
+                          disabled={sendingCash}
+                          className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                        >
+                          {sendingCash && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Thông báo admin
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function SessionsTab({
+  onPendingBillsChange,
+}: {
+  onPendingBillsChange: (count: number) => void;
+}) {
   const { user } = useAuthStore();
   const router = useRouter();
   const [sessions, setSessions] = useState<any[]>([]);
@@ -313,6 +726,10 @@ function SessionsTab() {
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
+
+
+  const pendingBillsSeqRef = useRef(0);
+  const pendingBillsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openSheet = () => {
     setSheetOpen(true);
@@ -368,8 +785,10 @@ function SessionsTab() {
   }, [filter]);
 
   const fetchPendingBills = useCallback(async () => {
+    const mySeq = ++pendingBillsSeqRef.current;
     try {
       const { data } = await sessionsApi.list({ limit: 50 });
+      if (mySeq !== pendingBillsSeqRef.current) return;
       const bills = (data.data ?? []).filter(
         (s: any) =>
           s.my_registration?.amount_override > 0 &&
@@ -377,8 +796,14 @@ function SessionsTab() {
           !s.my_registration?.payment_reference,
       );
       setPendingBills(bills);
+      onPendingBillsChange(bills.length);
     } catch { }
-  }, []);
+  }, [onPendingBillsChange]);
+
+  const scheduleFetchPendingBills = useCallback(() => {
+    if (pendingBillsDebounceRef.current) clearTimeout(pendingBillsDebounceRef.current);
+    pendingBillsDebounceRef.current = setTimeout(fetchPendingBills, 300);
+  }, [fetchPendingBills]);
 
   useEffect(() => {
     fetchPendingBills();
@@ -398,7 +823,7 @@ function SessionsTab() {
         { event: "*", schema: "public", table: "registrations" },
         () => {
           fetchSessions();
-          fetchPendingBills();
+          scheduleFetchPendingBills();
         },
       )
       .on(
@@ -406,15 +831,16 @@ function SessionsTab() {
         { event: "*", schema: "public", table: "sessions" },
         () => {
           fetchSessions();
-          fetchPendingBills();
+          scheduleFetchPendingBills();
         },
       )
       .subscribe();
 
     return () => {
+      if (pendingBillsDebounceRef.current) clearTimeout(pendingBillsDebounceRef.current);
       supabase.removeChannel(channel);
     };
-  }, [user?.id, fetchSessions, fetchPendingBills]);
+  }, [user?.id, fetchSessions, scheduleFetchPendingBills]);
 
   useEffect(() => {
     document.body.style.overflow = sheetOpen ? "hidden" : "";
@@ -455,35 +881,29 @@ function SessionsTab() {
         </div>
       </button>
 
-      {pendingBills.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-red-500 flex items-center gap-1">
-            💳 Cần thanh toán ({pendingBills.length})
-          </p>
-          {pendingBills.map((s) => (
-            <Link key={s.id} href={`/sessions/${s.id}`} className="block">
-              <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl px-4 py-3 active:bg-red-100 transition-colors">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    {s.title}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {format(new Date(s.scheduled_at), "EEE dd/MM", {
-                      locale: vi,
-                    })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-sm font-bold text-red-600">
-                    {s.my_registration.amount_override.toLocaleString("vi-VN")}đ
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-red-400" />
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+      {pendingBills.map((s) => (
+        <button
+          key={s.id}
+          type="button"
+          onClick={() => setPayModalSession({ session: s, reg: s.my_registration })}
+          className="w-full flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl px-4 py-3 active:bg-red-100 transition-colors text-left"
+        >
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">
+              {s.title}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {format(new Date(s.scheduled_at), "EEE dd/MM", { locale: vi })}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-sm font-bold text-red-600">
+              {s.my_registration.amount_override.toLocaleString("vi-VN")}đ
+            </span>
+            <ChevronRight className="w-4 h-4 text-red-400" />
+          </div>
+        </button>
+      ))}
 
       <div
         className="space-y-4"
@@ -717,7 +1137,7 @@ function SessionsTab() {
       )}
 
       {payModalSession && (
-        <PaymentModal
+        <SessionPaymentModal
           session={payModalSession.session}
           reg={payModalSession.reg}
           userFullName={user?.full_name ?? ""}
@@ -1219,7 +1639,11 @@ function MatchesTab({
   );
 }
 
-function EventsTab() {
+function EventsTab({
+  onOpenEventsChange,
+}: {
+  onOpenEventsChange: (hasOpen: boolean) => void;
+}) {
   const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1265,11 +1689,13 @@ function EventsTab() {
         type: typeFilter || undefined,
         limit: 30,
       });
-      setItems(data.data ?? []);
+      const list = data.data ?? [];
+      setItems(list);
+      onOpenEventsChange(list.some((a: any) => a.status === "open"));
     } finally {
       setLoading(false);
     }
-  }, [typeFilter]);
+  }, [typeFilter, onOpenEventsChange]);
 
   useEffect(() => {
     fetchEvents();
@@ -1555,6 +1981,46 @@ export default function ActivityPage() {
   });
   const tabRef = useRef<MainTab>("sessions");
   const [activeMatch, setActiveMatch] = useState<any>(null);
+  const [hasPendingBills, setHasPendingBills] = useState(false);
+  const [hasOpenEvents, setHasOpenEvents] = useState(false);
+
+  const eventsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+
+
+  useEffect(() => {
+    const fetchEventBadge = async () => {
+      try {
+        const { data: eventsData } = await activitiesApi.list({ limit: 30 });
+        const hasOpen = (eventsData.data ?? []).some(
+          (a: any) => a.status === "open",
+        );
+        setHasOpenEvents(hasOpen);
+      } catch {
+      }
+    };
+
+    const scheduleFetchEventBadge = () => {
+      if (eventsDebounceRef.current) clearTimeout(eventsDebounceRef.current);
+      eventsDebounceRef.current = setTimeout(fetchEventBadge, 300);
+    };
+
+    fetchEventBadge();
+
+    const channel = supabase
+      .channel("activity-events-badge")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "activities" },
+        scheduleFetchEventBadge,
+      )
+      .subscribe();
+
+    return () => {
+      if (eventsDebounceRef.current) clearTimeout(eventsDebounceRef.current);
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const TAB_ORDER: MainTab[] = ["sessions", "matches", "events"];
 
@@ -1579,6 +2045,7 @@ export default function ActivityPage() {
       switchTimerRef.current = null;
     }, 150);
   };
+
 
   useEffect(() => {
     const remembered = sessionStorage.getItem("activity:return-tab");
@@ -1689,7 +2156,15 @@ export default function ActivityPage() {
             onClick={() => switchTab("sessions")}
             className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "sessions" ? "text-blue-600" : "text-gray-500"}`}
           >
-            <CalendarDays className="w-4 h-4" />
+            <span className="relative inline-flex">
+              <CalendarDays className="w-4 h-4" />
+              {hasPendingBills && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
+                </span>
+              )}
+            </span>
             <span className="hidden xs:inline">Buổi đánh</span>
           </button>
           <button
@@ -1706,7 +2181,15 @@ export default function ActivityPage() {
             onClick={() => switchTab("events")}
             className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "events" ? "text-blue-600" : "text-gray-500"}`}
           >
-            <Megaphone className="w-4 h-4" />
+            <span className="relative inline-flex">
+              <Megaphone className="w-4 h-4" />
+              {hasOpenEvents && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 border border-white" />
+                </span>
+              )}
+            </span>
             <span className="hidden xs:inline">Hoạt động</span>
           </button>
         </div>
@@ -1718,11 +2201,11 @@ export default function ActivityPage() {
           }}
         >
           {tab === "sessions" ? (
-            <SessionsTab />
+            <SessionsTab onPendingBillsChange={(count) => setHasPendingBills(count > 0)} />
           ) : tab === "matches" ? (
             <MatchesTab onActiveMatchChange={setActiveMatch} />
           ) : (
-            <EventsTab />
+            <EventsTab onOpenEventsChange={setHasOpenEvents} />
           )}
         </div>
       </div>

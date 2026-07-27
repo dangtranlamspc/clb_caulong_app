@@ -1,9 +1,11 @@
 import { buildTransferNote } from "@/hooks/payment-ref";
-import { registrationsApi } from "@/lib/api";
-import { CheckCircle2Icon, Copy, ImagePlus, Loader2, XIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { registrationsApi, walletApi } from "@/lib/api";
+import { CheckCircle2Icon, Copy, ImagePlus, Loader2, Wallet, XIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import toast from 'react-hot-toast';
+
+
 
 export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }: {
     session: any;
@@ -12,7 +14,7 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
     onClose: () => void;
     onSuccess: () => void;
 }) {
-    const [step, setStep] = useState<'choose' | 'transfer' | 'cash'>('choose');
+    const [step, setStep] = useState<'choose' | 'transfer' | 'cash' | 'wallet'>('choose');
     const [payRef, setPayRef] = useState('');
     const [billFile, setBillFile] = useState<File | null>(null);
     const [billPreview, setBillPreview] = useState<string | null>(null);
@@ -20,11 +22,23 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
     const [uploading, setUploading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [sendingCash, setSendingCash] = useState(false);
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
+    const [loadingWallet, setLoadingWallet] = useState(false);
+    const [payingWallet, setPayingWallet] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const amount = reg.amount_override ?? 0;
     const suggestedRef = buildTransferNote(userFullName, session.title, session.scheduled_at);
     const qrUrl = `https://img.vietqr.io/image/${process.env.NEXT_PUBLIC_BANK_ID ?? 'MB'}-${process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? '0000000000'}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(suggestedRef)}&accountName=${encodeURIComponent(process.env.NEXT_PUBLIC_BANK_NAME ?? 'CLB CAU LONG')}`;
+
+    useEffect(() => {
+        if (step !== 'wallet' || walletBalance !== null) return;
+        setLoadingWallet(true);
+        walletApi.getMe()
+            .then(({ data }) => setWalletBalance(data.balance ?? 0))
+            .catch(() => toast.error('Không tải được số dư ví'))
+            .finally(() => setLoadingWallet(false));
+    }, [step, walletBalance]);
 
     const handlePickBill = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -80,6 +94,19 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
         }
     };
 
+    const handlePayWallet = async () => {
+        setPayingWallet(true);
+        try {
+            await walletApi.payRegistration(reg.id);
+            toast.success('Đã thanh toán bằng ví BNB!');
+            onSuccess();
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Thanh toán thất bại');
+        } finally {
+            setPayingWallet(false);
+        }
+    };
+
     return createPortal(
         <div
             className="fixed inset-0 z-[9999] flex flex-col justify-end"
@@ -91,17 +118,16 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
                 style={{ maxHeight: '90vh', overflowY: 'auto', paddingBottom: 'env(safe-area-inset-bottom)' }}
                 onClick={e => e.stopPropagation()}
             >
-                {/* Handle */}
                 <div className="flex justify-center pt-3 pb-1">
                     <div className="w-9 h-1 rounded-full bg-gray-200" />
                 </div>
 
-                {/* Header */}
                 <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
                     <div>
                         <p className="text-sm font-bold text-gray-900">
                             {step === 'choose' ? 'Chọn hình thức thanh toán' :
-                                step === 'transfer' ? 'Chuyển khoản' : 'Thanh toán tiền mặt'}
+                                step === 'transfer' ? 'Chuyển khoản' :
+                                    step === 'wallet' ? 'Ví BNB' : 'Thanh toán tiền mặt'}
                         </p>
                         <p className="text-xs text-gray-400 mt-0.5">{session.title}</p>
                     </div>
@@ -111,15 +137,25 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
                 </div>
 
                 <div className="px-5 py-4 space-y-4">
-                    {/* Số tiền */}
                     <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
                         <span className="text-sm text-gray-600">Số tiền cần thanh toán</span>
                         <span className="text-lg font-black text-red-600">{amount.toLocaleString('vi-VN')}đ</span>
                     </div>
 
-                    {/* Step: choose */}
                     {step === 'choose' && (
                         <div className="space-y-3">
+                            <button
+                                onClick={() => setStep('wallet')}
+                                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                            >
+                                <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                    <Wallet className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900">Ví BNB</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">Trừ thẳng vào số dư ví — xác nhận ngay lập tức</p>
+                                </div>
+                            </button>
                             <button
                                 onClick={() => setStep('transfer')}
                                 className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
@@ -143,17 +179,50 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
                         </div>
                     )}
 
-                    {/* Step: transfer */}
+                    {step === 'wallet' && (
+                        <div className="space-y-4">
+                            <div className="bg-blue-50 rounded-xl p-4">
+                                <p className="text-xs text-blue-600 mb-1">Số dư ví hiện tại</p>
+                                {loadingWallet ? (
+                                    <div className="flex items-center gap-2 text-blue-700">
+                                        <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+                                    </div>
+                                ) : (
+                                    <p className="text-xl font-black text-blue-700">
+                                        {(walletBalance ?? 0).toLocaleString('vi-VN')}đ
+                                    </p>
+                                )}
+                            </div>
+                            {walletBalance !== null && walletBalance < amount && (
+                                <div className="bg-red-50 rounded-xl p-3 text-xs text-red-600">
+                                    Số dư ví không đủ để thanh toán {amount.toLocaleString('vi-VN')}đ. Vui lòng chọn hình thức khác hoặc nạp thêm ví.
+                                </div>
+                            )}
+                            <div className="flex gap-2">
+                                <button onClick={() => setStep('choose')}
+                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                                    Quay lại
+                                </button>
+                                <button
+                                    onClick={handlePayWallet}
+                                    disabled={payingWallet || loadingWallet || (walletBalance !== null && walletBalance < amount)}
+                                    className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
+                                >
+                                    {payingWallet && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                    Xác nhận trừ ví
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {step === 'transfer' && (
                         <div className="space-y-4">
-                            {/* QR */}
                             <div className="flex justify-center">
                                 <div className="p-3 bg-white rounded-2xl border-2 border-gray-100 shadow-sm">
                                     <img src={qrUrl} alt="VietQR" className="w-44 h-44 object-contain"
                                         onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                 </div>
                             </div>
-                            {/* Bank info */}
                             <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
                                 <div className="flex justify-between">
                                     <span className="text-gray-500">Số tiền</span>
@@ -170,11 +239,9 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
                                     </div>
                                 </div>
                             </div>
-                            {/* Mã CK */}
                             <input value={payRef} onChange={e => setPayRef(e.target.value)}
                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
                                 placeholder={`Nhập nội dung: ${suggestedRef}`} />
-                            {/* Upload bill */}
                             <div>
                                 <p className="text-xs font-semibold text-gray-600 mb-1.5">
                                     Ảnh bill <span className="text-gray-400 font-normal">(không bắt buộc)</span>
@@ -221,7 +288,6 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
                         </div>
                     )}
 
-                    {/* Step: cash */}
                     {step === 'cash' && (
                         <div className="space-y-4">
                             <div className="bg-green-50 rounded-xl p-4 text-sm text-green-800">

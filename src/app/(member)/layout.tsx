@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "../../store/auth.store";
-import { authApi } from "../../lib/api";
+import { authApi, sessionsApi } from "../../lib/api";
 import {
     BirthdayModal,
     useBirthdayGreeting,
@@ -27,6 +27,7 @@ import { TeamInviteModal } from "@/components/member/matches/TeamInviteModal";
 import { NotificationBell } from "@/components/member/noti/NotificationBell";
 import { useNotificationsRealtimeStore } from "@/store/notifications-realtime.store";
 import { AdminMenuDrawer } from "@/components/admin/AdminMenuDrawer";
+import { supabase } from "@/lib/supabase";
 
 const NAV_ITEMS = [
     { href: "/home", icon: Home, label: "Trang chủ" },
@@ -90,7 +91,13 @@ function UserAvatar({
     );
 }
 
-function BottomNav({ pathname }: { pathname: string }) {
+function BottomNav({
+    pathname,
+    showActivityDot,
+}: {
+    pathname: string;
+    showActivityDot: boolean;
+}) {
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-center">
             <div
@@ -108,6 +115,7 @@ function BottomNav({ pathname }: { pathname: string }) {
                         href === "/profile"
                             ? pathname === "/profile"
                             : pathname.startsWith(href);
+                    const showDot = href === "/activity" && showActivityDot;
 
                     return (
                         <Link
@@ -117,7 +125,7 @@ function BottomNav({ pathname }: { pathname: string }) {
                             style={{ minHeight: 56 }}
                         >
                             <div
-                                className="flex items-center justify-center rounded-xl transition-all"
+                                className="relative flex items-center justify-center rounded-xl transition-all"
                                 style={{
                                     width: 36,
                                     height: 28,
@@ -133,6 +141,29 @@ function BottomNav({ pathname }: { pathname: string }) {
                                         transition: "color 0.2s",
                                     }}
                                 />
+                                {showDot && (
+                                    <span
+                                        className="absolute flex"
+                                        style={{
+                                            top: 0,
+                                            right: 0,
+                                            width: 12,
+                                            height: 12,
+                                        }}
+                                    >
+                                        <span
+                                            className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"
+                                        />
+                                        <span
+                                            className="animate-pulse relative inline-flex rounded-full bg-red-500"
+                                            style={{
+                                                width: 12,
+                                                height: 12,
+                                                border: "2px solid #ffffff",
+                                            }}
+                                        />
+                                    </span>
+                                )}
                             </div>
                             <span
                                 className="whitespace-nowrap"
@@ -164,13 +195,61 @@ export default function MemberLayout({
     const { isAuthenticated, logout, user } = useAuthStore();
     const [mounted, setMounted] = useState(false);
     const [adminDrawerOpen, setAdminDrawerOpen] = useState(false);
+    const [hasPendingPayment, setHasPendingPayment] = useState(false);
+    const pendingSeqRef = useRef(0);
+    const pendingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isAdmin = user?.role === "admin";
+
+    const fetchPendingPaymentFlag = async () => {
+        const mySeq = ++pendingSeqRef.current;
+        try {
+            const { data } = await sessionsApi.list({ limit: 50 });
+            if (mySeq !== pendingSeqRef.current) return;
+            const hasPending = (data.data ?? []).some(
+                (s: any) =>
+                    s.my_registration?.amount_override > 0 &&
+                    s.my_registration?.payment_status === "pending" &&
+                    !s.my_registration?.payment_reference,
+            );
+            setHasPendingPayment(hasPending);
+        } catch {
+        }
+    };
+
+    const schedulePendingFetch = () => {
+        if (pendingDebounceRef.current) clearTimeout(pendingDebounceRef.current);
+        pendingDebounceRef.current = setTimeout(fetchPendingPaymentFlag, 300);
+    };
 
     useEffect(() => {
         if (!user?.id) return;
         useNotificationsRealtimeStore.getState().connect(user.id);
         return () => {
             useNotificationsRealtimeStore.getState().disconnect();
+        };
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (!user?.id) return;
+        fetchPendingPaymentFlag();
+
+        const channel = supabase
+            .channel(`layout-pending-payment:${user.id}`)
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "registrations" },
+                schedulePendingFetch,
+            )
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "sessions" },
+                schedulePendingFetch,
+            )
+            .subscribe();
+
+        return () => {
+            if (pendingDebounceRef.current) clearTimeout(pendingDebounceRef.current);
+            supabase.removeChannel(channel);
         };
     }, [user?.id]);
 
@@ -348,7 +427,7 @@ export default function MemberLayout({
 
             <main className="max-w-lg mx-auto px-4 py-5">{children}</main>
 
-            <BottomNav pathname={pathname} />
+            <BottomNav pathname={pathname} showActivityDot={hasPendingPayment} />
 
             {isAdmin && (
                 <AdminMenuDrawer
