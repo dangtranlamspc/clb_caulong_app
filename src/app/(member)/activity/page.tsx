@@ -351,6 +351,12 @@ function SessionsTab() {
       }
 
       const sorted = [...list].sort((a: any, b: any) => {
+        if (!filter) {
+          const aOpen = a.status === "open" ? 0 : 1;
+          const bOpen = b.status === "open" ? 0 : 1;
+          if (aOpen !== bOpen) return aOpen - bOpen;
+        }
+
         const aTime = new Date(a.created_at ?? a.scheduled_at).getTime();
         const bTime = new Date(b.created_at ?? b.scheduled_at).getTime();
         return bTime - aTime;

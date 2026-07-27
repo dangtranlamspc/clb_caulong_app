@@ -811,10 +811,7 @@ export default function SessionDetailPage() {
 
   const canComplete =
     session.status === "waiting_payment" &&
-    pendingReview.length === 0 &&
-    rejected.length === 0 &&
-    registrations.filter((r) => r.participation_status === "confirmed").length >
-    0;
+    registrations.filter((r) => r.participation_status === "confirmed").length > 0;
 
   const hostRegs = registrations.filter((r) => !r.host_registration_id);
   const guestsOf = (hostId: string) =>

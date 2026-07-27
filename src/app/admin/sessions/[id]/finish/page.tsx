@@ -475,7 +475,7 @@ export default function SessionFinishPage() {
                               key={val}
                               type="button"
                               onClick={() => setWalletMode(h.id, val as any)}
-                              className={`px-2 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium text-center leading-tight transition-all ${active
+                              className={`px-2 py-3 min-h-[44px] rounded-lg text-[11px] sm:text-xs font-medium text-center leading-tight transition-all ${active
                                 ? "bg-blue-600 text-white shadow-sm"
                                 : "text-gray-500 hover:bg-gray-200/70"
                                 }`}
