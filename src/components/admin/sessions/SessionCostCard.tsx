@@ -53,6 +53,13 @@ export default function SessionCostCard({ sessionId }: Props) {
     total?: number;
   }[] = chi_phi.other_fee_list ?? [];
 
+  const courtBreakdown: {
+    name: string;
+    minutes?: number;
+    price_per_hour: number;
+    total: number;
+  }[] = Array.isArray(chi_phi.court_breakdown) ? chi_phi.court_breakdown : [];
+
   return (
     <div className="space-y-3">
       <div className="card space-y-2">
@@ -60,17 +67,64 @@ export default function SessionCostCard({ sessionId }: Props) {
           🔑 Chi phí thực tế
         </p>
 
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">
-            🏸 Cầu {chi_phi.shuttle_count} × {fmt(chi_phi.shuttle_price)}
-          </span>
-          <span className="font-medium">{fmt(chi_phi.shuttle_cost)}</span>
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-700">🏸 Tiền cầu</p>
+              <p className="text-xs text-gray-400">
+                {chi_phi.shuttle_count} quả × {fmt(chi_phi.shuttle_price)}
+              </p>
+            </div>
+            <span className="text-base font-bold text-emerald-600 flex-shrink-0 ml-3">
+              {fmt(chi_phi.shuttle_cost)}
+            </span>
+          </div>
         </div>
 
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">🏟 Sân</span>
-          <span className="font-medium">{fmt(chi_phi.court_fee)}</span>
-        </div>
+        {courtBreakdown.length > 0 ? (
+          <div className="rounded-xl border border-blue-100 bg-blue-50/40 overflow-hidden">
+            <div className="px-3 py-2 text-sm font-medium text-gray-600 border-b border-blue-100/70">
+              🏟 Sân
+            </div>
+
+            <div className="divide-y divide-blue-100/70">
+              {courtBreakdown.map((c, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-700 truncate">
+                      {c.name}
+                    </p>
+                    {c.minutes ? (
+                      <p className="text-xs text-gray-400">
+                        {c.minutes} phút × {fmt(c.price_per_hour)}/tiếng
+                      </p>
+                    ) : null}
+                  </div>
+                  <span className="text-sm font-semibold text-blue-600 flex-shrink-0 ml-3">
+                    {fmt(c.total)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center px-3 py-2 bg-blue-100/50">
+              <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                Tổng tiền sân
+              </span>
+              <span className="text-base font-bold text-blue-700">
+                {fmt(chi_phi.court_fee)}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">🏟 Sân</span>
+            <span className="font-medium">{fmt(chi_phi.court_fee)}</span>
+          </div>
+        )}
 
         {chi_phi.other_fee > 0 && (
           <div className="space-y-1">
@@ -139,9 +193,13 @@ export default function SessionCostCard({ sessionId }: Props) {
           </div>
         )}
 
-        <div className="flex justify-between text-sm font-bold border-t border-gray-100 pt-2">
-          <span>Tổng chi phí</span>
-          <span className="text-gray-900">{fmt(summary.total_cost)}</span>
+        <div className="flex items-center justify-between rounded-xl bg-gray-900 px-3.5 py-3 mt-1">
+          <span className="text-sm font-semibold text-gray-200">
+            Tổng chi phí
+          </span>
+          <span className="text-lg font-bold text-white">
+            {fmt(summary.total_cost)}
+          </span>
         </div>
       </div>
 

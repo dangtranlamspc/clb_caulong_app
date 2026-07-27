@@ -715,10 +715,7 @@ function SessionsTab({
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
-  const [modalSession, setModalSession] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
+  const [modalSession, setModalSession] = useState<{ id: string; title: string } | null>(null);
   const fadeIn = useFadeIn(!loading);
   const [pendingBills, setPendingBills] = useState<any[]>([]);
   const [payModalSession, setPayModalSession] = useState<any>(null);
@@ -727,62 +724,79 @@ function SessionsTab({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
 
-
   const pendingBillsSeqRef = useRef(0);
   const pendingBillsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openSheet = () => {
     setSheetOpen(true);
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => setSheetVisible(true)),
-    );
+    requestAnimationFrame(() => requestAnimationFrame(() => setSheetVisible(true)));
   };
   const closeSheet = () => {
     setSheetVisible(false);
     setTimeout(() => setSheetOpen(false), 300);
   };
 
-  const fetchSessions = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: any = { limit: 30 };
-      if (
-        filter &&
-        filter !== "waiting_payment" &&
-        filter !== "waiting_admin_confirm"
-      ) {
-        params.status = filter;
-      }
-
-      const { data } = await sessionsApi.list(params);
-      let list = data.data ?? [];
-
-      if (filter === "waiting_payment") {
-        list = list.filter(
-          (s: any) => s.my_registration?.payment_status === "pending",
-        );
-      } else if (filter === "waiting_admin_confirm") {
-        list = list.filter(
-          (s: any) => s.status === "waiting_payment" && !s.all_paid,
-        );
-      }
-
-      const sorted = [...list].sort((a: any, b: any) => {
-        if (!filter) {
-          const aOpen = a.status === "open" ? 0 : 1;
-          const bOpen = b.status === "open" ? 0 : 1;
-          if (aOpen !== bOpen) return aOpen - bOpen;
+  // 👇 nhận thêm option { silent } — silent = true thì KHÔNG bật loading/skeleton
+  const fetchSessions = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const silent = opts?.silent ?? false;
+      if (!silent) setLoading(true);
+      try {
+        const params: any = { limit: 30 };
+        if (
+          filter &&
+          filter !== "waiting_payment" &&
+          filter !== "waiting_admin_confirm"
+        ) {
+          params.status = filter;
         }
 
-        const aTime = new Date(a.created_at ?? a.scheduled_at).getTime();
-        const bTime = new Date(b.created_at ?? b.scheduled_at).getTime();
-        return bTime - aTime;
-      });
-      setSessions(sorted);
-    } finally {
-      setLoading(false);
-    }
-  }, [filter]);
+        const { data } = await sessionsApi.list(params);
+        let list = data.data ?? [];
+
+        if (filter === "waiting_payment") {
+          list = list.filter(
+            (s: any) => s.my_registration?.payment_status === "pending",
+          );
+        } else if (filter === "waiting_admin_confirm") {
+          list = list.filter(
+            (s: any) => s.status === "waiting_payment" && !s.all_paid,
+          );
+        }
+
+        const sorted = [...list].sort((a: any, b: any) => {
+          if (!filter) {
+            const aOpen = a.status === "open" ? 0 : 1;
+            const bOpen = b.status === "open" ? 0 : 1;
+            if (aOpen !== bOpen) return aOpen - bOpen;
+          }
+          const aTime = new Date(a.created_at ?? a.scheduled_at).getTime();
+          const bTime = new Date(b.created_at ?? b.scheduled_at).getTime();
+          return bTime - aTime;
+        });
+        setSessions(sorted);
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [filter],
+  );
+
+  // 👇 cập nhật lạc quan ngay khi bấm "Đăng ký ngay", không cần chờ / không cần fetch lại toàn bộ list
+  const applyOptimisticRegister = useCallback((sessionId: string, registration: any) => {
+    setSessions((prev) =>
+      prev.map((sess) => {
+        if (sess.id !== sessionId) return sess;
+        const nextAvailable = Math.max(0, (sess.available_slots ?? 0) - 1);
+        return {
+          ...sess,
+          my_registration: registration,
+          available_slots: nextAvailable,
+          status: nextAvailable <= 0 ? "full" : sess.status,
+        };
+      }),
+    );
+  }, []);
 
   const fetchPendingBills = useCallback(async () => {
     const mySeq = ++pendingBillsSeqRef.current;
@@ -810,7 +824,7 @@ function SessionsTab({
   }, [fetchPendingBills]);
 
   useEffect(() => {
-    fetchSessions();
+    fetchSessions(); // lần đầu / khi đổi filter -> vẫn hiện skeleton, đây là hành động chủ động của user
   }, [fetchSessions]);
 
   useEffect(() => {
@@ -822,7 +836,7 @@ function SessionsTab({
         "postgres_changes",
         { event: "*", schema: "public", table: "registrations" },
         () => {
-          fetchSessions();
+          fetchSessions({ silent: true }); // 👈 nền, không giật UI
           scheduleFetchPendingBills();
         },
       )
@@ -830,7 +844,7 @@ function SessionsTab({
         "postgres_changes",
         { event: "*", schema: "public", table: "sessions" },
         () => {
-          fetchSessions();
+          fetchSessions({ silent: true }); // 👈 nền, không giật UI
           scheduleFetchPendingBills();
         },
       )
@@ -850,8 +864,7 @@ function SessionsTab({
   }, [sheetOpen]);
 
   const activeOpt =
-    SESSION_FILTER_TABS.find((o) => o.value === filter) ??
-    SESSION_FILTER_TABS[0];
+    SESSION_FILTER_TABS.find((o) => o.value === filter) ?? SESSION_FILTER_TABS[0];
 
   return (
     <div className="space-y-4">
@@ -1080,23 +1093,24 @@ function SessionsTab({
                     {canRegister ? (
                       <button
                         type="button"
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           if (registeringId) return;
                           setRegisteringId(s.id);
-                          setTimeout(() => {
-                            const doNavigate = () =>
-                              router.push(`/sessions/${s.id}`);
-                            if (
-                              typeof document !== "undefined" &&
-                              (document as any).startViewTransition
-                            ) {
-                              (document as any).startViewTransition(doNavigate);
-                            } else {
-                              doNavigate();
-                            }
-                          }, 550);
+                          try {
+                            const { data } = await registrationsApi.register({ session_id: s.id });
+                            applyOptimisticRegister(s.id, data?.registration ?? {
+                              id: `temp-${Date.now()}`,
+                              payment_status: "pending",
+                              participation_status: "pending_approval",
+                            });
+                            toast.success(data?.message ?? "Đăng ký thành công, vui lòng chờ admin duyệt");
+                            fetchSessions({ silent: true });
+                          } catch {
+                          } finally {
+                            setRegisteringId(null);
+                          }
                         }}
                         disabled={registeringId === s.id}
                         className={`flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white bg-blue-600 shadow-sm shadow-blue-200 active:scale-95 transition-all duration-300 ease-out overflow-hidden ${registeringId === s.id
@@ -1104,16 +1118,14 @@ function SessionsTab({
                           : "w-[124px] h-8 gap-1 px-3 rounded-lg"
                           }`}
                         style={{
-                          transitionTimingFunction:
-                            "cubic-bezier(0.34, 1.56, 0.64, 1)",
+                          transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
                         }}
                       >
                         {registeringId === s.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <>
-                            Đăng ký ngay{" "}
-                            <ChevronRight className="w-3.5 h-4.5" />
+                            Đăng ký ngay <ChevronRight className="w-3.5 h-4.5" />
                           </>
                         )}
                       </button>

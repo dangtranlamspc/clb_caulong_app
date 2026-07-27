@@ -8,10 +8,31 @@ import {
   Send,
   Divide,
   Wallet,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { sessionsAdminApi } from "@/lib/api";
 import { MorphButton } from "@/components/effect-button/MorphButton";
+
+interface CourtItem {
+  id: string;
+  name: string;
+  minutes: number;
+  pricePerHour: number;
+}
+
+let courtIdCounter = 0;
+
+function newCourtId() {
+  courtIdCounter += 1;
+  return `court_${Date.now()}_${courtIdCounter}`;
+}
+
+function courtTotal(c: CourtItem): number {
+  const hours = (Number(c.minutes) || 0) / 60;
+  return Math.round((Number(c.pricePerHour) || 0) * hours);
+}
 
 function fmt(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
@@ -40,7 +61,35 @@ export default function SessionFinishPage() {
     "idle" | "loading" | "success"
   >("idle");
 
-  const [courtFee, setCourtFee] = useState(0);
+  const [courts, setCourts] = useState<CourtItem[]>([
+    { id: newCourtId(), name: "", minutes: 0, pricePerHour: 0 },
+  ]);
+
+  const courtFee = courts.reduce((sum, c) => sum + courtTotal(c), 0);
+
+  const addCourt = () => {
+    setCourts((prev) => [
+      ...prev,
+      { id: newCourtId(), name: "", minutes: 0, pricePerHour: 0 },
+    ]);
+  };
+
+  const removeCourt = (id: string) => {
+    setCourts((prev) => (prev.length <= 1 ? prev : prev.filter((c) => c.id !== id)));
+  };
+
+
+  const updateCourt = (
+    id: string,
+    field: "name" | "minutes" | "pricePerHour",
+    value: string | number,
+  ) => {
+    setCourts((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, [field]: value } : c)),
+    );
+  };
+
+
   const [shuttleCount, setShuttleCount] = useState(0);
   const [shuttlePrice, setShuttlePrice] = useState(0);
 
@@ -76,7 +125,20 @@ export default function SessionFinishPage() {
     ])
       .then(([{ data: s }, { data: r }]) => {
         setSession(s);
-        setCourtFee(s.court_fee ?? 0);
+        if (Array.isArray(s.court_breakdown) && s.court_breakdown.length > 0) {
+          setCourts(
+            s.court_breakdown.map((c: any) => ({
+              id: newCourtId(),
+              name: c.name ?? "",
+              minutes: c.minutes ?? 0,
+              pricePerHour: c.price_per_hour ?? 0,
+            })),
+          );
+        } else {
+          setCourts([
+            { id: newCourtId(), name: "", minutes: 0, pricePerHour: s.court_fee ?? 0 },
+          ]);
+        }
         setShuttleCount(s.shuttle_count ?? 0);
         setShuttlePrice(s.shuttle_price ?? 0);
 
@@ -267,6 +329,14 @@ export default function SessionFinishPage() {
 
       await sessionsAdminApi.finish(id, {
         court_fee: courtFee,
+        court_breakdown: courts
+          .filter((c) => c.name.trim() || c.pricePerHour > 0)
+          .map((c) => ({
+            name: c.name.trim() || "Sân (chưa đặt tên)",
+            minutes: Number(c.minutes) || undefined,
+            price_per_hour: Number(c.pricePerHour) || 0,
+            total: courtTotal(c),
+          })),
         shuttle_count: shuttleCount,
         shuttle_price: shuttlePrice,
         other_fee: totalOtherFees,
@@ -317,23 +387,103 @@ export default function SessionFinishPage() {
         </div>
       </div>
 
-      {/* Chi phí chung */}
       <div className="card space-y-4">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
           Chi phí thực tế
         </p>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             🏟 Tiền sân
           </label>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={formatNumberInput(courtFee)}
-            onChange={(e) => setCourtFee(parseNumberInput(e.target.value))}
-            className="input-field"
-            placeholder="0"
-          />
+          <div className="space-y-3">
+            {courts.map((c, idx) => (
+              <div
+                key={c.id}
+                className="rounded-xl border border-gray-200 bg-gray-50/60 p-3 space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-400">
+                    Sân {idx + 1}
+                  </span>
+                  {courts.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeCourt(c.id)}
+                      className="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      title="Xóa sân này"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-1">
+                    <label className="block text-[11px] text-gray-400 mb-1">
+                      Tên sân
+                    </label>
+                    <input
+                      type="text"
+                      value={c.name}
+                      onChange={(e) => updateCourt(c.id, "name", e.target.value)}
+                      className="input-field text-sm w-full"
+                      placeholder="Sân 1"
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <label className="block text-[11px] text-gray-400 mb-1">
+                      Số phút
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={c.minutes || ""}
+                      onChange={(e) =>
+                        updateCourt(c.id, "minutes", parseNumberInput(e.target.value))
+                      }
+                      className="input-field text-sm text-right w-full"
+                      placeholder="60"
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <label className="block text-[11px] text-gray-400 mb-1">
+                      Giá / tiếng
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={formatNumberInput(c.pricePerHour)}
+                      onChange={(e) =>
+                        updateCourt(c.id, "pricePerHour", parseNumberInput(e.target.value))
+                      }
+                      className="input-field text-sm text-right w-full"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between text-xs font-semibold text-gray-600 pt-1 border-t border-gray-200">
+                  <span>
+                    Tổng ({c.minutes || 0} phút × {fmt(c.pricePerHour || 0)}/tiếng)
+                  </span>
+                  <span>{fmt(courtTotal(c))}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={addCourt}
+            className="mt-2 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Thêm sân
+          </button>
+
+          <div className="flex justify-between text-sm font-medium text-gray-700 mt-2 pt-2 border-t border-gray-100">
+            <span>Tổng tiền sân</span>
+            <span>{fmt(courtFee)}</span>
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -379,9 +529,9 @@ export default function SessionFinishPage() {
           </p>
           <button
             onClick={handleSplitEqually}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
           >
-            <Divide className="w-3.5 h-3.5" /> Chia đều
+            <Divide className="w-4 h-4" /> Chia đều
           </button>
         </div>
 
