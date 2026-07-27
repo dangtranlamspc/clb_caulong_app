@@ -6,8 +6,8 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { profileApi } from '../../../../lib/api';
 import { useAuthStore } from '../../../../store/auth.store';
-import { AvatarCropModal } from '../../../../components/avatars/AvatarCropModal';
-import { AvatarPickerModal } from '../../../../components/avatars/AvatarPickerModal';
+import { AvatarCropModal } from '../../../../components/member/avatars/AvatarCropModal';
+import { AvatarPickerModal } from '../../../../components/member/avatars/AvatarPickerModal';
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 

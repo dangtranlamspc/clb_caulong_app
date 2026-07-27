@@ -21,7 +21,7 @@ import { vi } from "date-fns/locale";
 import { walletApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth.store";
-import { TransactionDetailModal } from "@/components/wallets/TransactionDetailModal";
+import { TransactionDetailModal } from "@/components/member/wallets/TransactionDetailModal";
 import { createPortal } from "react-dom";
 import { smt, txIcon } from "@/lib/wallet-helpers";
 

@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Trophy, Medal, Star, RefreshCw, TrendingUp, Swords, Shield, Calendar, ChevronDown } from 'lucide-react';
 import { rankingsApi } from '../../../lib/api';
 import { useAuthStore } from '../../../store/auth.store';
-import { RankPodiumAvatarList } from '@/components/ranks/Rank';
+import { RankPodiumAvatarList } from '@/components/member/ranks/Rank';
 
 const ATTENDANCE_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
     'Người Mới Tham Gia': { emoji: '🥚', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },

@@ -28,7 +28,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { createPortal } from "react-dom";
 import { useNotificationsRealtimeStore } from "@/store/notifications-realtime.store";
 import { walletApi, sessionsApi, registrationsApi, usersApi } from "@/lib/api";
-import { CustomSelect } from "../admin/sessions/CustomSelect";
+import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 
 type ActionPhase = "idle" | "loading" | "success";
 
@@ -70,7 +70,6 @@ function fmt(n: number) {
 
 function getPaymentMethodBadge(reg: any, hostName?: string) {
   const m = reg.payment_method;
-  // ✅ Bỏ điều kiện reg.is_guest — người đi cùng có tài khoản cũng có host_registration_id
   const isGroupedGuest = Boolean(reg.host_registration_id);
 
   if (m === "wallet_grouped" && isGroupedGuest) {
@@ -228,7 +227,6 @@ function WalletGuestConfirmModal({
             )}
           </button>
 
-          {/* Option 2: Tách riêng — khách tự nộp mặt */}
           <button
             onClick={() => handleConfirm("separate")}
             disabled={submitting}

@@ -7,9 +7,9 @@ import { authApi } from "../../lib/api";
 import {
     BirthdayModal,
     useBirthdayGreeting,
-} from "../../components/modals/BirthdayModal";
-import { MatchResultModal } from "../../components/matches/MatchResultModal";
-import { ChallengeModal } from "../../components/matches/ChallengeModal";
+} from "../../components/member/modals/BirthdayModal";
+import { MatchResultModal } from "../../components/member/matches/MatchResultModal";
+import { ChallengeModal } from "../../components/member/matches/ChallengeModal";
 import { useMatchResultNotification } from "../../hooks/useMatchResultNotification";
 import { useChallengeNotification } from "../../hooks/useChallengeNotification";
 import {
@@ -23,8 +23,8 @@ import {
     Menu,
 } from "lucide-react";
 import { useTeamInviteNotification } from "@/hooks/useTeamInviteNotification";
-import { TeamInviteModal } from "@/components/matches/TeamInviteModal";
-import { NotificationBell } from "@/components/noti/NotificationBell";
+import { TeamInviteModal } from "@/components/member/matches/TeamInviteModal";
+import { NotificationBell } from "@/components/member/noti/NotificationBell";
 import { useNotificationsRealtimeStore } from "@/store/notifications-realtime.store";
 import { AdminMenuDrawer } from "@/components/admin/AdminMenuDrawer";
 

@@ -7,7 +7,7 @@ import { Eye, EyeOff, Loader2, Mail, KeyRound, ArrowLeft, CheckCircle2 } from 'l
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/lib/api';
-import { OtpInput } from '@/components/auth/OtpInput';
+import { OtpInput } from '@/components/member/auth/OtpInput';
 
 const RESEND_COOLDOWN = 60;
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { activitiesApi } from "@/lib/api";
-import { ShirtOrderHistorySection } from "../../../../components/events-detail/shirt-history/ShirtOrderHistorySection";
+import { ShirtOrderHistorySection } from "../../../../components/member/events-detail/shirt-history/ShirtOrderHistorySection";
 import { ShirtOrderHistorySkeleton, SkeletonStyles } from "@/components/skeletons/Skeleton";
 import toast from "react-hot-toast";
 

@@ -30,8 +30,8 @@ import { sessionsApi, matchesApi, activitiesApi } from "@/lib/api";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
-import { PaymentModal } from "@/components/payments/PaymentModal";
-import { MembersModal } from "@/components/modals/MemberModalConponent";
+import { PaymentModal } from "@/components/member/payments/PaymentModal";
+import { MembersModal } from "@/components/member/modals/MemberModalConponent";
 import { useRouter } from "next/navigation";
 import { EventSkeleton, MatchSkeleton, SessionSkeleton, SkeletonList } from "@/components/skeletons/Skeleton";
 

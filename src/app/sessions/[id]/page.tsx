@@ -1,4 +1,5 @@
-import SessionDetailPage from "@/components/sessions/SessionDetailComponent";
+import SessionDetailPage from "@/components/member/sessions/SessionDetailComponent";
+
 
 export default function Page() {
     return <SessionDetailPage />;

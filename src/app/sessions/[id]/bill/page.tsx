@@ -1,4 +1,4 @@
-import BillPage from "@/components/bill/BillPage";
+import BillPage from "@/components/member/bill/BillPage";
 
 
 export default function Page() {

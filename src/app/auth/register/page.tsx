@@ -6,8 +6,8 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2, Camera, MailCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authApi } from '@/lib/api';
-import { AvatarCropModal } from '@/components/avatars/AvatarCropModal';
-import { AvatarPickerModal } from '@/components/avatars/AvatarPickerModal';
+import { AvatarCropModal } from '@/components/member/avatars/AvatarCropModal';
+import { AvatarPickerModal } from '@/components/member/avatars/AvatarPickerModal';
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 const RESEND_COOLDOWN = 60;
