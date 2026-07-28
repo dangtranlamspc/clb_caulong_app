@@ -612,10 +612,9 @@ export default function SessionDetailPage() {
     try {
       await sessionsAdminApi.updateStatus(id, { status: "cancelled" });
       toast.success("Đã hủy buổi đánh");
-      refreshSilently();
+      router.push("/admin/sessions");
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Hủy buổi thất bại");
-    } finally {
       setCancelling(false);
     }
   };
@@ -1605,6 +1604,23 @@ export default function SessionDetailPage() {
                 )}
               </button>
             ))}
+
+          {(session.status === "open" ||
+            session.status === "full" ||
+            session.status === "waiting_payment") && (
+              <button
+                onClick={() => setShowCancelModal(true)}
+                disabled={cancelling}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold disabled:opacity-50 flex-shrink-0"
+              >
+                {cancelling ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <XCircle className="w-4 h-4" />
+                )}
+                Hủy buổi
+              </button>
+            )}
 
           {session.status === "cancelled" && (
             <button
