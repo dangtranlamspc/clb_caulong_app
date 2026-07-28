@@ -381,7 +381,6 @@ export default function SessionDetailPage() {
         nestedWalletPending: any[];
       }[];
 
-    // hostName giờ bắt buộc để label "Gộp theo host" hiện đúng tên
     const getPaymentTag = (reg: any, hostName?: string) => {
       const isIndependentGuest = reg.is_guest && !reg.user_id;
 
@@ -1226,17 +1225,28 @@ export default function SessionDetailPage() {
       reg.other_fee_amount != null &&
       reg.other_fee_amount > 0;
 
-    const isPendingOrReviewState =
+    const isPlainPending =
       reg.participation_status !== "pending_approval" &&
       reg.participation_status !== "awaiting_checkin" &&
       !isAwaitingFinishRow &&
+      !isPendingReview &&
       reg.payment_status === "pending";
-    const shouldPulse = !isDesktop && isPendingOrReviewState;
+
+    const isConfirmedRow = reg.payment_status === "confirmed";
+
+    const pulseClass = !isDesktop
+      ? isPendingReview
+        ? "pending-review-row-pulse"
+        : isPlainPending
+          ? "pending-row-pulse"
+          : isConfirmedRow
+            ? "confirmed-row-tint"
+            : ""
+      : "";
 
     return (
       <div
-        className={`${isNested ? "pl-4 pr-3 py-3" : "px-4 py-3.5"} ${shouldPulse ? "pending-row-pulse" : ""
-          }`}
+        className={`${isNested ? "pl-4 pr-3 py-3" : "px-4 py-3.5"} ${pulseClass}`}
       >
         <div className="flex items-start gap-3">
           {isNested && (
@@ -1450,33 +1460,42 @@ export default function SessionDetailPage() {
   return (
     <>
       <style>{`
-                @keyframes morphTickPop {
-                    0%   { transform: scale(0); opacity: 0; }
-                    60%  { transform: scale(1.25); opacity: 1; }
-                    100% { transform: scale(1); opacity: 1; }
-                }
-                .morph-tick {
-                    animation: morphTickPop 0.3s ease-out;
-                }
+        @keyframes morphTickPop {
+            0%   { transform: scale(0); opacity: 0; }
+            60%  { transform: scale(1.25); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .morph-tick {
+            animation: morphTickPop 0.3s ease-out;
+        }
 
-                @keyframes badgePop {
-                    0%   { transform: scale(0.7) translateY(-4px); opacity: 0; }
-                    60%  { transform: scale(1.05) translateY(0); opacity: 1; }
-                    100% { transform: scale(1); opacity: 1; }
-                }
-                .badge-pop {
-                    animation: badgePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-                }
-                @keyframes pendingRowPulse {
-                    0%, 100% { background-color: rgba(253, 224, 71, 0.05); }
-                    50%      { background-color: rgba(253, 224, 71, 0.4); }
-                }
-                .pending-row-pulse {
-                    animation: pendingRowPulse 1.6s ease-in-out infinite;
-                }
-            `}</style>
+        @keyframes badgePop {
+            0%   { transform: scale(0.7) translateY(-4px); opacity: 0; }
+            60%  { transform: scale(1.05) translateY(0); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .badge-pop {
+            animation: badgePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes pendingRowPulse {
+            0%, 100% { background-color: rgba(253, 224, 71, 0.05); }
+            50%      { background-color: rgba(253, 224, 71, 0.4); }
+        }
+        .pending-row-pulse {
+            animation: pendingRowPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes pendingReviewRowPulse {
+            0%, 100% { background-color: rgba(59, 130, 246, 0.05); }
+            50%      { background-color: rgba(59, 130, 246, 0.35); }
+        }
+        .pending-review-row-pulse {
+            animation: pendingReviewRowPulse 1.6s ease-in-out infinite;
+        }
+        .confirmed-row-tint {
+            background-color: rgba(34, 197, 94, 0.12);
+        }
+      `}</style>
       <div className="max-w-3xl mx-auto space-y-4">
-        {/* Header */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => router.push("/admin/sessions")}
@@ -1509,7 +1528,7 @@ export default function SessionDetailPage() {
               phase={getPhase("checkinAll")}
               idleIcon={<UserCheck className="w-4 h-4" />}
               label={`All (${awaitingCheckin.length})`}
-              idleWidthClass="w-28"
+              idleWidthClass="w-22"
               colorClass="bg-green-500 hover:bg-green-600 text-white"
               successClassName="bg-green-500 text-white"
               onClick={handleCheckinAllPresent}
@@ -1522,7 +1541,7 @@ export default function SessionDetailPage() {
               phase={getPhase("closeList")}
               idleIcon={<UserX className="w-4 h-4" />}
               label={`Chốt (${awaitingCheckin.length} vắng)`}
-              idleWidthClass="w-40"
+              idleWidthClass="w-36"
               colorClass="bg-red-500 hover:bg-red-600 text-white"
               successClassName="bg-red-500 text-white"
               onClick={handleCloseList}
@@ -1642,7 +1661,6 @@ export default function SessionDetailPage() {
           )}
         </div>
 
-        {/* Session info card */}
         <div className="card grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-4 p-5 text-sm shadow-md">
           <div className="flex flex-col gap-1">
             <span className="text-gray-400 text-xs">Thời gian</span>

@@ -761,20 +761,20 @@ export function UpcomingSessionsSection({
                     })}
 
                     <style jsx>{`
-            @keyframes energyFlow {
-              0% {
-                background-position: 0% 0%;
-              }
-              100% {
-                background-position: -200% 0%;
-              }
-            }
-            @keyframes growBar {
-              from {
-                width: 0%;
-              }
-            }
-          `}</style>
+                        @keyframes energyFlow {
+                        0% {
+                            background-position: 0% 0%;
+                        }
+                        100% {
+                            background-position: -200% 0%;
+                        }
+                        }
+                        @keyframes growBar {
+                        from {
+                            width: 0%;
+                        }
+                        }
+                    `}</style>
                 </div>
             )}
 

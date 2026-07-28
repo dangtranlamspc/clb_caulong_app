@@ -7,15 +7,9 @@ import {
   CalendarDays,
   Trophy,
   ClipboardList,
-  ChevronRight,
-  MapPin,
-  Users,
   CheckCircle2,
   Hourglass,
-  AlertCircle,
-  TrendingUp,
-  Zap,
-  Gift,
+  AlertCircle
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import {
@@ -36,15 +30,6 @@ const LEVEL_LABELS: Record<string, string> = {
   tb_yeu: "TB yếu",
   tb: "TB",
   tb_plus: "TB+",
-  ban_chuyen: "Bán chuyên (BC)",
-  chuyen_nghiep: "Chuyên nghiệp",
-};
-
-const GUEST_SKILL_LABELS: Record<string, string> = {
-  yeu: "Yếu",
-  trung_binh_yeu: "TB yếu",
-  trung_binh: "TB",
-  trung_binh_cong: "TB+",
   ban_chuyen: "Bán chuyên (BC)",
   chuyen_nghiep: "Chuyên nghiệp",
 };
@@ -178,13 +163,11 @@ export default function HomePage() {
   return (
     <>
       <div className="space-y-5">
-        {/* Hero banner */}
         <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 rounded-3xl p-5 overflow-hidden">
           <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10" />
           <div className="absolute -bottom-8 -left-4 w-24 h-24 rounded-full bg-white/5" />
           <div className="relative">
             <div className="flex items-center gap-3 mb-1">
-              {/* Avatar */}
               {user?.avatar_url ? (
                 <img
                   src={user.avatar_url}
@@ -256,7 +239,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Quick actions */}
         <div className="grid grid-cols-3 gap-3">
           {[
             {

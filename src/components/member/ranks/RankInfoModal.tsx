@@ -105,7 +105,6 @@ export function RankInfoModal({ onClose }: RankInfoModalProps) {
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Close button */}
                 <button
                     onClick={handleClose}
                     className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-colors"
@@ -113,7 +112,6 @@ export function RankInfoModal({ onClose }: RankInfoModalProps) {
                     <X className="w-5 h-5" />
                 </button>
 
-                {/* Slide */}
                 <div
                     className={`flex flex-col items-center justify-center px-8 py-6 bg-gradient-to-br ${RANK_GRADIENT[tier]} transition-colors duration-300`}
                     onTouchStart={handleTouchStart}
@@ -131,7 +129,6 @@ export function RankInfoModal({ onClose }: RankInfoModalProps) {
                     <p className="text-white/60 text-sm mt-1">{RANK_DESC[tier]}</p>
                 </div>
 
-                {/* Nav arrows */}
                 {!isFirst && (
                     <button
                         onClick={goPrev}
@@ -149,7 +146,6 @@ export function RankInfoModal({ onClose }: RankInfoModalProps) {
                     </button>
                 )}
 
-                {/* Dots */}
                 <div className="flex items-center justify-center gap-1.5 py-4 bg-black/30">
                     {RANK_ORDER.map((_, i) => (
                         <button

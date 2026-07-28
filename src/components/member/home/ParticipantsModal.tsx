@@ -1,5 +1,6 @@
 "use client";
 import { Users } from "lucide-react";
+import { createPortal } from "react-dom";
 
 const LEVEL_LABELS: Record<string, string> = {
     yeu: "Yếu",
@@ -36,11 +37,20 @@ export function ParticipantsModal({
 }: ParticipantsModalProps) {
     if (!open) return null;
 
-    return (
+    return createPortal(
         <div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
             onClick={onClose}
         >
+            <style jsx>{`
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .no-scrollbar {
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+            `}</style>
             <div
                 className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[75vh] flex flex-col animate-slide-up"
                 onClick={(e) => e.stopPropagation()}
@@ -58,7 +68,7 @@ export function ParticipantsModal({
                     </button>
                 </div>
 
-                <div className="overflow-y-auto px-5 py-3 space-y-2">
+                <div className="no-scrollbar overflow-y-auto px-5 py-3 space-y-2">
                     {loading ? (
                         [...Array(4)].map((_, i) => (
                             <div key={i} className="h-14 bg-gray-50 rounded-2xl animate-pulse" />
@@ -119,6 +129,7 @@ export function ParticipantsModal({
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

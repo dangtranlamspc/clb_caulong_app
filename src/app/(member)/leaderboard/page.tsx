@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { Trophy, Medal, Star, RefreshCw, TrendingUp, Swords, Shield, Calendar, ChevronDown } from 'lucide-react';
+import { Trophy, Medal, Star, RefreshCw, TrendingUp, Swords, Shield, Calendar, ChevronDown, X } from 'lucide-react';
 import { rankingsApi } from '../../../lib/api';
 import { useAuthStore } from '../../../store/auth.store';
-import { RankPodiumAvatarList } from '@/components/member/ranks/Rank';
+import { getTierCardBackground, getTierTheme, RankIcon, RankPodiumAvatarList } from '@/components/member/ranks/Rank';
+import { createPortal } from 'react-dom';
 
 const ATTENDANCE_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
     'Người Mới Tham Gia': { emoji: '🥚', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },
@@ -212,8 +213,6 @@ function WeeklyTrendTriangle({ pointsThisWeek }: { pointsThisWeek: number }) {
         </span>
     );
 }
-
-// ── Podium (Top 3) ──────────────────────────────────────────────────────────
 
 const PODIUM_CFG: Record<1 | 2 | 3, {
     order: string;
@@ -574,8 +573,144 @@ function MiniEnergyBar({ points, total }: { points: number; total: number }) {
 }
 
 
+function RankEnergyBar({ points, total, tier }: { points: number; total: number; tier: string }) {
+    const [animatedWidth, setAnimatedWidth] = useState(0);
+    const targetWidth = Math.min(100, (points / total) * 100);
+    const percent = Math.round(targetWidth);
+    const theme = getTierTheme(tier);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setAnimatedWidth(targetWidth), 150);
+        return () => clearTimeout(timer);
+    }, [targetWidth]);
+
+    return (
+        <div className="w-full max-w-[220px]">
+            <div className="flex items-center gap-2">
+                <div
+                    className="relative h-4 flex-1 rounded-full overflow-hidden border"
+                    style={{ background: theme.track, borderColor: `${theme.accent}55` }}
+                >
+                    <div
+                        className="h-full rounded-full relative overflow-hidden"
+                        style={{
+                            width: `${animatedWidth}%`,
+                            background: `linear-gradient(90deg, ${theme.mid}, ${theme.glow}, ${theme.accent})`,
+                            transition: 'width 700ms ease-out',
+                        }}
+                    >
+                        <div
+                            className="absolute top-0 left-0 h-full w-1/2"
+                            style={{
+                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
+                                animation: 'energy-shimmer 2s linear infinite',
+                            }}
+                        />
+                    </div>
+                </div>
+                <span className="text-sm font-bold flex-shrink-0" style={{ color: theme.glow }}>{percent}%</span>
+            </div>
+            <p className="text-xs text-gray-400 mt-2 text-center">
+                {points}/{total} điểm lên hạng
+            </p>
+            <style jsx>{`
+                @keyframes energy-shimmer {
+                    0% { transform: translateX(-220%); }
+                    100% { transform: translateX(220%); }
+                }
+            `}</style>
+        </div>
+    );
+}
+
+function RankDetailModal({ member, onClose }: { member: any; onClose: () => void }) {
+    const [visible, setVisible] = useState(false);
+    const tier = member.tier;
+    const theme = getTierTheme(tier);
+    const isMaxTier = tier === 'Huyền Thoại';
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const handleClose = () => {
+        setVisible(false);
+        setTimeout(onClose, 200);
+    };
+
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(2px)',
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 200ms ease-out',
+            }}
+            onClick={(e) => e.target === e.currentTarget && handleClose()}
+        >
+            <div
+                className="w-full max-w-xs rounded-3xl overflow-hidden relative"
+                style={{
+                    transform: visible ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(8px)',
+                    opacity: visible ? 1 : 0,
+                    transition: 'transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out',
+                    backgroundColor: theme.dark,
+                    backgroundImage: getTierCardBackground(tier),
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <button
+                    onClick={handleClose}
+                    className="absolute top-3 right-3 z-20 w-7 h-7 rounded-full bg-white/15 flex items-center justify-center"
+                >
+                    <X className="w-4 h-4 text-white" />
+                </button>
+
+                <div className="flex flex-col items-center px-6 pt-12 pb-6">
+                    <p className="text-sm font-semibold text-white/90 mb-1">{member.full_name}</p>
+
+                    <div
+                        style={{
+                            width: '100%', maxWidth: 260, height: 210,
+                            overflow: 'visible', display: 'flex',
+                            alignItems: 'flex-start', justifyContent: 'center',
+                            pointerEvents: 'none', position: 'relative', zIndex: 1,
+                        }}
+                    >
+                        <RankIcon tier={tier} size={230} scale={1.25} offsetY={12} />
+                    </div>
+
+                    <p className="text-base font-bold text-white drop-shadow -mt-4 mb-3">{tier}</p>
+
+                    {isMaxTier ? (
+                        <p className="text-sm text-white/70">Đã đạt hạng cao nhất</p>
+                    ) : (
+                        <RankEnergyBar points={member.points ?? 0} total={POINTS_PER_TIER} tier={tier} />
+                    )}
+
+                    <div className="flex items-center gap-4 mt-4 pt-4 border-t border-white/15 w-full justify-center">
+                        <p className="text-sm text-white/80">
+                            <span className="text-emerald-300 font-bold">{member.wins}W</span>
+                            <span className="mx-1 text-white/40">/</span>
+                            <span className="text-red-300 font-bold">{member.losses}L</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+}
+
+
 function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
+    const [selectedMember, setSelectedMember] = useState<any>(null);
+
     const filteredData = filterByGender(data, genderFilter)
         .sort((a, b) => {
             if (b.total_points !== a.total_points) {
@@ -601,52 +736,53 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                     <p className="text-gray-400 text-sm">Chưa có dữ liệu rank</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-                    <div className="divide-y divide-gray-50">
-                        {displayList.map((p, idx) => {
-                            const isMe = p.id === user?.id;
-                            const pos = p._displayRank;
-                            const tierColor = TIER_COLOR[p.tier] ?? 'text-gray-600';
-                            const isMaxTier = p.tier === 'Huyền Thoại';
-                            return (
-                                <AnimatedRow key={p.id} index={idx}>
-                                    <div className={`flex items-center gap-3 px-4 py-7 ${isMe ? 'bg-blue-50' : pos <= 3 ? 'bg-yellow-50/50' : 'hover:bg-gray-50/50'}`}>
-                                        <RankMedal rank={pos} />
-                                        <div className='ml-10' style={{ width: 48, height: 48, flexShrink: 0, overflow: 'visible' }}>
-                                            <RankPodiumAvatarList
-                                                tier={p.tier}
-                                                avatar={p.avatar_url}
-                                                name={p.full_name}
-                                                size={48}
-                                                frameScale={5.5}
-                                            />
+                <div className="space-y-3">
+                    {displayList.map((p, idx) => {
+                        const isMe = p.id === user?.id;
+                        const pos = p._displayRank;
+                        const tierColor = TIER_COLOR[p.tier] ?? 'text-gray-600';
+                        return (
+                            <AnimatedRow key={p.id} index={idx}>
+                                <button
+                                    onClick={() => setSelectedMember(p)}
+                                    className={`w-full flex items-center gap-3 px-4 py-7 rounded-2xl -translate-y-0.5 text-left ${isMe ? 'bg-blue-50' : pos <= 3 ? 'bg-yellow-50/50' : 'bg-white'}`}
+                                    style={{
+                                        boxShadow: '0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06)',
+                                    }}
+                                >
+                                    <RankMedal rank={pos} />
+                                    <div className='ml-10' style={{ width: 48, height: 48, flexShrink: 0, overflow: 'visible' }}>
+                                        <RankPodiumAvatarList
+                                            tier={p.tier}
+                                            avatar={p.avatar_url}
+                                            name={p.full_name}
+                                            size={48}
+                                            frameScale={5.5}
+                                        />
+                                    </div>
+                                    <div className="flex-1 min-w-0 ml-12">
+                                        <div className="flex items-center gap-1.5">
+                                            <p className={`font-bold text-base break-words ${isMe ? 'text-blue-700' : 'text-gray-800'}`}>{p.full_name}</p>
+                                            {isMe && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">Bạn</span>}
                                         </div>
-                                        <div className="flex-1 min-w-0 ml-12">
-                                            <div className="flex items-center gap-1.5">
-                                                <p className={`font-bold text-base break-words ${isMe ? 'text-blue-700' : 'text-gray-800'}`}>{p.full_name}</p>
-                                                {isMe && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">Bạn</span>}
-                                            </div>
-                                            <span className={`text-sm font-semibold ${tierColor}`}>{p.tier}</span>
-                                            {!isMaxTier && (
-                                                <MiniEnergyBar points={p.points ?? 0} total={POINTS_PER_TIER} />
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col items-center flex-shrink-0">
-                                            <p className="text-sm text-gray-400 text-center">
-                                                <span className="text-green-600 font-medium">{p.wins}W</span>
-                                                <span className="mx-0.5">/</span>
-                                                <span className="text-red-400 font-medium">{p.losses}L</span>
-                                            </p>
-                                            <div className="mt-0.5">
-                                                <WeeklyTrendTriangle pointsThisWeek={p.points_this_week ?? 0} />
-                                            </div>
+                                        <span className={`text-sm font-semibold ${tierColor}`}>{p.tier}</span>
+                                    </div>
+                                    <div className="flex flex-col items-center flex-shrink-0">
+                                        <p className="text-lg font-black text-gray-800">{p.points ?? 0}</p>
+                                        <p className="text-[10px] text-gray-400 -mt-0.5">điểm</p>
+                                        <div className="mt-1.5">
+                                            <WeeklyTrendTriangle pointsThisWeek={p.points_this_week ?? 0} />
                                         </div>
                                     </div>
-                                </AnimatedRow>
-                            );
-                        })}
-                    </div>
+                                </button>
+                            </AnimatedRow>
+                        );
+                    })}
                 </div>
+            )}
+
+            {selectedMember && (
+                <RankDetailModal member={selectedMember} onClose={() => setSelectedMember(null)} />
             )}
         </div>
     );
@@ -659,13 +795,11 @@ function filterData_withOriginalRank(data: any[]) {
 export default function LeaderboardPage() {
     const { user } = useAuthStore();
     const [tab, setTab] = useState<Tab>('rank');
-    const [prevTab, setPrevTab] = useState<Tab>('rank');
     const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
     const [winRateData, setWinRateData] = useState<any[]>([]);
     const [rankData, setRankData] = useState<any[]>([]);
     const [myStats, setMyStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [tabLoading, setTabLoading] = useState(false);
 
     const fetchAll = async () => {
         setLoading(true);

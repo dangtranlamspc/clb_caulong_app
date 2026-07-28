@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { sessionsApi } from "../../../lib/api";
-import { RefreshCw, Wallet, X, Loader2, Users } from "lucide-react";
+import { RefreshCw, Wallet, X, Loader2, Users, TrendingUp, TrendingDown } from "lucide-react";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 
 function fmt(n: number) {
@@ -66,16 +66,16 @@ const STATUS_CFG: Record<
   completed: {
     label: "Xong",
     dot: "bg-emerald-400",
-    border: "border-l-emerald-400",
+    border: "border-emerald-400",
   },
   waiting_payment: {
     label: "Chờ TT",
     dot: "bg-blue-400",
-    border: "border-l-blue-400",
+    border: "border-blue-400",
   },
-  open: { label: "Sắp", dot: "bg-sky-400", border: "border-l-sky-400" },
-  full: { label: "Đầy", dot: "bg-orange-400", border: "border-l-orange-400" },
-  cancelled: { label: "Hủy", dot: "bg-gray-300", border: "border-l-gray-300" },
+  open: { label: "Sắp", dot: "bg-sky-400", border: "border-sky-400" },
+  full: { label: "Đầy", dot: "bg-orange-400", border: "border-orange-400" },
+  cancelled: { label: "Hủy", dot: "bg-gray-300", border: "border-gray-300" },
 };
 
 function SessionCostDetailModal({
@@ -316,11 +316,12 @@ function SessionCostCard({
   const { full } = fmtDate(session.scheduled_at);
   const cfg = STATUS_CFG[session.status] ?? STATUS_CFG.open;
   const isProfit = chi_phi.profit >= 0;
+  const profitBorder = isProfit ? "border-emerald-400" : "border-red-400";
 
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left bg-white rounded-2xl shadow-sm overflow-hidden border-l-4 ${cfg.border} active:scale-[0.99] transition-transform`}
+      className={`w-full text-left bg-white rounded-2xl overflow-hidden border-2 ${profitBorder} shadow-lg -translate-y-0.5 active:scale-[0.99] active:translate-y-0 transition-transform`}
     >
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="flex-1 min-w-0">
@@ -342,7 +343,8 @@ function SessionCostCard({
               : "bg-red-50 text-red-500"
               }`}
           >
-            {isProfit ? "↗" : "↘"} {isProfit ? "Lãi" : "Lỗ"}{" "}
+            {isProfit ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            {isProfit ? "Lãi" : "Lỗ"}{" "}
             {isProfit ? "+" : ""}
             {fmt(chi_phi.profit)}
           </span>
@@ -406,8 +408,9 @@ function SessionCostCard({
         </div>
 
         <div className="flex justify-between text-sm pt-1.5 border-t border-gray-200 mt-1">
-          <span className="font-semibold text-gray-700">
-            {isProfit ? "📈 Lãi" : "📉 Lỗ"}
+          <span className="font-semibold text-gray-700 flex items-center gap-1">
+            {isProfit ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-500" />}
+            {isProfit ? "Lãi" : "Lỗ"}
           </span>
           <span
             className={`font-black ${isProfit ? "text-emerald-600" : "text-red-500"}`}
@@ -470,7 +473,11 @@ export default function CostPage() {
     load();
   }, [month, year]);
 
-  const grouped = data ? groupByMonth(data.sessions) : [];
+  const completedSessions = data
+    ? data.sessions.filter((item: any) => item.session.status === "completed")
+    : [];
+
+  const grouped = groupByMonth(completedSessions);
   const s = data?.summary;
 
   const YEAR_OPTIONS = Array.from(
@@ -620,10 +627,10 @@ export default function CostPage() {
             </div>
           ))}
 
-          {data.sessions.length === 0 && (
+          {completedSessions.length === 0 && (
             <FadeIn delay={200}>
               <div className="bg-white rounded-2xl py-14 text-center">
-                <p className="text-gray-400 text-sm">Chưa có buổi đánh nào</p>
+                <p className="text-gray-400 text-sm">Chưa có buổi đánh nào hoàn thành</p>
               </div>
             </FadeIn>
           )}
