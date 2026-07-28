@@ -516,7 +516,7 @@ export function UpcomingSessionsSection({
     };
 
     const displaySessions = localSessions
-        .filter((s) => s.status !== "completed")
+        .filter((s) => s.status !== "completed" && s.status !== "cancelled")
         .sort(
             (a, b) =>
                 new Date(b.created_at ?? b.scheduled_at).getTime() -
