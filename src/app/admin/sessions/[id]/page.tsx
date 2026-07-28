@@ -38,6 +38,7 @@ import { MorphButton } from "@/components/effect-button/MorphButton";
 import SessionCostCard from "@/components/admin/sessions/SessionCostCard";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import { SwipeableRow } from "@/components/admin/sessions/SwipeableRow";
+import { CompactActionButton } from "@/components/admin/sessions/CompactActionButton";
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: any }> =
 {
@@ -346,7 +347,9 @@ export default function SessionDetailPage() {
         const guests = guestsOf(host.id);
         const nestedPending = guests.filter((g) => pendingIds.has(g.id));
         const nestedReview = guests.filter((g) => pendingReviewIds.has(g.id));
-        const nestedWalletPending = guests.filter((g) => walletPendingIds.has(g.id));
+        const nestedWalletPending = guests.filter((g) =>
+          walletPendingIds.has(g.id),
+        );
         const hostPending = pendingIds.has(host.id);
         const hostReview = pendingReviewIds.has(host.id);
         const hostWalletPending = walletPendingIds.has(host.id);
@@ -387,12 +390,24 @@ export default function SessionDetailPage() {
       if (isIndependentGuest && reg.payment_method === "cash") {
         return { label: "💵 Tiền mặt", cls: "bg-emerald-50 text-emerald-700" };
       }
-      if (Boolean(reg.payment_reference) && reg.payment_reference !== "TIEN_MAT")
-        return { label: "🏦 Chuyển khoản (đã nộp bill)", cls: "bg-indigo-50 text-indigo-700" };
+      if (
+        Boolean(reg.payment_reference) &&
+        reg.payment_reference !== "TIEN_MAT"
+      )
+        return {
+          label: "🏦 Chuyển khoản (đã nộp bill)",
+          cls: "bg-indigo-50 text-indigo-700",
+        };
       if (reg.payment_method === "cash")
-        return { label: "💵 Tiền mặt (tự yêu cầu)", cls: "bg-emerald-50 text-emerald-700" };
+        return {
+          label: "💵 Tiền mặt (tự yêu cầu)",
+          cls: "bg-emerald-50 text-emerald-700",
+        };
       if (reg.payment_method === "grouped_with_host")
-        return { label: `👥 Gộp theo ${hostName ?? "host"}`, cls: "bg-sky-50 text-sky-700" };
+        return {
+          label: `👥 Gộp theo ${hostName ?? "host"}`,
+          cls: "bg-sky-50 text-sky-700",
+        };
       return { label: "💵 Tiền mặt", cls: "bg-emerald-50 text-emerald-700" };
     };
 
@@ -405,7 +420,9 @@ export default function SessionDetailPage() {
               <p className="text-sm text-gray-600">
                 Có{" "}
                 <strong className="text-gray-900">
-                  {pending.length + pendingReview.length + walletPendingConfirm.length}
+                  {pending.length +
+                    pendingReview.length +
+                    walletPendingConfirm.length}
                 </strong>{" "}
                 người sẽ được tự động xác nhận khi hoàn thành:
               </p>
@@ -431,28 +448,37 @@ export default function SessionDetailPage() {
 
                     const buildGuestNamesLabel = (guests: any[]) => {
                       const names = guests
-                        .map((g) => (g.is_guest ? g.guest_full_name : g.users?.full_name))
+                        .map((g) =>
+                          g.is_guest ? g.guest_full_name : g.users?.full_name,
+                        )
                         .filter(Boolean);
 
                       if (names.length === 0) return "";
-                      if (names.length <= MAX_NAMES_SHOWN) return names.join(", ");
+                      if (names.length <= MAX_NAMES_SHOWN)
+                        return names.join(", ");
 
                       const shown = names.slice(0, MAX_NAMES_SHOWN).join(", ");
                       const remaining = names.length - MAX_NAMES_SHOWN;
                       return `${shown},... (${remaining} người khác)`;
                     };
 
-                    const walletPendingGuestNames = buildGuestNamesLabel(nestedWalletPending);
+                    const walletPendingGuestNames =
+                      buildGuestNamesLabel(nestedWalletPending);
                     const hostWalletLabel = walletPendingGuestNames
                       ? `⏳ Chưa chọn riêng hay gộp với ${walletPendingGuestNames} → gộp ví BnB`
                       : "⏳ Chưa chọn → gộp ví BnB";
 
-                    const nestedWalletGuests = [...nestedPending, ...nestedWalletPending];
+                    const nestedWalletGuests = [
+                      ...nestedPending,
+                      ...nestedWalletPending,
+                    ];
 
                     return (
                       <li key={host.id} className="text-sm text-gray-700">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-medium text-gray-900">{name}</span>
+                          <span className="font-medium text-gray-900">
+                            {name}
+                          </span>
 
                           {isIndependentGuest && hostPending && (
                             <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
@@ -469,7 +495,11 @@ export default function SessionDetailPage() {
                           {hostWalletPending && (
                             <span
                               title={nestedWalletPending
-                                .map((g) => (g.is_guest ? g.guest_full_name : g.users?.full_name))
+                                .map((g) =>
+                                  g.is_guest
+                                    ? g.guest_full_name
+                                    : g.users?.full_name,
+                                )
                                 .join(", ")}
                               className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700"
                             >
@@ -486,43 +516,49 @@ export default function SessionDetailPage() {
                           )}
                         </div>
 
-                        {(nestedWalletGuests.length > 0 || nestedReview.length > 0) && (
-                          <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-gray-100">
-                            {nestedWalletGuests.map((g) => (
-                              <li
-                                key={g.id}
-                                className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
-                              >
-                                <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
-                                <span>
-                                  {g.is_guest ? g.guest_full_name : g.users?.full_name}
-                                </span>
-                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700">
-                                  <Wallet className="w-2.5 h-2.5" /> Ví BNB của {name}
-                                </span>
-                              </li>
-                            ))}
-                            {nestedReview.map((g) => {
-                              const gTag = getPaymentTag(g, name);
-                              return (
+                        {(nestedWalletGuests.length > 0 ||
+                          nestedReview.length > 0) && (
+                            <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-gray-100">
+                              {nestedWalletGuests.map((g) => (
                                 <li
                                   key={g.id}
                                   className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
                                 >
                                   <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
                                   <span>
-                                    {g.is_guest ? g.guest_full_name : g.users?.full_name}
+                                    {g.is_guest
+                                      ? g.guest_full_name
+                                      : g.users?.full_name}
                                   </span>
-                                  <span
-                                    className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${gTag.cls}`}
-                                  >
-                                    {gTag.label}
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700">
+                                    <Wallet className="w-2.5 h-2.5" /> Ví BNB của{" "}
+                                    {name}
                                   </span>
                                 </li>
-                              );
-                            })}
-                          </ul>
-                        )}
+                              ))}
+                              {nestedReview.map((g) => {
+                                const gTag = getPaymentTag(g, name);
+                                return (
+                                  <li
+                                    key={g.id}
+                                    className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
+                                  >
+                                    <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                                    <span>
+                                      {g.is_guest
+                                        ? g.guest_full_name
+                                        : g.users?.full_name}
+                                    </span>
+                                    <span
+                                      className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${gTag.cls}`}
+                                    >
+                                      {gTag.label}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
                       </li>
                     );
                   },
@@ -538,7 +574,9 @@ export default function SessionDetailPage() {
             </p>
             <ul className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
               {rejected.map((r) => {
-                const name = r.is_guest ? r.guest_full_name : r.users?.full_name;
+                const name = r.is_guest
+                  ? r.guest_full_name
+                  : r.users?.full_name;
                 return (
                   <li
                     key={r.id}
@@ -546,13 +584,16 @@ export default function SessionDetailPage() {
                   >
                     <XCircle className="w-3 h-3 flex-shrink-0" />
                     <span className="font-medium">{name}</span>
-                    <span className="text-red-400">— thanh toán bị từ chối</span>
+                    <span className="text-red-400">
+                      — thanh toán bị từ chối
+                    </span>
                   </li>
                 );
               })}
             </ul>
             <p className="text-[11px] text-red-600">
-              Buổi vẫn sẽ hoàn thành, nhưng những người này giữ nguyên trạng thái — bạn cần xử lý thủ công sau.
+              Buổi vẫn sẽ hoàn thành, nhưng những người này giữ nguyên trạng
+              thái — bạn cần xử lý thủ công sau.
             </p>
           </div>
         )}
@@ -690,8 +731,7 @@ export default function SessionDetailPage() {
         },
         () => scheduleRefresh(),
       )
-      .subscribe((status, err) => {
-      });
+      .subscribe((status, err) => { });
     return () => {
       supabase.removeChannel(channel);
       if (refreshDebounceRef.current) clearTimeout(refreshDebounceRef.current);
@@ -951,7 +991,6 @@ export default function SessionDetailPage() {
       r.amount_override != null,
   );
 
-
   const confirmed = registrations.filter(
     (r) => r.payment_status === "confirmed",
   );
@@ -965,7 +1004,8 @@ export default function SessionDetailPage() {
 
   const canComplete =
     session.status === "waiting_payment" &&
-    registrations.filter((r) => r.participation_status === "confirmed").length > 0;
+    registrations.filter((r) => r.participation_status === "confirmed").length >
+    0;
 
   const hostRegs = registrations.filter((r) => !r.host_registration_id);
   const guestsOf = (hostId: string) =>
@@ -1039,10 +1079,7 @@ export default function SessionDetailPage() {
       );
     }
 
-    if (
-      reg.participation_status === "confirmed" &&
-      isAwaitingFinish(reg)
-    ) {
+    if (reg.participation_status === "confirmed" && isAwaitingFinish(reg)) {
       return (
         <MorphButton
           phase={getPhase(`${reg.id}:absent`)}
@@ -1143,10 +1180,7 @@ export default function SessionDetailPage() {
       );
     }
 
-    if (
-      reg.participation_status === "confirmed" &&
-      isAwaitingFinish(reg)
-    ) {
+    if (reg.participation_status === "confirmed" && isAwaitingFinish(reg)) {
       return (
         <button
           onClick={() => handleCheckinAbsent(reg.id, displayName)}
@@ -1521,7 +1555,7 @@ export default function SessionDetailPage() {
             )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {/* <div className="flex items-center justify-end gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {awaitingCheckin.length > 0 && (
             <MorphButton
               phase={getPhase("checkinAll")}
@@ -1551,20 +1585,7 @@ export default function SessionDetailPage() {
           {canAddMember &&
             awaitingCheckin.length === 0 &&
             pendingApproval.length === 0 &&
-            (registrations.length === 0 ? (
-              <button
-                onClick={() => setShowCancelModal(true)}
-                disabled={cancelling}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold flex-shrink-0 disabled:opacity-50"
-              >
-                {cancelling ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <XCircle className="w-4 h-4" />
-                )}
-                Hủy buổi
-              </button>
-            ) : (
+            registrations.length > 0 && (
               <button
                 type="button"
                 onClick={() => {
@@ -1603,24 +1624,22 @@ export default function SessionDetailPage() {
                   </>
                 )}
               </button>
-            ))}
-
-          {(session.status === "open" ||
-            session.status === "full" ||
-            session.status === "waiting_payment") && (
-              <button
-                onClick={() => setShowCancelModal(true)}
-                disabled={cancelling}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold disabled:opacity-50 flex-shrink-0"
-              >
-                {cancelling ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <XCircle className="w-4 h-4" />
-                )}
-                Hủy buổi
-              </button>
             )}
+
+          {(session.status === "open" || session.status === "full") && (
+            <button
+              onClick={() => setShowCancelModal(true)}
+              disabled={cancelling}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold flex-shrink-0 disabled:opacity-50"
+            >
+              {cancelling ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <XCircle className="w-4 h-4" />
+              )}
+              Hủy buổi
+            </button>
+          )}
 
           {session.status === "cancelled" && (
             <button
@@ -1675,7 +1694,249 @@ export default function SessionDetailPage() {
               Thêm thành viên
             </button>
           )}
-        </div>
+        </div> */}
+
+        {isDesktop ? (
+          <div className="flex items-center justify-end gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {awaitingCheckin.length > 0 && (
+              <MorphButton
+                phase={getPhase("checkinAll")}
+                idleIcon={<UserCheck className="w-4 h-4" />}
+                label={`All (${awaitingCheckin.length})`}
+                idleWidthClass="w-22"
+                colorClass="bg-green-500 hover:bg-green-600 text-white"
+                successClassName="bg-green-500 text-white"
+                onClick={handleCheckinAllPresent}
+                disabled={closingList}
+              />
+            )}
+
+            {awaitingCheckin.length > 0 && (
+              <MorphButton
+                phase={getPhase("closeList")}
+                idleIcon={<UserX className="w-4 h-4" />}
+                label={`Chốt (${awaitingCheckin.length} vắng)`}
+                idleWidthClass="w-36"
+                colorClass="bg-red-500 hover:bg-red-600 text-white"
+                successClassName="bg-red-500 text-white"
+                onClick={handleCloseList}
+                disabled={checkingInAll}
+              />
+            )}
+
+            {canAddMember &&
+              awaitingCheckin.length === 0 &&
+              pendingApproval.length === 0 &&
+              registrations.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (finishing) return;
+                    setFinishing(true);
+                    setTimeout(() => {
+                      const doNavigate = () =>
+                        router.push(`/admin/sessions/${id}/finish`);
+                      if (
+                        typeof document !== "undefined" &&
+                        (document as any).startViewTransition
+                      ) {
+                        (document as any).startViewTransition(doNavigate);
+                      } else {
+                        doNavigate();
+                      }
+                    }, 750);
+                  }}
+                  disabled={finishing}
+                  className={`flex-shrink-0 flex items-center justify-center text-sm font-semibold text-white bg-green-500 hover:bg-green-600 shadow-sm active:scale-95 overflow-hidden ${finishing
+                    ? "w-9 h-9 rounded-full gap-0 p-0"
+                    : "w-auto h-9 gap-1.5 px-3 rounded-lg"
+                    }`}
+                  style={{
+                    transitionProperty: "width, height, border-radius, padding, gap",
+                    transitionDuration: "550ms",
+                    transitionTimingFunction: "cubic-bezier(0.65, 0, 0.35, 1)",
+                  }}
+                >
+                  {finishing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Calculator className="w-4 h-4" /> Kết thúc
+                    </>
+                  )}
+                </button>
+              )}
+
+            {(session.status === "open" || session.status === "full") && (
+              <button
+                onClick={() => setShowCancelModal(true)}
+                disabled={cancelling}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold flex-shrink-0 disabled:opacity-50"
+              >
+                {cancelling ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <XCircle className="w-4 h-4" />
+                )}
+                Hủy buổi
+              </button>
+            )}
+
+            {session.status === "cancelled" && (
+              <button
+                onClick={handleReopenSession}
+                disabled={reopening}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-sm font-semibold flex-shrink-0 disabled:opacity-50"
+              >
+                {reopening ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-4 h-4" />
+                )}
+                Mở lại
+              </button>
+            )}
+
+            {(session.status === "waiting_payment" ||
+              session.status === "completed") && (
+                <button
+                  onClick={() => setShowRollbackModal(true)}
+                  disabled={rollingBack}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600 text-sm font-semibold disabled:opacity-50 flex-shrink-0"
+                >
+                  {rollingBack ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-4 h-4" />
+                  )}
+                  Hoàn tác
+                </button>
+              )}
+
+            {canComplete && (
+              <MorphButton
+                phase={getPhase("completeSession")}
+                idleIcon={<CheckCircle2 className="w-4 h-4" />}
+                label="Hoàn thành"
+                idleWidthClass="w-32"
+                colorClass="bg-emerald-500 hover:bg-emerald-600 text-white"
+                successClassName="bg-emerald-500 text-white"
+                onClick={handleCompleteSession}
+                disabled={completingSession}
+              />
+            )}
+
+            {canAddMember && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex-shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
+              >
+                <UserPlus className="w-4 h-4" />
+                Thêm thành viên
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 px-6">
+            {awaitingCheckin.length > 0 && (
+              <CompactActionButton
+                icon={<UserCheck className="w-4 h-4" />}
+                label="Điểm danh tất cả"
+                badge={awaitingCheckin.length}
+                colorClass="bg-emerald-500"
+                onClick={handleCheckinAllPresent}
+                disabled={closingList || getPhase("checkinAll") === "loading"}
+                loading={getPhase("checkinAll") === "loading"}
+              />
+            )}
+
+            {awaitingCheckin.length > 0 && (
+              <CompactActionButton
+                icon={<UserX className="w-4 h-4" />}
+                label="Chốt danh sách"
+                badge={awaitingCheckin.length}
+                colorClass="bg-rose-500"
+                onClick={handleCloseList}
+                disabled={checkingInAll || getPhase("closeList") === "loading"}
+                loading={getPhase("closeList") === "loading"}
+              />
+            )}
+
+            {canAddMember &&
+              awaitingCheckin.length === 0 &&
+              pendingApproval.length === 0 &&
+              registrations.length > 0 && (
+                <CompactActionButton
+                  icon={<Calculator className="w-4 h-4" />}
+                  label="Kết thúc"
+                  colorClass="bg-teal-500"
+                  onClick={() => {
+                    if (finishing) return;
+                    setFinishing(true);
+                    setTimeout(() => {
+                      router.push(`/admin/sessions/${id}/finish`);
+                    }, 300);
+                  }}
+                  disabled={finishing}
+                  loading={finishing}
+                />
+              )}
+
+            {(session.status === "open" || session.status === "full") && (
+              <CompactActionButton
+                icon={<XCircle className="w-4 h-4" />}
+                label="Huỷ buổi"
+                colorClass="bg-orange-500"
+                onClick={() => setShowCancelModal(true)}
+                disabled={cancelling}
+                loading={cancelling}
+              />
+            )}
+
+            {session.status === "cancelled" && (
+              <CompactActionButton
+                icon={<RotateCcw className="w-4 h-4" />}
+                label="Mở lại"
+                colorClass="bg-sky-500"
+                onClick={handleReopenSession}
+                disabled={reopening}
+                loading={reopening}
+              />
+            )}
+
+            {(session.status === "waiting_payment" ||
+              session.status === "completed") && (
+                <CompactActionButton
+                  icon={<RotateCcw className="w-4 h-4" />}
+                  label="Hoàn tác"
+                  colorClass="bg-amber-500"
+                  onClick={() => setShowRollbackModal(true)}
+                  disabled={rollingBack}
+                  loading={rollingBack}
+                />
+              )}
+
+            {canComplete && (
+              <CompactActionButton
+                icon={<CheckCircle2 className="w-4 h-4" />}
+                label="Hoàn thành"
+                colorClass="bg-green-500"
+                onClick={handleCompleteSession}
+                disabled={completingSession}
+                loading={completingSession}
+              />
+            )}
+
+            {canAddMember && (
+              <CompactActionButton
+                icon={<UserPlus className="w-4 h-4" />}
+                label="Thêm thành viên"
+                colorClass="bg-blue-500"
+                onClick={() => setShowAddModal(true)}
+              />
+            )}
+          </div>
+        )}
 
         <div className="card grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-4 p-5 text-sm shadow-md">
           <div className="flex flex-col gap-1">

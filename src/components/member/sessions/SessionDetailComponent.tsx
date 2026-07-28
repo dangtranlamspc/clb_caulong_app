@@ -202,7 +202,6 @@ function WalletGuestConfirmModal({
             </div>
           </div>
 
-          {/* Option 1: Gộp vào ví */}
           <button
             onClick={() => handleConfirm("grouped")}
             disabled={submitting}
@@ -310,6 +309,23 @@ export default function SessionDetailPage() {
 
   const [showAmountsModal, setShowAmountsModal] = useState(false);
   const [amountsModalVisible, setAmountsModalVisible] = useState(false);
+
+  const [costDetail, setCostDetail] = useState<any>(null);
+
+  const fetchCostDetail = async () => {
+    try {
+      const { data } = await sessionsApi.getCostDetail(id);
+      setCostDetail(data);
+    } catch {
+      setCostDetail(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchSession();
+    fetchRegistrations();
+    fetchCostDetail();
+  }, [id]);
 
   useEffect(() => {
     if (showGuestModal) {
@@ -1145,14 +1161,12 @@ export default function SessionDetailPage() {
             )}
           </div>
 
-          {/* Registrations list */}
-
           {/* Chi phí buổi */}
-          {(session.status === "waiting_payment" ||
-            session.status === "completed") &&
-            (session.court_fee > 0 ||
-              session.shuttle_count > 0 ||
-              totalOtherFeeFromRegs > 0) && (
+          {(session.status === "waiting_payment" || session.status === "completed") &&
+            costDetail &&
+            (costDetail.chi_phi.shuttle_count > 0 ||
+              costDetail.chi_phi.court_fee > 0 ||
+              costDetail.chi_phi.other_fee > 0) && (
               <div
                 className="bg-white rounded-2xl p-5 shadow-sm space-y-3"
                 style={{ animation: "fadeSlideUp .3s ease both" }}
@@ -1160,99 +1174,153 @@ export default function SessionDetailPage() {
                 <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
                   🧾 Chi phí buổi đánh
                 </h3>
-                <div className="space-y-1.5 text-sm">
-                  {session.shuttle_count > 0 && (
-                    <div className="flex justify-between text-gray-600">
-                      <span>
-                        🏸 Cầu {session.shuttle_count} ×{" "}
-                        {fmt(session.shuttle_price ?? 0)}
+
+                {costDetail.chi_phi.shuttle_count > 0 && (
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 overflow-hidden">
+                    <div className="flex items-center justify-between px-3.5 py-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-700">🏸 Tiền cầu</p>
+                        <p className="text-xs text-gray-400">
+                          {costDetail.chi_phi.shuttle_count} quả ×{" "}
+                          {fmt(costDetail.chi_phi.shuttle_price)}
+                        </p>
+                      </div>
+                      <span className="text-base font-bold text-emerald-600 flex-shrink-0 ml-3">
+                        {fmt(costDetail.chi_phi.shuttle_cost)}
                       </span>
+                    </div>
+                  </div>
+                )}
+
+                {Array.isArray(costDetail.chi_phi.court_breakdown) &&
+                  costDetail.chi_phi.court_breakdown.length > 0 ? (
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 overflow-hidden">
+                    <div className="px-3.5 py-2.5 text-sm font-medium text-gray-600 border-b border-blue-100/70">
+                      🏟 Sân
+                    </div>
+                    <div className="divide-y divide-blue-100/70">
+                      {costDetail.chi_phi.court_breakdown.map((c: any, i: number) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between px-3.5 py-2.5"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-700 truncate">
+                              {c.name}
+                            </p>
+                            {c.minutes ? (
+                              <p className="text-xs text-gray-400">
+                                {c.minutes} phút × {fmt(c.price_per_hour)}/tiếng
+                              </p>
+                            ) : null}
+                          </div>
+                          <span className="text-sm font-semibold text-blue-600 flex-shrink-0 ml-3">
+                            {fmt(c.total)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center px-3.5 py-2.5 bg-blue-100/50">
+                      <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                        Tổng tiền sân
+                      </span>
+                      <span className="text-base font-bold text-blue-700">
+                        {fmt(costDetail.chi_phi.court_fee)}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  costDetail.chi_phi.court_fee > 0 && (
+                    <div className="flex justify-between text-sm px-1">
+                      <span className="text-gray-600">🏟 Sân</span>
                       <span className="font-medium">
-                        {fmt(
-                          (session.shuttle_count ?? 0) *
-                          (session.shuttle_price ?? 0),
+                        {fmt(costDetail.chi_phi.court_fee)}
+                      </span>
+                    </div>
+                  )
+                )}
+
+                {costDetail.chi_phi.other_fee > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-sm px-1">
+                      <span className="text-gray-600">
+                        💰 Khoản thu khác
+                        {costDetail.chi_phi.other_fee_note && (
+                          <span className="text-gray-400 italic">
+                            {" "}
+                            ({costDetail.chi_phi.other_fee_note})
+                          </span>
                         )}
                       </span>
-                    </div>
-                  )}
-                  {session.court_fee > 0 && (
-                    <div className="flex justify-between text-gray-600">
-                      <span>🏟 Tiền sân</span>
                       <span className="font-medium">
-                        {fmt(session.court_fee ?? 0)}
+                        {fmt(costDetail.chi_phi.other_fee)}
                       </span>
                     </div>
-                  )}
-                  {totalOtherFeeFromRegs > 0 && (
-                    <div className="text-gray-600">
-                      <div className="flex justify-between">
-                        <span>💰 Khoản thu khác</span>
-                        <span className="font-medium">
-                          {fmt(totalOtherFeeFromRegs)}
-                        </span>
-                      </div>
-                      <div className="mt-1 pl-4 space-y-0.5">
-                        {registrations
-                          .filter((r) => (r.other_fee_amount ?? 0) > 0)
-                          .map((r: any) => {
-                            const name =
-                              r.users?.full_name ?? r.guest_full_name ?? "?";
-                            const isGroupedGuest =
-                              r.is_guest &&
-                              r.host_registration_id &&
-                              r.payment_method === "grouped_with_host";
-                            const hostName = isGroupedGuest
-                              ? (registrations.find(
-                                (h: any) => h.id === r.host_registration_id,
-                              )?.users?.full_name ??
-                                registrations.find(
-                                  (h: any) => h.id === r.host_registration_id,
-                                )?.guest_full_name)
-                              : null;
-                            return (
-                              <div
-                                key={r.id}
-                                className="flex justify-between text-xs text-gray-400"
-                              >
-                                <span>
-                                  {isGroupedGuest ? `+ ${name}` : name}
-                                  {isGroupedGuest && hostName && (
-                                    <span className="text-gray-300">
-                                      {" "}
-                                      (đi cùng {hostName})
+
+                    {Array.isArray(costDetail.chi_phi.other_fee_list) &&
+                      costDetail.chi_phi.other_fee_list.length > 0 && (
+                        <div className="ml-3 space-y-1.5 border-l-2 border-amber-100 pl-3">
+                          {costDetail.chi_phi.other_fee_list.map(
+                            (item: any, i: number) => (
+                              <div key={i}>
+                                <div className="flex justify-between text-xs text-gray-500">
+                                  <span>
+                                    {item.name}
+                                    {item.note && (
+                                      <span className="text-gray-400 italic">
+                                        {" "}
+                                        — {item.note}
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="font-medium text-amber-600">
+                                    {fmt(item.amount)}
+                                  </span>
+                                </div>
+                                {item.guests?.map((g: any, gi: number) => (
+                                  <div
+                                    key={gi}
+                                    className="flex justify-between text-xs text-gray-400 pl-3 mt-0.5"
+                                  >
+                                    <span>
+                                      + {g.name}{" "}
+                                      <span className="text-gray-300">(đi cùng)</span>
+                                      {g.note && (
+                                        <span className="italic"> — {g.note}</span>
+                                      )}
                                     </span>
-                                  )}
-                                  {r.other_fee_note && (
-                                    <span className="italic">
-                                      {" "}
-                                      — {r.other_fee_note}
+                                    <span className="font-medium text-amber-500">
+                                      {fmt(g.amount)}
                                     </span>
-                                  )}
-                                </span>
-                                <span className="font-medium text-amber-600">
-                                  {fmt(r.other_fee_amount)}
-                                </span>
+                                  </div>
+                                ))}
+                                {item.guests && item.guests.length > 0 && (
+                                  <div className="flex justify-between text-[11px] text-gray-400 pl-3 mt-0.5 pt-0.5 border-t border-dashed border-gray-200">
+                                    <span>= Tổng ({item.name})</span>
+                                    <span className="font-semibold text-amber-700">
+                                      {fmt(item.total ?? item.amount)}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-bold border-t border-gray-100 pt-2 text-gray-900">
-                    <span>Tổng chi phí</span>
-                    <span>
-                      {fmt(
-                        (session.court_fee ?? 0) +
-                        (session.shuttle_count ?? 0) *
-                        (session.shuttle_price ?? 0) +
-                        totalOtherFeeFromRegs,
+                            ),
+                          )}
+                        </div>
                       )}
-                    </span>
                   </div>
+                )}
+
+                <div className="flex items-center justify-between rounded-xl bg-gray-900 px-4 py-3.5 mt-1">
+                  <span className="text-sm font-semibold text-gray-200">
+                    Tổng chi phí
+                  </span>
+                  <span className="text-lg font-bold text-white">
+                    {fmt(costDetail.summary.total_cost)}
+                  </span>
                 </div>
-                {registrations.filter(
-                  (r) => r.participation_status === "confirmed",
-                ).length > 0 && (
+
+                {registrations.filter((r) => r.participation_status === "confirmed")
+                  .length > 0 && (
                     <button
                       onClick={openAmountsModal}
                       className="w-full py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-700 transition-colors flex items-center justify-center gap-1.5"

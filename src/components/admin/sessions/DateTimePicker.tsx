@@ -79,7 +79,6 @@ export function DateTimePicker({
   const [hours, setHours] = useState(initial?.getHours() ?? 7);
   const [mins, setMins] = useState(initial?.getMinutes() ?? 0);
 
-  // Sync when external value changes
   useEffect(() => {
     const d = parseValue(value);
     if (d) {
@@ -217,15 +216,14 @@ export function DateTimePicker({
                 disabled={isDisabled}
                 onClick={() => setSelDate(new Date(viewYear, viewMonth, day))}
                 className={`h-9 w-full rounded-lg text-sm font-medium transition-all
-                                    ${
-                                      isSel
-                                        ? "bg-blue-600 text-white"
-                                        : isToday
-                                          ? "bg-blue-50 text-blue-700 font-semibold"
-                                          : isDisabled
-                                            ? "text-gray-200 cursor-not-allowed"
-                                            : "text-gray-700 hover:bg-gray-100"
-                                    }`}
+                                    ${isSel
+                    ? "bg-blue-600 text-white"
+                    : isToday
+                      ? "bg-blue-50 text-blue-700 font-semibold"
+                      : isDisabled
+                        ? "text-gray-200 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                  }`}
               >
                 {day}
               </button>
@@ -303,11 +301,10 @@ export function DateTimePicker({
                     setMins(pm);
                   }}
                   className={`text-[11px] px-2 py-1 rounded-md transition-colors font-medium
-                                        ${
-                                          hours === ph && mins === pm
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600"
-                                        }`}
+                                        ${hours === ph && mins === pm
+                      ? "bg-blue-600 text-white"
+                      : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600"
+                    }`}
                 >
                   {pad(ph)}:{pad(pm)}
                 </button>
@@ -361,13 +358,12 @@ export function DateTimePicker({
         type="button"
         onClick={() => setOpen(true)}
         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm transition-all
-                    ${
-                      displayLabel
-                        ? "border-blue-400 bg-white ring-1 ring-blue-100"
-                        : error
-                          ? "border-red-300 bg-white"
-                          : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-white"
-                    }`}
+                    ${displayLabel
+            ? "border-blue-400 bg-white ring-1 ring-blue-100"
+            : error
+              ? "border-red-300 bg-white"
+              : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-white"
+          }`}
       >
         <span
           className={`flex items-center gap-2 ${displayLabel ? "text-gray-900 font-medium" : "text-gray-400"}`}

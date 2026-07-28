@@ -18,6 +18,7 @@ import {
     Clock3,
     Hourglass,
     CreditCard,
+    Lock
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
@@ -98,7 +99,7 @@ function getSessionStatusBadge(s: any) {
         myReg && (effectiveStatus === "open" || effectiveStatus === "full")
             ? "Bạn đã đăng ký"
             : effectiveStatus === "open"
-                ? "Mở đăng ký"
+                ? "Đang mở đăng ký"
                 : effectiveStatus === "full"
                     ? "Đã đầy"
                     : isAwaitingAdminFinish
@@ -514,13 +515,22 @@ export function UpcomingSessionsSection({
         }
     };
 
+    const displaySessions = localSessions
+        .filter((s) => s.status !== "completed")
+        .sort(
+            (a, b) =>
+                new Date(b.created_at ?? b.scheduled_at).getTime() -
+                new Date(a.created_at ?? a.scheduled_at).getTime(),
+        )
+        .slice(0, 4);
+
     return (
         <section>
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-1.5">
                     <Zap className="w-4 h-4 text-blue-300" />
                     <h3 className="font-bold text-gray-600 text-sm">
-                        Buổi đang mở đăng ký
+                        Buổi đánh gần đây
                     </h3>
                 </div>
                 <Link
@@ -531,20 +541,22 @@ export function UpcomingSessionsSection({
                 </Link>
             </div>
 
+            {(() => null)()}
+
             {loading ? (
                 <div className="space-y-2">
                     {[...Array(2)].map((_, i) => (
                         <div key={i} className="bg-white rounded-2xl h-24 animate-pulse" />
                     ))}
                 </div>
-            ) : localSessions.length === 0 ? (
+            ) : displaySessions.length === 0 ? (
                 <div className="bg-white rounded-2xl py-10 text-center border border-dashed border-gray-200">
                     <CalendarDays className="w-8 h-8 mx-auto text-gray-200 mb-2" />
-                    <p className="text-gray-400 text-sm">Chưa có buổi nào đang mở</p>
+                    <p className="text-gray-400 text-sm">Chưa có buổi đánh nào</p>
                 </div>
             ) : (
-                <div className="space-y-4">
-                    {localSessions.map((s, index) => {
+                <div className="space-y-2.5">
+                    {displaySessions.map((s, index) => {
                         const myReg = s.my_registration;
                         const isFull = s.available_slots <= 0;
 
@@ -589,7 +601,7 @@ export function UpcomingSessionsSection({
                             myReg.payment_status === "pending" &&
                             !myReg.payment_reference &&
                             myReg.participation_status === "confirmed";
-                        const statusBadge = myReg ? getSessionStatusBadge(s) : null;
+                        const statusBadge = getSessionStatusBadge(s);
                         const isRegisteringThis = registeringId === s.id;
 
                         const effectiveStatus =
@@ -613,13 +625,20 @@ export function UpcomingSessionsSection({
                             <div
                                 key={s.id}
                                 style={{
-                                    marginBottom: index !== localSessions.length - 1 ? "20px" : 0,
                                     boxShadow:
                                         "0 8px 24px -4px rgba(30, 64, 175, 0.12), 0 4px 10px -2px rgba(0,0,0,0.06)",
                                 }}
-                                className={`bg-white rounded-2xl p-5 border transition-all ${myReg ? "border-blue-200" : "border-gray-100"
+                                className={`relative bg-white rounded-2xl p-5 border transition-all ${myReg ? "border-blue-200" : "border-gray-100"
                                     }`}
                             >
+                                {isFull && (
+                                    <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-red-500 shadow-md shadow-red-200 flex items-center justify-center z-10"
+                                        title="Buổi đã đầy chỗ"
+                                    >
+                                        <Lock className="w-3.5 h-3.5 text-white" />
+                                    </div>
+                                )
+                                }
                                 <Link href={`/sessions/${s.id}`}>
                                     <div className="flex items-start justify-between gap-3 active:scale-99 transition-transform">
                                         <div className="flex-1 min-w-0">
@@ -676,9 +695,9 @@ export function UpcomingSessionsSection({
                                                 </span>
                                             )}
                                         </div>
-                                        {statusBadge && (
+                                        {statusBadge && !(isFull && !myReg) && (
                                             <span
-                                                className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge.cls}`}
+                                                className={`flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full ${statusBadge.cls}`}
                                             >
                                                 {statusBadge.label}
                                             </span>
@@ -739,7 +758,7 @@ export function UpcomingSessionsSection({
                                             onClick={(e) => e.stopPropagation()}
                                             className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 shadow-sm shadow-red-200 active:scale-95 transition-all px-4 h-9 rounded-full animate-pulse"
                                         >
-                                            <CreditCard className="w-3.5 h-3.5" /> Thanh toán ngay
+                                            <CreditCard className="w-3.5 h-3.5" /> Chi tiết thanh toán
                                         </Link>
                                     ) : canAddCompanion ? (
                                         <button
@@ -753,7 +772,9 @@ export function UpcomingSessionsSection({
                                             <UserPlus className="w-3.5 h-3.5" /> Thêm
                                         </button>
                                     ) : isFull && !myReg ? (
-                                        <span className="text-xs text-gray-400 px-2">Hết chỗ</span>
+                                        <span className="flex-shrink-0 text-xs font-semibold text-white bg-red-500 px-4 py-2 rounded-full">
+                                            Hết chỗ
+                                        </span>
                                     ) : null}
                                 </div>
                             </div>
@@ -776,15 +797,18 @@ export function UpcomingSessionsSection({
                         }
                     `}</style>
                 </div>
-            )}
+            )
+            }
 
-            {companionModalSession && (
-                <AddCompanionModal
-                    session={companionModalSession}
-                    onClose={() => setCompanionModalSession(null)}
-                    onDone={() => refetchSession(companionModalSession.id)}
-                />
-            )}
-        </section>
+            {
+                companionModalSession && (
+                    <AddCompanionModal
+                        session={companionModalSession}
+                        onClose={() => setCompanionModalSession(null)}
+                        onDone={() => refetchSession(companionModalSession.id)}
+                    />
+                )
+            }
+        </section >
     );
 }

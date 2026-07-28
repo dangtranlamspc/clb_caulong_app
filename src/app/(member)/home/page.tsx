@@ -112,7 +112,7 @@ export default function HomePage() {
 
   useEffect(() => {
     Promise.all([
-      sessionsApi.list({ status: "open", limit: 3 }),
+      sessionsApi.list({ limit: 4 }),
       registrationsApi.getMyRegistrations({ limit: 3 }),
       rankingsApi.myStats(),
       rankingsApi.myRank(),
@@ -120,12 +120,7 @@ export default function HomePage() {
       profileApi.getMe(),
     ])
       .then(([s, r, st, rk, bd, me]) => {
-        const sortedUpcoming = [...(s.data.data ?? [])].sort(
-          (a: any, b: any) =>
-            new Date(b.scheduled_at).getTime() -
-            new Date(a.scheduled_at).getTime(),
-        );
-        setUpcoming(sortedUpcoming);
+        setUpcoming(s.data.data ?? []);
         setMyRegs(r.data.data ?? []);
         setMyStats(st.data);
         setMyRank(rk.data);
