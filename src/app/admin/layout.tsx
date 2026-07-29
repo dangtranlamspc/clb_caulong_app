@@ -66,8 +66,8 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F6FA]">
-      <header className="sticky top-0 z-30 overflow-hidden bg-transparent">
+    <div className="fixed inset-0 flex flex-col bg-[#F4F6FA] overflow-hidden">
+      <header className="relative z-30 overflow-hidden bg-transparent flex-shrink-0">
         <div
           className="absolute inset-0 -z-10"
           style={{
@@ -75,7 +75,6 @@ export default function AdminLayout({
               "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
           }}
         />
-
         <div
           className="relative flex items-center justify-between px-4"
           style={{
@@ -86,7 +85,6 @@ export default function AdminLayout({
             borderBottom: "1px solid rgba(255,255,255,.10)",
           }}
         >
-          {/* Left */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMenuOpen(true)}
@@ -127,7 +125,6 @@ export default function AdminLayout({
             </div>
           </div>
 
-          {/* Right */}
           <button
             onClick={handleLogout}
             title="Đăng xuất"
@@ -155,7 +152,7 @@ export default function AdminLayout({
         </div>
       </header>
 
-      <main className="w-full px-4 lg:px-8 py-5">
+      <main className="flex-1 min-h-0 w-full px-4 lg:px-8 py-5 overflow-y-auto">
         {children}
       </main>
 

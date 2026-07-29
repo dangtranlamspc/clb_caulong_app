@@ -28,6 +28,7 @@ import { NotificationBell } from "@/components/member/noti/NotificationBell";
 import { useNotificationsRealtimeStore } from "@/store/notifications-realtime.store";
 import { AdminMenuDrawer } from "@/components/admin/AdminMenuDrawer";
 import { supabase } from "@/lib/supabase";
+import { FeedbackWidget } from "@/components/member/feedback/FeedBackChats";
 
 const NAV_ITEMS = [
     { href: "/home", icon: Home, label: "Trang chủ" },
@@ -426,6 +427,8 @@ export default function MemberLayout({
             </header>
 
             <main className="max-w-lg mx-auto px-4 py-5">{children}</main>
+
+            <FeedbackWidget />
 
             <BottomNav pathname={pathname} showActivityDot={hasPendingPayment} />
 

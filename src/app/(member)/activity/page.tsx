@@ -1024,27 +1024,27 @@ function SessionsTab({
                       {s.duration_minutes} phút
                     </span>
                   </div>
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="flex items-center gap-1 text-xs text-gray-400">
-                        <Zap className="w-3 h-3" />
-                        Chỗ trống
-                      </span>
-                      <span
-                        className={`text-xs ${energyTextCls(ratio, slotDimmed)}`}
-                      >
-                        {isFull
-                          ? "Hết chỗ"
-                          : `Còn ${s.available_slots} / ${s.max_slots}`}
-                      </span>
+                  {s.status !== "completed" && (
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Zap className="w-3 h-3" />
+                          Chỗ trống
+                        </span>
+                        <span className={`text-xs ${energyTextCls(ratio, slotDimmed)}`}>
+                          {isFull
+                            ? "Hết chỗ"
+                            : `Còn ${s.available_slots} / ${s.max_slots}`}
+                        </span>
+                      </div>
+                      <EnergyBar
+                        filled={filled}
+                        max={s.max_slots}
+                        status={s.status}
+                        dimmed={slotDimmed}
+                      />
                     </div>
-                    <EnergyBar
-                      filled={filled}
-                      max={s.max_slots}
-                      status={s.status}
-                      dimmed={slotDimmed}
-                    />
-                  </div>
+                  )}
                   <div className="flex items-center justify-between pt-3 border-t border-gray-50 gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-wrap">
                       {myReg

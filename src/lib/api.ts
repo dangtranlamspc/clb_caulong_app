@@ -512,12 +512,23 @@ export const handbookAdminApi = {
   create: (data: any) => api.post("/admin/handbook-pages", data),
   update: (id: string, data: any) => api.patch(`/admin/handbook-pages/${id}`, data),
   delete: (id: string) => api.delete(`/admin/handbook-pages/${id}`),
-  // parent_id: null/undefined = reordering top-level TOC sections,
-  // otherwise = reordering the sub-pages of that content page.
   reorder: (orderedIds: string[], parent_id?: string | null) =>
     api.patch("/admin/handbook-pages/reorder", { orderedIds, parent_id }),
 };
 
 export const handbookPublicApi = {
   tree: () => api.get("/handbook-pages"),
+};
+
+
+export const feedbackApi = {
+  // Member
+  send: (message: string) => api.post('/feedback', { message }),
+  getMine: () => api.get('/feedback/me'),
+
+  // Admin
+  listAdmin: (params?: { search?: string; status?: 'all' | 'read' | 'unread'; page?: number; limit?: number }) =>
+    api.get('/feedback/admin', { params }),
+  markRead: (id: string) => api.patch(`/feedback/admin/${id}/read`),
+  getUnreadCount: () => api.get('/feedback/admin/unread-count'),
 };
