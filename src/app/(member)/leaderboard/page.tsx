@@ -5,6 +5,7 @@ import { rankingsApi } from '../../../lib/api';
 import { useAuthStore } from '../../../store/auth.store';
 import { getTierCardBackground, getTierTheme, RankIcon, RankPodiumAvatarList } from '@/components/member/ranks/Rank';
 import { createPortal } from 'react-dom';
+import { CustomSelect } from '@/components/admin/sessions/CustomSelect';
 
 const ATTENDANCE_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
     'Người Mới Tham Gia': { emoji: '🥚', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },
@@ -336,34 +337,113 @@ function buildMonthOptions(monthsBack = 12) {
 
 const MONTH_OPTIONS = buildMonthOptions(12);
 
-function MonthDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-    return (
-        <div className="relative inline-flex items-center">
-            <Calendar className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 pointer-events-none" />
-            <select
-                value={value}
-                onChange={e => onChange(e.target.value)}
-                className="appearance-none bg-gray-50 border border-gray-200 rounded-lg pl-8 pr-7 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 cursor-pointer"
+const MODE_OPTIONS = [
+    { value: 'month', label: 'Theo tháng cụ thể' },
+    { value: 'range-3m', label: '3 tháng gần nhất' },
+    { value: 'range-6m', label: '6 tháng gần nhất' },
+    { value: 'range-1y', label: '1 năm gần nhất' },
+];
+
+function LeaderboardInfoModal({ onClose }: { onClose: () => void }) {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const handleClose = () => {
+        setVisible(false);
+        setTimeout(onClose, 200);
+    };
+
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(2px)',
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 200ms ease-out',
+            }}
+            onClick={(e) => e.target === e.currentTarget && handleClose()}
+        >
+            <div
+                className="w-full max-w-sm bg-white rounded-3xl overflow-hidden relative max-h-[85vh] overflow-y-auto"
+                style={{
+                    transform: visible ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(8px)',
+                    opacity: visible ? 1 : 0,
+                    transition: 'transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out',
+                }}
+                onClick={(e) => e.stopPropagation()}
             >
-                {MONTH_OPTIONS.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-2 pointer-events-none" />
-        </div>
+                <button
+                    onClick={handleClose}
+                    className="absolute top-3 right-3 z-20 w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                    <X className="w-4 h-4 text-gray-600" />
+                </button>
+
+                <div className="px-5 pt-6 pb-5">
+                    <div className="flex items-center gap-2 mb-1">
+                        <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-5 h-5 object-contain" />
+                        <p className="text-base font-bold text-gray-800">Cách tính điểm buổi đánh</p>
+                    </div>
+                    <p className="text-xs text-gray-400 mb-4">
+                        Mỗi buổi đánh tham gia và thanh toán xong sẽ được cộng điểm vào bảng xếp hạng này.
+                    </p>
+
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">1. Khi nào được cộng điểm?</p>
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-700 bg-emerald-50 rounded-lg px-3 py-1.5">
+                                    Tham gia + thanh toán thành công: +1
+                                    <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="w-4 h-4 object-contain" />
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-500 leading-relaxed mt-2">
+                                Điểm chỉ được cộng khi admin (hoặc hệ thống trừ ví tự động) <span className="font-semibold text-gray-700">xác nhận thanh toán</span> cho buổi đánh — đăng ký tham gia nhưng chưa thanh toán xong sẽ chưa được tính.
+                            </p>
+                        </div>
+
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">2. Số điểm hiển thị</p>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Con số cạnh biểu tượng <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" alt="" className="inline w-3.5 h-3.5 object-contain mx-0.5" /> là tổng số buổi đã tham gia và thanh toán thành công trong khoảng thời gian đang chọn (theo tháng cụ thể, hoặc 3/6/12 tháng gần nhất).
+                            </p>
+                        </div>
+
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">3. Mũi tên xu hướng</p>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                So sánh số buổi tham gia của khoảng thời gian hiện tại với khoảng liền trước đó (ví dụ tháng này so với tháng trước) — tăng thì mũi tên xanh, giảm thì mũi tên đỏ.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>,
+        document.body,
     );
 }
 
 
 function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
+    const [mode, setMode] = useState<string>('month');
     const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthValue());
     const [monthData, setMonthData] = useState(data);
     const [monthLoading, setMonthLoading] = useState(false);
+    const [showInfo, setShowInfo] = useState(false);
     const isFirstRender = useRef(true);
 
+    const isCurrentMonthMode = mode === 'month' && selectedMonth === getCurrentMonthValue();
+
     useEffect(() => {
-        if (selectedMonth === getCurrentMonthValue()) {
+        if (isCurrentMonthMode) {
             setMonthData(data);
         }
     }, [data]);
@@ -373,12 +453,20 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
             isFirstRender.current = false;
             return;
         }
-        const [year, month] = selectedMonth.split('-').map(Number);
+
         setMonthLoading(true);
-        rankingsApi.leaderboard({ month, year })
+
+        const params = mode.startsWith('range-')
+            ? { range: mode.replace('range-', '') as '3m' | '6m' | '1y' }
+            : (() => {
+                const [year, month] = selectedMonth.split('-').map(Number);
+                return { month, year };
+            })();
+
+        rankingsApi.leaderboard(params)
             .then((res: any) => setMonthData(res.data ?? []))
             .finally(() => setMonthLoading(false));
-    }, [selectedMonth]);
+    }, [mode, selectedMonth]);
 
     const filteredData = filterByGender(monthData, genderFilter);
     const top3 = filteredData.slice(0, 3);
@@ -387,10 +475,33 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
     return (
         <div className="space-y-4">
             <div className="space-y-2">
-                <div className="flex justify-end">
-                    <MonthDropdown value={selectedMonth} onChange={setSelectedMonth} />
+                <div className="flex justify-end gap-2">
+                    <CustomSelect
+                        value={mode}
+                        onChange={setMode}
+                        options={MODE_OPTIONS}
+                        triggerClassName="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-700 min-w-[150px]"
+                    />
+                    {mode === 'month' && (
+                        <CustomSelect
+                            value={selectedMonth}
+                            onChange={setSelectedMonth}
+                            options={MONTH_OPTIONS}
+                            triggerClassName="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-700 min-w-[130px]"
+                        />
+                    )}
                 </div>
-                <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
+                <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                        <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
+                    </div>
+                    <button
+                        onClick={() => setShowInfo(true)}
+                        className="mb-3 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md shadow-blue-300 flex-shrink-0 animate-bounce"
+                    >
+                        <Info className="w-4 h-4 text-white" strokeWidth={2.5} />
+                    </button>
+                </div>
             </div>
 
             {monthLoading ? (
@@ -447,9 +558,11 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                     {filteredData.length === 0 && (
                         <div className="bg-white rounded-2xl py-14 text-center">
                             <Trophy className="w-10 h-10 mx-auto text-gray-200 mb-3" />
-                            <p className="text-gray-400 text-sm">Không có dữ liệu cho tháng này</p>
+                            <p className="text-gray-400 text-sm">Không có dữ liệu cho khoảng thời gian này</p>
                         </div>
                     )}
+
+                    {showInfo && <LeaderboardInfoModal onClose={() => setShowInfo(false)} />}
                 </>
             )}
         </div>
@@ -509,24 +622,19 @@ function WinRateInfoModal({ onClose }: { onClose: () => void }) {
 
                     <div className="space-y-4">
                         <div>
-                            <p className="text-sm font-semibold text-gray-800 mb-1">1. Vì sao không xếp theo % thắng thô?</p>
-                            <p className="text-xs text-gray-500 leading-relaxed">
-                                Một người thắng 3/3 trận (100%) chưa chắc giỏi hơn người thắng 16/31 trận (51.6%) — mẫu quá nhỏ dễ do may mắn. Hệ thống dùng công thức <span className="font-semibold text-gray-700">Wilson score interval</span> để tính điểm tin cậy, tự động "phạt" các tỷ lệ % dựa trên mẫu nhỏ.
+                            <p className="text-sm font-semibold text-gray-800 mb-1">1. Công thức tính %:</p>
+                            <p className="text-xs font-mono font-semibold text-gray-700 bg-gray-50 rounded-lg px-3 py-2 mt-2">
+                                % = (Thắng + 5) / (Tổng trận + 10) × 100
                             </p>
                         </div>
 
                         <div>
-                            <p className="text-sm font-semibold text-gray-800 mb-1">2. Nhóm xếp hạng</p>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">2. Trường hợp 0 trận thắng</p>
                             <p className="text-xs text-gray-500 leading-relaxed">
-                                • <span className="font-semibold text-gray-700">Đủ điều kiện</span> (từ {5} trận trở lên): xếp hạng chính thức theo điểm tin cậy.<br />
-                                • <span className="font-semibold text-gray-700">Chưa đủ trận</span> (dưới {5} trận): luôn xếp sau nhóm trên, dù % thắng cao.
+                                Nếu chưa thắng trận nào, % hiển thị luôn là <span className="font-semibold text-gray-700">0%</span> (không áp dụng công thức phía trên), để không gây hiểu lầm là "có tỷ lệ thắng dương" dù thực tế chưa thắng lần nào.
                             </p>
-                        </div>
-
-                        <div>
-                            <p className="text-sm font-semibold text-gray-800 mb-1">3. % hiển thị có đổi không?</p>
-                            <p className="text-xs text-gray-500 leading-relaxed">
-                                Không. Con số % bạn thấy vẫn là tỷ lệ thắng thật (thắng/tổng số trận). Công thức Wilson chỉ ảnh hưởng đến <span className="font-semibold text-gray-700">thứ tự xếp hạng</span>, không thay đổi số liệu hiển thị.
+                            <p className="text-xs text-gray-500 leading-relaxed mt-1">
+                                Trong nhóm 0 thắng, ai <span className="font-semibold text-gray-700">thua ít trận hơn</span> sẽ được xếp cao hơn — ví dụ 0 thắng/2 thua đứng trên 0 thắng/4 thua.
                             </p>
                         </div>
                     </div>
@@ -775,10 +883,113 @@ function RankDetailModal({ member, onClose }: { member: any; onClose: () => void
     );
 }
 
+function RankInfoModal({ onClose }: { onClose: () => void }) {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const handleClose = () => {
+        setVisible(false);
+        setTimeout(onClose, 200);
+    };
+
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(2px)',
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 200ms ease-out',
+            }}
+            onClick={(e) => e.target === e.currentTarget && handleClose()}
+        >
+            <div
+                className="w-full max-w-sm bg-white rounded-3xl overflow-hidden relative max-h-[85vh] overflow-y-auto"
+                style={{
+                    transform: visible ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(8px)',
+                    opacity: visible ? 1 : 0,
+                    transition: 'transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out',
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <button
+                    onClick={handleClose}
+                    className="absolute top-3 right-3 z-20 w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                    <X className="w-4 h-4 text-gray-600" />
+                </button>
+
+                <div className="px-5 pt-6 pb-5">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Shield className="w-5 h-5 text-blue-600" />
+                        <p className="text-base font-bold text-gray-800">Cách tính điểm & thăng hạng</p>
+                    </div>
+                    <p className="text-xs text-gray-400 mb-4">
+                        Điểm được cộng theo từng trận đấu, tích lũy đủ sẽ tự động lên hạng.
+                    </p>
+
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">1. Cộng điểm sau mỗi trận</p>
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="text-xs font-mono font-semibold text-emerald-700 bg-emerald-50 rounded-lg px-3 py-1.5">
+                                    Thắng: +5 điểm
+                                </span>
+                                <span className="text-xs font-mono font-semibold text-red-700 bg-red-50 rounded-lg px-3 py-1.5">
+                                    Thua: +2 điểm
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-500 leading-relaxed mt-2">
+                                Dù thắng hay thua, mỗi trận đấu đều được cộng điểm — thắng được nhiều hơn để khuyến khích thi đấu tốt, nhưng thua vẫn có điểm để ghi nhận sự tham gia.
+                            </p>
+                        </div>
+
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">2. Lên hạng</p>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Mỗi hạng cần tích lũy đủ <span className="font-semibold text-gray-700">{POINTS_PER_TIER} điểm</span> để lên hạng tiếp theo. Điểm hiển thị trên mỗi thẻ (ví dụ "14 điểm") là điểm đang có trong hạng hiện tại — đạt {POINTS_PER_TIER} sẽ tự động thăng hạng và điểm reset về 0 ở hạng mới.
+                            </p>
+                        </div>
+
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">3. Thứ tự các hạng</p>
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {TIER_ORDER.map((t, i) => (
+                                    <span
+                                        key={t}
+                                        className={`text-[11px] font-semibold px-2 py-1 rounded-full ${TIER_COLOR[t] ?? 'text-gray-600'} bg-gray-50`}
+                                    >
+                                        {i + 1}. {t}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">4. Tổng điểm là gì?</p>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                "Tổng điểm" là điểm cộng dồn từ hạng đầu tiên đến hiện tại — bằng số hạng đã vượt qua nhân {POINTS_PER_TIER}, cộng điểm đang có ở hạng hiện tại. Dùng để so sánh mức độ tiến bộ tổng thể giữa các thành viên.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+}
+
 
 function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
     const [selectedMember, setSelectedMember] = useState<any>(null);
+    const [showInfo, setShowInfo] = useState(false);
 
     const filteredData = filterByGender(data, genderFilter)
         .sort((a, b) => {
@@ -798,7 +1009,17 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
 
     return (
         <div className="space-y-4">
-            <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex-1">
+                    <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
+                </div>
+                <button
+                    onClick={() => setShowInfo(true)}
+                    className="mb-3 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md shadow-blue-300 flex-shrink-0 animate-bounce"
+                >
+                    <Info className="w-4 h-4 text-white" strokeWidth={2.5} />
+                </button>
+            </div>
             {displayList.length === 0 ? (
                 <div className="bg-white rounded-2xl py-14 text-center">
                     <Shield className="w-10 h-10 mx-auto text-gray-200 mb-3" />
@@ -820,13 +1041,13 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                             <AnimatedRow key={p.id} index={idx}>
                                 <button
                                     onClick={() => setSelectedMember(p)}
-                                    className={`w-full flex items-center gap-3 px-4 py-7 rounded-2xl -translate-y-0.5 text-left ${isMe ? 'bg-blue-50' : pos <= 3 ? 'bg-yellow-50/50' : 'bg-white'}`}
+                                    className={`w-full flex items-center gap-3 px-4 py-6 rounded-2xl -translate-y-0.5 text-left ${isMe ? 'bg-blue-50' : pos <= 3 ? 'bg-yellow-50/50' : 'bg-white'}`}
                                     style={{
                                         boxShadow: '0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06)',
                                     }}
                                 >
                                     <RankMedal rank={pos} />
-                                    <div className='ml-10' style={{ width: 48, height: 48, flexShrink: 0, overflow: 'visible' }}>
+                                    <div className="ml-10 flex-shrink-0" style={{ width: 48, height: 48, overflow: 'visible' }}>
                                         <RankPodiumAvatarList
                                             tier={p.tier}
                                             avatar={p.avatar_url}
@@ -840,39 +1061,41 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                                             <p className={`font-bold text-base break-words ${isMe ? 'text-blue-700' : 'text-gray-800'}`}>{p.full_name}</p>
                                             {isMe && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">Bạn</span>}
                                         </div>
-                                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                            <span className={`text-sm font-semibold ${tierColor}`}>{p.tier}</span>
-                                            {totalPoints !== null && (
-                                                <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                                                    Tổng điểm: {totalPoints}
-                                                </span>
-                                            )}
+                                        <span className={`text-sm font-semibold ${tierColor}`}>{p.tier}</span>
+                                        <div className="flex items-center gap-1 mt-0.5">
+                                            <span className={`text-sm font-extrabold tabular-nums ${tierColor}`}>
+                                                {p.points ?? 0}
+                                            </span>
+                                            <span className="text-xs text-gray-400 font-medium">điểm</span>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-center flex-shrink-0 gap-1">
-                                        <p
-                                            className={`text-2xl font-extrabold tabular-nums leading-none ${tierColor}`}
-                                        >
-                                            {p.points ?? 0}
-                                        </p>
-                                        <p className="text-[11px] font-medium text-gray-400 tracking-wide">điểm</p>
-                                        <div className="mt-1.5 flex items-center gap-1">
-                                            {isFlat ? (
-                                                <span className={`text-xs font-bold ${trendColor}`}>–</span>
-                                            ) : (
-                                                <>
-                                                    <Triangle
-                                                        className={`w-2.5 h-2.5 ${trendColor} ${isUp ? '' : 'rotate-180'}`}
-                                                        fill="currentColor"
-                                                        strokeWidth={0}
-                                                    />
-                                                    <span className={`text-xs font-bold tabular-nums ${trendColor}`}>
-                                                        {Math.abs(delta)}
-                                                    </span>
-                                                </>
-                                            )}
+
+                                    {totalPoints !== null && (
+                                        <div className="flex flex-col items-center flex-shrink-0 mr-6">
+                                            <div className="relative">
+                                                <p className={`text-2xl font-extrabold tabular-nums leading-none ${tierColor}`}>
+                                                    {totalPoints}
+                                                </p>
+                                                <div className="absolute -top-3 -right-9 flex items-center gap-0.5">
+                                                    {isFlat ? (
+                                                        <span className={`text-sm font-bold ${trendColor}`}>–</span>
+                                                    ) : (
+                                                        <>
+                                                            <Triangle
+                                                                className={`w-3.5 h-3.5 ${trendColor} ${isUp ? '' : 'rotate-180'}`}
+                                                                fill="currentColor"
+                                                                strokeWidth={0}
+                                                            />
+                                                            <span className={`text-sm font-bold tabular-nums ${trendColor}`}>
+                                                                {Math.abs(delta)}
+                                                            </span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <p className="text-[11px] font-medium text-gray-400 tracking-wide whitespace-nowrap">tổng điểm</p>
                                         </div>
-                                    </div>
+                                    )}
                                 </button>
                             </AnimatedRow>
                         );
@@ -883,6 +1106,8 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
             {selectedMember && (
                 <RankDetailModal member={selectedMember} onClose={() => setSelectedMember(null)} />
             )}
+
+            {showInfo && <RankInfoModal onClose={() => setShowInfo(false)} />}
         </div>
     );
 }

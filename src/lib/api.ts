@@ -168,7 +168,7 @@ export const registrationsApi = {
 };
 
 export const rankingsApi = {
-  leaderboard: (params?: { month?: number; year?: number }) =>
+  leaderboard: (params?: { month?: number; year?: number; range?: "3m" | "6m" | "1y" }) =>
     api.get("/rankings/leaderboard", { params }),
   myRank: () => api.get("/rankings/my-rank"),
   myStats: () => api.get("/rankings/my-stats"),

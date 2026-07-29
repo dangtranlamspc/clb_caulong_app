@@ -35,8 +35,6 @@ export function CustomSelect({
     });
   };
 
-  // Tính vị trí ngay khi mount (trước khi trình duyệt paint), để dropdown
-  // đã "đúng chỗ" ngay từ lần render đầu tiên, dù đang ở trạng thái ẩn.
   useLayoutEffect(() => {
     updatePosition();
   }, []);
@@ -106,7 +104,7 @@ export function CustomSelect({
               left: pos.left,
               width: pos.width,
             }}
-            className={`max-h-56 overflow-y-auto hide-scrollbar bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] py-1 origin-top transition-all duration-150 ease-out ${open
+            className={`max-h-56 overflow-y-auto hide-scrollbar bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] py-1 origin-top transition-[opacity,transform] duration-150 ease-out ${open
               ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
               : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
               }`}
