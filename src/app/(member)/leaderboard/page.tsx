@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { Trophy, Medal, Star, RefreshCw, TrendingUp, Swords, Shield, Calendar, ChevronDown, X } from 'lucide-react';
+import { Trophy, Medal, Star, RefreshCw, TrendingUp, Swords, Shield, Calendar, ChevronDown, X, ArrowUp, TrendingDown, Triangle, Crown, Award, Info } from 'lucide-react';
 import { rankingsApi } from '../../../lib/api';
 import { useAuthStore } from '../../../store/auth.store';
 import { getTierCardBackground, getTierTheme, RankIcon, RankPodiumAvatarList } from '@/components/member/ranks/Rank';
@@ -141,17 +141,17 @@ function SkeletonRows({ count = 6 }: { count?: number }) {
 function RankMedal({ rank }: { rank: number }) {
     if (rank === 1) return (
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-md shadow-yellow-200">
-            <Trophy className="w-4 h-4 text-white" />
+            <Crown className="w-4 h-4 text-white" fill="currentColor" strokeWidth={1.5} />
         </div>
     );
     if (rank === 2) return (
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center shadow-sm">
-            <Medal className="w-4 h-4 text-white" />
+            <Award className="w-4 h-4 text-white" />
         </div>
     );
     if (rank === 3) return (
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center shadow-sm">
-            <Star className="w-4 h-4 text-white" />
+            <Award className="w-4 h-4 text-white" />
         </div>
     );
     return (
@@ -180,34 +180,24 @@ function AnimatedRow({ children, index }: { children: React.ReactNode; index: nu
 }
 
 function WeeklyTrendTriangle({ pointsThisWeek }: { pointsThisWeek: number }) {
-    if (!pointsThisWeek) {
+    const isUp = pointsThisWeek > 0;
+    const isFlat = !pointsThisWeek;
+    const color = isFlat ? 'text-gray-300' : isUp ? 'text-green-500' : 'text-red-400';
+
+    if (isFlat) {
         return (
-            <span className="inline-flex items-center text-sm text-gray-300 font-bold">
+            <span className={`inline-flex items-center text-xs font-bold ${color}`}>
                 –
             </span>
         );
     }
 
-    const isUp = pointsThisWeek > 0;
-    const color = isUp ? 'text-green-500' : 'text-red-400';
-
     return (
-        <span className={`inline-flex items-center gap-1.5 text-sm font-bold ${color}`}>
-            <span
-                className="inline-block w-0 h-0"
-                style={
-                    isUp
-                        ? {
-                            borderLeft: '6px solid transparent',
-                            borderRight: '6px solid transparent',
-                            borderBottom: '9px solid currentColor',
-                        }
-                        : {
-                            borderLeft: '6px solid transparent',
-                            borderRight: '6px solid transparent',
-                            borderTop: '9px solid currentColor',
-                        }
-                }
+        <span className={`inline-flex items-center gap-1 text-xs font-bold ${color}`}>
+            <Triangle
+                className={`w-2.5 h-2.5 ${isUp ? '' : 'rotate-180'}`}
+                fill="currentColor"
+                strokeWidth={0}
             />
             {Math.abs(pointsThisWeek)}
         </span>
@@ -466,12 +456,104 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
     );
 }
 
+function WinRateInfoModal({ onClose }: { onClose: () => void }) {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const handleClose = () => {
+        setVisible(false);
+        setTimeout(onClose, 200);
+    };
+
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(2px)',
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 200ms ease-out',
+            }}
+            onClick={(e) => e.target === e.currentTarget && handleClose()}
+        >
+            <div
+                className="w-full max-w-sm bg-white rounded-3xl overflow-hidden relative max-h-[85vh] overflow-y-auto"
+                style={{
+                    transform: visible ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(8px)',
+                    opacity: visible ? 1 : 0,
+                    transition: 'transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out',
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <button
+                    onClick={handleClose}
+                    className="absolute top-3 right-3 z-20 w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                    <X className="w-4 h-4 text-gray-600" />
+                </button>
+
+                <div className="px-5 pt-6 pb-5">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Swords className="w-5 h-5 text-blue-600" />
+                        <p className="text-base font-bold text-gray-800">Cách tính & xếp hạng Winrate</p>
+                    </div>
+                    <p className="text-xs text-gray-400 mb-4">
+                        Không chỉ dựa vào % thắng thô, để công bằng hơn với người chơi nhiều trận so với những người ít trận.
+                    </p>
+
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">1. Vì sao không xếp theo % thắng thô?</p>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Một người thắng 3/3 trận (100%) chưa chắc giỏi hơn người thắng 16/31 trận (51.6%) — mẫu quá nhỏ dễ do may mắn. Hệ thống dùng công thức <span className="font-semibold text-gray-700">Wilson score interval</span> để tính điểm tin cậy, tự động "phạt" các tỷ lệ % dựa trên mẫu nhỏ.
+                            </p>
+                        </div>
+
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">2. Nhóm xếp hạng</p>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                • <span className="font-semibold text-gray-700">Đủ điều kiện</span> (từ {5} trận trở lên): xếp hạng chính thức theo điểm tin cậy.<br />
+                                • <span className="font-semibold text-gray-700">Chưa đủ trận</span> (dưới {5} trận): luôn xếp sau nhóm trên, dù % thắng cao.
+                            </p>
+                        </div>
+
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800 mb-1">3. % hiển thị có đổi không?</p>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Không. Con số % bạn thấy vẫn là tỷ lệ thắng thật (thắng/tổng số trận). Công thức Wilson chỉ ảnh hưởng đến <span className="font-semibold text-gray-700">thứ tự xếp hạng</span>, không thay đổi số liệu hiển thị.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+}
+
 function WinRateTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
+    const [showInfo, setShowInfo] = useState(false);
     const filteredData = filterByGender(data, genderFilter);
     return (
         <div className="space-y-4">
-            <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex-1">
+                    <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
+                </div>
+                <button
+                    onClick={() => setShowInfo(true)}
+                    className="mb-3 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md shadow-blue-300 flex-shrink-0 animate-bounce"
+                >
+                    <Info className="w-4 h-4 text-white" strokeWidth={2.5} />
+                </button>
+            </div>
             {filteredData.length === 0 ? (
                 <div className="bg-white rounded-2xl py-14 text-center">
                     <Swords className="w-10 h-10 mx-auto text-gray-200 mb-3" />
@@ -507,7 +589,7 @@ function WinRateTab({ data, myStats, user }: { data: any[]; myStats: any; user: 
                                                 <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                                     <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(winRate, 100)}%` }} />
                                                 </div>
-                                                <span className="text-[10px] text-gray-400 flex-shrink-0">{member.total_sets_month ?? 0} set</span>
+                                                <span className="text-[10px] text-gray-400 flex-shrink-0">{member.total_sets_month ?? 0} trận</span>
                                             </div>
                                         </div>
                                         <div className="text-right flex-shrink-0">
@@ -521,6 +603,7 @@ function WinRateTab({ data, myStats, user }: { data: any[]; myStats: any; user: 
                                 </AnimatedRow>
                             );
                         })}
+                        {showInfo && <WinRateInfoModal onClose={() => setShowInfo(false)} />}
                     </div>
                 </div>
             )}
@@ -539,37 +622,23 @@ const TIER_COLOR: Record<string, string> = {
     'Huyền Thoại': 'text-purple-700',
 };
 
+const TIER_ORDER = [
+    'Tân thủ',
+    'Phong trào',
+    'Cứng cựa',
+    'Chủ lực',
+    'Cao thủ',
+    'Kiện tướng',
+    'Đại Kiện Tướng',
+    'Huyền Thoại',
+];
+
 const POINTS_PER_TIER = 50;
 
-function MiniEnergyBar({ points, total }: { points: number; total: number }) {
-    const [animatedWidth, setAnimatedWidth] = useState(0);
-    const targetWidth = Math.min(100, (points / total) * 100);
-    const percent = Math.round(targetWidth);
-
-    useEffect(() => {
-        const timer = setTimeout(() => setAnimatedWidth(targetWidth), 150);
-        return () => clearTimeout(timer);
-    }, [targetWidth]);
-
-    return (
-        <div className="w-full max-w-[160px] mt-1.5">
-            <div className="flex items-center gap-2">
-                <div className="relative h-3 flex-1 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-                    <div
-                        className="h-full rounded-full bg-gradient-to-r from-lime-400 via-green-500 to-emerald-500"
-                        style={{
-                            width: `${animatedWidth}%`,
-                            transition: 'width 700ms ease-out',
-                        }}
-                    />
-                </div>
-                <span className="text-[13px] font-bold text-green-600 flex-shrink-0">{percent}%</span>
-            </div>
-            <p className="text-[13px] text-gray-400 mt-2">
-                {points}/{total} điểm lên hạng
-            </p>
-        </div>
-    );
+function getTotalPoints(tier: string, currentPoints: number): number | null {
+    const idx = TIER_ORDER.indexOf(tier);
+    if (idx <= 0) return null;
+    return idx * POINTS_PER_TIER + (currentPoints ?? 0);
 }
 
 
@@ -741,6 +810,12 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                         const isMe = p.id === user?.id;
                         const pos = p._displayRank;
                         const tierColor = TIER_COLOR[p.tier] ?? 'text-gray-600';
+                        const totalPoints = getTotalPoints(p.tier, p.points ?? 0);
+
+                        const delta = p.points_this_week ?? 0;
+                        const isUp = delta > 0;
+                        const isFlat = delta === 0;
+                        const trendColor = isFlat ? 'text-gray-300' : isUp ? 'text-emerald-500' : 'text-red-500';
                         return (
                             <AnimatedRow key={p.id} index={idx}>
                                 <button
@@ -765,13 +840,37 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                                             <p className={`font-bold text-base break-words ${isMe ? 'text-blue-700' : 'text-gray-800'}`}>{p.full_name}</p>
                                             {isMe && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">Bạn</span>}
                                         </div>
-                                        <span className={`text-sm font-semibold ${tierColor}`}>{p.tier}</span>
+                                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                            <span className={`text-sm font-semibold ${tierColor}`}>{p.tier}</span>
+                                            {totalPoints !== null && (
+                                                <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                                                    Tổng điểm: {totalPoints}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="flex flex-col items-center flex-shrink-0">
-                                        <p className="text-lg font-black text-gray-800">{p.points ?? 0}</p>
-                                        <p className="text-[10px] text-gray-400 -mt-0.5">điểm</p>
-                                        <div className="mt-1.5">
-                                            <WeeklyTrendTriangle pointsThisWeek={p.points_this_week ?? 0} />
+                                    <div className="flex flex-col items-center flex-shrink-0 gap-1">
+                                        <p
+                                            className={`text-2xl font-extrabold tabular-nums leading-none ${tierColor}`}
+                                        >
+                                            {p.points ?? 0}
+                                        </p>
+                                        <p className="text-[11px] font-medium text-gray-400 tracking-wide">điểm</p>
+                                        <div className="mt-1.5 flex items-center gap-1">
+                                            {isFlat ? (
+                                                <span className={`text-xs font-bold ${trendColor}`}>–</span>
+                                            ) : (
+                                                <>
+                                                    <Triangle
+                                                        className={`w-2.5 h-2.5 ${trendColor} ${isUp ? '' : 'rotate-180'}`}
+                                                        fill="currentColor"
+                                                        strokeWidth={0}
+                                                    />
+                                                    <span className={`text-xs font-bold tabular-nums ${trendColor}`}>
+                                                        {Math.abs(delta)}
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </button>
@@ -786,10 +885,6 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
             )}
         </div>
     );
-}
-
-function filterData_withOriginalRank(data: any[]) {
-    return data.map(p => ({ ...p, _displayRank: Number(p.rank_position) }));
 }
 
 export default function LeaderboardPage() {
