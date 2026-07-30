@@ -341,7 +341,8 @@ export const sessionsAdminApi = {
   getCost: (id: string) => api.get(`/sessions/${id}/cost`),
   finish: (id: string, data: any) => api.patch(`/sessions/${id}/finish`, data),
   complete: (id: string) => api.patch(`/sessions/${id}/complete`),
-  rollbackFinish: (id: string) => api.patch(`/sessions/${id}/rollback-finish`),
+  rollbackFinish: (id: string, dto?: { refund_penalties?: boolean }) =>
+    api.patch(`/sessions/${id}/rollback-finish`, dto ?? {}),
 };
 
 export const registrationsAdminApi = {
@@ -533,4 +534,39 @@ export const feedbackApi = {
   markRead: (id: string) => api.patch(`/feedback/admin/${id}/read`),
   deleteFeedback: (id: string) => api.delete(`/feedback/admin/${id}`),
   getUnreadCount: () => api.get('/feedback/admin/unread-count'),
+};
+
+
+
+export const penaltiesApi = {
+  // Admin
+  create: (data: {
+    session_id?: string;
+    user_id: string;
+    type: "late_early" | "special" | "other";
+    amount: number;
+    reason: string;
+    payment_method: "wallet" | "member_choice";
+  }) => api.post("/penalties", data),
+  listAdmin: (params?: any) => api.get("/penalties", { params }),
+  getFundSummary: () => api.get("/penalties/fund-summary"),
+  getBySession: (sessionId: string) =>
+    api.get(`/penalties/session/${sessionId}`),
+  retryWallet: (id: string) => api.post(`/penalties/${id}/retry-wallet`),
+  confirmPayment: (id: string, notes?: string) =>
+    api.post(`/penalties/${id}/confirm`, { notes }),
+  rejectPayment: (id: string, reason: string) =>
+    api.post(`/penalties/${id}/reject`, { reason }),
+  remove: (id: string) => api.delete(`/penalties/${id}`),
+
+  // Member
+  getMyPenalties: (params?: any) => api.get("/penalties/me", { params }),
+  submitMemberPayment: (
+    id: string,
+    data: {
+      method: "wallet" | "bank_transfer" | "cash";
+      payment_reference?: string;
+      payment_proof_url?: string;
+    },
+  ) => api.post(`/penalties/${id}/submit-payment`, data),
 };

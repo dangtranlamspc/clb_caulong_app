@@ -11,9 +11,6 @@ function fmt(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
 }
 
-// target = null  -> modal đóng
-// target = {}    -> tạo mới
-// target = {id}  -> sửa buổi có id
 interface SessionFormModalProps {
   target: { id?: string } | null;
   onClose: () => void;
@@ -54,14 +51,12 @@ export default function SessionFormModal({
     },
   });
 
-  // Hiệu ứng fade-in khi mở
   useEffect(() => {
     if (!target) return;
     const raf = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(raf);
   }, [target]);
 
-  // Load dữ liệu (edit) hoặc reset form (create) mỗi khi target đổi
   useEffect(() => {
     if (!target) return;
 
@@ -98,7 +93,6 @@ export default function SessionFormModal({
         shuttle_price: 0,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target?.id]);
 
   const courtFee = Number(watch("court_fee")) || 0;

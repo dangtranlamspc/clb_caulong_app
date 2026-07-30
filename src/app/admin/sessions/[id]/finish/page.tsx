@@ -10,10 +10,12 @@ import {
   Wallet,
   Trash2,
   Plus,
+  AlertTriangle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { sessionsAdminApi } from "@/lib/api";
 import { MorphButton } from "@/components/effect-button/MorphButton";
+import PenaltyModal from "@/components/admin/wallet/PenaltyModal";
 
 interface CourtItem {
   id: string;
@@ -109,6 +111,11 @@ export default function SessionFinishPage() {
   const [walletModes, setWalletModes] = useState<
     Record<string, "member_choice" | "grouped" | "separate">
   >({});
+
+  const [penaltyTarget, setPenaltyTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const setWalletMode = (
     registrationId: string,
@@ -605,6 +612,18 @@ export default function SessionFinishPage() {
                         <Wallet className="w-4 h-4" />
                       </button>
                     )}
+                    {isRealUser && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPenaltyTarget({ id: h.user_id, name })
+                        }
+                        title="Phạt thành viên này"
+                        className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border-2 border-gray-200 text-gray-300 hover:border-red-300 hover:text-red-500 transition-all"
+                      >
+                        <AlertTriangle className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
 
                   {guests.length > 0 && isWalletDeduct && (
@@ -719,6 +738,21 @@ export default function SessionFinishPage() {
                                   </span>
                                 )}
                               </p>
+                              {!!g.user_id && !g.is_guest && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPenaltyTarget({
+                                      id: g.user_id,
+                                      name: g.users?.full_name,
+                                    })
+                                  }
+                                  title="Phạt thành viên này"
+                                  className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center border-2 border-gray-200 text-gray-300 hover:border-red-300 hover:text-red-500 transition-all"
+                                >
+                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                               <input
                                 type="text"
                                 inputMode="numeric"
@@ -809,6 +843,16 @@ export default function SessionFinishPage() {
               )}
             </span>
           </div>
+        )}
+
+        {penaltyTarget && (
+          <PenaltyModal
+            open={!!penaltyTarget}
+            onClose={() => setPenaltyTarget(null)}
+            sessionId={id}
+            memberId={penaltyTarget.id}
+            memberName={penaltyTarget.name}
+          />
         )}
       </div>
 

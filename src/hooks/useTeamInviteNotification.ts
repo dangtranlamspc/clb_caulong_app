@@ -2,8 +2,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { matchesApi } from '../lib/api';
-import toast from 'react-hot-toast';
-import { createClient, RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 const SEEN_KEY = 'seen_team_invites';
 
@@ -22,14 +22,8 @@ function markSeen(id: string) {
     } catch { }
 }
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
-
 export interface TeamInviteInfo {
     matchId: string;
-    /** Tên các đồng đội cùng team (KHÔNG bao gồm chính mình), đã join bằng ' & ' */
     teamAName: string;
     teamBName: string;
     matchType: 'singles' | 'doubles' | 'triples';

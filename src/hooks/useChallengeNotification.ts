@@ -3,7 +3,8 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { matchesApi } from '../lib/api';
 import toast from 'react-hot-toast';
-import { createClient, RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 const SEEN_CHALLENGES_KEY = 'seen_challenge_invites';
 
@@ -82,11 +83,6 @@ function buildChallenge(m: any, currentUserId?: string): ChallengeInfo {
         note: m.note ?? undefined,
     };
 }
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
 
 export function useChallengeNotification() {
     const { user, isAuthenticated } = useAuthStore();

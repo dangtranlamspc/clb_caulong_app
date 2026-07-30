@@ -2,7 +2,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { matchesApi } from '../lib/api';
-import { createClient, RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 interface PlayerInfo {
     name: string;
@@ -31,11 +32,6 @@ function toPlayerInfo(p: any): PlayerInfo {
         avatar: p?.avatar_url ?? p?.avatar ?? null,
     };
 }
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
 
 function buildResult(m: any, userId: string): MatchResult | null {
     const isTeamA =

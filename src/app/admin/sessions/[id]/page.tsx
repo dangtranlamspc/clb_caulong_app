@@ -23,6 +23,7 @@ import {
   RotateCcw,
   Wallet,
   ChevronDown,
+  ShieldAlert,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -31,6 +32,7 @@ import {
   sessionsAdminApi,
   registrationsAdminApi,
   membersAdminApi,
+  penaltiesApi,
 } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
@@ -39,6 +41,7 @@ import SessionCostCard from "@/components/admin/sessions/SessionCostCard";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import { SwipeableRow } from "@/components/admin/sessions/SwipeableRow";
 import { CompactActionButton } from "@/components/admin/sessions/CompactActionButton";
+import SessionPenaltiesCard from "@/components/admin/sessions/SessionPenaltiesCard";
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: any }> =
 {
@@ -176,6 +179,12 @@ export default function SessionDetailPage() {
 
   const [expandedHosts, setExpandedHosts] = useState<Set<string>>(new Set());
 
+  // refund phạt
+  const [showPenaltyRefundModal, setShowPenaltyRefundModal] = useState(false);
+  const [penaltyRefundModalVisible, setPenaltyRefundModalVisible] = useState(false);
+  const [penaltiesToRefund, setPenaltiesToRefund] = useState<any[]>([]);
+  const [checkingPenalties, setCheckingPenalties] = useState(false);
+
   const isDesktop = useIsDesktop();
 
   useEffect(() => {
@@ -191,6 +200,19 @@ export default function SessionDetailPage() {
       return () => cancelAnimationFrame(raf);
     }
   }, [showCancelModal]);
+
+
+  useEffect(() => {
+    if (showPenaltyRefundModal) {
+      const raf = requestAnimationFrame(() => setPenaltyRefundModalVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [showPenaltyRefundModal]);
+
+  const closePenaltyRefundModal = () => {
+    setPenaltyRefundModalVisible(false);
+    setTimeout(() => setShowPenaltyRefundModal(false), 200);
+  };
 
   const closeCancelModal = () => {
     setCancelModalVisible(false);
@@ -617,12 +639,46 @@ export default function SessionDetailPage() {
     });
   };
 
-  const handleRollbackFinish = async () => {
+  const getRollbackRefundPreview = () => {
+    const list: { user_id: string; full_name: string; amount: number }[] = [];
+
+    for (const host of hostRegs) {
+      const isHostRow = !host.is_guest;
+      const wasWalletDeducted =
+        host.payment_status === "confirmed" &&
+        (host.payment_method === "wallet" ||
+          host.payment_method === "wallet_grouped");
+      if (!isHostRow || !wasWalletDeducted) continue;
+
+      const guests = guestsOf(host.id).filter(
+        (g) => g.payment_method === "wallet_grouped",
+      );
+      const guestsTotal = guests.reduce(
+        (s, g) => s + (g.amount_override ?? 0),
+        0,
+      );
+      const amount = (host.amount_override ?? 0) + guestsTotal;
+      if (amount > 0) {
+        list.push({
+          user_id: host.user_id,
+          full_name: host.users?.full_name ?? "?",
+          amount,
+        });
+      }
+    }
+
+    return list;
+  };
+
+  const handleRollbackFinish = async (refundPenalties = false) => {
     if (!id) return;
     setShowRollbackModal(false);
+    setShowPenaltyRefundModal(false);
     setRollingBack(true);
     try {
-      const { data } = await sessionsAdminApi.rollbackFinish(id);
+      const { data } = await sessionsAdminApi.rollbackFinish(id, {
+        refund_penalties: refundPenalties,
+      });
       if (data.errors?.length > 0) {
         toast.error(
           `Hoàn tác xong nhưng có ${data.errors.length} lỗi — vui lòng kiểm tra lại thủ công.`,
@@ -638,11 +694,44 @@ export default function SessionDetailPage() {
           { icon: "ℹ️", duration: 6000 },
         );
       }
+      if (data.penalty_refunded_count > 0) {
+        toast(`Đã hoàn ${data.penalty_refunded_count} khoản phạt đã trừ ví.`, {
+          icon: "💸",
+          duration: 6000,
+        });
+      }
       refreshSilently();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Hoàn tác thất bại");
     } finally {
       setRollingBack(false);
+    }
+  };
+
+  const handleConfirmRollback = async () => {
+    if (!id) return;
+    setCheckingPenalties(true);
+    try {
+      const { data } = await penaltiesApi.getBySession(id);
+      const walletConfirmedPenalties = (data?.data ?? []).filter(
+        (p: any) =>
+          p.payment_status === "confirmed" && p.actual_payment_method === "wallet",
+      );
+
+      closeRollbackModal();
+
+      if (walletConfirmedPenalties.length > 0) {
+        setPenaltiesToRefund(walletConfirmedPenalties);
+        setShowPenaltyRefundModal(true);
+      } else {
+        handleRollbackFinish(false);
+      }
+    } catch (err) {
+      console.error("[handleConfirmRollback] Lỗi kiểm tra phạt:", err);
+      closeRollbackModal();
+      handleRollbackFinish(false); // check lỗi thì không chặn hoàn tác
+    } finally {
+      setCheckingPenalties(false);
     }
   };
 
@@ -888,6 +977,19 @@ export default function SessionDetailPage() {
 
   const handleAddMember = async () => {
     if (!id) return;
+
+    const numToAdd = addTab === "account" ? selectedMembers.length : 1;
+    const availableSlots = session.available_slots ?? 0;
+
+    if (numToAdd > availableSlots) {
+      toast.error(
+        availableSlots <= 0
+          ? "Buổi đã đủ số lượng, không thể thêm thành viên."
+          : `Chỉ còn ${availableSlots} chỗ trống, bạn đang chọn ${numToAdd} người.`,
+      );
+      return;
+    }
+
     setAdding(true);
     try {
       if (addTab === "account") {
@@ -1016,7 +1118,13 @@ export default function SessionDetailPage() {
       Number(session.shuttle_count ?? 0) > 0 ||
       Number(session.other_fee ?? 0) > 0);
 
-  const canAddMember = session.status === "open" || session.status === "full";
+  const canAddMember =
+    (session.status === "open" || session.status === "full") &&
+    session.available_slots > 0;
+
+  const canFinishSession =
+    (session.status === "open" || session.status === "full") &&
+    registrations.length > 0;
 
   const formatVnd = (n: number) =>
     Math.round(n ?? 0).toLocaleString("vi-VN") + "đ";
@@ -1582,7 +1690,7 @@ export default function SessionDetailPage() {
               />
             )}
 
-            {canAddMember &&
+            {canFinishSession &&
               awaitingCheckin.length === 0 &&
               pendingApproval.length === 0 &&
               registrations.length > 0 && (
@@ -1720,7 +1828,7 @@ export default function SessionDetailPage() {
               />
             )}
 
-            {canAddMember &&
+            {canFinishSession &&
               awaitingCheckin.length === 0 &&
               pendingApproval.length === 0 &&
               registrations.length > 0 && (
@@ -1843,7 +1951,9 @@ export default function SessionDetailPage() {
           </div>
         )}
 
-        {/* Summary badges */}
+
+        <SessionPenaltiesCard sessionId={id!} />
+
         <div className="flex gap-3 flex-wrap">
           {[
             {
@@ -2370,8 +2480,9 @@ export default function SessionDetailPage() {
                     disabled={
                       adding ||
                       (addTab === "account"
-                        ? selectedMembers.length === 0
-                        : !guestForm.full_name.trim())
+                        ? selectedMembers.length === 0 ||
+                        selectedMembers.length > (session.available_slots ?? 0)
+                        : !guestForm.full_name.trim() || (session.available_slots ?? 0) < 1)
                     }
                     className="px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold
                       flex items-center justify-center gap-2 flex-shrink-0
@@ -2388,6 +2499,14 @@ export default function SessionDetailPage() {
             </div>,
             document.body,
           )}
+
+
+        {selectedMembers.length > (session.available_slots ?? 0) && (
+          <p className="text-[11px] text-red-600 mt-1">
+            ⚠️ Bạn đang chọn {selectedMembers.length} người nhưng buổi chỉ còn{" "}
+            {session.available_slots ?? 0} chỗ trống.
+          </p>
+        )}
 
         {confirmModal &&
           typeof document !== "undefined" &&
@@ -2416,19 +2535,6 @@ export default function SessionDetailPage() {
               >
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                   <div className="flex items-center gap-2">
-                    {/* <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        confirmModal.key === "closeList"
-                          ? "bg-red-50"
-                          : "bg-green-50"
-                      }`}
-                    >
-                      {confirmModal.key === "closeList" ? (
-                        <UserX className="w-4 h-4 text-red-500" />
-                      ) : (
-                        <UserCheck className="w-4 h-4 text-green-600" />
-                      )}
-                    </div> */}
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${confirmModal.key === "closeList"
                         ? "bg-red-50"
@@ -2538,6 +2644,41 @@ export default function SessionDetailPage() {
                     Hoàn tác hóa đơn đã gửi cho buổi{" "}
                     <strong className="text-gray-700">{session.title}</strong>?
                   </p>
+
+                  {(() => {
+                    const preview = getRollbackRefundPreview();
+                    if (preview.length === 0) return null;
+                    const total = preview.reduce((s, p) => s + p.amount, 0);
+                    return (
+                      <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 space-y-2">
+                        <p className="text-xs font-semibold text-blue-700">
+                          Tiền sẽ hoàn về ví ({preview.length} người)
+                        </p>
+                        <ul className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                          {preview.map((p) => (
+                            <li
+                              key={p.user_id}
+                              className="flex items-center justify-between text-xs text-gray-600"
+                            >
+                              <span>{p.full_name}</span>
+                              <span className="font-semibold text-blue-700">
+                                {formatVnd(p.amount)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="flex items-center justify-between border-t border-blue-100 pt-1.5">
+                          <span className="text-xs font-semibold text-gray-700">
+                            Tổng hoàn
+                          </span>
+                          <span className="text-sm font-bold text-blue-700">
+                            {formatVnd(total)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <ul className="space-y-2">
                     <li className="flex items-start gap-2 text-sm text-gray-600">
                       <Wallet className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
@@ -2572,17 +2713,110 @@ export default function SessionDetailPage() {
                     Hủy
                   </button>
                   <button
-                    onClick={() => {
-                      closeRollbackModal();
-                      handleRollbackFinish();
-                    }}
-                    disabled={rollingBack}
+                    onClick={handleConfirmRollback}
+                    disabled={rollingBack || checkingPenalties}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
                   >
-                    {rollingBack && (
+                    {(rollingBack || checkingPenalties) && (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     )}
                     Xác nhận hoàn tác
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )}
+
+        {showPenaltyRefundModal &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{
+                background: "rgba(0,0,0,0.4)",
+                backdropFilter: "blur(2px)",
+                opacity: penaltyRefundModalVisible ? 1 : 0,
+                transition: "opacity 200ms ease-out",
+              }}
+              onClick={closePenaltyRefundModal}
+            >
+              <div
+                className="bg-white rounded-2xl w-full max-w-md shadow-xl"
+                style={{
+                  transform: penaltyRefundModalVisible
+                    ? "scale(1) translateY(0)"
+                    : "scale(0.95) translateY(8px)",
+                  opacity: penaltyRefundModalVisible ? 1 : 0,
+                  transition:
+                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                      <ShieldAlert className="w-4 h-4 text-red-500" />
+                    </div>
+                    <h3 className="font-bold text-gray-900">Hoàn luôn tiền phạt?</h3>
+                  </div>
+                  <button
+                    onClick={closePenaltyRefundModal}
+                    className="p-1 text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-5 space-y-3">
+                  <p className="text-sm text-gray-500">
+                    Buổi này có <strong>{penaltiesToRefund.length}</strong> khoản phạt
+                    đã được trừ thẳng vào ví. Bạn có muốn hoàn lại các khoản này luôn
+                    không?
+                  </p>
+                  <ul className="space-y-1.5 max-h-48 overflow-y-auto pr-1 rounded-xl border border-gray-100 p-2">
+                    {penaltiesToRefund.map((p: any) => (
+                      <li
+                        key={p.id}
+                        className="flex items-center justify-between text-xs text-gray-600 px-1 py-1"
+                      >
+                        <span className="truncate">
+                          {p.users?.full_name}{" "}
+                          <span className="text-gray-400">— {p.reason}</span>
+                        </span>
+                        <span className="font-semibold text-red-500 flex-shrink-0 ml-2">
+                          {formatVnd(p.amount)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs font-semibold text-gray-700">
+                      Tổng cộng
+                    </span>
+                    <span className="text-sm font-bold text-red-500">
+                      {formatVnd(
+                        penaltiesToRefund.reduce((s, p) => s + Number(p.amount), 0),
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 px-5 py-4 border-t border-gray-100">
+                  <button
+                    onClick={() => handleRollbackFinish(true)}
+                    disabled={rollingBack}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {rollingBack && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Hoàn luôn tiền phạt
+                  </button>
+                  <button
+                    onClick={() => handleRollbackFinish(false)}
+                    disabled={rollingBack}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold transition-colors disabled:opacity-50"
+                  >
+                    Không hoàn tiền phạt
                   </button>
                 </div>
               </div>

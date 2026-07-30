@@ -1071,6 +1071,12 @@ function SessionsTab({
                       >
                         <Users className="w-3.5 h-4.5" />
                         {filled} người
+                        {(s.male_count > 0 || s.female_count > 0) && (
+                          <span className="flex items-center gap-1.5 ml-1.5 pl-1.5 border-l border-gray-200">
+                            <span className="text-blue-500 font-medium">👨 {s.male_count ?? 0}</span>
+                            <span className="text-pink-500 font-medium">👩 {s.female_count ?? 0}</span>
+                          </span>
+                        )}
                       </button>
                       {myReg &&
                         myReg.amount_override > 0 &&

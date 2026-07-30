@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import { matchesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-import { createClient, RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 const STATUS_CFG: Record<string, { label: string; icon: any; cls: string; dot: string }> = {
     pending_opponent: { label: 'Chờ đối thủ', icon: Hourglass, cls: 'text-gray-500', dot: 'bg-gray-400' },
@@ -28,11 +29,6 @@ const FILTER_OPTS = [
     { value: 'approved', label: 'Đã hoàn thành', dot: 'bg-emerald-500' },
     { value: 'rejected', label: 'Bị từ chối', dot: 'bg-red-400' },
 ];
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
 
 export default function MatchesPage() {
     const { user } = useAuthStore();
@@ -114,7 +110,6 @@ export default function MatchesPage() {
 
     return (
         <div className="space-y-4">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -129,7 +124,6 @@ export default function MatchesPage() {
                 </Link>
             </div>
 
-            {/* Filter trigger — thay thế tabs cũ */}
             <button
                 type="button"
                 onClick={() => openSheet()}

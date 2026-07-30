@@ -200,25 +200,6 @@ export default function SessionsPage() {
     }
   };
 
-  const handleComplete = async (id: string, title: string) => {
-    if (
-      !confirm(
-        `Xác nhận hoàn thành buổi "${title}"? Những người đang "Chờ thanh toán" sẽ được tự động chuyển sang "Đã xác nhận thanh toán" + "Tiền mặt". Buổi sẽ bị khoá lại.`,
-      )
-    )
-      return;
-    setActionId(id);
-    try {
-      await sessionsAdminApi.complete(id);
-      toast.success("Đã hoàn thành và khoá buổi đánh!");
-      fetchSessions();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Thất bại");
-    } finally {
-      setActionId(null);
-    }
-  };
-
   const handleDelete = async (id: string, title: string) => {
     setDeleteTarget({ id, title });
   };
@@ -288,76 +269,223 @@ export default function SessionsPage() {
       r.payment_method !== "wallet_pending_confirm",
   );
 
+  const completePendingReview = completeRegs.filter(
+    (r) =>
+      r.payment_status === "pending" &&
+      (Boolean(r.payment_reference) ||
+        (r.payment_method === "cash" && r.amount_override != null) ||
+        r.payment_method === "grouped_with_host"),
+  );
+
+  const completeWalletPendingConfirm = completeRegs.filter(
+    (r) =>
+      r.payment_status === "pending" &&
+      r.payment_method === "wallet_pending_confirm" &&
+      r.amount_override != null,
+  );
+
   const completeHostRegs = completeRegs.filter((r) => !r.host_registration_id);
   const completeGuestsOf = (hostId: string) =>
     completeRegs.filter((r) => r.host_registration_id === hostId);
 
   const buildCompletePendingSummary = () => {
     const pendingIds = new Set(completePending.map((r) => r.id));
+    const pendingReviewIds = new Set(completePendingReview.map((r) => r.id));
+    const walletPendingIds = new Set(
+      completeWalletPendingConfirm.map((r) => r.id),
+    );
+
+    const getPaymentTag = (reg: any, hostName?: string) => {
+      const isIndependentGuest = reg.is_guest && !reg.user_id;
+
+      if (isIndependentGuest && reg.payment_method === "cash") {
+        return { label: "💵 Tiền mặt", cls: "bg-emerald-50 text-emerald-700" };
+      }
+      if (Boolean(reg.payment_reference) && reg.payment_reference !== "TIEN_MAT")
+        return {
+          label: "🏦 Chuyển khoản (đã nộp bill)",
+          cls: "bg-indigo-50 text-indigo-700",
+        };
+      if (reg.payment_method === "cash")
+        return {
+          label: "💵 Tiền mặt (tự yêu cầu)",
+          cls: "bg-emerald-50 text-emerald-700",
+        };
+      if (reg.payment_method === "grouped_with_host")
+        return {
+          label: `👥 Gộp theo ${hostName ?? "host"}`,
+          cls: "bg-sky-50 text-sky-700",
+        };
+      return { label: "💵 Tiền mặt", cls: "bg-emerald-50 text-emerald-700" };
+    };
 
     const rows = completeHostRegs
       .map((host) => {
-        const nestedGuests = completeGuestsOf(host.id).filter((g) =>
-          pendingIds.has(g.id),
+        const guests = completeGuestsOf(host.id);
+        const nestedPending = guests.filter((g) => pendingIds.has(g.id));
+        const nestedReview = guests.filter((g) => pendingReviewIds.has(g.id));
+        const nestedWalletPending = guests.filter((g) =>
+          walletPendingIds.has(g.id),
         );
         const hostPending = pendingIds.has(host.id);
-        if (!hostPending && nestedGuests.length === 0) return null;
-        return { host, hostPending, nestedGuests };
+        const hostReview = pendingReviewIds.has(host.id);
+        const hostWalletPending = walletPendingIds.has(host.id);
+
+        if (
+          !hostPending &&
+          !hostReview &&
+          !hostWalletPending &&
+          nestedPending.length === 0 &&
+          nestedReview.length === 0 &&
+          nestedWalletPending.length === 0
+        )
+          return null;
+
+        return {
+          host,
+          hostPending,
+          hostReview,
+          hostWalletPending,
+          nestedPending,
+          nestedReview,
+          nestedWalletPending,
+        };
       })
-      .filter(Boolean) as { host: any; hostPending: boolean; nestedGuests: any[] }[];
+      .filter(Boolean) as {
+        host: any;
+        hostPending: boolean;
+        hostReview: boolean;
+        hostWalletPending: boolean;
+        nestedPending: any[];
+        nestedReview: any[];
+        nestedWalletPending: any[];
+      }[];
+
+    const total =
+      completePending.length +
+      completePendingReview.length +
+      completeWalletPendingConfirm.length;
 
     return (
       <div className="space-y-3">
         <p className="text-sm text-gray-600">
-          Có <strong className="text-gray-900">{completePending.length}</strong>{" "}
-          người đang "Chờ thanh toán" sẽ được tự động xác nhận:
+          Có <strong className="text-gray-900">{total}</strong> người sẽ được tự
+          động xác nhận khi hoàn thành:
         </p>
         <ul className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-          {rows.map(({ host, hostPending, nestedGuests }) => {
-            const name = host.is_guest ? host.guest_full_name : host.users?.full_name;
-            const isIndependentGuest = host.is_guest && !host.user_id;
-            const isMember = Boolean(host.user_id) && !host.is_guest;
+          {rows.map(
+            ({
+              host,
+              hostPending,
+              hostReview,
+              hostWalletPending,
+              nestedPending,
+              nestedReview,
+              nestedWalletPending,
+            }) => {
+              const name = host.is_guest
+                ? host.guest_full_name
+                : host.users?.full_name;
+              const isIndependentGuest = host.is_guest && !host.user_id;
+              const isMember = Boolean(host.user_id) && !host.is_guest;
+              const tag = hostReview ? getPaymentTag(host) : null;
 
-            return (
-              <li key={host.id} className="text-sm text-gray-700">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-medium text-gray-900">{name}</span>
+              const MAX_NAMES_SHOWN = 2;
+              const buildGuestNamesLabel = (guests: any[]) => {
+                const names = guests
+                  .map((g) =>
+                    g.is_guest ? g.guest_full_name : g.users?.full_name,
+                  )
+                  .filter(Boolean);
+                if (names.length === 0) return "";
+                if (names.length <= MAX_NAMES_SHOWN) return names.join(", ");
+                const shown = names.slice(0, MAX_NAMES_SHOWN).join(", ");
+                const remaining = names.length - MAX_NAMES_SHOWN;
+                return `${shown},... (${remaining} người khác)`;
+              };
 
-                  {isIndependentGuest && hostPending && (
-                    <>
-                      <span className="text-gray-400 text-xs">— Đang chờ thanh toán</span>
+              const walletPendingGuestNames = buildGuestNamesLabel(
+                nestedWalletPending,
+              );
+              const hostWalletLabel = walletPendingGuestNames
+                ? `⏳ Chưa chọn riêng hay gộp với ${walletPendingGuestNames} → gộp ví BnB`
+                : "⏳ Chưa chọn → gộp ví BnB";
+
+              const nestedWalletGuests = [...nestedPending, ...nestedWalletPending];
+
+              return (
+                <li key={host.id} className="text-sm text-gray-700">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-medium text-gray-900">{name}</span>
+
+                    {isIndependentGuest && hostPending && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
                         💵 Tiền mặt
                       </span>
-                    </>
-                  )}
+                    )}
 
-                  {isMember && hostPending && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                      <Wallet className="w-2.5 h-2.5" /> Ví BNB
-                    </span>
-                  )}
-                </div>
+                    {isMember && hostPending && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                        <Wallet className="w-2.5 h-2.5" /> Ví BNB
+                      </span>
+                    )}
 
-                {nestedGuests.length > 0 && (
-                  <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-gray-100">
-                    {nestedGuests.map((g) => (
-                      <li
-                        key={g.id}
-                        className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
+                    {hostWalletPending && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                        {hostWalletLabel}
+                      </span>
+                    )}
+
+                    {hostReview && tag && (
+                      <span
+                        className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tag.cls}`}
                       >
-                        <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
-                        <span>{g.is_guest ? g.guest_full_name : g.users?.full_name}</span>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700">
-                          <Wallet className="w-2.5 h-2.5" /> Ví BNB của {name}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            );
-          })}
+                        {tag.label}
+                      </span>
+                    )}
+                  </div>
+
+                  {(nestedWalletGuests.length > 0 || nestedReview.length > 0) && (
+                    <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-gray-100">
+                      {nestedWalletGuests.map((g) => (
+                        <li
+                          key={g.id}
+                          className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
+                        >
+                          <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                          <span>
+                            {g.is_guest ? g.guest_full_name : g.users?.full_name}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700">
+                            <Wallet className="w-2.5 h-2.5" /> Ví BNB của {name}
+                          </span>
+                        </li>
+                      ))}
+                      {nestedReview.map((g) => {
+                        const gTag = getPaymentTag(g, name);
+                        return (
+                          <li
+                            key={g.id}
+                            className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
+                          >
+                            <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                            <span>
+                              {g.is_guest ? g.guest_full_name : g.users?.full_name}
+                            </span>
+                            <span
+                              className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${gTag.cls}`}
+                            >
+                              {gTag.label}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </li>
+              );
+            },
+          )}
         </ul>
       </div>
     );
@@ -458,7 +586,6 @@ export default function SessionsPage() {
                 key={s.id}
                 className="card flex flex-col gap-3 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)]"
               >
-                {/* Top row */}
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-semibold text-gray-900 leading-tight">
                     {s.title}
@@ -470,7 +597,6 @@ export default function SessionsPage() {
                   </span>
                 </div>
 
-                {/* Info */}
                 <div className="space-y-1.5 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
                     <CalendarDays className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
@@ -498,8 +624,9 @@ export default function SessionsPage() {
                             : ""
                         }
                       >
-                        {s.available_slots ?? s.max_slots}/{s.max_slots} chỗ
-                        trống
+                        {s.available_slots <= 0
+                          ? "Hết chỗ"
+                          : `${s.available_slots ?? s.max_slots}/${s.max_slots} chỗ trống`}
                       </span>
                       {(s.male_count > 0 || s.female_count > 0) && (
                         <span className="text-gray-400 text-xs">
@@ -831,7 +958,10 @@ export default function SessionsPage() {
                   <div className="flex items-center justify-center py-6 gap-2 text-gray-400">
                     <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                   </div>
-                ) : completePending.length > 0 ? (
+                ) : completePending.length +
+                  completePendingReview.length +
+                  completeWalletPendingConfirm.length >
+                  0 ? (
                   buildCompletePendingSummary()
                 ) : (
                   "Xác nhận hoàn thành buổi đánh? Buổi sẽ bị khoá lại."

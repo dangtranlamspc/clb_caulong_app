@@ -10,7 +10,8 @@ import {
 import toast from 'react-hot-toast';
 import { matchesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-import { createClient, RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 const WIN_POINTS = 5;
 const LOSE_POINTS = 2;
@@ -83,11 +84,6 @@ function ScoreRow({
         </div>
     );
 }
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
 
 export default function MatchDetailPage() {
     const { id } = useParams<{ id: string }>();
