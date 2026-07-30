@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { Trophy, Medal, Star, RefreshCw, TrendingUp, Swords, Shield, Calendar, ChevronDown, X, ArrowUp, TrendingDown, Triangle, Crown, Award, Info } from 'lucide-react';
+import { Trophy, RefreshCw, Swords, Shield, X, Triangle, Crown, Award, Info } from 'lucide-react';
 import { rankingsApi } from '../../../lib/api';
 import { useAuthStore } from '../../../store/auth.store';
 import { getTierCardBackground, getTierTheme, RankIcon, RankPodiumAvatarList } from '@/components/member/ranks/Rank';
 import { createPortal } from 'react-dom';
 import { CustomSelect } from '@/components/admin/sessions/CustomSelect';
+import Lottie from 'lottie-react';
 
 const ATTENDANCE_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
     'Người Mới Tham Gia': { emoji: '🥚', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },
@@ -344,6 +345,35 @@ const MODE_OPTIONS = [
     { value: 'range-1y', label: '1 năm gần nhất' },
 ];
 
+let cachedInfoAnimation: any = null;
+let infoAnimationPromise: Promise<any> | null = null;
+
+function InfoTriggerButton({ onClick }: { onClick: () => void }) {
+    const [animationData, setAnimationData] = useState<any>(cachedInfoAnimation);
+
+    useEffect(() => {
+        if (cachedInfoAnimation) return;
+        if (!infoAnimationPromise) {
+            infoAnimationPromise = fetch('/lottie/info.json').then((res) => res.json());
+        }
+        infoAnimationPromise.then((data) => {
+            cachedInfoAnimation = data;
+            setAnimationData(data);
+        });
+    }, []);
+
+    return (
+        <button
+            onClick={onClick}
+            className="mb-3 flex-shrink-0"
+        >
+            {animationData ? (
+                <Lottie animationData={animationData} loop autoplay className="w-12 h-12" />
+            ) : null}
+        </button>
+    );
+}
+
 function LeaderboardInfoModal({ onClose }: { onClose: () => void }) {
     const [visible, setVisible] = useState(false);
 
@@ -495,12 +525,7 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
                     <div className="flex-1">
                         <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
                     </div>
-                    <button
-                        onClick={() => setShowInfo(true)}
-                        className="mb-3 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md shadow-blue-300 flex-shrink-0 animate-bounce"
-                    >
-                        <Info className="w-4 h-4 text-white" strokeWidth={2.5} />
-                    </button>
+                    <InfoTriggerButton onClick={() => setShowInfo(true)} />
                 </div>
             </div>
 
@@ -655,12 +680,7 @@ function WinRateTab({ data, myStats, user }: { data: any[]; myStats: any; user: 
                 <div className="flex-1">
                     <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
                 </div>
-                <button
-                    onClick={() => setShowInfo(true)}
-                    className="mb-3 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md shadow-blue-300 flex-shrink-0 animate-bounce"
-                >
-                    <Info className="w-4 h-4 text-white" strokeWidth={2.5} />
-                </button>
+                <InfoTriggerButton onClick={() => setShowInfo(true)} />
             </div>
             {filteredData.length === 0 ? (
                 <div className="bg-white rounded-2xl py-14 text-center">
@@ -1013,12 +1033,7 @@ function RankTab({ data, myStats, user }: { data: any[]; myStats: any; user: any
                 <div className="flex-1">
                     <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
                 </div>
-                <button
-                    onClick={() => setShowInfo(true)}
-                    className="mb-3 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md shadow-blue-300 flex-shrink-0 animate-bounce"
-                >
-                    <Info className="w-4 h-4 text-white" strokeWidth={2.5} />
-                </button>
+                <InfoTriggerButton onClick={() => setShowInfo(true)} />
             </div>
             {displayList.length === 0 ? (
                 <div className="bg-white rounded-2xl py-14 text-center">

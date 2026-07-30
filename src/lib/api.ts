@@ -528,6 +528,9 @@ export const feedbackApi = {
 
   listAdmin: (params?: { search?: string; status?: 'all' | 'read' | 'unread'; page?: number; limit?: number }) =>
     api.get('/feedback/admin', { params }),
+  getUserThread: (userId: string) => api.get(`/feedback/admin/user/${userId}`),
+  markAllRead: (userId: string) => api.patch(`/feedback/admin/user/${userId}/read`),
   markRead: (id: string) => api.patch(`/feedback/admin/${id}/read`),
+  deleteFeedback: (id: string) => api.delete(`/feedback/admin/${id}`),
   getUnreadCount: () => api.get('/feedback/admin/unread-count'),
 };

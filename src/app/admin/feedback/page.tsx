@@ -12,6 +12,7 @@ import {
     ArrowLeft,
     Phone,
     Clock,
+    Trash2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -19,18 +20,26 @@ import { feedbackApi } from "@/lib/api";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 
-type FeedbackItem = {
-    id: string;
+type Conversation = {
     user_id: string;
-    message: string;
-    is_read: boolean;
-    created_at: string;
     users?: {
         id: string;
         full_name: string;
         avatar_url?: string;
         phone?: string;
     };
+    latest_message: string;
+    latest_created_at: string;
+    total_count: number;
+    unread_count: number;
+};
+
+type FeedbackItem = {
+    id: string;
+    user_id: string;
+    message: string;
+    is_read: boolean;
+    created_at: string;
 };
 
 type StatusFilter = "all" | "unread" | "read";
@@ -65,7 +74,7 @@ const STATUS_TABS: { value: StatusFilter; label: string }[] = [
 ];
 
 export default function AdminFeedbackPage() {
-    const [items, setItems] = useState<FeedbackItem[]>([]);
+    const [items, setItems] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState<StatusFilter>("all");
@@ -73,8 +82,12 @@ export default function AdminFeedbackPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [unreadCount, setUnreadCount] = useState(0);
-    const [selected, setSelected] = useState<FeedbackItem | null>(null);
+
+    const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
+    const [threadMessages, setThreadMessages] = useState<FeedbackItem[]>([]);
+    const [threadLoading, setThreadLoading] = useState(false);
     const [marking, setMarking] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const limit = 20;
 
     const fetchList = useCallback(async () => {
@@ -135,15 +148,31 @@ export default function AdminFeedbackPage() {
         fetchUnreadCount();
     }, [fetchUnreadCount]);
 
-    const openDetail = async (item: FeedbackItem) => {
-        setSelected(item);
-        if (!item.is_read) {
+    const openDetail = async (conv: Conversation) => {
+        setSelectedConv(conv);
+        setThreadMessages([]);
+        setThreadLoading(true);
+        try {
+            const { data } = await feedbackApi.getUserThread(conv.user_id);
+            setThreadMessages(data ?? []);
+        } catch {
+            toast.error("Không tải được nội dung góp ý");
+        } finally {
+            setThreadLoading(false);
+        }
+
+        if (conv.unread_count > 0) {
             setMarking(true);
             try {
-                await feedbackApi.markRead(item.id);
-                setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, is_read: true } : x)));
-                setSelected((prev) => (prev && prev.id === item.id ? { ...prev, is_read: true } : prev));
-                setUnreadCount((c) => Math.max(0, c - 1));
+                await feedbackApi.markAllRead(conv.user_id);
+                setThreadMessages((prev) => prev.map((m) => ({ ...m, is_read: true })));
+                setItems((prev) =>
+                    prev.map((c) => (c.user_id === conv.user_id ? { ...c, unread_count: 0 } : c)),
+                );
+                setSelectedConv((prev) =>
+                    prev && prev.user_id === conv.user_id ? { ...prev, unread_count: 0 } : prev,
+                );
+                setUnreadCount((c) => Math.max(0, c - conv.unread_count));
             } catch {
                 toast.error("Đánh dấu đã xem thất bại");
             } finally {
@@ -152,44 +181,77 @@ export default function AdminFeedbackPage() {
         }
     };
 
-    const DetailContent = ({ item }: { item: FeedbackItem }) => (
+    const handleDeleteMessage = async (id: string) => {
+        if (!window.confirm("Xoá góp ý này? Hành động không thể hoàn tác.")) return;
+        setDeletingId(id);
+        try {
+            await feedbackApi.deleteFeedback(id);
+            const remaining = threadMessages.filter((m) => m.id !== id);
+            setThreadMessages(remaining);
+            if (remaining.length === 0) setSelectedConv(null);
+            toast.success("Đã xoá góp ý");
+            fetchList();
+            fetchUnreadCount();
+        } catch {
+            toast.error("Xoá góp ý thất bại");
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const DetailContent = ({ conv }: { conv: Conversation }) => (
         <>
             <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 flex-shrink-0">
-                <Avatar name={item.users?.full_name} url={item.users?.avatar_url} size={44} />
+                <Avatar name={conv.users?.full_name} url={conv.users?.avatar_url} size={44} />
                 <div className="min-w-0 flex-1">
                     <p className="text-[14px] font-bold text-gray-900 truncate">
-                        {item.users?.full_name ?? "Ẩn danh"}
+                        {conv.users?.full_name ?? "Ẩn danh"}
                     </p>
-                    {item.users?.phone && (
+                    {conv.users?.phone && (
                         <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-                            <Phone className="w-3 h-3" /> {item.users.phone}
+                            <Phone className="w-3 h-3" /> {conv.users.phone}
                         </p>
                     )}
                 </div>
-                {marking ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-300 flex-shrink-0" />
-                ) : item.is_read ? (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full flex-shrink-0">
-                        <Check className="w-3 h-3" /> Đã xem
-                    </span>
-                ) : (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-[#e0533d] bg-[#e0533d]/[0.08] border border-[#e0533d]/20 px-2.5 py-1 rounded-full flex-shrink-0">
-                        Chưa xem
-                    </span>
-                )}
+                {marking && <Loader2 className="w-4 h-4 animate-spin text-gray-300 flex-shrink-0" />}
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto p-5">
-                <div className="flex items-center gap-1.5 text-[11px] text-gray-400 mb-3">
-                    <Clock className="w-3 h-3" />
-                    {format(new Date(item.created_at), "HH:mm · dd MMMM yyyy", { locale: vi })}
-                </div>
-                <div
-                    className={`rounded-2xl p-4 text-[13.5px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words border-l-[3px] bg-gray-50/80 ${item.is_read ? "border-gray-200" : "border-[#e0533d]"
-                        }`}
-                >
-                    {item.message}
-                </div>
+            <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-3">
+                {threadLoading ? (
+                    <div className="py-10 flex justify-center">
+                        <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
+                    </div>
+                ) : threadMessages.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-10">Không còn góp ý nào</p>
+                ) : (
+                    threadMessages.map((m) => (
+                        <div
+                            key={m.id}
+                            className={`group relative rounded-2xl p-4 text-[13.5px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words border-l-[3px] bg-gray-50/80 ${m.is_read ? "border-gray-200" : "border-[#e0533d]"
+                                }`}
+                        >
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                                    <Clock className="w-3 h-3" />
+                                    {format(new Date(m.created_at), "HH:mm · dd MMMM yyyy", { locale: vi })}
+                                </span>
+                                <button
+                                    onClick={() => handleDeleteMessage(m.id)}
+                                    disabled={deletingId === m.id}
+                                    className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-50 text-gray-300 hover:text-red-500 transition-all disabled:opacity-50"
+                                    title="Xoá góp ý này"
+                                >
+                                    {deletingId === m.id ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    )}
+                                </button>
+                            </div>
+                            {m.message}
+                        </div>
+                    ))
+                )}
             </div>
         </>
     );
@@ -203,7 +265,7 @@ export default function AdminFeedbackPage() {
                         <div>
                             <h2 className="text-[16px] font-bold text-gray-900 tracking-tight">Góp ý thành viên</h2>
                             <p className="text-[12px] text-gray-400 mt-0.5">
-                                {loading ? "Đang tải…" : `${total} góp ý${unreadCount > 0 ? ` · ${unreadCount} chưa xem` : ""}`}
+                                {loading ? "Đang tải…" : `${total} thành viên${unreadCount > 0 ? ` · ${unreadCount} tin chưa xem` : ""}`}
                             </p>
                         </div>
                     </div>
@@ -262,12 +324,12 @@ export default function AdminFeedbackPage() {
                         </div>
                     ) : (
                         <div className="space-y-1">
-                            {items.map((item) => {
-                                const isActive = selected?.id === item.id;
+                            {items.map((conv) => {
+                                const isActive = selectedConv?.user_id === conv.user_id;
                                 return (
                                     <button
-                                        key={item.id}
-                                        onClick={() => openDetail(item)}
+                                        key={conv.user_id}
+                                        onClick={() => openDetail(conv)}
                                         className={`group relative w-full flex items-start gap-3 px-3.5 py-3.5 text-left rounded-xl transition-all ${isActive
                                             ? "bg-[#183153]/[0.055]"
                                             : "hover:bg-gray-50"
@@ -276,42 +338,47 @@ export default function AdminFeedbackPage() {
                                         <span
                                             className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-full transition-colors ${isActive
                                                 ? "bg-[#183153]"
-                                                : !item.is_read
+                                                : conv.unread_count > 0
                                                     ? "bg-[#e0533d]"
                                                     : "bg-transparent"
                                                 }`}
                                         />
-                                        <Avatar name={item.users?.full_name} url={item.users?.avatar_url} />
+                                        <Avatar name={conv.users?.full_name} url={conv.users?.avatar_url} />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between gap-2">
                                                 <p
-                                                    className={`text-[13.5px] truncate ${!item.is_read ? "font-bold text-gray-900" : "font-semibold text-gray-700"
+                                                    className={`text-[13.5px] truncate ${conv.unread_count > 0 ? "font-bold text-gray-900" : "font-semibold text-gray-700"
                                                         }`}
                                                 >
-                                                    {item.users?.full_name ?? "Ẩn danh"}
+                                                    {conv.users?.full_name ?? "Ẩn danh"}
                                                 </p>
                                                 <span className="text-[10.5px] text-gray-400 flex-shrink-0">
-                                                    {formatDistanceToNow(new Date(item.created_at), {
+                                                    {formatDistanceToNow(new Date(conv.latest_created_at), {
                                                         locale: vi,
                                                         addSuffix: true,
                                                     })}
                                                 </span>
                                             </div>
-                                            {item.users?.phone && (
-                                                <p className="text-[11px] text-gray-400 mt-0.5">{item.users.phone}</p>
+                                            {conv.users?.phone && (
+                                                <p className="text-[11px] text-gray-400 mt-0.5">{conv.users.phone}</p>
                                             )}
                                             <p
-                                                className={`text-xs mt-1.5 line-clamp-2 leading-relaxed ${!item.is_read ? "text-gray-600" : "text-gray-400"
+                                                className={`text-xs mt-1.5 line-clamp-2 leading-relaxed ${conv.unread_count > 0 ? "text-gray-600" : "text-gray-400"
                                                     }`}
                                             >
-                                                {item.message}
+                                                {conv.latest_message}
                                             </p>
                                         </div>
-                                        <div className="flex-shrink-0 mt-1">
-                                            {item.is_read ? (
-                                                <MailOpen className="w-3.5 h-3.5 text-gray-300" />
-                                            ) : (
+                                        <div className="flex-shrink-0 mt-1 flex flex-col items-end gap-1.5">
+                                            {conv.total_count > 1 && (
+                                                <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">
+                                                    {conv.total_count}
+                                                </span>
+                                            )}
+                                            {conv.unread_count > 0 ? (
                                                 <span className="block w-2 h-2 rounded-full bg-[#e0533d]" />
+                                            ) : (
+                                                <MailOpen className="w-3.5 h-3.5 text-gray-300" />
                                             )}
                                         </div>
                                     </button>
@@ -346,26 +413,26 @@ export default function AdminFeedbackPage() {
 
             {/* ---------- Detail column (desktop) ---------- */}
             <div className="hidden lg:flex w-[380px] border-l border-gray-100 flex-col min-h-0 bg-gray-50/40">
-                {!selected ? (
+                {!selectedConv ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-300">
                         <div className="w-16 h-16 rounded-2xl bg-white border border-gray-100 flex items-center justify-center mb-4 shadow-sm">
                             <Mail className="w-7 h-7 text-gray-300" />
                         </div>
-                        <p className="text-sm text-gray-400">Chọn một góp ý để xem chi tiết</p>
+                        <p className="text-sm text-gray-400">Chọn một thành viên để xem góp ý</p>
                     </div>
                 ) : (
                     <div className="flex-1 flex flex-col min-h-0 bg-white">
-                        <DetailContent item={selected} />
+                        <DetailContent conv={selectedConv} />
                     </div>
                 )}
             </div>
 
             {/* ---------- Detail overlay (mobile) ---------- */}
-            {selected && (
+            {selectedConv && (
                 <div className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white animate-in slide-in-from-right duration-200">
                     <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-100 flex-shrink-0">
                         <button
-                            onClick={() => setSelected(null)}
+                            onClick={() => setSelectedConv(null)}
                             className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
                         >
                             <ArrowLeft className="w-4.5 h-4.5 text-gray-600" />
@@ -373,7 +440,7 @@ export default function AdminFeedbackPage() {
                         <span className="text-sm font-semibold text-gray-800">Chi tiết góp ý</span>
                     </div>
                     <div className="flex-1 flex flex-col min-h-0">
-                        <DetailContent item={selected} />
+                        <DetailContent conv={selectedConv} />
                     </div>
                 </div>
             )}
