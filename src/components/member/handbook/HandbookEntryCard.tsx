@@ -1,7 +1,13 @@
 "use client";
-import { BookOpen, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronRight, CheckCircle2 } from "lucide-react";
 
-export function HandbookEntryCard({ onClick }: { onClick: () => void }) {
+export function HandbookEntryCard({
+    onClick,
+    seen,
+}: {
+    onClick: () => void;
+    seen?: boolean;
+}) {
     return (
         <button
             onClick={onClick}
@@ -12,7 +18,15 @@ export function HandbookEntryCard({ onClick }: { onClick: () => void }) {
                 <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-white font-bold text-sm">Sổ tay CLB</p>
+                <div className="flex items-center gap-2">
+                    <p className="text-white font-bold text-sm">Sổ tay CLB</p>
+                    {seen && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Đã đọc
+                        </span>
+                    )}
+                </div>
                 <p className="text-white/60 text-xs mt-0.5">
                     Quy định, quy tắc &amp; thông tin CLB
                 </p>

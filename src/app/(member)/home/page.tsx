@@ -126,6 +126,14 @@ export default function HomePage() {
         setMyRank(rk.data);
         setBirthdays(bd.data ?? []);
         setUser(me.data);
+
+        if (me.data && !me.data.has_seen_handbook) {
+          setHandbookOpen(true);
+          profileApi
+            .markHandbookSeen()
+            .then(() => setUser({ ...me.data, has_seen_handbook: true }))
+            .catch(() => { });
+        }
       })
       .finally(() => setLoading(false));
   }, []);
@@ -278,7 +286,10 @@ export default function HomePage() {
           ))}
         </div>
 
-        <HandbookEntryCard onClick={() => setHandbookOpen(true)} />
+        <HandbookEntryCard
+          onClick={() => setHandbookOpen(true)}
+          seen={!!user?.has_seen_handbook}
+        />
 
         {!loading && birthdays.length > 0 && (
           <section>

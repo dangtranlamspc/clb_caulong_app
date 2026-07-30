@@ -102,6 +102,7 @@ export const authApi = {
 
 export const profileApi = {
   getMe: () => api.get("/users/me/profile"),
+  markHandbookSeen: () => api.patch("/users/me/handbook-seen"),
   updateMe: (data: any) => api.put("/users/me/profile", data),
   updatePassword: (data: any) => api.patch("/users/me/password", data),
   uploadAvatar: (file: File) => {
@@ -522,11 +523,9 @@ export const handbookPublicApi = {
 
 
 export const feedbackApi = {
-  // Member
   send: (message: string) => api.post('/feedback', { message }),
   getMine: () => api.get('/feedback/me'),
 
-  // Admin
   listAdmin: (params?: { search?: string; status?: 'all' | 'read' | 'unread'; page?: number; limit?: number }) =>
     api.get('/feedback/admin', { params }),
   markRead: (id: string) => api.patch(`/feedback/admin/${id}/read`),

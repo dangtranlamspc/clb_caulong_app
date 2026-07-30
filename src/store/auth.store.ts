@@ -12,6 +12,7 @@ interface User {
   gender?: string;
   shirt_size?: string;
   date_of_birth?: string;
+  has_seen_handbook?: boolean;
 }
 
 interface AuthState {
