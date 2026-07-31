@@ -717,6 +717,12 @@ export function UpcomingSessionsSection({
                                         >
                                             <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
                                             <span className="text-xs font-bold text-blue-600">{filled ?? 0}</span>
+                                            {(s.male_count > 0 || s.female_count > 0) && (
+                                                <span className="flex items-center gap-1 ml-1 pl-1.5 border-l border-blue-200">
+                                                    <span className="text-[11px] font-semibold text-blue-500">👨 {s.male_count ?? 0}</span>
+                                                    <span className="text-[11px] font-semibold text-pink-500">👩 {s.female_count ?? 0}</span>
+                                                </span>
+                                            )}
                                         </button>
 
                                         {myReg && regCfg && (

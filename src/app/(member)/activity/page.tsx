@@ -978,7 +978,7 @@ function SessionsTab({
             return (
               <Link key={s.id} href={`/sessions/${s.id}`} className="block">
                 <div
-                  className={`bg-white rounded-2xl p-4 border shadow-md transition-all active:scale-[0.99] ${myReg ? "border-blue-100" : "border-transparent"} ${s.status === "completed" ? "opacity-55 grayscale-[0.3]" : ""}`}
+                  className={`relative bg-white rounded-2xl p-4 border shadow-md transition-all active:scale-[0.99] ${myReg ? "border-blue-100" : "border-transparent"} ${s.status === "completed" ? "opacity-55 grayscale-[0.3]" : ""}`}
                   style={{
                     boxShadow:
                       "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
@@ -986,6 +986,24 @@ function SessionsTab({
                     animationDelay: `${idx * 50}ms`,
                   }}
                 >
+                  {s.status === "completed" ? (
+                    <div
+                      className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gray-400 shadow-md shadow-gray-200 flex items-center justify-center z-10"
+                      title="Buổi đã hoàn thành"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  ) : (
+                    isFull && !myReg && (
+                      <div
+                        className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-red-500 shadow-md shadow-red-200 flex items-center justify-center z-10"
+                        title="Buổi đã đầy chỗ"
+                      >
+                        <Lock className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    )
+                  )}
+
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <h3 className="font-semibold text-gray-900 leading-tight truncate flex-1 min-w-0">
                       {s.title}
@@ -1001,7 +1019,7 @@ function SessionsTab({
                           }`}
                       />
                       {cornerBadgeLabel}
-                      {s.status === "completed" && <Lock className="w-3 h-3" />}
+                      {s.status === "completed"}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mb-3">

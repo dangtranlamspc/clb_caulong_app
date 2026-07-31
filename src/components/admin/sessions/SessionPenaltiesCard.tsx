@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ShieldAlert, Clock, MoreHorizontal, Wallet } from "lucide-react";
+import { ShieldAlert, Clock, MoreHorizontal, Wallet, Loader2, X } from "lucide-react";
 import { penaltiesApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
+import toast from "react-hot-toast";
 
 function fmt(n: number) {
     return new Intl.NumberFormat("vi-VN").format(n || 0) + "đ";
@@ -68,6 +69,7 @@ export default function SessionPenaltiesCard({
 }) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [removingId, setRemovingId] = useState<string | null>(null);
 
     const fetchSeqRef = useRef(0);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,6 +122,20 @@ export default function SessionPenaltiesCard({
         };
     }, [sessionId]);
 
+    const handleRemove = async (penaltyId: string, memberName: string) => {
+        if (!window.confirm(`Huỷ khoản phạt của ${memberName}?`)) return;
+        setRemovingId(penaltyId);
+        try {
+            await penaltiesApi.remove(penaltyId);
+            toast.success("Đã huỷ khoản phạt");
+            fetchData(true);
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? "Huỷ thất bại");
+        } finally {
+            setRemovingId(null);
+        }
+    };
+
     if (loading) return <div className="h-24 bg-gray-100 animate-pulse rounded-2xl" />;
     if (!data || (data.data ?? []).length === 0) return null;
 
@@ -133,6 +149,7 @@ export default function SessionPenaltiesCard({
             <div className="divide-y divide-gray-100">
                 {data.data.map((p: any) => {
                     const Icon = TYPE_ICONS[p.type] ?? MoreHorizontal;
+                    const isRemoving = removingId === p.id;
                     return (
                         <div key={p.id} className="px-4 py-2.5 flex items-center gap-3">
                             <Icon className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -159,6 +176,20 @@ export default function SessionPenaltiesCard({
                                     {STATUS_LABELS[p.payment_status]}
                                 </span>
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => handleRemove(p.id, p.users?.full_name ?? "thành viên")}
+                                disabled={isRemoving}
+                                title="Huỷ khoản phạt"
+                                className="flex-shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-semibold transition-colors disabled:opacity-40"
+                            >
+                                {isRemoving ? (
+                                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                                ) : (
+                                    <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                )}
+                                <span className="hidden sm:inline">Huỷ</span>
+                            </button>
                         </div>
                     );
                 })}

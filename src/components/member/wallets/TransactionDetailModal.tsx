@@ -1,7 +1,7 @@
-import { Loader2, Users, XIcon, Ban } from "lucide-react";
+import { Loader2, Users, XIcon, Ban, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { activitiesApi, registrationsApi } from "@/lib/api";
+import { activitiesApi, registrationsApi, penaltiesApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { smt, txIcon } from "@/lib/wallet-helpers";
@@ -12,6 +12,13 @@ const TX_TYPE_LABEL: Record<string, string> = {
   manual_expense: "Chi tiêu khác (admin ghi nhận)",
   manual_credit: "Cộng tiền khác (admin ghi nhận)",
   refund: "Hoàn tiền",
+  penalty: "Phạt",
+};
+
+const PENALTY_TYPE_LABEL: Record<string, string> = {
+  late_early: "Đi trễ / về sớm",
+  special: "Trường hợp đặc biệt",
+  other: "Khác",
 };
 
 export function TransactionDetailModal({
@@ -49,9 +56,14 @@ export function TransactionDetailModal({
   const isShirtOrder =
     tx.reference_type === "shirt_order_registration" && tx.reference_id;
 
+  const isPenaltyPayment =
+    tx.type === "penalty" &&
+    tx.reference_type === "penalty" &&
+    tx.reference_id;
+
   const hasSnapshot = isSessionPayment && Boolean(tx.metadata);
 
-  const shouldFetch = isSessionPayment || isShirtOrder;
+  const shouldFetch = isSessionPayment || isShirtOrder || isPenaltyPayment;
 
   const shirtOrderLabel = isShirtOrder
     ? tx.amount > 0
@@ -66,7 +78,9 @@ export function TransactionDetailModal({
 
     const request = isShirtOrder
       ? activitiesApi.getShirtOrderRegistrationDetail(tx.reference_id)
-      : registrationsApi.getDetail(tx.reference_id);
+      : isPenaltyPayment
+        ? penaltiesApi.getDetail(tx.reference_id)
+        : registrationsApi.getDetail(tx.reference_id);
 
     request
       .then(({ data }) => { if (!ignore) setDetail(data); })
@@ -78,6 +92,7 @@ export function TransactionDetailModal({
 
   const reg = detail?.registration;
   const liveGuests = detail?.grouped_guests ?? [];
+  const penalty = isPenaltyPayment ? detail : null;
 
   const isRefunded = isSessionPayment && transactions.some((t: any) =>
     t.type === 'refund' &&
@@ -113,6 +128,9 @@ export function TransactionDetailModal({
 
   const isLoadingSessionDetail = isSessionPayment && loadingDetail;
   const sessionDetailFailed = isSessionPayment && !hasSnapshot && !loadingDetail && !reg;
+
+  const isLoadingPenaltyDetail = isPenaltyPayment && loadingDetail;
+  const penaltyDetailFailed = isPenaltyPayment && !loadingDetail && !penalty;
 
   if (typeof document === "undefined") return null;
 
@@ -215,6 +233,68 @@ export function TransactionDetailModal({
               </div>
             </div>
 
+            {isPenaltyPayment && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  Chi tiết khoản phạt
+                </p>
+
+                {isLoadingPenaltyDetail ? (
+                  <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+                  </div>
+                ) : penaltyDetailFailed ? (
+                  <p className="text-sm text-gray-400 text-center py-4">
+                    Không tải được chi tiết
+                  </p>
+                ) : (
+                  <div className="rounded-xl bg-white border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] divide-y divide-gray-50 overflow-hidden">
+                    {penalty?.sessions?.title ? (
+                      <div className="flex justify-between px-4 py-2.5 text-sm bg-blue-50/50">
+                        <span className="text-gray-500">Buổi đánh</span>
+                        <div className="text-right">
+                          <p className="font-semibold text-blue-700">
+                            {penalty.sessions.title}
+                          </p>
+                          {penalty.sessions.scheduled_at && (
+                            <p className="text-[11px] text-gray-400">
+                              {format(new Date(penalty.sessions.scheduled_at), "dd/MM/yyyy", { locale: vi })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between px-4 py-2.5 text-sm">
+                        <span className="text-gray-400">Buổi đánh</span>
+                        <span className="text-gray-400">Không gắn buổi nào</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between px-4 py-2.5 text-sm">
+                      <span className="text-gray-500 flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> Loại phạt
+                      </span>
+                      <span className="font-medium text-gray-800">
+                        {PENALTY_TYPE_LABEL[penalty?.type] ?? penalty?.type}
+                      </span>
+                    </div>
+
+                    <div className="px-4 py-2.5 text-sm">
+                      <p className="text-gray-500 mb-1">Lý do</p>
+                      <p className="text-gray-700">{penalty?.reason}</p>
+                    </div>
+
+                    <div className="flex justify-between px-4 py-3 text-sm bg-gray-50">
+                      <span className="font-semibold text-gray-700">Số tiền phạt</span>
+                      <span className="font-bold text-red-500">
+                        {smt(Number(penalty?.amount ?? 0))}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {isSessionPayment && (
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
@@ -240,7 +320,6 @@ export function TransactionDetailModal({
                       </div>
                     )}
 
-                    {/* Card của host (bạn) */}
                     <div className="rounded-xl bg-white border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] divide-y divide-gray-50 overflow-hidden">
                       <div className="flex justify-between px-4 py-2.5 text-sm">
                         <span className="text-gray-500">

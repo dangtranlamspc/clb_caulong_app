@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft,
-  Loader2,
   Calculator,
   Send,
   Divide,
@@ -16,6 +15,7 @@ import toast from "react-hot-toast";
 import { sessionsAdminApi } from "@/lib/api";
 import { MorphButton } from "@/components/effect-button/MorphButton";
 import PenaltyModal from "@/components/admin/wallet/PenaltyModal";
+import SessionPenaltiesCard from "@/components/admin/sessions/SessionPenaltiesCard";
 
 interface CourtItem {
   id: string;
@@ -529,6 +529,9 @@ export default function SessionFinishPage() {
           <span>{fmt(splittableCost)}</span>
         </div>
       </div>
+
+      {id && <SessionPenaltiesCard sessionId={id} />}
+
       <div className="card !p-0 overflow-hidden">
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
@@ -557,7 +560,6 @@ export default function SessionFinishPage() {
                   : "border-gray-200 bg-white"
                   }`}
               >
-                {/* Khung host */}
                 <div
                   className={`rounded-xl border p-3 space-y-2 transition-colors ${isWalletDeduct
                     ? "border-blue-200 bg-blue-50/70"
@@ -686,7 +688,6 @@ export default function SessionFinishPage() {
                     />
                   </div>
 
-                  {/* Tổng thu — dòng riêng, canh phải */}
                   <div className="flex justify-end">
                     <div className="w-fit text-right text-xs font-bold text-gray-800 bg-white border border-gray-200 rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">
                       <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">

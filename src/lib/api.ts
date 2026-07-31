@@ -365,6 +365,8 @@ export const registrationsAdminApi = {
   checkinAbsent: (id: string) =>
     api.patch(`/registrations/${id}/checkin-absent`),
   getAdminDetail: (id: string) => api.get(`/registrations/${id}/admin-detail`, { skipErrorToast: true } as any),
+  getCheckedInSessions: (userId: string) =>
+    api.get("/registrations/checked-in-sessions", { params: { user_id: userId } }),
 };
 
 export const matchesAdminApi = {
@@ -536,8 +538,6 @@ export const feedbackApi = {
   getUnreadCount: () => api.get('/feedback/admin/unread-count'),
 };
 
-
-
 export const penaltiesApi = {
   // Admin
   create: (data: {
@@ -569,4 +569,36 @@ export const penaltiesApi = {
       payment_proof_url?: string;
     },
   ) => api.post(`/penalties/${id}/submit-payment`, data),
+  getDetail: (id: string) =>
+    api.get(`/penalties/${id}`, { skipErrorToast: true } as any),
+};
+
+
+export const fundApi = {
+  getSummary: (month?: number, year?: number) =>
+    api.get("/fund/summary", { params: { month, year } }),
+  listTransactions: (params?: any) => api.get("/fund/transactions", { params }),
+  createTransaction: (data: {
+    type: "thu" | "chi"; category: string; title: string;
+    description?: string; amount: number;
+    deduct_from_member_id?: string;
+    payment_method?: "wallet" | "member_choice";
+  }) => api.post("/fund/transactions", data),
+  approve: (id: string) => api.post(`/fund/transactions/${id}/approve`),
+  reject: (id: string, reason: string) => api.post(`/fund/transactions/${id}/reject`, { reason }),
+  remove: (id: string) => api.delete(`/fund/transactions/${id}`),
+  cancel: (id: string) => api.post(`/fund/${id}/cancel`),
+  exportReport: (month?: number, year?: number) =>
+    api.get("/fund/export", { params: { month, year }, responseType: "blob" }),
+
+  getMyContributions: (params?: { payment_status?: string; page?: number; limit?: number }) =>
+    api.get("/fund/contributions/my", { params }),
+  submitContributionPayment: (
+    id: string,
+    data: { method: "wallet" | "bank_transfer" | "cash"; payment_reference?: string; payment_proof_url?: string },
+  ) => api.post(`/fund/contributions/${id}/payment`, data),
+  confirmContribution: (id: string, notes?: string) =>
+    api.post(`/fund/contributions/${id}/confirm`, { notes }),
+  rejectContribution: (id: string, reason: string) =>
+    api.post(`/fund/contributions/${id}/reject`, { reason }),
 };

@@ -5,11 +5,11 @@ import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2 } fro
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
-import { useAuthStore } from '@/store/auth.store';
 import { notificationsApi, walletApi, registrationsApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { useNotificationsRealtimeStore } from '@/store/notifications-realtime.store';
+import { PenaltyPaymentModal } from '../payments/PenaltyPaymentModal';
 
 const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     payment_added: { icon: Wallet, cls: 'text-blue-600', bg: 'bg-blue-50' },
@@ -22,7 +22,6 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
 
 
 export function NotificationBell() {
-    const { user } = useAuthStore();
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState<any[]>([]);
     const [unread, setUnread] = useState(0);
@@ -30,9 +29,14 @@ export function NotificationBell() {
     const [panelPos, setPanelPos] = useState({ top: 0, right: 0 });
     const [guestActionId, setGuestActionId] = useState<string | null>(null);
     const [guestHandled, setGuestHandled] = useState<Set<string>>(new Set());
-    const channelRef = useRef<RealtimeChannel | null>(null);
     const btnRef = useRef<HTMLButtonElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
+
+    const [penaltyModalData, setPenaltyModalData] = useState<{
+        id: string;
+        amount: number;
+        reason: string;
+    } | null>(null);
 
     const guestChannelsRef = useRef<Map<string, RealtimeChannel>>(new Map());
 
@@ -253,12 +257,15 @@ export function NotificationBell() {
                                     const isGuestConfirm = n.type === 'wallet_guest_confirm' || n.data?.type === 'wallet_guest_confirm';
                                     const alreadyHandled = guestHandled.has(n.id);
 
+                                    const isPenaltyChoice =
+                                        n.type === 'penalty_issued' && n.data?.payment_method === 'member_choice';
+                                    const penaltyResolved = Boolean(n.data?.resolved);
+
                                     return (
                                         <li
                                             key={n.id}
                                             onClick={() => !n.is_read && markRead(n.id)}
-                                            className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${n.is_read ? 'bg-white' : 'bg-blue-50/40 hover:bg-blue-50'
-                                                }`}
+                                            className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${n.is_read ? 'bg-white' : 'bg-blue-50/40 hover:bg-blue-50'}`}
                                         >
                                             <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${cfg.bg}`}>
                                                 <Icon className={`w-4 h-4 ${cfg.cls}`} />
@@ -293,7 +300,31 @@ export function NotificationBell() {
                                                         </button>
                                                     </div>
                                                 )}
+
                                                 {isGuestConfirm && alreadyHandled && (
+                                                    <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
+                                                )}
+
+                                                {isPenaltyChoice && !penaltyResolved && (
+                                                    <div className="mt-2" onClick={e => e.stopPropagation()}>
+                                                        <button
+                                                            onClick={() => {
+                                                                setPenaltyModalData({
+                                                                    id: n.data.penalty_id,
+                                                                    amount: n.data.amount,
+                                                                    reason: n.data.reason,
+                                                                });
+                                                                setOpen(false);
+                                                                if (!n.is_read) markRead(n.id);
+                                                            }}
+                                                            className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                                                        >
+                                                            💳 Thanh toán ngay
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {isPenaltyChoice && penaltyResolved && (
                                                     <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
                                                 )}
                                             </div>
@@ -306,6 +337,23 @@ export function NotificationBell() {
                     </div>
                 </div>,
                 document.body
+            )}
+
+            {penaltyModalData && (
+                <PenaltyPaymentModal
+                    penalty={penaltyModalData}
+                    onClose={() => setPenaltyModalData(null)}
+                    onSuccess={() => {
+                        setItems(prev =>
+                            prev.map(n =>
+                                n.data?.penalty_id === penaltyModalData.id
+                                    ? { ...n, data: { ...n.data, resolved: true } }
+                                    : n,
+                            ),
+                        );
+                        setPenaltyModalData(null);
+                    }}
+                />
             )}
         </>
     );
