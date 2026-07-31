@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { X, Loader2, Check, XCircle, Inbox, Landmark, Wallet2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { fundApi, penaltiesApi } from "@/lib/api";
+import { fundApi } from "@/lib/api";
 
 const CATEGORY_LABELS: Record<string, string> = {
     phat: "Phạt",
@@ -53,7 +53,11 @@ export default function ApproveFundRequestsSheet({
                     (tx: any) => tx.payment_method !== "member_choice",
                 );
                 setRequests(reqData);
-                setConfirmations(confRes.data.data ?? []);
+                const confData = (confRes.data.data ?? []).filter(
+                    (tx: any) => tx.category !== "phat",
+                );
+                setConfirmations(confData);
+
                 setPenaltyConfirmations(penaltyRes.data.data ?? []);
             })
             .catch(() => toast.error("Không tải được danh sách yêu cầu"))
@@ -176,7 +180,6 @@ export default function ApproveFundRequestsSheet({
                 background: visible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
                 transition: "background .3s",
             }}
-            onClick={(e) => e.target === e.currentTarget && handleClose()}
         >
             <div
                 className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col"
@@ -344,10 +347,12 @@ export default function ApproveFundRequestsSheet({
                                             <div key={p.id} className="p-4">
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-semibold text-gray-900">{p.reason}</p>
+                                                        <p className="text-sm font-semibold text-gray-900">
+                                                            {p.deducted_member?.full_name ?? "—"}
+                                                        </p>
                                                         <p className="text-xs text-gray-400 mt-0.5">
-                                                            {p.users?.full_name ?? "—"}
-                                                            {p.sessions?.title ? ` · ${p.sessions.title}` : ""}
+                                                            {p.description || p.title}
+                                                            {p.session?.title ? ` · ${p.session.title}` : ""}
                                                         </p>
                                                         <p className="text-[11px] text-gray-300 mt-0.5">
                                                             {new Date(p.created_at).toLocaleString("vi-VN")}

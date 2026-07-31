@@ -157,9 +157,9 @@ export default function FundManagementPage() {
                 .listTransactions({
                     month, year, page, limit: 10,
                     search: search.trim() || undefined,
-                    type: typeFilter || undefined,
-                    category: categoryFilter || undefined,
-                    status: statusFilter || undefined,
+                    type: (typeFilter || undefined) as any,
+                    category: (categoryFilter || undefined) as any,
+                    status: (statusFilter || undefined) as any,
                 })
                 .then(({ data }) => {
                     setTxs(data.data ?? []);
@@ -181,7 +181,10 @@ export default function FundManagementPage() {
                 const requestCount = (reqRes.data.data ?? []).filter(
                     (tx: any) => tx.payment_method !== "member_choice",
                 ).length;
-                const confCount = (confRes.data.data ?? []).length;
+                // "phat" đã được đếm riêng qua penaltyRes, tránh đếm trùng ở đây
+                const confCount = (confRes.data.data ?? []).filter(
+                    (tx: any) => tx.category !== "phat",
+                ).length;
                 const penaltyCount = (penaltyRes.data.data ?? []).length;
                 setPendingTotal(requestCount + confCount + penaltyCount);
             })
@@ -200,6 +203,9 @@ export default function FundManagementPage() {
 
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => {
+        // Toàn bộ phạt (category = "phat") và đóng góp giờ đều nằm trong
+        // bảng fund_transactions — không còn bảng "penalties" riêng nữa,
+        // nên chỉ cần lắng nghe 1 bảng này là đủ.
         const channel = supabase
             .channel("fund-transactions-page")
             .on(
@@ -210,16 +216,6 @@ export default function FundManagementPage() {
                     debounceRef.current = setTimeout(() => {
                         loadSummary(true);
                         loadTxs(true);
-                        loadPendingTotal();
-                    }, 250);
-                },
-            )
-            .on(
-                "postgres_changes",
-                { event: "*", schema: "public", table: "penalties" },
-                () => {
-                    if (debounceRef.current) clearTimeout(debounceRef.current);
-                    debounceRef.current = setTimeout(() => {
                         loadPendingTotal();
                     }, 250);
                 },
@@ -272,7 +268,7 @@ export default function FundManagementPage() {
         try {
             await fundApi.approve(id);
             toast.success("Đã duyệt giao dịch");
-            loadSummary(true); loadTxs(true);
+            loadSummary(true); loadTxs(true); loadPendingTotal();
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? "Duyệt thất bại");
         } finally { setActingId(null); }
@@ -285,7 +281,7 @@ export default function FundManagementPage() {
         try {
             await fundApi.reject(id, reason.trim());
             toast.success("Đã từ chối giao dịch");
-            loadSummary(true); loadTxs(true);
+            loadSummary(true); loadTxs(true); loadPendingTotal();
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? "Từ chối thất bại");
         } finally { setActingId(null); }
@@ -297,7 +293,7 @@ export default function FundManagementPage() {
         try {
             await fundApi.remove(tx.id);
             toast.success("Đã xóa giao dịch");
-            loadSummary(true); loadTxs(true);
+            loadSummary(true); loadTxs(true); loadPendingTotal();
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? "Xóa thất bại");
         } finally { setActingId(null); }
@@ -319,6 +315,7 @@ export default function FundManagementPage() {
             toast.success("Đã hủy giao dịch");
             loadSummary(true);
             loadTxs(true);
+            loadPendingTotal();
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? "Hủy giao dịch thất bại");
         } finally {
@@ -333,7 +330,7 @@ export default function FundManagementPage() {
         tx.status === "pending" && tx.payment_method === "member_choice";
 
     return (
-        <div className="max-w-[1400px] mx-auto space-y-4 pb-8">
+        <div className="max-w-[1680px] mx-auto space-y-4 pb-8 px-2">
             <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
                     <h1 className="text-xl font-bold text-gray-900">Quản lý quỹ</h1>
@@ -342,7 +339,7 @@ export default function FundManagementPage() {
                     </p>
                 </div>
 
-                <div className="hidden lg:flex items-center gap-2 flex-wrap">
+                <div className="hidden xl:flex items-center gap-2 flex-wrap">
                     <div className="relative">
                         <button
                             onClick={() => setMonthPickerOpen((v) => !v)}
@@ -501,7 +498,7 @@ export default function FundManagementPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4 items-start">
+            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_270px] gap-4 items-start">
                 <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                     <div className="flex items-center justify-between gap-3 px-4 py-3.5 border-b border-gray-100">
                         <p className="text-sm font-bold text-gray-900 flex-shrink-0">Lịch sử giao dịch</p>
@@ -532,7 +529,7 @@ export default function FundManagementPage() {
                             </div>
                         </div>
 
-                        <div className="flex lg:hidden items-center gap-2 flex-shrink-0">
+                        <div className="flex xl:hidden items-center gap-2 flex-shrink-0">
                             <div className="relative">
                                 <button
                                     onClick={() => setMonthPickerOpen((v) => !v)}
@@ -597,19 +594,19 @@ export default function FundManagementPage() {
                         </p>
                     ) : (
                         <>
-                            <div className="hidden lg:block overflow-x-auto">
-                                <table className="w-full min-w-[980px] text-sm">
+                            <div className="hidden xl:block overflow-x-auto">
+                                <table className="w-full min-w-[880px] text-sm table-fixed">
                                     <thead>
                                         <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
-                                            <th className="px-4 py-2.5 font-medium whitespace-nowrap">#</th>
-                                            <th className="px-4 py-2.5 font-medium whitespace-nowrap">Nội dung giao dịch</th>
-                                            <th className="px-4 py-2.5 font-medium whitespace-nowrap">Thời gian</th>
-                                            <th className="px-4 py-2.5 font-medium whitespace-nowrap">Loại</th>
-                                            <th className="px-4 py-2.5 font-medium whitespace-nowrap">Nguồn tiền</th>
-                                            <th className="px-4 py-2.5 font-medium text-right whitespace-nowrap">Số tiền</th>
-                                            <th className="px-4 py-2.5 font-medium whitespace-nowrap">Người thực hiện</th>
-                                            <th className="px-4 py-2.5 font-medium whitespace-nowrap">Trạng thái</th>
-                                            <th className="px-4 py-2.5 font-medium text-right whitespace-nowrap">Thao tác</th>
+                                            <th className="px-2 py-2.5 font-medium whitespace-nowrap w-10">#</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-56">Nội dung</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-28">Thời gian</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-16">Loại</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-32">Nguồn tiền</th>
+                                            <th className="px-3 py-2.5 font-medium text-right whitespace-nowrap w-24">Số tiền</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-28">Người TH</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-20">Trạng thái</th>
+                                            <th className="px-3 py-2.5 font-medium text-right whitespace-nowrap w-20">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -624,14 +621,14 @@ export default function FundManagementPage() {
                                                         <div className="flex items-center gap-2.5">
                                                             <CategoryIcon category={tx.category} type={tx.type} />
                                                             <div className="min-w-0">
-                                                                <p className="font-medium text-gray-900 truncate max-w-[220px]">{tx.title}</p>
-                                                                <p className="text-xs text-gray-400 truncate max-w-[220px]">
+                                                                <p className="font-medium text-gray-900 truncate max-w-[170px]">{tx.title}</p>
+                                                                <p className="text-xs text-gray-400 truncate max-w-[170px]">
                                                                     {CATEGORY_LABELS[tx.category] ?? tx.category}
                                                                 </p>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                                                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap text-xs">
                                                         {new Date(tx.created_at).toLocaleString("vi-VN", {
                                                             day: "2-digit", month: "2-digit", year: "numeric",
                                                             hour: "2-digit", minute: "2-digit",
@@ -719,7 +716,7 @@ export default function FundManagementPage() {
                                 </table>
                             </div>
 
-                            <div className="lg:hidden divide-y divide-gray-50">
+                            <div className="xl:hidden divide-y divide-gray-50">
                                 {txs.map((tx) => {
                                     const st = STATUS_CFG[tx.status] ?? STATUS_CFG.approved;
                                     const isPending = tx.status === "pending";
@@ -729,7 +726,7 @@ export default function FundManagementPage() {
                                         <div key={tx.id} className="px-4 py-3 flex items-center gap-3">
                                             <CategoryIcon category={tx.category} type={tx.type} />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-gray-900 truncate">{tx.title}</p>
+                                                <p className="font-medium text-gray-900 truncate">{tx.title}</p>
                                                 <p className="text-xs text-gray-400 truncate">
                                                     {new Date(tx.created_at).toLocaleDateString("vi-VN")} · {CATEGORY_LABELS[tx.category] ?? tx.category}
                                                 </p>
@@ -832,7 +829,7 @@ export default function FundManagementPage() {
                     )}
                 </div>
 
-                <div className="hidden lg:block space-y-4">
+                <div className="hidden xl:block space-y-4">
                     <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3 shadow-sm">
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Tổng quan trong tháng</p>
                         {loadingSummary ? (

@@ -538,53 +538,45 @@ export const feedbackApi = {
   getUnreadCount: () => api.get('/feedback/admin/unread-count'),
 };
 
-export const penaltiesApi = {
-  // Admin
-  create: (data: {
-    session_id?: string;
-    user_id: string;
-    type: "late_early" | "special" | "other";
-    amount: number;
-    reason: string;
-    payment_method: "wallet" | "member_choice";
-  }) => api.post("/penalties", data),
-  listAdmin: (params?: any) => api.get("/penalties", { params }),
-  getFundSummary: () => api.get("/penalties/fund-summary"),
-  getBySession: (sessionId: string) =>
-    api.get(`/penalties/session/${sessionId}`),
-  retryWallet: (id: string) => api.post(`/penalties/${id}/retry-wallet`),
-  confirmPayment: (id: string, notes?: string) =>
-    api.post(`/penalties/${id}/confirm`, { notes }),
-  rejectPayment: (id: string, reason: string) =>
-    api.post(`/penalties/${id}/reject`, { reason }),
-  remove: (id: string) => api.delete(`/penalties/${id}`),
-  listPendingConfirmations: () => api.get("/penalties/pending-confirmations"),
-
-  // Member
-  getMyPenalties: (params?: any) => api.get("/penalties/me", { params }),
-  submitMemberPayment: (
-    id: string,
-    data: {
-      method: "wallet" | "bank_transfer" | "cash";
-      payment_reference?: string;
-      payment_proof_url?: string;
-    },
-  ) => api.post(`/penalties/${id}/submit-payment`, data),
-  getDetail: (id: string) =>
-    api.get(`/penalties/${id}`, { skipErrorToast: true } as any),
-};
-
 
 export const fundApi = {
   getSummary: (month?: number, year?: number) =>
     api.get("/fund/summary", { params: { month, year } }),
-  listTransactions: (params?: any) => api.get("/fund/transactions", { params }),
+
+  listTransactions: (params?: {
+    type?: "thu" | "chi";
+    category?: "phat" | "dong_gop" | "tai_tro" | "mua_sam" | "tiec_team" | "chi_khac";
+    status?: "pending" | "approved" | "rejected" | "reversed";
+    payment_status?: "awaiting_choice" | "submitted" | "confirmed" | "rejected";
+    search?: string;
+    month?: number;
+    year?: number;
+    session_id?: string;
+    deducted_member_id?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get("/fund/transactions", { params }),
+
   createTransaction: (data: {
-    type: "thu" | "chi"; category: string; title: string;
-    description?: string; amount: number;
+    type: "thu" | "chi";
+    category: "phat" | "dong_gop" | "tai_tro" | "mua_sam" | "tiec_team" | "chi_khac";
+    title: string;
+    description?: string;
+    amount: number;
     deduct_from_member_id?: string;
     payment_method?: "wallet" | "member_choice";
+    session_id?: string;
   }) => api.post("/fund/transactions", data),
+
+  requestTransaction: (data: {
+    type: "thu" | "chi";
+    category: "phat" | "dong_gop" | "tai_tro" | "mua_sam" | "tiec_team" | "chi_khac";
+    title: string;
+    description?: string;
+    amount: number;
+    session_id?: string;
+  }) => api.post("/fund/transactions/request", data),
+
   approve: (id: string) => api.post(`/fund/transactions/${id}/approve`),
   reject: (id: string, reason: string) => api.post(`/fund/transactions/${id}/reject`, { reason }),
   remove: (id: string) => api.delete(`/fund/transactions/${id}`),
@@ -592,35 +584,57 @@ export const fundApi = {
   exportReport: (month?: number, year?: number) =>
     api.get("/fund/export", { params: { month, year }, responseType: "blob" }),
 
-  getMyContributions: (params?: { payment_status?: string; page?: number; limit?: number }) =>
-    api.get("/fund/contributions/my", { params }),
+  getMyContributions: (params?: {
+    category?: "phat" | "dong_gop" | "tai_tro" | "mua_sam" | "tiec_team" | "chi_khac";
+    payment_status?: "awaiting_choice" | "submitted" | "confirmed" | "rejected";
+    page?: number;
+    limit?: number;
+  }) => api.get("/fund/contributions/my", { params }),
+
   submitContributionPayment: (
     id: string,
     data: { method: "wallet" | "bank_transfer" | "cash"; payment_reference?: string; payment_proof_url?: string },
   ) => api.post(`/fund/contributions/${id}/payment`, data),
+
   confirmContribution: (id: string, notes?: string) =>
     api.post(`/fund/contributions/${id}/confirm`, { notes }),
+
   rejectContribution: (id: string, reason: string) =>
     api.post(`/fund/contributions/${id}/reject`, { reason }),
+
   listPendingConfirmations: (params?: { page?: number; limit?: number }) =>
     api.get("/fund/transactions", { params: { ...params, payment_status: "submitted" } }),
 
   // ADMIN
   createPenalty: (data: {
     session_id?: string;
-    user_id: string;
-    type: "late_early" | "special" | "other";
+    deduct_from_member_id: string;
+    penalty_type: "late_early" | "special" | "other";
     amount: number;
-    reason: string;
-    payment_method: "wallet" | "member_choice";
-  }) => api.post("/fund/penalties", data),
+    title: string;
+    description?: string;
+    payment_method?: "wallet" | "member_choice";
+  }) =>
+    api.post("/fund/penalties", {
+      type: "thu",
+      category: "phat",
+      title: data.title,
+      description: data.description,
+      amount: data.amount,
+      deduct_from_member_id: data.deduct_from_member_id,
+      payment_method: data.payment_method,
+      session_id: data.session_id,
+      penalty_type: data.penalty_type,
+    }),
 
   listPenalties: (params?: {
     session_id?: string;
-    user_id?: string;
-    type?: "late_early" | "special" | "other";
-    payment_status?: "pending" | "confirmed" | "rejected";
-    payment_method?: "wallet" | "member_choice";
+    deducted_member_id?: string;
+    status?: "pending" | "approved" | "rejected" | "reversed";
+    payment_status?: "awaiting_choice" | "submitted" | "confirmed" | "rejected";
+    search?: string;
+    month?: number;
+    year?: number;
     page?: number;
     limit?: number;
   }) => api.get("/fund/penalties", { params }),
@@ -647,7 +661,7 @@ export const fundApi = {
 
   // MEMBER
   getMyPenalties: (params?: {
-    payment_status?: "pending" | "confirmed" | "rejected";
+    payment_status?: "awaiting_choice" | "submitted" | "confirmed" | "rejected";
     page?: number;
     limit?: number;
   }) => api.get("/fund/penalties/me", { params }),

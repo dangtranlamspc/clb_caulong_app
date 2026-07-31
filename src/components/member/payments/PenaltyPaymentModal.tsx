@@ -3,7 +3,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { X as XIcon, Wallet, Copy, Download, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { penaltiesApi } from "@/lib/api";
+import { fundApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 
 const BANK_DISPLAY_NAMES: Record<string, string> = {
@@ -54,7 +54,7 @@ export function PenaltyPaymentModal({
     const handleWallet = async () => {
         setSubmitting(true);
         try {
-            await penaltiesApi.submitMemberPayment(penalty.id, { method: "wallet" });
+            await fundApi.submitPenaltyPayment(penalty.id, { method: "wallet" });
             toast.success("Đã trừ ví thành công!");
             onSuccess();
         } catch (err: any) {
@@ -67,7 +67,7 @@ export function PenaltyPaymentModal({
     const handleConfirmTransfer = async () => {
         setSubmitting(true);
         try {
-            await penaltiesApi.submitMemberPayment(penalty.id, {
+            await fundApi.submitPenaltyPayment(penalty.id, {
                 method: "bank_transfer",
                 payment_reference: ref,
             });
@@ -83,7 +83,7 @@ export function PenaltyPaymentModal({
     const handleCash = async () => {
         setSubmitting(true);
         try {
-            await penaltiesApi.submitMemberPayment(penalty.id, { method: "cash" });
+            await fundApi.submitPenaltyPayment(penalty.id, { method: "cash" });
             toast.success("Đã thông báo admin, vui lòng nộp tiền trực tiếp!");
             onSuccess();
         } catch (err: any) {

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { X, AlertTriangle, Clock, ShieldAlert, MoreHorizontal, Wallet, Landmark } from "lucide-react";
 import toast from "react-hot-toast";
-import { penaltiesApi } from "@/lib/api";
+import { fundApi } from "@/lib/api";
 
 type PenaltyType = "late_early" | "special" | "other";
 type PaymentMethodChoice = "wallet" | "member_choice";
@@ -85,18 +85,23 @@ export default function PenaltyModal({
         if (!canSubmit || !type) return;
         setSubmitting(true);
         try {
-            await penaltiesApi.create({
+            const typeLabel =
+                TYPE_OPTIONS.find((o) => o.value === type)?.label ?? "Khác";
+
+            await fundApi.createPenalty({
                 session_id: sessionId,
-                user_id: memberId,
-                type,
+                deduct_from_member_id: memberId,
+                penalty_type: type,
                 amount,
-                reason: reason.trim(),
+                title: `Phạt ${typeLabel} - ${memberName}`,
+                description: reason.trim(),
                 payment_method: paymentMethod,
             });
             toast.success(`Đã tạo khoản phạt cho ${memberName}`);
             onSuccess?.();
             onClose();
-        } catch {
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? "Tạo khoản phạt thất bại");
         } finally {
             setSubmitting(false);
         }

@@ -148,7 +148,7 @@ export function NotificationBell() {
 
         const relatedPenaltyId =
             lastNotification.type === 'penalty_rejected'
-                ? lastNotification.data?.penalty_id
+                ? lastNotification.data?.fund_transaction_id
                 : null;
 
         setItems(prev => {
@@ -157,7 +157,7 @@ export function NotificationBell() {
             return withNew.map(n =>
                 n.id !== lastNotification.id &&
                     n.type === 'penalty_issued' &&
-                    n.data?.penalty_id === relatedPenaltyId
+                    n.data?.fund_transaction_id === relatedPenaltyId
                     ? { ...n, data: { ...n.data, resolved: true, cancelled: true } }
                     : n,
             );
@@ -326,7 +326,7 @@ export function NotificationBell() {
                                                         <button
                                                             onClick={() => {
                                                                 setPenaltyModalData({
-                                                                    id: n.data.penalty_id,
+                                                                    id: n.data.fund_transaction_id,
                                                                     amount: n.data.amount,
                                                                     reason: n.data.reason,
                                                                 });
@@ -366,7 +366,7 @@ export function NotificationBell() {
                     onSuccess={() => {
                         setItems(prev =>
                             prev.map(n =>
-                                n.data?.penalty_id === penaltyModalData.id
+                                n.data?.fund_transaction_id === penaltyModalData.id
                                     ? { ...n, data: { ...n.data, resolved: true } }
                                     : n,
                             ),

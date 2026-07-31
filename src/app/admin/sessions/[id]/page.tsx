@@ -32,7 +32,7 @@ import {
   sessionsAdminApi,
   registrationsAdminApi,
   membersAdminApi,
-  penaltiesApi,
+  fundApi,
 } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
@@ -711,7 +711,7 @@ export default function SessionDetailPage() {
     if (!id) return;
     setCheckingPenalties(true);
     try {
-      const { data } = await penaltiesApi.getBySession(id);
+      const { data } = await fundApi.getPenaltiesBySession(id);
       const walletConfirmedPenalties = (data?.data ?? []).filter(
         (p: any) =>
           p.payment_status === "confirmed" && p.actual_payment_method === "wallet",

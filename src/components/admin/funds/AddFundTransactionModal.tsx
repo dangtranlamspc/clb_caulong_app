@@ -9,7 +9,9 @@ import toast from "react-hot-toast";
 import { fundApi, registrationsAdminApi, sessionsAdminApi } from "@/lib/api";
 import { membersAdminApi } from "@/lib/api";
 
-const CATEGORY_OPTIONS: { value: string; label: string; icon: any; types: ("thu" | "chi")[] }[] = [
+type FundTxCategory = "phat" | "dong_gop" | "tai_tro" | "mua_sam" | "tiec_team" | "chi_khac";
+
+const CATEGORY_OPTIONS: { value: FundTxCategory; label: string; icon: any; types: ("thu" | "chi")[] }[] = [
     { value: "phat", label: "Phạt", icon: AlertTriangle, types: ["thu"] },
     { value: "dong_gop", label: "Đóng góp", icon: Users, types: ["thu"] },
     { value: "tai_tro", label: "Tài trợ", icon: Gift, types: ["thu"] },
@@ -18,7 +20,7 @@ const CATEGORY_OPTIONS: { value: string; label: string; icon: any; types: ("thu"
     { value: "chi_khac", label: "Chi phí khác", icon: MoreHorizontal, types: ["chi"] },
 ];
 
-const THU_ONLY_CATEGORIES = ["phat", "dong_gop", "tai_tro"];
+const THU_ONLY_CATEGORIES: FundTxCategory[] = ["phat", "dong_gop", "tai_tro"];
 
 const PENALTY_TYPE_OPTIONS: { value: "late_early" | "special" | "other"; label: string; icon: any }[] = [
     { value: "late_early", label: "Đi trễ / về sớm", icon: Clock3 },
@@ -53,7 +55,7 @@ export default function AddFundTransactionModal({
 }: AddFundTransactionModalProps) {
     const [visible, setVisible] = useState(false);
     const [type, setType] = useState<"thu" | "chi">("thu");
-    const [category, setCategory] = useState("dong_gop");
+    const [category, setCategory] = useState<FundTxCategory>("dong_gop");
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [amount, setAmount] = useState(0);
@@ -247,12 +249,15 @@ export default function AddFundTransactionModal({
 
             setSubmitting(true);
             try {
+                const penaltyTypeLabel =
+                    PENALTY_TYPE_OPTIONS.find((p) => p.value === penaltyType)?.label ?? "Khác";
                 await fundApi.createPenalty({
                     session_id: selectedPenaltySession?.id,
-                    user_id: selectedMember.id,
-                    type: penaltyType,
+                    deduct_from_member_id: selectedMember.id,
+                    penalty_type: penaltyType,
                     amount,
-                    reason: penaltyReasonPreview,
+                    title: `Phạt ${penaltyTypeLabel} - ${selectedMember.full_name}`,
+                    description: penaltyReasonPreview,
                     payment_method: contributionMethod,
                 });
                 toast.success(
