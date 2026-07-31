@@ -6,7 +6,7 @@ import {
     UserCircle2, Search, XCircle, Wallet, ListChecks, CalendarClock, Clock3, Siren, HelpCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { fundApi, penaltiesApi, registrationsAdminApi, sessionsAdminApi } from "@/lib/api";
+import { fundApi, registrationsAdminApi, sessionsAdminApi } from "@/lib/api";
 import { membersAdminApi } from "@/lib/api";
 
 const CATEGORY_OPTIONS: { value: string; label: string; icon: any; types: ("thu" | "chi")[] }[] = [
@@ -247,7 +247,7 @@ export default function AddFundTransactionModal({
 
             setSubmitting(true);
             try {
-                await penaltiesApi.create({
+                await fundApi.createPenalty({
                     session_id: selectedPenaltySession?.id,
                     user_id: selectedMember.id,
                     type: penaltyType,

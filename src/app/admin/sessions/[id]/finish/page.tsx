@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -15,7 +15,9 @@ import toast from "react-hot-toast";
 import { sessionsAdminApi } from "@/lib/api";
 import { MorphButton } from "@/components/effect-button/MorphButton";
 import PenaltyModal from "@/components/admin/wallet/PenaltyModal";
-import SessionPenaltiesCard from "@/components/admin/sessions/SessionPenaltiesCard";
+import SessionPenaltiesCard, {
+  SessionPenaltiesCardHandle,
+} from "@/components/admin/sessions/SessionPenaltiesCard";
 
 interface CourtItem {
   id: string;
@@ -116,6 +118,7 @@ export default function SessionFinishPage() {
     id: string;
     name: string;
   } | null>(null);
+  const penaltiesCardRef = useRef<SessionPenaltiesCardHandle>(null);
 
   const setWalletMode = (
     registrationId: string,
@@ -530,7 +533,7 @@ export default function SessionFinishPage() {
         </div>
       </div>
 
-      {id && <SessionPenaltiesCard sessionId={id} />}
+      {id && <SessionPenaltiesCard ref={penaltiesCardRef} sessionId={id} />}
 
       <div className="card !p-0 overflow-hidden">
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
@@ -606,12 +609,15 @@ export default function SessionFinishPage() {
                         title={
                           isWalletDeduct ? "Bỏ trừ ví" : "Trừ thẳng ví BNB"
                         }
-                        className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border-2 transition-all ${isWalletDeduct
+                        className={`flex-shrink-0 h-8 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${isWalletDeduct
                           ? "bg-blue-600 border-blue-600 text-white"
                           : "border-gray-200 text-gray-300 hover:border-blue-300 hover:text-blue-400"
                           }`}
                       >
-                        <Wallet className="w-4 h-4" />
+                        <Wallet className="w-4 h-4 flex-shrink-0" />
+                        <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
+                          Ví
+                        </span>
                       </button>
                     )}
                     {isRealUser && (
@@ -621,9 +627,12 @@ export default function SessionFinishPage() {
                           setPenaltyTarget({ id: h.user_id, name })
                         }
                         title="Phạt thành viên này"
-                        className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border-2 border-gray-200 text-gray-300 hover:border-red-300 hover:text-red-500 transition-all"
+                        className="flex-shrink-0 h-8 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
                       >
-                        <AlertTriangle className="w-4 h-4" />
+                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                        <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
+                          Phạt
+                        </span>
                       </button>
                     )}
                   </div>
@@ -749,9 +758,12 @@ export default function SessionFinishPage() {
                                     })
                                   }
                                   title="Phạt thành viên này"
-                                  className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center border-2 border-gray-200 text-gray-300 hover:border-red-300 hover:text-red-500 transition-all"
+                                  className="flex-shrink-0 h-7 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
                                 >
-                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                                  <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
+                                    Phạt
+                                  </span>
                                 </button>
                               )}
                               <input
@@ -849,7 +861,10 @@ export default function SessionFinishPage() {
         {penaltyTarget && (
           <PenaltyModal
             open={!!penaltyTarget}
-            onClose={() => setPenaltyTarget(null)}
+            onClose={() => {
+              setPenaltyTarget(null);
+              penaltiesCardRef.current?.refresh();
+            }}
             sessionId={id}
             memberId={penaltyTarget.id}
             memberName={penaltyTarget.name}

@@ -6,7 +6,7 @@ import {
     ChevronDown, X, Users, Gift, ShoppingCart, PartyPopper, MoreHorizontal,
     AlertTriangle, Loader2, Check, XCircle, Trash2, TrendingUp, TrendingDown,
     Calendar, Sparkles, Coins, UserCircle2,
-    RotateCcw,
+    RotateCcw, Landmark, Banknote
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { fundApi } from "@/lib/api";
@@ -19,6 +19,12 @@ import { createPortal } from "react-dom";
 function fmt(n: number) {
     return new Intl.NumberFormat("vi-VN").format(Math.round(n || 0)) + "đ";
 }
+
+const PAYMENT_METHOD_BADGE: Record<string, { label: string; icon: any; cls: string }> = {
+    wallet: { label: "Ví BnB", icon: Wallet, cls: "bg-blue-50 text-blue-600" },
+    bank_transfer: { label: "Chuyển khoản", icon: Landmark, cls: "bg-indigo-50 text-indigo-600" },
+    cash: { label: "Tiền mặt", icon: Banknote, cls: "bg-emerald-50 text-emerald-600" },
+};
 
 const CATEGORY_LABELS: Record<string, string> = {
     phat: "Phạt",
@@ -64,20 +70,37 @@ function CategoryIcon({ category, type }: { category: string; type: "thu" | "chi
 function FundSourceBadge({ tx }: { tx: any }) {
     if (tx.type !== "thu") return <span className="text-gray-300 text-xs">—</span>;
 
-    if (tx.deducted_member?.full_name) {
+    if (!tx.deducted_member?.full_name) {
+        return <span className="text-gray-300 text-xs">—</span>;
+    }
+
+
+    if (!tx.actual_payment_method) {
         return (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-600 whitespace-nowrap">
-                <UserCircle2 className="w-3 h-3" />
-                {tx.deducted_member.full_name}
-            </span>
+            <div className="flex flex-col gap-0.5 items-start">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-amber-50 text-amber-600">
+                    Chờ TV chọn PT
+                </span>
+                <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
+                    {tx.deducted_member.full_name}
+                </span>
+            </div>
         );
     }
 
+    const method = PAYMENT_METHOD_BADGE[tx.actual_payment_method] ?? PAYMENT_METHOD_BADGE.wallet;
+    const Icon = method.icon;
+
     return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 whitespace-nowrap">
-            <Wallet className="w-3 h-3" />
-            Ví BnB
-        </span>
+        <div className="flex flex-col gap-0.5 items-start">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${method.cls}`}>
+                <Icon className="w-3 h-3" />
+                {method.label}
+            </span>
+            <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
+                {tx.deducted_member.full_name}
+            </span>
+        </div>
     );
 }
 
@@ -90,6 +113,8 @@ export default function FundManagementPage() {
 
     const [summary, setSummary] = useState<any>(null);
     const [loadingSummary, setLoadingSummary] = useState(true);
+
+    const [pendingTotal, setPendingTotal] = useState(0);
 
     const [txs, setTxs] = useState<any[]>([]);
     const [loadingTxs, setLoadingTxs] = useState(true);
@@ -145,10 +170,27 @@ export default function FundManagementPage() {
         [month, year, page, search, typeFilter, categoryFilter, statusFilter],
     );
 
+
+    const loadPendingTotal = useCallback(() => {
+        return Promise.all([
+            fundApi.listTransactions({ status: "pending", limit: 100, page: 1 }),
+            fundApi.listPendingConfirmations({ limit: 100, page: 1 }),
+            fundApi.getPendingPenaltyConfirmations(),
+        ])
+            .then(([reqRes, confRes, penaltyRes]) => {
+                const requestCount = (reqRes.data.data ?? []).filter(
+                    (tx: any) => tx.payment_method !== "member_choice",
+                ).length;
+                const confCount = (confRes.data.data ?? []).length;
+                const penaltyCount = (penaltyRes.data.data ?? []).length;
+                setPendingTotal(requestCount + confCount + penaltyCount);
+            })
+    }, []);
+
     useEffect(() => { loadSummary(); }, [loadSummary]);
     useEffect(() => { loadTxs(); }, [loadTxs]);
+    useEffect(() => { loadPendingTotal(); }, [loadPendingTotal]);
 
-    // debounce search
     const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const handleSearchChange = (val: string) => {
         setSearch(val);
@@ -156,7 +198,6 @@ export default function FundManagementPage() {
         searchDebounceRef.current = setTimeout(() => setPage(1), 400);
     };
 
-    // realtime
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => {
         const channel = supabase
@@ -169,6 +210,17 @@ export default function FundManagementPage() {
                     debounceRef.current = setTimeout(() => {
                         loadSummary(true);
                         loadTxs(true);
+                        loadPendingTotal();
+                    }, 250);
+                },
+            )
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "penalties" },
+                () => {
+                    if (debounceRef.current) clearTimeout(debounceRef.current);
+                    debounceRef.current = setTimeout(() => {
+                        loadPendingTotal();
                     }, 250);
                 },
             )
@@ -177,8 +229,7 @@ export default function FundManagementPage() {
             supabase.removeChannel(channel);
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [loadSummary, loadTxs]);
+    }, [loadSummary, loadTxs, loadPendingTotal]);
 
     const changeMonth = (delta: number) => {
         let m = month + delta;
@@ -275,7 +326,11 @@ export default function FundManagementPage() {
         }
     };
 
-    const pendingCount = summary?.pending_count ?? 0;
+    const pendingCount = pendingTotal;
+
+
+    const isAwaitingMemberChoice = (tx: any) =>
+        tx.status === "pending" && tx.payment_method === "member_choice";
 
     return (
         <div className="max-w-[1400px] mx-auto space-y-4 pb-8">
@@ -458,7 +513,9 @@ export default function FundManagementPage() {
                                 onChange={(val) => { setStatusFilter(val); setPage(1); }}
                                 options={[
                                     { value: "", label: "Tất cả trạng thái" },
+                                    { value: "pending", label: "Chờ duyệt" },
                                     { value: "approved", label: "Đã duyệt" },
+                                    { value: "rejected", label: "Từ chối" },
                                     { value: "reversed", label: "Đã huỷ" },
                                 ]}
                                 placeholder="Trạng thái"
@@ -600,7 +657,11 @@ export default function FundManagementPage() {
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3 text-right relative">
-                                                        {tx.status === "approved" ? (
+                                                        {isAwaitingMemberChoice(tx) ? (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-amber-600 bg-amber-50">
+                                                                Chờ TV thanh toán
+                                                            </span>
+                                                        ) : tx.status === "approved" ? (
                                                             <button
                                                                 onClick={() => handleCancel(tx)}
                                                                 disabled={actingId === tx.id}
@@ -687,7 +748,11 @@ export default function FundManagementPage() {
                                                 </p>
                                             </div>
 
-                                            {isApproved ? (
+                                            {isAwaitingMemberChoice(tx) ? (
+                                                <span className="flex-shrink-0 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg whitespace-nowrap">
+                                                    Chờ TV
+                                                </span>
+                                            ) : isApproved ? (
                                                 <button
                                                     onClick={() => handleCancel(tx)}
                                                     disabled={actingId === tx.id}
@@ -905,6 +970,8 @@ export default function FundManagementPage() {
                                         { val: "", label: "Tất cả" },
                                         { val: "pending", label: "Chờ duyệt" },
                                         { val: "approved", label: "Đã duyệt" },
+                                        { val: "rejected", label: "Từ chối" },
+                                        { val: "reversed", label: "Đã huỷ" },
                                     ].map((o) => (
                                         <button
                                             key={o.val || "all_status"}
@@ -941,6 +1008,7 @@ export default function FundManagementPage() {
                 onSuccess={() => {
                     loadSummary(true);
                     loadTxs(true);
+                    loadPendingTotal();
                 }}
             />
 
@@ -950,6 +1018,7 @@ export default function FundManagementPage() {
                 onSuccess={() => {
                     loadSummary(true);
                     loadTxs(true);
+                    loadPendingTotal();
                 }}
             />
         </div>

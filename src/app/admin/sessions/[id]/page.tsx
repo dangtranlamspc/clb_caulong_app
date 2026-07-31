@@ -179,7 +179,6 @@ export default function SessionDetailPage() {
 
   const [expandedHosts, setExpandedHosts] = useState<Set<string>>(new Set());
 
-  // refund phạt
   const [showPenaltyRefundModal, setShowPenaltyRefundModal] = useState(false);
   const [penaltyRefundModalVisible, setPenaltyRefundModalVisible] = useState(false);
   const [penaltiesToRefund, setPenaltiesToRefund] = useState<any[]>([]);

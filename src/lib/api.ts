@@ -558,6 +558,7 @@ export const penaltiesApi = {
   rejectPayment: (id: string, reason: string) =>
     api.post(`/penalties/${id}/reject`, { reason }),
   remove: (id: string) => api.delete(`/penalties/${id}`),
+  listPendingConfirmations: () => api.get("/penalties/pending-confirmations"),
 
   // Member
   getMyPenalties: (params?: any) => api.get("/penalties/me", { params }),
@@ -601,4 +602,60 @@ export const fundApi = {
     api.post(`/fund/contributions/${id}/confirm`, { notes }),
   rejectContribution: (id: string, reason: string) =>
     api.post(`/fund/contributions/${id}/reject`, { reason }),
+  listPendingConfirmations: (params?: { page?: number; limit?: number }) =>
+    api.get("/fund/transactions", { params: { ...params, payment_status: "submitted" } }),
+
+  // ADMIN
+  createPenalty: (data: {
+    session_id?: string;
+    user_id: string;
+    type: "late_early" | "special" | "other";
+    amount: number;
+    reason: string;
+    payment_method: "wallet" | "member_choice";
+  }) => api.post("/fund/penalties", data),
+
+  listPenalties: (params?: {
+    session_id?: string;
+    user_id?: string;
+    type?: "late_early" | "special" | "other";
+    payment_status?: "pending" | "confirmed" | "rejected";
+    payment_method?: "wallet" | "member_choice";
+    page?: number;
+    limit?: number;
+  }) => api.get("/fund/penalties", { params }),
+
+  getPenaltiesFundSummary: () => api.get("/fund/penalties/fund-summary"),
+
+  getPendingPenaltyConfirmations: () => api.get("/fund/penalties/pending-confirmations"),
+
+  getPenaltiesBySession: (sessionId: string) =>
+    api.get(`/fund/penalties/session/${sessionId}`),
+
+  retryPenaltyWalletDeduction: (id: string) =>
+    api.post(`/fund/penalties/${id}/retry-wallet`),
+
+  confirmPenaltyPayment: (id: string, notes?: string) =>
+    api.post(`/fund/penalties/${id}/confirm`, { notes }),
+
+  rejectPenaltyPayment: (id: string, reason: string) =>
+    api.post(`/fund/penalties/${id}/reject`, { reason }),
+
+  processExpiredPenalties: () => api.post("/fund/penalties/process-expired"),
+
+  removePenalty: (id: string) => api.delete(`/fund/penalties/${id}`),
+
+  // MEMBER
+  getMyPenalties: (params?: {
+    payment_status?: "pending" | "confirmed" | "rejected";
+    page?: number;
+    limit?: number;
+  }) => api.get("/fund/penalties/me", { params }),
+
+  getPenaltyById: (id: string) => api.get(`/fund/penalties/${id}`),
+
+  submitPenaltyPayment: (
+    id: string,
+    data: { method: "wallet" | "bank_transfer" | "cash"; payment_reference?: string; payment_proof_url?: string },
+  ) => api.post(`/fund/penalties/${id}/submit-payment`, data),
 };

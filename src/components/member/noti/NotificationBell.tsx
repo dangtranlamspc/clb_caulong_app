@@ -146,7 +146,22 @@ export function NotificationBell() {
         if (lastNotifiedIdRef.current === lastNotification.id) return;
         lastNotifiedIdRef.current = lastNotification.id;
 
-        setItems(prev => [lastNotification, ...prev]);
+        const relatedPenaltyId =
+            lastNotification.type === 'penalty_rejected'
+                ? lastNotification.data?.penalty_id
+                : null;
+
+        setItems(prev => {
+            const withNew = [lastNotification, ...prev];
+            if (!relatedPenaltyId) return withNew;
+            return withNew.map(n =>
+                n.id !== lastNotification.id &&
+                    n.type === 'penalty_issued' &&
+                    n.data?.penalty_id === relatedPenaltyId
+                    ? { ...n, data: { ...n.data, resolved: true, cancelled: true } }
+                    : n,
+            );
+        });
         setUnread(c => c + 1);
         toast(lastNotification.title, { icon: '🔔' });
     }, [lastNotification]);
@@ -260,6 +275,7 @@ export function NotificationBell() {
                                     const isPenaltyChoice =
                                         n.type === 'penalty_issued' && n.data?.payment_method === 'member_choice';
                                     const penaltyResolved = Boolean(n.data?.resolved);
+                                    const penaltyCancelled = Boolean(n.data?.cancelled);
 
                                     return (
                                         <li
@@ -324,7 +340,11 @@ export function NotificationBell() {
                                                     </div>
                                                 )}
 
-                                                {isPenaltyChoice && penaltyResolved && (
+                                                {isPenaltyChoice && penaltyResolved && penaltyCancelled && (
+                                                    <p className="text-[11px] text-gray-400 font-medium mt-1.5">🚫 Admin đã huỷ</p>
+                                                )}
+
+                                                {isPenaltyChoice && penaltyResolved && !penaltyCancelled && (
                                                     <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
                                                 )}
                                             </div>

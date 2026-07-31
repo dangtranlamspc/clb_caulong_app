@@ -52,7 +52,7 @@ export default function PenaltyModal({
     const [amount, setAmount] = useState(0);
     const [reason, setReason] = useState("");
     const [paymentMethod, setPaymentMethod] =
-        useState<PaymentMethodChoice>("member_choice");
+        useState<PaymentMethodChoice>("wallet");
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
@@ -60,7 +60,7 @@ export default function PenaltyModal({
             setType(null);
             setAmount(0);
             setReason("");
-            setPaymentMethod("member_choice");
+            setPaymentMethod("wallet");
         }
     }, [open]);
 
@@ -97,7 +97,6 @@ export default function PenaltyModal({
             onSuccess?.();
             onClose();
         } catch {
-            // toast lỗi đã được xử lý bởi interceptor
         } finally {
             setSubmitting(false);
         }
@@ -126,7 +125,6 @@ export default function PenaltyModal({
                     </button>
                 </div>
 
-                {/* Loại phạt */}
                 <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-2">
                         Loại phạt
@@ -140,8 +138,8 @@ export default function PenaltyModal({
                                     type="button"
                                     onClick={() => handlePickType(value)}
                                     className={`flex flex-col items-center gap-1 py-3 px-1 rounded-xl border-2 text-[11px] font-medium leading-tight text-center transition-colors ${active
-                                            ? "border-red-400 bg-red-50 text-red-600"
-                                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                                        ? "border-red-400 bg-red-50 text-red-600"
+                                        : "border-gray-200 text-gray-500 hover:border-gray-300"
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />
@@ -152,7 +150,6 @@ export default function PenaltyModal({
                     </div>
                 </div>
 
-                {/* Số tiền */}
                 <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1">
                         Số tiền phạt
@@ -173,7 +170,6 @@ export default function PenaltyModal({
                     )}
                 </div>
 
-                {/* Lý do */}
                 <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1">
                         Lý do phạt
@@ -190,7 +186,6 @@ export default function PenaltyModal({
                     />
                 </div>
 
-                {/* Cách thanh toán */}
                 <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-2">
                         Cách thanh toán
@@ -200,8 +195,8 @@ export default function PenaltyModal({
                             type="button"
                             onClick={() => setPaymentMethod("wallet")}
                             className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 text-xs font-semibold transition-colors ${paymentMethod === "wallet"
-                                    ? "border-blue-400 bg-blue-50 text-blue-600"
-                                    : "border-gray-200 text-gray-500"
+                                ? "border-blue-400 bg-blue-50 text-blue-600"
+                                : "border-gray-200 text-gray-500"
                                 }`}
                         >
                             <Wallet className="w-3.5 h-3.5" /> Trừ ví ngay
@@ -210,8 +205,8 @@ export default function PenaltyModal({
                             type="button"
                             onClick={() => setPaymentMethod("member_choice")}
                             className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 text-xs font-semibold transition-colors ${paymentMethod === "member_choice"
-                                    ? "border-blue-400 bg-blue-50 text-blue-600"
-                                    : "border-gray-200 text-gray-500"
+                                ? "border-blue-400 bg-blue-50 text-blue-600"
+                                : "border-gray-200 text-gray-500"
                                 }`}
                         >
                             <Landmark className="w-3.5 h-3.5" /> Member tự chọn
