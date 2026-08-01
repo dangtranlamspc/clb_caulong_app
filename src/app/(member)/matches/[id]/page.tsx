@@ -124,6 +124,26 @@ export default function MatchDetailPage() {
                     }
                 },
             )
+            .on(
+                'broadcast',
+                { event: 'match_status_changed' },
+                async (payload) => {
+                    if (payload.payload?.matchId === id) {
+                        await fetchMatch();
+                    }
+                },
+            )
+            .on(
+                'broadcast',
+                { event: 'match_deleted' },
+                (payload) => {
+                    if (payload.payload?.matchId === id) {
+                        toast.error('Trận đấu này đã bị admin xóa');
+                        sessionStorage.setItem('activity:return-tab', 'matches');
+                        router.push('/activity');
+                    }
+                },
+            )
             .subscribe();
 
         channelRef.current = channel;

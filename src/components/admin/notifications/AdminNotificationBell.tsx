@@ -2,20 +2,38 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Lottie, { LottieRefCurrentProps } from "lottie-react";
-import { Trash2, Loader2, CheckCircle2 } from "lucide-react";
+import { Trash2, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
-import { walletAdminApi, registrationsAdminApi } from "@/lib/api";
+import { walletAdminApi, registrationsAdminApi, matchesAdminApi } from "@/lib/api";
 import toast from "react-hot-toast";
 import bellAnimation from "../../../../public/lottie/noti.json";
 
+function ResolvedBadge({ action }: { action?: "approved" | "rejected" }) {
+    if (action === "rejected") {
+        return (
+            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-red-500">
+                <XCircle className="w-3.5 h-3.5" />
+                Đã từ chối
+            </div>
+        );
+    }
+    return (
+        <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Đã duyệt
+        </div>
+    );
+}
+
 export function AdminNotificationBell() {
-    const { notifications, unreadCount, markRead, markAllRead, remove, deleteAll, reload } = useAdminNotifications();
+    const { notifications, unreadCount, markRead, markResolved, markAllRead, remove, deleteAll, reload } = useAdminNotifications();
     const [open, setOpen] = useState(false);
     const [coords, setCoords] = useState({ top: 0, right: 0 });
     const buttonRef = useRef<HTMLButtonElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const lottieRef = useRef<LottieRefCurrentProps>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
+    const [processingAction, setProcessingAction] = useState<"approve" | "reject" | null>(null);
 
     const hasUnread = unreadCount > 0;
 
@@ -57,6 +75,41 @@ export function AdminNotificationBell() {
         if (notifications.length === 0) return;
         if (!window.confirm("Xoá tất cả thông báo? Hành động này không thể hoàn tác.")) return;
         deleteAll();
+    };
+
+
+    const handleApproveMatch = async (notifId: string, matchId: string) => {
+        setProcessingId(notifId);
+        setProcessingAction("approve");
+        try {
+            await matchesAdminApi.approve(matchId);
+            toast.success("Đã duyệt kết quả trận đấu");
+            await markRead(notifId);
+            markResolved(notifId, "approved");
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Duyệt thất bại, vui lòng thử lại");
+        } finally {
+            setProcessingId(null);
+            setProcessingAction(null);
+        }
+    };
+
+    const handleRejectMatch = async (notifId: string, matchId: string) => {
+        const reason = window.prompt("Nhập lý do từ chối:");
+        if (!reason || !reason.trim()) return;
+        setProcessingId(notifId);
+        setProcessingAction("reject");
+        try {
+            await matchesAdminApi.reject(matchId, reason.trim());
+            toast.success("Đã từ chối kết quả trận đấu");
+            await markRead(notifId);
+            markResolved(notifId, "rejected");
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Từ chối thất bại, vui lòng thử lại");
+        } finally {
+            setProcessingId(null);
+            setProcessingAction(null);
+        }
     };
 
     const handleApproveTopup = async (notifId: string, topupRequestId: string) => {
@@ -180,8 +233,14 @@ export function AdminNotificationBell() {
                                 const isRegistrationPending = n.type === "registration_pending";
                                 const registrationId = n.data?.registration_id;
 
+                                const isMatchResultPending = n.type === "match_result_pending";
+                                const matchId = n.data?.match_id;
+
                                 const isResolved = n.data?.resolved === true;
+                                const resolvedAction = n.data?.resolved_action as "approved" | "rejected" | undefined;
                                 const isProcessing = processingId === n.id;
+                                const isApproving = isProcessing && processingAction === "approve";
+                                const isRejecting = isProcessing && processingAction === "reject";
 
                                 return (
                                     <div
@@ -203,25 +262,41 @@ export function AdminNotificationBell() {
 
                                             {isTopupRequest && topupRequestId && (
                                                 isResolved ? (
-                                                    <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
-                                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                                        Đã xử lý
-                                                    </div>
+                                                    <ResolvedBadge action={resolvedAction} />
                                                 ) : (
+                                                    // <div className="flex items-center gap-2 mt-2">
+                                                    //     <button
+                                                    //         onClick={() => handleApproveTopup(n.id, topupRequestId)}
+                                                    //         disabled={isProcessing}
+                                                    //         className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                    //     >
+                                                    //         {isProcessing && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                    //         Xác nhận
+                                                    //     </button>
+                                                    //     <button
+                                                    //         onClick={() => handleRejectTopup(n.id, topupRequestId)}
+                                                    //         disabled={isProcessing}
+                                                    //         className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50"
+                                                    //     >
+                                                    //         Từ chối
+                                                    //     </button>
+                                                    // </div>
+
                                                     <div className="flex items-center gap-2 mt-2">
                                                         <button
                                                             onClick={() => handleApproveTopup(n.id, topupRequestId)}
                                                             disabled={isProcessing}
                                                             className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
                                                         >
-                                                            {isProcessing && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                            Xác nhận
+                                                            {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                            Duyệt
                                                         </button>
                                                         <button
                                                             onClick={() => handleRejectTopup(n.id, topupRequestId)}
                                                             disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50"
+                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
                                                         >
+                                                            {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
                                                             Từ chối
                                                         </button>
                                                     </div>
@@ -230,25 +305,66 @@ export function AdminNotificationBell() {
 
                                             {isRegistrationPending && registrationId && (
                                                 isResolved ? (
-                                                    <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
-                                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                                        Đã xử lý
-                                                    </div>
+                                                    <ResolvedBadge action={resolvedAction} />
                                                 ) : (
+                                                    // <div className="flex items-center gap-2 mt-2">
+                                                    //     <button
+                                                    //         onClick={() => handleApproveRegistration(n.id, registrationId)}
+                                                    //         disabled={isProcessing}
+                                                    //         className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                    //     >
+                                                    //         {isProcessing && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                    //         Duyệt
+                                                    //     </button>
+                                                    //     <button
+                                                    //         onClick={() => handleRejectRegistration(n.id, registrationId)}
+                                                    //         disabled={isProcessing}
+                                                    //         className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50"
+                                                    //     >
+                                                    //         Từ chối
+                                                    //     </button>
+                                                    // </div>
+
                                                     <div className="flex items-center gap-2 mt-2">
                                                         <button
                                                             onClick={() => handleApproveRegistration(n.id, registrationId)}
                                                             disabled={isProcessing}
                                                             className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
                                                         >
-                                                            {isProcessing && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                            {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
                                                             Duyệt
                                                         </button>
                                                         <button
                                                             onClick={() => handleRejectRegistration(n.id, registrationId)}
                                                             disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50"
+                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
                                                         >
+                                                            {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                            Từ chối
+                                                        </button>
+                                                    </div>
+                                                )
+                                            )}
+
+                                            {isMatchResultPending && matchId && (
+                                                isResolved ? (
+                                                    <ResolvedBadge action={resolvedAction} />
+                                                ) : (
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <button
+                                                            onClick={() => handleApproveMatch(n.id, matchId)}
+                                                            disabled={isProcessing}
+                                                            className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                        >
+                                                            {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                            Duyệt
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRejectMatch(n.id, matchId)}
+                                                            disabled={isProcessing}
+                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                        >
+                                                            {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
                                                             Từ chối
                                                         </button>
                                                     </div>

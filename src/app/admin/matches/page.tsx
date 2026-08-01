@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     CheckCircle2,
     XCircle,
@@ -27,6 +27,7 @@ import { createPortal } from "react-dom";
 import { ConfirmModal } from "@/components/admin/matches/ConfirmModal";
 import { CreateMatchModal } from "@/components/admin/matches/CreateMatchModal";
 import { ActionPhase, MorphButtonMatches } from "@/components/admin/matches/MorphButtonMatches";
+import { supabase } from "@/lib/supabase";
 
 const STATUS_TABS = [
     { value: "", label: "Tất cả", icon: RefreshCw },
@@ -36,7 +37,6 @@ const STATUS_TABS = [
     { value: "pending_result", label: "Chờ kết quả", shortLabel: "Chờ KQ", icon: Clock },
 ];
 
-// Các tab cần hiệu ứng nhấp nháy liên tục khi có số lượng > 0
 const ALERT_TAB_VALUES = new Set(["pending_approval", "pending_result"]);
 
 const STATUS_BADGE: Record<string, string> = {
@@ -99,7 +99,6 @@ function getTier(p: any): string {
     return tier ?? DEFAULT_TIER;
 }
 
-// Chấm đỏ "bật lên" liên tục (scale pop + ping) — đặt ở góc trên-phải của CẢ nút tab
 function AlertDot() {
     return (
         <>
@@ -190,7 +189,6 @@ export default function MatchesAdminPage() {
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
     const [showStatusModal, setShowStatusModal] = useState(false);
 
-    // Phase state cho các nút dùng MorphButton (loading -> success -> idle)
     const [approvePhase, setApprovePhase] = useState<Record<string, ActionPhase>>({});
     const [deletePhase, setDeletePhase] = useState<Record<string, ActionPhase>>({});
     const [rollbackPhase, setRollbackPhase] = useState<Record<string, ActionPhase>>({});
@@ -236,6 +234,30 @@ export default function MatchesAdminPage() {
     useEffect(() => {
         setPage(1);
     }, [activeTab]);
+
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        const channel = supabase
+            .channel("matches-admin-realtime")
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "friendly_matches" },
+                () => {
+                    if (debounceRef.current) clearTimeout(debounceRef.current);
+                    debounceRef.current = setTimeout(() => {
+                        fetchMatches();
+                        fetchStatusCounts();
+                    }, 250);
+                },
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, [fetchMatches, fetchStatusCounts]);
 
     const handleApprove = async (
         id: string,
@@ -366,7 +388,6 @@ export default function MatchesAdminPage() {
             setPhase(setRollbackPhase, id, "success");
             fetchMatches();
             fetchStatusCounts();
-            // Giữ modal mở thêm chút để thấy morph "✓" trước khi tự đóng
             setTimeout(() => {
                 setRollbackId(null);
                 setPhase(setRollbackPhase, id, "idle");

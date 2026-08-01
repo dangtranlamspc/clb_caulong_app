@@ -21,9 +21,9 @@ function fmt(n: number) {
 }
 
 const PAYMENT_METHOD_BADGE: Record<string, { label: string; icon: any; cls: string }> = {
-    wallet: { label: "Ví BnB", icon: Wallet, cls: "bg-blue-50 text-blue-600" },
-    bank_transfer: { label: "Chuyển khoản", icon: Landmark, cls: "bg-indigo-50 text-indigo-600" },
-    cash: { label: "Tiền mặt", icon: Banknote, cls: "bg-emerald-50 text-emerald-600" },
+    wallet: { label: "Ví BnB", icon: Wallet, cls: "bg-blue-600 text-white shadow-sm shadow-blue-200" },
+    bank_transfer: { label: "Chuyển khoản", icon: Landmark, cls: "bg-indigo-600 text-white shadow-sm shadow-indigo-200" },
+    cash: { label: "Tiền mặt", icon: Banknote, cls: "bg-emerald-600 text-white shadow-sm shadow-emerald-200" },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -81,15 +81,14 @@ function FundSourceBadge({ tx }: { tx: any }) {
         return <span className="text-gray-300 text-xs">—</span>;
     }
 
-
     if (!tx.actual_payment_method) {
         return (
-            <div className="flex flex-col gap-0.5 items-start">
+            <div className="flex flex-col gap-1 items-center text-center">
+                <span className="text-xs font-semibold text-gray-700 truncate max-w-[140px]">
+                    {tx.deducted_member.full_name}
+                </span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-amber-50 text-amber-600">
                     Chờ TV chọn PT
-                </span>
-                <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
-                    {tx.deducted_member.full_name}
                 </span>
             </div>
         );
@@ -99,13 +98,13 @@ function FundSourceBadge({ tx }: { tx: any }) {
     const Icon = method.icon;
 
     return (
-        <div className="flex flex-col gap-0.5 items-start">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${method.cls}`}>
-                <Icon className="w-3 h-3" />
-                {method.label}
-            </span>
-            <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
+        <div className="flex flex-col gap-1 items-center text-center">
+            {/* <span className="text-xs font-semibold text-gray-700 truncate max-w-[140px]">
                 {tx.deducted_member.full_name}
+            </span> */}
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${method.cls}`}>
+                <Icon className="w-3.5 h-3.5" />
+                {method.label}
             </span>
         </div>
     );
@@ -603,62 +602,60 @@ export default function FundManagementPage() {
                                 <table className="w-full min-w-[880px] text-sm table-fixed">
                                     <thead>
                                         <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
-                                            <th className="px-2 py-2.5 font-medium whitespace-nowrap w-10">#</th>
+                                            <th className="px-2 py-2.5 font-medium whitespace-nowrap w-10 text-center">#</th>
                                             <th className="px-3 py-2.5 font-medium whitespace-nowrap w-56">Nội dung</th>
-                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-28">Thời gian</th>
-                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-16">Loại</th>
-                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-32">Nguồn tiền</th>
-                                            <th className="px-3 py-2.5 font-medium text-right whitespace-nowrap w-24">Số tiền</th>
-                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-28">Người TH</th>
-                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-20">Trạng thái</th>
-                                            <th className="px-3 py-2.5 font-medium text-right whitespace-nowrap w-20">Thao tác</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-28 text-center">Thời gian</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-16 text-center">Loại</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-32 text-center">Nguồn tiền</th>
+                                            <th className="px-3 py-2.5 font-medium text-center whitespace-nowrap w-24">Số tiền</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-28 text-center">Người TH</th>
+                                            <th className="px-3 py-2.5 font-medium whitespace-nowrap w-20 text-center">Trạng thái</th>
+                                            <th className="px-3 py-2.5 font-medium text-center whitespace-nowrap w-20">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {txs.map((tx, idx) => {
                                             const st = STATUS_CFG[tx.status] ?? STATUS_CFG.approved;
-                                            const isPending = tx.status === "pending";
-                                            const canDelete = tx.status !== "approved";
                                             return (
                                                 <tr key={tx.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
-                                                    <td className="px-4 py-3 text-gray-400">{(page - 1) * 10 + idx + 1}</td>
+                                                    <td className="px-4 py-3 text-gray-400 text-center">{(page - 1) * 10 + idx + 1}</td>
                                                     <td className="px-4 py-3">
                                                         <div className="flex items-center gap-2.5">
                                                             <CategoryIcon category={tx.category} type={tx.type} />
                                                             <div className="min-w-0">
-                                                                <p className="font-medium text-gray-900 truncate max-w-[170px]">{tx.title}</p>
+                                                                <p className="font-medium text-gray-900 truncate max-w-[300px]">{tx.title}</p>
                                                                 <p className="text-xs text-gray-400 truncate max-w-[170px]">
                                                                     {CATEGORY_LABELS[tx.category] ?? tx.category}
                                                                 </p>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap text-xs">
+                                                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap text-xs text-center">
                                                         {new Date(tx.created_at).toLocaleString("vi-VN", {
                                                             day: "2-digit", month: "2-digit", year: "numeric",
                                                             hour: "2-digit", minute: "2-digit",
                                                         })}
                                                     </td>
-                                                    <td className="px-4 py-3">
+                                                    <td className="px-4 py-3 text-center">
                                                         <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${tx.type === "thu" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"}`}>
                                                             {tx.type === "thu" ? "Thu" : "Chi"}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-3">
+                                                    <td className="px-4 py-3 text-center">
                                                         <FundSourceBadge tx={tx} />
                                                     </td>
-                                                    <td className={`px-4 py-3 text-right font-bold whitespace-nowrap ${tx.type === "thu" ? "text-emerald-600" : "text-red-500"}`}>
+                                                    <td className={`px-4 py-3 text-center font-bold whitespace-nowrap ${tx.type === "thu" ? "text-emerald-600" : "text-red-500"}`}>
                                                         {tx.type === "thu" ? "+" : "-"}{fmt(tx.amount)}
                                                     </td>
-                                                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                                                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-center">
                                                         {tx.created_by_user?.full_name ?? "—"}
                                                     </td>
-                                                    <td className="px-4 py-3 whitespace-nowrap">
+                                                    <td className="px-4 py-3 whitespace-nowrap text-center">
                                                         <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${st.cls}`}>
                                                             {st.label}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-3 text-right relative">
+                                                    <td className="px-4 py-3 text-center relative">
                                                         {isAwaitingMemberChoice(tx) ? (
                                                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-amber-600 bg-amber-50">
                                                                 Chờ TV thanh toán
@@ -721,21 +718,24 @@ export default function FundManagementPage() {
                                 </table>
                             </div>
 
-                            <div className="xl:hidden divide-y divide-gray-50">
+                            <div className="xl:hidden px-3 py-3 space-y-3">
                                 {txs.map((tx) => {
                                     const st = STATUS_CFG[tx.status] ?? STATUS_CFG.approved;
                                     const isPending = tx.status === "pending";
                                     const isApproved = tx.status === "approved";
                                     const canDelete = tx.status !== "approved";
                                     return (
-                                        <div key={tx.id} className="px-4 py-3 flex items-center gap-3">
+                                        <div
+                                            key={tx.id}
+                                            className="rounded-2xl border border-gray-100 bg-white shadow-md shadow-gray-200/60 px-4 py-3.5 flex items-center gap-3"
+                                        >
                                             <CategoryIcon category={tx.category} type={tx.type} />
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-gray-900 truncate">{tx.title}</p>
-                                                <p className="text-xs text-gray-400 truncate">
+                                                <p className="font-medium text-gray-900 line-clamp-2 leading-snug">{tx.title}</p>
+                                                <p className="text-xs text-gray-400 truncate mt-0.5">
                                                     {new Date(tx.created_at).toLocaleDateString("vi-VN")} · {CATEGORY_LABELS[tx.category] ?? tx.category}
                                                 </p>
-                                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                                                     {tx.status !== "approved" && (
                                                         <span className={`inline-block px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${st.cls}`}>
                                                             {st.label}

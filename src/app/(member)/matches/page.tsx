@@ -72,22 +72,25 @@ export default function MatchesPage() {
 
     useEffect(() => {
         if (!user?.id) return;
-
         const channel = supabase
             .channel(`matches-list:${user.id}`)
-            .on('broadcast', { event: 'match_result' }, () => {
+            .on("broadcast", { event: "match_result" }, () => {
                 fetchMatchesRef.current();
             })
-            .on('broadcast', { event: 'new_challenge' }, () => {
+            .on("broadcast", { event: "new_challenge" }, () => {
                 fetchMatchesRef.current();
             })
-            .on('broadcast', { event: 'match_status_changed' }, () => {
+            .on("broadcast", { event: "match_status_changed" }, () => {
+                fetchMatchesRef.current();
+            })
+            .on("broadcast", { event: "admin_match_created" }, () => {
+                fetchMatchesRef.current();
+            })
+            .on("broadcast", { event: "match_deleted" }, () => {
                 fetchMatchesRef.current();
             })
             .subscribe();
-
         channelRef.current = channel;
-
         return () => {
             if (channelRef.current) {
                 supabase.removeChannel(channelRef.current);

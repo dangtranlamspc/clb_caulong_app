@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { notificationsAdminApi } from "@/lib/api";
-import { useAuthStore } from "@/store/auth.store"; // đổi path nếu admin dùng store khác
+import { useAuthStore } from "@/store/auth.store";
 import toast from "react-hot-toast";
 
 export interface AdminNotification {
@@ -39,7 +39,6 @@ export function useAdminNotifications() {
             setLoading(false);
         }
     }, [userId]);
-
     useEffect(() => {
         load().then(() => {
             setTimeout(() => { toastEnabledRef.current = true; }, 500);
@@ -79,7 +78,7 @@ export function useAdminNotifications() {
             await notificationsAdminApi.markRead(id);
         } catch (err) {
             console.error("[useAdminNotifications] Lỗi đánh dấu đã đọc:", err);
-            load(); // rollback bằng cách load lại nếu API lỗi
+            load();
         }
     }, [load]);
 
@@ -120,5 +119,13 @@ export function useAdminNotifications() {
         }
     }, [notifications, load]);
 
-    return { notifications, unreadCount, loading, markRead, markAllRead, remove, deleteAll, reload: load };
+    const markResolved = useCallback((id: string, action: "approved" | "rejected") => {
+        setNotifications((prev) =>
+            prev.map((n) =>
+                n.id === id ? { ...n, data: { ...(n.data ?? {}), resolved: true, resolved_action: action } } : n,
+            ),
+        );
+    }, []);
+
+    return { notifications, unreadCount, loading, markRead, markAllRead, remove, markResolved, deleteAll, reload: load };
 }
