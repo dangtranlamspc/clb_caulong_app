@@ -169,7 +169,7 @@ export const registrationsApi = {
 };
 
 export const rankingsApi = {
-  leaderboard: (params?: { month?: number; year?: number; range?: "3m" | "6m" | "1y" }) =>
+  leaderboard: (params?: { month?: number; year?: number; view?: "year" }) =>
     api.get("/rankings/leaderboard", { params }),
   myRank: () => api.get("/rankings/my-rank"),
   myStats: () => api.get("/rankings/my-stats"),
@@ -386,7 +386,7 @@ export const matchesAdminApi = {
 };
 
 export const rankingsAdminApi = {
-  leaderboard: (params?: { month?: number; year?: number }) =>
+  leaderboard: (params?: { month?: number; year?: number; view?: 'month' | 'year' }) =>
     api.get("/rankings/leaderboard", { params }),
   reviceLeaderboard: () => api.get("/rankings/revice"),
   winRate: () => api.get("/rankings/win-rate"),
@@ -592,6 +592,16 @@ export const fundApi = {
     page?: number;
     limit?: number;
   }) => api.get("/fund/contributions/my", { params }),
+
+  contributeSelf: (data: {
+    category: "dong_gop" | "tai_tro";
+    title: string;
+    description?: string;
+    amount: number;
+    method: "wallet" | "bank_transfer" | "cash";
+    payment_reference?: string;
+    payment_proof_url?: string;
+  }) => api.post("/fund/contribute", data),
 
   submitContributionPayment: (
     id: string,

@@ -9,10 +9,12 @@ import {
   ClipboardList,
   CheckCircle2,
   Hourglass,
-  AlertCircle
+  AlertCircle,
+  Wallet2
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import {
+  fundApi,
   profileApi,
   rankingsApi,
   registrationsApi,
@@ -24,6 +26,7 @@ import { HandbookModal } from "@/components/member/handbook/HandbookModal";
 import { UpcomingEvents } from "@/components/member/home/UpcomingEvents";
 import { UpcomingSessionsSection } from "@/components/member/home/UpcomingSessionsSection";
 import { ParticipantsModal } from "@/components/member/home/ParticipantsModal";
+import { supabase } from "@/lib/supabase";
 
 const LEVEL_LABELS: Record<string, string> = {
   yeu: "Yếu",
@@ -68,29 +71,15 @@ function getMemberLevelBadge(user: any): {
   return { emoji: "🎯", line1: "Chưa có level" };
 }
 
-const REG_CFG: Record<
-  string,
-  { label: string; icon: any; cls: string; bg: string }
-> = {
-  pending: {
-    label: "Chờ xác nhận",
-    icon: Hourglass,
-    cls: "text-amber-600",
-    bg: "bg-amber-50",
-  },
-  confirmed: {
-    label: "Đã xác nhận",
-    icon: CheckCircle2,
-    cls: "text-emerald-600",
-    bg: "bg-emerald-50",
-  },
-  rejected: {
-    label: "Từ chối",
-    icon: AlertCircle,
-    cls: "text-red-500",
-    bg: "bg-red-50",
-  },
-};
+
+function fmtCompact(n: number) {
+  if (n >= 1_000_000) {
+    const trieu = n / 1_000_000;
+    return (Number.isInteger(trieu) ? trieu.toString() : trieu.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")).replace(".", ",") + "tr";
+  }
+  if (n >= 1000) return Math.round(n / 1000) + "k";
+  return n.toString();
+}
 
 export default function HomePage() {
   const { user, setUser } = useAuthStore();
@@ -100,6 +89,7 @@ export default function HomePage() {
   const [birthdays, setBirthdays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [myRank, setMyRank] = useState<any>(null);
+  const [fundBalance, setFundBalance] = useState<number | null>(null);
 
   const [participantsModal, setParticipantsModal] = useState<{
     open: boolean;
@@ -136,6 +126,42 @@ export default function HomePage() {
         }
       })
       .finally(() => setLoading(false));
+  }, []);
+
+
+  const loadFundBalance = () => {
+    fundApi.getSummary().then(({ data }) => setFundBalance(data.balance)).catch(() => { });
+  };
+
+  useEffect(() => {
+    loadFundBalance();
+  }, []);
+
+  useEffect(() => {
+    let debounceRef: ReturnType<typeof setTimeout> | null = null;
+    const channel = supabase
+      .channel("home-fund-balance")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "fund_transactions" },
+        () => {
+          if (debounceRef) clearTimeout(debounceRef);
+          debounceRef = setTimeout(loadFundBalance, 250);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "club_fund" },
+        () => {
+          if (debounceRef) clearTimeout(debounceRef);
+          debounceRef = setTimeout(loadFundBalance, 250);
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+      if (debounceRef) clearTimeout(debounceRef);
+    };
   }, []);
 
   const levelBadge = getMemberLevelBadge(user);
@@ -242,7 +268,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-2.5">
           {[
             {
               href: "/activity",
@@ -268,19 +294,36 @@ export default function HomePage() {
               ic: "text-purple-600",
               ring: "ring-purple-100",
             },
+            {
+              href: "/fund",
+              icon: Wallet2,
+              label: "Quỹ\nchung",
+              bg: "bg-emerald-50",
+              ic: "text-emerald-600",
+              ring: "ring-emerald-100",
+            },
           ].map(({ href, icon: Icon, label, bg, ic, ring }) => (
             <Link key={href} href={href}>
               <div
-                className={`${bg} rounded-2xl p-3 flex flex-col items-center gap-2 text-center shadow-lg shadow-black/10 active:scale-95 transition-transform`}
+                className={`${bg} rounded-2xl p-2.5 flex flex-col items-center gap-2 text-center shadow-lg shadow-black/10 active:scale-95 transition-transform`}
               >
                 <div
-                  className={`w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-sm ring-1 ${ring}`}
+                  className={`w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm ring-1 ${ring}`}
                 >
-                  <Icon className={`w-5 h-5 ${ic}`} />
+                  <Icon className={`w-4.5 h-4.5 ${ic}`} />
                 </div>
-                <p className="text-xs font-semibold text-gray-700 leading-tight whitespace-pre-line h-8 flex items-center justify-center">
-                  {label}
-                </p>
+                {href === "/fund" ? (
+                  <div className="h-8 flex flex-col items-center justify-center leading-tight">
+                    <p className="text-[10px] font-semibold text-gray-500">Quỹ chung</p>
+                    <p className="text-[12px] font-black text-emerald-700">
+                      {fundBalance === null ? "..." : fmtCompact(fundBalance)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-[11px] font-semibold text-gray-700 leading-tight whitespace-pre-line h-8 flex items-center justify-center">
+                    {label}
+                  </p>
+                )}
               </div>
             </Link>
           ))}

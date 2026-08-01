@@ -68,7 +68,14 @@ function CategoryIcon({ category, type }: { category: string; type: "thu" | "chi
 }
 
 function FundSourceBadge({ tx }: { tx: any }) {
-    if (tx.type !== "thu") return <span className="text-gray-300 text-xs">—</span>;
+    if (tx.type !== "thu") {
+        return (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 text-slate-600">
+                <Wallet className="w-3 h-3" />
+                Quỹ BnB
+            </span>
+        );
+    }
 
     if (!tx.deducted_member?.full_name) {
         return <span className="text-gray-300 text-xs">—</span>;
@@ -181,7 +188,6 @@ export default function FundManagementPage() {
                 const requestCount = (reqRes.data.data ?? []).filter(
                     (tx: any) => tx.payment_method !== "member_choice",
                 ).length;
-                // "phat" đã được đếm riêng qua penaltyRes, tránh đếm trùng ở đây
                 const confCount = (confRes.data.data ?? []).filter(
                     (tx: any) => tx.category !== "phat",
                 ).length;
@@ -203,9 +209,6 @@ export default function FundManagementPage() {
 
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => {
-        // Toàn bộ phạt (category = "phat") và đóng góp giờ đều nằm trong
-        // bảng fund_transactions — không còn bảng "penalties" riêng nữa,
-        // nên chỉ cần lắng nghe 1 bảng này là đủ.
         const channel = supabase
             .channel("fund-transactions-page")
             .on(
@@ -327,7 +330,9 @@ export default function FundManagementPage() {
 
 
     const isAwaitingMemberChoice = (tx: any) =>
-        tx.status === "pending" && tx.payment_method === "member_choice";
+        tx.status === "pending" &&
+        tx.payment_method === "member_choice" &&
+        tx.payment_status !== "rejected";
 
     return (
         <div className="max-w-[1680px] mx-auto space-y-4 pb-8 px-2">

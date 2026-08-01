@@ -31,12 +31,12 @@ function slugName(name: string) {
         .toUpperCase();
 }
 
-export function PenaltyPaymentModal({
-    penalty,
+export function ContributionPaymentModal({
+    contribution,
     onClose,
     onSuccess,
 }: {
-    penalty: { id: string; amount: number; reason: string };
+    contribution: { id: string; amount: number; title: string };
     onClose: () => void;
     onSuccess: () => void;
 }) {
@@ -55,17 +55,17 @@ export function PenaltyPaymentModal({
         setTimeout(onClose, 250);
     };
 
-    const ref = `PHAT ${penalty.id.slice(0, 8).toUpperCase()} ${slugName(user?.full_name ?? "")}`;
+    const ref = `GOPQUY ${contribution.id.slice(0, 8).toUpperCase()} ${slugName(user?.full_name ?? "")}`;
     const bankId = process.env.NEXT_PUBLIC_BANK_ID ?? "MB";
     const bankAccount = process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "0000000000";
     const bankAccountName = process.env.NEXT_PUBLIC_BANK_NAME ?? "CLB CAU LONG";
     const bankDisplayName = BANK_DISPLAY_NAMES[bankId] ?? bankId;
-    const qr = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${penalty.amount}&addInfo=${encodeURIComponent(ref)}&accountName=${encodeURIComponent(bankAccountName)}`;
+    const qr = `https://img.vietqr.io/image/${bankId}-${bankAccount}-compact2.png?amount=${contribution.amount}&addInfo=${encodeURIComponent(ref)}&accountName=${encodeURIComponent(bankAccountName)}`;
 
     const handleWallet = async () => {
         setSubmitting(true);
         try {
-            await fundApi.submitPenaltyPayment(penalty.id, { method: "wallet" });
+            await fundApi.submitContributionPayment(contribution.id, { method: "wallet" });
             toast.success("Đã trừ ví thành công!");
             onSuccess();
         } catch (err: any) {
@@ -78,7 +78,7 @@ export function PenaltyPaymentModal({
     const handleConfirmTransfer = async () => {
         setSubmitting(true);
         try {
-            await fundApi.submitPenaltyPayment(penalty.id, {
+            await fundApi.submitContributionPayment(contribution.id, {
                 method: "bank_transfer",
                 payment_reference: ref,
             });
@@ -94,7 +94,7 @@ export function PenaltyPaymentModal({
     const handleCash = async () => {
         setSubmitting(true);
         try {
-            await fundApi.submitPenaltyPayment(penalty.id, { method: "cash" });
+            await fundApi.submitContributionPayment(contribution.id, { method: "cash" });
             toast.success("Đã thông báo admin, vui lòng nộp tiền trực tiếp!");
             onSuccess();
         } catch (err: any) {
@@ -147,8 +147,8 @@ export function PenaltyPaymentModal({
             >
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                     <div>
-                        <p className="text-sm font-bold text-gray-900">Thanh toán khoản phạt</p>
-                        <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[220px]">{penalty.reason}</p>
+                        <p className="text-sm font-bold text-gray-900">Thanh toán góp quỹ</p>
+                        <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[220px]">{contribution.title}</p>
                     </div>
                     <button onClick={handleClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
                         <XIcon className="w-4 h-4" />
@@ -156,9 +156,9 @@ export function PenaltyPaymentModal({
                 </div>
 
                 <div className="px-5 py-4 space-y-4">
-                    <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
-                        <span className="text-sm text-gray-600">Số tiền cần trả</span>
-                        <span className="text-lg font-black text-red-600">{fmt(penalty.amount)}</span>
+                    <div className="flex items-center justify-between bg-blue-50 rounded-xl px-4 py-3">
+                        <span className="text-sm text-gray-600">Số tiền cần đóng</span>
+                        <span className="text-lg font-black text-blue-600">{fmt(contribution.amount)}</span>
                     </div>
 
                     {method === "choose" && (
@@ -241,7 +241,7 @@ export function PenaltyPaymentModal({
                                 </div>
                                 <div className="flex justify-between px-4 py-2.5">
                                     <span className="text-gray-500">Số tiền</span>
-                                    <span className="font-bold text-red-600">{fmt(penalty.amount)}</span>
+                                    <span className="font-bold text-blue-600">{fmt(contribution.amount)}</span>
                                 </div>
                                 <div className="px-4 py-2.5">
                                     <div className="flex justify-between">

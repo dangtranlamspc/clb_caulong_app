@@ -320,30 +320,20 @@ function TopThreePodium({ top3 }: { top3: any[] }) {
     );
 }
 
-function getCurrentMonthValue() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+function buildYearOptions(count = 5) {
+    const y = new Date().getFullYear();
+    return Array.from({ length: count }, (_, i) => ({ value: String(y - i), label: `Năm ${y - i}` }));
 }
 
-function buildMonthOptions(monthsBack = 12) {
-    const now = new Date();
-    const opts: { value: string; label: string }[] = [];
-    for (let i = 0; i < monthsBack; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        opts.push({ value, label: `Tháng ${d.getMonth() + 1}/${d.getFullYear()}` });
-    }
-    return opts;
+function buildMonthOptionList() {
+    return [
+        { value: 'all', label: '📅 Cả năm' },
+        ...Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: `Tháng ${i + 1}` })),
+    ];
 }
 
-const MONTH_OPTIONS = buildMonthOptions(12);
-
-const MODE_OPTIONS = [
-    { value: 'month', label: 'Theo tháng cụ thể' },
-    { value: 'range-3m', label: '3 tháng gần nhất' },
-    { value: 'range-6m', label: '6 tháng gần nhất' },
-    { value: 'range-1y', label: '1 năm gần nhất' },
-];
+const YEAR_OPTIONS = buildYearOptions(5);
+const MONTH_OPTION_LIST = buildMonthOptionList();
 
 let cachedInfoAnimation: any = null;
 let infoAnimationPromise: Promise<any> | null = null;
@@ -463,17 +453,20 @@ function LeaderboardInfoModal({ onClose }: { onClose: () => void }) {
 
 function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
-    const [mode, setMode] = useState<string>('month');
-    const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthValue());
+    const today = new Date();
+    const [selectedYear, setSelectedYear] = useState(String(today.getFullYear()));
+    const [selectedMonthOption, setSelectedMonthOption] = useState(String(today.getMonth() + 1));
     const [monthData, setMonthData] = useState(data);
     const [monthLoading, setMonthLoading] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const isFirstRender = useRef(true);
 
-    const isCurrentMonthMode = mode === 'month' && selectedMonth === getCurrentMonthValue();
+    const isCurrentDefault =
+        selectedYear === String(today.getFullYear()) &&
+        selectedMonthOption === String(today.getMonth() + 1);
 
     useEffect(() => {
-        if (isCurrentMonthMode) {
+        if (isCurrentDefault) {
             setMonthData(data);
         }
     }, [data]);
@@ -486,17 +479,14 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
 
         setMonthLoading(true);
 
-        const params = mode.startsWith('range-')
-            ? { range: mode.replace('range-', '') as '3m' | '6m' | '1y' }
-            : (() => {
-                const [year, month] = selectedMonth.split('-').map(Number);
-                return { month, year };
-            })();
+        const params = selectedMonthOption === 'all'
+            ? { view: 'year' as const, year: Number(selectedYear) }
+            : { month: Number(selectedMonthOption), year: Number(selectedYear) };
 
         rankingsApi.leaderboard(params)
             .then((res: any) => setMonthData(res.data ?? []))
             .finally(() => setMonthLoading(false));
-    }, [mode, selectedMonth]);
+    }, [selectedYear, selectedMonthOption]);
 
     const filteredData = filterByGender(monthData, genderFilter);
     const top3 = filteredData.slice(0, 3);
@@ -507,19 +497,17 @@ function LeaderboardTab({ data, myStats, user }: { data: any[]; myStats: any; us
             <div className="space-y-2">
                 <div className="flex justify-end gap-2">
                     <CustomSelect
-                        value={mode}
-                        onChange={setMode}
-                        options={MODE_OPTIONS}
-                        triggerClassName="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-700 min-w-[150px]"
+                        value={selectedYear}
+                        onChange={setSelectedYear}
+                        options={YEAR_OPTIONS}
+                        triggerClassName="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-700 min-w-[100px]"
                     />
-                    {mode === 'month' && (
-                        <CustomSelect
-                            value={selectedMonth}
-                            onChange={setSelectedMonth}
-                            options={MONTH_OPTIONS}
-                            triggerClassName="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-700 min-w-[130px]"
-                        />
-                    )}
+                    <CustomSelect
+                        value={selectedMonthOption}
+                        onChange={setSelectedMonthOption}
+                        options={MONTH_OPTION_LIST}
+                        triggerClassName="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-700 min-w-[110px]"
+                    />
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex-1">
@@ -1165,7 +1153,7 @@ export default function LeaderboardPage() {
         { key: 'rank', label: 'Rank', icon: '💎' },
         { key: 'winrate', label: 'Winrate', icon: '⚔️' },
         {
-            key: 'leaderboard', label: 'Buổi đánh',
+            key: 'leaderboard', label: 'Chuyên cần',
             icon: <img src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png" className="w-4 h-4 object-contain" style={{ mixBlendMode: 'screen' }} />
         },
     ];

@@ -49,15 +49,14 @@ function TriangleDown({ className = '' }: { className?: string }) {
     );
 }
 
-function MonthDropdown({ options, value, onChange }: { options: Date[]; value: Date; onChange: (d: Date) => void }) {
+function YearDropdown({ options, value, onChange }: { options: number[]; value: number; onChange: (y: number) => void }) {
     const [open, setOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const wrapRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (open) {
-            setMounted(true);
-        } else if (mounted) {
+        if (open) setMounted(true);
+        else if (mounted) {
             const t = setTimeout(() => setMounted(false), 150);
             return () => clearTimeout(t);
         }
@@ -71,9 +70,6 @@ function MonthDropdown({ options, value, onChange }: { options: Date[]; value: D
         return () => document.removeEventListener('mousedown', onClickOutside);
     }, []);
 
-    const label = `Tháng ${value.getMonth() + 1}/${value.getFullYear()}`;
-    const labelShort = `T${value.getMonth() + 1}/${value.getFullYear()}`;
-
     return (
         <div ref={wrapRef} className="relative flex-shrink-0">
             <button
@@ -82,30 +78,85 @@ function MonthDropdown({ options, value, onChange }: { options: Date[]; value: D
                 className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 whitespace-nowrap hover:bg-gray-100 hover:border-gray-300 transition-colors duration-200"
             >
                 <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                <span className="hidden sm:inline">{label}</span>
-                <span className="sm:hidden">{labelShort}</span>
+                <span>Năm {value}</span>
                 <ChevronDown className={`w-3 h-3 text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </button>
 
             {mounted && (
                 <div
-                    className={`absolute right-0 mt-1.5 w-36 sm:w-40 max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1 origin-top-right transition-all duration-150 ease-out ${open ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
-                        }`}
+                    className={`absolute right-0 mt-1.5 w-28 max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1 origin-top-right transition-all duration-150 ease-out ${open ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'}`}
                 >
-                    {options.map((opt) => {
-                        const isActive = opt.getFullYear() === value.getFullYear() && opt.getMonth() === value.getMonth();
-                        return (
-                            <button
-                                key={`${opt.getFullYear()}-${opt.getMonth()}`}
-                                type="button"
-                                onClick={() => { onChange(opt); setOpen(false); }}
-                                className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                                    }`}
-                            >
-                                Tháng {opt.getMonth() + 1}/{opt.getFullYear()}
-                            </button>
-                        );
-                    })}
+                    {options.map((y) => (
+                        <button
+                            key={y}
+                            type="button"
+                            onClick={() => { onChange(y); setOpen(false); }}
+                            className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${y === value ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                        >
+                            Năm {y}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function MonthOptionDropdown({ value, onChange }: { value: 'all' | number; onChange: (v: 'all' | number) => void }) {
+    const [open, setOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    const wrapRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (open) setMounted(true);
+        else if (mounted) {
+            const t = setTimeout(() => setMounted(false), 150);
+            return () => clearTimeout(t);
+        }
+    }, [open]);
+
+    useEffect(() => {
+        const onClickOutside = (e: MouseEvent) => {
+            if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', onClickOutside);
+        return () => document.removeEventListener('mousedown', onClickOutside);
+    }, []);
+
+    const label = value === 'all' ? 'Cả năm' : `Tháng ${value}`;
+
+    return (
+        <div ref={wrapRef} className="relative flex-shrink-0">
+            <button
+                type="button"
+                onClick={() => setOpen((o) => !o)}
+                className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 whitespace-nowrap hover:bg-gray-100 hover:border-gray-300 transition-colors duration-200"
+            >
+                <span>{label}</span>
+                <ChevronDown className={`w-3 h-3 text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            </button>
+
+            {mounted && (
+                <div
+                    className={`absolute right-0 mt-1.5 w-32 max-h-72 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1 origin-top-right transition-all duration-150 ease-out ${open ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'}`}
+                >
+                    <button
+                        type="button"
+                        onClick={() => { onChange('all'); setOpen(false); }}
+                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold border-b border-gray-100 mb-1 transition-colors duration-150 ${value === 'all' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                        📅 Cả năm
+                    </button>
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                        <button
+                            key={m}
+                            type="button"
+                            onClick={() => { onChange(m); setOpen(false); }}
+                            className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${value === m ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                        >
+                            Tháng {m}
+                        </button>
+                    ))}
                 </div>
             )}
         </div>
@@ -218,7 +269,6 @@ function TopThree({ data, valueKey, valueSuffix, deltaKey, deltaSuffix, deltaLab
     );
 }
 
-/* ───────────────────────── Mobile rank pill (dùng chung) ───────────────────────── */
 function PosPill({ pos }: { pos: number }) {
     return (
         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-[11px] font-bold flex items-center justify-center">
@@ -227,7 +277,6 @@ function PosPill({ pos }: { pos: number }) {
     );
 }
 
-/* ───────────────────────── Theo số buổi tham gia ───────────────────────── */
 
 function SessionMobileCard({ m, pos, prevMonthLabel }: { m: any; pos: number; prevMonthLabel: string }) {
     const totalClubSessions = m.total_sessions_in_month ?? 0;
@@ -259,7 +308,6 @@ function SessionMobileCard({ m, pos, prevMonthLabel }: { m: any; pos: number; pr
 function SessionTable({ data, prevMonthLabel }: { data: any[]; prevMonthLabel: string }) {
     return (
         <div className="card !p-0 overflow-hidden">
-            {/* Desktop / tablet: table */}
             <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
@@ -310,7 +358,6 @@ function SessionTable({ data, prevMonthLabel }: { data: any[]; prevMonthLabel: s
                 </table>
             </div>
 
-            {/* Mobile: card list */}
             <div className="sm:hidden divide-y divide-gray-50">
                 {data.map((m, idx) => (
                     <SessionMobileCard key={m.id} m={m} pos={idx + 4} prevMonthLabel={prevMonthLabel} />
@@ -320,7 +367,6 @@ function SessionTable({ data, prevMonthLabel }: { data: any[]; prevMonthLabel: s
     );
 }
 
-/* ───────────────────────── Theo điểm leo rank ───────────────────────── */
 
 function RankMobileCard({ p, pos }: { p: any; pos: number }) {
     const cfg = getTierConfig(p.tier);
@@ -352,7 +398,6 @@ function RankMobileCard({ p, pos }: { p: any; pos: number }) {
 function RankTable({ data }: { data: any[] }) {
     return (
         <div className="card !p-0 overflow-hidden">
-            {/* Desktop / tablet: table */}
             <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
@@ -403,7 +448,6 @@ function RankTable({ data }: { data: any[] }) {
                 </table>
             </div>
 
-            {/* Mobile: card list */}
             <div className="sm:hidden divide-y divide-gray-50">
                 {data.map((p, idx) => (
                     <RankMobileCard key={p.id} p={p} pos={idx + 4} />
@@ -420,14 +464,17 @@ export default function RankingsPage() {
     const [loadingRank, setLoadingRank] = useState(true);
 
     const today = new Date();
-    const [selectedMonth, setSelectedMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+    const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+    const [selectedMonthOption, setSelectedMonthOption] = useState<'all' | number>(today.getMonth() + 1);
 
-    const monthOptions = Array.from({ length: 12 }, (_, i) => new Date(today.getFullYear(), today.getMonth() - i, 1));
+    const yearOptions = Array.from({ length: 5 }, (_, i) => today.getFullYear() - i);
 
-    const fetchSessions = async (month: Date) => {
+    const fetchSessions = async (year: number, monthOption: 'all' | number) => {
         setLoadingSessions(true);
         try {
-            const { data } = await rankingsAdminApi.leaderboard({ month: month.getMonth() + 1, year: month.getFullYear() });
+            const { data } = monthOption === 'all'
+                ? await rankingsAdminApi.leaderboard({ view: 'year', year })
+                : await rankingsAdminApi.leaderboard({ month: monthOption, year });
             setSessionData(data ?? []);
         } finally { setLoadingSessions(false); }
     };
@@ -438,17 +485,21 @@ export default function RankingsPage() {
         finally { setLoadingRank(false); }
     };
 
-    const refreshAll = () => { fetchSessions(selectedMonth); fetchRank(); };
+    const refreshAll = () => { fetchSessions(selectedYear, selectedMonthOption); fetchRank(); };
     useEffect(() => { refreshAll(); }, []);
-    useEffect(() => { fetchSessions(selectedMonth); }, [selectedMonth]);
+    useEffect(() => { fetchSessions(selectedYear, selectedMonthOption); }, [selectedYear, selectedMonthOption]);
 
     const sessionTop3 = sessionData.slice(0, 3);
     const sessionRest = sessionData.slice(3);
     const rankTop3 = rankData.slice(0, 3);
     const rankRest = rankData.slice(3);
 
-    const prevMonthDate = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1);
-    const prevMonthLabel = `tháng ${prevMonthDate.getMonth() + 1}/${prevMonthDate.getFullYear()}`;
+    // Label "so với ..." — tự lùi qua năm trước nếu đang ở tháng 1
+    const prevLabel = (() => {
+        if (selectedMonthOption === 'all') return `năm ${selectedYear - 1}`;
+        if (selectedMonthOption === 1) return `tháng 12/${selectedYear - 1}`;
+        return `tháng ${selectedMonthOption - 1}/${selectedYear}`;
+    })();
 
     return (
         <div className="space-y-4">
@@ -460,16 +511,18 @@ export default function RankingsPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-                {/* ── Cột: Theo số buổi tham gia ── */}
                 <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                             <h2 className="font-bold text-gray-900 flex items-center gap-1.5 text-sm sm:text-base">
-                                <Users className="w-4 h-4 text-blue-500 flex-shrink-0" /> <span className="truncate">THEO SỐ BUỔI THAM GIA</span>
+                                <Users className="w-4 h-4 text-blue-500 flex-shrink-0" /> <span className="truncate">CHUYÊN CẦN</span>
                             </h2>
-                            <p className="hidden sm:block text-xs text-gray-400 mt-0.5">Xếp hạng thành viên theo tổng số buổi tham gia trong tháng</p>
+                            <p className="hidden sm:block text-xs text-gray-400 mt-0.5">Xếp hạng thành viên theo tổng số buổi tham gia</p>
                         </div>
-                        <MonthDropdown options={monthOptions} value={selectedMonth} onChange={setSelectedMonth} />
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <YearDropdown options={yearOptions} value={selectedYear} onChange={setSelectedYear} />
+                            <MonthOptionDropdown value={selectedMonthOption} onChange={setSelectedMonthOption} />
+                        </div>
                     </div>
 
                     {loadingSessions && sessionData.length === 0 ? (
@@ -493,25 +546,25 @@ export default function RankingsPage() {
                                     valueSuffix="buổi"
                                     deltaKey="sessions_delta"
                                     deltaSuffix="buổi"
-                                    deltaLabel={`so với ${prevMonthLabel}`}
+                                    deltaLabel={`so với ${prevLabel}`}
                                     renderSub={(m) => <AttendanceLevelBadge totalSessions={m.total_sessions ?? 0} />}
                                 />
-                                {sessionRest.length > 0 && <SessionTable data={sessionRest} prevMonthLabel={prevMonthLabel} />}
+                                {sessionRest.length > 0 && <SessionTable data={sessionRest} prevMonthLabel={prevLabel} />}
                                 <p className="text-[11px] text-gray-400 flex items-start gap-1.5 px-1">
                                     <span>ⓘ</span>
-                                    <span>Tỷ lệ tham gia = (Số buổi thành viên đã tham gia trong tháng / Tổng số buổi CLB tổ chức trong tháng) × 100%.</span>
+                                    <span>Tỷ lệ tham gia = (Số buổi thành viên đã tham gia / Tổng số buổi CLB tổ chức trong khoảng thời gian đã chọn) × 100%.</span>
                                 </p>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* ── Cột: Theo điểm leo rank ── */}
+                {/* Phần ĐIỂM RANK giữ nguyên, không đổi */}
                 <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                             <h2 className="font-bold text-gray-900 flex items-center gap-1.5 text-sm sm:text-base">
-                                <Trophy className="w-4 h-4 text-purple-500 flex-shrink-0" /> <span className="truncate">THEO ĐIỂM LEO RANK</span>
+                                <Trophy className="w-4 h-4 text-purple-500 flex-shrink-0" /> <span className="truncate">ĐIỂM RANK</span>
                             </h2>
                             <p className="hidden sm:block text-xs text-gray-400 mt-0.5">Xếp hạng thành viên theo tổng điểm tích lũy để leo rank</p>
                         </div>

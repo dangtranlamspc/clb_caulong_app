@@ -1,11 +1,11 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2 } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
-import { notificationsApi, walletApi, registrationsApi } from '@/lib/api';
+import { notificationsApi, walletApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { useNotificationsRealtimeStore } from '@/store/notifications-realtime.store';
@@ -22,6 +22,79 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
 
 const SWIPE_THRESHOLD = -70;
 const MAX_DRAG = -110;
+
+function ConfirmDeleteAllModal({
+    onConfirm,
+    onCancel,
+}: {
+    onConfirm: () => void;
+    onCancel: () => void;
+}) {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const handleCancel = () => {
+        setVisible(false);
+        setTimeout(onCancel, 200);
+    };
+
+    const handleConfirm = () => {
+        setVisible(false);
+        setTimeout(onConfirm, 200);
+    };
+
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center px-4 transition-opacity"
+            style={{
+                background: 'rgba(0,0,0,0.5)',
+                opacity: visible ? 1 : 0,
+                transitionDuration: '200ms',
+            }}
+            onClick={(e) => e.target === e.currentTarget && handleCancel()}
+        >
+            <div
+                className="w-full max-w-xs bg-white rounded-2xl overflow-hidden transition-transform"
+                style={{
+                    transform: visible ? 'scale(1)' : 'scale(0.92)',
+                    transitionDuration: '200ms',
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
+                    <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
+                        <AlertTriangle className="w-5 h-5 text-red-500" />
+                    </div>
+                    <p className="text-sm font-bold text-gray-900">Xoá tất cả thông báo?</p>
+                    <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                        Hành động này không thể hoàn tác. Toàn bộ thông báo sẽ bị xoá vĩnh viễn.
+                    </p>
+                </div>
+                <div className="flex border-t border-gray-100">
+                    <button
+                        onClick={handleCancel}
+                        className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100"
+                    >
+                        Huỷ
+                    </button>
+                    <button
+                        onClick={handleConfirm}
+                        className="flex-1 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                        Xoá tất cả
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+}
 
 function NotificationItem({
     n,
@@ -70,18 +143,15 @@ function NotificationItem({
             const dx = t.clientX - startXRef.current;
             const dy = t.clientY - startYRef.current;
 
-            // Xác định hướng vuốt ngay lần di chuyển đầu tiên đủ lớn
             if (directionRef.current === 'none' && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
                 directionRef.current = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
             }
 
             if (directionRef.current === 'horizontal') {
-                // Chặn cuộn trang khi đang vuốt ngang
                 e.preventDefault();
                 if (Math.abs(dx) > 5) movedRef.current = true;
                 setDragX(Math.min(0, Math.max(MAX_DRAG, dx)));
             }
-            // Nếu là vertical thì để mặc định trình duyệt tự cuộn trang, không làm gì thêm
         };
 
         const onTouchEnd = () => {
@@ -134,7 +204,7 @@ function NotificationItem({
                 style={{
                     transform: `translateX(${dragX}px)`,
                     transition: dragging ? 'none' : 'transform .2s ease',
-                    touchAction: 'pan-y', // cho phép cuộn dọc mặc định, JS tự xử lý ngang
+                    touchAction: 'pan-y',
                 }}
                 className={`relative flex items-start gap-3 px-4 py-3 cursor-pointer bg-white ${n.is_read ? '' : 'bg-blue-50/40 hover:bg-blue-50'}`}
             >
@@ -219,6 +289,7 @@ export function NotificationBell() {
     const [panelPos, setPanelPos] = useState({ top: 0, right: 0 });
     const [guestActionId, setGuestActionId] = useState<string | null>(null);
     const [guestHandled, setGuestHandled] = useState<Set<string>>(new Set());
+    const [confirmDeleteAllOpen, setConfirmDeleteAllOpen] = useState(false);
     const btnRef = useRef<HTMLButtonElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
 
@@ -416,8 +487,6 @@ export function NotificationBell() {
     };
 
     const handleDeleteAll = async () => {
-        if (items.length === 0) return;
-        if (!window.confirm('Xoá tất cả thông báo?')) return;
         const prevItems = items;
         const prevUnread = unread;
         setItems([]);
@@ -468,7 +537,7 @@ export function NotificationBell() {
                                 </button>
                             )}
                             {items.length > 0 && (
-                                <button onClick={handleDeleteAll} className="text-xs text-red-500 font-medium">
+                                <button onClick={() => setConfirmDeleteAllOpen(true)} className="text-xs text-red-500 font-medium">
                                     Xoá tất cả
                                 </button>
                             )}
@@ -514,6 +583,16 @@ export function NotificationBell() {
                     </div>
                 </div>,
                 document.body
+            )}
+
+            {confirmDeleteAllOpen && (
+                <ConfirmDeleteAllModal
+                    onConfirm={() => {
+                        setConfirmDeleteAllOpen(false);
+                        handleDeleteAll();
+                    }}
+                    onCancel={() => setConfirmDeleteAllOpen(false)}
+                />
             )}
 
             {penaltyModalData && (

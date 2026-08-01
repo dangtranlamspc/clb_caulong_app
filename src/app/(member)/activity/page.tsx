@@ -711,7 +711,6 @@ function SessionsTab({
   onPendingBillsChange: (count: number) => void;
 }) {
   const { user } = useAuthStore();
-  const router = useRouter();
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
@@ -736,7 +735,6 @@ function SessionsTab({
     setTimeout(() => setSheetOpen(false), 300);
   };
 
-  // 👇 nhận thêm option { silent } — silent = true thì KHÔNG bật loading/skeleton
   const fetchSessions = useCallback(
     async (opts?: { silent?: boolean }) => {
       const silent = opts?.silent ?? false;
@@ -824,7 +822,7 @@ function SessionsTab({
   }, [fetchPendingBills]);
 
   useEffect(() => {
-    fetchSessions(); // lần đầu / khi đổi filter -> vẫn hiện skeleton, đây là hành động chủ động của user
+    fetchSessions();
   }, [fetchSessions]);
 
   useEffect(() => {
@@ -836,7 +834,7 @@ function SessionsTab({
         "postgres_changes",
         { event: "*", schema: "public", table: "registrations" },
         () => {
-          fetchSessions({ silent: true }); // 👈 nền, không giật UI
+          fetchSessions({ silent: true });
           scheduleFetchPendingBills();
         },
       )
@@ -844,7 +842,7 @@ function SessionsTab({
         "postgres_changes",
         { event: "*", schema: "public", table: "sessions" },
         () => {
-          fetchSessions({ silent: true }); // 👈 nền, không giật UI
+          fetchSessions({ silent: true });
           scheduleFetchPendingBills();
         },
       )
