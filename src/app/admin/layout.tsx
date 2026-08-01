@@ -152,7 +152,7 @@ export default function AdminLayout({
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 w-full px-4 lg:px-8 py-5 overflow-y-auto">
+      <main className="flex-1 min-h-0 w-full px-4 lg:px-8 py-5 overflow-y-auto hide-scrollbar">
         {children}
       </main>
 

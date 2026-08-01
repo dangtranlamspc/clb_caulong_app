@@ -1,7 +1,7 @@
 import { Loader2, Users, XIcon, Ban, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { activitiesApi, registrationsApi, penaltiesApi } from "@/lib/api";
+import { activitiesApi, registrationsApi, fundApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { smt, txIcon } from "@/lib/wallet-helpers";
@@ -79,7 +79,7 @@ export function TransactionDetailModal({
     const request = isShirtOrder
       ? activitiesApi.getShirtOrderRegistrationDetail(tx.reference_id)
       : isPenaltyPayment
-        ? penaltiesApi.getDetail(tx.reference_id)
+        ? fundApi.getPenaltyById(tx.reference_id)
         : registrationsApi.getDetail(tx.reference_id);
 
     request
@@ -249,16 +249,16 @@ export function TransactionDetailModal({
                   </p>
                 ) : (
                   <div className="rounded-xl bg-white border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] divide-y divide-gray-50 overflow-hidden">
-                    {penalty?.sessions?.title ? (
+                    {penalty?.session?.title ? (
                       <div className="flex justify-between px-4 py-2.5 text-sm bg-blue-50/50">
                         <span className="text-gray-500">Buổi đánh</span>
                         <div className="text-right">
                           <p className="font-semibold text-blue-700">
-                            {penalty.sessions.title}
+                            {penalty.session.title}
                           </p>
-                          {penalty.sessions.scheduled_at && (
+                          {penalty.session.scheduled_at && (
                             <p className="text-[11px] text-gray-400">
-                              {format(new Date(penalty.sessions.scheduled_at), "dd/MM/yyyy", { locale: vi })}
+                              {format(new Date(penalty.session.scheduled_at), "dd/MM/yyyy", { locale: vi })}
                             </p>
                           )}
                         </div>
@@ -275,13 +275,13 @@ export function TransactionDetailModal({
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> Loại phạt
                       </span>
                       <span className="font-medium text-gray-800">
-                        {PENALTY_TYPE_LABEL[penalty?.type] ?? penalty?.type}
+                        {PENALTY_TYPE_LABEL[penalty?.penalty_type] ?? penalty?.penalty_type ?? "—"}
                       </span>
                     </div>
 
                     <div className="px-4 py-2.5 text-sm">
                       <p className="text-gray-500 mb-1">Lý do</p>
-                      <p className="text-gray-700">{penalty?.reason}</p>
+                      <p className="text-gray-700">{penalty?.description ?? penalty?.title}</p>
                     </div>
 
                     <div className="flex justify-between px-4 py-3 text-sm bg-gray-50">
@@ -331,7 +331,7 @@ export function TransactionDetailModal({
                       </div>
 
                       {displayOtherFee > 0 ? (
-                        <div className="px-4 py-2.5 text-sm">
+                        <div className="px-4 py-2.5 text-sm">``
                           <div className="flex justify-between">
                             <span className="text-gray-500">
                               Khoản khác của bạn

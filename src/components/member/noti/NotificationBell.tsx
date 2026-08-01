@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2 } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -20,6 +20,196 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     wallet_guest_confirm: { icon: Wallet, cls: 'text-amber-600', bg: 'bg-amber-50' },
 };
 
+const SWIPE_THRESHOLD = -70;
+const MAX_DRAG = -110;
+
+function NotificationItem({
+    n,
+    onRead,
+    onDelete,
+    guestActionId,
+    guestHandled,
+    onGuestConfirm,
+    onPenaltyClick,
+}: {
+    n: any;
+    onRead: (id: string) => void;
+    onDelete: (id: string) => void;
+    guestActionId: string | null;
+    guestHandled: Set<string>;
+    onGuestConfirm: (n: any, mode: 'grouped' | 'separate') => void;
+    onPenaltyClick: (n: any) => void;
+}) {
+    const [dragX, setDragX] = useState(0);
+    const [dragging, setDragging] = useState(false);
+    const rowRef = useRef<HTMLDivElement>(null);
+
+    const startXRef = useRef(0);
+    const startYRef = useRef(0);
+    const movedRef = useRef(false);
+    const draggingRef = useRef(false);
+    const directionRef = useRef<'none' | 'horizontal' | 'vertical'>('none');
+
+    useEffect(() => {
+        const el = rowRef.current;
+        if (!el) return;
+
+        const onTouchStart = (e: TouchEvent) => {
+            const t = e.touches[0];
+            startXRef.current = t.clientX;
+            startYRef.current = t.clientY;
+            movedRef.current = false;
+            draggingRef.current = true;
+            directionRef.current = 'none';
+            setDragging(true);
+        };
+
+        const onTouchMove = (e: TouchEvent) => {
+            if (!draggingRef.current) return;
+            const t = e.touches[0];
+            const dx = t.clientX - startXRef.current;
+            const dy = t.clientY - startYRef.current;
+
+            // Xác định hướng vuốt ngay lần di chuyển đầu tiên đủ lớn
+            if (directionRef.current === 'none' && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+                directionRef.current = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
+            }
+
+            if (directionRef.current === 'horizontal') {
+                // Chặn cuộn trang khi đang vuốt ngang
+                e.preventDefault();
+                if (Math.abs(dx) > 5) movedRef.current = true;
+                setDragX(Math.min(0, Math.max(MAX_DRAG, dx)));
+            }
+            // Nếu là vertical thì để mặc định trình duyệt tự cuộn trang, không làm gì thêm
+        };
+
+        const onTouchEnd = () => {
+            if (!draggingRef.current) return;
+            draggingRef.current = false;
+            setDragging(false);
+            if (directionRef.current === 'horizontal') {
+                setDragX(prev => {
+                    if (prev <= SWIPE_THRESHOLD) {
+                        onDelete(n.id);
+                        return prev;
+                    }
+                    return 0;
+                });
+            }
+            directionRef.current = 'none';
+        };
+
+        el.addEventListener('touchstart', onTouchStart, { passive: true });
+        el.addEventListener('touchmove', onTouchMove, { passive: false });
+        el.addEventListener('touchend', onTouchEnd, { passive: true });
+        el.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+        return () => {
+            el.removeEventListener('touchstart', onTouchStart);
+            el.removeEventListener('touchmove', onTouchMove);
+            el.removeEventListener('touchend', onTouchEnd);
+            el.removeEventListener('touchcancel', onTouchEnd);
+        };
+    }, [n.id, onDelete]);
+
+    const cfg = TYPE_CFG[n.type] ?? TYPE_CFG.payment_added;
+    const Icon = cfg.icon;
+    const isGuestConfirm = n.type === 'wallet_guest_confirm' || n.data?.type === 'wallet_guest_confirm';
+    const alreadyHandled = guestHandled.has(n.id);
+
+    const isPenaltyChoice = n.type === 'penalty_issued' && n.data?.payment_method === 'member_choice';
+    const penaltyResolved = Boolean(n.data?.resolved);
+    const penaltyCancelled = Boolean(n.data?.cancelled);
+
+    return (
+        <li className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-5">
+                <Trash2 className="w-4 h-4 text-white" />
+            </div>
+
+            <div
+                ref={rowRef}
+                onClick={() => { if (!movedRef.current && !n.is_read) onRead(n.id); }}
+                style={{
+                    transform: `translateX(${dragX}px)`,
+                    transition: dragging ? 'none' : 'transform .2s ease',
+                    touchAction: 'pan-y', // cho phép cuộn dọc mặc định, JS tự xử lý ngang
+                }}
+                className={`relative flex items-start gap-3 px-4 py-3 cursor-pointer bg-white ${n.is_read ? '' : 'bg-blue-50/40 hover:bg-blue-50'}`}
+            >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${cfg.bg}`}>
+                    <Icon className={`w-4 h-4 ${cfg.cls}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className={`text-sm leading-snug ${n.is_read ? 'text-gray-600' : 'text-gray-900 font-semibold'}`}>
+                        {n.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-snug">{n.message}</p>
+
+                    <div className="flex items-center justify-between mt-1">
+                        <p className="text-[10px] text-gray-300">
+                            {format(new Date(n.created_at), 'dd/MM HH:mm', { locale: vi })}
+                        </p>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(n.id); }}
+                            className="text-gray-300 hover:text-red-500 transition-colors p-1 -m-1"
+                            aria-label="Xoá thông báo"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+
+                    {isGuestConfirm && !alreadyHandled && (
+                        <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
+                            <button
+                                onClick={() => onGuestConfirm(n, 'grouped')}
+                                disabled={guestActionId === n.id}
+                                className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                            >
+                                {guestActionId === n.id
+                                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                                    : <Wallet className="w-3 h-3" />}
+                                Gộp vào ví
+                            </button>
+                            <button
+                                onClick={() => onGuestConfirm(n, 'separate')}
+                                disabled={guestActionId === n.id}
+                                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50"
+                            >
+                                💵 Khách tự trả
+                            </button>
+                        </div>
+                    )}
+
+                    {isGuestConfirm && alreadyHandled && (
+                        <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
+                    )}
+
+                    {isPenaltyChoice && !penaltyResolved && (
+                        <div className="mt-2" onClick={e => e.stopPropagation()}>
+                            <button
+                                onClick={() => onPenaltyClick(n)}
+                                className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                            >
+                                💳 Thanh toán ngay
+                            </button>
+                        </div>
+                    )}
+
+                    {isPenaltyChoice && penaltyResolved && penaltyCancelled && (
+                        <p className="text-[11px] text-gray-400 font-medium mt-1.5">🚫 Admin đã huỷ</p>
+                    )}
+
+                    {isPenaltyChoice && penaltyResolved && !penaltyCancelled && (
+                        <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
+                    )}
+                </div>
+                {!n.is_read && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />}
+            </div>
+        </li>
+    );
+}
 
 export function NotificationBell() {
     const [open, setOpen] = useState(false);
@@ -213,6 +403,34 @@ export function NotificationBell() {
         try { await notificationsApi.markAllRead(); } catch { }
     };
 
+    const handleDelete = async (id: string) => {
+        const target = items.find(i => i.id === id);
+        setItems(prev => prev.filter(n => n.id !== id));
+        if (target && !target.is_read) setUnread(c => Math.max(0, c - 1));
+        try {
+            await notificationsApi.delete(id);
+        } catch {
+            toast.error('Xoá thông báo thất bại');
+            load();
+        }
+    };
+
+    const handleDeleteAll = async () => {
+        if (items.length === 0) return;
+        if (!window.confirm('Xoá tất cả thông báo?')) return;
+        const prevItems = items;
+        const prevUnread = unread;
+        setItems([]);
+        setUnread(0);
+        try {
+            await notificationsApi.deleteAll();
+        } catch {
+            toast.error('Xoá tất cả thông báo thất bại');
+            setItems(prevItems);
+            setUnread(prevUnread);
+        }
+    };
+
     return (
         <>
             <button
@@ -243,10 +461,15 @@ export function NotificationBell() {
 
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
                         <p className="text-sm font-semibold text-gray-900">Thông báo</p>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                             {unread > 0 && (
                                 <button onClick={markAllRead} className="text-xs text-blue-600 font-medium">
                                     Đọc tất cả
+                                </button>
+                            )}
+                            {items.length > 0 && (
+                                <button onClick={handleDeleteAll} className="text-xs text-red-500 font-medium">
+                                    Xoá tất cả
                                 </button>
                             )}
                             <button onClick={() => setOpen(false)} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
@@ -266,92 +489,26 @@ export function NotificationBell() {
                             <div className="py-10 text-center text-gray-400 text-sm">Chưa có thông báo nào</div>
                         ) : (
                             <ul className="divide-y divide-gray-50">
-                                {items.map(n => {
-                                    const cfg = TYPE_CFG[n.type] ?? TYPE_CFG.payment_added;
-                                    const Icon = cfg.icon;
-                                    const isGuestConfirm = n.type === 'wallet_guest_confirm' || n.data?.type === 'wallet_guest_confirm';
-                                    const alreadyHandled = guestHandled.has(n.id);
-
-                                    const isPenaltyChoice =
-                                        n.type === 'penalty_issued' && n.data?.payment_method === 'member_choice';
-                                    const penaltyResolved = Boolean(n.data?.resolved);
-                                    const penaltyCancelled = Boolean(n.data?.cancelled);
-
-                                    return (
-                                        <li
-                                            key={n.id}
-                                            onClick={() => !n.is_read && markRead(n.id)}
-                                            className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${n.is_read ? 'bg-white' : 'bg-blue-50/40 hover:bg-blue-50'}`}
-                                        >
-                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${cfg.bg}`}>
-                                                <Icon className={`w-4 h-4 ${cfg.cls}`} />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className={`text-sm leading-snug ${n.is_read ? 'text-gray-600' : 'text-gray-900 font-semibold'}`}>
-                                                    {n.title}
-                                                </p>
-                                                <p className="text-xs text-gray-500 mt-0.5 leading-snug">{n.message}</p>
-                                                <p className="text-[10px] text-gray-300 mt-1">
-                                                    {format(new Date(n.created_at), 'dd/MM HH:mm', { locale: vi })}
-                                                </p>
-
-                                                {isGuestConfirm && !alreadyHandled && (
-                                                    <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
-                                                        <button
-                                                            onClick={() => handleGuestConfirm(n, 'grouped')}
-                                                            disabled={guestActionId === n.id}
-                                                            className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                                                        >
-                                                            {guestActionId === n.id
-                                                                ? <Loader2 className="w-3 h-3 animate-spin" />
-                                                                : <Wallet className="w-3 h-3" />}
-                                                            Gộp vào ví
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleGuestConfirm(n, 'separate')}
-                                                            disabled={guestActionId === n.id}
-                                                            className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50"
-                                                        >
-                                                            💵 Khách tự trả
-                                                        </button>
-                                                    </div>
-                                                )}
-
-                                                {isGuestConfirm && alreadyHandled && (
-                                                    <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
-                                                )}
-
-                                                {isPenaltyChoice && !penaltyResolved && (
-                                                    <div className="mt-2" onClick={e => e.stopPropagation()}>
-                                                        <button
-                                                            onClick={() => {
-                                                                setPenaltyModalData({
-                                                                    id: n.data.fund_transaction_id,
-                                                                    amount: n.data.amount,
-                                                                    reason: n.data.reason,
-                                                                });
-                                                                setOpen(false);
-                                                                if (!n.is_read) markRead(n.id);
-                                                            }}
-                                                            className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600"
-                                                        >
-                                                            💳 Thanh toán ngay
-                                                        </button>
-                                                    </div>
-                                                )}
-
-                                                {isPenaltyChoice && penaltyResolved && penaltyCancelled && (
-                                                    <p className="text-[11px] text-gray-400 font-medium mt-1.5">🚫 Admin đã huỷ</p>
-                                                )}
-
-                                                {isPenaltyChoice && penaltyResolved && !penaltyCancelled && (
-                                                    <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
-                                                )}
-                                            </div>
-                                            {!n.is_read && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />}
-                                        </li>
-                                    );
-                                })}
+                                {items.map(n => (
+                                    <NotificationItem
+                                        key={n.id}
+                                        n={n}
+                                        onRead={markRead}
+                                        onDelete={handleDelete}
+                                        guestActionId={guestActionId}
+                                        guestHandled={guestHandled}
+                                        onGuestConfirm={handleGuestConfirm}
+                                        onPenaltyClick={(notif) => {
+                                            setPenaltyModalData({
+                                                id: notif.data.fund_transaction_id,
+                                                amount: notif.data.amount,
+                                                reason: notif.data.reason,
+                                            });
+                                            setOpen(false);
+                                            if (!notif.is_read) markRead(notif.id);
+                                        }}
+                                    />
+                                ))}
                             </ul>
                         )}
                     </div>

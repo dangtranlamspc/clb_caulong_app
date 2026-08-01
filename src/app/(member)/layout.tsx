@@ -301,8 +301,7 @@ export default function MemberLayout({
     const firstName = user?.full_name?.split(" ").pop() ?? user?.full_name;
 
     return (
-        <div
-            className="app-shell min-h-screen pb-24">
+        <div className="app-shell min-h-screen pb-24 overflow-x-hidden">
             <div
                 className="fixed inset-0 -z-10"
                 style={{ backgroundColor: "#f4f6fa" }}

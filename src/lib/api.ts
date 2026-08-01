@@ -209,6 +209,8 @@ export const notificationsApi = {
   unreadCount: () => api.get("/notifications/unread-count"),
   markRead: (id: string) => api.patch(`/notifications/${id}/read`),
   markAllRead: () => api.patch("/notifications/read-all"),
+  delete: (id: string) => api.delete(`/notifications/${id}`),
+  deleteAll: () => api.delete("/notifications"),
 };
 
 export const walletApi = {
