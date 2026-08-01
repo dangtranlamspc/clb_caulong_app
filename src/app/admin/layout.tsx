@@ -9,6 +9,7 @@ import {
   isAdminMenuActive,
 } from "@/components/admin/AdminMenuDrawer";
 import { authApi } from "@/lib/api";
+import { AdminNotificationBell } from "@/components/admin/notifications/AdminNotificationBell";
 
 function BadmintonLogo({ size = 72 }: { size?: number }) {
   return (
@@ -104,59 +105,52 @@ export default function AdminLayout({
             </div>
 
             <div className="flex flex-col">
-              <span
-                className="font-bold text-white"
-                style={{
-                  fontSize: 16,
-                  letterSpacing: "-0.01em",
-                }}
-              >
+              <span className="font-bold text-white" style={{ fontSize: 16, letterSpacing: "-0.01em" }}>
                 {headerTitle}
               </span>
-
-              <span
-                style={{
-                  fontSize: 10,
-                  color: "rgba(255,255,255,.6)",
-                }}
-              >
+              <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)" }}>
                 BNB Administration
               </span>
             </div>
           </div>
 
-          <button
-            onClick={handleLogout}
-            title="Đăng xuất"
-            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-            style={{
-              background: "rgba(255,255,255,.08)",
-              border: "1px solid rgba(255,255,255,.10)",
-              color: "rgba(255,255,255,.75)",
-            }}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget;
-              el.style.background = "rgba(239,68,68,.18)";
-              el.style.borderColor = "rgba(239,68,68,.35)";
-              el.style.color = "#fca5a5";
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget;
-              el.style.background = "rgba(255,255,255,.08)";
-              el.style.borderColor = "rgba(255,255,255,.10)";
-              el.style.color = "rgba(255,255,255,.75)";
-            }}
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            <AdminNotificationBell />
+
+            <button
+              onClick={handleLogout}
+              title="Đăng xuất"
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={{
+                background: "rgba(255,255,255,.08)",
+                border: "1px solid rgba(255,255,255,.10)",
+                color: "rgba(255,255,255,.75)",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget;
+                el.style.background = "rgba(239,68,68,.18)";
+                el.style.borderColor = "rgba(239,68,68,.35)";
+                el.style.color = "#fca5a5";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget;
+                el.style.background = "rgba(255,255,255,.08)";
+                el.style.borderColor = "rgba(255,255,255,.10)";
+                el.style.color = "rgba(255,255,255,.75)";
+              }}
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-      </header>
+      </header >
 
       <main className="flex-1 min-h-0 w-full px-4 lg:px-8 py-5 overflow-y-auto hide-scrollbar">
         {children}
       </main>
 
       <AdminMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
-    </div>
+    </div >
   );
 }

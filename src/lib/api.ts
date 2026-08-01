@@ -685,3 +685,14 @@ export const fundApi = {
     data: { method: "wallet" | "bank_transfer" | "cash"; payment_reference?: string; payment_proof_url?: string },
   ) => api.post(`/fund/penalties/${id}/submit-payment`, data),
 };
+
+
+export const notificationsAdminApi = {
+  list: (unread?: boolean) =>
+    api.get("/admin/notifications", { params: { unread: unread ? "true" : undefined } }),
+  unreadCount: () => api.get("/admin/notifications/unread-count"),
+  markRead: (id: string) => api.patch(`/admin/notifications/${id}/read`),
+  markAllRead: () => api.patch("/admin/notifications/read-all"),
+  delete: (id: string) => api.delete(`/admin/notifications/${id}`),
+  deleteAll: () => api.delete("/admin/notifications"),
+};
