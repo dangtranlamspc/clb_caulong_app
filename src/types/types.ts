@@ -9,4 +9,6 @@ export type CartItem = {
     size: string;
     quantity: number;
     unit_price: number;
+    jersey_number?: string;
+    print_name?: string;
 };

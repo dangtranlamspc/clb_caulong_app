@@ -14,7 +14,7 @@ import {
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { eventsAdminApi } from "@/lib/api";
 import ShirtOrderFormPage from "@/components/admin/events/form/ShirtOrderFormPage";
 import BirthdayFormPage from "@/components/admin/events/form/BirthdayFormPage";
@@ -112,8 +112,6 @@ const TYPE_FILTER_OPTIONS = [
 ];
 
 
-
-
 function SkeletonTableRow() {
     return (
         <tr className="animate-pulse">
@@ -172,6 +170,7 @@ function SkeletonMobileCard() {
 
 export default function ActivitiesListPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [typeFilter, setTypeFilter] = useState("");
@@ -194,6 +193,23 @@ export default function ActivitiesListPage() {
     const [selectedActivity, setSelectedActivity] = useState<any>(null);
     const [showRegistrations, setShowRegistrations] = useState(false);
     const [showAddRegistration, setShowAddRegistration] = useState(false);
+
+    useEffect(() => {
+        const openId = searchParams.get("openRegistrations");
+        if (!openId) return;
+
+        (async () => {
+            try {
+                const { data: full } = await eventsAdminApi.get(openId);
+                setSelectedActivity(full);
+                setShowRegistrations(true);
+            } catch {
+                toast.error("Không tìm thấy hoạt động cần xem");
+            } finally {
+                router.replace("/admin/events");
+            }
+        })();
+    }, [searchParams]);
 
     useEffect(() => {
         const el = tabRefs.current[typeFilter];

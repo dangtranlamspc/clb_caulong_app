@@ -59,8 +59,8 @@ export function ShirtOrderForm({
                   onClick={() => setSelectedGender(g)}
                   disabled={!canRegister}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${selectedGender === g
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-600 border-gray-200"
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-600 border-gray-200"
                     }`}
                 >
                   {g === "nam" ? "Nam" : "Nữ"}
@@ -89,10 +89,10 @@ export function ShirtOrderForm({
                       onClick={() => toggleSize(s)}
                       disabled={!canRegister}
                       className={`relative w-11 h-11 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isSelected
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : isInCart
-                            ? "bg-amber-50 text-amber-500 border-amber-200"
-                            : "bg-white text-gray-600 border-gray-200"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : isInCart
+                          ? "bg-amber-50 text-amber-500 border-amber-200"
+                          : "bg-white text-gray-600 border-gray-200"
                         }`}
                     >
                       {s}
@@ -194,11 +194,10 @@ export function ShirtOrderForm({
           {canRegister && (
             <button
               onClick={handlePlaceOrder}
-              disabled={selectedSizeList.length === 0 || placingOrder}
+              disabled={selectedSizeList.length === 0}
               className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {placingOrder && <Loader2 className="w-4 h-4 animate-spin" />}
-              Đặt hàng
+              Thêm vào giỏ hàng
             </button>
           )}
         </>

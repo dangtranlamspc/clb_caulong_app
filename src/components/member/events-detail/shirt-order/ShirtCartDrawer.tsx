@@ -13,8 +13,6 @@ export function ShirtCartDrawer({
   changeCartQty,
   removeCartItem,
   cartTotal,
-  handleCheckout,
-  checkingOut,
   myRegistrations,
   shirtTypes,
   priceOf,
@@ -35,8 +33,6 @@ export function ShirtCartDrawer({
   changeCartQty: (cartId: string, delta: number) => void;
   removeCartItem: (cartId: string) => void;
   cartTotal: number;
-  handleCheckout: () => void;
-  checkingOut: boolean;
   myRegistrations: any[];
   shirtTypes: any[];
   priceOf: (r: any) => number;
@@ -159,14 +155,6 @@ export function ShirtCartDrawer({
                     <span className="text-sm text-gray-500">Tạm tính</span>
                     <span className="font-bold text-gray-900">{fmt(cartTotal)}</span>
                   </div>
-                  <button
-                    onClick={handleCheckout}
-                    disabled={checkingOut}
-                    className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {checkingOut && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Đặt hàng ({cart.length} sản phẩm)
-                  </button>
                 </div>
               )}
 
@@ -305,16 +293,17 @@ export function ShirtCartDrawer({
                     <span className="text-sm text-gray-500">Tổng đã đặt</span>
                     <span className="font-bold text-gray-900">{fmt(subtotal)}</span>
                   </div>
-
-                  {unpaidRegsCount > 0 && (
-                    <button
-                      onClick={openCombinedPay}
-                      className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-orange-200"
-                    >
-                      💳 Thanh toán tất cả ({fmt(unpaidTotal)})
-                    </button>
-                  )}
                 </div>
+              )}
+
+
+              {(cart.length > 0 || unpaidRegsCount > 0) && (
+                <button
+                  onClick={openCombinedPay}
+                  className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-green-200"
+                >
+                  💳 Thanh toán tất cả ({fmt(cartTotal + unpaidTotal)})
+                </button>
               )}
 
               {cart.length > 0 && myRegistrations.length > 0 && (

@@ -59,25 +59,6 @@ function FadeIn({
   );
 }
 
-const STATUS_CFG: Record<
-  string,
-  { label: string; dot: string; border: string }
-> = {
-  completed: {
-    label: "Xong",
-    dot: "bg-emerald-400",
-    border: "border-emerald-400",
-  },
-  waiting_payment: {
-    label: "Chờ TT",
-    dot: "bg-blue-400",
-    border: "border-blue-400",
-  },
-  open: { label: "Sắp", dot: "bg-sky-400", border: "border-sky-400" },
-  full: { label: "Đầy", dot: "bg-orange-400", border: "border-orange-400" },
-  cancelled: { label: "Hủy", dot: "bg-gray-300", border: "border-gray-300" },
-};
-
 function SessionCostDetailModal({
   sessionId,
   onClose,
@@ -314,9 +295,13 @@ function SessionCostCard({
 }) {
   const { session, participants, chi_phi } = item;
   const { full } = fmtDate(session.scheduled_at);
-  const cfg = STATUS_CFG[session.status] ?? STATUS_CFG.open;
-  const isProfit = chi_phi.profit >= 0;
-  const profitBorder = isProfit ? "border-emerald-400" : "border-red-400";
+  const isProfit = chi_phi.profit > 0;
+  const isBreakEven = chi_phi.profit === 0;
+  const profitBorder = isBreakEven
+    ? "border-blue-400"
+    : isProfit
+      ? "border-emerald-400"
+      : "border-red-400";
 
   return (
     <button
@@ -333,21 +318,19 @@ function SessionCostCard({
           </p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
-            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-            {cfg.label}
-          </span>
-          <span
-            className={`flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full ${isProfit
-              ? "bg-emerald-50 text-emerald-600"
-              : "bg-red-50 text-red-500"
-              }`}
-          >
-            {isProfit ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-            {isProfit ? "Lãi" : "Lỗ"}{" "}
-            {isProfit ? "+" : ""}
-            {fmt(chi_phi.profit)}
-          </span>
+          {!isBreakEven && (
+            <span
+              className={`flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full ${isProfit
+                ? "bg-emerald-50 text-emerald-600"
+                : "bg-red-50 text-red-500"
+                }`}
+            >
+              {isProfit ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              {isProfit ? "Lãi" : "Lỗ"}{" "}
+              {isProfit ? "+" : ""}
+              {fmt(chi_phi.profit)}
+            </span>
+          )}
         </div>
       </div>
 
@@ -400,25 +383,27 @@ function SessionCostCard({
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">💵 Tổng thu</span>
             <span
-              className={`font-semibold ${isProfit ? "text-emerald-600" : "text-red-500"}`}
+              className={`font-semibold ${isBreakEven ? "text-blue-600" : isProfit ? "text-emerald-600" : "text-red-500"}`}
             >
               {fmtFull(chi_phi.total_paid)}
             </span>
           </div>
         </div>
 
-        <div className="flex justify-between text-sm pt-1.5 border-t border-gray-200 mt-1">
-          <span className="font-semibold text-gray-700 flex items-center gap-1">
-            {isProfit ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-500" />}
-            {isProfit ? "Lãi" : "Lỗ"}
-          </span>
-          <span
-            className={`font-black ${isProfit ? "text-emerald-600" : "text-red-500"}`}
-          >
-            {isProfit ? "+" : ""}
-            {fmtFull(chi_phi.profit)}
-          </span>
-        </div>
+        {!isBreakEven && (
+          <div className="flex justify-between text-sm pt-1.5 border-t border-gray-200 mt-1">
+            <span className="font-semibold text-gray-700 flex items-center gap-1">
+              {isProfit ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-500" />}
+              {isProfit ? "Lãi" : "Lỗ"}
+            </span>
+            <span
+              className={`font-black ${isProfit ? "text-emerald-600" : "text-red-500"}`}
+            >
+              {isProfit ? "+" : ""}
+              {fmtFull(chi_phi.profit)}
+            </span>
+          </div>
+        )}
       </div>
     </button>
   );

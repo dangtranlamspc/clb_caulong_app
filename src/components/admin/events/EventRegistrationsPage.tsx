@@ -51,6 +51,15 @@ export default function EventRegistrationsPage({
 
     const [proofImageUrl, setProofImageUrl] = useState<string | null>(null);
 
+    const [rejectPaymentConfirm, setRejectPaymentConfirm] = useState<{ ids: string[]; label: string } | null>(null);
+    const [rejectingPayment, setRejectingPayment] = useState(false);
+
+    const [rejectCancelConfirm, setRejectCancelConfirm] = useState<{ regId: string; label: string } | null>(null);
+    const [rejectingCancel, setRejectingCancel] = useState(false);
+
+    const [removeConfirm, setRemoveConfirm] = useState<{ type: string; regId: string; label: string } | null>(null);
+    const [removing, setRemoving] = useState(false);
+
 
     const handleRefresh = async () => {
         setRefreshing(true);
@@ -78,15 +87,6 @@ export default function EventRegistrationsPage({
         try {
             await eventsAdminApi.approveCancelRequest(regId);
             toast.success("Đã duyệt huỷ và hoàn tiền");
-            fetchAll();
-        } catch { }
-    };
-
-    const handleRejectCancel = async (regId: string, label: string) => {
-        if (!confirm(`Từ chối yêu cầu huỷ của "${label}"?`)) return;
-        try {
-            await eventsAdminApi.rejectCancelRequest(regId);
-            toast.success("Đã từ chối yêu cầu huỷ");
             fetchAll();
         } catch { }
     };
@@ -148,23 +148,65 @@ export default function EventRegistrationsPage({
             fetchAll();
         } catch { }
     };
-    const handleRejectPayment = async (regId: string | string[], label: string) => {
+
+    const handleRejectPayment = (regId: string | string[], label: string) => {
         const ids = Array.isArray(regId) ? regId : [regId];
-        if (!confirm(`Từ chối yêu cầu thanh toán của "${label}"?`)) return;
-        try {
-            await Promise.all(ids.map((id) => eventsAdminApi.rejectShirtOrder(id)));
-            toast.success("Đã từ chối yêu cầu thanh toán");
-            fetchAll();
-        } catch { }
+        setRejectPaymentConfirm({ ids, label });
     };
 
-    const handleRemove = async (type: string, regId: string, label: string) => {
-        if (!confirm(`Xoá đăng ký của "${label}"?`)) return;
+
+    const executeRejectPayment = async () => {
+        if (!rejectPaymentConfirm) return;
+        setRejectingPayment(true);
         try {
-            await eventsAdminApi.removeRegistration(type, regId);
-            toast.success("Đã xoá đăng ký");
+            await Promise.all(rejectPaymentConfirm.ids.map((id) => eventsAdminApi.rejectShirtOrder(id)));
+            toast.success("Đã từ chối yêu cầu thanh toán");
+            setRejectPaymentConfirm(null);
             fetchAll();
-        } catch { }
+        } catch {
+            toast.error("Từ chối thất bại");
+        } finally {
+            setRejectingPayment(false);
+        }
+    };
+
+
+    const handleRejectCancel = (regId: string, label: string) => {
+        setRejectCancelConfirm({ regId, label });
+    };
+    const executeRejectCancel = async () => {
+        if (!rejectCancelConfirm) return;
+        setRejectingCancel(true);
+        try {
+            await eventsAdminApi.rejectCancelRequest(rejectCancelConfirm.regId);
+            toast.success("Đã từ chối yêu cầu huỷ");
+            setRejectCancelConfirm(null);
+            fetchAll();
+        } catch {
+            toast.error("Từ chối thất bại");
+        } finally {
+            setRejectingCancel(false);
+        }
+    };
+
+    const handleRemove = (type: string, regId: string, label: string) => {
+        setRemoveConfirm({ type, regId, label });
+    };
+
+
+    const executeRemove = async () => {
+        if (!removeConfirm) return;
+        setRemoving(true);
+        try {
+            await eventsAdminApi.removeRegistration(removeConfirm.type, removeConfirm.regId);
+            toast.success("Đã xoá đăng ký");
+            setRemoveConfirm(null);
+            fetchAll();
+        } catch {
+            toast.error("Xoá thất bại");
+        } finally {
+            setRemoving(false);
+        }
     };
 
     if (loading) {
@@ -367,13 +409,18 @@ export default function EventRegistrationsPage({
                             <div className="px-5 py-4 border-b border-gray-100">
                                 <h2 className="font-bold text-gray-900">Chốt danh sách đặt áo</h2>
                                 <p className="text-sm text-gray-500 mt-1">
-                                    Các đăng ký chưa xác nhận bên dưới sẽ được xử lý khi bấm "Chốt":
+                                    Các đăng ký <strong>chưa thanh toán và chưa gửi yêu cầu thanh toán</strong> bên dưới sẽ được xử lý khi bấm "Chốt":
                                     thành viên sẽ tự động bị trừ ví, khách chưa thanh toán sẽ được đánh dấu đỏ.
+                                    Đơn đã bị từ chối hoặc đang chờ admin xác nhận sẽ <strong>không</strong> bị ảnh hưởng — cần xử lý thủ công.
                                 </p>
                             </div>
                             <div className="flex-1 overflow-y-auto p-5 space-y-2">
                                 {registrations
-                                    .filter((r: any) => r.payment_status !== "confirmed")
+                                    .filter((r: any) =>
+                                        r.payment_status !== "confirmed" &&
+                                        r.payment_status !== "rejected" &&
+                                        !r.payment_method
+                                    )
                                     .map((r: any) => (
                                         <div key={r.id} className="flex items-center justify-between text-sm border border-gray-100 rounded-lg px-3 py-2">
                                             <div>
@@ -389,9 +436,13 @@ export default function EventRegistrationsPage({
                                             </span>
                                         </div>
                                     ))}
-                                {registrations.filter((r: any) => r.payment_status !== "confirmed").length === 0 && (
-                                    <p className="text-center text-gray-400 py-8">Không còn đơn nào chưa xác nhận</p>
-                                )}
+                                {registrations.filter((r: any) =>
+                                    r.payment_status !== "confirmed" &&
+                                    r.payment_status !== "rejected" &&
+                                    !r.payment_method
+                                ).length === 0 && (
+                                        <p className="text-center text-gray-400 py-8">Không còn đơn nào cần xử lý</p>
+                                    )}
                             </div>
                             <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">
                                 <button
@@ -445,10 +496,116 @@ export default function EventRegistrationsPage({
                     </div>,
                     document.body
                 )}
+
+
+                {rejectPaymentConfirm && (
+                    <ConfirmModal
+                        title="Từ chối thanh toán"
+                        message={<>Từ chối yêu cầu thanh toán của <strong>"{rejectPaymentConfirm.label}"</strong>?</>}
+                        confirmLabel="Từ chối"
+                        confirmColorClass="bg-red-500 hover:bg-red-600"
+                        icon={<XCircle className="w-5 h-5 text-red-500" />}
+                        iconBgClass="bg-red-50"
+                        loading={rejectingPayment}
+                        onConfirm={executeRejectPayment}
+                        onCancel={() => setRejectPaymentConfirm(null)}
+                    />
+                )}
+
+
+                {rejectCancelConfirm && (
+                    <ConfirmModal
+                        title="Từ chối yêu cầu huỷ"
+                        message={<>Từ chối yêu cầu huỷ của <strong>"{rejectCancelConfirm.label}"</strong>?</>}
+                        confirmLabel="Từ chối"
+                        confirmColorClass="bg-red-500 hover:bg-red-600"
+                        icon={<XCircle className="w-5 h-5 text-red-500" />}
+                        iconBgClass="bg-red-50"
+                        loading={rejectingCancel}
+                        onConfirm={executeRejectCancel}
+                        onCancel={() => setRejectCancelConfirm(null)}
+                    />
+                )}
+
+
+                {removeConfirm && (
+                    <ConfirmModal
+                        title="Xoá đăng ký"
+                        message={<>Xoá đăng ký của <strong>"{removeConfirm.label}"</strong>? Hành động này không thể hoàn tác.</>}
+                        confirmLabel="Xoá"
+                        confirmColorClass="bg-red-600 hover:bg-red-700"
+                        icon={<Trash2 className="w-5 h-5 text-red-600" />}
+                        iconBgClass="bg-red-50"
+                        loading={removing}
+                        onConfirm={executeRemove}
+                        onCancel={() => setRemoveConfirm(null)}
+                    />
+                )}
+
             </div>
         </div>
     );
 }
+
+function ConfirmModal({
+    title,
+    message,
+    confirmLabel,
+    confirmColorClass,
+    icon,
+    iconBgClass,
+    loading,
+    onConfirm,
+    onCancel,
+}: {
+    title: string;
+    message: React.ReactNode;
+    confirmLabel: string;
+    confirmColorClass: string;
+    icon: React.ReactNode;
+    iconBgClass: string;
+    loading: boolean;
+    onConfirm: () => void;
+    onCancel: () => void;
+}) {
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[999999] bg-black/40 flex items-center justify-center p-4"
+            onClick={(e) => e.target === e.currentTarget && !loading && onCancel()}
+        >
+            <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${iconBgClass}`}>
+                        {icon}
+                    </div>
+                    <div>
+                        <h2 className="font-bold text-gray-900">{title}</h2>
+                        <p className="text-sm text-gray-500 mt-0.5">{message}</p>
+                    </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                    <button
+                        onClick={onCancel}
+                        disabled={loading}
+                        className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                        Huỷ
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        disabled={loading}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-60 flex items-center gap-1.5 ${confirmColorClass}`}
+                    >
+                        {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        {confirmLabel}
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+}
+
 
 function ProofImageModal({
     url,

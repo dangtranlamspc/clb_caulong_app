@@ -155,33 +155,57 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
 
   const selectedSizeList = Object.keys(sizeQuantities);
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = () => {
     if (!selectedType) return;
     if (selectedSizeList.length === 0) return toast.error("Vui lòng chọn ít nhất 1 size");
 
-    setPlacingOrder(true);
-    try {
+    setCart((prev) => {
+      const next = [...prev];
+
       for (const s of selectedSizeList) {
-        await activitiesApi.registerShirtOrder(activity.id, {
-          shirt_type_id: selectedType.id,
-          color_id: activeColor?.id ?? undefined,
-          gender: selectedGender,
-          size: s,
-          quantity: sizeQuantities[s] < 1 ? 1 : sizeQuantities[s],
-          jersey_number: jerseyNumber || undefined,
-          print_name: printName || undefined,
-        });
+        const qtyToAdd = sizeQuantities[s] < 1 ? 1 : sizeQuantities[s];
+
+        const existingIndex = next.findIndex(
+          (item) =>
+            item.shirt_type_id === selectedType.id &&
+            item.gender === selectedGender &&
+            (item.color_id ?? null) === (activeColor?.id ?? null) &&
+            item.size === s,
+        );
+
+        if (existingIndex !== -1) {
+          // Đã có dòng cùng loại áo + màu + size trong giỏ -> cộng dồn số lượng
+          next[existingIndex] = {
+            ...next[existingIndex],
+            quantity: next[existingIndex].quantity + qtyToAdd,
+            jersey_number: jerseyNumber || next[existingIndex].jersey_number,
+            print_name: printName || next[existingIndex].print_name,
+          };
+        } else {
+          next.push({
+            cart_id: `${selectedType.id}-${selectedGender}-${activeColor?.id ?? "nocolor"}-${s}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            shirt_type_id: selectedType.id,
+            shirt_type_name: selectedType.name,
+            image: activeColorImage ?? undefined,
+            color_id: activeColor?.id,
+            color_name: activeColor?.name,
+            gender: selectedGender,
+            size: s,
+            quantity: qtyToAdd,
+            unit_price: selectedType.price_per_shirt ?? 0,
+            jersey_number: jerseyNumber || undefined,
+            print_name: printName || undefined,
+          });
+        }
       }
-      toast.success(`Đã đặt hàng ${selectedSizeList.length} sản phẩm`);
-      setSizeQuantities({});
-      setJerseyNumber("");
-      setPrintName("");
-      onChanged();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Đặt hàng thất bại, vui lòng thử lại");
-    } finally {
-      setPlacingOrder(false);
-    }
+
+      return next;
+    });
+
+    toast.success(`Đã thêm ${selectedSizeList.length} sản phẩm vào giỏ hàng`);
+    setSizeQuantities({});
+    setJerseyNumber("");
+    setPrintName("");
   };
 
   const changeCartQty = (cartId: string, delta: number) => {
@@ -200,28 +224,6 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
 
   const cartTotal = cart.reduce((s, item) => s + item.unit_price * item.quantity, 0);
 
-  const handleCheckout = async () => {
-    if (cart.length === 0) return;
-    setCheckingOut(true);
-    try {
-      for (const item of cart) {
-        await activitiesApi.registerShirtOrder(activity.id, {
-          shirt_type_id: item.shirt_type_id,
-          color_id: item.color_id ?? undefined,
-          gender: item.gender,
-          size: item.size,
-          quantity: item.quantity,
-        });
-      }
-      toast.success(`Đã đặt hàng ${cart.length} sản phẩm`);
-      setCart([]);
-      onChanged();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Đặt hàng thất bại, vui lòng thử lại");
-    } finally {
-      setCheckingOut(false);
-    }
-  };
   const handleCancel = async (reg: any) => {
     if (!confirm("Xoá sản phẩm này khỏi đơn hàng?")) return;
     try {
@@ -291,60 +293,57 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
   );
   const unpaidTotal = unpaidRegs.reduce((s: number, r: any) => s + priceOf(r), 0);
 
-  const handlePayWalletAll = async () => {
-    if (unpaidRegs.length === 0) return;
-    setSubmittingPay(true);
-    try {
-      for (const reg of unpaidRegs) {
-        await activitiesApi.payShirtOrder(activity.id, { registration_id: reg.id, method: "wallet" });
-      }
-      toast.success(`Đã thanh toán ${fmt(unpaidTotal)} từ ví cho ${unpaidRegs.length} sản phẩm`);
-      closeConfirmPanel();
-      onChanged();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Thanh toán thất bại");
-    } finally {
-      setSubmittingPay(false);
-    }
-  };
+  const combinedUnpaidCount = cart.length + unpaidRegs.length;
+  const combinedUnpaidTotal = cartTotal + unpaidTotal;
 
-  const handleConfirmTransferredAll = async (ref: string) => {
-    if (unpaidRegs.length === 0) return;
+  const handlePayAll = async (method: "wallet" | "transfer" | "cash", ref?: string) => {
+    if (combinedUnpaidCount === 0) return;
     setSubmittingPay(true);
     try {
-      for (const reg of unpaidRegs) {
-        await activitiesApi.payShirtOrder(activity.id, {
-          registration_id: reg.id,
-          method: "transfer",
+      if (cart.length > 0) {
+        const items = cart.map((item) => ({
+          shirt_type_id: item.shirt_type_id,
+          color_id: item.color_id ?? undefined,
+          gender: item.gender,
+          size: item.size,
+          quantity: item.quantity,
+          jersey_number: item.jersey_number,
+          print_name: item.print_name,
+        }));
+        await activitiesApi.registerAndPayShirtOrderBatch(activity.id, {
+          items,
+          method,
           payment_reference: ref,
         });
       }
-      toast.success("Đã ghi nhận chuyển khoản, chờ admin xác nhận!");
+      if (unpaidRegs.length > 0) {
+        await activitiesApi.payShirtOrderBatch(activity.id, {
+          registration_ids: unpaidRegs.map((r: any) => r.id),
+          method,
+          payment_reference: ref,
+        });
+      }
+
+      setCart([]);
+      toast.success(
+        method === "wallet"
+          ? `Đã thanh toán ${fmt(combinedUnpaidTotal)} từ ví`
+          : method === "transfer"
+            ? "Đã ghi nhận chuyển khoản, chờ admin xác nhận!"
+            : "Đã thông báo admin!",
+      );
       closeConfirmPanel();
       onChanged();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Gửi thất bại");
+      toast.error(err?.response?.data?.message ?? "Thao tác thất bại");
     } finally {
       setSubmittingPay(false);
     }
   };
 
-  const handleRequestCashAll = async () => {
-    if (unpaidRegs.length === 0) return;
-    setSubmittingPay(true);
-    try {
-      for (const reg of unpaidRegs) {
-        await activitiesApi.payShirtOrder(activity.id, { registration_id: reg.id, method: "cash" });
-      }
-      toast.success("Đã thông báo admin!");
-      closeConfirmPanel();
-      onChanged();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Gửi thất bại");
-    } finally {
-      setSubmittingPay(false);
-    }
-  };
+  const handlePayWalletAll = () => handlePayAll("wallet");
+  const handleConfirmTransferredAll = (ref: string) => handlePayAll("transfer", ref);
+  const handleRequestCashAll = () => handlePayAll("cash");
 
   if (shirtTypes.length === 0) {
     return (
@@ -406,8 +405,8 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
         changeCartQty={changeCartQty}
         removeCartItem={removeCartItem}
         cartTotal={cartTotal}
-        handleCheckout={handleCheckout}
-        checkingOut={checkingOut}
+        // handleCheckout={handleCheckout}
+        // checkingOut={checkingOut}
         myRegistrations={pendingRegistrations}
         shirtTypes={shirtTypes}
         priceOf={priceOf}
@@ -426,8 +425,8 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
         open={showPayPanel}
         visible={payPanelVisible}
         onClose={closePayPanel}
-        unpaidCount={unpaidRegs.length}
-        unpaidTotal={unpaidTotal}
+        unpaidCount={combinedUnpaidCount}
+        unpaidTotal={combinedUnpaidTotal}
         activityTitle={activity.title}
         selectPayMethod={selectPayMethod}
       />
@@ -438,8 +437,8 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
         onClose={closeConfirmPanel}
         payMethod={payMethod}
         activity={activity}
-        unpaidCount={unpaidRegs.length}
-        unpaidTotal={unpaidTotal}
+        unpaidCount={combinedUnpaidCount}
+        unpaidTotal={combinedUnpaidTotal}
         backToChooseMethod={backToChooseMethod}
         handlePayWalletAll={handlePayWalletAll}
         handleConfirmTransferredAll={handleConfirmTransferredAll}

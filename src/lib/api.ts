@@ -299,6 +299,16 @@ export const activitiesApi = {
   updateShirtOrderQuantity: (activityId: string, regId: string, quantity: number) =>
     api.patch(`/activities/${activityId}/register/shirt-order/${regId}/quantity`, { quantity }),
 
+  registerShirtOrderBatch: (activityId: string, items: any[]) =>
+    api.post(`/activities/${activityId}/register/shirt-order/batch`, { items }),
+
+  payShirtOrderBatch: (activityId: string, dto: any) =>
+    api.post(`/activities/${activityId}/register/shirt-order/payment-batch`, dto),
+
+
+  registerAndPayShirtOrderBatch: (activityId: string, dto: any) =>
+    api.post(`/activities/${activityId}/register/shirt-order/batch-with-payment`, dto),
+
 };
 
 //admin
@@ -480,6 +490,20 @@ export const eventsAdminApi = {
     api.post(`/admin/activities/${activityId}/reopen`),
   reopenActivityWithDeadline: (activityId: string, deadline: string) =>
     api.post(`/admin/activities/${activityId}/reopen-with-deadline`, { deadline }),
+  getShirtOrderRegistrationDetail: (registrationId: string) =>
+    api.get(`/admin/activities/registrations/${registrationId}/detail`),
+  confirmShirtOrderBatch: (ids: string[]) =>
+    api.patch(`/admin/activities/shirt-order-registrations/confirm-batch`, { registration_ids: ids }),
+
+  rejectShirtOrderBatch: (ids: string[]) =>
+    api.patch(`/admin/activities/shirt-order-registrations/reject-batch`, { registration_ids: ids }),
+
+  getShirtOrderRegistrationsDetailBatch: (ids: string[]) =>
+    api.get(`/admin/activities/registrations/detail-batch`, {
+      params: { ids: ids.join(",") },
+      skipErrorToast: true,
+    } as any),
+
 };
 
 export const uploadsAdminApi = {
