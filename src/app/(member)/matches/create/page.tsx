@@ -117,6 +117,12 @@ export default function CreateMatchPage() {
     const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
     const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
+
+    const btnRef = useRef<HTMLButtonElement>(null);
+    const [btnWidth, setBtnWidth] = useState<number | null>(null);
+
+
+
     useEffect(() => {
         const el = tabRefs.current[matchType];
         if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth });
@@ -166,6 +172,12 @@ export default function CreateMatchPage() {
         }
     };
 
+    useEffect(() => {
+        if (!loading && btnRef.current) {
+            setBtnWidth(btnRef.current.offsetWidth);
+        }
+    }, [loading, canSubmit, matchType]);
+
     const showPartnerA = matchType !== 'singles';
     const showPartnerA3 = matchType === 'triples';
     const showOpponentB2 = matchType !== 'singles';
@@ -181,9 +193,9 @@ export default function CreateMatchPage() {
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </button>
                 <div>
-                    <h1 className="text-xl font-bold text-white"
+                    <h1 className="text-xl font-bold text-dark"
                         style={{ textShadow: "0 1px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.8)" }}>Tạo trận giao hữu</h1>
-                    <p className="text-xs text-white mt-0.5"
+                    <p className="text-xs text-dark mt-0.5"
                         style={{ textShadow: "0 1px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.7)" }}>Thách đấu thành viên khác trong CLB · 1 set duy nhất</p>
                 </div>
             </div>
@@ -342,14 +354,25 @@ export default function CreateMatchPage() {
                 />
             </div>
 
-            <button
-                onClick={handleSubmit}
-                disabled={!canSubmit || loading}
-                className="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold text-base hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
-            >
-                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                {loading ? 'Đang gửi...' : '🏸 Gửi lời thách đấu'}
-            </button>
+            <div className="flex justify-center">
+                <button
+                    ref={btnRef}
+                    onClick={handleSubmit}
+                    disabled={!canSubmit || loading}
+                    style={{
+                        width: loading ? 56 : (btnWidth ?? undefined),
+                        borderRadius: loading ? 9999 : 16,
+                        transition: 'width .35s cubic-bezier(.4,0,.2,1), border-radius .35s cubic-bezier(.4,0,.2,1)',
+                    }}
+                    className="py-4 bg-blue-600 text-white font-bold text-base hover:bg-blue-700 active:scale-[0.98] transition-colors overflow-hidden flex items-center justify-center gap-2 shadow-lg shadow-blue-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    {loading ? (
+                        <Loader2 className="w-5 h-5 animate-spin flex-shrink-0" />
+                    ) : (
+                        <span className="whitespace-nowrap px-4">🏸 Gửi lời thách đấu</span>
+                    )}
+                </button>
+            </div>
         </div>
     );
 }

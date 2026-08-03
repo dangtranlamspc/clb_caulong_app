@@ -18,7 +18,7 @@ import {
   CornerDownRight,
   CheckCircle2,
 } from "lucide-react";
-import { motion, LayoutGroup } from "framer-motion";
+import { motion, LayoutGroup, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -115,20 +115,17 @@ export default function SessionsPage() {
   } | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const fetchSessions = useCallback(async () => {
-    setLoading(true);
+  const fetchSessions = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     try {
       const params = Object.fromEntries(
         Object.entries(query).filter(([, v]) => v !== ""),
       );
       const { data } = await sessionsAdminApi.list(params);
       const sorted = [...(data.data ?? [])].sort((a: any, b: any) => {
-
         const aTime = new Date(a.scheduled_at).getTime();
         const bTime = new Date(b.scheduled_at).getTime();
-
         if (aTime !== bTime) return bTime - aTime;
-
         const aCreated = new Date(a.created_at).getTime();
         const bCreated = new Date(b.created_at).getTime();
         return bCreated - aCreated;
@@ -136,7 +133,7 @@ export default function SessionsPage() {
       setSessions(sorted);
       setMeta(data.meta);
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   }, [query]);
 
@@ -178,7 +175,14 @@ export default function SessionsPage() {
     try {
       await sessionsAdminApi.updateStatus(id, { status: "cancelled" });
       toast.success("Đã hủy buổi và xóa toàn bộ đăng ký");
-      fetchSessions();
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === id
+            ? { ...s, status: "cancelled", confirmed_count: 0, pending_count: 0 }
+            : s,
+        ),
+      );
+      fetchSessions({ silent: true });
     } finally {
       setActionId(null);
     }
@@ -194,7 +198,10 @@ export default function SessionsPage() {
     try {
       await sessionsAdminApi.updateStatus(id, { status: next });
       toast.success("Đã cập nhật trạng thái");
-      fetchSessions();
+      setSessions((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, status: next } : s)),
+      );
+      fetchSessions({ silent: true });
     } finally {
       setActionId(null);
     }
@@ -212,7 +219,9 @@ export default function SessionsPage() {
     try {
       await sessionsAdminApi.delete(id);
       toast.success("Đã xóa buổi");
-      fetchSessions();
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+      setMeta((prev: any) => ({ ...prev, total: Math.max((prev.total ?? 1) - 1, 0) }));
+      fetchSessions({ silent: true });
     } finally {
       setActionId(null);
     }
@@ -248,7 +257,10 @@ export default function SessionsPage() {
     try {
       await sessionsAdminApi.complete(id);
       toast.success("Đã hoàn thành và khoá buổi đánh!");
-      fetchSessions();
+      setSessions((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, status: "completed" } : s)),
+      );
+      fetchSessions({ silent: true });
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Thất bại");
     } finally {
@@ -568,172 +580,176 @@ export default function SessionsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
-          {sessions.map((s) => {
-            const cfg =
-              s.status === "waiting_payment"
-                ? s.pending_action_count > 0
-                  ? STATUS_CONFIG.waiting_payment
-                  : {
-                    label: "Chờ chốt thanh toán",
-                    cls: "bg-indigo-100 text-indigo-700",
-                  }
-                : (STATUS_CONFIG[s.status] ?? STATUS_CONFIG.open);
-            const nextActions = STATUS_NEXT[s.status] ?? [];
-            const busy = actionId === s.id;
+          <AnimatePresence initial={false}>
+            {sessions.map((s) => {
+              const cfg =
+                s.status === "waiting_payment"
+                  ? s.pending_action_count > 0
+                    ? STATUS_CONFIG.waiting_payment
+                    : { label: "Chờ chốt thanh toán", cls: "bg-indigo-100 text-indigo-700" }
+                  : (STATUS_CONFIG[s.status] ?? STATUS_CONFIG.open);
+              const nextActions = STATUS_NEXT[s.status] ?? [];
+              const busy = actionId === s.id;
 
-            return (
-              <div
-                key={s.id}
-                className="card flex flex-col gap-3 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)]"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold text-gray-900 leading-tight">
-                    {s.title}
-                  </h3>
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${cfg.cls}`}
-                  >
-                    {cfg.label}
-                  </span>
-                </div>
-
-                <div className="space-y-1.5 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
-                    <span>
-                      {format(
-                        new Date(s.scheduled_at),
-                        "EEEE, dd/MM/yyyy HH:mm",
-                        { locale: vi },
-                      )}
-                    </span>
-                  </div>
-                  {s.location && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
-                      <span className="truncate">{s.location}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-4">
-                    <span className="flex items-center gap-1 flex-wrap">
-                      <Users className="w-3.5 h-3.5 text-gray-400" />
-                      <span
-                        className={
-                          s.available_slots <= 0
-                            ? "text-red-500 font-medium"
-                            : ""
-                        }
-                      >
-                        {s.available_slots <= 0
-                          ? "Hết chỗ"
-                          : `${s.available_slots ?? s.max_slots}/${s.max_slots} chỗ trống`}
-                      </span>
-                      {(s.male_count > 0 || s.female_count > 0) && (
-                        <span className="text-gray-400 text-xs">
-                          · 👨 {s.male_count ?? 0} · 👩 {s.female_count ?? 0}
-                        </span>
-                      )}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-gray-400" />
-                      {s.duration_minutes} phút
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-gray-100 pt-2">
-                  <span className="text-xs text-gray-400">
-                    {s.confirmed_count ?? 0} đã xác nhận ·{" "}
-                    {s.pending_count ?? 0} chờ
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-3 pt-1">
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => {
-                        setNavigatingId(s.id);
-                        router.push(`/admin/sessions/${s.id}`);
-                        setTimeout(
-                          () =>
-                            setNavigatingId((cur) =>
-                              cur === s.id ? null : cur,
-                            ),
-                          4000,
-                        );
-                      }}
-                      disabled={navigatingId === s.id}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-60"
+              return (
+                <motion.div
+                  key={s.id}
+                  layout
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.2 } }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="card flex flex-col gap-3 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)]"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold text-gray-900 leading-tight">
+                      {s.title}
+                    </h3>
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${cfg.cls}`}
                     >
-                      {navigatingId === s.id ? (
-                        <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-                      ) : (
-                        <Eye className="w-4 h-4 shrink-0" />
-                      )}
-                      Xem
-                    </button>
-                    {s.status !== "completed" && (
-                      <>
-                        <button
-                          onClick={() => setFormTarget({ id: s.id })}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium transition-colors"
-                        >
-                          <Pencil className="w-4 h-4" /> Sửa
-                        </button>
-                      </>
-                    )}
-                    {s.status === "cancelled" && (
-                      <button
-                        onClick={() => handleDelete(s.id, s.title)}
-                        disabled={busy}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-500 text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap"
-                      >
-                        <Trash2 className="w-4 h-4 shrink-0" /> Xóa
-                      </button>
-                    )}
+                      {cfg.label}
+                    </span>
                   </div>
 
-                  {nextActions.length > 0 && (
+                  <div className="space-y-1.5 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                      <span>
+                        {format(
+                          new Date(s.scheduled_at),
+                          "EEEE, dd/MM/yyyy HH:mm",
+                          { locale: vi },
+                        )}
+                      </span>
+                    </div>
+                    {s.location && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                        <span className="truncate">{s.location}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center gap-1 flex-wrap">
+                        <Users className="w-3.5 h-3.5 text-gray-400" />
+                        <span
+                          className={
+                            s.available_slots <= 0
+                              ? "text-red-500 font-medium"
+                              : ""
+                          }
+                        >
+                          {s.available_slots <= 0
+                            ? "Hết chỗ"
+                            : `${s.available_slots ?? s.max_slots}/${s.max_slots} chỗ trống`}
+                        </span>
+                        {(s.male_count > 0 || s.female_count > 0) && (
+                          <span className="text-gray-400 text-xs">
+                            · 👨 {s.male_count ?? 0} · 👩 {s.female_count ?? 0}
+                          </span>
+                        )}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-gray-400" />
+                        {s.duration_minutes} phút
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-2">
+                    <span className="text-xs text-gray-400">
+                      {s.confirmed_count ?? 0} đã xác nhận ·{" "}
+                      {s.pending_count ?? 0} chờ
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-3 pt-1">
                     <div className="flex gap-1.5">
-                      {nextActions.map(({ label, next, to, action, cls }) =>
-                        to ? (
-                          <Link
-                            key={to}
-                            href={`/admin/sessions/${s.id}/${to}`}
-                            className={`flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition-colors ${cls}`}
-                          >
-                            {label}
-                          </Link>
-                        ) : action === "complete" ? (
-                          <button
-                            key="complete"
-                            onClick={() => openCompleteModal(s.id, s.title)}
-                            disabled={busy}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap ${cls}`}
-                          >
-                            {label}
-                          </button>
+                      <button
+                        onClick={() => {
+                          setNavigatingId(s.id);
+                          router.push(`/admin/sessions/${s.id}`);
+                          setTimeout(
+                            () =>
+                              setNavigatingId((cur) =>
+                                cur === s.id ? null : cur,
+                              ),
+                            4000,
+                          );
+                        }}
+                        disabled={navigatingId === s.id}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-60"
+                      >
+                        {navigatingId === s.id ? (
+                          <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
                         ) : (
+                          <Eye className="w-4 h-4 shrink-0" />
+                        )}
+                        Xem
+                      </button>
+                      {s.status !== "completed" && (
+                        <>
                           <button
-                            key={next}
-                            onClick={() =>
-                              next === "cancelled"
-                                ? setCancelTarget({ id: s.id, title: s.title })
-                                : handleStatusChange(s.id, next!)
-                            }
-                            disabled={busy}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap ${cls}`}
+                            onClick={() => setFormTarget({ id: s.id })}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium transition-colors"
                           >
-                            {label}
+                            <Pencil className="w-4 h-4" /> Sửa
                           </button>
-                        ),
+                        </>
+                      )}
+                      {s.status === "cancelled" && (
+                        <button
+                          onClick={() => handleDelete(s.id, s.title)}
+                          disabled={busy}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-500 text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap"
+                        >
+                          <Trash2 className="w-4 h-4 shrink-0" /> Xóa
+                        </button>
                       )}
                     </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+
+                    {nextActions.length > 0 && (
+                      <div className="flex gap-1.5">
+                        {nextActions.map(({ label, next, to, action, cls }) =>
+                          to ? (
+                            <Link
+                              key={to}
+                              href={`/admin/sessions/${s.id}/${to}`}
+                              className={`flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition-colors ${cls}`}
+                            >
+                              {label}
+                            </Link>
+                          ) : action === "complete" ? (
+                            <button
+                              key="complete"
+                              onClick={() => openCompleteModal(s.id, s.title)}
+                              disabled={busy}
+                              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap ${cls}`}
+                            >
+                              {label}
+                            </button>
+                          ) : (
+                            <button
+                              key={next}
+                              onClick={() =>
+                                next === "cancelled"
+                                  ? setCancelTarget({ id: s.id, title: s.title })
+                                  : handleStatusChange(s.id, next!)
+                              }
+                              disabled={busy}
+                              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap ${cls}`}
+                            >
+                              {label}
+                            </button>
+                          ),
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
       )}
 
@@ -764,7 +780,7 @@ export default function SessionsPage() {
       <SessionFormModal
         target={formTarget}
         onClose={() => setFormTarget(null)}
-        onSuccess={fetchSessions}
+        onSuccess={() => fetchSessions({ silent: true })}
       />
 
       {deleteTarget &&
