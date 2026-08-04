@@ -720,3 +720,9 @@ export const notificationsAdminApi = {
   delete: (id: string) => api.delete(`/admin/notifications/${id}`),
   deleteAll: () => api.delete("/admin/notifications"),
 };
+
+
+export const pushApi = {
+  subscribe: (sub: PushSubscriptionJSON) => api.post("/push/subscribe", sub),
+  unsubscribe: (endpoint: string) => api.post("/push/unsubscribe", { endpoint }),
+};

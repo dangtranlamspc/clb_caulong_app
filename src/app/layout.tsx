@@ -9,14 +9,26 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "BNB BADMINTON CLUB",
-  description: "Hệ thống quản lý thành viên",
+  title: "CLB Cầu Lông BNB",
+  description: "Ứng dụng quản lý CLB Cầu Lông BNB",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CLB Cầu Lông BNB",
+  },
+  icons: {
+    icon: "/icons/icon-512x512.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
+  themeColor: "#1d4ed8",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

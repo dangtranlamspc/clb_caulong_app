@@ -7,12 +7,14 @@ import { vi } from 'date-fns/locale';
 import {
   User, Calendar, Shirt,
   ChevronRight, CheckCircle2, Clock, Lock,
-  Trophy, CalendarDays, ClipboardList, Gem
+  Trophy, CalendarDays, ClipboardList, Gem,
+  Bell
 } from 'lucide-react';
 import Link from 'next/link';
 import { rankingsApi } from '../../../lib/api';
 import { getTierTheme, RankPodiumAvatar, getTierCardBackground, RankIcon } from '@/components/member/ranks/Rank';
 import { RankInfoModal } from '@/components/member/ranks/RankInfoModal';
+import { PushNotificationManager } from '@/components/PushNotificationManager';
 
 const LEVEL_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
   'Người Mới Tham Gia': { emoji: '🥚', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },
@@ -325,6 +327,16 @@ export default function ProfilePage() {
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </Link>
 
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-50">
+          <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+            <Bell className="w-4 h-4 text-rose-600" />
+          </div>
+          <div className="flex-1">
+            <span className="text-sm font-medium text-gray-700">Thông báo đẩy</span>
+            <p className="text-xs text-gray-400">Nhận thông báo ngay cả khi không mở app</p>
+          </div>
+          <PushNotificationManager />
+        </div>
         <Link
           href="/history"
           className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-50"

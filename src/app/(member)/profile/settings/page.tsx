@@ -75,21 +75,18 @@ export default function SettingsPage() {
   const onSubmit = async (values: any) => {
     setLoading(true);
     try {
-      // 1. Upload avatar trước nếu người dùng đã chọn ảnh mới
       let newAvatarUrl: string | undefined;
       if (avatarFile) {
         const { data: avatarData } = await profileApi.uploadAvatar(avatarFile);
         newAvatarUrl = avatarData.avatar_url;
       }
 
-      // 2. Cập nhật thông tin profile (chỉ khi có thay đổi trên form)
       let updatedUser = null;
       if (isDirty) {
         const { data } = await profileApi.updateMe(values);
         updatedUser = data;
       }
 
-      // 3. Đồng bộ lại store + state cục bộ
       if (updatedUser) {
         setUser(newAvatarUrl ? { ...updatedUser, avatar_url: newAvatarUrl } : updatedUser);
       } else if (newAvatarUrl) {
@@ -130,7 +127,6 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/profile" className="p-2 -ml-2 text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-100">
           <ArrowLeft className="w-5 h-5" />
@@ -139,7 +135,6 @@ export default function SettingsPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* ── Avatar card ── */}
         <div className="card flex flex-col items-center gap-3 py-6">
           <div className="relative">
             <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200 flex items-center justify-center">
@@ -165,7 +160,6 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        {/* Personal info card */}
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Thông tin cơ bản</h2>
 
@@ -208,7 +202,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Additional info card */}
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Thông tin bổ sung</h2>
 
@@ -245,7 +238,6 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
-          {/* Membership info card */}
           <div className="card space-y-4">
             <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Thành viên & trình độ</h2>
 
