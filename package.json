@@ -20,6 +20,7 @@
     "axios": "^1.6.0",
     "date-fns": "^3.0.0",
     "framer-motion": "^12.42.2",
+    "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.5",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.414.0",

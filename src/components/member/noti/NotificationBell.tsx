@@ -10,6 +10,8 @@ import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { useNotificationsRealtimeStore } from '@/store/notifications-realtime.store';
 import { PenaltyPaymentModal } from '../payments/PenaltyPaymentModal';
+import Lottie, { LottieRefCurrentProps } from 'lottie-react';
+import bellAnimation from '../../../../public/lottie/noti.json';
 
 const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     payment_added: { icon: Wallet, cls: 'text-blue-600', bg: 'bg-blue-50' },
@@ -18,6 +20,9 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     bill_issued: { icon: Wallet, cls: 'text-amber-600', bg: 'bg-amber-50' },
     added_to_session: { icon: CalendarDays, cls: 'text-blue-600', bg: 'bg-blue-50' },
     wallet_guest_confirm: { icon: Wallet, cls: 'text-amber-600', bg: 'bg-amber-50' },
+    shirt_order_payment_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
+    shirt_order_cancel_approved: { icon: CheckCircle2, cls: 'text-emerald-600', bg: 'bg-emerald-50' },
+    shirt_order_cancel_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
 };
 
 const SWIPE_THRESHOLD = -70;
@@ -292,6 +297,7 @@ export function NotificationBell() {
     const [confirmDeleteAllOpen, setConfirmDeleteAllOpen] = useState(false);
     const btnRef = useRef<HTMLButtonElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
+    const lottieRef = useRef<LottieRefCurrentProps>(null);
 
     const [penaltyModalData, setPenaltyModalData] = useState<{
         id: string;
@@ -343,6 +349,15 @@ export function NotificationBell() {
     };
 
     useEffect(() => { load(); }, []);
+
+    useEffect(() => {
+        if (!lottieRef.current) return;
+        if (unread > 0 && !open) {
+            lottieRef.current.play();
+        } else {
+            lottieRef.current.stop();
+        }
+    }, [unread, open]);
 
     useEffect(() => {
         const pendingGuestNotifs = items.filter(n => {
@@ -505,16 +520,22 @@ export function NotificationBell() {
             <button
                 ref={btnRef}
                 onClick={toggleOpen}
-                className="relative w-9 h-9 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center active:scale-95 transition-transform"
+                title="Thông báo"
+                className="relative w-16 h-16 flex items-center justify-center active:scale-95 transition-transform"
             >
-                <Bell className="w-4 h-4 text-gray-600" />
+                <Lottie
+                    lottieRef={lottieRef}
+                    animationData={bellAnimation}
+                    autoplay={false}
+                    loop={true}
+                    style={{ width: 64, height: 64 }}
+                />
                 {unread > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                    <span className="absolute top-3 right-3 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
                         {unread > 9 ? '9+' : unread}
                     </span>
                 )}
             </button>
-
             {open && typeof document !== 'undefined' && createPortal(
                 <div
                     ref={panelRef}

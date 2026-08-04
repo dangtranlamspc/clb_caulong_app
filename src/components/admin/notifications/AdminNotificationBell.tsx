@@ -262,6 +262,223 @@ function ShirtOrderPaymentModal({
     );
 }
 
+function ShirtOrderCancelModal({
+    registrationIds,
+    onClose,
+    onResolved,
+    onNavigate,
+    onStale,
+}: {
+    registrationIds: string[];
+    onClose: () => void;
+    onResolved: (action: "approved" | "rejected") => void;
+    onNavigate: (activityId: string) => void;
+    onStale: () => void;
+}) {
+    const [loading, setLoading] = useState(true);
+    const [detail, setDetail] = useState<any>(null);
+    const [notFound, setNotFound] = useState(false);
+    const [processing, setProcessing] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+        eventsAdminApi
+            .getShirtOrderRegistrationsDetailBatch(registrationIds)
+            .then(({ data }) => {
+                if (cancelled) return;
+                setDetail(data);
+            })
+            .catch((err) => {
+                if (cancelled) return;
+                if (err?.response?.status === 404) {
+                    setNotFound(true);
+                    onStale();
+                } else {
+                    toast.error("Không tải được chi tiết đơn hàng");
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => { cancelled = true; };
+    }, [registrationIds]);
+
+    const handleApprove = async () => {
+        if (!window.confirm("Duyệt huỷ đăng ký này? Nếu đã thanh toán bằng ví, tiền sẽ được hoàn lại tự động.")) return;
+        setProcessing(true);
+        try {
+            await Promise.all(registrationIds.map((id) => eventsAdminApi.approveCancelRequest(id)));
+            toast.success("Đã duyệt huỷ và hoàn tiền (nếu có)");
+            onResolved("approved");
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Duyệt huỷ thất bại");
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const handleReject = async () => {
+        setProcessing(true);
+        try {
+            await Promise.all(registrationIds.map((id) => eventsAdminApi.rejectCancelRequest(id)));
+            toast.success("Đã từ chối yêu cầu huỷ");
+            onResolved("rejected");
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Từ chối thất bại");
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const items: any[] = detail?.registrations ?? [];
+    const first = items[0];
+    const anyPending = items.some((r) => r.cancel_requested_at);
+    const willRefundWallet = items.some(
+        (r) => r.payment_method === "wallet" && r.payment_status === "confirmed",
+    );
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[999999] bg-black/40 flex items-center justify-center p-4"
+            onClick={(e) => e.target === e.currentTarget}
+        >
+            <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl overflow-hidden max-h-[85vh] flex flex-col">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+                    <p className="font-bold text-gray-900">
+                        Yêu cầu huỷ đăng ký {items.length > 1 ? `(${items.length} sản phẩm)` : ""}
+                    </p>
+                    <button
+                        onClick={onClose}
+                        className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+                    >
+                        <X className="w-4 h-4 text-gray-500" />
+                    </button>
+                </div>
+
+                <div className="px-5 py-4 space-y-3 overflow-y-auto flex-1">
+                    {loading ? (
+                        <div className="flex items-center justify-center py-8 text-gray-400 gap-2 text-sm">
+                            <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+                        </div>
+                    ) : items.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-6">Không tìm thấy đơn hàng</p>
+                    ) : (
+                        <>
+                            <p className="text-xs text-gray-400">
+                                {detail.activity?.emoji} {detail.activity?.title}
+                            </p>
+
+                            <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center font-semibold text-blue-600 overflow-hidden flex-shrink-0">
+                                    {first.users?.avatar_url ? (
+                                        <img src={first.users.avatar_url} className="w-full h-full object-cover" />
+                                    ) : (
+                                        (first.users?.full_name ?? first.guest_full_name)?.[0]?.toUpperCase() ?? "?"
+                                    )}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="font-semibold text-gray-900 truncate">
+                                        {first.users?.full_name ?? first.guest_full_name ?? "—"}
+                                    </p>
+                                    {(first.users?.phone ?? first.guest_phone) && (
+                                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                                            <Phone className="w-3 h-3" /> {first.users?.phone ?? first.guest_phone}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                {items.map((r) => (
+                                    <div key={r.id} className="rounded-xl border border-gray-100 divide-y divide-gray-50 text-sm">
+                                        <div className="flex justify-between px-3 py-2">
+                                            <span className="text-gray-500">Loại áo</span>
+                                            <span className="font-medium text-gray-800">{r.shirt_type_name}</span>
+                                        </div>
+                                        <div className="flex justify-between px-3 py-2">
+                                            <span className="text-gray-500">Form / Size</span>
+                                            <span className="font-medium text-gray-800">
+                                                {r.gender === "nu" ? "Nữ" : "Nam"} · {r.size}
+                                            </span>
+                                        </div>
+                                        {r.color_name && (
+                                            <div className="flex justify-between px-3 py-2">
+                                                <span className="text-gray-500">Màu</span>
+                                                <span className="font-medium text-gray-800">{r.color_name}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between px-3 py-2">
+                                            <span className="text-gray-500">Số lượng</span>
+                                            <span className="font-medium text-gray-800">{r.quantity}</span>
+                                        </div>
+                                        <div className="flex justify-between px-3 py-2">
+                                            <span className="font-semibold text-gray-700">Thành tiền</span>
+                                            <span className="font-bold text-gray-900">{fmt(r.total_amount)}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-between px-3 py-2 bg-gray-50 rounded-xl text-sm">
+                                <span className="text-gray-500">Phương thức đã dùng</span>
+                                <span className="font-medium text-gray-800">
+                                    {first.payment_method === "wallet"
+                                        ? "Ví BNB"
+                                        : first.payment_method === "transfer"
+                                            ? "Chuyển khoản"
+                                            : first.payment_method === "cash"
+                                                ? "Tiền mặt"
+                                                : "Chưa thanh toán"}
+                                </span>
+                            </div>
+
+                            <div
+                                className={`flex justify-between px-3 py-2.5 rounded-xl ${willRefundWallet ? "bg-blue-50" : "bg-gray-50"}`}
+                            >
+                                <span className="font-semibold text-gray-700">
+                                    {willRefundWallet ? "Sẽ hoàn về Ví BNB" : "Tổng cộng"}
+                                </span>
+                                <span className={`font-bold ${willRefundWallet ? "text-blue-600" : "text-gray-700"}`}>
+                                    {fmt(detail.total_amount)}
+                                </span>
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {!notFound && items.length > 0 && anyPending && (
+                    <div className="flex items-center gap-2 px-5 py-4 border-t border-gray-100 flex-shrink-0">
+                        <button
+                            onClick={() => onNavigate(detail.activity?.id)}
+                            className="flex-1 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 text-sm font-semibold flex items-center justify-center"
+                        >
+                            Chi tiết
+                        </button>
+                        <button
+                            onClick={handleReject}
+                            disabled={processing}
+                            className="flex-1 py-2 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                        >
+                            {processing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                            Từ chối
+                        </button>
+                        <button
+                            onClick={handleApprove}
+                            disabled={processing}
+                            className="flex-1 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                        >
+                            {processing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                            Duyệt huỷ
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>,
+        document.body,
+    );
+}
+
+
 export function AdminNotificationBell() {
     const router = useRouter();
     const pathname = usePathname();
@@ -279,6 +496,11 @@ export function AdminNotificationBell() {
         registrationIds: string[];
     } | null>(null);
 
+    const [shirtOrderCancelModal, setShirtOrderCancelModal] = useState<{
+        notifId: string;
+        registrationIds: string[];
+    } | null>(null);
+
 
     const [navigatingToEvents, setNavigatingToEvents] = useState(false);
 
@@ -288,6 +510,7 @@ export function AdminNotificationBell() {
         if (navigatingToEvents && pathname === "/admin/events") {
             setNavigatingToEvents(false);
             setShirtOrderModal(null);
+            setShirtOrderCancelModal(null);
         }
     }, [pathname, navigatingToEvents]);
 
@@ -330,6 +553,33 @@ export function AdminNotificationBell() {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [open]);
+
+    const autoResolvedRef = useRef<Set<string>>(new Set());
+
+    useEffect(() => {
+        const cancelledNotifs = notifications.filter(
+            (n) => n.type === "shirt_order_pending_payment_cancelled" && !n.data?.resolved,
+        );
+        if (cancelledNotifs.length === 0) return;
+
+        for (const cn of cancelledNotifs) {
+            const cancelledIds: string[] = cn.data?.registration_ids ?? [];
+            if (!cancelledIds.length) continue;
+
+            const staleNotif = notifications.find((n) => {
+                if (n.type !== "shirt_order_payment_pending") return false;
+                if (n.data?.resolved) return false;
+                if (autoResolvedRef.current.has(n.id)) return false;
+                const ids: string[] = n.data?.registration_ids ?? [];
+                return ids.some((id) => cancelledIds.includes(id));
+            });
+
+            if (staleNotif) {
+                autoResolvedRef.current.add(staleNotif.id);
+                markResolved(staleNotif.id, "rejected");
+            }
+        }
+    }, [notifications, markResolved]);
 
     const handleDeleteAll = () => {
         if (notifications.length === 0) return;
@@ -442,6 +692,36 @@ export function AdminNotificationBell() {
         }
     };
 
+
+    const handleOpenShirtOrderCancel = (notifId: string, registrationIds: string[]) => {
+        markRead(notifId);
+        setShirtOrderCancelModal({ notifId, registrationIds });
+    };
+
+    const handleShirtOrderCancelResolved = (action: "approved" | "rejected") => {
+        if (shirtOrderCancelModal) {
+            markResolved(shirtOrderCancelModal.notifId, action);
+        }
+        setShirtOrderCancelModal(null);
+    };
+
+    const handleRejectShirtOrderCancelDirect = async (notifId: string, ids: string[]) => {
+        if (!window.confirm("Từ chối yêu cầu huỷ đăng ký đặt áo này?")) return;
+        setProcessingId(notifId);
+        setProcessingAction("reject");
+        try {
+            await Promise.all(ids.map((id) => eventsAdminApi.rejectCancelRequest(id)));
+            toast.success("Đã từ chối yêu cầu huỷ");
+            await markRead(notifId);
+            markResolved(notifId, "rejected");
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Từ chối thất bại");
+        } finally {
+            setProcessingId(null);
+            setProcessingAction(null);
+        }
+    };
+
     return (
         <>
             <button
@@ -458,13 +738,18 @@ export function AdminNotificationBell() {
                     style={{ width: 64, height: 64 }}
                 />
                 {hasUnread && (
+                    <span className="absolute top-3 right-3 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                )}
+                {/* {hasUnread && (
                     <span
                         className="absolute text-red-500 text-xs font-bold flex items-center justify-center"
                         style={{ top: 10, right: 8 }}
                     >
                         {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
-                )}
+                )} */}
             </button>
 
             {open && typeof document !== "undefined" && createPortal(
@@ -512,6 +797,14 @@ export function AdminNotificationBell() {
                                     n.type === "shirt_order_new_guest" ||
                                     n.type === "shirt_order_payment_wallet";
 
+                                const isShirtOrderPendingCancelled =
+                                    n.type === "shirt_order_pending_payment_cancelled";
+                                const isShirtOrderCancelRequest = n.type === "shirt_order_cancel_request";
+                                const shirtOrderCancelRegistrationIds: string[] =
+                                    n.data?.registration_ids ??
+                                    (n.data?.registration_id ? [n.data.registration_id] : []);
+                                const shirtOrderCancelActivityId = n.data?.activity_id;
+
                                 const isShirtOrderPaymentPending = n.type === "shirt_order_payment_pending";
                                 const shirtOrderRegistrationIds: string[] =
                                     n.data?.registration_ids ??
@@ -536,7 +829,7 @@ export function AdminNotificationBell() {
                                                 className="text-left w-full"
                                             >
                                                 <p className="text-sm font-semibold text-gray-900">{n.title}</p>
-                                                <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                                                <p className="text-xs text-gray-500 mt-0.5 whitespace-pre-line break-words">{n.message}</p>
                                                 <p className="text-[10px] text-gray-400 mt-1">
                                                     {new Date(n.created_at).toLocaleString("vi-VN")}
                                                 </p>
@@ -635,6 +928,41 @@ export function AdminNotificationBell() {
                                                 )
                                             )}
 
+                                            {isShirtOrderCancelRequest && shirtOrderCancelRegistrationIds.length > 0 && (
+                                                isResolved ? (
+                                                    <ResolvedBadge action={resolvedAction} />
+                                                ) : (
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                markRead(n.id);
+                                                                setOpen(false);
+                                                                setNavigatingToEvents(true);
+                                                                router.push(`/admin/events?openRegistrations=${shirtOrderCancelActivityId}`);
+                                                            }}
+                                                            className="flex-1 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 text-xs font-semibold"
+                                                        >
+                                                            Chi tiết
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRejectShirtOrderCancelDirect(n.id, shirtOrderCancelRegistrationIds)}
+                                                            disabled={isProcessing}
+                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                        >
+                                                            {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                            Từ chối
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleOpenShirtOrderCancel(n.id, shirtOrderCancelRegistrationIds)}
+                                                            className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold"
+                                                        >
+                                                            Xác nhận
+                                                        </button>
+                                                    </div>
+                                                )
+                                            )}
+
+
                                             {isShirtOrderInfo && shirtOrderActivityId && (
                                                 <div className="flex justify-end mt-2">
                                                     <button
@@ -649,6 +977,7 @@ export function AdminNotificationBell() {
                                                     </button>
                                                 </div>
                                             )}
+
                                         </div>
 
                                         <button
@@ -679,6 +1008,20 @@ export function AdminNotificationBell() {
                     onStale={() => {
                         remove(shirtOrderModal.notifId);
                         setShirtOrderModal(null);
+                    }}
+                />
+            )}
+
+
+            {shirtOrderCancelModal && (
+                <ShirtOrderCancelModal
+                    registrationIds={shirtOrderCancelModal.registrationIds}
+                    onClose={() => setShirtOrderCancelModal(null)}
+                    onResolved={handleShirtOrderCancelResolved}
+                    onNavigate={handleNavigateFromShirtOrderModal}
+                    onStale={() => {
+                        remove(shirtOrderCancelModal.notifId);
+                        setShirtOrderCancelModal(null);
                     }}
                 />
             )}

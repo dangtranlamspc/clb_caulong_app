@@ -1,10 +1,11 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, Users, X, CalendarDays, ArrowDownToLine, ShoppingCart, PlusCircle, RotateCcw, Wallet, Ban } from 'lucide-react';
+import { Loader2, Users, X, CalendarDays, ArrowDownToLine, ShoppingCart, PlusCircle, RotateCcw, Wallet, Ban, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { registrationsAdminApi } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 function fmt(n: number) {
     return new Intl.NumberFormat('vi-VN').format(n) + 'đ';
@@ -97,6 +98,55 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
     const nameOf = (g: any) =>
         hasSnapshot ? g.name : (g.is_guest ? g.guest_full_name : g.users?.full_name);
 
+
+    const receiptRef = useRef<HTMLDivElement>(null);
+    const [sharing, setSharing] = useState(false);
+
+    const handleShareImage = async () => {
+        if (!receiptRef.current || sharing) return;
+        setSharing(true);
+        try {
+            const html2canvas = (await import('html2canvas')).default;
+            const canvas = await html2canvas(receiptRef.current, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+            });
+
+            const blob: Blob | null = await new Promise((resolve) =>
+                canvas.toBlob((b) => resolve(b), 'image/png'),
+            );
+            if (!blob) throw new Error('Không tạo được ảnh');
+
+            const fileName = `bien-lai-${tx.id ?? Date.now()}.png`;
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            if (
+                typeof navigator !== 'undefined' &&
+                (navigator as any).canShare?.({ files: [file] })
+            ) {
+                await (navigator as any).share({
+                    files: [file],
+                    title: 'Biên lai giao dịch — Ví BNB',
+                });
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast.success('Đã tải ảnh biên lai xuống');
+            }
+        } catch (err: any) {
+            if (err?.name !== 'AbortError') {
+                toast.error('Tạo ảnh biên lai thất bại');
+            }
+        } finally {
+            setSharing(false);
+        }
+    };
+
     return createPortal(
         <div
             className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
@@ -105,13 +155,14 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                 backdropFilter: 'blur(2px)',
                 opacity: visible ? 1 : 0,
                 transition: 'opacity 200ms ease-out',
+                overscrollBehavior: 'contain',
             }}
             onClick={e => e.target === e.currentTarget && handleClose()}
         >
             <div
-                className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
+                className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden relative"
                 style={{
-                    maxHeight: '90vh',
+                    maxHeight: '90dvh',
                     display: 'flex',
                     flexDirection: 'column',
                     transform: visible ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(8px)',
@@ -130,15 +181,38 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                     }
                 `}</style>
 
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0" id="tx-modal-header">
                     <p className="text-sm font-bold text-gray-900">Chi tiết giao dịch</p>
-                    <button onClick={handleClose} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                        <X className="w-4 h-4 text-gray-500" />
-                    </button>
+
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={handleShareImage}
+                            disabled={sharing}
+                            className="flex items-center gap-1.5 px-3 h-7 rounded-full bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition-transform duration-150 active:scale-95 disabled:opacity-50"
+                            title="Chia sẻ ảnh biên lai"
+                        >
+                            {sharing ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                                <Share2 className="w-3.5 h-3.5" />
+                            )}
+                            <span>Chia sẻ</span>
+                        </button>
+                        <button onClick={handleClose} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-transform duration-150 active:scale-90">
+                            <X className="w-4 h-4 text-gray-500" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="relative flex-1 min-h-0">
-                    <div className={`px-5 py-5 space-y-5 overflow-y-auto hide-scrollbar h-full ${isReversed ? 'blur-[1px] select-none pointer-events-none' : ''}`}>
+                    <div
+                        className={`px-5 pt-5 pb-10 space-y-5 overflow-y-auto hide-scrollbar ${isReversed ? 'blur-[1px] select-none pointer-events-none' : ''}`}
+                        style={{
+                            WebkitOverflowScrolling: 'touch',
+                            overscrollBehavior: 'contain',
+                            maxHeight: 'calc(90dvh - 65px)',
+                        }}
+                    >
                         <div className="flex flex-col items-center text-center gap-2">
                             <div className={`w-14 h-14 rounded-full flex items-center justify-center ${cls}`}>
                                 <Icon className="w-6 h-6" />
@@ -269,7 +343,7 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                     </div>
 
                     {isReversed && (
-                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-white/70">
+                        <div className="absolute left-0 right-0 bottom-0 z-10 flex flex-col items-center justify-center gap-1 bg-white/70" style={{ top: 65 }}>
                             <Ban className="w-6 h-6 text-gray-400" />
                             <p className="text-base font-bold text-gray-600 text-center px-6">
                                 {isSessionCancelled ? 'Buổi đánh đã bị hủy' : 'Hóa đơn đã được hoàn tác'}
@@ -280,8 +354,106 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                         </div>
                     )}
                 </div>
+
+                <div
+                    style={{ position: 'fixed', left: -9999, top: 0, width: 420 }}
+                    aria-hidden="true"
+                >
+                    <div ref={receiptRef} style={{ width: 420, background: '#ffffff', padding: 28, fontFamily: 'inherit' }}>
+                        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: '#2563eb', letterSpacing: 0.5 }}>
+                                VÍ BNB — CLB CẦU LÔNG
+                            </p>
+                            <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>Biên lai giao dịch</p>
+                        </div>
+
+                        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                            <p style={{ fontSize: 30, fontWeight: 900, color: isPositive ? '#059669' : '#ef4444' }}>
+                                {isPositive ? '+' : ''}{fmt(tx.amount)}
+                            </p>
+                            <span style={{ fontSize: 11, color: '#9ca3af', background: '#f9fafb', padding: '4px 10px', borderRadius: 999 }}>
+                                {TX_TYPE_LABEL[tx.type] ?? tx.type}
+                            </span>
+                        </div>
+
+                        <div style={{ background: '#f9fafb', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+                            <Row label="Tiêu đề" value={tx.title} />
+                            {tx.description && <Row label="Diễn giải" value={tx.description} />}
+                            <Row label="Thời gian" value={format(new Date(tx.created_at), 'HH:mm, dd/MM/yyyy', { locale: vi })} />
+                            <Row label="Số dư sau giao dịch" value={fmt(tx.balance_after)} bold />
+                        </div>
+
+                        {isSessionPayment && (
+                            <div style={{ border: '1px solid #f3f4f6', borderRadius: 12, overflow: 'hidden' }}>
+                                {displaySessionTitle && <Row label="Buổi đánh" value={displaySessionTitle} highlight />}
+                                <Row label="Tiền sân + cầu của người này" value={fmt(displayBase)} />
+                                {displayOtherFee > 0 && (
+                                    <Row label="Khoản khác" value={fmt(displayOtherFee)} note={displayOtherFeeNote} amber />
+                                )}
+                                {displayGuests.length > 0 && (
+                                    <div style={{ padding: '10px 16px' }}>
+                                        <p style={{ fontSize: 11, color: '#9333ea', fontWeight: 600, marginBottom: 6 }}>
+                                            Gộp thanh toán cùng {displayGuests.length} khách
+                                        </p>
+                                        {displayGuests.map((g: any, idx: number) => (
+                                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '3px 0' }}>
+                                                <span style={{ color: '#4b5563' }}>+ {nameOf(g)}</span>
+                                                <span style={{ fontWeight: 600, color: '#374151' }}>
+                                                    {fmt((g.base_amount ?? 0) + (g.other_fee_amount ?? 0))}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <Row label="Tổng đã trả" value={fmt(displayTotal)} bold shaded />
+                            </div>
+                        )}
+
+                        <p style={{ textAlign: 'center', fontSize: 10, color: '#d1d5db', marginTop: 20 }}>
+                            Xuất lúc {format(new Date(), 'HH:mm, dd/MM/yyyy', { locale: vi })}
+                        </p>
+                    </div>
+                </div>
             </div>
-        </div>,
+        </div >,
         document.body
+    );
+}
+function Row({
+    label,
+    value,
+    note,
+    bold,
+    amber,
+    highlight,
+    shaded,
+}: {
+    label: string;
+    value: string;
+    note?: string;
+    bold?: boolean;
+    amber?: boolean;
+    highlight?: boolean;
+    shaded?: boolean;
+}) {
+    return (
+        <div
+            style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '10px 16px',
+                fontSize: 13,
+                background: highlight ? 'rgba(239,246,255,0.7)' : shaded ? '#f9fafb' : 'transparent',
+                borderTop: '1px solid #f3f4f6',
+            }}
+        >
+            <span style={{ color: '#9ca3af' }}>{label}</span>
+            <div style={{ textAlign: 'right' }}>
+                <span style={{ fontWeight: bold ? 700 : 500, color: amber ? '#d97706' : highlight ? '#1d4ed8' : '#111827' }}>
+                    {value}
+                </span>
+                {note && <p style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic', margin: 0 }}>{note}</p>}
+            </div>
+        </div>
     );
 }
