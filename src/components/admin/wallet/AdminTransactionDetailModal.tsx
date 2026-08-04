@@ -368,10 +368,10 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                         </div>
 
                         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                            <p style={{ fontSize: 30, fontWeight: 900, color: isPositive ? '#059669' : '#ef4444' }}>
+                            <p style={{ fontSize: 30, fontWeight: 900, color: isPositive ? '#059669' : '#ef4444', margin: 0, lineHeight: 1.3 }}>
                                 {isPositive ? '+' : ''}{fmt(tx.amount)}
                             </p>
-                            <span style={{ fontSize: 11, color: '#9ca3af', background: '#f9fafb', padding: '4px 10px', borderRadius: 999 }}>
+                            <span style={{ display: 'inline-block', marginTop: 10, fontSize: 11, color: '#9ca3af', background: '#f9fafb', padding: '4px 10px', borderRadius: 999 }}>
                                 {TX_TYPE_LABEL[tx.type] ?? tx.type}
                             </span>
                         </div>

@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { walletAdminApi } from "@/lib/api";
 import AdminTransactionDetailModal from "@/components/admin/wallet/AdminTransactionDetailModal";
+import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 
 function fmt(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
@@ -731,34 +732,41 @@ export default function WalletAdminSummaryPage() {
                 />
               </div>
               <div className="flex gap-2">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value);
-                    setPage(1);
-                  }}
-                  className="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none bg-white text-gray-700"
-                >
-                  <option value="">Tất cả trạng thái</option>
-                  <option value="ok">Bình thường</option>
-                  <option value="low">Sắp hết</option>
-                  <option value="negative">Âm ví</option>
-                </select>
-                <select
-                  value={rankFilter}
-                  onChange={(e) => {
-                    setRankFilter(e.target.value);
-                    setPage(1);
-                  }}
-                  className="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none bg-white text-gray-700"
-                >
-                  <option value="">Tất cả hạng</option>
-                  {Object.keys(TIER_STYLE).map((k) => (
-                    <option key={k} value={k}>
-                      {TIER_STYLE[k].dot} {k}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex-1 sm:flex-none sm:w-40">
+                  <CustomSelect
+                    value={statusFilter}
+                    onChange={(val) => {
+                      setStatusFilter(val);
+                      setPage(1);
+                    }}
+                    placeholder="Tất cả trạng thái"
+                    options={[
+                      { value: '', label: 'Tất cả trạng thái' },
+                      { value: 'ok', label: 'Bình thường' },
+                      { value: 'low', label: 'Sắp hết' },
+                      { value: 'negative', label: 'Âm ví' },
+                    ]}
+                    triggerClassName="w-full flex items-center justify-between text-left px-3 py-2 sm:py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none"
+                  />
+                </div>
+                <div className="flex-1 sm:flex-none sm:w-44">
+                  <CustomSelect
+                    value={rankFilter}
+                    onChange={(val) => {
+                      setRankFilter(val);
+                      setPage(1);
+                    }}
+                    placeholder="Tất cả hạng"
+                    options={[
+                      { value: '', label: 'Tất cả hạng' },
+                      ...Object.keys(TIER_STYLE).map((k) => ({
+                        value: k,
+                        label: `${TIER_STYLE[k].dot} ${k}`,
+                      })),
+                    ]}
+                    triggerClassName="w-full flex items-center justify-between text-left px-3 py-2 sm:py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
 
