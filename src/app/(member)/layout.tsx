@@ -109,6 +109,7 @@ function BottomNav({
                     boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
                     borderTopLeftRadius: 24,
                     borderTopRightRadius: 24,
+                    paddingBottom: "env(safe-area-inset-bottom, 0px)",
                 }}
             >
                 {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
@@ -122,21 +123,21 @@ function BottomNav({
                         <Link
                             key={href}
                             href={href}
-                            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors min-w-0"
-                            style={{ minHeight: 56 }}
+                            className="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-colors min-w-0 active:opacity-60"
+                            style={{ minHeight: 72 }}
                         >
                             <div
                                 className="relative flex items-center justify-center rounded-xl transition-all"
                                 style={{
-                                    width: 36,
-                                    height: 28,
+                                    width: 40,
+                                    height: 32,
                                     background: isActive ? "rgba(30,58,95,0.1)" : "transparent",
                                 }}
                             >
                                 <Icon
                                     style={{
-                                        width: 20,
-                                        height: 20,
+                                        width: 21,
+                                        height: 21,
                                         color: isActive ? "#0e56b5" : "#9ca3af",
                                         strokeWidth: isActive ? 2.2 : 1.8,
                                         transition: "color 0.2s",
@@ -147,7 +148,7 @@ function BottomNav({
                                         className="absolute flex"
                                         style={{
                                             top: 0,
-                                            right: 0,
+                                            right: 2,
                                             width: 12,
                                             height: 12,
                                         }}
@@ -169,7 +170,7 @@ function BottomNav({
                             <span
                                 className="whitespace-nowrap"
                                 style={{
-                                    fontSize: 9.5,
+                                    fontSize: 10,
                                     fontWeight: isActive ? 600 : 400,
                                     color: isActive ? "#0e56b5" : "#9ca3af",
                                     transition: "color 0.2s",

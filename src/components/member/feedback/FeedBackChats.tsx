@@ -211,10 +211,11 @@ export function FeedbackWidget() {
             <button
                 onClick={openWidget}
                 aria-label="Gửi góp ý"
-                className="fixed bottom-20 right-4 z-[999] rounded-full text-white flex items-center justify-center active:scale-90 transition-transform"
+                className="fixed right-4 z-[999] rounded-full text-white flex items-center justify-center active:scale-90 transition-transform"
                 style={{
                     width: 54,
                     height: 54,
+                    bottom: "calc(96px + env(safe-area-inset-bottom, 0px))",
                     background: NAVY_GRADIENT,
                     boxShadow: "0 8px 24px -6px rgba(18,40,63,0.55), 0 0 0 1px rgba(255,255,255,0.08) inset",
                 }}
