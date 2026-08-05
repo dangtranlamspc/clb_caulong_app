@@ -12,7 +12,7 @@ function urlBase64ToUint8Array(base64String: string) {
     return Uint8Array.from(Array.from(rawData).map((c) => c.charCodeAt(0)));
 }
 
-export function PushNotificationManager() {
+export function PushNotificationManager({ currentUserId }: { currentUserId: string }) {
     const [permission, setPermission] = useState<NotificationPermission>("default");
     const [subscribed, setSubscribed] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -22,11 +22,22 @@ export function PushNotificationManager() {
         if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
         setPermission(Notification.permission);
 
-        navigator.serviceWorker.register("/sw.js").then(async (reg) => {
+        (async () => {
+            const reg = await navigator.serviceWorker.register("/sw.js");
             const existing = await reg.pushManager.getSubscription();
-            setSubscribed(!!existing);
-        });
-    }, []);
+
+            if (existing && Notification.permission === "granted") {
+                try {
+                    await pushApi.subscribe(existing.toJSON() as any);
+                } catch (e) {
+                    console.warn("Đồng bộ lại push subscription thất bại:", e);
+                }
+                setSubscribed(true);
+            } else {
+                setSubscribed(false);
+            }
+        })();
+    }, [currentUserId]);
 
     async function handleSubscribe() {
         setLoading(true);
@@ -36,10 +47,13 @@ export function PushNotificationManager() {
             setPermission(perm);
             if (perm !== "granted") return;
 
-            const sub = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-            });
+            let sub = await reg.pushManager.getSubscription();
+            if (!sub) {
+                sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+                });
+            }
 
             await pushApi.subscribe(sub.toJSON() as any);
             setSubscribed(true);
