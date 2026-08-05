@@ -5,13 +5,14 @@ import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Tras
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
-import { notificationsApi, walletApi } from '@/lib/api';
+import { notificationsApi, registrationsApi, walletApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { useNotificationsRealtimeStore } from '@/store/notifications-realtime.store';
 import { PenaltyPaymentModal } from '../payments/PenaltyPaymentModal';
 import Lottie, { LottieRefCurrentProps } from 'lottie-react';
 import bellAnimation from '../../../../public/lottie/noti.json';
+import { useAuthStore } from '@/store/auth.store';
 
 const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     payment_added: { icon: Wallet, cls: 'text-blue-600', bg: 'bg-blue-50' },
@@ -23,6 +24,8 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     shirt_order_payment_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
     shirt_order_cancel_approved: { icon: CheckCircle2, cls: 'text-emerald-600', bg: 'bg-emerald-50' },
     shirt_order_cancel_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
+    session_created: { icon: CalendarDays, cls: 'text-indigo-600', bg: 'bg-indigo-50' },
+    member_declined_session: { icon: AlertCircle, cls: 'text-orange-500', bg: 'bg-orange-50' },
 };
 
 const SWIPE_THRESHOLD = -70;
@@ -109,6 +112,11 @@ function NotificationItem({
     guestHandled,
     onGuestConfirm,
     onPenaltyClick,
+    joinActionId,
+    joinedSessions,
+    onJoinSession,
+    respondAction,
+    onRespondAdded,
 }: {
     n: any;
     onRead: (id: string) => void;
@@ -117,6 +125,11 @@ function NotificationItem({
     guestHandled: Set<string>;
     onGuestConfirm: (n: any, mode: 'grouped' | 'separate') => void;
     onPenaltyClick: (n: any) => void;
+    joinActionId: string | null;
+    joinedSessions: Set<string>;
+    onJoinSession: (n: any) => void;
+    respondAction: { id: string; action: 'accept' | 'decline' } | null;
+    onRespondAdded: (n: any, action: 'accept' | 'decline') => void;
 }) {
     const [dragX, setDragX] = useState(0);
     const [dragging, setDragging] = useState(false);
@@ -197,6 +210,14 @@ function NotificationItem({
     const penaltyResolved = Boolean(n.data?.resolved);
     const penaltyCancelled = Boolean(n.data?.cancelled);
 
+    const isSessionCreated = n.type === 'session_created';
+    const alreadyJoined = joinedSessions.has(n.id);
+
+    const isAddedConfirm =
+        n.type === 'added_to_session' && n.data?.requires_response;
+    const addedResolved = Boolean(n.data?.resolved);
+    const addedOutcome = n.data?.outcome as 'accepted' | 'declined' | 'session_cancelled' | undefined;
+
     return (
         <li className="relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-5">
@@ -261,6 +282,66 @@ function NotificationItem({
                         <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
                     )}
 
+                    {isAddedConfirm && !addedResolved && (
+                        <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
+                            <button
+                                onClick={() => onRespondAdded(n, 'accept')}
+                                disabled={respondAction?.id === n.id}
+                                className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                                {respondAction && respondAction.id === n.id && respondAction.action === 'accept'
+                                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                                    : <CheckCircle2 className="w-3 h-3" />}
+                                Tham gia
+                            </button>
+                            <button
+                                onClick={() => onRespondAdded(n, 'decline')}
+                                disabled={respondAction?.id === n.id}
+                                className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
+                            >
+                                {respondAction && respondAction.id === n.id && respondAction.action === 'decline' && (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                )}
+                                Bận rùi
+                            </button>
+                        </div>
+                    )}
+                    {isAddedConfirm && addedResolved && (
+                        <p
+                            className={`text-[11px] font-medium mt-1.5 ${addedOutcome === 'declined'
+                                ? 'text-red-500'
+                                : addedOutcome === 'session_cancelled'
+                                    ? 'text-gray-400'
+                                    : 'text-emerald-600'
+                                }`}
+                        >
+                            {addedOutcome === 'declined'
+                                ? '🚫 Bạn đã báo bận'
+                                : addedOutcome === 'session_cancelled'
+                                    ? '🚫 Buổi đã huỷ'
+                                    : '✓ Đã xác nhận tham gia'}
+                        </p>
+                    )}
+
+                    {isSessionCreated && !alreadyJoined && (
+                        <div className="mt-2" onClick={e => e.stopPropagation()}>
+                            <button
+                                onClick={() => onJoinSession(n)}
+                                disabled={joinActionId === n.id}
+                                className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                                {joinActionId === n.id
+                                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                                    : <CalendarDays className="w-3 h-3" />}
+                                Tham gia ngay
+                            </button>
+                        </div>
+                    )}
+
+                    {isSessionCreated && alreadyJoined && (
+                        <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã đăng ký</p>
+                    )}
+
                     {isPenaltyChoice && !penaltyResolved && (
                         <div className="mt-2" onClick={e => e.stopPropagation()}>
                             <button
@@ -287,6 +368,7 @@ function NotificationItem({
 }
 
 export function NotificationBell() {
+    const userId = useAuthStore((s) => s.user?.id);
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState<any[]>([]);
     const [unread, setUnread] = useState(0);
@@ -295,6 +377,12 @@ export function NotificationBell() {
     const [guestActionId, setGuestActionId] = useState<string | null>(null);
     const [guestHandled, setGuestHandled] = useState<Set<string>>(new Set());
     const [confirmDeleteAllOpen, setConfirmDeleteAllOpen] = useState(false);
+
+    const [joinActionId, setJoinActionId] = useState<string | null>(null);
+    const [joinedSessions, setJoinedSessions] = useState<Set<string>>(new Set());
+
+    const [respondAction, setRespondAction] = useState<{ id: string; action: 'accept' | 'decline' } | null>(null);
+
     const btnRef = useRef<HTMLButtonElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
     const lottieRef = useRef<LottieRefCurrentProps>(null);
@@ -323,8 +411,63 @@ export function NotificationBell() {
                     .map((n: any) => n.id)
             );
             setGuestHandled(resolvedIds);
+
+            const joinedIds = new Set<string>(
+                (list ?? [])
+                    .filter((n: any) => n.type === 'session_created' && n.data?.registered)
+                    .map((n: any) => n.id)
+            );
+            setJoinedSessions(joinedIds);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRespondAdded = async (n: any, action: 'accept' | 'decline') => {
+        const registrationId = n.data?.registration_id;
+        if (!registrationId) return;
+        setRespondAction({ id: n.id, action });
+        try {
+            await registrationsApi.respond(registrationId, action);
+            toast.success(
+                action === 'accept'
+                    ? 'Đã xác nhận tham gia buổi đánh'
+                    : 'Đã báo bận, đăng ký của bạn đã được huỷ',
+            );
+            setItems(prev =>
+                prev.map(item =>
+                    item.id === n.id
+                        ? { ...item, data: { ...item.data, resolved: true, outcome: action === 'accept' ? 'accepted' : 'declined' } }
+                        : item,
+                ),
+            );
+            if (!n.is_read) markRead(n.id);
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Có lỗi xảy ra');
+        } finally {
+            setRespondAction(null);
+        }
+    };
+
+    const handleJoinSession = async (n: any) => {
+        const sessionId = n.data?.session_id;
+        if (!sessionId) return;
+        setJoinActionId(n.id);
+        try {
+            await registrationsApi.register({ session_id: sessionId });
+            toast.success('Đã đăng ký buổi đánh, chờ admin duyệt nhé!');
+            setJoinedSessions(prev => new Set(prev).add(n.id));
+            if (!n.is_read) markRead(n.id);
+        } catch (err: any) {
+            const msg = err?.response?.data?.message ?? '';
+            if (msg.includes('đã đăng ký')) {
+                setJoinedSessions(prev => new Set(prev).add(n.id));
+                toast('Bạn đã đăng ký buổi này rồi', { icon: 'ℹ️' });
+            } else {
+                toast.error(msg || 'Đăng ký thất bại, vui lòng thử lại');
+            }
+        } finally {
+            setJoinActionId(null);
         }
     };
 
@@ -358,6 +501,65 @@ export function NotificationBell() {
             lottieRef.current.stop();
         }
     }, [unread, open]);
+
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const channel = supabase
+            .channel(`member-notifications-updates:${userId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'notifications',
+                    filter: `user_id=eq.${userId}`,
+                },
+                (payload) => {
+                    const updated = payload.new as any;
+                    setItems((prev) => {
+                        const exists = prev.some((n) => n.id === updated.id);
+                        if (!exists) return prev;
+
+                        const before = prev.find((n) => n.id === updated.id)!;
+                        if (before.is_read !== updated.is_read) {
+                            setUnread((c) =>
+                                updated.is_read ? Math.max(0, c - 1) : c + 1,
+                            );
+                        }
+
+                        return prev.map((n) => (n.id === updated.id ? updated : n));
+                    });
+                },
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'DELETE',
+                    schema: 'public',
+                    table: 'notifications',
+                    filter: `user_id=eq.${userId}`,
+                },
+                (payload) => {
+                    const deletedId = (payload.old as any)?.id;
+                    if (!deletedId) return;
+
+                    setItems((prev) => {
+                        const target = prev.find((n) => n.id === deletedId);
+                        if (target && !target.is_read) {
+                            setUnread((c) => Math.max(0, c - 1));
+                        }
+                        return prev.filter((n) => n.id !== deletedId);
+                    });
+                },
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [userId]);
 
     useEffect(() => {
         const pendingGuestNotifs = items.filter(n => {
@@ -597,6 +799,11 @@ export function NotificationBell() {
                                             setOpen(false);
                                             if (!notif.is_read) markRead(notif.id);
                                         }}
+                                        joinActionId={joinActionId}
+                                        joinedSessions={joinedSessions}
+                                        onJoinSession={handleJoinSession}
+                                        respondAction={respondAction}
+                                        onRespondAdded={handleRespondAdded}
                                     />
                                 ))}
                             </ul>

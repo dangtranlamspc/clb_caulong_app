@@ -62,6 +62,52 @@ export function useAdminNotifications() {
                     });
                 }
             })
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "notifications",
+                    filter: `user_id=eq.${userId}`,
+                },
+                (payload) => {
+                    const updated = payload.new as AdminNotification;
+                    setNotifications((prev) => {
+                        const exists = prev.some((n) => n.id === updated.id);
+                        if (!exists) return prev;
+
+                        const before = prev.find((n) => n.id === updated.id)!;
+                        if (before.is_read !== updated.is_read) {
+                            setUnreadCount((c) =>
+                                updated.is_read ? Math.max(0, c - 1) : c + 1,
+                            );
+                        }
+
+                        return prev.map((n) => (n.id === updated.id ? updated : n));
+                    });
+                },
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "DELETE",
+                    schema: "public",
+                    table: "notifications",
+                    filter: `user_id=eq.${userId}`,
+                },
+                (payload) => {
+                    const deletedId = (payload.old as any)?.id;
+                    if (!deletedId) return;
+
+                    setNotifications((prev) => {
+                        const target = prev.find((n) => n.id === deletedId);
+                        if (target && !target.is_read) {
+                            setUnreadCount((c) => Math.max(0, c - 1));
+                        }
+                        return prev.filter((n) => n.id !== deletedId);
+                    });
+                },
+            )
             .subscribe();
 
         return () => {

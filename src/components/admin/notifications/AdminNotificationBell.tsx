@@ -10,7 +10,15 @@ import bellAnimation from "../../../../public/lottie/noti.json";
 import { usePathname, useRouter } from "next/navigation";
 import { fmt } from "@/lib/fund-constants";
 
-function ResolvedBadge({ action }: { action?: "approved" | "rejected" }) {
+function ResolvedBadge({ action }: { action?: "approved" | "rejected" | "cancelled" }) {
+    if (action === "cancelled") {
+        return (
+            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-gray-400">
+                <XCircle className="w-3.5 h-3.5" />
+                Buổi đã huỷ
+            </div>
+        );
+    }
     if (action === "rejected") {
         return (
             <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-red-500">
@@ -742,14 +750,6 @@ export function AdminNotificationBell() {
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
-                {/* {hasUnread && (
-                    <span
-                        className="absolute text-red-500 text-xs font-bold flex items-center justify-center"
-                        style={{ top: 10, right: 8 }}
-                    >
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                )} */}
             </button>
 
             {open && typeof document !== "undefined" && createPortal(

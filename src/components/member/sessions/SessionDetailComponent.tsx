@@ -19,6 +19,7 @@ import {
   UserPlus,
   Wallet,
   Download,
+  Heart,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
@@ -264,6 +265,7 @@ export default function SessionDetailPage() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [registerPhase, setRegisterPhase] = useState<ActionPhase>("idle");
+  const [interestedPhase, setInterestedPhase] = useState<ActionPhase>("idle");
   const [cancelPhase, setCancelPhase] = useState<ActionPhase>("idle");
   const [payType, setPayType] = useState<"solo" | "grouped" | null>(null);
 
@@ -312,6 +314,8 @@ export default function SessionDetailPage() {
 
   const [costDetail, setCostDetail] = useState<any>(null);
 
+  const [respondPhase, setRespondPhase] = useState<"idle" | "accept" | "decline">("idle");
+
   const fetchCostDetail = async () => {
     try {
       const { data } = await sessionsApi.getCostDetail(id);
@@ -338,6 +342,7 @@ export default function SessionDetailPage() {
     try {
       const { data } = await sessionsApi.get(id);
       setSession(data);
+      setInterestedPhase(data.is_interested ? "success" : "idle");
     } finally {
       setLoading(false);
     }
@@ -483,6 +488,38 @@ export default function SessionDetailPage() {
     } catch (err: any) {
       setRegisterPhase("idle");
       toast.error(err?.response?.data?.message ?? "Đăng ký thất bại");
+    }
+  };
+
+  const handleMarkInterested = async () => {
+    setInterestedPhase("loading");
+    try {
+      await sessionsApi.markInterested(id);
+      setInterestedPhase("success");
+      toast.success("Đã gửi lời chúc đến mọi người trong buổi!");
+    } catch (err: any) {
+      setInterestedPhase("idle");
+      toast.error(err?.response?.data?.message ?? "Gửi thất bại");
+    }
+  };
+
+
+  const handleRespondAdded = async (action: "accept" | "decline") => {
+    if (!myReg?.id) return;
+    setRespondPhase(action);
+    try {
+      await registrationsApi.respond(myReg.id, action);
+      toast.success(
+        action === "accept"
+          ? "Đã xác nhận tham gia buổi đánh"
+          : "Đã báo bận, đăng ký của bạn đã được huỷ",
+      );
+      fetchSession();
+      fetchRegistrations();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Có lỗi xảy ra");
+    } finally {
+      setRespondPhase("idle");
     }
   };
 
@@ -1081,18 +1118,20 @@ export default function SessionDetailPage() {
             </div>
 
             {(myReg?.participation_status === "pending_approval" ||
-              myReg?.participation_status === "awaiting_checkin") && (
+              (myReg?.participation_status === "awaiting_checkin" &&
+                myReg?.added_response !== "pending")) && (
                 <div className="flex items-center gap-1.5 mb-4 -mt-1">
                   {myReg?.participation_status === "pending_approval" && (
                     <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-50 text-amber-700 flex items-center gap-1">
                       <Hourglass className="w-3 h-3" /> Chờ admin duyệt
                     </span>
                   )}
-                  {myReg?.participation_status === "awaiting_checkin" && (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600 flex items-center gap-1">
-                      <Hourglass className="w-3 h-3" /> Chờ admin điểm danh
-                    </span>
-                  )}
+                  {myReg?.participation_status === "awaiting_checkin" &&
+                    myReg?.added_response !== "pending" && (
+                      <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600 flex items-center gap-1">
+                        <Hourglass className="w-3 h-3" /> Chờ admin điểm danh
+                      </span>
+                    )}
                 </div>
               )}
 
@@ -1161,7 +1200,54 @@ export default function SessionDetailPage() {
             )}
           </div>
 
-          {/* Chi phí buổi */}
+          {myReg && myReg.added_response === "pending" && (
+            <div
+              className="bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-4 space-y-3"
+              style={{ animation: "fadeSlideUp .35s ease both" }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                  <CalendarDays className="w-4.5 h-4.5 text-indigo-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-indigo-800">
+                    Admin đã thêm bạn vào buổi này
+                  </p>
+                  <p className="text-xs text-indigo-600 mt-0.5">
+                    Xác nhận tham gia hoặc báo bận để admin sắp xếp lại nếu cần.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleRespondAdded("accept")}
+                  disabled={respondPhase !== "idle"}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold px-3 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                  {respondPhase === "accept" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
+                  Tham gia
+                </button>
+                <button
+                  onClick={() => handleRespondAdded("decline")}
+                  disabled={respondPhase !== "idle"}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold px-3 py-2.5 rounded-xl bg-white border border-red-200 text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                >
+                  {respondPhase === "decline" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <XCircle className="w-4 h-4" />
+                  )}
+                  Bận rùi
+                </button>
+              </div>
+            </div>
+          )}
+
           {(session.status === "waiting_payment" || session.status === "completed") &&
             costDetail &&
             (costDetail.chi_phi.shuttle_count > 0 ||
@@ -1573,25 +1659,27 @@ export default function SessionDetailPage() {
             )}
           </div>
 
-          {myReg && myReg.participation_status === "awaiting_checkin" && (
-            <div
-              className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3"
-              style={{ animation: "fadeSlideUp .35s ease both" }}
-            >
-              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                <Hourglass className="w-5 h-5 text-slate-500" />
+          {myReg &&
+            myReg.participation_status === "awaiting_checkin" &&
+            myReg.added_response !== "pending" && (
+              <div
+                className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3"
+                style={{ animation: "fadeSlideUp .35s ease both" }}
+              >
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <Hourglass className="w-5 h-5 text-slate-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Đang chờ điểm danh
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Admin sẽ điểm danh khi buổi bắt đầu. Sau khi buổi kết thúc, số
+                    tiền cần thanh toán sẽ hiện ở đây.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  Đang chờ điểm danh
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Admin sẽ điểm danh khi buổi bắt đầu. Sau khi buổi kết thúc, số
-                  tiền cần thanh toán sẽ hiện ở đây.
-                </p>
-              </div>
-            </div>
-          )}
+            )}
 
           {myReg &&
             myReg.participation_status === "confirmed" &&
@@ -1911,11 +1999,39 @@ export default function SessionDetailPage() {
             }}
           >
             {canRegister && (
-              <MorphButton
-                phase={registerPhase}
-                label="🏸 Đăng ký tham gia"
-                onClick={handleRegister}
-              />
+              <div className="w-full flex items-center justify-center gap-2">
+                <MorphButton
+                  phase={registerPhase}
+                  label="🏸 Đăng ký tham gia"
+                  idleWidthClass="flex-1"
+                  onClick={handleRegister}
+                />
+
+                <button
+                  onClick={handleMarkInterested}
+                  disabled={interestedPhase !== "idle"}
+                  className={`flex items-center justify-center gap-1.5 text-sm font-medium
+                    h-10 rounded-lg px-3 whitespace-nowrap
+                    transition-[flex,border-radius,background-color] duration-300 ease-out
+                    disabled:cursor-not-allowed disabled:opacity-60
+                    ${interestedPhase === "idle" ? "flex-1" : "flex-shrink-0 w-10 !px-0 rounded-full"}
+                    ${interestedPhase === "success"
+                      ? "bg-pink-500 text-white"
+                      : "bg-white border border-pink-200 text-pink-500 hover:bg-pink-50"
+                    }`}
+                >
+                  {interestedPhase === "loading" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : interestedPhase === "success" ? (
+                    <CheckCircle2 className="w-4 h-4" />
+                  ) : (
+                    <Heart className="w-4 h-4" />
+                  )}
+                  {interestedPhase === "idle" && (
+                    <span className="whitespace-nowrap">Quan tâm</span>
+                  )}
+                </button>
+              </div>
             )}
 
             {myReg &&

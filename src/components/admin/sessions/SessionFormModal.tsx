@@ -153,7 +153,6 @@ export default function SessionFormModal({
         opacity: visible ? 1 : 0,
         transition: "opacity 200ms ease-out",
       }}
-      onClick={handleClose}
     >
       <div
         className="bg-white rounded-2xl w-full max-w-xl shadow-xl my-8 max-h-[90vh] flex flex-col"

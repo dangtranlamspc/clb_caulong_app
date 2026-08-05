@@ -121,6 +121,7 @@ export const sessionsApi = {
     api.get("/sessions/costs/summary", { params }),
   getCostDetail: (id: string) => api.get(`/sessions/${id}/cost-detail`),
   getParticipants: (id: string) => api.get(`/sessions/${id}/participants`),
+  markInterested: (id: string) => api.post(`/sessions/${id}/interested`),
 };
 
 export const registrationsApi = {
@@ -166,6 +167,8 @@ export const registrationsApi = {
     },
   ) => api.post(`/registrations/${registrationId}/guests`, data),
   getDetail: (id: string) => api.get(`/registrations/${id}`, { skipErrorToast: true } as any),
+  respond: (id: string, action: "accept" | "decline") =>
+    api.patch(`/registrations/${id}/respond`, { action }),
 };
 
 export const rankingsApi = {

@@ -34,7 +34,6 @@ import { sessionsApi, matchesApi, activitiesApi, registrationsApi, walletApi } f
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
-import { PaymentModal } from "@/components/member/payments/PaymentModal";
 import { MembersModal } from "@/components/member/modals/MemberModalConponent";
 import { useRouter } from "next/navigation";
 import { EventSkeleton, MatchSkeleton, SessionSkeleton, SkeletonList } from "@/components/skeletons/Skeleton";
