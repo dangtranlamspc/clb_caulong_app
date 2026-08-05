@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuthStore } from "@/store/auth.store";
 import { pushApi } from "@/lib/api";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
@@ -12,7 +13,10 @@ function urlBase64ToUint8Array(base64String: string) {
     return Uint8Array.from(Array.from(rawData).map((c) => c.charCodeAt(0)));
 }
 
-export function PushNotificationManager({ currentUserId }: { currentUserId: string }) {
+export function PushNotificationManager() {
+    const { user } = useAuthStore();
+    const currentUserId = user?.id;
+
     const [permission, setPermission] = useState<NotificationPermission>("default");
     const [subscribed, setSubscribed] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -20,6 +24,8 @@ export function PushNotificationManager({ currentUserId }: { currentUserId: stri
     useEffect(() => {
         if (typeof window === "undefined") return;
         if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+        if (!currentUserId) return; // chưa xác định user thì chưa đồng bộ subscription
+
         setPermission(Notification.permission);
 
         (async () => {
@@ -27,6 +33,8 @@ export function PushNotificationManager({ currentUserId }: { currentUserId: stri
             const existing = await reg.pushManager.getSubscription();
 
             if (existing && Notification.permission === "granted") {
+                // Luôn đồng bộ lại user_id cho endpoint hiện có,
+                // phòng trường hợp browser đã có subscription từ tài khoản khác trước đó
                 try {
                     await pushApi.subscribe(existing.toJSON() as any);
                 } catch (e) {
