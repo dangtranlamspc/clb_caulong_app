@@ -555,7 +555,15 @@ export const handbookPublicApi = {
 
 
 export const feedbackApi = {
-  send: (message: string) => api.post('/feedback', { message }),
+  send: (message: string, image_url?: string) =>
+    api.post('/feedback', { message, image_url }),
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post('/feedback/upload-image', formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
   getMine: () => api.get('/feedback/me'),
 
   listAdmin: (params?: { search?: string; status?: 'all' | 'read' | 'unread'; page?: number; limit?: number }) =>

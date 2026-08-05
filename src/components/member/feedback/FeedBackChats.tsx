@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { MessageCircle, X, Send, Loader2, Check, CheckCheck, Sparkles } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, Check, CheckCheck, Sparkles, ImagePlus } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useAuthStore } from "@/store/auth.store";
@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 type Feedback = {
     id: string;
     message: string;
+    image_url?: string | null;
     is_read: boolean;
     created_at: string;
 };
@@ -88,6 +89,34 @@ export function FeedbackWidget() {
     const planeDotRef = useRef<HTMLDivElement>(null);
     const planeSeqRef = useRef(0);
     const planeRafRef = useRef<number | null>(null);
+
+
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handlePickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+            toast.error("Chỉ nhận ảnh PNG/JPEG/WEBP");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Ảnh vượt quá 5MB");
+            return;
+        }
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+        e.target.value = "";
+    };
+
+    const removeImage = () => {
+        if (imagePreview) URL.revokeObjectURL(imagePreview);
+        setImageFile(null);
+        setImagePreview(null);
+    };
 
     const fetchMine = useCallback(async () => {
         try {
@@ -168,11 +197,20 @@ export function FeedbackWidget() {
 
     const handleSend = async () => {
         const content = text.trim();
-        if (!content || sending) return;
+        if ((!content && !imageFile) || sending) return;
         setSending(true);
         setText("");
+
         try {
-            const { data } = await feedbackApi.send(content);
+            let image_url: string | undefined;
+            if (imageFile) {
+                setUploadingImage(true);
+                const { data } = await feedbackApi.uploadImage(imageFile);
+                image_url = data.url;
+                setUploadingImage(false);
+            }
+
+            const { data } = await feedbackApi.send(content, image_url);
             setItems((prev) => [data, ...prev]);
             requestAnimationFrame(() => listRef.current?.scrollTo({ top: 0, behavior: "smooth" }));
 
@@ -187,12 +225,14 @@ export function FeedbackWidget() {
                 setTimeout(() => setFlyingPlane((cur) => (cur?.id === id ? null : cur)), PLANE_FLIGHT_MS + 50);
             }
 
+            removeImage();
             closeWidget();
         } catch {
             toast.error("Gửi thất bại, vui lòng thử lại");
             setText(content);
         } finally {
             setSending(false);
+            setUploadingImage(false);
         }
     };
 
@@ -317,15 +357,52 @@ export function FeedbackWidget() {
                                         <span className="text-[10px] text-gray-300">Enter để gửi</span>
                                     </div>
                                 </div>
+
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    className="hidden"
+                                    onChange={handlePickImage}
+                                />
+
+                                <div className="mt-2.5 flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="h-9 px-3 rounded-lg border border-gray-200 flex items-center gap-1.5 text-xs text-gray-500 active:scale-95 transition-transform"
+                                    >
+                                        <ImagePlus className="w-4 h-4" />
+                                        Đính kèm ảnh
+                                    </button>
+
+                                    {imagePreview && (
+                                        <div className="relative">
+                                            <img
+                                                src={imagePreview}
+                                                alt="preview"
+                                                className="h-9 w-9 object-cover rounded-lg border border-gray-200"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={removeImage}
+                                                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gray-800 text-white flex items-center justify-center"
+                                            >
+                                                <X className="w-2.5 h-2.5" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
                                 <button
                                     ref={sendBtnRef}
                                     onClick={handleSend}
-                                    disabled={!text.trim() || sending}
+                                    disabled={(!text.trim() && !imageFile) || sending}
                                     className="mt-2.5 w-full h-11 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-35 active:scale-[0.99] transition-all shadow-sm shadow-[#183153]/20"
                                     style={{ background: NAVY_GRADIENT }}
                                 >
                                     {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                    Gửi góp ý
+                                    {uploadingImage ? "Đang tải ảnh..." : "Gửi góp ý"}
                                 </button>
                             </div>
 
@@ -368,6 +445,13 @@ export function FeedbackWidget() {
                                                 animation: `feedbackItemIn 0.28s cubic-bezier(.32,.72,0,1) ${idx * 0.03}s both`,
                                             }}
                                         >
+                                            {f.image_url && (
+                                                <img
+                                                    src={f.image_url}
+                                                    alt="feedback"
+                                                    className="rounded-xl mb-2 max-h-48 w-full object-cover border border-gray-100"
+                                                />
+                                            )}
                                             <p className="text-[13.5px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words">
                                                 {f.message}
                                             </p>

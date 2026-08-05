@@ -38,6 +38,7 @@ type FeedbackItem = {
     id: string;
     user_id: string;
     message: string;
+    image_url?: string | null;
     is_read: boolean;
     created_at: string;
 };
@@ -82,6 +83,8 @@ export default function AdminFeedbackPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [unreadCount, setUnreadCount] = useState(0);
+
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
     const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
     const [threadMessages, setThreadMessages] = useState<FeedbackItem[]>([]);
@@ -248,6 +251,14 @@ export default function AdminFeedbackPage() {
                                     )}
                                 </button>
                             </div>
+                            {m.image_url && (
+                                <img
+                                    src={m.image_url}
+                                    alt="Ảnh minh hoạ"
+                                    onClick={() => setLightboxUrl(m.image_url!)}
+                                    className="rounded-xl mb-2 max-h-56 w-auto max-w-full object-cover border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity"
+                                />
+                            )}
                             {m.message}
                         </div>
                     ))
@@ -258,7 +269,6 @@ export default function AdminFeedbackPage() {
 
     return (
         <div className="flex h-full min-h-0 bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-            {/* ---------- List column ---------- */}
             <div className="flex-1 flex flex-col min-h-0">
                 <div className="px-5 pt-5 pb-4 flex-shrink-0 border-b border-gray-100">
                     <div className="flex items-baseline justify-between mb-4">
@@ -411,7 +421,6 @@ export default function AdminFeedbackPage() {
                 )}
             </div>
 
-            {/* ---------- Detail column (desktop) ---------- */}
             <div className="hidden lg:flex w-[380px] border-l border-gray-100 flex-col min-h-0 bg-gray-50/40">
                 {!selectedConv ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-300">
@@ -427,7 +436,6 @@ export default function AdminFeedbackPage() {
                 )}
             </div>
 
-            {/* ---------- Detail overlay (mobile) ---------- */}
             {selectedConv && (
                 <div className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white animate-in slide-in-from-right duration-200">
                     <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-100 flex-shrink-0">
@@ -442,6 +450,26 @@ export default function AdminFeedbackPage() {
                     <div className="flex-1 flex flex-col min-h-0">
                         <DetailContent conv={selectedConv} />
                     </div>
+                </div>
+            )}
+
+            {lightboxUrl && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+                    onClick={() => setLightboxUrl(null)}
+                >
+                    <button
+                        onClick={() => setLightboxUrl(null)}
+                        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                    >
+                        <X className="w-4.5 h-4.5 text-white" />
+                    </button>
+                    <img
+                        src={lightboxUrl}
+                        alt="Ảnh góp ý"
+                        onClick={(e) => e.stopPropagation()}
+                        className="max-w-full max-h-full rounded-lg object-contain"
+                    />
                 </div>
             )}
         </div>
