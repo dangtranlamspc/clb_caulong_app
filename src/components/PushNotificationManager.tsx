@@ -96,3 +96,6 @@ export function PushNotificationManager() {
         </button>
     );
 }
+
+
+// Web Push notification (thông báo hệ thống nổi lên như app mobile, kể cả khi tắt tab/trình duyệt)
