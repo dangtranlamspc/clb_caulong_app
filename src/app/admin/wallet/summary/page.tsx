@@ -23,6 +23,7 @@ import { vi } from "date-fns/locale";
 import { walletAdminApi } from "@/lib/api";
 import AdminTransactionDetailModal from "@/components/admin/wallet/AdminTransactionDetailModal";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
+import { subscribeWalletChanged } from "@/lib/wallet-events";
 
 function fmt(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
@@ -211,8 +212,15 @@ function MemberPanel({
     }
   }, [member.id, onTransactionsLoaded]);
 
+
+
   useEffect(() => {
     fetchTx();
+  }, [fetchTx]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeWalletChanged(() => fetchTx());
+    return unsubscribe;
   }, [fetchTx]);
 
   const closeForm = () => {
@@ -490,6 +498,12 @@ export default function WalletAdminSummaryPage() {
       setMembers(data.data ?? []);
       setMeta(data.meta ?? {});
       hasLoadedRef.current = true;
+
+      setSelectedMember((prev: any) => {
+        if (!prev) return prev;
+        const updated = (data.data ?? []).find((m: any) => m.id === prev.id);
+        return updated ? { ...prev, ...updated } : prev;
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -511,6 +525,14 @@ export default function WalletAdminSummaryPage() {
   useEffect(() => {
     fetchMembers();
   }, [statusFilter, rankFilter, page, sortField, sortOrder]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeWalletChanged(() => {
+      fetchSummary();
+      fetchMembers();
+    });
+    return unsubscribe;
+  }, [fetchSummary, fetchMembers]);
 
   const panelRef = useRef<HTMLDivElement>(null);
 

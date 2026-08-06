@@ -76,7 +76,7 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
 
         request
             .then(({ data }: any) => { if (!ignore) setDetail(data); })
-            .catch(() => { if (!ignore) setDetail(null); })
+            .catch(() => { if (!ignore) setDetail({ deleted: true }); })
             .finally(() => { if (!ignore) setLoadingDetail(false); });
         return () => { ignore = true; };
     }, [tx.reference_id]);
@@ -92,14 +92,27 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
         ? (detail?.registrations ?? [])
         : (detail?.registration ? [detail.registration] : []);
 
+    const isShirtOrderDeleted = isShirtOrder && !loadingDetail && detail?.deleted === true;
+
+    const isShirtOrderCancelled =
+        isShirtOrder &&
+        !loadingDetail &&
+        !isShirtOrderDeleted &&
+        tx.amount < 0 &&
+        shirtItems.some((item: any) => Boolean(item.cancelled_at));
+
+    const isShirtOrderReversed = isShirtOrderCancelled;
+
     const isRefunded = isSessionPayment && transactions.some((t: any) =>
         t.type === 'refund' &&
         new Date(t.created_at).getTime() > new Date(tx.created_at).getTime() &&
         typeof t.description === 'string' && tx.title && t.description.includes(tx.title)
     );
 
-    const isReversed =
+    const isSessionReversed =
         isSessionPayment && (isRefunded || (!loadingDetail && (!reg || reg.payment_status !== 'confirmed')));
+
+    const showReversedOverlay = isSessionReversed || isShirtOrderReversed;
 
     const sessionStatus = reg?.sessions?.status;
     const isSessionCancelled = sessionStatus === 'cancelled';
@@ -231,7 +244,7 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
 
                 <div className="relative flex-1 min-h-0">
                     <div
-                        className={`px-5 pt-5 pb-10 space-y-5 overflow-y-auto hide-scrollbar ${isReversed ? 'blur-[1px] select-none pointer-events-none' : ''}`}
+                        className={`px-5 pt-5 pb-10 space-y-5 overflow-y-auto hide-scrollbar ${showReversedOverlay ? 'blur-[1px] select-none pointer-events-none' : ''}`}
                         style={{
                             WebkitOverflowScrolling: 'touch',
                             overscrollBehavior: 'contain',
@@ -379,7 +392,7 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                     </div>
                                 ) : shirtItems.length === 0 ? (
                                     <p className="text-sm text-gray-400 text-center py-4">
-                                        Không tải được chi tiết
+                                        {isShirtOrderDeleted ? 'Đăng ký đặt áo này đã bị xoá' : 'Không tải được chi tiết'}
                                     </p>
                                 ) : (
                                     <div className="space-y-3">
@@ -443,14 +456,17 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                 )}
                             </div>
                         )}
-
                     </div>
 
-                    {isReversed && (
+                    {showReversedOverlay && (
                         <div className="absolute left-0 right-0 bottom-0 z-10 flex flex-col items-center justify-center gap-1 bg-white/70" style={{ top: 65 }}>
                             <Ban className="w-6 h-6 text-gray-400" />
                             <p className="text-base font-bold text-gray-600 text-center px-6">
-                                {isSessionCancelled ? 'Buổi đánh đã bị hủy' : 'Hóa đơn đã được hoàn tác'}
+                                {isSessionCancelled
+                                    ? 'Buổi đánh đã bị hủy'
+                                    : isShirtOrderCancelled
+                                        ? 'Đơn đặt hàng đã huỷ'
+                                        : 'Hóa đơn đã được hoàn tác'}
                             </p>
                             <p className="text-sm font-semibold text-emerald-600">
                                 Đã hoàn tiền

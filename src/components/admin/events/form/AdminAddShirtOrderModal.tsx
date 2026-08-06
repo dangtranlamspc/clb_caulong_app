@@ -16,6 +16,7 @@ import {
     ArrowLeft,
 } from "lucide-react";
 import { eventsAdminApi, membersAdminApi } from "@/lib/api";
+import { notifyWalletChanged } from "@/lib/wallet-events";
 
 const COLOR_SWATCH_MAP: Record<string, string> = {
     "xanh dương": "#2563eb",
@@ -295,6 +296,11 @@ export default function AdminAddShirtOrderModal({
 
         if (successCount > 0) {
             toast.success(`Đã thêm ${successCount}/${cart.length} sản phẩm vào đơn hàng`);
+
+            if (payment === "wallet") {
+                notifyWalletChanged();
+            }
+
             onSuccess();
         }
 

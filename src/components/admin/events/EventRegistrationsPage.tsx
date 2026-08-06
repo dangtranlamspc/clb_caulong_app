@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { eventsAdminApi } from "@/lib/api";
 import { createPortal } from "react-dom";
+import { notifyWalletChanged } from "@/lib/wallet-events";
 
 type PaymentFilter = "all" | "unpaid" | "paid";
 
@@ -87,6 +88,7 @@ export default function EventRegistrationsPage({
         try {
             await eventsAdminApi.approveCancelRequest(regId);
             toast.success("Đã duyệt huỷ và hoàn tiền");
+            notifyWalletChanged();
             fetchAll();
         } catch { }
     };
@@ -96,6 +98,7 @@ export default function EventRegistrationsPage({
         try {
             await eventsAdminApi.finalizeShirtOrder(id!);
             toast.success("Đã chốt danh sách");
+            notifyWalletChanged();
             setShowFinalizeModal(false);
             fetchAll();
         } catch {
@@ -145,6 +148,7 @@ export default function EventRegistrationsPage({
                 await eventsAdminApi.confirmTournamentPayment(ids[0]);
             }
             toast.success("Đã xác nhận thanh toán");
+            notifyWalletChanged();
             fetchAll();
         } catch { }
     };
@@ -200,6 +204,7 @@ export default function EventRegistrationsPage({
         try {
             await eventsAdminApi.removeRegistration(removeConfirm.type, removeConfirm.regId);
             toast.success("Đã xoá đăng ký");
+            notifyWalletChanged();
             setRemoveConfirm(null);
             fetchAll();
         } catch {
