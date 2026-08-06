@@ -722,6 +722,12 @@ function SessionsTab({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
 
+  const PAGE_SIZE = 10;
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
   const pendingBillsSeqRef = useRef(0);
   const pendingBillsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -735,11 +741,12 @@ function SessionsTab({
   };
 
   const fetchSessions = useCallback(
-    async (opts?: { silent?: boolean }) => {
+    async (opts?: { silent?: boolean; targetLimit?: number }) => {
       const silent = opts?.silent ?? false;
+      const targetLimit = opts?.targetLimit ?? limit;
       if (!silent) setLoading(true);
       try {
-        const params: any = { limit: 30 };
+        const params: any = { limit: targetLimit };
         if (
           filter &&
           filter !== "waiting_payment" &&
@@ -750,6 +757,8 @@ function SessionsTab({
 
         const { data } = await sessionsApi.list(params);
         let list = data.data ?? [];
+        const rawFetchedCount = list.length;
+        const total = data.meta?.total ?? rawFetchedCount;
 
         if (filter === "waiting_payment") {
           list = list.filter(
@@ -759,6 +768,10 @@ function SessionsTab({
           list = list.filter(
             (s: any) => s.status === "waiting_payment" && !s.all_paid,
           );
+        }
+
+        if (filter !== "cancelled") {
+          list = list.filter((s: any) => s.status !== "cancelled");
         }
 
         const sorted = [...list].sort((a: any, b: any) => {
@@ -771,15 +784,18 @@ function SessionsTab({
           const bTime = new Date(b.created_at ?? b.scheduled_at).getTime();
           return bTime - aTime;
         });
+
         setSessions(sorted);
+        setHasMore(rawFetchedCount < total);
+        setLimit(targetLimit);
       } finally {
         if (!silent) setLoading(false);
+        setLoadingMore(false);
       }
     },
-    [filter],
+    [filter, limit],
   );
 
-  // 👇 cập nhật lạc quan ngay khi bấm "Đăng ký ngay", không cần chờ / không cần fetch lại toàn bộ list
   const applyOptimisticRegister = useCallback((sessionId: string, registration: any) => {
     setSessions((prev) =>
       prev.map((sess) => {
@@ -816,12 +832,39 @@ function SessionsTab({
     pendingBillsDebounceRef.current = setTimeout(fetchPendingBills, 300);
   }, [fetchPendingBills]);
 
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore || loading) return;
+    setLoadingMore(true);
+    fetchSessions({ silent: true, targetLimit: limit + PAGE_SIZE });
+  }, [loadingMore, hasMore, loading, limit, fetchSessions]);
+
   useEffect(() => {
     fetchPendingBills();
   }, [fetchPendingBills]);
 
   useEffect(() => {
-    fetchSessions();
+    fetchSessions({ targetLimit: PAGE_SIZE });
+  }, [filter]);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const el = sentinelRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, loadMore]);
+
+  const fetchSessionsRef = useRef(fetchSessions);
+  useEffect(() => {
+    fetchSessionsRef.current = fetchSessions;
   }, [fetchSessions]);
 
   useEffect(() => {
@@ -833,7 +876,7 @@ function SessionsTab({
         "postgres_changes",
         { event: "*", schema: "public", table: "registrations" },
         () => {
-          fetchSessions({ silent: true });
+          fetchSessionsRef.current({ silent: true });
           scheduleFetchPendingBills();
         },
       )
@@ -841,7 +884,7 @@ function SessionsTab({
         "postgres_changes",
         { event: "*", schema: "public", table: "sessions" },
         () => {
-          fetchSessions({ silent: true });
+          fetchSessionsRef.current({ silent: true });
           scheduleFetchPendingBills();
         },
       )
@@ -851,7 +894,7 @@ function SessionsTab({
       if (pendingBillsDebounceRef.current) clearTimeout(pendingBillsDebounceRef.current);
       supabase.removeChannel(channel);
     };
-  }, [user?.id, fetchSessions, scheduleFetchPendingBills]);
+  }, [user?.id, scheduleFetchPendingBills]);
 
   useEffect(() => {
     document.body.style.overflow = sheetOpen ? "hidden" : "";
@@ -1161,6 +1204,23 @@ function SessionsTab({
         )}
       </div>
 
+      {!loading && sessions.length > 0 && (
+        <div ref={sentinelRef} className="flex justify-center py-4">
+          {loadingMore ? (
+            <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
+          ) : hasMore ? (
+            <button
+              onClick={loadMore}
+              className="text-xs font-medium text-blue-600 bg-blue-50 px-4 py-2 rounded-full active:bg-blue-100"
+            >
+              Xem thêm
+            </button>
+          ) : sessions.length > PAGE_SIZE ? (
+            <span className="text-xs text-gray-300">Đã hiển thị hết</span>
+          ) : null}
+        </div>
+      )}
+
       {modalSession && (
         <MembersModal
           sessionId={modalSession.id}
@@ -1178,7 +1238,7 @@ function SessionsTab({
           onSuccess={() => {
             setPayModalSession(null);
             setTimeout(() => {
-              fetchSessions();
+              fetchSessions({ silent: true });
               fetchPendingBills();
             }, 300);
           }}

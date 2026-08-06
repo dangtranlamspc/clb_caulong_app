@@ -176,7 +176,8 @@ export const rankingsApi = {
     api.get("/rankings/leaderboard", { params }),
   myRank: () => api.get("/rankings/my-rank"),
   myStats: () => api.get("/rankings/my-stats"),
-  winRate: () => api.get("/rankings/win-rate"),
+  winRate: (params?: { month?: number; year?: number; view?: 'month' | 'year' }) =>
+    api.get('/rankings/win-rate', { params }),
   rankLeaderboard: () => api.get("/rankings/rank-leaderboard"),
 };
 

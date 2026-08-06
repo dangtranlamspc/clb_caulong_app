@@ -661,19 +661,71 @@ function WinRateInfoModal({ onClose }: { onClose: () => void }) {
 function WinRateTab({ data, myStats, user }: { data: any[]; myStats: any; user: any }) {
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
     const [showInfo, setShowInfo] = useState(false);
-    const filteredData = filterByGender(data, genderFilter);
+
+    const today = new Date();
+    const [selectedYear, setSelectedYear] = useState(String(today.getFullYear()));
+    const [selectedMonthOption, setSelectedMonthOption] = useState(String(today.getMonth() + 1));
+    const [monthData, setMonthData] = useState(data);
+    const [monthLoading, setMonthLoading] = useState(false);
+    const isFirstRender = useRef(true);
+
+    const isCurrentDefault =
+        selectedYear === String(today.getFullYear()) &&
+        selectedMonthOption === String(today.getMonth() + 1);
+
+    useEffect(() => {
+        if (isCurrentDefault) setMonthData(data);
+    }, [data]);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        setMonthLoading(true);
+
+        const params = selectedMonthOption === 'all'
+            ? { view: 'year' as const, year: Number(selectedYear) }
+            : { month: Number(selectedMonthOption), year: Number(selectedYear) };
+
+        rankingsApi.winRate(params)
+            .then((res: any) => setMonthData(res.data ?? []))
+            .finally(() => setMonthLoading(false));
+    }, [selectedYear, selectedMonthOption]);
+
+    const filteredData = filterByGender(monthData, genderFilter);
+
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between gap-2">
-                <div className="flex-1">
-                    <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
+            <div className="space-y-2">
+                <div className="flex justify-end gap-2">
+                    <CustomSelect
+                        value={selectedYear}
+                        onChange={setSelectedYear}
+                        options={YEAR_OPTIONS}
+                        triggerClassName="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-700 min-w-[100px]"
+                    />
+                    <CustomSelect
+                        value={selectedMonthOption}
+                        onChange={setSelectedMonthOption}
+                        options={MONTH_OPTION_LIST}
+                        triggerClassName="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-700 min-w-[110px]"
+                    />
                 </div>
-                <InfoTriggerButton onClick={() => setShowInfo(true)} />
+                <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                        <GenderSubTabs value={genderFilter} onChange={setGenderFilter} />
+                    </div>
+                    <InfoTriggerButton onClick={() => setShowInfo(true)} />
+                </div>
             </div>
-            {filteredData.length === 0 ? (
+
+            {monthLoading ? (
+                <SkeletonRows count={5} />
+            ) : filteredData.length === 0 ? (
                 <div className="bg-white rounded-2xl py-14 text-center">
                     <Swords className="w-10 h-10 mx-auto text-gray-200 mb-3" />
-                    <p className="text-gray-400 text-sm">Chưa có dữ liệu win rate tháng này</p>
+                    <p className="text-gray-400 text-sm">Chưa có dữ liệu win rate cho khoảng thời gian này</p>
                 </div>
             ) : (
                 <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
@@ -719,10 +771,11 @@ function WinRateTab({ data, myStats, user }: { data: any[]; myStats: any; user: 
                                 </AnimatedRow>
                             );
                         })}
-                        {showInfo && <WinRateInfoModal onClose={() => setShowInfo(false)} />}
                     </div>
                 </div>
             )}
+
+            {showInfo && <WinRateInfoModal onClose={() => setShowInfo(false)} />}
         </div>
     );
 }
