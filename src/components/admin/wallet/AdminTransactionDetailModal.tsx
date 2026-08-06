@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { Loader2, Users, X, CalendarDays, ArrowDownToLine, ShoppingCart, PlusCircle, RotateCcw, Wallet, Ban, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { registrationsAdminApi } from '@/lib/api';
+import { eventsAdminApi, registrationsAdminApi } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 function fmt(n: number) {
@@ -41,7 +41,16 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
     const isSessionPayment =
         tx.type === 'session_payment' && tx.reference_type === 'registration' && tx.reference_id;
 
+    const isShirtOrder =
+        tx.reference_type === 'shirt_order_registration' && tx.reference_id;
+
     const hasSnapshot = isSessionPayment && Boolean(tx.metadata);
+
+    const shirtOrderLabel = isShirtOrder
+        ? tx.amount > 0
+            ? 'Hoàn tiền đặt áo'
+            : 'Thanh toán đặt áo'
+        : null;
 
     useEffect(() => {
         const raf = requestAnimationFrame(() => setVisible(true));
@@ -54,10 +63,18 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
     };
 
     useEffect(() => {
-        if (!isSessionPayment) return;
+        const shouldFetch = isSessionPayment || isShirtOrder;
+        if (!shouldFetch) return;
         let ignore = false;
         setLoadingDetail(true);
-        registrationsAdminApi.getAdminDetail(tx.reference_id)
+
+        const request = isShirtOrder
+            ? (isShirtOrderBatch
+                ? eventsAdminApi.getShirtOrderRegistrationsDetailBatch(shirtOrderRegIds)
+                : eventsAdminApi.getShirtOrderRegistrationDetail(tx.reference_id))
+            : registrationsAdminApi.getAdminDetail(tx.reference_id);
+
+        request
             .then(({ data }: any) => { if (!ignore) setDetail(data); })
             .catch(() => { if (!ignore) setDetail(null); })
             .finally(() => { if (!ignore) setLoadingDetail(false); });
@@ -66,6 +83,14 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
 
     const reg = detail?.registration;
     const liveGuests = detail?.grouped_guests ?? [];
+    const shirtOrderRegIds: string[] = isShirtOrder
+        ? (tx.metadata?.registration_ids?.length ? tx.metadata.registration_ids : [tx.reference_id])
+        : [];
+    const isShirtOrderBatch = shirtOrderRegIds.length > 1;
+
+    const shirtItems: any[] = isShirtOrderBatch
+        ? (detail?.registrations ?? [])
+        : (detail?.registration ? [detail.registration] : []);
 
     const isRefunded = isSessionPayment && transactions.some((t: any) =>
         t.type === 'refund' &&
@@ -221,7 +246,7 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                 {isPositive ? '+' : ''}{fmt(tx.amount)}
                             </p>
                             <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
-                                {TX_TYPE_LABEL[tx.type] ?? tx.type}
+                                {shirtOrderLabel ?? TX_TYPE_LABEL[tx.type] ?? tx.type}
                             </span>
                         </div>
 
@@ -340,6 +365,85 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                 )}
                             </div>
                         )}
+
+
+                        {isShirtOrder && (
+                            <div>
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                                    Chi tiết đơn đặt áo {shirtItems.length > 1 ? `(${shirtItems.length} sản phẩm)` : ''}
+                                </p>
+
+                                {loadingDetail ? (
+                                    <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
+                                        <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+                                    </div>
+                                ) : shirtItems.length === 0 ? (
+                                    <p className="text-sm text-gray-400 text-center py-4">
+                                        Không tải được chi tiết
+                                    </p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {shirtItems.map((item, idx) => (
+                                            <div key={item.id ?? idx} className="rounded-xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
+                                                <div className="flex justify-between px-4 py-2.5 text-sm">
+                                                    <span className="text-gray-500">Loại áo</span>
+                                                    <span className="font-medium text-gray-800">{item.shirt_type_name}</span>
+                                                </div>
+                                                {item.color_name && (
+                                                    <div className="flex justify-between px-4 py-2.5 text-sm">
+                                                        <span className="text-gray-500">Màu sắc</span>
+                                                        <span className="font-medium text-gray-800">{item.color_name}</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between px-4 py-2.5 text-sm">
+                                                    <span className="text-gray-500">Size</span>
+                                                    <span className="font-medium text-gray-800">{item.size}</span>
+                                                </div>
+                                                {(item.jersey_number || item.print_name) && (
+                                                    <div className="flex justify-between px-4 py-2.5 text-sm">
+                                                        <span className="text-gray-500">Số áo / Tên in</span>
+                                                        <span className="font-medium text-gray-800 text-right">
+                                                            {item.jersey_number && `Số ${item.jersey_number}`}
+                                                            {item.jersey_number && item.print_name && " · "}
+                                                            {item.print_name && `"${item.print_name}"`}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between px-4 py-2.5 text-sm">
+                                                    <span className="text-gray-500">Số lượng</span>
+                                                    <span className="font-medium text-gray-800">{item.quantity}</span>
+                                                </div>
+                                                <div className="flex justify-between px-4 py-2.5 text-sm">
+                                                    <span className="text-gray-500">Đơn giá</span>
+                                                    <span className="font-medium text-gray-800">{fmt(item.unit_price)}</span>
+                                                </div>
+                                                <div className="flex justify-between px-4 py-3 text-sm bg-blue-50">
+                                                    <span className="font-semibold text-blue-700">Thành tiền</span>
+                                                    <span className="font-bold text-blue-700">{fmt(item.total_amount)}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {shirtItems.length > 1 && (
+                                            <div className="flex justify-between px-4 py-3 text-sm bg-emerald-50 rounded-xl border border-emerald-100">
+                                                <span className="font-semibold text-emerald-700">Tổng cộng ({shirtItems.length} sản phẩm)</span>
+                                                <span className="font-bold text-emerald-700">
+                                                    {fmt(shirtItems.reduce((s, it) => s + (it.total_amount ?? 0), 0))}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {shirtItems[0]?.users?.full_name && (
+                                            <div className="flex justify-between px-4 py-2.5 text-sm bg-blue-50/50 rounded-xl">
+                                                <span className="text-gray-500">Người đặt</span>
+                                                <span className="font-semibold text-blue-700">{shirtItems[0].users.full_name}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                     </div>
 
                     {isReversed && (
@@ -406,6 +510,65 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                     </div>
                                 )}
                                 <Row label="Tổng đã trả" value={fmt(displayTotal)} bold shaded />
+                            </div>
+                        )}
+
+                        {isShirtOrder && shirtItems.length > 0 && (
+                            <div style={{ marginTop: 16 }}>
+                                {shirtItems.map((item, idx) => (
+                                    <div
+                                        key={item.id ?? idx}
+                                        style={{
+                                            border: '1px solid #f3f4f6',
+                                            borderRadius: 12,
+                                            overflow: 'hidden',
+                                            marginBottom: 10,
+                                        }}
+                                    >
+                                        <Row label="Loại áo" value={item.shirt_type_name} />
+                                        {item.color_name && <Row label="Màu sắc" value={item.color_name} />}
+                                        <Row label="Size" value={item.size} />
+                                        {(item.jersey_number || item.print_name) && (
+                                            <Row
+                                                label="Số áo / Tên in"
+                                                value={[
+                                                    item.jersey_number ? `Số ${item.jersey_number}` : null,
+                                                    item.print_name ? `"${item.print_name}"` : null,
+                                                ].filter(Boolean).join(' · ')}
+                                            />
+                                        )}
+                                        <Row label="Số lượng" value={String(item.quantity)} />
+                                        <Row label="Đơn giá" value={fmt(item.unit_price)} />
+                                        <Row label="Thành tiền" value={fmt(item.total_amount)} bold highlight />
+                                    </div>
+                                ))}
+
+                                {shirtItems.length > 1 && (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            padding: '10px 16px',
+                                            fontSize: 13,
+                                            background: '#ecfdf5',
+                                            border: '1px solid #d1fae5',
+                                            borderRadius: 12,
+                                        }}
+                                    >
+                                        <span style={{ fontWeight: 700, color: '#047857' }}>
+                                            Tổng cộng ({shirtItems.length} sản phẩm)
+                                        </span>
+                                        <span style={{ fontWeight: 700, color: '#047857' }}>
+                                            {fmt(shirtItems.reduce((s, it) => s + (it.total_amount ?? 0), 0))}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {shirtItems[0]?.users?.full_name && (
+                                    <div style={{ marginTop: 10 }}>
+                                        <Row label="Người đặt" value={shirtItems[0].users.full_name} highlight />
+                                    </div>
+                                )}
                             </div>
                         )}
 

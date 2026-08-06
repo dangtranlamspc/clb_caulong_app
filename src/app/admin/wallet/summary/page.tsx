@@ -10,7 +10,6 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
   Plus,
   SlidersHorizontal,
   X,
