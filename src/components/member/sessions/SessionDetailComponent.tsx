@@ -276,6 +276,7 @@ export default function SessionDetailPage() {
     full_name: "",
     gender: "male",
     skill_level: "",
+    email: "",
   });
   const [addingGuest, setAddingGuest] = useState(false);
 
@@ -583,7 +584,7 @@ export default function SessionDetailPage() {
     setGuestModalVisible(false);
     setTimeout(() => {
       setShowGuestModal(false);
-      setGuestForm({ full_name: "", gender: "male", skill_level: "" });
+      setGuestForm({ full_name: "", gender: "male", skill_level: "", email: "" });
       setGuestTab("account");
       setMemberSearch("");
       setMemberSearchResults([]);
@@ -624,6 +625,7 @@ export default function SessionDetailPage() {
           guest_full_name: guestForm.full_name.trim(),
           guest_gender: guestForm.gender,
           guest_skill_level: guestForm.skill_level || undefined,
+          guest_email: guestForm.email.trim() || undefined,
         });
         toast.success(`Đã thêm khách ${guestForm.full_name} đi cùng bạn`);
         closeGuestModal();
@@ -1200,53 +1202,55 @@ export default function SessionDetailPage() {
             )}
           </div>
 
-          {myReg && myReg.added_response === "pending" && (
-            <div
-              className="bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-4 space-y-3"
-              style={{ animation: "fadeSlideUp .35s ease both" }}
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                  <CalendarDays className="w-4.5 h-4.5 text-indigo-600" />
+          {myReg &&
+            myReg.added_response === "pending" &&
+            myReg.participation_status !== "confirmed" && (
+              <div
+                className="bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-4 space-y-3"
+                style={{ animation: "fadeSlideUp .35s ease both" }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <CalendarDays className="w-4.5 h-4.5 text-indigo-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-indigo-800">
+                      Admin đã thêm bạn vào buổi này
+                    </p>
+                    <p className="text-xs text-indigo-600 mt-0.5">
+                      Xác nhận tham gia hoặc báo bận để admin sắp xếp lại nếu cần.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-indigo-800">
-                    Admin đã thêm bạn vào buổi này
-                  </p>
-                  <p className="text-xs text-indigo-600 mt-0.5">
-                    Xác nhận tham gia hoặc báo bận để admin sắp xếp lại nếu cần.
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleRespondAdded("accept")}
-                  disabled={respondPhase !== "idle"}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold px-3 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                >
-                  {respondPhase === "accept" ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="w-4 h-4" />
-                  )}
-                  Tham gia
-                </button>
-                <button
-                  onClick={() => handleRespondAdded("decline")}
-                  disabled={respondPhase !== "idle"}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold px-3 py-2.5 rounded-xl bg-white border border-red-200 text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
-                >
-                  {respondPhase === "decline" ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <XCircle className="w-4 h-4" />
-                  )}
-                  Bận rùi
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleRespondAdded("accept")}
+                    disabled={respondPhase !== "idle"}
+                    className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold px-3 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  >
+                    {respondPhase === "accept" ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4" />
+                    )}
+                    Tham gia
+                  </button>
+                  <button
+                    onClick={() => handleRespondAdded("decline")}
+                    disabled={respondPhase !== "idle"}
+                    className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold px-3 py-2.5 rounded-xl bg-white border border-red-200 text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                  >
+                    {respondPhase === "decline" ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <XCircle className="w-4 h-4" />
+                    )}
+                    Bận rùi
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {(session.status === "waiting_payment" || session.status === "completed") &&
             costDetail &&
@@ -1954,6 +1958,20 @@ export default function SessionDetailPage() {
                               }))}
                             />
                           </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Email (không bắt buộc, để gửi hóa đơn)
+                          </label>
+                          <input
+                            type="email"
+                            value={guestForm.email}
+                            onChange={(e) =>
+                              setGuestForm((f) => ({ ...f, email: e.target.value }))
+                            }
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                            placeholder="vidu@email.com"
+                          />
                         </div>
                         <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
                           ⓘ Tiền của khách đi cùng sẽ được gộp vào số tiền bạn

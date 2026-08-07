@@ -163,6 +163,7 @@ export const registrationsApi = {
       guest_full_name?: string;
       guest_gender?: string;
       guest_skill_level?: string;
+      guest_email?: string;
       notes?: string;
     },
   ) => api.post(`/registrations/${registrationId}/guests`, data),

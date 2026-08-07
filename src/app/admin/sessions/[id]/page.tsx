@@ -24,6 +24,7 @@ import {
   Wallet,
   ChevronDown,
   ShieldAlert,
+  Share2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -141,11 +142,14 @@ export default function SessionDetailPage() {
   const [addNotes, setAddNotes] = useState("");
   const [adding, setAdding] = useState(false);
 
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+
   const [addTab, setAddTab] = useState<"account" | "guest">("account");
   const [guestForm, setGuestForm] = useState({
     full_name: "",
     gender: "male",
     skill_level: "",
+    email: "",
   });
   const [hostRegId, setHostRegId] = useState<string>("");
   const [guestPaidNow, setGuestPaidNow] = useState(false);
@@ -183,6 +187,8 @@ export default function SessionDetailPage() {
   const [penaltyRefundModalVisible, setPenaltyRefundModalVisible] = useState(false);
   const [penaltiesToRefund, setPenaltiesToRefund] = useState<any[]>([]);
   const [checkingPenalties, setCheckingPenalties] = useState(false);
+
+  const [sharingReceiptId, setSharingReceiptId] = useState<string | null>(null);
 
   const isDesktop = useIsDesktop();
 
@@ -288,6 +294,106 @@ export default function SessionDetailPage() {
       title: "Điểm danh tất cả có mặt?",
       message: `Điểm danh có mặt cho tất cả ${awaitingCheckin.length} người đang chờ điểm danh?`,
     });
+  };
+
+  const handleShareGuestReceipt = async (reg: any, hostName?: string) => {
+    if (sharingReceiptId) return;
+    setSharingReceiptId(reg.id);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+
+      const displayName = reg.users?.full_name ?? reg.guest_full_name ?? "?";
+      const totalAmount = reg.amount_override ?? 0;
+      const baseAmount = reg.base_amount ?? totalAmount;
+      const otherFeeAmount = reg.other_fee_amount ?? 0;
+      const otherFeeNote = reg.other_fee_note;
+      const isGroupedGuest = Boolean(reg.host_registration_id);
+
+      const container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "420px";
+      document.body.appendChild(container);
+
+      const row = (label: string, value: string, opts?: { bold?: boolean; amber?: boolean; shaded?: boolean; note?: string }) => `
+      <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:13px;background:${opts?.shaded ? "#f9fafb" : "transparent"};border-top:1px solid #f3f4f6;">
+        <span style="color:#9ca3af;">${label}</span>
+        <div style="text-align:right;">
+          <span style="font-weight:${opts?.bold ? 700 : 500};color:${opts?.amber ? "#d97706" : "#111827"};">${value}</span>
+          ${opts?.note ? `<p style="font-size:11px;color:#9ca3af;font-style:italic;margin:0;">${opts.note}</p>` : ""}
+        </div>
+      </div>
+    `;
+
+      container.innerHTML = `
+      <div style="width:420px;background:#ffffff;padding:28px;font-family:inherit;">
+        <div style="text-align:center;margin-bottom:20px;">
+          <p style="font-size:13px;font-weight:700;color:#2563eb;letter-spacing:0.5px;">BNB BADMINTON CLUB</p>
+          <p style="font-size:12px;color:#9ca3af;margin-top:2px;">Biên lai thanh toán</p>
+        </div>
+        <div style="text-align:center;margin-bottom:20px;">
+          <p style="font-size:30px;font-weight:900;color:#ef4444;margin:0;line-height:1.3;">${formatVnd(totalAmount)}</p>
+          <span style="display:inline-block;margin-top:10px;font-size:11px;color:#9ca3af;background:#f9fafb;padding:4px 10px;border-radius:999px;">
+            💵 Tiền mặt${isGroupedGuest ? " (tự thanh toán)" : ""}
+          </span>
+        </div>
+        <div style="background:#f9fafb;border-radius:12px;overflow:hidden;margin-bottom:16px;">
+          ${row("Người thanh toán", displayName)}
+          ${row("Buổi đánh", session.title)}
+          ${row("Thời gian buổi", format(new Date(session.scheduled_at), "HH:mm dd/MM/yyyy", { locale: vi }))}
+          ${isGroupedGuest && hostName ? row("Đi cùng", hostName, { note: "thanh toán riêng, không gộp ví" }) : ""}
+        </div>
+        <div style="border:1px solid #f3f4f6;border-radius:12px;overflow:hidden;">
+          ${row("Tiền sân + cầu", formatVnd(baseAmount))}
+          ${otherFeeAmount > 0 ? row("Khoản khác", formatVnd(otherFeeAmount), { amber: true, note: otherFeeNote }) : ""}
+          ${row("Tổng cộng", formatVnd(totalAmount), { bold: true, shaded: true })}
+        </div>
+        <p style="text-align:center;font-size:10px;color:#d1d5db;margin-top:20px;">
+          Xuất lúc ${format(new Date(), "HH:mm, dd/MM/yyyy", { locale: vi })}
+        </p>
+      </div>
+    `;
+
+      const canvas = await html2canvas(container.firstElementChild as HTMLElement, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+      document.body.removeChild(container);
+
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png"),
+      );
+      if (!blob) throw new Error("Không tạo được ảnh");
+
+      const fileName = `bien-lai-${displayName.replace(/\s+/g, "-")}-${reg.id}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      if (
+        typeof navigator !== "undefined" &&
+        (navigator as any).canShare?.({ files: [file] })
+      ) {
+        await (navigator as any).share({
+          files: [file],
+          title: "Biên lai thanh toán — BNB Badminton",
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Đã tải ảnh biên lai xuống");
+      }
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        toast.error("Tạo ảnh biên lai thất bại");
+      }
+    } finally {
+      setSharingReceiptId(null);
+    }
   };
 
   const runCloseList = async () => {
@@ -783,6 +889,16 @@ export default function SessionDetailPage() {
     }
   };
 
+  const handleManualRefresh = async () => {
+    if (manualRefreshing) return;
+    setManualRefreshing(true);
+    try {
+      await refreshSilently();
+    } finally {
+      setManualRefreshing(false);
+    }
+  };
+
   const scheduleRefresh = () => {
     if (refreshDebounceRef.current) clearTimeout(refreshDebounceRef.current);
     refreshDebounceRef.current = setTimeout(() => {
@@ -968,7 +1084,7 @@ export default function SessionDetailPage() {
       setAddConfirmNow(false);
       setAddNotes("");
       setAddTab("account");
-      setGuestForm({ full_name: "", gender: "male", skill_level: "" });
+      setGuestForm({ full_name: "", gender: "male", skill_level: "", email: "" });
       setHostRegId("");
       setGuestPaidNow(false);
     }, 200);
@@ -1024,6 +1140,7 @@ export default function SessionDetailPage() {
           guest_full_name: guestForm.full_name,
           guest_gender: guestForm.gender,
           guest_skill_level: guestForm.skill_level || undefined,
+          guest_email: guestForm.email.trim() || undefined,
           host_registration_id: hostRegId || undefined,
           payment_status: guestPaidNow ? "confirmed" : "pending",
           notes: addNotes || undefined,
@@ -1386,7 +1503,7 @@ export default function SessionDetailPage() {
 
     return (
       <div
-        className={`${isNested ? "pl-4 pr-3 py-3" : "px-4 py-3.5"} ${pulseClass}`}
+        className={`relative ${isNested ? "pl-4 pr-3 py-3" : "px-4 py-3.5"} ${pulseClass}`}
       >
         <div className="flex items-start gap-3">
           {isNested && (
@@ -1513,6 +1630,29 @@ export default function SessionDetailPage() {
               >
                 {totalAmount != null ? formatVnd(totalAmount) : "-"}
               </span>
+
+              {reg.is_guest &&
+                reg.payment_method === "cash" &&
+                totalAmount != null && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShareGuestReceipt(reg, hostName);
+                    }}
+                    disabled={sharingReceiptId === reg.id}
+                    title="Chia sẻ biên lai"
+                    className="hidden md:flex flex-shrink-0 items-center gap-1 px-2.5 h-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50"
+                  >
+                    {sharingReceiptId === reg.id ? (
+                      <Loader2 className="w-3 h-3 text-white animate-spin" />
+                    ) : (
+                      <Share2 className="w-3 h-3 text-white" />
+                    )}
+                    <span className="text-[10px] font-semibold text-white whitespace-nowrap">
+                      Chia sẻ
+                    </span>
+                  </button>
+                )}
             </div>
 
             {hasBreakdown && (
@@ -1536,6 +1676,28 @@ export default function SessionDetailPage() {
             )}
           </div>
         </div>
+        {reg.is_guest &&
+          reg.payment_method === "cash" &&
+          totalAmount != null && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShareGuestReceipt(reg, hostName);
+              }}
+              disabled={sharingReceiptId === reg.id}
+              title="Chia sẻ biên lai"
+              className={`flex md:hidden absolute ${isNested ? "top-2 right-2" : "top-3 right-3"} items-center gap-1 px-2.5 h-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 z-10`}
+            >
+              {sharingReceiptId === reg.id ? (
+                <Loader2 className="w-3 h-3 text-white animate-spin" />
+              ) : (
+                <Share2 className="w-3 h-3 text-white" />
+              )}
+              <span className="text-[10px] font-semibold text-white whitespace-nowrap">
+                Chia sẻ
+              </span>
+            </button>
+          )}
       </div>
     );
   };
@@ -1647,6 +1809,17 @@ export default function SessionDetailPage() {
           <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate flex-1 min-w-0">
             {session.title}
           </h1>
+
+          <button
+            onClick={handleManualRefresh}
+            disabled={manualRefreshing}
+            title="Tải lại dữ liệu"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50"
+          >
+            <RotateCcw
+              className={`w-5 h-5 text-gray-500 ${manualRefreshing ? "animate-spin" : ""}`}
+            />
+          </button>
 
           {canAddMember &&
             (awaitingCheckin.length > 0 || pendingApproval.length > 0) && (
@@ -1953,197 +2126,230 @@ export default function SessionDetailPage() {
 
         <SessionPenaltiesCard sessionId={id!} />
 
-        <div className="flex gap-3 flex-wrap">
-          {[
-            {
-              label: "Chờ duyệt",
-              count: pendingApproval.length,
-              cls: "bg-orange-50 text-orange-600 border border-orange-200",
-            },
-            {
-              label: "Chờ điểm danh",
-              count: awaitingCheckin.length,
-              cls: "bg-slate-50 text-slate-600 border border-slate-200",
-            },
-            {
-              label: "Chờ buổi đánh kết thúc",
-              count: awaitingFinish.length,
-              cls: "bg-slate-50 text-slate-600 border border-slate-200",
-            },
-            {
-              label: "Chờ thanh toán",
-              count: pending.length,
-              cls: "bg-amber-50 text-amber-700 border border-amber-200",
-            },
-            {
-              label: "Chờ chốt thanh toán",
-              count: pendingReview.length + walletPendingConfirm.length,
-              cls: "bg-blue-50 text-blue-700 border border-blue-200",
-            },
-            {
-              label: "Đã xác nhận thanh toán",
-              count: confirmed.length,
-              cls: "bg-green-50 text-green-700 border border-green-200",
-            },
-            {
-              label: "Thanh toán bị từ chối",
-              count: rejected.length,
-              cls: "bg-red-50 text-red-600 border border-red-200",
-            },
-          ]
-            .filter(({ count }) => count > 0)
-            .map(({ label, count, cls }) => (
-              <span
-                key={label}
-                className={`badge-pop px-3 py-1 rounded-full text-sm font-medium ${cls}`}
-              >
-                {label}: {count}
-              </span>
-            ))}
-        </div>
-
-        <div>
-          {registrations.length === 0 ? (
-            <div className="card py-12 text-center text-gray-400 shadow-md">
-              <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p>Chưa có ai đăng ký buổi này</p>
+        {manualRefreshing ? (
+          <>
+            <div className="flex gap-3 flex-wrap">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-7 w-28 rounded-full bg-gray-200 animate-pulse"
+                />
+              ))}
             </div>
-          ) : (
+
             <div className="space-y-4">
-              {hostRegs.map((host) => {
-                const guests = guestsOf(host.id);
-                const groupTotal =
-                  guests.length > 0
-                    ? (host.amount_override ?? 0) +
-                    guests.reduce((s, g) => s + (g.amount_override ?? 0), 0)
-                    : null;
-                const isExpanded = expandedHosts.has(host.id);
-                const hostCanReview = getCanReviewPayment(host);
-                const showHostActions =
-                  host.participation_status === "pending_approval" ||
-                  host.participation_status === "awaiting_checkin" ||
-                  isAwaitingFinish(host) ||
-                  (host.payment_status === "pending" && hostCanReview);
-
-                const hostExtras = (
-                  <>
-                    {guests.length > 0 && (
-                      <>
-                        <button
-                          onClick={() => toggleHostGuests(host.id)}
-                          className="w-full flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-100 bg-blue-50/50 hover:bg-blue-50 active:bg-blue-100 transition-colors group"
-                        >
-                          <span className="flex items-center gap-2">
-                            <span className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                              {guests.length}
-                            </span>
-                            <span className="text-sm font-semibold text-blue-700">
-                              {isExpanded ? "Ẩn" : "Hiện"} người đi cùng
-                            </span>
-                          </span>
-                          <ChevronDown
-                            className={`w-4 h-4 text-blue-500 transition-transform duration-300 flex-shrink-0 ${isExpanded ? "rotate-180" : ""
-                              }`}
-                          />
-                        </button>
-
-                        <div
-                          className="grid transition-[grid-template-rows] duration-300 ease-in-out"
-                          style={{
-                            gridTemplateRows: isExpanded ? "1fr" : "0fr",
-                          }}
-                        >
-                          <div className="overflow-hidden">
-                            <div
-                              className="bg-gray-50/70 divide-y divide-gray-100 border-t border-gray-100 transition-opacity duration-300"
-                              style={{ opacity: isExpanded ? 1 : 0 }}
-                            >
-                              {guests.map((g) =>
-                                renderRow(
-                                  g,
-                                  true,
-                                  host.users?.full_name ??
-                                  host.guest_full_name ??
-                                  "host",
-                                ),
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    {groupTotal !== null && (
-                      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/40">
-                        <span className="text-xs font-semibold text-gray-500">
-                          Tổng cộng
-                        </span>
-                        <span className="text-sm font-bold text-gray-900">
-                          {formatVnd(groupTotal)}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                );
-
-                return (
-                  <div
-                    key={host.id}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden"
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-1/3 rounded bg-gray-200 animate-pulse" />
+                      <div className="h-3 w-1/4 rounded bg-gray-200 animate-pulse" />
+                      <div className="h-5 w-24 rounded-full bg-gray-200 animate-pulse mt-2" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex gap-3 flex-wrap">
+              {[
+                {
+                  label: "Chờ duyệt",
+                  count: pendingApproval.length,
+                  cls: "bg-orange-50 text-orange-600 border border-orange-200",
+                },
+                {
+                  label: "Chờ điểm danh",
+                  count: awaitingCheckin.length,
+                  cls: "bg-slate-50 text-slate-600 border border-slate-200",
+                },
+                {
+                  label: "Chờ buổi đánh kết thúc",
+                  count: awaitingFinish.length,
+                  cls: "bg-slate-50 text-slate-600 border border-slate-200",
+                },
+                {
+                  label: "Chờ thanh toán",
+                  count: pending.length,
+                  cls: "bg-amber-50 text-amber-700 border border-amber-200",
+                },
+                {
+                  label: "Chờ chốt thanh toán",
+                  count: pendingReview.length + walletPendingConfirm.length,
+                  cls: "bg-blue-50 text-blue-700 border border-blue-200",
+                },
+                {
+                  label: "Đã xác nhận thanh toán",
+                  count: confirmed.length,
+                  cls: "bg-green-50 text-green-700 border border-green-200",
+                },
+                {
+                  label: "Thanh toán bị từ chối",
+                  count: rejected.length,
+                  cls: "bg-red-50 text-red-600 border border-red-200",
+                },
+              ]
+                .filter(({ count }) => count > 0)
+                .map(({ label, count, cls }) => (
+                  <span
+                    key={label}
+                    className={`badge-pop px-3 py-1 rounded-full text-sm font-medium ${cls}`}
                   >
-                    {isDesktop ? (
-                      <div>
-                        {renderRowContent(host, false)}
-                        {showHostActions && (
-                          <div className="flex justify-end gap-2 border-t border-gray-100 px-4 py-2.5">
-                            <DesktopRowActions reg={host} />
+                    {label}: {count}
+                  </span>
+                ))}
+            </div>
+
+            <div>
+              {registrations.length === 0 ? (
+                <div className="card py-12 text-center text-gray-400 shadow-md">
+                  <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p>Chưa có ai đăng ký buổi này</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {hostRegs.map((host) => {
+                    const guests = guestsOf(host.id);
+                    const groupTotal =
+                      guests.length > 0
+                        ? (host.amount_override ?? 0) +
+                        guests.reduce((s, g) => s + (g.amount_override ?? 0), 0)
+                        : null;
+                    const isExpanded = expandedHosts.has(host.id);
+                    const hostCanReview = getCanReviewPayment(host);
+                    const showHostActions =
+                      host.participation_status === "pending_approval" ||
+                      host.participation_status === "awaiting_checkin" ||
+                      isAwaitingFinish(host) ||
+                      (host.payment_status === "pending" && hostCanReview);
+
+                    const hostExtras = (
+                      <>
+                        {guests.length > 0 && (
+                          <>
+                            <button
+                              onClick={() => toggleHostGuests(host.id)}
+                              className="w-full flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-100 bg-blue-50/50 hover:bg-blue-50 active:bg-blue-100 transition-colors group"
+                            >
+                              <span className="flex items-center gap-2">
+                                <span className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                  {guests.length}
+                                </span>
+                                <span className="text-sm font-semibold text-blue-700">
+                                  {isExpanded ? "Ẩn" : "Hiện"} người đi cùng
+                                </span>
+                              </span>
+                              <ChevronDown
+                                className={`w-4 h-4 text-blue-500 transition-transform duration-300 flex-shrink-0 ${isExpanded ? "rotate-180" : ""
+                                  }`}
+                              />
+                            </button>
+
+                            <div
+                              className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                              style={{
+                                gridTemplateRows: isExpanded ? "1fr" : "0fr",
+                              }}
+                            >
+                              <div className="overflow-hidden">
+                                <div
+                                  className="bg-gray-50/70 divide-y divide-gray-100 border-t border-gray-100 transition-opacity duration-300"
+                                  style={{ opacity: isExpanded ? 1 : 0 }}
+                                >
+                                  {guests.map((g) =>
+                                    renderRow(
+                                      g,
+                                      true,
+                                      host.users?.full_name ??
+                                      host.guest_full_name ??
+                                      "host",
+                                    ),
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {groupTotal !== null && (
+                          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/40">
+                            <span className="text-xs font-semibold text-gray-500">
+                              Tổng cộng
+                            </span>
+                            <span className="text-sm font-bold text-gray-900">
+                              {formatVnd(groupTotal)}
+                            </span>
                           </div>
                         )}
-                        {hostExtras}
-                      </div>
-                    ) : (
-                      <SwipeableRow
-                        disabled={!showHostActions}
-                        actions={<RowActions reg={host} />}
-                      >
-                        <div>
-                          {renderRowContent(host, false)}
-                          {hostExtras}
-                        </div>
-                      </SwipeableRow>
-                    )}
+                      </>
+                    );
 
-                    {showReject === host.id && (
-                      <div className="px-4 pb-3 flex gap-2">
-                        <input
-                          type="text"
-                          value={rejectNotes[host.id] ?? ""}
-                          onChange={(e) =>
-                            setRejectNotes((n) => ({
-                              ...n,
-                              [host.id]: e.target.value,
-                            }))
-                          }
-                          className="input-field text-sm flex-1"
-                          placeholder="Lý do từ chối (tuỳ chọn)"
-                        />
-                        <MorphButton
-                          phase={getPhase(`${host.id}:rejectConfirm`)}
-                          idleIcon={null}
-                          label="Xác nhận từ chối"
-                          idleWidthClass="w-40"
-                          colorClass="bg-red-500 hover:bg-red-600 text-white"
-                          onClick={() => handleReject(host.id)}
-                          disabled={actionId === host.id}
-                        />
+                    return (
+                      <div
+                        key={host.id}
+                        className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden"
+                      >
+                        {isDesktop ? (
+                          <div>
+                            {renderRowContent(host, false)}
+                            {showHostActions && (
+                              <div className="flex justify-end gap-2 border-t border-gray-100 px-4 py-2.5">
+                                <DesktopRowActions reg={host} />
+                              </div>
+                            )}
+                            {hostExtras}
+                          </div>
+                        ) : (
+                          <SwipeableRow
+                            disabled={!showHostActions}
+                            actions={<RowActions reg={host} />}
+                          >
+                            <div>
+                              {renderRowContent(host, false)}
+                              {hostExtras}
+                            </div>
+                          </SwipeableRow>
+                        )}
+
+                        {showReject === host.id && (
+                          <div className="px-4 pb-3 flex gap-2">
+                            <input
+                              type="text"
+                              value={rejectNotes[host.id] ?? ""}
+                              onChange={(e) =>
+                                setRejectNotes((n) => ({
+                                  ...n,
+                                  [host.id]: e.target.value,
+                                }))
+                              }
+                              className="input-field text-sm flex-1"
+                              placeholder="Lý do từ chối (tuỳ chọn)"
+                            />
+                            <MorphButton
+                              phase={getPhase(`${host.id}:rejectConfirm`)}
+                              idleIcon={null}
+                              label="Xác nhận từ chối"
+                              idleWidthClass="w-40"
+                              colorClass="bg-red-500 hover:bg-red-600 text-white"
+                              onClick={() => handleReject(host.id)}
+                              disabled={actionId === host.id}
+                            />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
 
         {viewingBillUrl &&
           typeof document !== "undefined" &&
@@ -2436,6 +2642,20 @@ export default function SessionDetailPage() {
                             ]}
                           />
                         </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Email (không bắt buộc, để gửi hóa đơn)
+                        </label>
+                        <input
+                          type="email"
+                          value={guestForm.email}
+                          onChange={(e) =>
+                            setGuestForm((f) => ({ ...f, email: e.target.value }))
+                          }
+                          className="input-field"
+                          placeholder="vidu@email.com"
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">

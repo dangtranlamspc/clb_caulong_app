@@ -277,9 +277,14 @@ function NotificationItem({
                             </button>
                         </div>
                     )}
-
                     {isGuestConfirm && alreadyHandled && (
-                        <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
+                        <p className="text-[11px] text-emerald-600 font-medium mt-1.5">
+                            {n.data?.resolved_mode === 'separate'
+                                ? '💵 Đã chọn: Khách tự trả'
+                                : n.data?.resolved_mode === 'grouped' || n.data?.resolved_mode === 'auto'
+                                    ? '💳 Đã gộp vào ví'
+                                    : '✓ Đã xử lý'}
+                        </p>
                     )}
 
                     {isAddedConfirm && !addedResolved && (
@@ -483,6 +488,13 @@ export function NotificationBell() {
                     : 'Khách đi cùng sẽ tự thanh toán tiền mặt',
             );
             setGuestHandled(prev => new Set(prev).add(n.id));
+            setItems(prev =>
+                prev.map(item =>
+                    item.id === n.id
+                        ? { ...item, data: { ...item.data, resolved: true, resolved_mode: mode } }
+                        : item,
+                ),
+            );
             if (!n.is_read) markRead(n.id);
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? 'Có lỗi xảy ra');
