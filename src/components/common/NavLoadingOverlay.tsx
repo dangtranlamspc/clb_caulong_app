@@ -11,7 +11,7 @@ export function NavLoadingOverlay({ fadingOut }: { fadingOut: boolean }) {
                 transition: "opacity 350ms ease-out",
             }}
         >
-            <div className="flex flex-col items-center gap-5">
+            <div className="fixed inset-0 z-[999]" style={{ height: "100dvh" }}>
                 <img
                     src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494767/LOGO_TEAM_BNB_WHITE_hs59vg.png"
                     width={164}

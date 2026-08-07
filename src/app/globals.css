@@ -19,6 +19,12 @@
     display: none;
   }
 
+  html,
+  body {
+    background-color: #10192f;
+    height: 100%;
+  }
+
   #__next {
     overflow-x: hidden;
   }

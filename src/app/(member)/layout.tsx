@@ -367,6 +367,7 @@ export default function MemberLayout({
                             "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
                         borderBottomLeftRadius: 24,
                         borderBottomRightRadius: 24,
+                        paddingTop: "env(safe-area-inset-top, 0px)",
                     }}
                 >
                     <div

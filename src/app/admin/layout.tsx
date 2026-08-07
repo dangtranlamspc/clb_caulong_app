@@ -103,7 +103,8 @@ export default function AdminLayout({
         <div
           className="relative flex items-center justify-between px-4"
           style={{
-            height: 64,
+            minHeight: 64,
+            paddingTop: "env(safe-area-inset-top, 0px)",
             background: "rgba(255,255,255,.04)",
             backdropFilter: "blur(6px)",
             WebkitBackdropFilter: "blur(6px)",
