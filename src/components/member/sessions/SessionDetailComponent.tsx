@@ -669,20 +669,6 @@ export default function SessionDetailPage() {
               animation: "bnbLogoPop 1s ease-in-out infinite",
             }}
           />
-          {/* <div className="flex items-center gap-1.5">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className="rounded-full"
-                style={{
-                  width: 7,
-                  height: 7,
-                  background: "#6366f1",
-                  animation: `bnbDotBounce 1.2s ease-in-out ${i * 0.15}s infinite`,
-                }}
-              />
-            ))}
-          </div> */}
         </div>
 
         <style>{`
@@ -1116,7 +1102,10 @@ export default function SessionDetailPage() {
                 }
             `}</style>
       <div className="min-h-screen bg-[#F4F6FA] pb-4">
-        <div className="sticky top-0 z-30 bg-white/85 backdrop-blur-md border-b border-gray-100/80 px-4 py-3 flex items-center justify-between">
+        <div
+          className="sticky top-0 z-30 bg-white/85 backdrop-blur-md border-b border-gray-100/80 px-4 py-3 flex items-center justify-between"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+        >
           <button
             onClick={() => {
               sessionStorage.setItem("activity:return-tab", "sessions");
