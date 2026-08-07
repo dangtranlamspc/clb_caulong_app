@@ -244,73 +244,71 @@ export default function EventRegistrationsPage({
     return (
         <div className="w-full mx-auto">
             <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 pr-12">
-                    <div>
-                        <h1 className="text-xl font-bold text-gray-900">
-                            {activity.emoji} {activity.title}
-                        </h1>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                            {activity.type === "poll"
-                                ? `${(regData.votes ?? []).length} lượt bình chọn`
-                                : `${registrations.length} đăng ký`}
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:flex-wrap w-full sm:w-auto">
-                        <button
-                            onClick={handleRefresh}
-                            disabled={refreshing}
-                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap disabled:opacity-60"
-                        >
-                            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-                            Làm mới
-                        </button>
-                        {activity.type === "shirt_order" && activity.status !== "closed" && (
-                            <>
-                                <button
-                                    onClick={() => handleCopyPublicLink(activity.id)}
-                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap"
-                                >
-                                    <Link2 className="w-4 h-4" /> Tạo link công khai
-                                </button>
-                                {onAddRegistration && (
-                                    <button
-                                        onClick={onAddRegistration}
-                                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium whitespace-nowrap"
-                                    >
-                                        <UserPlus className="w-4 h-4" /> Thêm đăng ký
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => setShowFinalizeModal(true)}
-                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium whitespace-nowrap"
-                                >
-                                    <Lock className="w-4 h-4" /> Chốt danh sách
-                                </button>
-                            </>
-                        )}
-                        {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason !== "deadline" && (
+                <div className="pr-12">
+                    <h1 className="text-xl font-bold text-gray-900">
+                        {activity.emoji} {activity.title}
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                        {activity.type === "poll"
+                            ? `${(regData.votes ?? []).length} lượt bình chọn`
+                            : `${registrations.length} đăng ký`}
+                    </p>
+                </div>
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:flex-wrap w-full sm:w-auto mt-3">
+                    <button
+                        onClick={handleRefresh}
+                        disabled={refreshing}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap disabled:opacity-60"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+                        Làm mới
+                    </button>
+                    {activity.type === "shirt_order" && activity.status !== "closed" && (
+                        <>
                             <button
-                                onClick={handleReopen}
-                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
+                                onClick={() => handleCopyPublicLink(activity.id)}
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap"
                             >
-                                <RotateCcw className="w-4 h-4" /> Mở đăng ký
+                                <Link2 className="w-4 h-4" /> Tạo link công khai
                             </button>
-                        )}
-                        {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason === "deadline" && (
+                            {onAddRegistration && (
+                                <button
+                                    onClick={onAddRegistration}
+                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium whitespace-nowrap"
+                                >
+                                    <UserPlus className="w-4 h-4" /> Thêm đăng ký
+                                </button>
+                            )}
                             <button
-                                onClick={() => setShowReopenDeadlineModal(true)}
-                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
+                                onClick={() => setShowFinalizeModal(true)}
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium whitespace-nowrap"
                             >
-                                <RotateCcw className="w-4 h-4" /> Mở lại hoạt động
+                                <Lock className="w-4 h-4" /> Chốt danh sách
                             </button>
-                        )}
+                        </>
+                    )}
+                    {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason !== "deadline" && (
                         <button
-                            onClick={() => exportToExcel(activity, regData)}
-                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap col-span-2 sm:col-span-1"
+                            onClick={handleReopen}
+                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
                         >
-                            <FileSpreadsheet className="w-4 h-4" /> Xuất Excel
+                            <RotateCcw className="w-4 h-4" /> Mở đăng ký
                         </button>
-                    </div>
+                    )}
+                    {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason === "deadline" && (
+                        <button
+                            onClick={() => setShowReopenDeadlineModal(true)}
+                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
+                        >
+                            <RotateCcw className="w-4 h-4" /> Mở lại hoạt động
+                        </button>
+                    )}
+                    <button
+                        onClick={() => exportToExcel(activity, regData)}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap col-span-2 sm:col-span-1"
+                    >
+                        <FileSpreadsheet className="w-4 h-4" /> Xuất Excel
+                    </button>
                 </div>
             </div>
 
@@ -837,11 +835,16 @@ function ShirtOrderTable({
         return imgSrc(img);
     };
 
-    const filteredRegistrations = registrations.filter((r) => {
-        if (paymentFilter === "paid") return r.payment_status === "confirmed";
-        if (paymentFilter === "unpaid") return r.payment_status !== "confirmed";
-        return true;
-    });
+    const filteredRegistrations = registrations
+        .filter((r) => {
+            if (paymentFilter === "paid") return r.payment_status === "confirmed";
+            if (paymentFilter === "unpaid") return r.payment_status !== "confirmed";
+            return true;
+        })
+        .sort(
+            (a, b) =>
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
 
     const groups = new Map<string, any[]>();
     for (const r of filteredRegistrations) {
@@ -1904,6 +1907,10 @@ function TournamentTable({
     onConfirm: (regId: string) => void;
     onRemove: (regId: string, label: string) => void;
 }) {
+    const sortedRegistrations = [...registrations].sort(
+        (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
     return (
         <div>
             {totalExpected > 0 && (
@@ -1925,7 +1932,7 @@ function TournamentTable({
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                    {registrations.map((r: any) => {
+                    {sortedRegistrations.map((r: any) => {
                         const badge = getTournamentPaymentBadge(r);
                         const isConfirmed = r.payment_status === "confirmed";
                         const hasPendingRequest =
