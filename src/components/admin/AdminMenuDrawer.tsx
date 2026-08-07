@@ -103,11 +103,14 @@ export function AdminMenuDrawer({
                 onClick={onClose}
             />
             <div
-                className={`absolute top-0 left-0 h-full bg-[#F4F6FA] shadow-2xl overflow-y-auto rounded-r-3xl ${closing ? 'animate-slide-out-left' : 'animate-slide-in-left'
+                className={`absolute top-0 left-0 h-full bg-[#F4F6FA] shadow-2xl overflow-y-auto drawer-scroll rounded-r-3xl ${closing ? 'animate-slide-out-left' : 'animate-slide-in-left'
                     }`}
                 style={{ width: 'min(85vw, 360px)' }}
             >
-                <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between rounded-tr-3xl">
+                <div
+                    className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between rounded-tr-3xl"
+                    style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+                >
                     <h2 className="font-bold text-gray-900 text-sm">⚙️ Khu vực quản trị</h2>
                     <button
                         onClick={onClose}
@@ -212,6 +215,7 @@ export function AdminMenuDrawer({
             </div>
 
             <style jsx>{`
+
                 @keyframes slide-in-left {
                 from { transform: translateX(-100%); }
                 to { transform: translateX(0); }
@@ -239,6 +243,13 @@ export function AdminMenuDrawer({
                 }
                 .animate-fade-out {
                 animation: fade-out 0.2s ease-out forwards;
+                }
+                .drawer-scroll {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+                .drawer-scroll::-webkit-scrollbar {
+                    display: none;
                 }
             `}</style>
         </div>
