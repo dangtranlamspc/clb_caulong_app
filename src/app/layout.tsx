@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { GlobalNavLoading } from "@/components/common/GlobalNavLoading";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -44,6 +45,7 @@ export default function RootLayout({
           toastOptions={{ duration: 3000 }}
           containerStyle={{ zIndex: 999999 }}
         />
+        <GlobalNavLoading />
         {children}
       </body>
     </html>

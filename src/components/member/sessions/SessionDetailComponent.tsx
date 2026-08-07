@@ -264,6 +264,7 @@ export default function SessionDetailPage() {
 
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(true);
   const [registerPhase, setRegisterPhase] = useState<ActionPhase>("idle");
   const [interestedPhase, setInterestedPhase] = useState<ActionPhase>("idle");
   const [cancelPhase, setCancelPhase] = useState<ActionPhase>("idle");
@@ -338,6 +339,13 @@ export default function SessionDetailPage() {
       return () => cancelAnimationFrame(raf);
     }
   }, [showGuestModal]);
+
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => setShowLoading(false), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   const fetchSession = async () => {
     try {
@@ -639,14 +647,54 @@ export default function SessionDetailPage() {
     }
   };
 
-  if (loading) {
+  if (showLoading) {
     return (
-      <div className="min-h-screen bg-[#F4F6FA]">
-        <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
-          <div className="h-8 bg-gray-200 rounded-xl w-48 animate-pulse" />
-          <div className="bg-white rounded-2xl h-48 animate-pulse" />
-          <div className="bg-white rounded-2xl h-32 animate-pulse" />
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{
+          background:
+            "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
+          opacity: loading ? 1 : 0,
+          transition: "opacity 350ms ease-out",
+        }}
+      >
+        <div className="flex flex-col items-center gap-5">
+          <img
+            src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494767/LOGO_TEAM_BNB_WHITE_hs59vg.png"
+            width={164}
+            height={164}
+            alt="BNB Badminton Club"
+            style={{
+              objectFit: "contain",
+              animation: "bnbLogoPop 1s ease-in-out infinite",
+            }}
+          />
+          {/* <div className="flex items-center gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="rounded-full"
+                style={{
+                  width: 7,
+                  height: 7,
+                  background: "#6366f1",
+                  animation: `bnbDotBounce 1.2s ease-in-out ${i * 0.15}s infinite`,
+                }}
+              />
+            ))}
+          </div> */}
         </div>
+
+        <style>{`
+            @keyframes bnbLogoPop {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.18); }
+            }
+            @keyframes bnbDotBounce {
+                0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+                40% { transform: translateY(-6px); opacity: 1; }
+            }
+        `}</style>
       </div>
     );
   }

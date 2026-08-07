@@ -48,7 +48,15 @@ export const isAdminMenuActive = (href: string, pathname: string) =>
 const isChildActive = (children: AdminMenuChild[] | undefined, pathname: string) =>
     children?.some((c) => isAdminMenuActive(c.href, pathname)) ?? false;
 
-export function AdminMenuDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AdminMenuDrawer({
+    open,
+    onClose,
+    onNavigateStart,
+}: {
+    open: boolean;
+    onClose: () => void;
+    onNavigateStart?: (href: string) => void;
+}) {
     const router = useRouter();
     const pathname = usePathname();
 
@@ -74,7 +82,12 @@ export function AdminMenuDrawer({ open, onClose }: { open: boolean; onClose: () 
 
     const go = (href: string) => {
         onClose();
-        router.push(href);
+        if (href === pathname) return;
+        if (onNavigateStart) {
+            onNavigateStart(href);
+        } else {
+            router.push(href);
+        }
     };
 
     const isActive = (href: string) => isAdminMenuActive(href, pathname);
@@ -106,7 +119,6 @@ export function AdminMenuDrawer({ open, onClose }: { open: boolean; onClose: () 
 
                 <div className="p-4 space-y-2.5">
                     {ADMIN_MENU.map(({ href, icon: Icon, label, desc, iconBg, children }, idx) => {
-                        // ── Mục có con: expand/collapse thay vì điều hướng thẳng ──
                         if (children) {
                             const childActive = isChildActive(children, pathname);
                             const isOpen = openMenus[label] ?? childActive;
@@ -161,7 +173,6 @@ export function AdminMenuDrawer({ open, onClose }: { open: boolean; onClose: () 
                             );
                         }
 
-                        // ── Mục thường: link thẳng ──
                         const active = isActive(href!);
                         return (
                             <div key={href}>

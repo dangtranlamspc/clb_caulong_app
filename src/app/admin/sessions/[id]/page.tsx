@@ -43,6 +43,7 @@ import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import { SwipeableRow } from "@/components/admin/sessions/SwipeableRow";
 import { CompactActionButton } from "@/components/admin/sessions/CompactActionButton";
 import SessionPenaltiesCard from "@/components/admin/sessions/SessionPenaltiesCard";
+import { useNavLoadingStore } from "@/store/nav-loading.store";
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: any }> =
 {
@@ -295,6 +296,8 @@ export default function SessionDetailPage() {
       message: `Điểm danh có mặt cho tất cả ${awaitingCheckin.length} người đang chờ điểm danh?`,
     });
   };
+
+  const startNavLoading = useNavLoadingStore((s) => s.start);
 
   const handleShareGuestReceipt = async (reg: any, hostName?: string) => {
     if (sharingReceiptId) return;
@@ -834,7 +837,7 @@ export default function SessionDetailPage() {
     } catch (err) {
       console.error("[handleConfirmRollback] Lỗi kiểm tra phạt:", err);
       closeRollbackModal();
-      handleRollbackFinish(false); // check lỗi thì không chặn hoàn tác
+      handleRollbackFinish(false);
     } finally {
       setCheckingPenalties(false);
     }
@@ -1871,6 +1874,7 @@ export default function SessionDetailPage() {
                   onClick={() => {
                     if (finishing) return;
                     setFinishing(true);
+                    startNavLoading();
                     setTimeout(() => {
                       const doNavigate = () =>
                         router.push(`/admin/sessions/${id}/finish`);
@@ -2011,6 +2015,7 @@ export default function SessionDetailPage() {
                   onClick={() => {
                     if (finishing) return;
                     setFinishing(true);
+                    startNavLoading();
                     setTimeout(() => {
                       router.push(`/admin/sessions/${id}/finish`);
                     }, 300);

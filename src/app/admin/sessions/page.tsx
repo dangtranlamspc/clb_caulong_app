@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useTransition, useRef } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -26,6 +26,7 @@ import { sessionsAdminApi } from "@/lib/api";
 import { createPortal } from "react-dom";
 import SessionFormModal from "@/components/admin/sessions/SessionFormModal";
 import { useRouter } from "next/navigation";
+import { useNavLoadingStore } from "@/store/nav-loading.store";
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
   open: { label: "Mở đăng ký", cls: "bg-green-100 text-green-700" },
@@ -94,6 +95,11 @@ export default function SessionsPage() {
   const [formTarget, setFormTarget] = useState<{ id?: string } | null>(null);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
+  const [isPending, startTransition] = useTransition();
+  const startNavLoading = useNavLoadingStore((s) => s.start);
+  const stopNavLoading = useNavLoadingStore((s) => s.stop);
+  const navLoadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [completeTarget, setCompleteTarget] = useState<{
     id: string;
     title: string;
@@ -136,6 +142,19 @@ export default function SessionsPage() {
       if (!opts?.silent) setLoading(false);
     }
   }, [query]);
+
+  useEffect(() => {
+    if (!isPending) {
+      setNavigatingId(null);
+      if (navLoadingTimerRef.current) clearTimeout(navLoadingTimerRef.current);
+      navLoadingTimerRef.current = setTimeout(() => {
+        stopNavLoading();
+      }, 400);
+    }
+    return () => {
+      if (navLoadingTimerRef.current) clearTimeout(navLoadingTimerRef.current);
+    };
+  }, [isPending]);
 
   useEffect(() => {
     fetchSessions();
@@ -668,14 +687,10 @@ export default function SessionsPage() {
                       <button
                         onClick={() => {
                           setNavigatingId(s.id);
-                          router.push(`/admin/sessions/${s.id}`);
-                          setTimeout(
-                            () =>
-                              setNavigatingId((cur) =>
-                                cur === s.id ? null : cur,
-                              ),
-                            4000,
-                          );
+                          startNavLoading();
+                          startTransition(() => {
+                            router.push(`/admin/sessions/${s.id}`);
+                          });
                         }}
                         disabled={navigatingId === s.id}
                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-60"

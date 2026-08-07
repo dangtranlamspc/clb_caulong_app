@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "../../store/auth.store";
+import { useNavLoadingStore } from "@/store/nav-loading.store";
 import { authApi, sessionsApi } from "../../lib/api";
 import {
     BirthdayModal,
@@ -29,6 +30,7 @@ import { useNotificationsRealtimeStore } from "@/store/notifications-realtime.st
 import { AdminMenuDrawer } from "@/components/admin/AdminMenuDrawer";
 import { supabase } from "@/lib/supabase";
 import { FeedbackWidget } from "@/components/member/feedback/FeedBackChats";
+import { NavLoadingOverlay } from "@/components/common/NavLoadingOverlay";
 
 const NAV_ITEMS = [
     { href: "/home", icon: Home, label: "Trang chủ" },
@@ -196,11 +198,36 @@ export default function MemberLayout({
     const pathname = usePathname();
     const { isAuthenticated, logout, user } = useAuthStore();
     const [mounted, setMounted] = useState(false);
+    const [showLoading, setShowLoading] = useState(true);
     const [adminDrawerOpen, setAdminDrawerOpen] = useState(false);
     const [hasPendingPayment, setHasPendingPayment] = useState(false);
     const pendingSeqRef = useRef(0);
     const pendingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isAdmin = user?.role === "admin";
+
+    const [isPending, startTransition] = useTransition();
+    const startNavLoading = useNavLoadingStore((s) => s.start);
+    const stopNavLoading = useNavLoadingStore((s) => s.stop);
+    const navLoadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        if (!isPending) {
+            if (navLoadingTimerRef.current) clearTimeout(navLoadingTimerRef.current);
+            navLoadingTimerRef.current = setTimeout(() => {
+                stopNavLoading();
+            }, 400);
+        }
+        return () => {
+            if (navLoadingTimerRef.current) clearTimeout(navLoadingTimerRef.current);
+        };
+    }, [isPending]);
+
+    const handleAdminNavigate = (href: string) => {
+        startNavLoading();
+        startTransition(() => {
+            router.push(href);
+        });
+    };
 
     const fetchPendingPaymentFlag = async () => {
         const mySeq = ++pendingSeqRef.current;
@@ -274,6 +301,8 @@ export default function MemberLayout({
 
     useEffect(() => {
         setMounted(true);
+        const timer = setTimeout(() => setShowLoading(false), 900);
+        return () => clearTimeout(timer);
     }, []);
 
     useEffect(() => {
@@ -290,19 +319,16 @@ export default function MemberLayout({
     };
 
     if (!mounted) {
-        return (
-            <div className="min-h-screen bg-[#F4F6FA] flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
+        return <NavLoadingOverlay fadingOut={false} />;
     }
 
     if (!isAuthenticated) return null;
 
-    const firstName = user?.full_name?.split(" ").pop() ?? user?.full_name;
 
     return (
         <div className="app-shell min-h-screen pb-24 overflow-x-hidden">
+            {showLoading && <NavLoadingOverlay fadingOut={false} />}
+
             <div
                 className="fixed inset-0 -z-10"
                 style={{ backgroundColor: "#f4f6fa" }}
@@ -436,6 +462,7 @@ export default function MemberLayout({
                 <AdminMenuDrawer
                     open={adminDrawerOpen}
                     onClose={() => setAdminDrawerOpen(false)}
+                    onNavigateStart={handleAdminNavigate}
                 />
             )}
         </div>

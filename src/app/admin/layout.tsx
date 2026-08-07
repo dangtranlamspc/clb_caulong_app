@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { LogOut, Menu } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
+import { useNavLoadingStore } from "@/store/nav-loading.store";
 import {
   AdminMenuDrawer,
   ADMIN_MENU,
@@ -34,6 +35,11 @@ export default function AdminLayout({
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const [isPending, startTransition] = useTransition();
+  const startNavLoading = useNavLoadingStore((s) => s.start);
+  const stopNavLoading = useNavLoadingStore((s) => s.stop);
+  const navLoadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
@@ -48,6 +54,25 @@ export default function AdminLayout({
     }
   }, [mounted, isAuthenticated, user, router]);
 
+  useEffect(() => {
+    if (!isPending) {
+      if (navLoadingTimerRef.current) clearTimeout(navLoadingTimerRef.current);
+      navLoadingTimerRef.current = setTimeout(() => {
+        stopNavLoading();
+      }, 400);
+    }
+    return () => {
+      if (navLoadingTimerRef.current) clearTimeout(navLoadingTimerRef.current);
+    };
+  }, [isPending]);
+
+  const handleNavigate = (href: string) => {
+    startNavLoading();
+    startTransition(() => {
+      router.push(href);
+    });
+  };
+
   if (!mounted || user?.role !== "admin") return null;
 
   const currentPage = ADMIN_MENU.filter((item) =>
@@ -55,7 +80,6 @@ export default function AdminLayout({
   ).sort((a, b) => (b.href ?? "").length - (a.href ?? "").length)[0];
 
   const headerTitle = currentPage?.label ?? "Quản trị";
-
 
   const handleLogout = async () => {
     try {
@@ -150,7 +174,11 @@ export default function AdminLayout({
         {children}
       </main>
 
-      <AdminMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <AdminMenuDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onNavigateStart={handleNavigate}
+      />
     </div >
   );
 }

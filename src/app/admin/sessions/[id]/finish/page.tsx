@@ -18,6 +18,7 @@ import PenaltyModal from "@/components/admin/wallet/PenaltyModal";
 import SessionPenaltiesCard, {
   SessionPenaltiesCardHandle,
 } from "@/components/admin/sessions/SessionPenaltiesCard";
+import { useNavLoadingStore } from "@/store/nav-loading.store";
 
 interface CourtItem {
   id: string;
@@ -68,6 +69,8 @@ export default function SessionFinishPage() {
   const [courts, setCourts] = useState<CourtItem[]>([
     { id: newCourtId(), name: "", minutes: 0, pricePerHour: 0 },
   ]);
+
+  const startNavLoading = useNavLoadingStore((s) => s.start);
 
   const courtFee = courts.reduce((sum, c) => sum + courtTotal(c), 0);
 
@@ -362,6 +365,7 @@ export default function SessionFinishPage() {
       setSubmitPhase("success");
       toast.success("Đã kết thúc buổi và gửi hóa đơn thanh toán!");
       setTimeout(() => {
+        startNavLoading();
         router.push(`/admin/sessions/${id}`);
       }, 600);
     } catch (err) {
@@ -384,7 +388,10 @@ export default function SessionFinishPage() {
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
         <button
-          onClick={() => router.push(`/admin/sessions/${id}`)}
+          onClick={() => {
+            startNavLoading();
+            router.push(`/admin/sessions/${id}`);
+          }}
           className="p-2 hover:bg-gray-100 rounded-lg"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -874,7 +881,10 @@ export default function SessionFinishPage() {
 
       <div className="flex items-center justify-end gap-3">
         <button
-          onClick={() => router.push(`/admin/sessions/${id}`)}
+          onClick={() => {
+            startNavLoading();
+            router.push(`/admin/sessions/${id}`);
+          }}
           className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0"
           disabled={submitPhase !== "idle"}
         >
