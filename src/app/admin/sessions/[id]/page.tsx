@@ -154,6 +154,7 @@ export default function SessionDetailPage() {
   });
   const [hostRegId, setHostRegId] = useState<string>("");
   const [guestPaidNow, setGuestPaidNow] = useState(false);
+  const [guestPaySeparately, setGuestPaySeparately] = useState(false);
 
   const [checkingInAll, setCheckingInAll] = useState(false);
   const [closingList, setClosingList] = useState(false);
@@ -299,18 +300,34 @@ export default function SessionDetailPage() {
 
   const startNavLoading = useNavLoadingStore((s) => s.start);
 
-  const handleShareGuestReceipt = async (reg: any, hostName?: string) => {
+  const handleShareGuestReceipt = async (
+    reg: any,
+    hostName?: string,
+    groupedGuests?: any[],
+  ) => {
     if (sharingReceiptId) return;
     setSharingReceiptId(reg.id);
     try {
       const html2canvas = (await import("html2canvas")).default;
 
       const displayName = reg.users?.full_name ?? reg.guest_full_name ?? "?";
-      const totalAmount = reg.amount_override ?? 0;
-      const baseAmount = reg.base_amount ?? totalAmount;
-      const otherFeeAmount = reg.other_fee_amount ?? 0;
-      const otherFeeNote = reg.other_fee_note;
+      const hostAmount = reg.amount_override ?? 0;
+      const hostBaseAmount = reg.base_amount ?? hostAmount;
+      const hostOtherFeeAmount = reg.other_fee_amount ?? 0;
+      const hostOtherFeeNote = reg.other_fee_note;
       const isGroupedGuest = Boolean(reg.host_registration_id);
+
+      const guestsList = (groupedGuests ?? []).map((g) => ({
+        name: g.users?.full_name ?? g.guest_full_name ?? "?",
+        baseAmount: g.base_amount ?? g.amount_override ?? 0,
+        otherFeeAmount: g.other_fee_amount ?? 0,
+        otherFeeNote: g.other_fee_note,
+      }));
+      const guestsTotal = guestsList.reduce(
+        (s, g) => s + g.baseAmount + (g.otherFeeAmount ?? 0),
+        0,
+      );
+      const totalAmount = hostAmount + guestsTotal;
 
       const container = document.createElement("div");
       container.style.position = "fixed";
@@ -328,6 +345,19 @@ export default function SessionDetailPage() {
         </div>
       </div>
     `;
+
+      const guestRowsHtml = guestsList
+        .map(
+          (g) => `
+            <div style="padding:10px 16px 2px;font-size:13px;border-top:1px solid #f3f4f6;">
+              <span style="color:#9ca3af;">+ </span>${g.name}
+              <span style="color:#9ca3af;font-size:12px;"> (đi cùng)</span>
+            </div>
+            ${row("Tiền sân + cầu", formatVnd(g.baseAmount))}
+            ${g.otherFeeAmount > 0 ? row("Khoản khác", formatVnd(g.otherFeeAmount), { amber: true, note: g.otherFeeNote }) : ""}
+          `,
+        )
+        .join("");
 
       container.innerHTML = `
       <div style="width:420px;background:#ffffff;padding:28px;font-family:inherit;">
@@ -348,8 +378,9 @@ export default function SessionDetailPage() {
           ${isGroupedGuest && hostName ? row("Đi cùng", hostName, { note: "thanh toán riêng, không gộp ví" }) : ""}
         </div>
         <div style="border:1px solid #f3f4f6;border-radius:12px;overflow:hidden;">
-          ${row("Tiền sân + cầu", formatVnd(baseAmount))}
-          ${otherFeeAmount > 0 ? row("Khoản khác", formatVnd(otherFeeAmount), { amber: true, note: otherFeeNote }) : ""}
+          ${row("Tiền sân + cầu", formatVnd(hostBaseAmount))}
+          ${hostOtherFeeAmount > 0 ? row("Khoản khác", formatVnd(hostOtherFeeAmount), { amber: true, note: hostOtherFeeNote }) : ""}
+          ${guestRowsHtml}
           ${row("Tổng cộng", formatVnd(totalAmount), { bold: true, shaded: true })}
         </div>
         <p style="text-align:center;font-size:10px;color:#d1d5db;margin-top:20px;">
@@ -1090,6 +1121,7 @@ export default function SessionDetailPage() {
       setGuestForm({ full_name: "", gender: "male", skill_level: "", email: "" });
       setHostRegId("");
       setGuestPaidNow(false);
+      setGuestPaySeparately(false);
     }, 200);
   };
 
@@ -1145,7 +1177,8 @@ export default function SessionDetailPage() {
           guest_skill_level: guestForm.skill_level || undefined,
           guest_email: guestForm.email.trim() || undefined,
           host_registration_id: hostRegId || undefined,
-          payment_status: guestPaidNow ? "confirmed" : "pending",
+          pay_type: hostRegId ? (guestPaySeparately ? "solo" : "grouped") : undefined,
+          payment_status: guestPaySeparately ? (guestPaidNow ? "confirmed" : "pending") : undefined,
           notes: addNotes || undefined,
         });
         toast.success(`Đã thêm khách ${guestForm.full_name} vào buổi`);
@@ -1202,7 +1235,7 @@ export default function SessionDetailPage() {
       r.payment_status === "pending" &&
       (Boolean(r.payment_reference) ||
         (r.payment_method === "cash" && r.amount_override != null) ||
-        r.payment_method === "grouped_with_host"),
+        (r.payment_method === "grouped_with_host" && r.amount_override != null)),
   );
 
   const walletPendingConfirm = registrations.filter(
@@ -1449,12 +1482,12 @@ export default function SessionDetailPage() {
     );
   }
 
-  const renderRowContent = (reg: any, isNested = false, hostName?: string) => {
+  const renderRowContent = (reg: any, isNested = false, hostName?: string, groupedGuestsForReceipt?: any[],) => {
     const isPendingReview =
       reg.payment_status === "pending" &&
       (Boolean(reg.payment_reference) ||
         (reg.payment_method === "cash" && reg.amount_override != null) ||
-        reg.payment_method === "grouped_with_host");
+        (reg.payment_method === "grouped_with_host" && reg.amount_override != null));
 
     const isAwaitingFinishRow =
       reg.payment_status === "pending" &&
@@ -1640,7 +1673,7 @@ export default function SessionDetailPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleShareGuestReceipt(reg, hostName);
+                      handleShareGuestReceipt(reg, hostName, groupedGuestsForReceipt);
                     }}
                     disabled={sharingReceiptId === reg.id}
                     title="Chia sẻ biên lai"
@@ -1685,7 +1718,7 @@ export default function SessionDetailPage() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                handleShareGuestReceipt(reg, hostName);
+                handleShareGuestReceipt(reg, hostName, groupedGuestsForReceipt);
               }}
               disabled={sharingReceiptId === reg.id}
               title="Chia sẻ biên lai"
@@ -2226,6 +2259,11 @@ export default function SessionDetailPage() {
                         ? (host.amount_override ?? 0) +
                         guests.reduce((s, g) => s + (g.amount_override ?? 0), 0)
                         : null;
+                    const groupedGuestsForHost = guests.filter(
+                      (g) => g.payment_method === "grouped_with_host",
+                    );
+                    const hostDisplayName =
+                      host.users?.full_name ?? host.guest_full_name ?? "?";
                     const isExpanded = expandedHosts.has(host.id);
                     const hostCanReview = getCanReviewPayment(host);
                     const showHostActions =
@@ -2271,9 +2309,7 @@ export default function SessionDetailPage() {
                                     renderRow(
                                       g,
                                       true,
-                                      host.users?.full_name ??
-                                      host.guest_full_name ??
-                                      "host",
+                                      host.users?.full_name ?? host.guest_full_name ?? "người đứng tên",
                                     ),
                                   )}
                                 </div>
@@ -2302,7 +2338,7 @@ export default function SessionDetailPage() {
                       >
                         {isDesktop ? (
                           <div>
-                            {renderRowContent(host, false)}
+                            {renderRowContent(host, false, hostDisplayName, groupedGuestsForHost)}
                             {showHostActions && (
                               <div className="flex justify-end gap-2 border-t border-gray-100 px-4 py-2.5">
                                 <DesktopRowActions reg={host} />
@@ -2316,7 +2352,7 @@ export default function SessionDetailPage() {
                             actions={<RowActions reg={host} />}
                           >
                             <div>
-                              {renderRowContent(host, false)}
+                              {renderRowContent(host, false, hostDisplayName, groupedGuestsForHost)}
                               {hostExtras}
                             </div>
                           </SwipeableRow>
@@ -2664,19 +2700,41 @@ export default function SessionDetailPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Đi cùng (tuỳ chọn, để gộp tiền)
+                          Đi cùng (tuỳ chọn)
                         </label>
                         <CustomSelect
                           value={hostRegId}
-                          onChange={setHostRegId}
+                          onChange={(val) => {
+                            setHostRegId(val);
+                            if (!val) setGuestPaySeparately(false);
+                          }}
                           placeholder="-- Không, tính tiền riêng --"
                           options={registrations
-                            .filter((r) => !r.is_guest)
+                            .filter((r) => !r.host_registration_id)
                             .map((r: any) => ({
                               value: r.id,
-                              label: r.users?.full_name ?? "?",
+                              label: r.users?.full_name ?? r.guest_full_name ?? "?",
                             }))}
                         />
+
+                        {hostRegId && (
+                          <>
+                            <label className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                              <input
+                                type="checkbox"
+                                checked={guestPaySeparately}
+                                onChange={(e) => setGuestPaySeparately(e.target.checked)}
+                                className="rounded"
+                              />
+                              Thanh toán riêng (không gộp với người đi cùng)
+                            </label>
+                            <p className="text-[11px] text-gray-400 mt-1">
+                              {guestPaySeparately
+                                ? "Khách này sẽ tự thanh toán tiền mặt riêng, nhận hóa đơn riêng qua email."
+                                : "Mặc định: người đi cùng trả hộ, hóa đơn sẽ gộp gửi về người đi cùng."}
+                            </p>
+                          </>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
