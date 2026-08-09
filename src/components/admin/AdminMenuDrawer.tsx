@@ -64,6 +64,7 @@ export function AdminMenuDrawer({
     const [closing, setClosing] = useState(false);
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
+
     useEffect(() => {
         if (open) {
             setMounted(true);

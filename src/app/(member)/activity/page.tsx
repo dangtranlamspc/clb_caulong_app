@@ -706,8 +706,10 @@ function SessionPaymentModal({
 
 function SessionsTab({
   onPendingBillsChange,
+  onOpenSessionsChange,
 }: {
   onPendingBillsChange: (count: number) => void;
+  onOpenSessionsChange: (hasOpen: boolean) => void;
 }) {
   const { user } = useAuthStore();
   const [sessions, setSessions] = useState<any[]>([]);
@@ -816,7 +818,8 @@ function SessionsTab({
     try {
       const { data } = await sessionsApi.list({ limit: 50 });
       if (mySeq !== pendingBillsSeqRef.current) return;
-      const bills = (data.data ?? []).filter(
+      const allSessions = data.data ?? [];
+      const bills = allSessions.filter(
         (s: any) =>
           s.my_registration?.amount_override > 0 &&
           s.my_registration?.payment_status === "pending" &&
@@ -824,8 +827,9 @@ function SessionsTab({
       );
       setPendingBills(bills);
       onPendingBillsChange(bills.length);
+      onOpenSessionsChange(allSessions.some((s: any) => s.status === "open"));
     } catch { }
-  }, [onPendingBillsChange]);
+  }, [onPendingBillsChange, onOpenSessionsChange]);
 
   const scheduleFetchPendingBills = useCallback(() => {
     if (pendingBillsDebounceRef.current) clearTimeout(pendingBillsDebounceRef.current);
@@ -2075,6 +2079,7 @@ export default function ActivityPage() {
   const tabRef = useRef<MainTab>("sessions");
   const [activeMatch, setActiveMatch] = useState<any>(null);
   const [hasPendingBills, setHasPendingBills] = useState(false);
+  const [hasOpenSessions, setHasOpenSessions] = useState(false);
   const [hasOpenEvents, setHasOpenEvents] = useState(false);
 
   const eventsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2238,7 +2243,7 @@ export default function ActivityPage() {
 
         <div className="relative flex bg-gray-100 rounded-2xl p-1">
           <div
-            className="absolute top-1 bottom-1 bg-white rounded-xl shadow-sm"
+            className="absolute top-1 bottom-1 bg-blue-600 rounded-xl shadow-sm"
             style={{
               ...indicatorStyle,
               transition:
@@ -2247,43 +2252,50 @@ export default function ActivityPage() {
           />
           <button
             onClick={() => switchTab("sessions")}
-            className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "sessions" ? "text-blue-600" : "text-gray-500"}`}
+            className={`relative flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "sessions" ? "text-white" : "text-gray-500"}`}
           >
-            <span className="relative inline-flex">
-              <CalendarDays className="w-4 h-4" />
-              {hasPendingBills && (
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
+            <span className="relative inline-block">
+              Buổi đánh
+              {hasPendingBills ? (
+                <span className="absolute -top-1.5 -right-2.5 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400 border border-white" />
                 </span>
-              )}
+              ) : hasOpenSessions ? (
+                <span className="absolute -top-1.5 -right-2.5 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400 border border-white" />
+                </span>
+              ) : null}
             </span>
-            <span className="hidden xs:inline">Buổi đánh</span>
           </button>
           <button
             onClick={() => switchTab("matches")}
-            className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "matches" ? "text-blue-600" : "text-gray-500"}`}
+            className={`relative flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "matches" ? "text-white" : "text-gray-500"}`}
           >
-            <Swords className="w-4 h-4" />
-            <span className="hidden xs:inline">Giao hữu</span>
-            {activeMatch && (
-              <span className="w-2 h-2 rounded-full bg-amber-400 absolute top-2 right-3" />
-            )}
-          </button>
-          <button
-            onClick={() => switchTab("events")}
-            className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "events" ? "text-blue-600" : "text-gray-500"}`}
-          >
-            <span className="relative inline-flex">
-              <Megaphone className="w-4 h-4" />
-              {hasOpenEvents && (
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 border border-white" />
+            <span className="relative inline-block">
+              Giao hữu
+              {activeMatch && (
+                <span className="absolute -top-1.5 -right-2.5 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400 border border-white" />
                 </span>
               )}
             </span>
-            <span className="hidden xs:inline">Hoạt động</span>
+          </button>
+          <button
+            onClick={() => switchTab("events")}
+            className={`relative flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "events" ? "text-white" : "text-gray-500"}`}
+          >
+            <span className="relative inline-block">
+              Hoạt động
+              {hasOpenEvents && (
+                <span className="absolute -top-1.5 -right-2.5 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400 border border-white" />
+                </span>
+              )}
+            </span>
           </button>
         </div>
 
@@ -2294,7 +2306,10 @@ export default function ActivityPage() {
           }}
         >
           {tab === "sessions" ? (
-            <SessionsTab onPendingBillsChange={(count) => setHasPendingBills(count > 0)} />
+            <SessionsTab
+              onPendingBillsChange={(count) => setHasPendingBills(count > 0)}
+              onOpenSessionsChange={setHasOpenSessions}
+            />
           ) : tab === "matches" ? (
             <MatchesTab onActiveMatchChange={setActiveMatch} />
           ) : (

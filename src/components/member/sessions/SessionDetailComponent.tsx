@@ -52,6 +52,16 @@ const SKILL_LABEL: Record<string, string> = {
   chuyen_nghiep: "Chuyên nghiệp",
 };
 
+
+const LEVEL_LABELS: Record<string, string> = {
+  yeu: "Yếu",
+  tb_yeu: "TB yếu",
+  tb: "TB",
+  tb_plus: "TB+",
+  ban_chuyen: "Bán chuyên (BC)",
+  chuyen_nghiep: "Chuyên nghiệp",
+};
+
 const BANK_DISPLAY_NAMES: Record<string, string> = {
   MB: "MB Bank",
   VCB: "Vietcombank",
@@ -63,6 +73,18 @@ const BANK_DISPLAY_NAMES: Record<string, string> = {
   STB: "Sacombank",
   VPB: "VPBank",
   MSB: "MSB",
+};
+
+
+const TIER_BADGE_CLS: Record<string, string> = {
+  'Tân thủ': 'bg-zinc-100 text-zinc-700 border-zinc-200',
+  'Phong trào': 'bg-orange-50 text-orange-700 border-orange-200',
+  'Cứng cựa': 'bg-slate-100 text-slate-700 border-slate-200',
+  'Chủ lực': 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  'Cao thủ': 'bg-sky-50 text-sky-700 border-sky-200',
+  'Kiện tướng': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'Đại Kiện Tướng': 'bg-blue-50 text-blue-700 border-blue-200',
+  'Huyền Thoại': 'bg-purple-50 text-purple-700 border-purple-200',
 };
 
 function fmt(n: number) {
@@ -787,10 +809,6 @@ export default function SessionDetailPage() {
     (r: any) => r.participation_status !== "pending_approval",
   );
 
-  // const regRoots = registrations.filter((m: any) => !m.host_registration_id);
-  // const regGuestsOf = (hostId: string) =>
-  //   registrations.filter((m: any) => m.host_registration_id === hostId);
-
   const regRoots = approvedRegistrations.filter(
     (m: any) => !m.host_registration_id,
   );
@@ -801,12 +819,17 @@ export default function SessionDetailPage() {
     const u = m.users;
     const fullName = u?.full_name ?? m.guest_full_name ?? "?";
     const gender = u?.gender ?? m.guest_gender;
-    const skillLevel = m.is_guest ? m.guest_skill_level : null;
+    const skillLevel = m.is_guest ? m.guest_skill_level : u?.level;
+    const skillLabel = m.is_guest
+      ? (SKILL_LABEL[skillLevel] ?? skillLevel)
+      : (LEVEL_LABELS[skillLevel] ?? skillLevel);
     const parts = fullName.trim().split(" ").filter(Boolean);
     const initials =
       parts.length >= 2
         ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
         : fullName.slice(0, 2).toUpperCase();
+    const tierCls = !m.is_guest && m.tier ? TIER_BADGE_CLS[m.tier] : null;
+
     return (
       <li
         key={m.id}
@@ -831,18 +854,23 @@ export default function SessionDetailPage() {
         )}
         <div className="flex-1 min-w-0">
           <p
-            className={`font-medium text-gray-900 truncate ${opts?.nested ? "text-xs" : "text-sm"}`}
+            className={`font-medium text-gray-900 truncate flex items-center gap-1 ${opts?.nested ? "text-xs" : "text-sm"}`}
           >
             {fullName}
             {m.is_guest && (
               <span className="text-xs text-gray-400 ml-1">(khách)</span>
             )}
+            {tierCls && (
+              <span
+                className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 border ${tierCls}`}
+              >
+                {m.tier}
+              </span>
+            )}
           </p>
           <p className="text-xs text-gray-400">
             {gender === "male" ? "Nam" : gender === "female" ? "Nữ" : ""}
-            {skillLevel && (
-              <span> · {SKILL_LABEL[skillLevel] ?? skillLevel}</span>
-            )}
+            {skillLevel && <span> · {skillLabel}</span>}
           </p>
         </div>
       </li>
@@ -970,12 +998,12 @@ export default function SessionDetailPage() {
                   {combinedOtherFeeNote && (
                     <span className="italic"> ({combinedOtherFeeNote})</span>
                   )}
-                  {" = "}
+                  {/* {" = "}
                   <span
                     className={`font-semibold ${isMe ? "text-blue-600" : "text-gray-600"}`}
                   >
                     {fmt(amount)}
-                  </span>
+                  </span> */}
                 </p>
               )}
 
@@ -1100,6 +1128,13 @@ export default function SessionDetailPage() {
                     from { opacity: 0; transform: translateY(6px); }
                     to   { opacity: 1; transform: translateY(0); }
                 }
+                .scrollbar-hide::-webkit-scrollbar {
+                    display: none;
+                }
+                .scrollbar-hide {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
             `}</style>
       <div className="min-h-screen bg-[#F4F6FA] pb-4">
         <div
@@ -1203,34 +1238,47 @@ export default function SessionDetailPage() {
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-50">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                  <Users className="w-3.5 h-3.5" />
-                  Chỗ trống
-                </span>
-                <span
-                  className={`text-xs font-semibold ${slotDimmed
-                    ? "text-gray-400"
-                    : isFull
-                      ? "text-red-500"
-                      : slotRatio >= 0.6
-                        ? "text-amber-500"
-                        : "text-emerald-600"
-                    }`}
-                >
-                  {isFull
-                    ? "Đã hết chỗ"
-                    : `Còn ${session.available_slots}/${session.max_slots}`}
-                </span>
+            {session.status === "completed" ? (
+              <div className="mt-4 pt-4 border-t border-gray-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                    <Users className="w-4 h-4 text-indigo-500" />
+                  </div>
+                  <span className="font-medium text-gray-700">
+                    {registrations.filter(r => r.participation_status === "confirmed").length} người đã tham gia
+                  </span>
+                </div>
               </div>
-              <div className="w-full h-2.5 rounded-full bg-gray-100 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${slotPct}%`, background: slotBarColor }}
-                />
+            ) : (
+              <div className="mt-4 pt-4 border-t border-gray-50">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                    <Users className="w-3.5 h-3.5" />
+                    Chỗ trống
+                  </span>
+                  <span
+                    className={`text-xs font-semibold ${slotDimmed
+                      ? "text-gray-400"
+                      : isFull
+                        ? "text-red-500"
+                        : slotRatio >= 0.6
+                          ? "text-amber-500"
+                          : "text-emerald-600"
+                      }`}
+                  >
+                    {isFull
+                      ? "Đã hết chỗ"
+                      : `Còn ${session.available_slots}/${session.max_slots}`}
+                  </span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${slotPct}%`, background: slotBarColor }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {session.description && (
               <p className="mt-4 pt-4 border-t border-gray-50 text-sm text-gray-500 leading-relaxed">
@@ -1688,14 +1736,22 @@ export default function SessionDetailPage() {
                     );
                   })}
                 </ul>
-                {regRoots.length > 3 && (
-                  <button
-                    onClick={openAllRegsModal}
-                    className="w-full mt-2 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-600 transition-colors"
-                  >
-                    Xem tất cả ({approvedRegistrations.length} người)
-                  </button>
-                )}
+                {regRoots.length > 3 && (() => {
+                  const shownRoots = regRoots.slice(0, 3);
+                  const shownCount = shownRoots.reduce(
+                    (sum, root) => sum + 1 + regGuestsOf(root.id).length,
+                    0,
+                  );
+                  const remainingCount = approvedRegistrations.length - shownCount;
+                  return (
+                    <button
+                      onClick={openAllRegsModal}
+                      className="w-full mt-2 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-600 transition-colors"
+                    >
+                      Xem tất cả (còn {remainingCount} người)
+                    </button>
+                  );
+                })()}
               </>
             )}
           </div>
@@ -1778,7 +1834,7 @@ export default function SessionDetailPage() {
                       <XIcon className="w-4 h-4 text-gray-500" />
                     </button>
                   </div>
-                  <div className="px-5 py-4 overflow-y-auto">
+                  <div className="px-5 py-4 overflow-y-auto scrollbar-hide">
                     {renderPersonAmounts()}
                   </div>
                   <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
@@ -1881,7 +1937,7 @@ export default function SessionDetailPage() {
                         )}
 
                         {!selectedCompanion && (
-                          <div className="max-h-60 overflow-y-auto -mx-1 border border-gray-100 rounded-xl">
+                          <div className="max-h-60 overflow-y-auto scrollbar-hide -mx-1 border border-gray-100 rounded-xl">
                             {searchingMembers ? (
                               <p className="text-sm text-gray-400 text-center py-4">
                                 Đang tìm...
@@ -1911,8 +1967,7 @@ export default function SessionDetailPage() {
                                             />
                                           ) : (
                                             <span className="text-xs font-semibold text-blue-700">
-                                              {m.full_name?.[0]?.toUpperCase() ??
-                                                "?"}
+                                              {m.full_name?.[0]?.toUpperCase() ?? "?"}
                                             </span>
                                           )}
                                         </div>
@@ -1920,9 +1975,7 @@ export default function SessionDetailPage() {
                                           <p className="text-sm font-medium text-gray-900 truncate">
                                             {m.full_name}
                                           </p>
-                                          <p className="text-xs text-gray-400">
-                                            {m.phone}
-                                          </p>
+                                          <p className="text-xs text-gray-400">{m.phone}</p>
                                         </div>
                                       </button>
                                     </li>
@@ -2705,7 +2758,7 @@ export default function SessionDetailPage() {
                       <XIcon className="w-4 h-4 text-gray-500" />
                     </button>
                   </div>
-                  <div className="px-5 py-2 overflow-y-auto">
+                  <div className="px-5 py-2 overflow-y-auto scrollbar-hide">
                     <ul className="divide-y divide-gray-50">
                       {regRoots.map((root: any) => {
                         const guests = regGuestsOf(root.id);
