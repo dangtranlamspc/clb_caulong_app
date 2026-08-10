@@ -136,9 +136,14 @@ function LeaderAvatar({ src, name }: { src?: string | null; name: string }) {
     );
 }
 
-function StatCard({ icon: Icon, iconBg, label, value }: { icon: any; iconBg: string; label: string; value: number | string }) {
+function StatCard({ icon: Icon, iconBg, label, value, onClick }: { icon: any; iconBg: string; label: string; value: number | string; onClick?: () => void }) {
     return (
-        <div className="bg-white rounded-2xl p-4 flex items-start gap-3 border border-gray-100 shadow-sm">
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={!onClick}
+            className={`bg-white rounded-2xl p-4 flex items-start gap-3 border border-gray-100 shadow-sm text-left w-full ${onClick ? 'hover:border-blue-200 hover:shadow-md active:scale-[0.98] transition-all cursor-pointer' : ''}`}
+        >
             <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}>
                 <Icon className="w-5 h-5 text-white" />
             </div>
@@ -146,10 +151,9 @@ function StatCard({ icon: Icon, iconBg, label, value }: { icon: any; iconBg: str
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{label}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-0.5 leading-tight">{value}</p>
             </div>
-        </div>
+        </button>
     );
 }
-
 function CardSkeleton({ className = 'h-20' }: { className?: string }) {
     return (
         <div className={`relative overflow-hidden bg-gray-100 rounded-2xl ${className}`}>
@@ -343,7 +347,6 @@ export default function AdminDashboardPage() {
 
     return (
         <div className="space-y-4">
-            {/* Stat cards thành viên */}
             {statsLoading ? (
                 <div className="grid grid-cols-2 gap-3">
                     {[...Array(4)].map((_, i) => <CardSkeleton key={i} />)}
@@ -351,10 +354,34 @@ export default function AdminDashboardPage() {
             ) : (
                 <Reveal show delayMs={0}>
                     <div className="grid grid-cols-2 gap-3">
-                        <StatCard icon={Users} iconBg="bg-blue-500" label="Tổng thành viên" value={totalMembers} />
-                        <StatCard icon={Crown} iconBg="bg-emerald-500" label="VIP" value={memberBreakdown.vip} />
-                        <StatCard icon={User} iconBg="bg-violet-400" label="Thường" value={memberBreakdown.thuong} />
-                        <StatCard icon={UserRound} iconBg="bg-orange-400" label="Vãng lai" value={memberBreakdown.vang_lai} />
+                        <StatCard
+                            icon={Users}
+                            iconBg="bg-blue-500"
+                            label="Tổng thành viên"
+                            value={totalMembers}
+                            onClick={() => router.push('/admin/members')}
+                        />
+                        <StatCard
+                            icon={Crown}
+                            iconBg="bg-emerald-500"
+                            label="VIP"
+                            value={memberBreakdown.vip}
+                            onClick={() => router.push('/admin/members?member_type=co_dinh&member_subtype=vip')}
+                        />
+                        <StatCard
+                            icon={User}
+                            iconBg="bg-violet-400"
+                            label="Thường"
+                            value={memberBreakdown.thuong}
+                            onClick={() => router.push('/admin/members?member_type=co_dinh&member_subtype=thuong')}
+                        />
+                        <StatCard
+                            icon={UserRound}
+                            iconBg="bg-orange-400"
+                            label="Vãng lai"
+                            value={memberBreakdown.vang_lai}
+                            onClick={() => router.push('/admin/members?member_type=vang_lai')}
+                        />
                     </div>
                 </Reveal>
             )}

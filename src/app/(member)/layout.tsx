@@ -108,7 +108,7 @@ function BottomNav({
     return (
         <nav
             className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4"
-            style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+            style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom, 0px))" }}
         >
             <div
                 className="w-full max-w-lg flex items-stretch"

@@ -46,7 +46,7 @@ function formatCurrency(n: number) {
 
 export default function ActivitiesOverview() {
     const now = new Date();
-    const [month, setMonth] = useState<number>(now.getMonth() + 1);
+    const [month, setMonth] = useState<number>(0);
     const [year, setYear] = useState<number>(now.getFullYear());
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
