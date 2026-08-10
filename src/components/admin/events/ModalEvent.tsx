@@ -6,6 +6,7 @@ interface ModalActiviesProps {
     open: boolean;
     onClose: () => void;
     children: React.ReactNode;
+    header?: React.ReactNode;
     maxWidth?: string;
 }
 
@@ -13,6 +14,7 @@ export default function ModalEvent({
     open,
     onClose,
     children,
+    header,
     maxWidth = "max-w-lg",
 }: ModalActiviesProps) {
     const [mounted, setMounted] = useState(open);
@@ -41,7 +43,7 @@ export default function ModalEvent({
             }}
         >
             <div
-                className={`w-full ${maxWidth} bg-white rounded-2xl shadow-xl max-h-[75vh] sm:max-h-[90vh] overflow-hidden relative flex flex-col`}
+                className={`w-full ${maxWidth} bg-white rounded-2xl shadow-xl h-[90vh] sm:h-[100vh] overflow-hidden relative flex flex-col`}
                 style={{
                     transform: visible ? "scale(1) translateY(0)" : "scale(0.95) translateY(12px)",
                     opacity: visible ? 1 : 0,
@@ -55,7 +57,14 @@ export default function ModalEvent({
                 >
                     <X className="w-4 h-4" />
                 </button>
-                <div className="overflow-y-auto hide-scrollbar">
+
+                {header && (
+                    <div className="flex-shrink-0 px-5 pt-5 pb-3">
+                        {header}
+                    </div>
+                )}
+
+                <div className="overflow-y-auto hide-scrollbar flex-1 min-h-0">
                     {children}
                 </div>
             </div>
