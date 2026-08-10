@@ -453,6 +453,175 @@ function MemberPanel({
 type SortField = "balance" | "full_name" | "last_session_at";
 type SortOrder = "asc" | "desc";
 
+function StatMembersModal({
+  title,
+  status,
+  onClose,
+  onSelectMember,
+}: {
+  title: string;
+  status: string;
+  onClose: () => void;
+  onSelectMember: (member: any) => void;
+}) {
+  const [visible, setVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState<any[]>([]);
+  const [meta, setMeta] = useState<any>({ total: 0, total_pages: 0 });
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const perPage = 10;
+
+  useEffect(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+  }, []);
+
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(onClose, 200);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    walletAdminApi
+      .listMembers({
+        status: status || undefined,
+        search: search || undefined,
+        page,
+        limit: perPage,
+        sort_by: "balance",
+        sort_order: "desc",
+      })
+      .then(({ data }) => {
+        if (cancelled) return;
+        setMembers(data.data ?? []);
+        setMeta(data.meta ?? {});
+      })
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [status, search, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const totalPages = meta.total_pages ?? 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{
+        background: visible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+        backdropFilter: visible ? "blur(2px)" : "none",
+        transition: "background .2s ease, backdrop-filter .2s ease",
+      }}
+      onClick={handleClose}
+    >
+      <div
+        className="w-full max-w-lg bg-white rounded-2xl shadow-xl h-[80vh] sm:h-[85vh] overflow-hidden relative flex flex-col"
+        style={{
+          transform: visible ? "scale(1) translateY(0)" : "scale(0.95) translateY(12px)",
+          opacity: visible ? 1 : 0,
+          transition: "transform .22s cubic-bezier(.34,1.56,.64,1), opacity .18s ease",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={handleClose}
+          className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 shadow-sm"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Header cố định */}
+        <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-900 pr-8">{title}</h2>
+          <p className="text-xs text-gray-400 mt-0.5">{meta.total ?? 0} thành viên</p>
+
+          <div className="relative mt-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Tìm kiếm thành viên..."
+              className="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+        </div>
+
+        {/* Body cuộn riêng */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {loading ? (
+            <div className="px-5 py-4 space-y-2">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-14 bg-gray-100 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : members.length === 0 ? (
+            <div className="px-5 py-16 text-center text-gray-400 text-sm">
+              Không có thành viên nào
+            </div>
+          ) : (
+            <div className="px-3 py-3 space-y-2">
+              {members.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => {
+                    onSelectMember(m);
+                    handleClose();
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 overflow-hidden">
+                    {m.avatar_url ? (
+                      <img src={m.avatar_url} alt={m.full_name} className="w-full h-full object-cover" />
+                    ) : (
+                      m.full_name[0]
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 truncate text-sm">{m.full_name}</p>
+                    <p className="text-xs text-gray-400">{m.phone}</p>
+                  </div>
+                  <span className={`text-sm font-bold whitespace-nowrap ${m.balance < 0 ? "text-red-500" : "text-gray-900"}`}>
+                    {fmt(m.balance)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer phân trang cố định */}
+        {totalPages > 1 && (
+          <div className="flex-shrink-0 flex items-center justify-center gap-1 px-5 py-3 border-t border-gray-100">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <span className="text-xs text-gray-500 px-2">
+              {page} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function WalletAdminSummaryPage() {
   const [stats, setStats] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
@@ -468,6 +637,7 @@ export default function WalletAdminSummaryPage() {
   const [sortField, setSortField] = useState<SortField>("balance");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [memberTransactions, setMemberTransactions] = useState<any[]>([]);
+  const [statModal, setStatModal] = useState<{ title: string; status: string } | null>(null);
   const perPage = 8;
 
   const [panelMember, setPanelMember] = useState<any | null>(null);
@@ -644,6 +814,7 @@ export default function WalletAdminSummaryPage() {
       deltaPositive: stats.club_balance_delta >= 0,
       icon: <Wallet className="w-5 h-5 text-blue-600" />,
       iconBg: "bg-blue-50",
+      status: "", // tất cả
     },
     {
       label: "Thành viên còn tiền",
@@ -652,6 +823,7 @@ export default function WalletAdminSummaryPage() {
       deltaPositive: true,
       icon: <Users className="w-5 h-5 text-emerald-600" />,
       iconBg: "bg-emerald-50",
+      status: "ok",
     },
     {
       label: "Thành viên âm ví",
@@ -660,6 +832,7 @@ export default function WalletAdminSummaryPage() {
       deltaPositive: false,
       icon: <AlertTriangle className="w-5 h-5 text-orange-500" />,
       iconBg: "bg-orange-50",
+      status: "negative",
     },
     {
       label: "Tổng công nợ",
@@ -668,6 +841,7 @@ export default function WalletAdminSummaryPage() {
       deltaPositive: false,
       icon: <TrendingDown className="w-5 h-5 text-purple-600" />,
       iconBg: "bg-purple-50",
+      status: "negative",
     },
   ];
 
@@ -713,15 +887,15 @@ export default function WalletAdminSummaryPage() {
       <div className="px-3 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {statCards.map((s, i) => (
-            <div
+            <button
               key={s.label}
-              className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 animate-card-fade"
+              type="button"
+              onClick={() => setStatModal({ title: s.label, status: s.status })}
               style={{ animationDelay: `${i * 40}ms` }}
+              className="text-left bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 transition-all duration-150 animate-card-fade hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
             >
               <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                <div
-                  className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${s.iconBg}`}
-                >
+                <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${s.iconBg}`}>
                   {s.icon}
                 </div>
                 <p className="text-[11px] sm:text-xs text-gray-500 leading-tight">
@@ -731,12 +905,10 @@ export default function WalletAdminSummaryPage() {
               <p className="text-lg sm:text-2xl font-black text-gray-900 truncate">
                 {s.value}
               </p>
-              <p
-                className={`text-[10px] sm:text-xs mt-1 font-medium ${s.deltaPositive ? "text-emerald-600" : "text-red-500"}`}
-              >
+              <p className={`text-[10px] sm:text-xs mt-1 font-medium ${s.deltaPositive ? "text-emerald-600" : "text-red-500"}`}>
                 {s.delta}
               </p>
-            </div>
+            </button>
           ))}
         </div>
 
@@ -1039,6 +1211,15 @@ export default function WalletAdminSummaryPage() {
               tx={selectedTx}
               onClose={() => setSelectedTx(null)}
               transactions={memberTransactions}
+            />
+          )}
+
+          {statModal && (
+            <StatMembersModal
+              title={statModal.title}
+              status={statModal.status}
+              onClose={() => setStatModal(null)}
+              onSelectMember={(m) => setSelectedMember(m)}
             />
           )}
         </div>
