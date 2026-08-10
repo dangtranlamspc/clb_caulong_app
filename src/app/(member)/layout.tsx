@@ -101,184 +101,80 @@ function BottomNav({
     pathname: string;
     showActivityDot: boolean;
 }) {
-    const count = NAV_ITEMS.length;
     const activeIndex = NAV_ITEMS.findIndex(({ href }) =>
         href === "/profile" ? pathname === "/profile" : pathname.startsWith(href),
     );
 
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [width, setWidth] = useState(0);
-
-    useEffect(() => {
-        const el = containerRef.current;
-        if (!el) return;
-        const ro = new ResizeObserver((entries) => setWidth(entries[0].contentRect.width));
-        ro.observe(el);
-        return () => ro.disconnect();
-    }, []);
-
-    // ---- Các hằng số điều khiển hình dạng ----
-    const BAR_H = 64;
-    const RADIUS = 26;
-    const DIP = 26;           // tăng từ 12 -> 26: lõm sâu và rõ hơn hẳn
-    const GAP = 8;            // khoảng hở giữa đáy bubble và đáy lõm
-    const BUBBLE_R = 26;      // bán kính bubble khi active
-    const REST_SIZE = 22;
-    const REST_BOTTOM = 26;
-    const LABEL_BOTTOM = 8;
-    const NOTCH_HALF = BUBBLE_R + 24;  // tăng từ +16 -> +24: miệng lõm rộng hơn, đỡ gắt khi sâu
-
-    const ACTIVE_BOTTOM = BAR_H - DIP + GAP;
-    const CONTAINER_H = ACTIVE_BOTTOM + BUBBLE_R * 2 + 4;
-
-    const tabCenterX = (i: number) => (width > 0 ? ((i + 0.5) / count) * width : 0);
-
-    const buildPath = () => {
-        const r = RADIUS;
-        if (width === 0) return "";
-        if (activeIndex < 0) {
-            return `M ${r} 0 H ${width - r} Q ${width} 0 ${width} ${r} V ${BAR_H - r} Q ${width} ${BAR_H} ${width - r} ${BAR_H} H ${r} Q 0 ${BAR_H} 0 ${BAR_H - r} V ${r} Q 0 0 ${r} 0 Z`;
-        }
-        const cx = tabCenterX(activeIndex);
-        const margin = r + 4;
-
-        const maxHalfLeft = cx - margin;
-        const maxHalfRight = (width - margin) - cx;
-        const half = Math.max(0, Math.min(NOTCH_HALF, maxHalfLeft, maxHalfRight));
-
-        // Độ sâu lõm co giãn theo tỉ lệ độ rộng thực có, tránh dốc đứng khi bị kẹp hẹp
-        const widthRatio = NOTCH_HALF > 0 ? half / NOTCH_HALF : 0;
-        const dip = DIP * widthRatio;
-
-        if (half < 4 || dip < 2) {
-            // Quá hẹp để vẽ lõm đẹp -> bỏ qua lõm, giữ cạnh phẳng
-            return `M ${r} 0 H ${width - r} Q ${width} 0 ${width} ${r} V ${BAR_H - r} Q ${width} ${BAR_H} ${width - r} ${BAR_H} H ${r} Q 0 ${BAR_H} 0 ${BAR_H - r} V ${r} Q 0 0 ${r} 0 Z`;
-        }
-
-        const leftX = cx - half;
-        const rightX = cx + half;
-
-        return `
-            M ${r} 0
-            H ${leftX}
-            C ${leftX + half * 0.55} 0, ${cx - half * 0.55} ${dip}, ${cx} ${dip}
-            C ${cx + half * 0.55} ${dip}, ${rightX - half * 0.55} 0, ${rightX} 0
-            H ${width - r}
-            Q ${width} 0 ${width} ${r}
-            V ${BAR_H - r}
-            Q ${width} ${BAR_H} ${width - r} ${BAR_H}
-            H ${r}
-            Q 0 ${BAR_H} 0 ${BAR_H - r}
-            V ${r}
-            Q 0 0 ${r} 0
-            Z
-        `;
-    };
-
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-4">
+        <nav
+            className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4"
+            style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+        >
             <div
-                ref={containerRef}
-                className="relative w-full max-w-lg"
-                style={{ height: CONTAINER_H, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+                className="w-full max-w-lg flex items-stretch"
+                style={{
+                    height: 64,
+                    borderRadius: 22,
+                    background:
+                        "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
+                    boxShadow: "0 10px 24px rgba(16,25,47,0.35)",
+                }}
             >
-                <svg
-                    width={width}
-                    height={BAR_H}
-                    viewBox={`0 0 ${width} ${BAR_H}`}
-                    className="absolute bottom-0 left-0"
-                    style={{ filter: "drop-shadow(0 10px 24px rgba(16,25,47,0.35))" }}
-                >
-                    <defs>
-                        <linearGradient id="nav-bg" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stopColor="#183153" />
-                            <stop offset="40%" stopColor="#102744" />
-                            <stop offset="70%" stopColor="#10192f" />
-                            <stop offset="100%" stopColor="#1a1035" />
-                        </linearGradient>
-                    </defs>
-                    {width > 0 && (
-                        <path
-                            d={buildPath()}
-                            fill="url(#nav-bg)"
-                            style={{ transition: "d 0.38s cubic-bezier(0.34,1.4,0.64,1)" }}
-                        />
-                    )}
-                </svg>
+                {NAV_ITEMS.map(({ href, icon: Icon, label }, i) => {
+                    const isActive = i === activeIndex;
+                    const showDot = href === "/activity" && showActivityDot;
 
-                <div className="absolute inset-0">
-                    {NAV_ITEMS.map(({ href, icon: Icon, label }, i) => {
-                        const isActive = i === activeIndex;
-                        const showDot = href === "/activity" && showActivityDot;
-                        const cx = tabCenterX(i);
-
-                        return (
-                            <Link key={href} href={href} className="absolute inset-0" style={{ pointerEvents: "none" }}>
-                                {/* Vùng bấm phủ toàn bộ tab, canh giữa theo cx */}
-                                <span
-                                    className="absolute block"
+                    return (
+                        <Link
+                            key={href}
+                            href={href}
+                            className="flex-1 flex flex-col items-center justify-center gap-1"
+                        >
+                            <div
+                                className="relative flex items-center justify-center transition-colors duration-200"
+                                style={{
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: "50%",
+                                    background: isActive ? "rgba(255,255,255,0.16)" : "transparent",
+                                }}
+                            >
+                                <Icon
                                     style={{
-                                        pointerEvents: "auto",
-                                        left: width > 0 ? cx - width / count / 2 : `${(i / count) * 100}%`,
-                                        width: width > 0 ? width / count : `${100 / count}%`,
-                                        top: 0,
-                                        bottom: 0,
+                                        width: 20,
+                                        height: 20,
+                                        color: isActive ? "#ffffff" : "rgba(255,255,255,0.5)",
+                                        strokeWidth: isActive ? 2.2 : 1.8,
+                                        transition: "color 0.2s ease",
                                     }}
                                 />
-
-                                {/* Icon box: 1 phần tử duy nhất, tự transition mọi thuộc tính -> mượt, không nhảy */}
-                                <div
-                                    className="absolute flex items-center justify-center"
-                                    style={{
-                                        left: width > 0 ? cx : `${((i + 0.5) / count) * 100}%`,
-                                        transform: "translateX(-50%)",
-                                        bottom: isActive ? ACTIVE_BOTTOM : REST_BOTTOM,
-                                        width: isActive ? BUBBLE_R * 2 : REST_SIZE,
-                                        height: isActive ? BUBBLE_R * 2 : REST_SIZE,
-                                        borderRadius: "50%",
-                                        background: isActive ? "#ffffff" : "transparent",
-                                        boxShadow: isActive ? "0 6px 14px rgba(0,0,0,0.25)" : "none",
-                                        transition:
-                                            "bottom 0.38s cubic-bezier(0.34,1.4,0.64,1), left 0.38s cubic-bezier(0.34,1.4,0.64,1), width 0.38s cubic-bezier(0.34,1.4,0.64,1), height 0.38s cubic-bezier(0.34,1.4,0.64,1), background 0.28s ease, box-shadow 0.28s ease",
-                                        pointerEvents: "none",
-                                    }}
-                                >
-                                    <Icon
-                                        style={{
-                                            width: isActive ? 22 : 20,
-                                            height: isActive ? 22 : 20,
-                                            color: isActive ? "#0e56b5" : "rgba(255,255,255,0.55)",
-                                            strokeWidth: isActive ? 2.2 : 1.8,
-                                            transition: "all 0.28s ease",
-                                        }}
-                                    />
-                                    {showDot && (
-                                        <span className="absolute flex" style={{ top: -2, right: -2, width: 11, height: 11 }}>
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-                                            <span className="animate-pulse relative inline-flex rounded-full bg-red-500" style={{ width: 11, height: 11, border: "2px solid #10192f" }} />
-                                        </span>
-                                    )}
-                                </div>
-
-                                {/* Label: vị trí cố định, chỉ đổi màu/độ đậm, không di chuyển */}
-                                <span
-                                    className="absolute whitespace-nowrap transition-colors duration-300"
-                                    style={{
-                                        left: width > 0 ? cx : `${((i + 0.5) / count) * 100}%`,
-                                        bottom: LABEL_BOTTOM,
-                                        transform: "translateX(-50%)",
-                                        fontSize: 10,
-                                        fontWeight: isActive ? 600 : 400,
-                                        color: isActive ? "#ffffff" : "rgba(255,255,255,0.4)",
-                                        letterSpacing: "-0.01em",
-                                    }}
-                                >
-                                    {label}
-                                </span>
-                            </Link>
-                        );
-                    })}
-                </div>
+                                {showDot && (
+                                    <span
+                                        className="absolute flex"
+                                        style={{ top: -2, right: -2, width: 10, height: 10 }}
+                                    >
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                                        <span
+                                            className="relative inline-flex rounded-full bg-red-500"
+                                            style={{ width: 10, height: 10, border: "2px solid #10192f" }}
+                                        />
+                                    </span>
+                                )}
+                            </div>
+                            <span
+                                className="transition-colors duration-200"
+                                style={{
+                                    fontSize: 10,
+                                    fontWeight: isActive ? 600 : 400,
+                                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.4)",
+                                    letterSpacing: "-0.01em",
+                                }}
+                            >
+                                {label}
+                            </span>
+                        </Link>
+                    );
+                })}
             </div>
         </nav>
     );
