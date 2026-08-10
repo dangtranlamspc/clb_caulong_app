@@ -1,15 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import {
   CalendarDays,
   Trophy,
   ClipboardList,
-  CheckCircle2,
-  Hourglass,
-  AlertCircle,
   Wallet2
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";

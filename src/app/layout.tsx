@@ -44,7 +44,10 @@ export default function RootLayout({
         <Toaster
           position="top-center"
           toastOptions={{ duration: 3000 }}
-          containerStyle={{ zIndex: 999999 }}
+          containerStyle={{
+            top: "calc(env(safe-area-inset-top, 0px) + 80px)",
+            zIndex: 999999,
+          }}
         />
         <GlobalNavLoading />
         {children}

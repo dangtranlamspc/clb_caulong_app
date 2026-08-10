@@ -41,7 +41,7 @@ export default function ModalEvent({
             }}
         >
             <div
-                className={`w-full ${maxWidth} bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-hidden relative flex flex-col`}
+                className={`w-full ${maxWidth} bg-white rounded-2xl shadow-xl max-h-[75vh] sm:max-h-[90vh] overflow-hidden relative flex flex-col`}
                 style={{
                     transform: visible ? "scale(1) translateY(0)" : "scale(0.95) translateY(12px)",
                     opacity: visible ? 1 : 0,
