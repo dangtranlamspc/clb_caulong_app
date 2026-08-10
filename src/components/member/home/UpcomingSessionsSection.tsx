@@ -577,18 +577,15 @@ export function UpcomingSessionsSection({
                                 text: "text-emerald-600",
                                 barBg:
                                     "bg-gradient-to-r from-blue-400 via-emerald-400 to-emerald-500",
-                                animate: true,
                             },
                             low: {
                                 text: "text-amber-600",
                                 barBg:
                                     "bg-gradient-to-r from-amber-400 via-orange-400 to-orange-500",
-                                animate: true,
                             },
                             full: {
                                 text: "text-red-500",
                                 barBg: "bg-red-500",
-                                animate: false,
                             },
                         }[slotStatus];
 
@@ -673,15 +670,7 @@ export function UpcomingSessionsSection({
                                                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                                                         <div
                                                             className={`h-full rounded-full ${STATUS_STYLE.barBg}`}
-                                                            style={{
-                                                                width: `${pct}%`,
-                                                                backgroundSize: STATUS_STYLE.animate
-                                                                    ? "200% 100%"
-                                                                    : "100% 100%",
-                                                                animation: STATUS_STYLE.animate
-                                                                    ? "energyFlow 2s linear infinite, growBar 0.8s ease-out"
-                                                                    : "growBar 0.8s ease-out",
-                                                            }}
+                                                            style={{ width: `${pct}%` }}
                                                         />
                                                     </div>
                                                 </div>
@@ -786,22 +775,6 @@ export function UpcomingSessionsSection({
                             </div>
                         );
                     })}
-
-                    <style jsx>{`
-                        @keyframes energyFlow {
-                        0% {
-                            background-position: 0% 0%;
-                        }
-                        100% {
-                            background-position: -200% 0%;
-                        }
-                        }
-                        @keyframes growBar {
-                        from {
-                            width: 0%;
-                        }
-                        }
-                    `}</style>
                 </div>
             )
             }

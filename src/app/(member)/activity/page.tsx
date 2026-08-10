@@ -245,17 +245,19 @@ function EnergyBar({
   max,
   status,
   dimmed = false,
+  animated = true,
 }: {
   filled: number;
   max: number;
   status?: string;
   dimmed?: boolean;
+  animated?: boolean;
 }) {
   const ratio = max > 0 ? filled / max : 0;
   const pct = Math.round(Math.min(1, ratio) * 100);
   const isFull = ratio >= 1;
   const isCompleted = status === "completed" || dimmed;
-  const isStatic = isFull || isCompleted;
+  const isStatic = isFull || isCompleted || !animated;
 
   const gradient = isCompleted
     ? "#9ca3af"
@@ -274,7 +276,7 @@ function EnergyBar({
           background: gradient,
           backgroundSize: isStatic ? "100% 100%" : "200% 100%",
           animation: isStatic
-            ? "energyGrow 0.6s ease-out"
+            ? undefined
             : "energyFlow 2s linear infinite, energyGrow 0.6s ease-out",
           transition: "width 0.5s ease",
         }}
@@ -1104,6 +1106,7 @@ function SessionsTab({
                         max={s.max_slots}
                         status={s.status}
                         dimmed={slotDimmed}
+                        animated={false}
                       />
                     </div>
                   )}
