@@ -21,7 +21,7 @@ const LOGO_URL =
     "https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494767/LOGO_TEAM_BNB_WHITE_hs59vg.png";
 const BACKGROUND_COLOR = "#1d4ed8"; // trùng theme_color trong manifest.json
 const OUTPUT_DIR = "public/icons";
-const LOGO_PADDING_RATIO = 0.72; // logo chiếm 72% kích thước icon, còn lại là viền đệm
+const LOGO_PADDING_RATIO = 0.92; // logo chiếm 72% kích thước icon, còn lại là viền đệm
 const SIZES = [192, 512]; // các kích thước cần cho manifest.json
 const APPLE_TOUCH_SIZE = 180; // kích thước chuẩn cho apple-touch-icon
 // ============================================

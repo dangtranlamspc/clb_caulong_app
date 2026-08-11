@@ -46,7 +46,6 @@ self.addEventListener("notificationclick", (event) => {
             ? `/admin/sessions/${data.session_id}`
             : `/sessions/${data.session_id}`;
     } else if (data.registration_id) {
-        // Chỉ member mới rơi vào đây (case wallet_guest_confirm không kèm session_id, ví dụ)
         targetUrl = "/history";
     }
 

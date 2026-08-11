@@ -24,7 +24,7 @@ export function PushNotificationManager() {
     useEffect(() => {
         if (typeof window === "undefined") return;
         if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
-        if (!currentUserId) return; // chưa xác định user thì chưa đồng bộ subscription
+        if (!currentUserId) return;
 
         setPermission(Notification.permission);
 
@@ -33,8 +33,6 @@ export function PushNotificationManager() {
             const existing = await reg.pushManager.getSubscription();
 
             if (existing && Notification.permission === "granted") {
-                // Luôn đồng bộ lại user_id cho endpoint hiện có,
-                // phòng trường hợp browser đã có subscription từ tài khoản khác trước đó
                 try {
                     await pushApi.subscribe(existing.toJSON() as any);
                 } catch (e) {
