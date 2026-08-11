@@ -1,5 +1,3 @@
-// public/sw.js
-
 const ICON_URL =
     "https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494767/LOGO_TEAM_BNB_WHITE_hs59vg.png";
 
@@ -38,14 +36,18 @@ self.addEventListener("notificationclick", (event) => {
     event.notification.close();
 
     const data = event.notification.data || {};
-    let targetUrl = "/";
+    const isAdmin = data.scope === "admin";
+    let targetUrl = isAdmin ? "/admin" : "/";
 
-    if (data.session_id) {
-        targetUrl = `/sessions/${data.session_id}`;
-    } else if (data.registration_id) {
-        targetUrl = `/history`;
-    } else if (data.url) {
+    if (data.url) {
         targetUrl = data.url;
+    } else if (data.session_id) {
+        targetUrl = isAdmin
+            ? `/admin/sessions/${data.session_id}`
+            : `/sessions/${data.session_id}`;
+    } else if (data.registration_id) {
+        // Chỉ member mới rơi vào đây (case wallet_guest_confirm không kèm session_id, ví dụ)
+        targetUrl = "/history";
     }
 
     event.waitUntil(
