@@ -288,7 +288,7 @@ export const activitiesApi = {
     api.post(`/activities/${id}/register/tournament/public`, data),
   payTournamentPublic: (
     registrationId: string,
-    data: { method: "wallet" | "transfer" | "cash" },
+    data: { method: "wallet" | "transfer" | "cash"; payment_reference?: string },
   ) => api.post(`/registrations/${registrationId}/tournament-payment`, data),
   getShirtOrderRegistrationDetail: (regId: string) =>
     api.get(`/activities/shirt-order-registrations/${regId}`, {
@@ -460,6 +460,8 @@ export const eventsAdminApi = {
     api.patch(`/admin/activities/tournament-registrations/${regId}/confirm`),
   drawTeams: (id: string, data: any) =>
     api.post(`/admin/activities/${id}/tournament/draw-teams`, data),
+  rejectTournamentPayment: (regId: string) =>
+    api.post(`/admin/activities/tournament-registrations/${regId}/reject-payment`),
   adminAddShirtOrderRegistration: (
     activityId: string,
     data: {

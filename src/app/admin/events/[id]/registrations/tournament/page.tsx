@@ -11,6 +11,11 @@ import {
   ChevronRight,
   ChevronLeft,
   RotateCcw,
+  Check,
+  Copy,
+  ExternalLink,
+  Link2,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -429,6 +434,28 @@ export default function TournamentRegistrationsPage() {
   const [editRole, setEditRole] = useState("");
   const [editNotes, setEditNotes] = useState("");
 
+  const [publicLinkOpen, setPublicLinkOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const [payingAction, setPayingAction] = useState<{ id: string; type: "confirm" | "reject" } | null>(null);
+
+  const publicLink = useMemo(() => {
+    if (typeof window === "undefined" || !id) return "";
+    return `${window.location.origin}/giai-dau/${id}`;
+  }, [id]);
+
+  const handleCopyPublicLink = async () => {
+    if (!publicLink) return;
+    try {
+      await navigator.clipboard.writeText(publicLink);
+      setLinkCopied(true);
+      toast.success("Đã sao chép link đăng ký công khai");
+      setTimeout(() => setLinkCopied(false), 1500);
+    } catch {
+      toast.error("Không thể sao chép, vui lòng copy thủ công");
+    }
+  };
+
   const openModal = (r: any, mode: "view" | "edit") => {
     setModalReg(r);
     setModalMode(mode);
@@ -508,9 +535,9 @@ export default function TournamentRegistrationsPage() {
 
   const filtered = useMemo(() => {
     return registrations.filter((r) => {
-      const name = r.users?.full_name?.toLowerCase() ?? "";
-      const email = r.users?.email?.toLowerCase() ?? "";
-      const phone = r.users?.phone ?? "";
+      const name = (r.users?.full_name ?? r.guest_full_name ?? "").toLowerCase();
+      const email = (r.users?.email ?? r.guest_email ?? "").toLowerCase();
+      const phone = r.users?.phone ?? r.guest_phone ?? "";
       const q = search.trim().toLowerCase();
       if (q && !name.includes(q) && !email.includes(q) && !phone.includes(q))
         return false;
@@ -557,11 +584,27 @@ export default function TournamentRegistrationsPage() {
   };
 
   const handleConfirmPayment = async (regId: string) => {
+    setPayingAction({ id: regId, type: "confirm" });
     try {
       await eventsAdminApi.confirmTournamentPayment(regId);
       toast.success("Đã xác nhận thanh toán");
-      load();
-    } catch { }
+      await load();
+    } catch {
+    } finally {
+      setPayingAction(null);
+    }
+  };
+
+  const handleRejectPayment = async (regId: string) => {
+    setPayingAction({ id: regId, type: "reject" });
+    try {
+      await eventsAdminApi.rejectTournamentPayment(regId);
+      toast.success("Đã từ chối yêu cầu thanh toán");
+      await load();
+    } catch {
+    } finally {
+      setPayingAction(null);
+    }
   };
 
   const handleDrawTeams = async () => {
@@ -683,9 +726,91 @@ export default function TournamentRegistrationsPage() {
               {stats.revenue.toLocaleString("vi-VN")}đ
             </span>
           </div>
+
           <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm">
             <Download className="w-4 h-4" /> Xuất danh sách
           </button>
+
+          <div className="relative">
+            <button
+              onClick={() => setPublicLinkOpen((v) => !v)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors shadow-sm"
+            >
+              <Link2 className="w-4 h-4" /> Tạo link công khai
+            </button>
+
+            {publicLinkOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setPublicLinkOpen(false)}
+                />
+                <div
+                  className="
+                fixed left-4 right-4 top-1/2 -translate-y-1/2 z-50
+                sm:absolute sm:left-auto sm:right-0 sm:top-full sm:translate-y-0
+                sm:mt-2 sm:w-80
+                bg-white rounded-2xl border border-gray-100 shadow-xl p-4
+            "
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-bold text-gray-900">
+                      Link đăng ký công khai
+                    </p>
+                    <button
+                      onClick={() => setPublicLinkOpen(false)}
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+                    Chia sẻ link này để người chưa có tài khoản CLB cũng tự đăng ký
+                    thi đấu được.
+                  </p>
+                  <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 mb-3">
+                    <span className="text-xs text-gray-700 truncate flex-1">
+                      {publicLink}
+                    </span>
+                    <button
+                      onClick={handleCopyPublicLink}
+                      title="Sao chép link"
+                      className="flex-shrink-0 text-blue-600 hover:text-blue-700"
+                    >
+                      {linkCopied ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCopyPublicLink}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors"
+                    >
+                      {linkCopied ? (
+                        <Check className="w-3.5 h-3.5" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                      Sao chép
+                    </button>
+                    <a
+                      href={publicLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      Mở trang
+                    </a>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
           <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm">
             <Filter className="w-4 h-4" /> Bộ lọc
           </button>
@@ -808,13 +933,13 @@ export default function TournamentRegistrationsPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            {/* Desktop: Table view */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50/80 text-gray-500 text-[11px] uppercase tracking-wide">
                   <tr>
                     <th className="text-left px-4 py-3.5 font-semibold">STT</th>
                     <th className="text-left px-4 py-3.5 font-semibold">Vận động viên</th>
+                    <th className="text-left px-4 py-3.5 font-semibold">Loại</th>
                     <th className="text-left px-4 py-3.5 font-semibold">Giới tính</th>
                     <th className="text-left px-4 py-3.5 font-semibold">Trình độ</th>
                     <th className="text-left px-4 py-3.5 font-semibold">Vai trò</th>
@@ -835,20 +960,30 @@ export default function TournamentRegistrationsPage() {
                           <img
                             src={
                               r.users?.avatar_url ||
-                              `https://ui-avatars.com/api/?name=${encodeURIComponent(r.users?.full_name ?? "?")}`
+                              `https://ui-avatars.com/api/?name=${encodeURIComponent(r.users?.full_name ?? r.guest_full_name ?? "?")}`
                             }
                             className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-50"
                             alt=""
                           />
                           <div className="min-w-0">
                             <p className="font-medium text-gray-900 truncate">
-                              {r.users?.full_name ?? "—"}
+                              {r.users?.full_name ?? r.guest_full_name ?? "—"}
                             </p>
                             <p className="text-xs text-gray-400 truncate">
-                              {r.users?.email ?? ""}
+                              {r.users?.email ?? r.guest_email ?? (r.user_id ? "" : "Khách")}
                             </p>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-full ${r.user_id
+                            ? "bg-indigo-50 text-indigo-600"
+                            : "bg-gray-100 text-gray-500"
+                            }`}
+                        >
+                          {r.user_id ? "Thành viên" : "Khách"}
+                        </span>
                       </td>
                       <td className="px-4 py-3.5 text-gray-600">
                         {r.role === "nam" ? "Nam" : "Nữ"}
@@ -882,7 +1017,7 @@ export default function TournamentRegistrationsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-gray-600">
-                        {r.users?.phone ?? "—"}
+                        {r.users?.phone ?? r.guest_phone ?? "—"}
                       </td>
                       <td className="px-4 py-3.5 text-gray-500">
                         {r.created_at
@@ -928,7 +1063,7 @@ export default function TournamentRegistrationsPage() {
                   ))}
                   {pageItems.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="text-center py-14 text-gray-400">
+                      <td colSpan={10} className="text-center py-14 text-gray-400">
                         <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
                         Không có vận động viên nào phù hợp bộ lọc
                       </td>
@@ -938,26 +1073,28 @@ export default function TournamentRegistrationsPage() {
               </table>
             </div>
 
-            {/* Mobile: List/Card view */}
-            <div className="md:hidden divide-y divide-gray-50">
+            <div className="md:hidden p-3 space-y-3">
               {pageItems.map((r, i) => (
-                <div key={r.id} className="p-4 space-y-3">
+                <div
+                  key={r.id}
+                  className="p-4 space-y-3 rounded-2xl border border-gray-100 shadow-md bg-white"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <img
                         src={
                           r.users?.avatar_url ||
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(r.users?.full_name ?? "?")}`
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(r.users?.full_name ?? r.guest_full_name ?? "?")}`
                         }
                         className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-50"
                         alt=""
                       />
                       <div className="min-w-0">
                         <p className="font-medium text-gray-900 truncate">
-                          {r.users?.full_name ?? "—"}
+                          {r.users?.full_name ?? r.guest_full_name ?? "—"}
                         </p>
                         <p className="text-xs text-gray-400 truncate">
-                          {r.users?.email ?? ""}
+                          {r.users?.email ?? r.guest_email ?? (r.user_id ? "" : "Khách")}
                         </p>
                       </div>
                     </div>
@@ -967,6 +1104,17 @@ export default function TournamentRegistrationsPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-y-2 gap-x-3 text-xs">
+                    <div>
+                      <p className="text-gray-400 mb-0.5">Loại</p>
+                      <span
+                        className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${r.user_id
+                          ? "bg-indigo-50 text-indigo-600"
+                          : "bg-gray-100 text-gray-500"
+                          }`}
+                      >
+                        {r.user_id ? "Thành viên" : "Khách"}
+                      </span>
+                    </div>
                     <div>
                       <p className="text-gray-400 mb-0.5">Giới tính</p>
                       <p className="text-gray-700 font-medium">
@@ -1003,7 +1151,7 @@ export default function TournamentRegistrationsPage() {
                     </div>
                     <div>
                       <p className="text-gray-400 mb-0.5">SĐT</p>
-                      <p className="text-gray-700">{r.users?.phone ?? "—"}</p>
+                      <p className="text-gray-700">{r.users?.phone ?? r.guest_phone ?? "—"}</p>
                     </div>
                     <div>
                       <p className="text-gray-400 mb-0.5">Ngày ĐK</p>
@@ -1029,25 +1177,55 @@ export default function TournamentRegistrationsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-1 pt-1 border-t border-gray-50">
-                    <button
-                      onClick={() => openModal(r, "view")}
-                      className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => openModal(r, "edit")}
-                      className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteReg(r.id)}
-                      className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-50">
+                    {r.payment_method && r.payment_status !== "confirmed" ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleConfirmPayment(r.id)}
+                          disabled={payingAction?.id === r.id}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 disabled:opacity-60 transition-colors"
+                        >
+                          {payingAction && payingAction.id === r.id && payingAction.type === "confirm" ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            "Xác nhận"
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleRejectPayment(r.id)}
+                          disabled={payingAction?.id === r.id}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-60 transition-colors"
+                        >
+                          {payingAction && payingAction.id === r.id && payingAction.type === "reject" ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            "Từ chối"
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <span />
+                    )}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openModal(r, "view")}
+                        className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => openModal(r, "edit")}
+                        className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReg(r.id)}
+                        className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1182,22 +1360,24 @@ export default function TournamentRegistrationsPage() {
         </div>
       </div>
 
-      {modalReg && (
-        <RegistrationDetailModal
-          reg={modalReg}
-          mode={modalMode}
-          editLevel={editLevel}
-          editRole={editRole}
-          editNotes={editNotes}
-          onEditLevel={setEditLevel}
-          onEditRole={setEditRole}
-          onEditNotes={setEditNotes}
-          onClose={closeModal}
-          onSave={handleSaveEdit}
-          onConfirmPayment={handleConfirmPayment}
-        />
-      )}
-    </div>
+      {
+        modalReg && (
+          <RegistrationDetailModal
+            reg={modalReg}
+            mode={modalMode}
+            editLevel={editLevel}
+            editRole={editRole}
+            editNotes={editNotes}
+            onEditLevel={setEditLevel}
+            onEditRole={setEditRole}
+            onEditNotes={setEditNotes}
+            onClose={closeModal}
+            onSave={handleSaveEdit}
+            onConfirmPayment={handleConfirmPayment}
+          />
+        )
+      }
+    </div >
   );
 }
 
