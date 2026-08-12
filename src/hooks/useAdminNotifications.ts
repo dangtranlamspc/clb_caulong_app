@@ -23,6 +23,7 @@ export function useAdminNotifications() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const toastEnabledRef = useRef(false);
+    const processedIdsRef = useRef<Set<string>>(new Set());
 
     const load = useCallback(async () => {
         if (!userId) return;
@@ -52,15 +53,32 @@ export function useAdminNotifications() {
             .channel(`admin-notifications:${userId}`)
             .on("broadcast", { event: "new_notification" }, ({ payload }) => {
                 const notif = payload as AdminNotification;
-                setNotifications((prev) => [notif, ...prev]);
-                setUnreadCount((prev) => prev + 1);
 
-                if (toastEnabledRef.current) {
-                    toast(notif.title, {
-                        icon: "🔔",
-                        duration: 4000,
-                    });
-                }
+                const dedupeKey = `${notif.id}:${notif.is_read}:${notif.data?.resolved ? "resolved" : "new"}`;
+                if (processedIdsRef.current.has(dedupeKey)) return;
+                processedIdsRef.current.add(dedupeKey);
+
+                setNotifications((prev) => {
+                    const idx = prev.findIndex((n) => n.id === notif.id);
+
+                    if (idx !== -1) {
+                        const before = prev[idx];
+                        if (before.is_read !== notif.is_read) {
+                            setUnreadCount((c) =>
+                                notif.is_read ? Math.max(0, c - 1) : c + 1,
+                            );
+                        }
+                        const next = [...prev];
+                        next[idx] = notif;
+                        return next;
+                    }
+
+                    setUnreadCount((c) => c + 1);
+                    if (toastEnabledRef.current) {
+                        toast(notif.title, { icon: "🔔", duration: 4000 });
+                    }
+                    return [notif, ...prev];
+                });
             })
             .on(
                 "postgres_changes",
