@@ -45,7 +45,7 @@ export default function RootLayout({
           position="top-center"
           toastOptions={{ duration: 3000 }}
           containerStyle={{
-            top: "calc(env(safe-area-inset-top, 0px) + 80px)",
+            top: "calc(env(safe-area-inset-top, 0px) + 60px)",
             zIndex: 999999,
           }}
         />
