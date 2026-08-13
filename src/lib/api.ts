@@ -460,6 +460,8 @@ export const eventsAdminApi = {
     api.patch(`/admin/activities/tournament-registrations/${regId}/confirm`),
   drawTeams: (id: string, data: any) =>
     api.post(`/admin/activities/${id}/tournament/draw-teams`, data),
+  getTournamentTeams: (id: string) =>
+    api.get(`/admin/activities/${id}/tournament/teams`),
   rejectTournamentPayment: (regId: string) =>
     api.post(`/admin/activities/tournament-registrations/${regId}/reject-payment`),
   adminAddShirtOrderRegistration: (
@@ -511,6 +513,19 @@ export const eventsAdminApi = {
       skipErrorToast: true,
     } as any),
 
+  updateTournamentRegistration: (regId: string, data: { role?: string; level?: string | null; notes?: string }) =>
+    api.patch(`/admin/activities/tournament-registrations/${regId}`, data),
+
+  adminAddTournamentRegistration: (activityId: string, data: any) =>
+    api.post(`/admin/activities/${activityId}/tournament-registrations`, data),
+
+  clearTournamentTeams: (id: string) =>
+    api.delete(`/admin/activities/${id}/tournament/teams`),
+
+  exportTournamentTeams: (id: string) =>
+    api.get(`/admin/activities/${id}/tournament/teams/export`, {
+      responseType: "blob",
+    }),
 };
 
 export const uploadsAdminApi = {
