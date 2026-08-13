@@ -106,8 +106,6 @@ export default function TournamentRegistrationsPage() {
     const [teamCount, setTeamCount] = useState("8");
     const [drawing, setDrawing] = useState(false);
 
-    // Xác nhận thanh toán: đăng ký đang được chọn để xem chi tiết trước khi
-    // admin bấm xác nhận (áp dụng cho chuyển khoản & tiền mặt).
     const [confirmTarget, setConfirmTarget] = useState<any>(null);
     const [confirming, setConfirming] = useState(false);
 
