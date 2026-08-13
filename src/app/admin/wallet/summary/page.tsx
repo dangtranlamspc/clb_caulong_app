@@ -16,6 +16,8 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  Minus,
+  Share2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -185,14 +187,18 @@ function MemberPanel({
 }) {
   const [showTopup, setShowTopup] = useState(false);
   const [showAdjust, setShowAdjust] = useState(false);
+  const [showDeduct, setShowDeduct] = useState(false);
   const [amountDisplay, setAmountDisplay] = useState("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loadingTx, setLoadingTx] = useState(true);
 
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const [sharing, setSharing] = useState(false);
+
   const amount = parseThousands(amountDisplay);
-  const formOpen = showTopup || showAdjust;
+  const formOpen = showTopup || showAdjust || showDeduct;
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAmountDisplay(formatThousands(e.target.value, showAdjust));
@@ -226,24 +232,24 @@ function MemberPanel({
   const closeForm = () => {
     setShowTopup(false);
     setShowAdjust(false);
+    setShowDeduct(false);
     setAmountDisplay("");
     setNote("");
   };
 
-  const handleSubmit = async (isTopup: boolean) => {
-    if (!amount || (isTopup && amount < 1000)) {
+  const handleSubmit = async (mode: "topup" | "adjust" | "deduct") => {
+    const finalAmount = mode === "deduct" ? -Math.abs(amount) : amount;
+
+    if (!finalAmount || (mode === "topup" && finalAmount < 1000)) {
       toast.error("Số tiền không hợp lệ");
       return;
     }
     setSubmitting(true);
     try {
-      const { data } = isTopup
-        ? await walletAdminApi.manualTopup(member.id, amount, note || undefined)
-        : await walletAdminApi.manualAdjust(
-          member.id,
-          amount,
-          note || undefined,
-        );
+      const { data } =
+        mode === "topup"
+          ? await walletAdminApi.manualTopup(member.id, finalAmount, note || undefined)
+          : await walletAdminApi.manualAdjust(member.id, finalAmount, note || undefined);
 
       toast.success("Đã cập nhật số dư");
       closeForm();
@@ -262,6 +268,52 @@ function MemberPanel({
       if (trimmed.startsWith("-")) return trimmed.slice(1);
       return trimmed ? `-${trimmed}` : "-";
     });
+  };
+
+
+  const handleShareImage = async () => {
+    if (!receiptRef.current || sharing) return;
+    setSharing(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png"),
+      );
+      if (!blob) throw new Error("Không tạo được ảnh");
+
+      const fileName = `so-du-${member.full_name?.replace(/\s+/g, "-") ?? member.id}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      if (
+        typeof navigator !== "undefined" &&
+        (navigator as any).canShare?.({ files: [file] })
+      ) {
+        await (navigator as any).share({
+          files: [file],
+          title: "Sao kê ví — Ví BNB",
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Đã tải ảnh sao kê xuống");
+      }
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        toast.error("Tạo ảnh sao kê thất bại");
+      }
+    } finally {
+      setSharing(false);
+    }
   };
 
   const isNegativeAmount = amountDisplay.trim().startsWith("-");
@@ -292,12 +344,27 @@ function MemberPanel({
             <p className="text-xs text-gray-400 mt-0.5">{member.phone}</p>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-transform duration-150 active:scale-90 flex-shrink-0"
-        >
-          <X className="w-4 h-4 text-gray-500" />
-        </button>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            onClick={handleShareImage}
+            disabled={sharing}
+            className="flex items-center gap-1.5 px-3 h-7 rounded-full bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition-transform duration-150 active:scale-95 disabled:opacity-50"
+            title="Chia sẻ ảnh sao kê"
+          >
+            {sharing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Share2 className="w-3.5 h-3.5" />
+            )}
+            <span>Chia sẻ</span>
+          </button>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-transform duration-150 active:scale-90"
+          >
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
       </div>
 
       <div className="px-4 sm:px-5 py-4 border-b border-gray-100 flex-shrink-0">
@@ -314,6 +381,7 @@ function MemberPanel({
           onClick={() => {
             setShowTopup(true);
             setShowAdjust(false);
+            setShowDeduct(false);
           }}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-transform duration-150 active:scale-95 text-white text-xs sm:text-sm font-semibold"
         >
@@ -321,8 +389,19 @@ function MemberPanel({
         </button>
         <button
           onClick={() => {
+            setShowDeduct(true);
+            setShowTopup(false);
+            setShowAdjust(false);
+          }}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-transform duration-150 active:scale-95 text-red-600 text-xs sm:text-sm font-medium"
+        >
+          <Minus className="w-3.5 h-3.5" /> Trừ tiền
+        </button>
+        <button
+          onClick={() => {
             setShowAdjust(true);
             setShowTopup(false);
+            setShowDeduct(false);
           }}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-transform duration-150 active:scale-95 text-gray-700 text-xs sm:text-sm font-medium"
         >
@@ -335,11 +414,16 @@ function MemberPanel({
           }`}
       >
         <div className="overflow-hidden">
-          <div className="px-4 sm:px-5 py-3 bg-blue-50 border-b border-blue-100">
-            <p className="text-xs font-semibold text-blue-800 mb-2">
+          <div
+            className={`px-4 sm:px-5 py-3 border-b ${showDeduct ? "bg-red-50 border-red-100" : "bg-blue-50 border-blue-100"
+              }`}
+          >
+            <p className={`text-xs font-semibold mb-2 ${showDeduct ? "text-red-800" : "text-blue-800"}`}>
               {showTopup
                 ? "Nạp tiền thủ công"
-                : "Điều chỉnh số dư (có thể nhập số âm)"}
+                : showDeduct
+                  ? "Trừ tiền thủ công"
+                  : "Điều chỉnh số dư (có thể nhập số âm)"}
             </p>
             <div className="flex flex-col gap-2">
               <div className="flex gap-2">
@@ -366,14 +450,20 @@ function MemberPanel({
                   value={amountDisplay}
                   onChange={handleAmountChange}
                   placeholder="Số tiền"
-                  className="flex-1 min-w-0 px-3 py-2 text-sm border border-blue-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-shadow duration-150 bg-white"
+                  className={`flex-1 min-w-0 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow duration-150 bg-white ${showDeduct
+                    ? "border-red-200 focus:border-red-400 focus:ring-red-100"
+                    : "border-blue-200 focus:border-blue-400 focus:ring-blue-100"
+                    }`}
                 />
               </div>
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Ghi chú"
-                className="w-full px-3 py-2 text-sm border border-blue-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-shadow duration-150 bg-white"
+                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow duration-150 bg-white ${showDeduct
+                  ? "border-red-200 focus:border-red-400 focus:ring-red-100"
+                  : "border-blue-200 focus:border-blue-400 focus:ring-blue-100"
+                  }`}
               />
               <div className="flex gap-2">
                 <button
@@ -384,9 +474,12 @@ function MemberPanel({
                   Thu lại
                 </button>
                 <button
-                  onClick={() => handleSubmit(showTopup)}
+                  onClick={() =>
+                    handleSubmit(showTopup ? "topup" : showDeduct ? "deduct" : "adjust")
+                  }
                   disabled={submitting}
-                  className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 transition-transform duration-150 active:scale-[0.98] text-white text-sm font-semibold rounded-lg disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-1.5"
+                  className={`flex-1 px-3 py-2 transition-transform duration-150 active:scale-[0.98] text-white text-sm font-semibold rounded-lg disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-1.5 ${showDeduct ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
+                    }`}
                 >
                   {submitting ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -429,7 +522,11 @@ function MemberPanel({
                         locale: vi,
                       })}
                     </td>
-                    <td className="px-2 py-2.5 text-gray-700">{tx.title}</td>
+                    <td className="px-2 py-2.5 text-gray-700">
+                      {(tx.type === "manual_expense" || tx.type === "manual_credit") && tx.description
+                        ? tx.description
+                        : tx.title}
+                    </td>
                     <td
                       className={`px-2 py-2.5 font-bold text-right whitespace-nowrap ${tx.amount > 0 ? "text-emerald-600" : "text-red-500"}`}
                     >
@@ -445,6 +542,103 @@ function MemberPanel({
             </table>
           </div>
         )}
+      </div>
+
+      <div style={{ position: "fixed", left: -9999, top: 0, width: 420 }} aria-hidden="true">
+        <div
+          ref={receiptRef}
+          style={{ width: 420, background: "#ffffff", padding: 28, fontFamily: "inherit" }}
+        >
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#2563eb", letterSpacing: 0.5 }}>
+              VÍ BNB — CLB CẦU LÔNG
+            </p>
+            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>Sao kê ví thành viên</p>
+          </div>
+
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <p style={{ fontSize: 18, fontWeight: 700, color: "#111827", margin: 0 }}>
+              {member.full_name}
+            </p>
+            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{member.phone}</p>
+            <p
+              style={{
+                fontSize: 30,
+                fontWeight: 900,
+                color: member.balance < 0 ? "#ef4444" : "#111827",
+                marginTop: 10,
+                lineHeight: 1.3,
+              }}
+            >
+              {fmt(member.balance)}
+            </p>
+            <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>Số dư hiện tại</p>
+          </div>
+
+          <div style={{ border: "1px solid #f3f4f6", borderRadius: 12, overflow: "hidden" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "8px 16px",
+                fontSize: 11,
+                color: "#9ca3af",
+                background: "#f9fafb",
+                fontWeight: 600,
+              }}
+            >
+              <span>Ngày</span>
+              <span>Giao dịch</span>
+              <span>Số dư sau</span>
+            </div>
+            {transactions.length === 0 ? (
+              <div style={{ padding: "16px", textAlign: "center", fontSize: 12, color: "#9ca3af" }}>
+                Chưa có giao dịch nào
+              </div>
+            ) : (
+              transactions.map((tx: any, idx: number) => {
+                const label =
+                  (tx.type === "manual_expense" || tx.type === "manual_credit") && tx.description
+                    ? tx.description
+                    : tx.title;
+                return (
+                  <div
+                    key={tx.id ?? idx}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      padding: "8px 16px",
+                      fontSize: 12,
+                      borderTop: "1px solid #f3f4f6",
+                      gap: 8,
+                    }}
+                  >
+                    <span style={{ color: "#9ca3af", flexShrink: 0, whiteSpace: "nowrap" }}>
+                      {format(new Date(tx.created_at), "dd/MM/yyyy", { locale: vi })}
+                    </span>
+                    <span style={{ color: "#374151", flex: 1, textAlign: "left" }}>{label}</span>
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color: tx.amount > 0 ? "#059669" : "#ef4444",
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {tx.amount > 0 ? "+" : ""}
+                      {fmt(tx.amount)}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <p style={{ textAlign: "center", fontSize: 10, color: "#d1d5db", marginTop: 20 }}>
+            Xuất lúc {format(new Date(), "HH:mm, dd/MM/yyyy", { locale: vi })}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -552,7 +746,6 @@ function StatMembersModal({
           </div>
         </div>
 
-        {/* Body cuộn riêng */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           {loading ? (
             <div className="px-5 py-4 space-y-2">
@@ -595,7 +788,6 @@ function StatMembersModal({
           )}
         </div>
 
-        {/* Footer phân trang cố định */}
         {totalPages > 1 && (
           <div className="flex-shrink-0 flex items-center justify-center gap-1 px-5 py-3 border-t border-gray-100">
             <button

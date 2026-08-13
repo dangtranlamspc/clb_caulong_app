@@ -185,6 +185,9 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
         }
     };
 
+    const isManualType = tx.type === 'manual_expense' || tx.type === 'manual_credit';
+    const badgeUsesDescription = !isShirtOrder && isManualType && Boolean(tx.description);
+
     return createPortal(
         <div
             className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
@@ -259,7 +262,8 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                 {isPositive ? '+' : ''}{fmt(tx.amount)}
                             </p>
                             <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
-                                {shirtOrderLabel ?? TX_TYPE_LABEL[tx.type] ?? tx.type}
+                                {shirtOrderLabel
+                                    ?? (badgeUsesDescription ? tx.description : (TX_TYPE_LABEL[tx.type] ?? tx.type))}
                             </span>
                         </div>
 
@@ -268,12 +272,12 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                 <span className="text-gray-400">Tiêu đề</span>
                                 <span className="font-semibold text-gray-900 text-right">{tx.title}</span>
                             </div>
-                            {tx.description && (
+                            {/* {tx.description && (
                                 <div className="px-4 py-3 text-sm">
                                     <p className="text-gray-400 mb-1">Diễn giải</p>
                                     <p className="text-gray-700">{tx.description}</p>
                                 </div>
-                            )}
+                            )} */}
                             <div className="flex justify-between px-4 py-3 text-sm">
                                 <span className="text-gray-400">Thời gian</span>
                                 <span className="font-medium text-gray-700">
@@ -492,13 +496,14 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                 {isPositive ? '+' : ''}{fmt(tx.amount)}
                             </p>
                             <span style={{ display: 'inline-block', marginTop: 10, fontSize: 11, color: '#9ca3af', background: '#f9fafb', padding: '4px 10px', borderRadius: 999 }}>
-                                {TX_TYPE_LABEL[tx.type] ?? tx.type}
+                                {shirtOrderLabel
+                                    ?? (badgeUsesDescription ? tx.description : (TX_TYPE_LABEL[tx.type] ?? tx.type))}
                             </span>
                         </div>
 
                         <div style={{ background: '#f9fafb', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
                             <Row label="Tiêu đề" value={tx.title} />
-                            {tx.description && <Row label="Diễn giải" value={tx.description} />}
+                            {tx.description && !badgeUsesDescription && <Row label="Diễn giải" value={tx.description} />}
                             <Row label="Thời gian" value={format(new Date(tx.created_at), 'HH:mm, dd/MM/yyyy', { locale: vi })} />
                             <Row label="Số dư sau giao dịch" value={fmt(tx.balance_after)} bold />
                         </div>
