@@ -708,7 +708,7 @@ export default function TournamentFormPage() {
 
                         <SectionCard icon="🎖️" title="III. ĐỘI TRƯỞNG VÀ BỐC THĂM CHIA ĐỘI">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Field label="1. Đội trưởng nữ" required>
+                                <Field label="1. Đội trưởng" required>
                                     <RichTextEditor
                                         value={form.rules.captain_female_content}
                                         onChange={(html) =>
@@ -721,7 +721,7 @@ export default function TournamentFormPage() {
                                     <RichTextEditor
                                         value={form.rules.draw_teams_content}
                                         onChange={(html) => setRules({ draw_teams_content: html })}
-                                        placeholder="Các đội trưởng nữ có mặt sớm để bốc thăm chia đội..."
+                                        placeholder="Các đội trưởng có mặt sớm để bốc thăm chia đội..."
                                     />
                                 </Field>
                             </div>
