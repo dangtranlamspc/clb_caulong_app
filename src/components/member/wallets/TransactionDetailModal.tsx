@@ -348,7 +348,7 @@ export function TransactionDetailModal({
       <div
         className="w-full bg-white rounded-t-2xl transition-transform ease-out hide-scrollbar"
         style={{
-          maxHeight: "100vh",
+          maxHeight: "90vh",
           overflowY: "auto",
           paddingBottom: "env(safe-area-inset-bottom)",
           transform: visible ? "translateY(0)" : "translateY(100%)",

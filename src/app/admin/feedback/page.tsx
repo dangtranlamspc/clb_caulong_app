@@ -437,7 +437,10 @@ export default function AdminFeedbackPage() {
             </div>
 
             {selectedConv && (
-                <div className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white animate-in slide-in-from-right duration-200">
+                <div
+                    className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white animate-in slide-in-from-right duration-200"
+                    style={{ paddingTop: "max(env(safe-area-inset-top), 44px)" }}
+                >
                     <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-100 flex-shrink-0">
                         <button
                             onClick={() => setSelectedConv(null)}

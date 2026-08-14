@@ -730,6 +730,20 @@ export function AdminNotificationBell() {
         }
     };
 
+    const handleOpenFeedbackDetail = (
+        notifId: string,
+        feedbackUserId: string,
+        phone?: string | null,
+        fullName?: string | null,
+    ) => {
+        markRead(notifId);
+        setOpen(false);
+        const q = phone || fullName || "";
+        const qs = new URLSearchParams({ openUser: feedbackUserId });
+        if (q) qs.set("q", q);
+        router.push(`/admin/feedback?${qs.toString()}`);
+    };
+
     return (
         <>
             <button
@@ -810,6 +824,9 @@ export function AdminNotificationBell() {
                                     n.data?.registration_ids ??
                                     (n.data?.registration_id ? [n.data.registration_id] : []);
                                 const shirtOrderActivityId = n.data?.activity_id;
+
+                                const isFeedbackReceived = n.type === "feedback_received";
+                                const feedbackUserId = n.data?.user_id;
 
                                 const isResolved = n.data?.resolved === true;
                                 const resolvedAction = n.data?.resolved_action as "approved" | "rejected" | undefined;
@@ -971,6 +988,24 @@ export function AdminNotificationBell() {
                                                             setOpen(false);
                                                             window.location.href = `/admin/events?openRegistrations=${shirtOrderActivityId}`;
                                                         }}
+                                                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                                                    >
+                                                        Chi tiết
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {isFeedbackReceived && feedbackUserId && (
+                                                <div className="flex justify-end mt-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleOpenFeedbackDetail(
+                                                                n.id,
+                                                                feedbackUserId,
+                                                                n.data?.phone,
+                                                                n.data?.full_name,
+                                                            )
+                                                        }
                                                         className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
                                                     >
                                                         Chi tiết

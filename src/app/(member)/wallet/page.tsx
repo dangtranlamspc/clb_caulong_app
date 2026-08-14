@@ -620,6 +620,13 @@ export default function WalletPage() {
             {transactions.map((tx) => {
               const { Icon, cls } = txIcon(tx);
               const isPositive = tx.amount > 0;
+              // Với các khoản admin điều chỉnh số dư ("Điều chỉnh số dư"),
+              // hiển thị trực tiếp "Trừ/Cộng tiền <mô tả>" thay vì tiêu đề chung chung
+              const isGenericAdjustment =
+                tx.title === "Điều chỉnh số dư" && Boolean(tx.description);
+              const displayTitle = isGenericAdjustment
+                ? `${isPositive ? "Cộng" : "Trừ"} tiền ${tx.description}`
+                : tx.title;
               return (
                 <li
                   key={tx.id}
@@ -634,7 +641,7 @@ export default function WalletPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-gray-900 truncate">
-                        {tx.title}
+                        {displayTitle}
                       </p>
                       <span
                         className={`text-sm font-bold flex-shrink-0 ${isPositive ? "text-emerald-600" : "text-red-500"}`}
@@ -643,9 +650,11 @@ export default function WalletPage() {
                         {smt(tx.amount)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 truncate">
-                      {tx.description}
-                    </p>
+                    {!isGenericAdjustment && (
+                      <p className="text-xs text-gray-400 truncate">
+                        {tx.description}
+                      </p>
+                    )}
                     <div className="flex items-center justify-between mt-0.5">
                       <span className="text-[11px] text-gray-400">
                         {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm", {
