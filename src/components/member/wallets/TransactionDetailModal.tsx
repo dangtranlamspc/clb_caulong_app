@@ -1,4 +1,4 @@
-import { Loader2, Users, XIcon, Ban, AlertTriangle } from "lucide-react";
+import { Loader2, Users, XIcon, Ban, AlertTriangle, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { activitiesApi, registrationsApi, fundApi } from "@/lib/api";
@@ -35,7 +35,7 @@ export function TransactionDetailModal({
 
   const [detail, setDetail] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
-
+  const [sharingReceipt, setSharingReceipt] = useState(false);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -136,6 +136,204 @@ export function TransactionDetailModal({
 
   const shirtReg = isShirtOrder ? detail?.registration : null;
 
+  const handleShareReceipt = async () => {
+    if (sharingReceipt) return;
+    setSharingReceipt(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+
+      const guestsList = displayGuests.map((g: any) => {
+        const gName = hasSnapshot
+          ? g.name
+          : g.is_guest
+            ? g.guest_full_name
+            : g.users?.full_name;
+        return {
+          name: gName,
+          baseAmount: g.base_amount ?? 0,
+          otherFeeAmount: g.other_fee_amount ?? 0,
+          otherFeeNote: g.other_fee_note,
+        };
+      });
+
+      const noteLinesHtml = (note?: string, prefix = "— ") =>
+        (note ?? "")
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map(
+            (line) =>
+              `<p style="margin:0;font-size:11px;color:#9ca3af;font-style:italic;">${prefix}${line}</p>`,
+          )
+          .join("");
+
+      const otherFeeBox = (amount: number, note?: string, label = "Khoản khác của bạn") => {
+        if (amount <= 0) return "";
+        const noteHtml = noteLinesHtml(note);
+        if (!noteHtml) {
+          return `
+          <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:13px;border-top:1px solid #f3f4f6;">
+            <span style="color:#9ca3af;">${label}</span>
+            <span style="font-weight:500;color:#d97706;">${smt(amount)}</span>
+          </div>
+        `;
+        }
+        return `
+        <div style="padding:10px 16px;border-top:1px solid #f3f4f6;">
+          <p style="margin:0 0 6px;font-size:13px;color:#9ca3af;">${label}</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #fde68a;background:#fffbeb;border-radius:10px;padding:8px 10px;">
+            <div style="flex:1;min-width:0;">${noteHtml}</div>
+            <span style="font-weight:600;color:#d97706;font-size:13px;flex-shrink:0;">${smt(amount)}</span>
+          </div>
+        </div>
+      `;
+      };
+
+      const row = (
+        label: string,
+        value: string,
+        opts?: { bold?: boolean; shaded?: boolean },
+      ) => `
+      <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:13px;background:${opts?.shaded ? "#f9fafb" : "transparent"};border-top:1px solid #f3f4f6;">
+        <span style="color:${opts?.bold ? "#374151" : "#9ca3af"};font-weight:${opts?.bold ? 600 : 400};">${label}</span>
+        <span style="font-weight:${opts?.bold ? 700 : 500};color:${opts?.bold ? "#ef4444" : "#111827"};">${value}</span>
+      </div>
+    `;
+
+      const guestCardsHtml = guestsList
+        .map(
+          (g: any) => `
+          <div style="border:1px solid #f3f4f6;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+            <div style="padding:10px 16px 0;font-size:13px;">
+              <span style="color:#9ca3af;">+ </span>${g.name}
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 16px 10px;padding-left:28px;font-size:12px;color:#9ca3af;">
+              <span>Tiền sân + cầu</span>
+              <span>${smt(g.baseAmount)}</span>
+            </div>
+            ${g.otherFeeAmount > 0
+              ? `
+              <div style="padding:0 16px 10px;padding-left:28px;">
+                <p style="margin:0 0 4px;font-size:12px;color:#d97706;">Khoản khác</p>
+                ${noteLinesHtml(g.otherFeeNote, "")
+                ? `
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #fde68a;background:#fffbeb;border-radius:10px;padding:8px 10px;">
+                    <div style="flex:1;min-width:0;">${noteLinesHtml(g.otherFeeNote, "")}</div>
+                    <span style="font-weight:600;color:#d97706;font-size:12px;flex-shrink:0;">${smt(g.otherFeeAmount)}</span>
+                  </div>
+                `
+                : `
+                  <div style="display:flex;justify-content:space-between;">
+                    <span></span>
+                    <span style="font-weight:600;color:#d97706;font-size:12px;">${smt(g.otherFeeAmount)}</span>
+                  </div>
+                `
+              }
+              </div>
+            `
+              : ""
+            }
+            <div style="display:flex;justify-content:space-between;padding:10px 16px;border-top:1px solid #f3f4f6;">
+              <span style="font-size:13px;font-weight:600;color:#4b5563;">Tổng của ${g.name}</span>
+              <span style="font-size:13px;font-weight:700;color:#ef4444;">${smt(g.baseAmount + g.otherFeeAmount)}</span>
+            </div>
+          </div>
+        `,
+        )
+        .join("");
+
+      const container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "420px";
+      document.body.appendChild(container);
+
+      container.innerHTML = `
+      <div style="width:420px;background:#ffffff;padding:24px;font-family:inherit;">
+        <div style="text-align:center;margin-bottom:16px;">
+          <p style="font-size:13px;font-weight:700;color:#2563eb;letter-spacing:0.5px;margin:0;">BNB BADMINTON CLUB</p>
+          <p style="font-size:11px;color:#9ca3af;margin:2px 0 0;">Biên lai thanh toán</p>
+        </div>
+
+        <p style="font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:0.5px;text-transform:uppercase;margin:0 0 8px;">
+          Chi tiết khoản thanh toán
+        </p>
+
+        <div style="background:#eff6ff;border-radius:12px;display:flex;justify-content:space-between;padding:10px 16px;margin-bottom:12px;">
+          <span style="font-size:13px;color:#6b7280;">Buổi đánh</span>
+          <span style="font-size:13px;font-weight:600;color:#1d4ed8;">${displaySessionTitle ?? "—"}</span>
+        </div>
+
+        <div style="border:1px solid #f3f4f6;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:${guestsList.length > 0 ? "12" : "16"}px;">
+          ${row("Tiền sân + cầu của bạn", smt(displayBase)).replace('border-top:1px solid #f3f4f6;', 'border-top:none;')}
+          ${otherFeeBox(displayOtherFee, displayOtherFeeNote)}
+          ${row("Tổng của bạn", smt(displayBase + displayOtherFee), { bold: true })}
+        </div>
+
+        ${guestsList.length > 0
+          ? `
+          <p style="font-size:12px;font-weight:600;color:#9333ea;margin:0 0 8px;">
+            👥 Gộp thanh toán cùng ${guestsList.length} khách
+          </p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+            ${guestCardsHtml}
+          </div>
+        `
+          : ""
+        }
+
+        <div style="border:1px solid #f3f4f6;border-radius:12px;overflow:hidden;display:flex;justify-content:space-between;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+          <span style="font-size:13px;font-weight:600;color:#374151;">Tổng bạn đã trả</span>
+          <span style="font-size:14px;font-weight:700;color:#ef4444;">${smt(displayTotal)}</span>
+        </div>
+
+        <p style="text-align:center;font-size:10px;color:#d1d5db;margin-top:18px;">
+          Xuất lúc ${format(new Date(), "HH:mm, dd/MM/yyyy", { locale: vi })}
+        </p>
+      </div>
+    `;
+
+      const canvas = await html2canvas(container.firstElementChild as HTMLElement, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+      document.body.removeChild(container);
+
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png"),
+      );
+      if (!blob) throw new Error("Không tạo được ảnh");
+
+      const fileName = `bien-lai-${(displaySessionTitle ?? "buoi-danh").replace(/\s+/g, "-")}-${tx.id ?? Date.now()}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      if (
+        typeof navigator !== "undefined" &&
+        (navigator as any).canShare?.({ files: [file] })
+      ) {
+        await (navigator as any).share({
+          files: [file],
+          title: "Biên lai thanh toán — BNB Badminton",
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        console.error("[handleShareReceipt] failed:", err);
+      }
+    } finally {
+      setSharingReceipt(false);
+    }
+  };
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex flex-col justify-end transition-opacity duration-250"
@@ -176,12 +374,29 @@ export function TransactionDetailModal({
             <p className="text-sm font-bold text-gray-900">
               Chi tiết giao dịch
             </p>
-            <button
-              onClick={handleClose}
-              className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
-            >
-              <XIcon className="w-4 h-4 text-gray-500" />
-            </button>
+            <div className="flex items-center gap-2">
+              {isSessionPayment && !isLoadingSessionDetail && !sessionDetailFailed && !isReversed && (
+                <button
+                  type="button"
+                  onClick={handleShareReceipt}
+                  disabled={sharingReceipt}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors disabled:opacity-50"
+                >
+                  {sharingReceipt ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Share2 className="w-3.5 h-3.5" />
+                  )}
+                  Chia sẻ
+                </button>
+              )}
+              <button
+                onClick={handleClose}
+                className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0"
+              >
+                <XIcon className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -331,19 +546,34 @@ export function TransactionDetailModal({
                       </div>
 
                       {displayOtherFee > 0 ? (
-                        <div className="px-4 py-2.5 text-sm">``
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">
-                              Khoản khác của bạn
-                            </span>
-                            <span className="font-medium text-amber-600">
-                              {smt(displayOtherFee)}
-                            </span>
-                          </div>
-                          {displayOtherFeeNote && (
-                            <p className="text-xs text-gray-400 italic mt-0.5">
-                              {displayOtherFeeNote}
-                            </p>
+                        <div className="px-4 py-2.5 text-sm">
+                          {displayOtherFeeNote ? (
+                            <div className="space-y-1.5">
+                              <span className="text-gray-500">Khoản khác của bạn</span>
+                              <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/40 px-2.5 py-1.5">
+                                <div className="flex-1 min-w-0 space-y-0.5">
+                                  {displayOtherFeeNote
+                                    .split("\n")
+                                    .map((l: string) => l.trim())
+                                    .filter(Boolean)
+                                    .map((line: string, i: number) => (
+                                      <p key={i} className="text-xs text-gray-400 italic">
+                                        — {line}
+                                      </p>
+                                    ))}
+                                </div>
+                                <span className="font-medium text-amber-600 flex-shrink-0">
+                                  {smt(displayOtherFee)}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Khoản khác của bạn</span>
+                              <span className="font-medium text-amber-600">
+                                {smt(displayOtherFee)}
+                              </span>
+                            </div>
                           )}
                         </div>
                       ) : (
@@ -390,20 +620,33 @@ export function TransactionDetailModal({
                                 <span>{smt(gBase)}</span>
                               </div>
                               {gOtherFee > 0 && (
-                                <div className="flex justify-between text-xs mt-0.5 pl-3">
-                                  <span className="text-amber-500">
-                                    Khoản khác
-                                  </span>
-                                  <div className="text-right">
-                                    <span className="text-amber-600 font-medium">
-                                      {smt(gOtherFee)}
-                                    </span>
-                                    {g.other_fee_note && (
-                                      <p className="text-gray-400 italic">
-                                        {g.other_fee_note}
-                                      </p>
-                                    )}
-                                  </div>
+                                <div className="mt-0.5 pl-3 text-xs">
+                                  {g.other_fee_note ? (
+                                    <div className="space-y-1">
+                                      <span className="text-amber-500">Khoản khác</span>
+                                      <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/40 px-2.5 py-1.5">
+                                        <div className="flex-1 min-w-0 space-y-0.5">
+                                          {g.other_fee_note
+                                            .split("\n")
+                                            .map((l: string) => l.trim())
+                                            .filter(Boolean)
+                                            .map((line: string, i: number) => (
+                                              <p key={i} className="text-gray-400 italic">
+                                                {line}
+                                              </p>
+                                            ))}
+                                        </div>
+                                        <span className="text-amber-600 font-medium flex-shrink-0">
+                                          {smt(gOtherFee)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-amber-500">Khoản khác</span>
+                                      <span className="text-amber-600 font-medium">{smt(gOtherFee)}</span>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                               <div className="flex justify-between text-sm mt-1.5 pt-1.5 border-t border-gray-50">

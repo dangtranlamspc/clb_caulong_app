@@ -336,15 +336,25 @@ export default function SessionDetailPage() {
       container.style.width = "420px";
       document.body.appendChild(container);
 
-      const row = (label: string, value: string, opts?: { bold?: boolean; amber?: boolean; shaded?: boolean; note?: string }) => `
-      <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:13px;background:${opts?.shaded ? "#f9fafb" : "transparent"};border-top:1px solid #f3f4f6;">
-        <span style="color:#9ca3af;">${label}</span>
-        <div style="text-align:right;">
-          <span style="font-weight:${opts?.bold ? 700 : 500};color:${opts?.amber ? "#d97706" : "#111827"};">${value}</span>
-          ${opts?.note ? `<p style="font-size:11px;color:#9ca3af;font-style:italic;margin:0;">${opts.note}</p>` : ""}
-        </div>
-      </div>
-    `;
+      const row = (label: string, value: string, opts?: { bold?: boolean; amber?: boolean; shaded?: boolean; note?: string }) => {
+        const noteHtml = opts?.note
+          ? opts.note
+            .split("\n")
+            .map((l) => l.trim())
+            .filter(Boolean)
+            .join("<br/>")
+          : "";
+
+        return `
+          <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:13px;background:${opts?.shaded ? "#f9fafb" : "transparent"};border-top:1px solid #f3f4f6;">
+            <span style="color:#9ca3af;">${label}</span>
+            <div style="text-align:right;">
+              <span style="font-weight:${opts?.bold ? 700 : 500};color:${opts?.amber ? "#d97706" : "#111827"};">${value}</span>
+              ${noteHtml ? `<p style="font-size:11px;color:#9ca3af;font-style:italic;margin:0;">${noteHtml}</p>` : ""}
+            </div>
+          </div>
+        `;
+      };
 
       const guestRowsHtml = guestsList
         .map(
@@ -1692,19 +1702,31 @@ export default function SessionDetailPage() {
             </div>
 
             {hasBreakdown && (
-              <p className="text-[11px] text-gray-400 mt-1.5">
-                Sân + cầu:{" "}
-                <span className="font-medium text-gray-500">
-                  {formatVnd(reg.base_amount)}
-                </span>
-                {" + "}Khoản khác:{" "}
-                <span className="font-medium text-gray-500">
-                  {formatVnd(reg.other_fee_amount)}
-                </span>
+              <div className="text-[11px] text-gray-400 mt-1.5 space-y-1">
+                <p>
+                  Sân + cầu:{" "}
+                  <span className="font-medium text-gray-500">
+                    {formatVnd(reg.base_amount)}
+                  </span>
+                  {" + "}Khoản khác:{" "}
+                  <span className="font-medium text-gray-500">
+                    {formatVnd(reg.other_fee_amount)}
+                  </span>
+                </p>
                 {reg.other_fee_note && (
-                  <span className="italic"> ({reg.other_fee_note})</span>
+                  <ul className="pl-3 space-y-0.5">
+                    {reg.other_fee_note
+                      .split("\n")
+                      .map((l: string) => l.trim())
+                      .filter(Boolean)
+                      .map((line: string, i: number) => (
+                        <li key={i} className="italic">
+                          — {line}
+                        </li>
+                      ))}
+                  </ul>
                 )}
-              </p>
+              </div>
             )}
 
             {reg.notes && (

@@ -142,52 +142,75 @@ export default function SessionCostCard({ sessionId }: Props) {
             </div>
 
             {otherFeeItems.length > 0 && (
-              <div className="ml-4 space-y-1.5 border-l-2 border-amber-100 pl-3">
-                {otherFeeItems.map((item, i) => (
-                  <div key={i}>
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>
-                        {item.name}
-                        {item.note && (
-                          <span className="text-gray-400 italic">
-                            {" "}
-                            — {item.note}
+              <div className="ml-4 space-y-2 border-l-2 border-amber-100 pl-3">
+                {otherFeeItems.map((item, i) => {
+                  const noteLines = (item.note ?? "")
+                    .split("\n")
+                    .map((l) => l.trim())
+                    .filter(Boolean);
+
+                  return (
+                    <div key={i} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="font-medium text-gray-600">{item.name}</span>
+                        <span className="font-medium text-amber-600">
+                          {fmt(item.amount)}
+                        </span>
+                      </div>
+
+                      {noteLines.length > 0 && (
+                        <div className="pl-2 space-y-0.5">
+                          {noteLines.map((line, li) => (
+                            <p key={li} className="text-[11px] text-gray-400 italic">
+                              — {line}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      {item.guests?.map((g, gi) => {
+                        const gNoteLines = (g.note ?? "")
+                          .split("\n")
+                          .map((l) => l.trim())
+                          .filter(Boolean);
+                        return (
+                          <div key={gi} className="pl-3">
+                            <div className="flex justify-between text-xs text-gray-400">
+                              <span>
+                                + {g.name}{" "}
+                                <span className="text-gray-300">(đi cùng)</span>
+                              </span>
+                              <span className="font-medium text-amber-500">
+                                {fmt(g.amount)}
+                              </span>
+                            </div>
+                            {gNoteLines.length > 0 && (
+                              <div className="pl-3 space-y-0.5">
+                                {gNoteLines.map((line, li) => (
+                                  <p
+                                    key={li}
+                                    className="text-[11px] text-gray-300 italic"
+                                  >
+                                    — {line}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {item.guests && item.guests.length > 0 && (
+                        <div className="flex justify-between text-[11px] text-gray-400 pl-3 pt-0.5 border-t border-dashed border-gray-200">
+                          <span>= Tổng ({item.name})</span>
+                          <span className="font-semibold text-amber-700">
+                            {fmt(item.total ?? item.amount)}
                           </span>
-                        )}
-                      </span>
-                      <span className="font-medium text-amber-600">
-                        {fmt(item.amount)}
-                      </span>
+                        </div>
+                      )}
                     </div>
-
-                    {item.guests?.map((g, gi) => (
-                      <div
-                        key={gi}
-                        className="flex justify-between text-xs text-gray-400 pl-3 mt-0.5"
-                      >
-                        <span>
-                          + {g.name}{" "}
-                          <span className="text-gray-300">(đi cùng)</span>
-                          {g.note && (
-                            <span className="italic"> — {g.note}</span>
-                          )}
-                        </span>
-                        <span className="font-medium text-amber-500">
-                          {fmt(g.amount)}
-                        </span>
-                      </div>
-                    ))}
-
-                    {item.guests && item.guests.length > 0 && (
-                      <div className="flex justify-between text-[11px] text-gray-400 pl-3 mt-0.5 pt-0.5 border-t border-dashed border-gray-200">
-                        <span>= Tổng ({item.name})</span>
-                        <span className="font-semibold text-amber-700">
-                          {fmt(item.total ?? item.amount)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

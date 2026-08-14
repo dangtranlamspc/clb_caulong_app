@@ -27,11 +27,24 @@ interface CourtItem {
   pricePerHour: number;
 }
 
+interface OtherFeeItem {
+  id: string;
+  amount: number;
+  note: string;
+}
+
 let courtIdCounter = 0;
 
 function newCourtId() {
   courtIdCounter += 1;
   return `court_${Date.now()}_${courtIdCounter}`;
+}
+
+let otherFeeItemIdCounter = 0;
+
+function newOtherFeeItemId() {
+  otherFeeItemIdCounter += 1;
+  return `fee_${Date.now()}_${otherFeeItemIdCounter}`;
 }
 
 function courtTotal(c: CourtItem): number {
@@ -102,10 +115,9 @@ export default function SessionFinishPage() {
 
   const [amounts, setAmounts] = useState<Record<string, number>>({});
   const [guestAmounts, setGuestAmounts] = useState<Record<string, number>>({});
-  const [otherFees, setOtherFees] = useState<Record<string, number>>({});
-  const [otherFeeNotes, setOtherFeeNotes] = useState<Record<string, string>>(
-    {},
-  );
+  const [otherFeeItems, setOtherFeeItems] = useState<
+    Record<string, OtherFeeItem[]>
+  >({});
 
   const [walletDeductIds, setWalletDeductIds] = useState<Set<string>>(
     new Set(),
@@ -128,6 +140,58 @@ export default function SessionFinishPage() {
     mode: "member_choice" | "grouped" | "separate",
   ) => {
     setWalletModes((prev) => ({ ...prev, [registrationId]: mode }));
+  };
+
+  const otherFeeSum = (regId: string) =>
+    (otherFeeItems[regId] ?? []).reduce(
+      (s, i) => s + (Number(i.amount) || 0),
+      0,
+    );
+
+  const otherFeeNoteJoined = (regId: string) => {
+    const items = (otherFeeItems[regId] ?? []).filter(
+      (i) => (Number(i.amount) || 0) > 0 || i.note.trim(),
+    );
+    if (items.length === 0) return undefined;
+
+    return items
+      .map((i) => {
+        const amountText = fmt(Number(i.amount) || 0);
+        return i.note.trim() ? `${amountText} - ${i.note.trim()}` : amountText;
+      })
+      .join("\n");
+  };
+
+  const addOtherFeeItem = (regId: string) => {
+    setOtherFeeItems((prev) => ({
+      ...prev,
+      [regId]: [
+        ...(prev[regId] ?? []),
+        { id: newOtherFeeItemId(), amount: 0, note: "" },
+      ],
+    }));
+  };
+
+  const removeOtherFeeItem = (regId: string, itemId: string) => {
+    setOtherFeeItems((prev) => {
+      const items = prev[regId] ?? [];
+      if (items.length <= 1) return prev;
+      return { ...prev, [regId]: items.filter((i) => i.id !== itemId) };
+    });
+  };
+
+  const updateOtherFeeItem = (
+    regId: string,
+    itemId: string,
+    field: "amount" | "note",
+    value: string | number,
+  ) => {
+    setOtherFeeItems((prev) => ({
+      ...prev,
+      [regId]: (prev[regId] ?? []).map((i) =>
+        i.id === itemId ? { ...i, [field]: value } : i,
+      ),
+    }));
   };
 
   useEffect(() => {
@@ -184,24 +248,28 @@ export default function SessionFinishPage() {
         });
         setGuestAmounts(initGuestAmounts);
 
-        const initOtherFees: Record<string, number> = {};
-        const initOtherFeeNotes: Record<string, string> = {};
+        const initOtherFeeItems: Record<string, OtherFeeItem[]> = {};
         confirmed.forEach((reg: any) => {
-          if (reg.other_fee_amount)
-            initOtherFees[reg.id] = reg.other_fee_amount;
-          if (reg.other_fee_note)
-            initOtherFeeNotes[reg.id] = reg.other_fee_note;
+          initOtherFeeItems[reg.id] = reg.other_fee_amount
+            ? [
+              {
+                id: newOtherFeeItemId(),
+                amount: reg.other_fee_amount,
+                note: reg.other_fee_note ?? "",
+              },
+            ]
+            : [{ id: newOtherFeeItemId(), amount: 0, note: "" }];
         });
-        setOtherFees(initOtherFees);
-        setOtherFeeNotes(initOtherFeeNotes);
+        setOtherFeeItems(initOtherFeeItems);
       })
       .finally(() => setLoading(false));
   }, [id]);
 
   const shuttleCost = shuttleCount * shuttlePrice;
   const splittableCost = courtFee + shuttleCost;
-  const totalOtherFees = Object.values(otherFees).reduce(
-    (a, b) => a + (Number(b) || 0),
+  const totalOtherFees = Object.values(otherFeeItems).reduce(
+    (sum, items) =>
+      sum + items.reduce((s, i) => s + (Number(i.amount) || 0), 0),
     0,
   );
   const totalCost = splittableCost + totalOtherFees;
@@ -213,7 +281,7 @@ export default function SessionFinishPage() {
   const totalCollected =
     Object.values(amounts).reduce((a, b) => a + (Number(b) || 0), 0) +
     Object.values(guestAmounts).reduce((a, b) => a + (Number(b) || 0), 0) +
-    Object.values(otherFees).reduce((a, b) => a + (Number(b) || 0), 0);
+    totalOtherFees;
 
   const toggleWalletDeduct = (registrationId: string) => {
     setWalletDeductIds((prev) => {
@@ -318,24 +386,24 @@ export default function SessionFinishPage() {
 
       hostRows.forEach((h) => {
         const base = Number(amounts[h.id]) || 0;
-        const other = Number(otherFees[h.id]) || 0;
+        const other = otherFeeSum(h.id);
         allAmounts.push({
           registration_id: h.id,
           amount: base + other,
           base_amount: base,
           other_fee_amount: other,
-          other_fee_note: otherFeeNotes[h.id]?.trim() || undefined,
+          other_fee_note: otherFeeNoteJoined(h.id),
         });
 
         guestsOf(h.id).forEach((g) => {
           const gBase = Number(guestAmounts[g.id]) || 0;
-          const gOther = Number(otherFees[g.id]) || 0;
+          const gOther = otherFeeSum(g.id);
           allAmounts.push({
             registration_id: g.id,
             amount: gBase + gOther,
             base_amount: gBase,
             other_fee_amount: gOther,
-            other_fee_note: otherFeeNotes[g.id]?.trim() || undefined,
+            other_fee_note: otherFeeNoteJoined(g.id),
           });
         });
       });
@@ -565,7 +633,7 @@ export default function SessionFinishPage() {
             return (
               <div
                 key={h.id}
-                className={`rounded-2xl border-2 p-3 space-y-3 transition-colors ${isWalletDeduct
+                className={`rounded-2xl border-2 p-3 space-y-3 transition-colors duration-300 ${isWalletDeduct
                   ? "border-blue-200 bg-blue-50/30"
                   : "border-gray-200 bg-white"
                   }`}
@@ -576,21 +644,51 @@ export default function SessionFinishPage() {
                     : "border-gray-200 bg-gray-50/60"
                     }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
                         <p className="text-sm font-semibold text-gray-900 truncate">
                           {name}
                           {h.is_guest && (
-                            <span className="text-xs text-gray-400 ml-1">
-                              (khách)
-                            </span>
+                            <span className="text-xs text-gray-400 ml-1">(khách)</span>
                           )}
                         </p>
                         {isWalletDeduct && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 flex-shrink-0">
                             <Wallet className="w-2.5 h-2.5" /> Ví BNB
                           </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+                        {isRealUser && (
+                          <button
+                            type="button"
+                            onClick={() => toggleWalletDeduct(h.id)}
+                            title={isWalletDeduct ? "Bỏ trừ ví" : "Trừ thẳng ví BNB"}
+                            className={`flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${isWalletDeduct
+                              ? "bg-blue-600 border-blue-600 text-white"
+                              : "border-gray-200 text-gray-300 hover:border-blue-300 hover:text-blue-400"
+                              }`}
+                          >
+                            <Wallet className="w-4 h-4 flex-shrink-0" />
+                            <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
+                              Ví
+                            </span>
+                          </button>
+                        )}
+                        {isRealUser && (
+                          <button
+                            type="button"
+                            onClick={() => setPenaltyTarget({ id: h.user_id, name })}
+                            title="Phạt thành viên này"
+                            className="flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
+                          >
+                            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                            <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
+                              Phạt
+                            </span>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -600,108 +698,59 @@ export default function SessionFinishPage() {
                       inputMode="numeric"
                       value={formatNumberInput(amounts[h.id] ?? 0)}
                       onChange={(e) =>
-                        handleAmountChange(
-                          h.id,
-                          parseNumberInput(e.target.value),
-                        )
+                        handleAmountChange(h.id, parseNumberInput(e.target.value))
                       }
-                      className="input-field w-32 text-right text-sm flex-shrink-0"
+                      className="input-field w-full text-right text-sm"
                       placeholder="0"
                     />
-
-                    {isRealUser && (
-                      <button
-                        type="button"
-                        onClick={() => toggleWalletDeduct(h.id)}
-                        title={
-                          isWalletDeduct ? "Bỏ trừ ví" : "Trừ thẳng ví BNB"
-                        }
-                        className={`flex-shrink-0 h-8 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${isWalletDeduct
-                          ? "bg-blue-600 border-blue-600 text-white"
-                          : "border-gray-200 text-gray-300 hover:border-blue-300 hover:text-blue-400"
-                          }`}
-                      >
-                        <Wallet className="w-4 h-4 flex-shrink-0" />
-                        <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
-                          Ví
-                        </span>
-                      </button>
-                    )}
-                    {isRealUser && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setPenaltyTarget({ id: h.user_id, name })
-                        }
-                        title="Phạt thành viên này"
-                        className="flex-shrink-0 h-8 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
-                      >
-                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                        <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
-                          Phạt
-                        </span>
-                      </button>
-                    )}
                   </div>
 
-                  {guests.length > 0 && isWalletDeduct && (
-                    <div className="pt-1">
-                      <p className="text-[11px] font-medium text-gray-400 mb-1.5">
-                        Cách xử lý thanh toán cho khách đi cùng
-                      </p>
-                      <div className="grid grid-cols-3 gap-1 p-1 bg-gray-100 rounded-xl">
-                        {[
-                          { val: "member_choice", label: "Member tự chọn" },
-                          { val: "grouped", label: "Gộp trừ ví" },
-                          { val: "separate", label: "Tách riêng" },
-                        ].map(({ val, label }) => {
-                          const active =
-                            (walletModes[h.id] ?? "grouped") === val;
-                          return (
-                            <button
-                              key={val}
-                              type="button"
-                              onClick={() => setWalletMode(h.id, val as any)}
-                              className={`px-2 py-3 min-h-[44px] rounded-lg text-[11px] sm:text-xs font-medium text-center leading-tight transition-all ${active
-                                ? "bg-blue-600 text-white shadow-sm"
-                                : "text-gray-500 hover:bg-gray-200/70"
-                                }`}
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
+                  <div className="space-y-1.5 pl-2">
+                    {(otherFeeItems[h.id] ?? []).map((item) => (
+                      <div key={item.id} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={formatNumberInput(item.amount)}
+                          onChange={(e) =>
+                            updateOtherFeeItem(
+                              h.id,
+                              item.id,
+                              "amount",
+                              parseNumberInput(e.target.value),
+                            )
+                          }
+                          className="input-field w-28 text-right text-xs text-gray-500"
+                          placeholder="0"
+                        />
+                        <input
+                          type="text"
+                          value={item.note}
+                          onChange={(e) =>
+                            updateOtherFeeItem(h.id, item.id, "note", e.target.value)
+                          }
+                          className="input-field flex-1 text-xs text-gray-500"
+                          placeholder="💰 Khoản khác của host..."
+                        />
+                        {(otherFeeItems[h.id]?.length ?? 0) > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeOtherFeeItem(h.id, item.id)}
+                            className="flex-shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            title="Xóa dòng này"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 flex-shrink-0" />
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={formatNumberInput(otherFees[h.id] ?? 0)}
-                      onChange={(e) =>
-                        setOtherFees((prev) => ({
-                          ...prev,
-                          [h.id]: parseNumberInput(e.target.value),
-                        }))
-                      }
-                      className="input-field w-28 text-right text-xs text-gray-500"
-                      placeholder="0"
-                    />
-                    <input
-                      type="text"
-                      value={otherFeeNotes[h.id] ?? ""}
-                      onChange={(e) =>
-                        setOtherFeeNotes((prev) => ({
-                          ...prev,
-                          [h.id]: e.target.value,
-                        }))
-                      }
-                      className="input-field flex-1 text-xs text-gray-500"
-                      placeholder="💰 Khoản khác của host..."
-                    />
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => addOtherFeeItem(h.id)}
+                      className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Thêm khoản khác
+                    </button>
                   </div>
 
                   <div className="flex justify-end">
@@ -711,13 +760,52 @@ export default function SessionFinishPage() {
                       </span>
                       <span className="whitespace-nowrap">
                         {fmt(
-                          (Number(amounts[h.id]) || 0) +
-                          (Number(otherFees[h.id]) || 0),
+                          (Number(amounts[h.id]) || 0) + otherFeeSum(h.id),
                         )}
                       </span>
                     </div>
                   </div>
                 </div>
+
+                {guests.length > 0 && (
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${isWalletDeduct
+                      ? "grid-rows-[1fr] opacity-100"
+                      : "grid-rows-[0fr] opacity-0"
+                      }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="pt-1 pb-1">
+                        <p className="text-[11px] font-medium text-gray-400 mb-1.5">
+                          Cách xử lý thanh toán cho khách đi cùng
+                        </p>
+                        <div className="grid grid-cols-3 gap-1 p-1 bg-gray-100 rounded-xl">
+                          {[
+                            { val: "member_choice", label: "Member tự chọn" },
+                            { val: "grouped", label: "Gộp trừ ví" },
+                            { val: "separate", label: "Tách riêng" },
+                          ].map(({ val, label }) => {
+                            const active =
+                              (walletModes[h.id] ?? "grouped") === val;
+                            return (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() => setWalletMode(h.id, val as any)}
+                                className={`px-2 py-3 min-h-[38px] rounded-lg text-[11px] sm:text-xs font-medium text-center leading-tight transition-all ${active
+                                  ? "bg-blue-600 text-white shadow-sm"
+                                  : "text-gray-500 hover:bg-gray-200/70"
+                                  }`}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {guests.length > 0 && (
                   <div className="relative pl-6">
@@ -740,39 +828,42 @@ export default function SessionFinishPage() {
                               : "border-purple-100 bg-purple-50/40"
                               }`}
                           >
-                            <div className="flex items-center gap-3">
-                              <p className="flex-1 text-xs text-purple-600 truncate">
-                                +{" "}
-                                {g.is_guest
-                                  ? g.guest_full_name
-                                  : g.users?.full_name}
-                                <span className="text-gray-400 ml-1">
-                                  (đi cùng)
-                                </span>
-                                {isWalletDeduct && (
-                                  <span className="text-blue-400 ml-1">
-                                    · chờ xác nhận
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <p className="flex-1 text-xs text-purple-600 truncate">
+                                  +{" "}
+                                  {g.is_guest
+                                    ? g.guest_full_name
+                                    : g.users?.full_name}
+                                  <span className="text-gray-400 ml-1">
+                                    (đi cùng)
                                   </span>
+                                  {isWalletDeduct && (
+                                    <span className="text-blue-400 ml-1">
+                                      · chờ xác nhận
+                                    </span>
+                                  )}
+                                </p>
+                                {!!g.user_id && !g.is_guest && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPenaltyTarget({
+                                        id: g.user_id,
+                                        name: g.users?.full_name,
+                                      })
+                                    }
+                                    title="Phạt thành viên này"
+                                    className="flex-shrink-0 h-7 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
+                                  >
+                                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                                    <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
+                                      Phạt
+                                    </span>
+                                  </button>
                                 )}
-                              </p>
-                              {!!g.user_id && !g.is_guest && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setPenaltyTarget({
-                                      id: g.user_id,
-                                      name: g.users?.full_name,
-                                    })
-                                  }
-                                  title="Phạt thành viên này"
-                                  className="flex-shrink-0 h-7 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
-                                >
-                                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                                  <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
-                                    Phạt
-                                  </span>
-                                </button>
-                              )}
+                              </div>
+
                               <input
                                 type="text"
                                 inputMode="numeric"
@@ -785,37 +876,57 @@ export default function SessionFinishPage() {
                                     parseNumberInput(e.target.value),
                                   )
                                 }
-                                className="input-field w-32 text-right text-sm"
+                                className="input-field w-full text-right text-sm"
                                 placeholder="0"
                               />
                             </div>
 
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                value={formatNumberInput(otherFees[g.id] ?? 0)}
-                                onChange={(e) =>
-                                  setOtherFees((prev) => ({
-                                    ...prev,
-                                    [g.id]: parseNumberInput(e.target.value),
-                                  }))
-                                }
-                                className="input-field w-28 text-right text-xs text-gray-500"
-                                placeholder="0"
-                              />
-                              <input
-                                type="text"
-                                value={otherFeeNotes[g.id] ?? ""}
-                                onChange={(e) =>
-                                  setOtherFeeNotes((prev) => ({
-                                    ...prev,
-                                    [g.id]: e.target.value,
-                                  }))
-                                }
-                                className="input-field flex-1 text-xs text-gray-500"
-                                placeholder="💰 Khoản khác của khách..."
-                              />
+                            <div className="space-y-1.5">
+                              {(otherFeeItems[g.id] ?? []).map((item) => (
+                                <div key={item.id} className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formatNumberInput(item.amount)}
+                                    onChange={(e) =>
+                                      updateOtherFeeItem(
+                                        g.id,
+                                        item.id,
+                                        "amount",
+                                        parseNumberInput(e.target.value),
+                                      )
+                                    }
+                                    className="input-field w-28 text-right text-xs text-gray-500"
+                                    placeholder="0"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={item.note}
+                                    onChange={(e) =>
+                                      updateOtherFeeItem(g.id, item.id, "note", e.target.value)
+                                    }
+                                    className="input-field flex-1 text-xs text-gray-500"
+                                    placeholder="💰 Khoản khác của khách..."
+                                  />
+                                  {(otherFeeItems[g.id]?.length ?? 0) > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeOtherFeeItem(g.id, item.id)}
+                                      className="flex-shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                      title="Xóa dòng này"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => addOtherFeeItem(g.id)}
+                                className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Thêm khoản khác
+                              </button>
                             </div>
 
                             <div className="flex justify-end">
@@ -825,8 +936,7 @@ export default function SessionFinishPage() {
                                 </span>
                                 <span className="whitespace-nowrap">
                                   {fmt(
-                                    (Number(guestAmounts[g.id]) || 0) +
-                                    (Number(otherFees[g.id]) || 0),
+                                    (Number(guestAmounts[g.id]) || 0) + otherFeeSum(g.id),
                                   )}
                                 </span>
                               </div>
@@ -855,9 +965,7 @@ export default function SessionFinishPage() {
               {fmt(
                 Array.from(walletDeductIds).reduce((sum, regId) => {
                   return (
-                    sum +
-                    (Number(amounts[regId]) || 0) +
-                    (Number(otherFees[regId]) || 0)
+                    sum + (Number(amounts[regId]) || 0) + otherFeeSum(regId)
                   );
                 }, 0),
               )}

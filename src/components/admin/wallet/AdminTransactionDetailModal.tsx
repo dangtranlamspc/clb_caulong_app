@@ -119,6 +119,11 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
 
     const isLoadingSessionDetail = isSessionPayment && loadingDetail;
 
+    const displayHostName =
+        (hasSnapshot && tx.metadata.member_name) ||
+        (reg?.is_guest ? reg?.guest_full_name : reg?.users?.full_name) ||
+        null;
+
     const displaySessionTitle = hasSnapshot ? tx.metadata.session_title : reg?.sessions?.title;
     const displayBase = hasSnapshot ? (tx.metadata.base_amount ?? 0) : (reg?.base_amount ?? 0);
     const displayOtherFee = hasSnapshot ? (tx.metadata.other_fee_amount ?? 0) : (reg?.other_fee_amount ?? 0);
@@ -310,18 +315,39 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                         )}
 
                                         <div className="flex justify-between px-4 py-2.5 text-sm">
-                                            <span className="text-gray-500">Tiền sân + cầu của người này</span>
+                                            <span className="text-gray-500">
+                                                Tiền sân + cầu của {displayHostName || "người này"}
+                                            </span>
                                             <span className="font-medium text-gray-800">{fmt(displayBase)}</span>
                                         </div>
 
                                         {displayOtherFee > 0 ? (
                                             <div className="px-4 py-2.5 text-sm">
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-500">Khoản khác</span>
-                                                    <span className="font-medium text-amber-600">{fmt(displayOtherFee)}</span>
-                                                </div>
-                                                {displayOtherFeeNote && (
-                                                    <p className="text-xs text-gray-400 italic mt-0.5">{displayOtherFeeNote}</p>
+                                                {displayOtherFeeNote ? (
+                                                    <div className="space-y-1.5">
+                                                        <span className="text-gray-500">Khoản khác</span>
+                                                        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/40 px-2.5 py-1.5">
+                                                            <div className="flex-1 min-w-0 space-y-0.5">
+                                                                {displayOtherFeeNote
+                                                                    .split("\n")
+                                                                    .map((l: string) => l.trim())
+                                                                    .filter(Boolean)
+                                                                    .map((line: string, i: number) => (
+                                                                        <p key={i} className="text-xs text-gray-400 italic">
+                                                                            — {line}
+                                                                        </p>
+                                                                    ))}
+                                                            </div>
+                                                            <span className="font-medium text-amber-600 flex-shrink-0">
+                                                                {fmt(displayOtherFee)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-gray-500">Khoản khác</span>
+                                                        <span className="font-medium text-amber-600">{fmt(displayOtherFee)}</span>
+                                                    </div>
                                                 )}
                                             </div>
                                         ) : (
@@ -353,14 +379,33 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                                                 <span>{fmt(gBase)}</span>
                                                             </div>
                                                             {gOtherFee > 0 && (
-                                                                <div className="flex justify-between text-xs mt-0.5 pl-3">
-                                                                    <span className="text-amber-500">Khoản khác</span>
-                                                                    <div className="text-right">
-                                                                        <span className="text-amber-600 font-medium">{fmt(gOtherFee)}</span>
-                                                                        {g.other_fee_note && (
-                                                                            <p className="text-gray-400 italic">{g.other_fee_note}</p>
-                                                                        )}
-                                                                    </div>
+                                                                <div className="mt-0.5 pl-3 text-xs">
+                                                                    {g.other_fee_note ? (
+                                                                        <div className="space-y-1">
+                                                                            <span className="text-amber-500">Khoản khác</span>
+                                                                            <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/40 px-2.5 py-1.5">
+                                                                                <div className="flex-1 min-w-0 space-y-0.5">
+                                                                                    {g.other_fee_note
+                                                                                        .split("\n")
+                                                                                        .map((l: string) => l.trim())
+                                                                                        .filter(Boolean)
+                                                                                        .map((line: string, i: number) => (
+                                                                                            <p key={i} className="text-gray-400 italic">
+                                                                                                {line}
+                                                                                            </p>
+                                                                                        ))}
+                                                                                </div>
+                                                                                <span className="text-amber-600 font-medium flex-shrink-0">
+                                                                                    {fmt(gOtherFee)}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="text-amber-500">Khoản khác</span>
+                                                                            <span className="text-amber-600 font-medium">{fmt(gOtherFee)}</span>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -511,25 +556,96 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                         {isSessionPayment && (
                             <div style={{ border: '1px solid #f3f4f6', borderRadius: 12, overflow: 'hidden' }}>
                                 {displaySessionTitle && <Row label="Buổi đánh" value={displaySessionTitle} highlight />}
-                                <Row label="Tiền sân + cầu của người này" value={fmt(displayBase)} />
+                                <Row
+                                    label={`Tiền sân + cầu của ${displayHostName || "người này"}`}
+                                    value={fmt(displayBase)}
+                                />
+
                                 {displayOtherFee > 0 && (
-                                    <Row label="Khoản khác" value={fmt(displayOtherFee)} note={displayOtherFeeNote} amber />
+                                    <div style={{ padding: '10px 16px', borderTop: '1px solid #f3f4f6' }}>
+                                        <p style={{ fontSize: 13, color: '#9ca3af', margin: '0 0 6px' }}>Khoản khác</p>
+                                        {displayOtherFeeNote ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, border: '1px solid #fde68a', background: '#fffbeb', borderRadius: 10, padding: '8px 10px' }}>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    {displayOtherFeeNote
+                                                        .split('\n')
+                                                        .map((l: string) => l.trim())
+                                                        .filter(Boolean)
+                                                        .map((line: string, i: number) => (
+                                                            <p key={i} style={{ margin: 0, fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>
+                                                                — {line}
+                                                            </p>
+                                                        ))}
+                                                </div>
+                                                <span style={{ fontWeight: 600, color: '#d97706', fontSize: 13, flexShrink: 0 }}>
+                                                    {fmt(displayOtherFee)}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                                <span style={{ fontWeight: 600, color: '#d97706', fontSize: 13 }}>
+                                                    {fmt(displayOtherFee)}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
+
                                 {displayGuests.length > 0 && (
-                                    <div style={{ padding: '10px 16px' }}>
+                                    <div style={{ padding: '10px 16px', borderTop: '1px solid #f3f4f6' }}>
                                         <p style={{ fontSize: 11, color: '#9333ea', fontWeight: 600, marginBottom: 6 }}>
                                             Gộp thanh toán cùng {displayGuests.length} khách
                                         </p>
-                                        {displayGuests.map((g: any, idx: number) => (
-                                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '3px 0' }}>
-                                                <span style={{ color: '#4b5563' }}>+ {nameOf(g)}</span>
-                                                <span style={{ fontWeight: 600, color: '#374151' }}>
-                                                    {fmt((g.base_amount ?? 0) + (g.other_fee_amount ?? 0))}
-                                                </span>
-                                            </div>
-                                        ))}
+                                        {displayGuests.map((g: any, idx: number) => {
+                                            const gName = nameOf(g);
+                                            const gBase = g.base_amount ?? 0;
+                                            const gOtherFee = g.other_fee_amount ?? 0;
+                                            const gTotal = gBase + gOtherFee;
+                                            return (
+                                                <div key={idx} style={{ padding: '6px 0', borderTop: idx > 0 ? '1px dashed #f3f4f6' : 'none' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                                                        <span style={{ color: '#4b5563' }}>+ {gName}</span>
+                                                        <span style={{ fontWeight: 600, color: '#374151' }}>{fmt(gTotal)}</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#9ca3af', paddingLeft: 12, marginTop: 2 }}>
+                                                        <span>Tiền sân + cầu</span>
+                                                        <span>{fmt(gBase)}</span>
+                                                    </div>
+                                                    {gOtherFee > 0 && (
+                                                        <div style={{ paddingLeft: 12, marginTop: 4 }}>
+                                                            <p style={{ fontSize: 12, color: '#d97706', margin: '0 0 4px' }}>Khoản khác</p>
+                                                            {g.other_fee_note ? (
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, border: '1px solid #fde68a', background: '#fffbeb', borderRadius: 10, padding: '6px 8px' }}>
+                                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                                        {g.other_fee_note
+                                                                            .split('\n')
+                                                                            .map((l: string) => l.trim())
+                                                                            .filter(Boolean)
+                                                                            .map((line: string, i: number) => (
+                                                                                <p key={i} style={{ margin: 0, fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>
+                                                                                    {line}
+                                                                                </p>
+                                                                            ))}
+                                                                    </div>
+                                                                    <span style={{ fontWeight: 600, color: '#d97706', fontSize: 12, flexShrink: 0 }}>
+                                                                        {fmt(gOtherFee)}
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                                                    <span style={{ fontWeight: 600, color: '#d97706', fontSize: 12 }}>
+                                                                        {fmt(gOtherFee)}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
+
                                 <Row label="Tổng đã trả" value={fmt(displayTotal)} bold shaded />
                             </div>
                         )}

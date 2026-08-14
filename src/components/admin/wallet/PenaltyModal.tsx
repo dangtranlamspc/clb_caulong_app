@@ -40,6 +40,8 @@ interface PenaltyModalProps {
     onSuccess?: () => void;
 }
 
+const TRANSITION_MS = 220;
+
 export default function PenaltyModal({
     open,
     onClose,
@@ -55,16 +57,27 @@ export default function PenaltyModal({
         useState<PaymentMethodChoice>("wallet");
     const [submitting, setSubmitting] = useState(false);
 
+    const [mounted, setMounted] = useState(open);
+    const [visible, setVisible] = useState(false);
+
     useEffect(() => {
         if (open) {
             setType(null);
             setAmount(0);
             setReason("");
             setPaymentMethod("wallet");
+
+            setMounted(true);
+            const raf = requestAnimationFrame(() => setVisible(true));
+            return () => cancelAnimationFrame(raf);
+        } else {
+            setVisible(false);
+            const timeout = setTimeout(() => setMounted(false), TRANSITION_MS);
+            return () => clearTimeout(timeout);
         }
     }, [open]);
 
-    if (!open) return null;
+    if (!mounted) return null;
 
     const handlePickType = (t: PenaltyType) => {
         setType(t);
@@ -108,8 +121,18 @@ export default function PenaltyModal({
     };
 
     return (
-        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
-            <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-5 space-y-4 max-h-[92vh] overflow-y-auto">
+        <div
+            className={`fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/50 px-3 pb-3 sm:p-4 transition-opacity duration-200 ease-out ${visible ? "opacity-100" : "opacity-0"
+                }`}
+            onClick={onClose}
+        >
+            <div
+                onClick={(e) => e.stopPropagation()}
+                className={`w-full sm:max-w-md bg-white rounded-3xl sm:rounded-2xl p-5 space-y-4 max-h-[92vh] overflow-y-auto transition-all duration-200 ease-out ${visible
+                    ? "translate-y-0 sm:scale-100 opacity-100"
+                    : "translate-y-6 sm:translate-y-0 sm:scale-95 opacity-0"
+                    }`}
+            >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
