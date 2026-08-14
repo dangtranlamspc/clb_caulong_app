@@ -127,22 +127,16 @@ export default function SessionCostCard({ sessionId }: Props) {
         )}
 
         {chi_phi.other_fee > 0 && (
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">
-                💰 Khoản thu khác
-                {chi_phi.other_fee_note && (
-                  <span className="text-gray-400 italic">
-                    {" "}
-                    ({chi_phi.other_fee_note})
-                  </span>
-                )}
-              </span>
-              <span className="font-medium">{fmt(chi_phi.other_fee)}</span>
+          <div className="rounded-xl border border-amber-100 bg-amber-50/40 overflow-hidden">
+            <div className="px-3 py-2 text-sm font-medium text-gray-600 border-b border-amber-100/70">
+              💰 Khoản thu khác
+              {chi_phi.other_fee_note && (
+                <span className="text-gray-400 italic"> ({chi_phi.other_fee_note})</span>
+              )}
             </div>
 
             {otherFeeItems.length > 0 && (
-              <div className="ml-4 space-y-2 border-l-2 border-amber-100 pl-3">
+              <div className="p-3 space-y-2">
                 {otherFeeItems.map((item, i) => {
                   const noteLines = (item.note ?? "")
                     .split("\n")
@@ -150,13 +144,13 @@ export default function SessionCostCard({ sessionId }: Props) {
                     .filter(Boolean);
 
                   return (
-                    <div key={i} className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="font-medium text-gray-600">{item.name}</span>
-                        <span className="font-medium text-amber-600">
-                          {fmt(item.amount)}
-                        </span>
-                      </div>
+                    <div
+                      key={i}
+                      className="rounded-lg border border-amber-200/70 bg-white/70 px-2.5 py-2 space-y-1"
+                    >
+                      <p className="text-xs font-semibold text-gray-600">
+                        {item.name}
+                      </p>
 
                       {noteLines.length > 0 && (
                         <div className="pl-2 space-y-0.5">
@@ -167,6 +161,14 @@ export default function SessionCostCard({ sessionId }: Props) {
                           ))}
                         </div>
                       )}
+
+                      {/* Dòng tổng của riêng người này, nằm giữa các khoản thu */}
+                      <div className="flex justify-between text-xs pt-1 border-t border-dashed border-amber-200/70">
+                        <span className="text-gray-500">Tổng ({item.name})</span>
+                        <span className="font-semibold text-amber-600">
+                          {fmt(item.amount)}
+                        </span>
+                      </div>
 
                       {item.guests?.map((g, gi) => {
                         const gNoteLines = (g.note ?? "")
@@ -202,7 +204,7 @@ export default function SessionCostCard({ sessionId }: Props) {
 
                       {item.guests && item.guests.length > 0 && (
                         <div className="flex justify-between text-[11px] text-gray-400 pl-3 pt-0.5 border-t border-dashed border-gray-200">
-                          <span>= Tổng ({item.name})</span>
+                          <span>= Tổng cộng</span>
                           <span className="font-semibold text-amber-700">
                             {fmt(item.total ?? item.amount)}
                           </span>
@@ -213,14 +215,23 @@ export default function SessionCostCard({ sessionId }: Props) {
                 })}
               </div>
             )}
+
+            <div className="flex justify-between items-center px-3 py-2 bg-amber-100/50">
+              <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">
+                Tổng khoản thu khác
+              </span>
+              <span className="text-base font-bold text-amber-700">
+                {fmt(chi_phi.other_fee)}
+              </span>
+            </div>
           </div>
         )}
 
-        <div className="flex items-center justify-between rounded-xl bg-gray-900 px-3.5 py-3 mt-1">
-          <span className="text-sm font-semibold text-gray-200">
-            Tổng chi phí
+        <div className="flex items-center justify-between rounded-xl bg-gray-900 px-3.5 py-3 mt-1 -mx-4 sm:-mx-5">
+          <span className="text-sm font-semibold text-gray-200 pl-1">
+            Tổng tất cả các chi phí
           </span>
-          <span className="text-lg font-bold text-white">
+          <span className="text-lg font-bold text-white pr-1">
             {fmt(summary.total_cost)}
           </span>
         </div>

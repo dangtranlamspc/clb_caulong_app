@@ -1671,11 +1671,13 @@ export default function SessionDetailPage() {
                 </span>
               )}
 
-              <span
-                className={`ml-auto text-xs font-bold whitespace-nowrap ${totalAmount != null ? "text-gray-900" : "text-gray-300 italic font-normal"}`}
-              >
-                {totalAmount != null ? formatVnd(totalAmount) : "-"}
-              </span>
+              {!hasBreakdown && (
+                <span
+                  className={`ml-auto text-xs font-bold whitespace-nowrap ${totalAmount != null ? "text-gray-900" : "text-gray-300 italic font-normal"}`}
+                >
+                  {totalAmount != null ? formatVnd(totalAmount) : "-"}
+                </span>
+              )}
 
               {reg.is_guest &&
                 reg.payment_method === "cash" &&
@@ -1702,30 +1704,50 @@ export default function SessionDetailPage() {
             </div>
 
             {hasBreakdown && (
-              <div className="text-[11px] text-gray-400 mt-1.5 space-y-1">
-                <p>
-                  Sân + cầu:{" "}
-                  <span className="font-medium text-gray-500">
+              <div className="mt-2 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 px-2.5 py-1.5">
+                  <span className="text-gray-500">Tiền sân + cầu</span>
+                  <span className="font-medium text-gray-700">
                     {formatVnd(reg.base_amount)}
                   </span>
-                  {" + "}Khoản khác:{" "}
-                  <span className="font-medium text-gray-500">
-                    {formatVnd(reg.other_fee_amount)}
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-gray-500">Khoản khác</span>
+                  {reg.other_fee_note ? (
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/40 px-2.5 py-1.5">
+                      <ul className="flex-1 min-w-0 space-y-0.5 list-none">
+                        {reg.other_fee_note
+                          .split("\n")
+                          .map((l: string) => l.trim())
+                          .filter(Boolean)
+                          .map((line: string, i: number) => (
+                            <li key={i} className="text-[11px] text-gray-400 italic">
+                              — {line}
+                            </li>
+                          ))}
+                      </ul>
+                      <span className="font-medium text-amber-600 flex-shrink-0">
+                        {formatVnd(reg.other_fee_amount)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-end">
+                      <span className="font-medium text-amber-600">
+                        {formatVnd(reg.other_fee_amount)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-gray-100 px-2.5 py-2">
+                  <span className="text-sm font-semibold text-gray-700">
+                    Tổng của {displayName}
                   </span>
-                </p>
-                {reg.other_fee_note && (
-                  <ul className="pl-3 space-y-0.5">
-                    {reg.other_fee_note
-                      .split("\n")
-                      .map((l: string) => l.trim())
-                      .filter(Boolean)
-                      .map((line: string, i: number) => (
-                        <li key={i} className="italic">
-                          — {line}
-                        </li>
-                      ))}
-                  </ul>
-                )}
+                  <span className="text-sm font-bold text-gray-900">
+                    {formatVnd(totalAmount)}
+                  </span>
+                </div>
               </div>
             )}
 
