@@ -163,15 +163,6 @@ function defaultComposition(size: 4 | 6): CompositionSlot[] {
     ];
 }
 
-const TABS = [
-    { key: "info", label: "Thông tin giải đấu" },
-    { key: "prizes", label: "Giải thưởng" },
-    { key: "fees", label: "Lệ phí" },
-    { key: "preview", label: "Xem trước" },
-] as const;
-
-type TabKey = (typeof TABS)[number]["key"];
-
 const MATCH_CONTENT_OPTIONS = [
     { value: "Đôi Nam", label: "Đôi Nam" },
     { value: "Đôi Nam - Nữ", label: "Đôi Nam - Nữ" },
@@ -240,7 +231,6 @@ interface TournamentFormPageProps {
 export default function TournamentFormPage({ id }: TournamentFormPageProps) {
     const router = useRouter();
 
-    const [activeTab, setActiveTab] = useState<TabKey>("info");
     const [form, setForm] = useState<TournamentFormState>(initialForm);
     const [loading, setLoading] = useState(!!id);
     const [saving, setSaving] = useState(false);
@@ -601,9 +591,9 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                 <button
                                     disabled={togglingStatus}
                                     onClick={handleToggleRegistration}
-                                    className={`px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-50 ${form.status === "open"
-                                        ? "border-red-200 text-red-600 hover:bg-red-50"
-                                        : "border-green-200 text-green-600 hover:bg-green-50"
+                                    className={`btn-primary disabled:opacity-50 whitespace-nowrap ${form.status === "open"
+                                        ? "bg-red-600 text-white hover:bg-red-700"
+                                        : "bg-green-600 text-white hover:bg-green-700"
                                         }`}
                                 >
                                     {togglingStatus
@@ -629,9 +619,9 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                             <button
                                 disabled={togglingStatus}
                                 onClick={handleToggleRegistration}
-                                className={`flex-1 px-3 py-2.5 rounded-lg border text-sm font-medium disabled:opacity-50 text-center ${form.status === "open"
-                                    ? "border-red-200 text-red-600 hover:bg-red-50"
-                                    : "border-green-200 text-green-600 hover:bg-green-50"
+                                className={`flex-1 btn-primary disabled:opacity-50 text-center whitespace-nowrap ${form.status === "open"
+                                    ? "bg-red-600 text-white hover:bg-red-700"
+                                    : "bg-green-600 text-white hover:bg-green-700"
                                     }`}
                             >
                                 {form.status === "open" ? "Đóng ĐK" : "Mở ĐK"}
@@ -648,489 +638,547 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                     </div>
                 </div>
 
-                <div
-                    className={`flex gap-4 sm:gap-6 border-b border-gray-200 overflow-x-auto overflow-y-hidden ${HIDE_SCROLLBAR_CLASS}`}
-                >
-                    {TABS.map((tab) => (
-                        <button
-                            key={tab.key}
-                            onClick={() => setActiveTab(tab.key)}
-                            className={`pb-3 text-sm font-medium whitespace-nowrap border-b-2 -mb-px flex-shrink-0 ${activeTab === tab.key
-                                ? "border-blue-600 text-blue-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700"
-                                }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
+                <div className="border-b border-gray-200 pb-3">
+                    <span className="text-sm font-medium text-blue-600 border-b-2 border-blue-600 -mb-3 pb-3 inline-block">
+                        Thông tin giải đấu
+                    </span>
                 </div>
             </div>
 
             <div
                 className={`flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 pt-5 sm:pt-6 ${HIDE_SCROLLBAR_CLASS}`}
             >
-                {activeTab === "info" && (
-                    <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-4 sm:gap-6">
-                        <div className="space-y-4 sm:space-y-6 min-w-0">
-                            <SectionCard icon="📅" title="I. THỜI GIAN – ĐỊA ĐIỂM">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <Field label="Thời gian" required>
-                                        <input
-                                            type="datetime-local"
-                                            className="input-field"
-                                            value={form.event_date}
-                                            onChange={(e) =>
-                                                setForm((f) => ({ ...f, event_date: e.target.value }))
-                                            }
-                                        />
-                                    </Field>
-                                    <Field label="Địa điểm">
-                                        <input
-                                            className="input-field"
-                                            placeholder="Sân cầu lông..."
-                                            value={form.location}
-                                            onChange={(e) =>
-                                                setForm((f) => ({ ...f, location: e.target.value }))
-                                            }
-                                        />
-                                    </Field>
-                                </div>
-                            </SectionCard>
-
-                            <SectionCard icon="👥" title="II. HÌNH THỨC VÀ ĐỐI TƯỢNG THAM GIA">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-                                    <Field label="Hình thức thi đấu" required>
-                                        <CustomSelect
-                                            value={form.format_type}
-                                            onChange={(v) =>
-                                                setForm((f) => ({
-                                                    ...f,
-                                                    format_type: v as "don" | "doi_bong",
-                                                }))
-                                            }
-                                            options={FORMAT_TYPE_OPTIONS}
-                                        />
-                                    </Field>
-                                    <Field
-                                        label={
-                                            form.format_type === "don"
-                                                ? "Số lượng người tham gia"
-                                                : "Số lượng đội tham gia"
+                <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-4 sm:gap-6">
+                    <div className="space-y-4 sm:space-y-6 min-w-0">
+                        <SectionCard icon="📅" title="I. THỜI GIAN – ĐỊA ĐIỂM">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <Field label="Thời gian" required>
+                                    <input
+                                        type="datetime-local"
+                                        className="input-field"
+                                        value={form.event_date}
+                                        onChange={(e) =>
+                                            setForm((f) => ({ ...f, event_date: e.target.value }))
                                         }
-                                        required
-                                    >
-                                        <div className="flex items-center gap-2">
+                                    />
+                                </Field>
+                                <Field label="Địa điểm">
+                                    <input
+                                        className="input-field"
+                                        placeholder="Sân cầu lông..."
+                                        value={form.location}
+                                        onChange={(e) =>
+                                            setForm((f) => ({ ...f, location: e.target.value }))
+                                        }
+                                    />
+                                </Field>
+                            </div>
+                        </SectionCard>
+
+                        <SectionCard icon="👥" title="II. HÌNH THỨC VÀ ĐỐI TƯỢNG THAM GIA">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                                <Field label="Hình thức thi đấu" required>
+                                    <CustomSelect
+                                        value={form.format_type}
+                                        onChange={(v) =>
+                                            setForm((f) => ({
+                                                ...f,
+                                                format_type: v as "don" | "doi_bong",
+                                            }))
+                                        }
+                                        options={FORMAT_TYPE_OPTIONS}
+                                    />
+                                </Field>
+                                <Field
+                                    label={
+                                        form.format_type === "don"
+                                            ? "Số lượng người tham gia"
+                                            : "Số lượng đội tham gia"
+                                    }
+                                    required
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            className="input-field"
+                                            placeholder="VD: 7"
+                                            value={form.max_teams}
+                                            onChange={(e) =>
+                                                setForm((f) => ({ ...f, max_teams: e.target.value }))
+                                            }
+                                        />
+                                        <span className="text-sm text-gray-500 shrink-0">
+                                            {form.format_type === "don" ? "người" : "đội"}
+                                        </span>
+                                    </div>
+                                </Field>
+                            </div>
+
+                            {form.format_type === "doi_bong" && (
+                                <>
+                                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                        <label className="text-sm font-medium text-gray-700">
+                                            Thành phần mỗi đội <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative flex rounded-lg border border-gray-200 overflow-hidden text-xs bg-gray-50 p-0.5 w-[152px]">
+                                            <div
+                                                className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md bg-blue-600 shadow-sm transition-transform duration-300 ease-out"
+                                                style={{
+                                                    transform:
+                                                        form.team_size === 4
+                                                            ? "translateX(0%)"
+                                                            : "translateX(calc(100% + 4px))",
+                                                }}
+                                            />
+                                            {[4, 6].map((size) => (
+                                                <button
+                                                    key={size}
+                                                    type="button"
+                                                    onClick={() => handleTeamSizeChange(size as 4 | 6)}
+                                                    className={`relative z-10 flex-1 px-3 py-1.5 font-medium rounded-md transition-colors duration-300 ${form.team_size === size
+                                                        ? "text-white"
+                                                        : "text-gray-500 hover:text-gray-900"
+                                                        }`}
+                                                >
+                                                    {size} người
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <CompositionGrid slots={form.composition} onChange={handleSlotChange} />
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        Mỗi ô là 1 vị trí trong đội. Hệ thống dùng thành phần này để
+                                        kiểm tra slot còn trống khi thành viên đăng ký, và để bốc
+                                        thăm chia đội.
+                                    </p>
+                                </>
+                            )}
+                        </SectionCard>
+
+                        <SectionCard icon="🎖️" title="III. ĐỘI TRƯỞNG VÀ BỐC THĂM CHIA ĐỘI">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Field label="1. Đội trưởng" required>
+                                    <RichTextEditor
+                                        value={form.rules.captain_female_content}
+                                        onChange={(html) =>
+                                            setRules({ captain_female_content: html })
+                                        }
+                                        placeholder="Nhận thông báo từ BTC, nộp danh sách thi đấu từng vòng..."
+                                    />
+                                </Field>
+                                <Field label="2. Bốc thăm chia đội" required>
+                                    <RichTextEditor
+                                        value={form.rules.draw_teams_content}
+                                        onChange={(html) => setRules({ draw_teams_content: html })}
+                                        placeholder="Các đội trưởng có mặt sớm để bốc thăm chia đội..."
+                                    />
+                                </Field>
+                            </div>
+                        </SectionCard>
+
+                        <SectionCard icon="📋" title="III. NỘI DUNG THI ĐẤU">
+                            <label className="text-sm font-medium text-gray-700">
+                                Nội dung thi đấu <span className="text-red-500">*</span>
+                            </label>
+                            <div className="space-y-2 mt-2">
+                                {form.rules.match_contents.map((item) => {
+                                    const visual = getMatchContentVisual(item.label);
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className="flex items-center gap-3 rounded-xl border border-gray-200 p-3"
+                                        >
+                                            <span className="text-gray-300 cursor-grab select-none hidden sm:inline">
+                                                ⠿
+                                            </span>
+                                            <div
+                                                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                                                style={{ background: visual.background }}
+                                            >
+                                                {visual.icon}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <CustomSelect
+                                                    value={item.label}
+                                                    onChange={(v) => updateMatchContent(item.id, v)}
+                                                    options={MATCH_CONTENT_OPTIONS}
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeMatchContent(item.id)}
+                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={addMatchContent}
+                                className="mt-3 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-400"
+                            >
+                                <Plus className="w-4 h-4" /> Thêm nội dung
+                            </button>
+                        </SectionCard>
+
+                        <SectionCard icon="📖" title="IV. THỂ THỨC THI ĐẤU">
+                            <Field label="Thể thức" required>
+                                <RichTextEditor
+                                    value={form.rules.format_content}
+                                    onChange={(html) => setRules({ format_content: html })}
+                                    placeholder="Các đội thi đấu vòng tròn một lượt..."
+                                    minHeight={140}
+                                />
+                            </Field>
+                        </SectionCard>
+
+                        <SectionCard
+                            icon="✅"
+                            title="IV. CÁCH TÍNH ĐIỂM VÀ XÁC ĐỊNH KẾT QUẢ"
+                        >
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700 mb-2">
+                                        1. Mỗi nội dung thi đấu
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Field label="Loại set">
+                                            <CustomSelect
+                                                value={form.rules.scoring.set_type}
+                                                onChange={(v) => setScoring({ set_type: v })}
+                                                options={SET_TYPE_OPTIONS.map((opt) => ({
+                                                    value: opt,
+                                                    label: opt,
+                                                }))}
+                                            />
+                                        </Field>
+                                        <Field label="Điểm">
                                             <input
                                                 type="number"
                                                 min={1}
                                                 className="input-field"
-                                                placeholder="VD: 7"
-                                                value={form.max_teams}
+                                                value={form.rules.scoring.points_per_set}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({ ...f, max_teams: e.target.value }))
-                                                }
-                                            />
-                                            <span className="text-sm text-gray-500 shrink-0">
-                                                {form.format_type === "don" ? "người" : "đội"}
-                                            </span>
-                                        </div>
-                                    </Field>
-                                </div>
-
-                                {form.format_type === "doi_bong" && (
-                                    <>
-                                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                            <label className="text-sm font-medium text-gray-700">
-                                                Thành phần mỗi đội <span className="text-red-500">*</span>
-                                            </label>
-                                            <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs">
-                                                {[4, 6].map((size) => (
-                                                    <button
-                                                        key={size}
-                                                        type="button"
-                                                        onClick={() => handleTeamSizeChange(size as 4 | 6)}
-                                                        className={`px-3 py-1.5 font-medium ${form.team_size === size
-                                                            ? "bg-blue-600 text-white"
-                                                            : "bg-white text-gray-500 hover:bg-gray-50"
-                                                            }`}
-                                                    >
-                                                        {size} người
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                                            {form.composition.map((slot, i) => (
-                                                <CompositionSlotCard
-                                                    key={i}
-                                                    slot={slot}
-                                                    onChange={(key) => handleSlotChange(i, key)}
-                                                />
-                                            ))}
-                                        </div>
-                                        <p className="text-xs text-gray-400 mt-2">
-                                            Mỗi ô là 1 vị trí trong đội. Hệ thống dùng thành phần này để
-                                            kiểm tra slot còn trống khi thành viên đăng ký, và để bốc
-                                            thăm chia đội.
-                                        </p>
-                                    </>
-                                )}
-                            </SectionCard>
-
-                            <SectionCard icon="🎖️" title="III. ĐỘI TRƯỞNG VÀ BỐC THĂM CHIA ĐỘI">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Field label="1. Đội trưởng" required>
-                                        <RichTextEditor
-                                            value={form.rules.captain_female_content}
-                                            onChange={(html) =>
-                                                setRules({ captain_female_content: html })
-                                            }
-                                            placeholder="Nhận thông báo từ BTC, nộp danh sách thi đấu từng vòng..."
-                                        />
-                                    </Field>
-                                    <Field label="2. Bốc thăm chia đội" required>
-                                        <RichTextEditor
-                                            value={form.rules.draw_teams_content}
-                                            onChange={(html) => setRules({ draw_teams_content: html })}
-                                            placeholder="Các đội trưởng có mặt sớm để bốc thăm chia đội..."
-                                        />
-                                    </Field>
-                                </div>
-                            </SectionCard>
-
-                            <SectionCard icon="📋" title="III. NỘI DUNG THI ĐẤU">
-                                <label className="text-sm font-medium text-gray-700">
-                                    Nội dung thi đấu <span className="text-red-500">*</span>
-                                </label>
-                                <div className="space-y-2 mt-2">
-                                    {form.rules.match_contents.map((item) => {
-                                        const visual = getMatchContentVisual(item.label);
-                                        return (
-                                            <div
-                                                key={item.id}
-                                                className="flex items-center gap-3 rounded-xl border border-gray-200 p-3"
-                                            >
-                                                <span className="text-gray-300 cursor-grab select-none hidden sm:inline">
-                                                    ⠿
-                                                </span>
-                                                <div
-                                                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                                                    style={{ background: visual.background }}
-                                                >
-                                                    {visual.icon}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <CustomSelect
-                                                        value={item.label}
-                                                        onChange={(v) => updateMatchContent(item.id, v)}
-                                                        options={MATCH_CONTENT_OPTIONS}
-                                                    />
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeMatchContent(item.id)}
-                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={addMatchContent}
-                                    className="mt-3 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-400"
-                                >
-                                    <Plus className="w-4 h-4" /> Thêm nội dung
-                                </button>
-                            </SectionCard>
-
-                            <SectionCard icon="📖" title="IV. THỂ THỨC THI ĐẤU">
-                                <Field label="Thể thức" required>
-                                    <RichTextEditor
-                                        value={form.rules.format_content}
-                                        onChange={(html) => setRules({ format_content: html })}
-                                        placeholder="Các đội thi đấu vòng tròn một lượt..."
-                                        minHeight={140}
-                                    />
-                                </Field>
-                            </SectionCard>
-
-                            <SectionCard
-                                icon="✅"
-                                title="IV. CÁCH TÍNH ĐIỂM VÀ XÁC ĐỊNH KẾT QUẢ"
-                            >
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-700 mb-2">
-                                            1. Mỗi nội dung thi đấu
-                                        </p>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <Field label="Loại set">
-                                                <CustomSelect
-                                                    value={form.rules.scoring.set_type}
-                                                    onChange={(v) => setScoring({ set_type: v })}
-                                                    options={SET_TYPE_OPTIONS.map((opt) => ({
-                                                        value: opt,
-                                                        label: opt,
-                                                    }))}
-                                                />
-                                            </Field>
-                                            <Field label="Điểm">
-                                                <input
-                                                    type="number"
-                                                    min={1}
-                                                    className="input-field"
-                                                    value={form.rules.scoring.points_per_set}
-                                                    onChange={(e) =>
-                                                        setScoring({ points_per_set: e.target.value })
-                                                    }
-                                                />
-                                            </Field>
-                                            <Field label="Cách biệt">
-                                                <input
-                                                    type="number"
-                                                    min={0}
-                                                    className="input-field"
-                                                    value={form.rules.scoring.win_margin}
-                                                    onChange={(e) =>
-                                                        setScoring({ win_margin: e.target.value })
-                                                    }
-                                                />
-                                            </Field>
-                                            <Field label="Chạm điểm tối đa">
-                                                <input
-                                                    type="number"
-                                                    min={1}
-                                                    className="input-field"
-                                                    value={form.rules.scoring.max_score}
-                                                    onChange={(e) =>
-                                                        setScoring({ max_score: e.target.value })
-                                                    }
-                                                />
-                                            </Field>
-                                        </div>
-                                    </div>
-
-                                    <Field label="2. Việc xếp hạng các đội" required>
-                                        <RichTextEditor
-                                            value={form.rules.ranking_rules_content}
-                                            onChange={(html) =>
-                                                setRules({ ranking_rules_content: html })
-                                            }
-                                            placeholder="Tổng số điểm qua các nội dung thi đấu..."
-                                            minHeight={180}
-                                        />
-                                    </Field>
-                                </div>
-                            </SectionCard>
-
-                            <SectionCard icon="📜" title="VI. LUẬT THI ĐẤU">
-                                <Field label="Nội dung" required>
-                                    <RichTextEditor
-                                        value={form.rules.rules_content}
-                                        onChange={(html) => setRules({ rules_content: html })}
-                                        placeholder="Áp dụng Luật Cầu lông hiện hành..."
-                                        minHeight={140}
-                                    />
-                                </Field>
-                            </SectionCard>
-
-                            <SectionCard icon="💰" title="LỆ PHÍ">
-                                <Field label="Lệ phí / người">
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        className="input-field"
-                                        placeholder="0"
-                                        value={form.entry_fee_per_person}
-                                        onChange={(e) =>
-                                            setForm((f) => ({
-                                                ...f,
-                                                entry_fee_per_person: e.target.value,
-                                            }))
-                                        }
-                                    />
-                                </Field>
-                                <p className="text-xs text-gray-400 mt-1.5">
-                                    Áp dụng cho từng người đăng ký cá nhân (không nhân theo cặp).
-                                </p>
-                            </SectionCard>
-                        </div>
-
-                        <div className="space-y-4 sm:space-y-6">
-                            <SectionCard title="Thông tin chung" plain>
-                                <Field label="Tên giải đấu" required>
-                                    <input
-                                        className="input-field"
-                                        value={form.title}
-                                        onChange={(e) => handleTitleChange(e.target.value)}
-                                    />
-                                </Field>
-                                <Field label="Slug (đường dẫn)" required>
-                                    <input
-                                        className="input-field"
-                                        placeholder="vd: hung-phat-bnb-cup-2026"
-                                        value={form.slug}
-                                        onChange={(e) => handleSlugChange(e.target.value)}
-                                    />
-                                </Field>
-                                <Field label="Emoji">
-                                    <input
-                                        className="input-field"
-                                        value={form.emoji}
-                                        maxLength={4}
-                                        onChange={(e) =>
-                                            setForm((f) => ({ ...f, emoji: e.target.value }))
-                                        }
-                                    />
-                                </Field>
-                                <Field label="Mô tả ngắn">
-                                    <textarea
-                                        className="input-field"
-                                        rows={3}
-                                        maxLength={160}
-                                        value={form.description}
-                                        onChange={(e) =>
-                                            setForm((f) => ({ ...f, description: e.target.value }))
-                                        }
-                                    />
-                                    <p className="text-xs text-gray-400 mt-1 text-right">
-                                        {form.description.length}/160
-                                    </p>
-                                </Field>
-                            </SectionCard>
-
-                            <SectionCard title="Logo giải đấu" plain>
-                                <ImageUploadBox
-                                    imageUrl={form.logo_url}
-                                    uploading={uploadingLogo}
-                                    inputRef={logoInputRef}
-                                    objectFit="contain"
-                                    onPick={(file) =>
-                                        handleUploadFile(file, "logos", "logo_url", setUploadingLogo)
-                                    }
-                                />
-                            </SectionCard>
-
-                            <SectionCard title="Ảnh bìa (Banner)" plain>
-                                <ImageUploadBox
-                                    imageUrl={form.cover_image_url}
-                                    uploading={uploadingBanner}
-                                    inputRef={bannerInputRef}
-                                    objectFit="cover"
-                                    onPick={(file) =>
-                                        handleUploadFile(
-                                            file,
-                                            "banners",
-                                            "cover_image_url",
-                                            setUploadingBanner,
-                                        )
-                                    }
-                                />
-                            </SectionCard>
-
-                            <SectionCard title="Cài đặt hiển thị" plain>
-                                <ToggleField
-                                    label="Hiển thị trang chủ"
-                                    checked={form.show_on_homepage}
-                                    onChange={(v) =>
-                                        setForm((f) => ({ ...f, show_on_homepage: v }))
-                                    }
-                                />
-                                <Field label="Thứ tự hiển thị">
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        className="input-field"
-                                        value={form.display_order}
-                                        onChange={(e) =>
-                                            setForm((f) => ({ ...f, display_order: e.target.value }))
-                                        }
-                                    />
-                                </Field>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Thời gian đăng ký
-                                    </label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <Field label="Từ ngày">
-                                            <input
-                                                type="date"
-                                                className="input-field"
-                                                value={form.registration_start_date}
-                                                onChange={(e) =>
-                                                    setForm((f) => ({
-                                                        ...f,
-                                                        registration_start_date: e.target.value,
-                                                    }))
+                                                    setScoring({ points_per_set: e.target.value })
                                                 }
                                             />
                                         </Field>
-                                        <Field label="Đến ngày">
+                                        <Field label="Cách biệt">
                                             <input
-                                                type="date"
+                                                type="number"
+                                                min={0}
                                                 className="input-field"
-                                                value={form.registration_end_date}
+                                                value={form.rules.scoring.win_margin}
                                                 onChange={(e) =>
-                                                    setForm((f) => ({
-                                                        ...f,
-                                                        registration_end_date: e.target.value,
-                                                    }))
+                                                    setScoring({ win_margin: e.target.value })
+                                                }
+                                            />
+                                        </Field>
+                                        <Field label="Chạm điểm tối đa">
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                className="input-field"
+                                                value={form.rules.scoring.max_score}
+                                                onChange={(e) =>
+                                                    setScoring({ max_score: e.target.value })
                                                 }
                                             />
                                         </Field>
                                     </div>
                                 </div>
-                                <Field label="Ngày chốt danh sách đăng ký">
-                                    <input
-                                        type="datetime-local"
-                                        className="input-field"
-                                        value={form.deadline}
-                                        onChange={(e) =>
-                                            setForm((f) => ({ ...f, deadline: e.target.value }))
+
+                                <Field label="2. Việc xếp hạng các đội" required>
+                                    <RichTextEditor
+                                        value={form.rules.ranking_rules_content}
+                                        onChange={(html) =>
+                                            setRules({ ranking_rules_content: html })
                                         }
+                                        placeholder="Tổng số điểm qua các nội dung thi đấu..."
+                                        minHeight={180}
                                     />
-                                    <p className="text-xs text-gray-400 mt-1.5 leading-snug">
-                                        Sau thời điểm này hệ thống có thể tự đóng đăng ký.
-                                    </p>
                                 </Field>
-                                <ToggleField
-                                    label="Hiển thị danh sách đăng ký"
-                                    checked={form.show_registration_list}
-                                    onChange={(v) =>
-                                        setForm((f) => ({ ...f, show_registration_list: v }))
+                            </div>
+                        </SectionCard>
+
+                        <SectionCard icon="📜" title="VI. LUẬT THI ĐẤU">
+                            <Field label="Nội dung" required>
+                                <RichTextEditor
+                                    value={form.rules.rules_content}
+                                    onChange={(html) => setRules({ rules_content: html })}
+                                    placeholder="Áp dụng Luật Cầu lông hiện hành..."
+                                    minHeight={140}
+                                />
+                            </Field>
+                        </SectionCard>
+
+                        <SectionCard icon="💰" title="LỆ PHÍ">
+                            <Field label="Lệ phí / người">
+                                <input
+                                    type="number"
+                                    min={0}
+                                    className="input-field"
+                                    placeholder="0"
+                                    value={form.entry_fee_per_person}
+                                    onChange={(e) =>
+                                        setForm((f) => ({
+                                            ...f,
+                                            entry_fee_per_person: e.target.value,
+                                        }))
                                     }
                                 />
-                            </SectionCard>
-
-                            <SectionCard title="Ghi chú admin" plain>
-                                <Field label="Ghi chú nội bộ">
-                                    <textarea
-                                        className="input-field"
-                                        rows={4}
-                                        maxLength={300}
-                                        placeholder="Nhập ghi chú..."
-                                        value={form.admin_notes}
-                                        onChange={(e) =>
-                                            setForm((f) => ({ ...f, admin_notes: e.target.value }))
-                                        }
-                                    />
-                                    <p className="text-xs text-gray-400 mt-1 text-right">
-                                        {form.admin_notes.length}/300
-                                    </p>
-                                </Field>
-                            </SectionCard>
-                        </div>
+                            </Field>
+                            <p className="text-xs text-gray-400 mt-1.5">
+                                Áp dụng cho từng người đăng ký cá nhân (không nhân theo cặp).
+                            </p>
+                        </SectionCard>
                     </div>
-                )}
 
-                {activeTab !== "info" && (
-                    <ComingSoonTab label={TABS.find((t) => t.key === activeTab)!.label} />
-                )}
+                    <div className="space-y-4 sm:space-y-6">
+                        <SectionCard title="Thông tin chung" plain>
+                            <Field label="Tên giải đấu" required>
+                                <input
+                                    className="input-field"
+                                    value={form.title}
+                                    onChange={(e) => handleTitleChange(e.target.value)}
+                                />
+                            </Field>
+                            <Field label="Slug (đường dẫn)" required>
+                                <input
+                                    className="input-field"
+                                    placeholder="vd: hung-phat-bnb-cup-2026"
+                                    value={form.slug}
+                                    onChange={(e) => handleSlugChange(e.target.value)}
+                                />
+                            </Field>
+                            <Field label="Emoji">
+                                <input
+                                    className="input-field"
+                                    value={form.emoji}
+                                    maxLength={4}
+                                    onChange={(e) =>
+                                        setForm((f) => ({ ...f, emoji: e.target.value }))
+                                    }
+                                />
+                            </Field>
+                            <Field label="Mô tả ngắn">
+                                <textarea
+                                    className="input-field"
+                                    rows={3}
+                                    maxLength={160}
+                                    value={form.description}
+                                    onChange={(e) =>
+                                        setForm((f) => ({ ...f, description: e.target.value }))
+                                    }
+                                />
+                                <p className="text-xs text-gray-400 mt-1 text-right">
+                                    {form.description.length}/160
+                                </p>
+                            </Field>
+                        </SectionCard>
+
+                        <SectionCard title="Logo giải đấu" plain>
+                            <ImageUploadBox
+                                imageUrl={form.logo_url}
+                                uploading={uploadingLogo}
+                                inputRef={logoInputRef}
+                                objectFit="contain"
+                                onPick={(file) =>
+                                    handleUploadFile(file, "logos", "logo_url", setUploadingLogo)
+                                }
+                            />
+                        </SectionCard>
+
+                        <SectionCard title="Ảnh bìa (Banner)" plain>
+                            <ImageUploadBox
+                                imageUrl={form.cover_image_url}
+                                uploading={uploadingBanner}
+                                inputRef={bannerInputRef}
+                                objectFit="cover"
+                                onPick={(file) =>
+                                    handleUploadFile(
+                                        file,
+                                        "banners",
+                                        "cover_image_url",
+                                        setUploadingBanner,
+                                    )
+                                }
+                            />
+                        </SectionCard>
+
+                        <SectionCard title="Cài đặt hiển thị" plain>
+                            <ToggleField
+                                label="Hiển thị trang chủ"
+                                checked={form.show_on_homepage}
+                                onChange={(v) =>
+                                    setForm((f) => ({ ...f, show_on_homepage: v }))
+                                }
+                            />
+                            <Field label="Thứ tự hiển thị">
+                                <input
+                                    type="number"
+                                    min={0}
+                                    className="input-field"
+                                    value={form.display_order}
+                                    onChange={(e) =>
+                                        setForm((f) => ({ ...f, display_order: e.target.value }))
+                                    }
+                                />
+                            </Field>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Thời gian đăng ký
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <Field label="Từ ngày">
+                                        <input
+                                            type="date"
+                                            className="input-field"
+                                            value={form.registration_start_date}
+                                            onChange={(e) =>
+                                                setForm((f) => ({
+                                                    ...f,
+                                                    registration_start_date: e.target.value,
+                                                }))
+                                            }
+                                        />
+                                    </Field>
+                                    <Field label="Đến ngày">
+                                        <input
+                                            type="date"
+                                            className="input-field"
+                                            value={form.registration_end_date}
+                                            onChange={(e) =>
+                                                setForm((f) => ({
+                                                    ...f,
+                                                    registration_end_date: e.target.value,
+                                                }))
+                                            }
+                                        />
+                                    </Field>
+                                </div>
+                            </div>
+                            <Field label="Ngày chốt danh sách đăng ký">
+                                <input
+                                    type="datetime-local"
+                                    className="input-field"
+                                    value={form.deadline}
+                                    onChange={(e) =>
+                                        setForm((f) => ({ ...f, deadline: e.target.value }))
+                                    }
+                                />
+                                <p className="text-xs text-gray-400 mt-1.5 leading-snug">
+                                    Sau thời điểm này hệ thống có thể tự đóng đăng ký.
+                                </p>
+                            </Field>
+                            <ToggleField
+                                label="Hiển thị danh sách đăng ký"
+                                checked={form.show_registration_list}
+                                onChange={(v) =>
+                                    setForm((f) => ({ ...f, show_registration_list: v }))
+                                }
+                            />
+                        </SectionCard>
+
+                        <SectionCard title="Ghi chú admin" plain>
+                            <Field label="Ghi chú nội bộ">
+                                <textarea
+                                    className="input-field"
+                                    rows={4}
+                                    maxLength={300}
+                                    placeholder="Nhập ghi chú..."
+                                    value={form.admin_notes}
+                                    onChange={(e) =>
+                                        setForm((f) => ({ ...f, admin_notes: e.target.value }))
+                                    }
+                                />
+                                <p className="text-xs text-gray-400 mt-1 text-right">
+                                    {form.admin_notes.length}/300
+                                </p>
+                            </Field>
+                        </SectionCard>
+                    </div>
+                </div>
+
             </div>
+        </div>
+    );
+}
+
+function CompositionGrid({
+    slots,
+    onChange,
+}: {
+    slots: CompositionSlot[];
+    onChange: (index: number, key: string) => void;
+}) {
+    const [displayed, setDisplayed] = useState<
+        { slot: CompositionSlot; index: number; phase: "idle" | "entering" | "leaving" }[]
+    >(slots.map((s, i) => ({ slot: s, index: i, phase: "idle" })));
+    const prevLength = useRef(slots.length);
+
+    useEffect(() => {
+        const prevLen = prevLength.current;
+        const newLen = slots.length;
+
+        if (newLen > prevLen) {
+            setDisplayed((prev) => {
+                const base = prev.map((d, i) => ({ ...d, slot: slots[i] }));
+                const added = slots.slice(prevLen).map((s, i) => ({
+                    slot: s,
+                    index: prevLen + i,
+                    phase: "entering" as const,
+                }));
+                return [...base, ...added];
+            });
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    setDisplayed((prev) =>
+                        prev.map((d) =>
+                            d.phase === "entering" ? { ...d, phase: "idle" } : d,
+                        ),
+                    );
+                });
+            });
+        } else if (newLen < prevLen) {
+            setDisplayed((prev) =>
+                prev.map((d, i) =>
+                    i < newLen ? { ...d, slot: slots[i] } : { ...d, phase: "leaving" },
+                ),
+            );
+            setTimeout(() => {
+                setDisplayed((prev) => prev.filter((d) => d.index < newLen));
+            }, 200);
+        } else {
+            setDisplayed((prev) => prev.map((d, i) => ({ ...d, slot: slots[i] })));
+        }
+
+        prevLength.current = newLen;
+    }, [slots]);
+
+    return (
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            {displayed.map((d) => (
+                <div
+                    key={d.index}
+                    className={`transition-all duration-200 ease-out ${d.phase === "entering"
+                        ? "opacity-0 scale-90"
+                        : d.phase === "leaving"
+                            ? "opacity-0 scale-90 pointer-events-none"
+                            : "opacity-100 scale-100"
+                        }`}
+                >
+                    <CompositionSlotCard
+                        slot={d.slot}
+                        onChange={(key) => onChange(d.index, key)}
+                    />
+                </div>
+            ))}
         </div>
     );
 }
@@ -1352,17 +1400,5 @@ function OnePersonIcon() {
             <circle cx="12" cy="7" r="4" />
             <path d="M12 13c-5 0-9 2.5-9 6v2h18v-2c0-3.5-4-6-9-6z" />
         </svg>
-    );
-}
-
-function ComingSoonTab({ label }: { label: string }) {
-    return (
-        <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-400">
-            <p className="text-sm">
-                Tab <span className="font-medium text-gray-500">"{label}"</span> chưa có
-                dữ liệu tương ứng ở backend (chưa có cột/field lưu trữ), nên chưa hiển
-                thị nội dung ở đây để tránh mất dữ liệu khi lưu.
-            </p>
-        </div>
     );
 }
