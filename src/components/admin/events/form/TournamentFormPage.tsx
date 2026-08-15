@@ -212,7 +212,7 @@ const initialForm: TournamentFormState = {
     format_type: "doi_bong",
     event_date: "",
     deadline: "",
-    status: "open", // tạo mới luôn mở đăng ký, không cho chọn nữa
+    status: "open",
     location: "",
     description: "",
     cover_image_url: "",
@@ -234,7 +234,6 @@ const HIDE_SCROLLBAR_CLASS =
     "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
 interface TournamentFormPageProps {
-    /** Có id ⇒ chế độ sửa; không có id ⇒ chế độ tạo mới */
     id?: string;
 }
 
@@ -577,10 +576,11 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
     const canToggleRegistration = !!id && ["open", "closed"].includes(form.status);
 
     return (
-        <div className="w-full h-screen flex flex-col bg-[#F4F6FA]">
-            {/* ── Header + Tabs: cố định, không cuộn ── */}
+        <div
+            className="flex-shrink-0 bg-[#F4F6FA] px-4 sm:px-6 pt-4 sm:pt-6"
+            style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}
+        >
             <div className="flex-shrink-0 bg-[#F4F6FA] px-4 sm:px-6 pt-4 sm:pt-6">
-                {/* ── Header ── */}
                 <div className="mb-5 sm:mb-6 space-y-3 sm:space-y-0">
                     <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
@@ -596,7 +596,6 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                             </h1>
                         </div>
 
-                        {/* Desktop */}
                         <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                             {canToggleRegistration && (
                                 <button
@@ -625,7 +624,6 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                         </div>
                     </div>
 
-                    {/* Mobile */}
                     <div className="flex sm:hidden items-center gap-2">
                         {canToggleRegistration && (
                             <button
@@ -650,7 +648,6 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                     </div>
                 </div>
 
-                {/* ── Tabs ── */}
                 <div
                     className={`flex gap-4 sm:gap-6 border-b border-gray-200 overflow-x-auto overflow-y-hidden ${HIDE_SCROLLBAR_CLASS}`}
                 >
@@ -669,7 +666,6 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                 </div>
             </div>
 
-            {/* ── Nội dung: vùng duy nhất được cuộn ── */}
             <div
                 className={`flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 pt-5 sm:pt-6 ${HIDE_SCROLLBAR_CLASS}`}
             >
