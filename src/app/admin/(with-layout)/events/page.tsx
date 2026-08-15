@@ -648,3 +648,4 @@ export default function ActivitiesListPage() {
 
 
 // hiển thị khung xám nhấp nháy mô phỏng đúng cấu trúc bảng (desktop) và card (mobile), giúp cảm giác load mượt và ít giật hơn.
+// ls -R app/admin
