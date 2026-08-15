@@ -106,6 +106,20 @@ const defaultRules = (): RulesState => ({
     rules_content: "",
 });
 
+function toLocalInputValue(isoUtc: string): string {
+    const d = new Date(isoUtc);
+    if (isNaN(d.getTime())) return "";
+    const offsetMs = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function toUtcIso(localValue: string): string | undefined {
+    if (!localValue) return undefined;
+    const d = new Date(localValue);
+    if (isNaN(d.getTime())) return undefined;
+    return d.toISOString();
+}
+
 function slugify(input: string): string {
     return input
         .normalize("NFD")
@@ -225,6 +239,10 @@ const initialForm: TournamentFormState = {
     rules: defaultRules(),
 };
 
+// Utility className để ẩn thanh scroll (ngang + dọc) mà vẫn scroll được bằng tay/trackpad
+const HIDE_SCROLLBAR_CLASS =
+    "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
+
 export default function TournamentFormPage() {
     const params = useParams<{ id: string }>();
     const router = useRouter();
@@ -294,8 +312,8 @@ export default function TournamentFormPage() {
                     slug: data.slug ?? "",
                     emoji: data.emoji ?? "🏆",
                     format_type: detail.format_type === "don" ? "don" : "doi_bong",
-                    event_date: data.event_date ? data.event_date.slice(0, 16) : "",
-                    deadline: data.deadline ? data.deadline.slice(0, 16) : "",
+                    event_date: data.event_date ? toLocalInputValue(data.event_date) : "",
+                    deadline: data.deadline ? toLocalInputValue(data.deadline) : "",
                     status: data.status ?? "draft",
                     location: data.location ?? "",
                     description: data.description ?? "",
@@ -472,8 +490,8 @@ export default function TournamentFormPage() {
                 title: form.title,
                 slug: form.slug || undefined,
                 emoji: form.emoji,
-                event_date: form.event_date,
-                deadline: form.deadline || undefined,
+                event_date: toUtcIso(form.event_date),
+                deadline: form.deadline ? toUtcIso(form.deadline) : undefined,
                 status: statusOverride ?? form.status,
                 location: form.location || undefined,
                 description: form.description || undefined,
@@ -544,50 +562,82 @@ export default function TournamentFormPage() {
         );
 
     return (
-        <div className="w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={handleClose}
-                        className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-                        aria-label="Quay lại"
-                    >
-                        ←
-                    </button>
-                    <h1 className="text-lg font-bold text-gray-900">
-                        {id ? "Chỉnh sửa giải đấu" : "Tạo giải đấu"}
-                    </h1>
+        <div className="w-full p-4 sm:p-6">
+            {/* ── Header: back+title trên, hàng nút riêng ở dưới trên mobile ── */}
+            <div className="mb-5 sm:mb-6 space-y-3 sm:space-y-0">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <button
+                            onClick={handleClose}
+                            className="text-gray-400 hover:text-gray-600 text-xl leading-none flex-shrink-0"
+                            aria-label="Quay lại"
+                        >
+                            ←
+                        </button>
+                        <h1 className="text-lg font-bold text-gray-900 truncate">
+                            {id ? "Chỉnh sửa giải đấu" : "Tạo giải đấu"}
+                        </h1>
+                    </div>
+
+                    {/* Desktop: nút nằm cùng hàng với title */}
+                    <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+                        <button
+                            onClick={handleClose}
+                            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            disabled={saving}
+                            onClick={() => handleSubmit("draft")}
+                            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                            Lưu nháp
+                        </button>
+                        <button
+                            disabled={saving}
+                            onClick={() => handleSubmit("open")}
+                            className="btn-primary disabled:opacity-50"
+                        >
+                            {saving ? "Đang lưu..." : "Xuất bản"}
+                        </button>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                {/* Mobile: hàng nút riêng, chia đều full-width */}
+                <div className="flex sm:hidden items-center gap-2">
                     <button
                         onClick={handleClose}
-                        className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                        className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 text-center"
                     >
                         Hủy
                     </button>
                     <button
                         disabled={saving}
                         onClick={() => handleSubmit("draft")}
-                        className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                        className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 text-center"
                     >
                         Lưu nháp
                     </button>
                     <button
                         disabled={saving}
                         onClick={() => handleSubmit("open")}
-                        className="btn-primary disabled:opacity-50"
+                        className="btn-primary flex-1 disabled:opacity-50 text-center"
                     >
                         {saving ? "Đang lưu..." : "Xuất bản"}
                     </button>
                 </div>
             </div>
 
-            <div className="flex gap-6 border-b border-gray-200 mb-6 overflow-x-auto">
+            {/* ── Tabs: ẩn thanh scroll ngang, vẫn vuốt được ── */}
+            <div
+                className={`flex gap-4 sm:gap-6 border-b border-gray-200 mb-5 sm:mb-6 overflow-x-auto overflow-y-hidden ${HIDE_SCROLLBAR_CLASS}`}
+            >
                 {TABS.map((tab) => (
                     <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
-                        className={`pb-3 text-sm font-medium whitespace-nowrap border-b-2 -mb-px ${activeTab === tab.key
+                        className={`pb-3 text-sm font-medium whitespace-nowrap border-b-2 -mb-px flex-shrink-0 ${activeTab === tab.key
                             ? "border-blue-600 text-blue-600"
                             : "border-transparent text-gray-500 hover:text-gray-700"
                             }`}
@@ -598,10 +648,10 @@ export default function TournamentFormPage() {
             </div>
 
             {activeTab === "info" && (
-                <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6">
-                    <div className="space-y-6 min-w-0">
+                <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-4 sm:gap-6">
+                    <div className="space-y-4 sm:space-y-6 min-w-0">
                         <SectionCard icon="📅" title="I. THỜI GIAN – ĐỊA ĐIỂM">
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="Thời gian" required>
                                     <input
                                         type="datetime-local"
@@ -626,7 +676,7 @@ export default function TournamentFormPage() {
                         </SectionCard>
 
                         <SectionCard icon="👥" title="II. HÌNH THỨC VÀ ĐỐI TƯỢNG THAM GIA">
-                            <div className="grid grid-cols-2 gap-3 mb-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
                                 <Field label="Hình thức thi đấu" required>
                                     <CustomSelect
                                         value={form.format_type}
@@ -667,7 +717,7 @@ export default function TournamentFormPage() {
 
                             {form.format_type === "doi_bong" && (
                                 <>
-                                    <div className="flex items-center justify-between mb-2">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                                         <label className="text-sm font-medium text-gray-700">
                                             Thành phần mỗi đội <span className="text-red-500">*</span>
                                         </label>
@@ -688,7 +738,7 @@ export default function TournamentFormPage() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3">
                                         {form.composition.map((slot, i) => (
                                             <CompositionSlotCard
                                                 key={i}
@@ -739,7 +789,7 @@ export default function TournamentFormPage() {
                                             key={item.id}
                                             className="flex items-center gap-3 rounded-xl border border-gray-200 p-3"
                                         >
-                                            <span className="text-gray-300 cursor-grab select-none">
+                                            <span className="text-gray-300 cursor-grab select-none hidden sm:inline">
                                                 ⠿
                                             </span>
                                             <div
@@ -888,7 +938,7 @@ export default function TournamentFormPage() {
                         </SectionCard>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                         <SectionCard title="Thông tin chung" plain>
                             <Field label="Tên giải đấu" required>
                                 <input
@@ -990,7 +1040,7 @@ export default function TournamentFormPage() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Thời gian đăng ký
                                 </label>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <Field label="Từ ngày">
                                         <input
                                             type="date"
@@ -1084,8 +1134,8 @@ function SectionCard({
         <div
             className={
                 plain
-                    ? "bg-white rounded-xl border border-gray-200 p-5"
-                    : "bg-white rounded-xl border border-gray-200 p-5"
+                    ? "bg-white rounded-xl border border-gray-200 p-4 sm:p-5"
+                    : "bg-white rounded-xl border border-gray-200 p-4 sm:p-5"
             }
         >
             <h2 className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-4 tracking-wide">

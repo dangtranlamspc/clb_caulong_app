@@ -25,6 +25,9 @@ import { eventsAdminApi, walletAdminApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import { createPortal } from "react-dom";
 
+const HIDE_SCROLLBAR_CLASS =
+  "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
+
 function useCountUp(target: number, duration = 900) {
   const [value, setValue] = useState(0);
 
@@ -128,7 +131,7 @@ function levelPillStyle(level?: string | null) {
 
 function SkeletonStatCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 animate-pulse">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 animate-pulse">
       <div className="flex items-start justify-between mb-3">
         <div className="h-3 bg-gray-100 rounded w-16" />
         <div className="w-9 h-9 rounded-xl bg-gray-100" />
@@ -181,7 +184,7 @@ function SkeletonTableRow() {
 
 function SkeletonFilterBar() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 animate-pulse">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 animate-pulse">
       <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
         <div className="md:col-span-2 h-10 bg-gray-100 rounded-lg" />
         <div className="h-10 bg-gray-100 rounded-lg" />
@@ -196,7 +199,7 @@ function SkeletonFilterBar() {
 function SkeletonRightPanel() {
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse space-y-3">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-40" />
         <div className="h-3 bg-gray-100 rounded w-full" />
         <div className="h-3 bg-gray-100 rounded w-3/4" />
@@ -207,7 +210,7 @@ function SkeletonRightPanel() {
         </div>
         <div className="h-10 bg-gray-100 rounded-lg mt-3" />
       </div>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 animate-pulse">
         <div className="h-4 bg-gray-100 rounded w-44 mb-4" />
         <div className="flex items-center gap-5">
           <div className="w-24 h-24 rounded-full bg-gray-100 flex-shrink-0" />
@@ -319,12 +322,12 @@ function RegistrationDetailModal({
       }}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transition-all duration-200 ease-out ${visible
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto transition-all duration-200 ease-out ${visible
           ? "opacity-100 scale-100 translate-y-0"
           : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100">
           <h3 className="font-bold text-gray-900">
             {mode === "edit" ? "Chỉnh sửa đăng ký" : "Chi tiết đăng ký"}
           </h3>
@@ -336,7 +339,7 @@ function RegistrationDetailModal({
           </button>
         </div>
 
-        <div className="p-5 space-y-5">
+        <div className="p-4 sm:p-5 space-y-5">
           <div className="flex flex-col items-center text-center gap-2">
             <img
               src={
@@ -446,7 +449,7 @@ function RegistrationDetailModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-t border-gray-100">
           <button
             onClick={handleClose}
             className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
@@ -610,7 +613,7 @@ function AdminAddTournamentRegistrationModal({
           : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100">
           <h3 className="font-bold text-gray-900">Thêm đăng ký thi đấu</h3>
           <button
             onClick={handleClose}
@@ -620,7 +623,7 @@ function AdminAddTournamentRegistrationModal({
           </button>
         </div>
 
-        <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div className="p-4 sm:p-5 space-y-4 max-h-[70vh] overflow-y-auto">
           {/* Tab switcher giữ nguyên */}
           <div className="relative flex rounded-lg border border-gray-200 overflow-hidden text-sm bg-gray-50 p-0.5">
             <div
@@ -632,7 +635,7 @@ function AdminAddTournamentRegistrationModal({
             <button
               type="button"
               onClick={() => setMode("member")}
-              className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors duration-300 ${mode === "member" ? "text-white" : "text-gray-600 hover:text-gray-900"
+              className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors duration-300 text-xs sm:text-sm ${mode === "member" ? "text-white" : "text-gray-600 hover:text-gray-900"
                 }`}
             >
               Thành viên (có tài khoản)
@@ -640,7 +643,7 @@ function AdminAddTournamentRegistrationModal({
             <button
               type="button"
               onClick={() => setMode("guest")}
-              className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors duration-300 ${mode === "guest" ? "text-white" : "text-gray-600 hover:text-gray-900"
+              className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors duration-300 text-xs sm:text-sm ${mode === "guest" ? "text-white" : "text-gray-600 hover:text-gray-900"
                 }`}
             >
               Khách (không tài khoản)
@@ -654,16 +657,16 @@ function AdminAddTournamentRegistrationModal({
                   Tìm thành viên
                 </label>
                 {selectedMember ? (
-                  <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-blue-200 bg-blue-50">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
                         {selectedMember.full_name}
                       </p>
                       <p className="text-xs text-gray-400">{selectedMember.phone}</p>
                     </div>
                     <button
                       onClick={() => setSelectedMember(null)}
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs text-blue-600 hover:underline flex-shrink-0"
                     >
                       Đổi
                     </button>
@@ -685,10 +688,10 @@ function AdminAddTournamentRegistrationModal({
                           <button
                             key={m.id}
                             onClick={() => handleSelectMember(m)}
-                            className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-gray-50"
+                            className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-gray-50"
                           >
-                            <span className="text-sm text-gray-900">{m.full_name}</span>
-                            <span className="text-xs text-gray-400">{m.phone}</span>
+                            <span className="text-sm text-gray-900 truncate">{m.full_name}</span>
+                            <span className="text-xs text-gray-400 flex-shrink-0">{m.phone}</span>
                           </button>
                         ))}
                       </div>
@@ -705,7 +708,7 @@ function AdminAddTournamentRegistrationModal({
                     onChange={(e) => setGuestName(e.target.value)}
                   />
                 </Field>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Field label="SĐT">
                     <input
                       className="input-field transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
@@ -736,7 +739,7 @@ function AdminAddTournamentRegistrationModal({
             )}
           </FadeSwitch>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Vai trò" required>
               <CustomSelect
                 value={role}
@@ -775,7 +778,7 @@ function AdminAddTournamentRegistrationModal({
           </Field>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-t border-gray-100">
           <button
             onClick={handleClose}
             className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
@@ -1147,7 +1150,7 @@ export default function TournamentRegistrationsPage() {
 
   if (loading) {
     return (
-      <div className="w-full p-6 space-y-5 bg-gray-50 min-h-screen">
+      <div className="w-full p-4 sm:p-6 space-y-4 sm:space-y-5 bg-gray-50 min-h-screen">
         <div className="flex items-center gap-1.5 animate-pulse">
           <div className="h-3.5 bg-gray-100 rounded w-16" />
           <ChevronRight className="w-3.5 h-3.5 text-gray-200" />
@@ -1168,13 +1171,13 @@ export default function TournamentRegistrationsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5 sm:gap-3">
           {Array.from({ length: 7 }).map((_, i) => (
             <SkeletonStatCard key={i} />
           ))}
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 sm:gap-6">
           <div className="space-y-4 min-w-0">
             <SkeletonFilterBar />
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -1210,62 +1213,65 @@ export default function TournamentRegistrationsPage() {
   }
 
   return (
-    <div className="w-full p-6 space-y-5 bg-gray-50 min-h-screen">
-      <div className="flex items-center gap-1.5 text-sm text-gray-400">
+    <div className="w-full p-4 sm:p-6 space-y-4 sm:space-y-5 bg-gray-50 min-h-screen">
+      <div className="flex items-center gap-1.5 text-sm text-gray-400 min-w-0">
         <button
           onClick={() => router.push("/activities")}
-          className="hover:text-gray-600 transition-colors"
+          className="hover:text-gray-600 transition-colors flex-shrink-0"
         >
           Giải đấu
         </button>
-        <ChevronRight className="w-3.5 h-3.5" />
-        <span className="text-gray-500">{activity?.title}</span>
-        <ChevronRight className="w-3.5 h-3.5" />
-        <span className="text-gray-900 font-medium">Quản lý đăng ký</span>
+        <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+        <span className="text-gray-500 truncate min-w-0">{activity?.title}</span>
+        <ChevronRight className="w-3.5 h-3.5 flex-shrink-0 hidden sm:block" />
+        <span className="text-gray-900 font-medium flex-shrink-0 hidden sm:inline">
+          Quản lý đăng ký
+        </span>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Vận động viên đăng ký
-          </h1>
-          <span
-            className="text-xs font-semibold px-3 py-1.5 rounded-full border"
-            style={{
-              background: STATUS_COLORS[activity?.status]?.bg ?? "#f3f4f6",
-              color: STATUS_COLORS[activity?.status]?.text ?? "#6b7280",
-              borderColor: STATUS_COLORS[activity?.status]?.border ?? "#e5e7eb",
-            }}
-          >
-            {STATUS_LABEL[activity?.status] ?? activity?.status}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 border border-green-100 text-sm">
-            <span className="text-green-600 font-medium">Doanh thu:</span>
-            <span className="text-green-700 font-bold tabular-nums">
-              {stats.revenue.toLocaleString("vi-VN")}đ
-            </span>
-          </div>
+      <div className="flex items-center gap-3 flex-wrap">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          Vận động viên đăng ký
+        </h1>
+        <span
+          className="text-xs font-semibold px-3 py-1.5 rounded-full border flex-shrink-0"
+          style={{
+            background: STATUS_COLORS[activity?.status]?.bg ?? "#f3f4f6",
+            color: STATUS_COLORS[activity?.status]?.text ?? "#6b7280",
+            borderColor: STATUS_COLORS[activity?.status]?.border ?? "#e5e7eb",
+          }}
+        >
+          {STATUS_LABEL[activity?.status] ?? activity?.status}
+        </span>
+      </div>
 
+      <div className="flex flex-col gap-2">
+        <div
+          className={`flex items-center gap-2 overflow-x-auto sm:overflow-visible -mx-4 px-4 sm:mx-0 sm:px-0 justify-end ${HIDE_SCROLLBAR_CLASS}`}
+        >
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm shadow-blue-200 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm shadow-blue-200 transition-colors flex-shrink-0"
           >
             <Plus className="w-4 h-4" /> Thêm đăng ký
           </button>
 
-
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm">
-            <Download className="w-4 h-4" /> Xuất danh sách
+          <button
+            title="Xuất danh sách"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm flex-shrink-0"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Xuất danh sách</span>
           </button>
 
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <button
+              title="Tạo link công khai"
               onClick={() => setPublicLinkOpen((v) => !v)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors shadow-sm"
             >
-              <Link2 className="w-4 h-4" /> Tạo link công khai
+              <Link2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Tạo link công khai</span>
             </button>
 
             {publicLinkOpen && (
@@ -1279,8 +1285,7 @@ export default function TournamentRegistrationsPage() {
                 fixed left-4 right-4 top-1/2 -translate-y-1/2 z-50
                 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:translate-y-0
                 sm:mt-2 sm:w-80
-                bg-white rounded-2xl border border-gray-100 shadow-xl p-4
-            "
+                bg-white rounded-2xl border border-gray-100 shadow-xl p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-bold text-gray-900">
@@ -1339,14 +1344,23 @@ export default function TournamentRegistrationsPage() {
               </>
             )}
           </div>
+          <div className="w-1 flex-shrink-0 sm:hidden" aria-hidden />
+        </div>
 
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm">
-            <Filter className="w-4 h-4" /> Bộ lọc
-          </button>
+        {/* Doanh thu: hàng riêng bên dưới, căn sang phải */}
+        <div className="flex justify-end">
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 border border-green-100 text-sm">
+            <span className="text-green-600 font-medium">
+              Doanh thu:
+            </span>
+            <span className="text-green-700 font-bold tabular-nums">
+              {stats.revenue.toLocaleString("vi-VN")}đ
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5 sm:gap-3">
         <StatCard
           label="Tổng số đăng ký"
           value={stats.total}
@@ -1401,9 +1415,9 @@ export default function TournamentRegistrationsPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 sm:gap-6">
         <div className="space-y-4 min-w-0">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
               <div className="md:col-span-3">
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">
@@ -1793,7 +1807,7 @@ export default function TournamentRegistrationsPage() {
               )}
             </div>
 
-            <div className="flex items-center justify-between px-4 py-3.5 border-t border-gray-100 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-3 sm:py-3.5 border-t border-gray-100 text-xs sm:text-sm text-gray-500">
               <span>
                 Hiển thị {(page - 1) * PAGE_SIZE + 1} -{" "}
                 {Math.min(page * PAGE_SIZE, filtered.length)} trong tổng số{" "}
@@ -1846,7 +1860,7 @@ export default function TournamentRegistrationsPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
                 <Users className="w-4 h-4 text-emerald-600" />
@@ -1981,38 +1995,44 @@ export default function TournamentRegistrationsPage() {
         )
       }
 
-      {showAddModal && createPortal(
-        <AdminAddTournamentRegistrationModal
-          activityId={id!}
-          onClose={() => setShowAddModal(false)}
-          onAdded={load}
-        />,
-        document.body
-      )}
+      {
+        showAddModal && createPortal(
+          <AdminAddTournamentRegistrationModal
+            activityId={id!}
+            onClose={() => setShowAddModal(false)}
+            onAdded={load}
+          />,
+          document.body
+        )
+      }
 
-      {showTeamsModal && createPortal(
-        <TeamsModal
-          teams={teams}
-          unassigned={unassigned}
-          loading={loadingTeams}
-          clearing={clearingTeams}
-          exporting={exportingTeams}
-          onClose={() => setShowTeamsModal(false)}
-          onClear={handleClearTeams}
-          onExport={handleExportTeamsExcel}
-        />,
-        document.body
-      )}
+      {
+        showTeamsModal && createPortal(
+          <TeamsModal
+            teams={teams}
+            unassigned={unassigned}
+            loading={loadingTeams}
+            clearing={clearingTeams}
+            exporting={exportingTeams}
+            onClose={() => setShowTeamsModal(false)}
+            onClear={handleClearTeams}
+            onExport={handleExportTeamsExcel}
+          />,
+          document.body
+        )
+      }
 
 
-      {statModal && createPortal(
-        <StatMembersModal
-          title={statModal.title}
-          items={statModal.items}
-          onClose={() => setStatModal(null)}
-        />,
-        document.body
-      )}
+      {
+        statModal && createPortal(
+          <StatMembersModal
+            title={statModal.title}
+            items={statModal.items}
+            onClose={() => setStatModal(null)}
+          />,
+          document.body
+        )
+      }
 
     </div >
   );
@@ -2049,7 +2069,7 @@ function StatMembersModal({
           : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0">
           <h3 className="font-bold text-gray-900">
             {title} <span className="text-gray-400 font-normal">({items.length})</span>
           </h3>
@@ -2068,7 +2088,7 @@ function StatMembersModal({
             </p>
           ) : (
             items.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 px-5 py-3">
+              <div key={r.id} className="flex items-center gap-3 px-4 sm:px-5 py-3">
                 <img
                   src={
                     r.users?.avatar_url ||
@@ -2118,7 +2138,7 @@ function StatMembersModal({
           )}
         </div>
 
-        <div className="flex items-center justify-end px-5 py-3.5 border-t border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-end px-4 sm:px-5 py-3 sm:py-3.5 border-t border-gray-100 flex-shrink-0">
           <button
             onClick={handleClose}
             className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
@@ -2174,23 +2194,23 @@ function TeamsModal({
           : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-          <h3 className="font-bold text-gray-900">
+        <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0">
+          <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
             Kết quả chia đội {teams.length > 0 && `(${teams.length} đội)`}
           </h3>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={onExport}
               disabled={!hasData || exporting}
               title="Xuất Excel"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {exporting ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <Download className="w-3.5 h-3.5" />
               )}
-              Xuất Excel
+              <span className="hidden sm:inline">Xuất Excel</span>
             </button>
             <button
               onClick={handleClose}
@@ -2201,7 +2221,7 @@ function TeamsModal({
           </div>
         </div>
 
-        <div className="p-5 overflow-y-auto flex-1 min-h-0">
+        <div className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0">
           {loading ? (
             <div className="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
               <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
@@ -2315,11 +2335,11 @@ function TeamsModal({
           )}
         </div>
 
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 sm:py-3.5 border-t border-gray-100 flex-shrink-0">
           <button
             onClick={onClear}
             disabled={clearing || !hasData}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {clearing ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -2367,30 +2387,32 @@ function StatCard({
     <button
       type="button"
       onClick={onClick}
-      className="text-left w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
+      className="text-left w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
     >
-      <div className="flex items-start justify-between mb-2.5">
-        <p className="text-xs text-gray-400 font-medium">{label}</p>
+      <div className="flex items-start justify-between mb-2 sm:mb-2.5">
+        <p className="text-[11px] sm:text-xs text-gray-400 font-medium truncate pr-1">
+          {label}
+        </p>
         {pill ? (
           <span
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
+            className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
             style={{ background: pill.bg, color: pill.text }}
           >
             {pillLevel}
           </span>
         ) : (
           <span
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+            className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center text-sm sm:text-base flex-shrink-0"
             style={{ background: iconBg }}
           >
             {icon}
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-gray-900 tabular-nums">
+      <p className="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">
         {Math.round(animatedValue)}
       </p>
-      <p className="text-xs text-gray-400 mt-0.5 tabular-nums">
+      <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 tabular-nums">
         {subPercent !== undefined ? `(${animatedPercent.toFixed(2)}%)` : sub}
       </p>
     </button>
@@ -2410,7 +2432,7 @@ function LevelDonutCard({ stats }: { stats: any }) {
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
       <h3 className="font-bold text-gray-900 mb-4 text-sm">
         Thống kê phân bố trình độ
       </h3>

@@ -18,6 +18,7 @@ import {
   Banknote,
   Copy,
   CheckCircle2,
+  ArrowLeft,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { activitiesApi, profileApi, usersApi } from "@/lib/api";
@@ -332,51 +333,55 @@ export default function TournamentRegisterPage() {
     (entryFee === 0 && !!registration);
 
   return (
-    <div
-      className="min-h-screen bg-[#F4F6FA] p-4 md:p-8 pt-12 md:pt-8"
-    >
-      <div className="max-w-6xl mx-auto space-y-5">
-        <div className="flex items-center gap-1.5 text-sm text-gray-400">
-          <span>Giải đấu</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span>{activity.title}</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-gray-900 font-medium">Đăng ký thi đấu</span>
+    <div className="min-h-screen bg-[#F4F6FA] p-4 sm:p-6 md:p-8 pt-6 sm:pt-8">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-5">
+        {/* ── Breadcrumb: ẩn bớt phần đuôi trên mobile để không tràn dòng ── */}
+        <div className="flex items-center gap-1.5 text-sm text-gray-400 min-w-0">
+          <span className="flex-shrink-0">Giải đấu</span>
+          <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="truncate min-w-0">{activity.title}</span>
+          <ChevronRight className="w-3.5 h-3.5 flex-shrink-0 hidden sm:block" />
+          <span className="text-gray-900 font-medium flex-shrink-0 hidden sm:inline">
+            Đăng ký thi đấu
+          </span>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           Đăng ký thi đấu cá nhân
         </h1>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        {/* ── Step indicator: luôn hiển thị tiêu đề bước, không để trống trên mobile ── */}
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm">
           <div className="flex items-center">
             {STEPS.map((s, i) => (
               <div
                 key={s.key}
                 className="flex items-center flex-1 last:flex-none"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${step >= s.key
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${step >= s.key
                       ? "bg-blue-600 text-white"
                       : "bg-gray-100 text-gray-400"
                       }`}
                   >
                     {s.key}
                   </div>
-                  <div className="hidden sm:block">
+                  <div className="min-w-0">
                     <p
-                      className={`text-sm font-semibold ${step >= s.key ? "text-gray-900" : "text-gray-400"
+                      className={`text-xs sm:text-sm font-semibold truncate ${step >= s.key ? "text-gray-900" : "text-gray-400"
                         }`}
                     >
                       {s.title}
                     </p>
-                    <p className="text-xs text-gray-400">{s.sub}</p>
+                    <p className="hidden sm:block text-xs text-gray-400 truncate">
+                      {s.sub}
+                    </p>
                   </div>
                 </div>
                 {i < STEPS.length - 1 && (
                   <div
-                    className={`flex-1 h-0.5 mx-3 ${step > s.key ? "bg-blue-600" : "bg-gray-100"
+                    className={`flex-1 h-0.5 mx-2.5 sm:mx-3 ${step > s.key ? "bg-blue-600" : "bg-gray-100"
                       }`}
                   />
                 )}
@@ -385,16 +390,16 @@ export default function TournamentRegisterPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] items-start gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] items-start gap-4 sm:gap-5">
           {/* Cột phải (desktop): sidebar — chiều cao độc lập với cột trái */}
           <div className="contents lg:flex lg:flex-col lg:gap-5 lg:col-start-2 lg:row-start-1">
             {/* ── Nhóm 1 (mobile): Thông tin giải đấu + Lệ phí ── */}
-            <div className="space-y-5 order-1 lg:order-none">
-              <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
+            <div className="space-y-4 sm:space-y-5 order-1 lg:order-none">
+              <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
                 <p className="font-bold text-gray-900 text-sm">
                   Thông tin giải đấu
                 </p>
-                <div className="rounded-xl overflow-hidden h-28 bg-gray-100">
+                <div className="rounded-xl overflow-hidden h-24 sm:h-28 bg-gray-100">
                   {activity.cover_image_url && (
                     <img
                       src={activity.cover_image_url}
@@ -430,11 +435,11 @@ export default function TournamentRegisterPage() {
               </div>
 
               {entryFee > 0 && (
-                <div className="bg-white rounded-2xl p-5 shadow-sm space-y-1">
+                <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-1">
                   <p className="font-bold text-gray-900 text-sm mb-1">
                     Lệ phí thi đấu
                   </p>
-                  <p className="text-2xl font-black text-red-600">
+                  <p className="text-xl sm:text-2xl font-black text-red-600">
                     {fmt(entryFee)}{" "}
                     <span className="text-sm font-medium text-gray-400">
                       / người
@@ -452,7 +457,7 @@ export default function TournamentRegisterPage() {
 
             {/* ── Nhóm 3 (mobile): Thông tin đăng ký ── */}
             <div className="order-3 lg:order-none">
-              <div className="bg-white rounded-2xl p-5 shadow-sm space-y-2.5">
+              <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-2.5">
                 <p className="font-bold text-gray-900 text-sm">
                   Thông tin đăng ký
                 </p>
@@ -481,7 +486,7 @@ export default function TournamentRegisterPage() {
 
             {/* ── Nhóm 5 (mobile): Bạn cần hỗ trợ ── */}
             <div className="order-5 lg:order-none">
-              <div className="bg-blue-50 rounded-2xl p-5 space-y-2">
+              <div className="bg-blue-50 rounded-2xl p-4 sm:p-5 space-y-2">
                 <p className="font-bold text-gray-900 text-sm">Bạn cần hỗ trợ?</p>
                 <p className="text-xs text-blue-700 leading-relaxed">
                   Liên hệ BTC qua số điện thoại hoặc Fanpage để được hỗ trợ nhanh
@@ -497,9 +502,9 @@ export default function TournamentRegisterPage() {
           {/* Cột trái (desktop): form + nút điều hướng — chiều cao độc lập với cột phải */}
           <div className="contents lg:flex lg:flex-col lg:gap-5 lg:col-start-1 lg:row-start-1">
             {/* ── Nhóm 2 (mobile): Nội dung form theo bước ── */}
-            <div className="space-y-5 min-w-0 order-2 lg:order-none">
+            <div className="space-y-4 sm:space-y-5 min-w-0 order-2 lg:order-none">
               {step === 1 && (
-                <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
                   <SectionTitle
                     icon={<User className="w-4 h-4" />}
                     title="Thông tin cá nhân"
@@ -523,10 +528,10 @@ export default function TournamentRegisterPage() {
                             />
                           )}
                         </div>
-                        <span className="flex-1 text-sm font-medium text-gray-900">
+                        <span className="flex-1 min-w-0 truncate text-sm font-medium text-gray-900">
                           {form.full_name}
                         </span>
-                        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex-shrink-0">
                           Thành viên
                         </span>
                         <button
@@ -535,7 +540,7 @@ export default function TournamentRegisterPage() {
                             e.stopPropagation();
                             clearMember();
                           }}
-                          className="text-gray-300 hover:text-red-500"
+                          className="text-gray-300 hover:text-red-500 flex-shrink-0"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -543,7 +548,7 @@ export default function TournamentRegisterPage() {
                     ) : (
                       <div className="flex gap-2">
                         <input
-                          className="input-field flex-1"
+                          className="input-field flex-1 min-w-0"
                           placeholder="Nhập họ và tên"
                           value={form.full_name}
                           onChange={(e) =>
@@ -625,7 +630,7 @@ export default function TournamentRegisterPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Trình độ hiện tại <span className="text-red-500">*</span>
                     </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                       {LEVEL_OPTIONS.map((lv) => (
                         <button
                           key={lv.value}
@@ -633,26 +638,28 @@ export default function TournamentRegisterPage() {
                           onClick={() =>
                             setForm((f) => ({ ...f, level: lv.value as any }))
                           }
-                          className={`relative rounded-2xl border-2 p-3 text-center transition-colors ${form.level === lv.value
+                          className={`relative rounded-2xl border-2 p-2.5 sm:p-3 text-center transition-colors ${form.level === lv.value
                             ? "border-blue-500 bg-blue-50/40"
                             : "border-gray-200"
                             }`}
                         >
                           {form.level === lv.value && (
-                            <span className="absolute top-2 right-2 w-4 h-4 rounded bg-blue-600 flex items-center justify-center">
+                            <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-4 h-4 rounded bg-blue-600 flex items-center justify-center">
                               <CheckCircle2 className="w-3 h-3 text-white" />
                             </span>
                           )}
                           <span
-                            className="w-9 h-9 mx-auto rounded-full flex items-center justify-center text-sm font-bold mb-1.5"
+                            className="w-8 h-8 sm:w-9 sm:h-9 mx-auto rounded-full flex items-center justify-center text-sm font-bold mb-1.5"
                             style={{ background: lv.bg, color: lv.color }}
                           >
                             {lv.value}
                           </span>
-                          <p className="text-sm font-semibold text-gray-800">
+                          <p className="text-xs sm:text-sm font-semibold text-gray-800">
                             {lv.label}
                           </p>
-                          <p className="text-xs text-gray-400">{lv.sub}</p>
+                          <p className="text-[11px] sm:text-xs text-gray-400">
+                            {lv.sub}
+                          </p>
                         </button>
                       ))}
                     </div>
@@ -683,7 +690,7 @@ export default function TournamentRegisterPage() {
                           onClick={() =>
                             setForm((f) => ({ ...f, role: r.value }))
                           }
-                          className={`flex items-center gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors ${form.role === r.value
+                          className={`flex items-center gap-3 rounded-2xl border-2 p-3 sm:p-3.5 text-left transition-colors ${form.role === r.value
                             ? "border-blue-500 bg-blue-50/40"
                             : "border-gray-200"
                             }`}
@@ -696,11 +703,13 @@ export default function TournamentRegisterPage() {
                           >
                             {r.value === "nam" ? "♂" : "♀"}
                           </span>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">
                               {r.label}
                             </p>
-                            <p className="text-xs text-gray-400">{r.sub}</p>
+                            <p className="text-xs text-gray-400 truncate">
+                              {r.sub}
+                            </p>
                           </div>
                         </button>
                       ))}
@@ -729,7 +738,7 @@ export default function TournamentRegisterPage() {
               )}
 
               {step === 2 && (
-                <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
                   <SectionTitle icon="💳" title="Hoàn tất đăng ký" />
 
                   {entryFee === 0 ? (
@@ -746,7 +755,7 @@ export default function TournamentRegisterPage() {
                         </p>
                         <button
                           onClick={() => router.push(`/events/${id}`)}
-                          className="mt-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+                          className="w-full sm:w-auto mt-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
                         >
                           Về trang giải đấu
                         </button>
@@ -784,7 +793,7 @@ export default function TournamentRegisterPage() {
                       </p>
                       <button
                         onClick={() => router.push(`/events/${id}`)}
-                        className="mt-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+                        className="w-full sm:w-auto mt-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
                       >
                         Về trang giải đấu
                       </button>
@@ -803,7 +812,7 @@ export default function TournamentRegisterPage() {
                       </p>
                       <button
                         onClick={() => router.push(`/events/${id}`)}
-                        className="mt-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+                        className="w-full sm:w-auto mt-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold"
                       >
                         Về trang giải đấu
                       </button>
@@ -877,15 +886,15 @@ export default function TournamentRegisterPage() {
                                 <img
                                   src={qrUrl}
                                   alt="QR chuyển khoản"
-                                  className="w-48 h-48 rounded-lg border border-gray-200 bg-white"
+                                  className="w-40 h-40 sm:w-48 sm:h-48 rounded-lg border border-gray-200 bg-white"
                                 />
                               </div>
                               <div className="flex items-center justify-between gap-3">
-                                <div>
+                                <div className="min-w-0">
                                   <p className="text-xs text-gray-400">
                                     Nội dung chuyển khoản
                                   </p>
-                                  <p className="font-mono font-semibold text-red-600">
+                                  <p className="font-mono font-semibold text-red-600 truncate">
                                     {paymentRef}
                                   </p>
                                 </div>
@@ -935,19 +944,21 @@ export default function TournamentRegisterPage() {
               )}
             </div>
 
-            {/* ── Nhóm 4 (mobile): Nút Quay lại / Tiếp tục ── */}
+            {/* ── Nhóm 4 (mobile): Nút Quay lại / Tiếp tục — nút chính nổi bật, chiếm phần lớn chiều rộng ── */}
             <div className="order-4 lg:order-none">
               {step === 1 && (
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={goBack}
-                    className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-white"
+                    aria-label="Quay lại"
+                    className="flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-white flex-shrink-0"
                   >
-                    ← Quay lại
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Quay lại</span>
                   </button>
                   <button
                     onClick={goNext}
-                    className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold flex items-center gap-1.5"
+                    className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold flex items-center justify-center gap-1.5"
                   >
                     Tiếp tục <ChevronRight className="w-4 h-4" />
                   </button>
@@ -957,9 +968,10 @@ export default function TournamentRegisterPage() {
                 <div className="flex items-center justify-between">
                   <button
                     onClick={goBack}
-                    className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-white"
+                    className="flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-white"
                   >
-                    ← Quay lại
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Quay lại</span>
                   </button>
                 </div>
               )}
@@ -975,7 +987,7 @@ export default function TournamentRegisterPage() {
             e.target === e.currentTarget && setShowMemberSearch(false)
           }
         >
-          <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-4 space-y-3">
+          <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3">
             <div className="flex items-center justify-between">
               <p className="font-bold text-gray-900">Tìm thành viên</p>
               <button onClick={() => setShowMemberSearch(false)}>
@@ -1012,7 +1024,7 @@ export default function TournamentRegisterPage() {
                         />
                       )}
                     </div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900 truncate">
                       {m.full_name}
                     </p>
                   </button>
@@ -1101,15 +1113,17 @@ function PaymentOption({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-start gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors ${active ? "border-blue-500 bg-blue-50/40" : "border-gray-200"
+      className={`flex items-start gap-3 rounded-2xl border-2 p-3 sm:p-3.5 text-left transition-colors ${active ? "border-blue-500 bg-blue-50/40" : "border-gray-200"
         }`}
     >
       <span className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
         {icon}
       </span>
-      <div>
-        <p className="text-sm font-semibold text-gray-900">{label}</p>
-        <p className="text-xs text-gray-400">{sub}</p>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-gray-900 truncate">
+          {label}
+        </p>
+        <p className="text-xs text-gray-400 truncate">{sub}</p>
       </div>
     </button>
   );
