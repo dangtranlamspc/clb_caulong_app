@@ -1254,13 +1254,24 @@ export default function TournamentRegistrationsPage() {
     }
   };
 
-  const handleConfirmPayment = async (regId: string) => {
+  const handleConfirmPayment = async (regId: string, method?: "transfer" | "cash") => {
+    const reg = registrations.find((r) => r.id === regId);
+
+    if (!method && reg && !reg.user_id && !reg.payment_method) {
+      setConfirmMethodModal({ id: regId });
+      return;
+    }
+
     setPayingAction({ id: regId, type: "confirm" });
     try {
-      await eventsAdminApi.confirmTournamentPayment(regId);
+      const { data } = await eventsAdminApi.confirmTournamentPayment(regId, method);
+      setRegistrations((prev) =>
+        prev.map((r) => (r.id === regId ? { ...r, ...data.registration } : r))
+      );
       toast.success("Đã xác nhận thanh toán");
-      await load();
-    } catch {
+      setConfirmMethodModal(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Xác nhận thanh toán thất bại");
     } finally {
       setPayingAction(null);
     }
@@ -1269,10 +1280,13 @@ export default function TournamentRegistrationsPage() {
   const handleRejectPayment = async (regId: string) => {
     setPayingAction({ id: regId, type: "reject" });
     try {
-      await eventsAdminApi.rejectTournamentPayment(regId);
+      const { data } = await eventsAdminApi.rejectTournamentPayment(regId);
+      setRegistrations((prev) =>
+        prev.map((r) => (r.id === regId ? { ...r, ...data.registration } : r))
+      );
       toast.success("Đã từ chối yêu cầu thanh toán");
-      await load();
-    } catch {
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Từ chối thất bại");
     } finally {
       setPayingAction(null);
     }
@@ -1282,10 +1296,7 @@ export default function TournamentRegistrationsPage() {
     if (!id) return;
     setDrawing(true);
     try {
-      await eventsAdminApi.drawTeams(id, {
-        content: drawContent,
-        team_count: Number(teamCount),
-      });
+      await eventsAdminApi.drawTeams(id, { content: drawContent, team_count: Number(teamCount) });
       toast.success("Đã chia đội thành công");
       setShowDrawForm(false);
       load();
@@ -1312,13 +1323,19 @@ export default function TournamentRegistrationsPage() {
   const handleRowCollapsed = async (id: string) => {
     try {
       const { data } = await eventsAdminApi.removeRegistration("tournament", id);
+
+      setRegistrations((prev) => prev.filter((r) => r.id !== id));
+
       if (data.teams_cleared) {
         toast.success("Đã xoá đăng ký và xoá kết quả chia đội, vui lòng chia lại");
+        await loadTeams();
       } else {
         toast.success("Đã xoá đăng ký");
+        setTeams((prev) =>
+          prev.map((t) => ({ ...t, members: t.members?.filter((m: any) => m.id !== id) }))
+        );
+        setUnassigned((prev) => prev.filter((m: any) => m.id !== id));
       }
-      await load();
-      await loadTeams();
     } catch {
       toast.error("Xoá đăng ký thất bại");
     } finally {
@@ -1398,6 +1415,10 @@ export default function TournamentRegistrationsPage() {
     : isClosed
       ? "Đang đóng"
       : (STATUS_LABEL[activity?.status] ?? activity?.status);
+
+  const hasActiveFilters = Boolean(
+    search || genderFilter || levelFilter || roleFilter || paymentFilter
+  );
 
   return (
     <div className="w-full h-screen flex flex-col bg-gray-50">
@@ -1557,58 +1578,44 @@ export default function TournamentRegistrationsPage() {
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 sm:gap-6">
           <div className="space-y-4 min-w-0">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                <div className="md:col-span-3">
+              <div className="flex flex-col md:flex-row gap-3 md:items-end">
+                <div className="w-full md:flex-1 md:min-w-0 transition-all duration-300 ease-out">
                   <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                     Tìm kiếm
                   </label>
                   <input
-                    className="input-field"
+                    className="input-field w-full"
                     placeholder="Tên, SĐT, email..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                    Trình độ
-                  </label>
-                  <CustomSelect
-                    value={levelFilter}
-                    onChange={setLevelFilter}
-                    options={LEVEL_OPTIONS}
-                  />
+
+                <div className="w-full md:w-[170px] md:flex-shrink-0">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Trình độ</label>
+                  <CustomSelect value={levelFilter} onChange={setLevelFilter} options={LEVEL_OPTIONS} />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                    Vai trò
-                  </label>
-                  <CustomSelect
-                    value={roleFilter}
-                    onChange={setRoleFilter}
-                    options={ROLES_OPTIONS}
-                  />
+
+                <div className="w-full md:w-[170px] md:flex-shrink-0">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Vai trò</label>
+                  <CustomSelect value={roleFilter} onChange={setRoleFilter} options={ROLES_OPTIONS} />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                    Thanh toán
-                  </label>
-                  <CustomSelect
-                    value={paymentFilter}
-                    onChange={setPaymentFilter}
-                    options={PAYMENT_OPTIONS}
-                  />
+
+                <div className="w-full md:w-[170px] md:flex-shrink-0">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Thanh toán</label>
+                  <CustomSelect value={paymentFilter} onChange={setPaymentFilter} options={PAYMENT_OPTIONS} />
                 </div>
-                <div className="md:col-span-1 flex items-center">
-                  {(search || genderFilter || levelFilter || roleFilter || paymentFilter) && (
-                    <button
-                      onClick={clearFilters}
-                      title="Xoá bộ lọc"
-                      className="w-full h-[42px] flex items-center justify-center gap-1.5 px-3 rounded-lg border border-gray-200 text-sm font-medium text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors flex-shrink-0 whitespace-nowrap"
-                    >
-                      <FilterX className="w-4 h-4" /> Xoá bộ lọc
-                    </button>
-                  )}
+
+                <div
+                  className={`overflow-hidden transition-all duration-300 ease-out md:flex-shrink-0 ${hasActiveFilters ? "w-full md:w-[140px] opacity-100" : "w-0 opacity-0"
+                    }`}
+                >
+                  <button
+                    onClick={clearFilters}
+                    className="w-full h-[42px] flex items-center justify-center gap-1.5 px-3 rounded-lg border border-gray-200 text-sm font-medium text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors whitespace-nowrap"
+                  >
+                    <FilterX className="w-4 h-4" /> Xoá bộ lọc
+                  </button>
                 </div>
               </div>
             </div>
@@ -2230,6 +2237,69 @@ export default function TournamentRegistrationsPage() {
           onCancel={() => setDeleteRegModal(null)}
         />
       )}
+
+      {confirmMethodModal && createPortal(
+        <ConfirmGuestPaymentMethodModal
+          submitting={payingAction?.id === confirmMethodModal.id}
+          onSelect={(method) => handleConfirmPayment(confirmMethodModal.id, method)}
+          onClose={() => setConfirmMethodModal(null)}
+        />,
+        document.body
+      )}
+    </div>
+  );
+}
+
+function ConfirmGuestPaymentMethodModal({
+  submitting,
+  onSelect,
+  onClose,
+}: {
+  submitting: boolean;
+  onSelect: (method: "transfer" | "cash") => void;
+  onClose: () => void;
+}) {
+  const { visible, handleClose } = useModalTransition(onClose);
+
+  return (
+    <div
+      className={`fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"
+        }`}
+      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+          }`}
+      >
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">Chọn phương thức thanh toán</h3>
+          <p className="text-xs text-gray-400 mt-1">Khách đã thanh toán bằng hình thức nào?</p>
+        </div>
+        <div className="p-5 grid grid-cols-2 gap-3">
+          <button
+            disabled={submitting}
+            onClick={() => onSelect("transfer")}
+            className="px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-sm font-semibold text-gray-700 disabled:opacity-50 transition-colors"
+          >
+            Chuyển khoản
+          </button>
+          <button
+            disabled={submitting}
+            onClick={() => onSelect("cash")}
+            className="px-4 py-3 rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50 text-sm font-semibold text-gray-700 disabled:opacity-50 transition-colors"
+          >
+            Tiền mặt
+          </button>
+        </div>
+        <div className="flex justify-end px-5 py-3 border-t border-gray-100">
+          <button
+            onClick={handleClose}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            Huỷ
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

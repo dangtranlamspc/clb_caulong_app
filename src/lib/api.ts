@@ -456,8 +456,10 @@ export const eventsAdminApi = {
     api.get(`/admin/activities/${id}/poll-options`),
   updatePollOptions: (id: string, options: any[]) =>
     api.put(`/admin/activities/${id}/poll-options`, { options }),
-  confirmTournamentPayment: (regId: string) =>
-    api.patch(`/admin/activities/tournament-registrations/${regId}/confirm`),
+  confirmTournamentPayment: (regId: string, paymentMethod?: "transfer" | "cash") =>
+    api.patch(`/admin/activities/tournament-registrations/${regId}/confirm`, {
+      payment_method: paymentMethod,
+    }),
   drawTeams: (id: string, data: any) =>
     api.post(`/admin/activities/${id}/tournament/draw-teams`, data),
   getTournamentTeams: (id: string) =>
