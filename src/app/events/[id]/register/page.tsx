@@ -333,9 +333,11 @@ export default function TournamentRegisterPage() {
     (entryFee === 0 && !!registration);
 
   return (
-    <div className="min-h-screen bg-[#F4F6FA] p-4 sm:p-6 md:p-8 pt-6 sm:pt-8">
+    <div
+      className="min-h-screen bg-[#F4F6FA] p-4 sm:p-6 md:p-8"
+      style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top))" }}
+    >
       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-5">
-        {/* ── Breadcrumb: ẩn bớt phần đuôi trên mobile để không tràn dòng ── */}
         <div className="flex items-center gap-1.5 text-sm text-gray-400 min-w-0">
           <span className="flex-shrink-0">Giải đấu</span>
           <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
@@ -350,7 +352,6 @@ export default function TournamentRegisterPage() {
           Đăng ký thi đấu cá nhân
         </h1>
 
-        {/* ── Step indicator: luôn hiển thị tiêu đề bước, không để trống trên mobile ── */}
         <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm">
           <div className="flex items-center">
             {STEPS.map((s, i) => (
@@ -391,9 +392,7 @@ export default function TournamentRegisterPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] items-start gap-4 sm:gap-5">
-          {/* Cột phải (desktop): sidebar — chiều cao độc lập với cột trái */}
           <div className="contents lg:flex lg:flex-col lg:gap-5 lg:col-start-2 lg:row-start-1">
-            {/* ── Nhóm 1 (mobile): Thông tin giải đấu + Lệ phí ── */}
             <div className="space-y-4 sm:space-y-5 order-1 lg:order-none">
               <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
                 <p className="font-bold text-gray-900 text-sm">
