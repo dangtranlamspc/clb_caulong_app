@@ -106,6 +106,21 @@ const defaultRules = (): RulesState => ({
     rules_content: "",
 });
 
+
+function toLocalInputValue(isoUtc: string): string {
+    const d = new Date(isoUtc);
+    if (isNaN(d.getTime())) return "";
+    const offsetMs = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function toUtcIso(localValue: string): string | undefined {
+    if (!localValue) return undefined;
+    const d = new Date(localValue);
+    if (isNaN(d.getTime())) return undefined;
+    return d.toISOString();
+}
+
 function slugify(input: string): string {
     return input
         .normalize("NFD")
@@ -294,8 +309,8 @@ export default function TournamentFormPage() {
                     slug: data.slug ?? "",
                     emoji: data.emoji ?? "🏆",
                     format_type: detail.format_type === "don" ? "don" : "doi_bong",
-                    event_date: data.event_date ? data.event_date.slice(0, 16) : "",
-                    deadline: data.deadline ? data.deadline.slice(0, 16) : "",
+                    event_date: data.event_date ? toLocalInputValue(data.event_date) : "",
+                    deadline: data.deadline ? toLocalInputValue(data.deadline) : "",
                     status: data.status ?? "draft",
                     location: data.location ?? "",
                     description: data.description ?? "",
@@ -472,8 +487,8 @@ export default function TournamentFormPage() {
                 title: form.title,
                 slug: form.slug || undefined,
                 emoji: form.emoji,
-                event_date: form.event_date,
-                deadline: form.deadline || undefined,
+                event_date: toUtcIso(form.event_date),
+                deadline: form.deadline ? toUtcIso(form.deadline) : undefined,
                 status: statusOverride ?? form.status,
                 location: form.location || undefined,
                 description: form.description || undefined,
