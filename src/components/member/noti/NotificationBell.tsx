@@ -13,6 +13,7 @@ import { PenaltyPaymentModal } from '../payments/PenaltyPaymentModal';
 import Lottie, { LottieRefCurrentProps } from 'lottie-react';
 import bellAnimation from '../../../../public/lottie/noti.json';
 import { useAuthStore } from '@/store/auth.store';
+import { useRouter } from 'next/navigation';
 
 const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     payment_added: { icon: Wallet, cls: 'text-blue-600', bg: 'bg-blue-50' },
@@ -108,6 +109,7 @@ function NotificationItem({
     n,
     onRead,
     onDelete,
+    onNavigateWalletTx,
     guestActionId,
     guestHandled,
     onGuestConfirm,
@@ -121,6 +123,7 @@ function NotificationItem({
     n: any;
     onRead: (id: string) => void;
     onDelete: (id: string) => void;
+    onNavigateWalletTx: (n: any) => void;
     guestActionId: string | null;
     guestHandled: Set<string>;
     onGuestConfirm: (n: any, mode: 'grouped' | 'separate') => void;
@@ -218,6 +221,8 @@ function NotificationItem({
     const addedResolved = Boolean(n.data?.resolved);
     const addedOutcome = n.data?.outcome as 'accepted' | 'declined' | 'session_cancelled' | undefined;
 
+    const hasWalletTx = Boolean(n.data?.wallet_reference_id);
+
     return (
         <li className="relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-5">
@@ -226,7 +231,14 @@ function NotificationItem({
 
             <div
                 ref={rowRef}
-                onClick={() => { if (!movedRef.current && !n.is_read) onRead(n.id); }}
+                onClick={() => {
+                    if (movedRef.current) return;
+                    if (hasWalletTx) {
+                        onNavigateWalletTx(n);
+                        return;
+                    }
+                    if (!n.is_read) onRead(n.id);
+                }}
                 style={{
                     transform: `translateX(${dragX}px)`,
                     transition: dragging ? 'none' : 'transform .2s ease',
@@ -373,6 +385,7 @@ function NotificationItem({
 }
 
 export function NotificationBell() {
+    const router = useRouter();
     const userId = useAuthStore((s) => s.user?.id);
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState<any[]>([]);
@@ -729,6 +742,14 @@ export function NotificationBell() {
         }
     };
 
+    const handleNavigateWalletTx = (n: any) => {
+        const refId = n.data?.wallet_reference_id;
+        if (!refId) return;
+        if (!n.is_read) markRead(n.id);
+        setOpen(false);
+        router.push(`/wallet?tx_ref=${refId}`);
+    };
+
     return (
         <>
             <button
@@ -799,6 +820,7 @@ export function NotificationBell() {
                                         n={n}
                                         onRead={markRead}
                                         onDelete={handleDelete}
+                                        onNavigateWalletTx={handleNavigateWalletTx}
                                         guestActionId={guestActionId}
                                         guestHandled={guestHandled}
                                         onGuestConfirm={handleGuestConfirm}

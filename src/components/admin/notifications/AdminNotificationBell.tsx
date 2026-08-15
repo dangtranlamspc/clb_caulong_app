@@ -811,6 +811,9 @@ export function AdminNotificationBell() {
                                     n.type === "shirt_order_new_guest" ||
                                     n.type === "shirt_order_payment_wallet";
 
+                                const isTournamentNewRegistration = n.type === "tournament_new_registration";
+                                const tournamentNavPath = n.data?.path;
+
                                 const isShirtOrderPendingCancelled =
                                     n.type === "shirt_order_pending_payment_cancelled";
                                 const isShirtOrderCancelRequest = n.type === "shirt_order_cancel_request";
@@ -987,6 +990,21 @@ export function AdminNotificationBell() {
                                                             markRead(n.id);
                                                             setOpen(false);
                                                             window.location.href = `/admin/events?openRegistrations=${shirtOrderActivityId}`;
+                                                        }}
+                                                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                                                    >
+                                                        Chi tiết
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {isTournamentNewRegistration && tournamentNavPath && (
+                                                <div className="flex justify-end mt-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            markRead(n.id);
+                                                            setOpen(false);
+                                                            router.push(tournamentNavPath);
                                                         }}
                                                         className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
                                                     >

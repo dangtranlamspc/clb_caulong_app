@@ -56,6 +56,21 @@ export function TransactionDetailModal({
   const isShirtOrder =
     tx.reference_type === "shirt_order_registration" && tx.reference_id;
 
+  const isTournamentPayment =
+    tx.reference_type === "tournament_registration" && tx.reference_id;
+
+  const shirtOrderLabel = isShirtOrder
+    ? tx.amount > 0
+      ? "Hoàn tiền đặt áo"
+      : "Thanh toán đặt áo"
+    : null;
+
+  const tournamentLabel = isTournamentPayment
+    ? tx.amount > 0
+      ? "Hoàn tiền giải đấu"
+      : "Thanh toán giải đấu"
+    : null;
+
   const isPenaltyPayment =
     tx.type === "penalty" &&
     tx.reference_type === "penalty" &&
@@ -65,11 +80,11 @@ export function TransactionDetailModal({
 
   const shouldFetch = isSessionPayment || isShirtOrder || isPenaltyPayment;
 
-  const shirtOrderLabel = isShirtOrder
-    ? tx.amount > 0
-      ? "Hoàn tiền đặt áo"
-      : "Thanh toán đặt áo"
-    : null;
+  // const shirtOrderLabel = isShirtOrder
+  //   ? tx.amount > 0
+  //     ? "Hoàn tiền đặt áo"
+  //     : "Thanh toán đặt áo"
+  //   : null;
 
   useEffect(() => {
     if (!shouldFetch) return;
@@ -415,7 +430,7 @@ export function TransactionDetailModal({
                 {smt(tx.amount)}
               </p>
               <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
-                {shirtOrderLabel ?? TX_TYPE_LABEL[tx.type] ?? tx.type}
+                {shirtOrderLabel ?? tournamentLabel ?? TX_TYPE_LABEL[tx.type] ?? tx.type}
               </span>
             </div>
 

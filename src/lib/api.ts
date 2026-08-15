@@ -220,7 +220,7 @@ export const notificationsApi = {
 
 export const walletApi = {
   getMe: () => api.get("/wallet/me"),
-  getTransactions: (params?: any) =>
+  getTransactions: (params?: { type?: string; reference_id?: string; page?: number; limit?: number }) =>
     api.get("/wallet/me/transactions", { params }),
   requestTopup: (data: {
     amount: number;
@@ -516,8 +516,20 @@ export const eventsAdminApi = {
   updateTournamentRegistration: (regId: string, data: { role?: string; level?: string | null; notes?: string }) =>
     api.patch(`/admin/activities/tournament-registrations/${regId}`, data),
 
-  adminAddTournamentRegistration: (activityId: string, data: any) =>
-    api.post(`/admin/activities/${activityId}/tournament-registrations`, data),
+  adminAddTournamentRegistration: (
+    activityId: string,
+    data: {
+      user_id?: string;
+      guest_full_name?: string;
+      guest_phone?: string;
+      guest_email?: string;
+      guest_gender?: "nam" | "nu";
+      role: "nam" | "nu";
+      level?: "A" | "B+" | "B" | "C";
+      notes?: string;
+      payment_method?: "wallet" | "member_choice";
+    },
+  ) => api.post(`/admin/activities/${activityId}/tournament-registrations`, data),
 
   clearTournamentTeams: (id: string) =>
     api.delete(`/admin/activities/${id}/tournament/teams`),

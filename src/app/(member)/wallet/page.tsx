@@ -24,6 +24,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { TransactionDetailModal } from "@/components/member/wallets/TransactionDetailModal";
 import { createPortal } from "react-dom";
 import { smt, txIcon } from "@/lib/wallet-helpers";
+import { useSearchParams, useRouter } from "next/navigation";
 
 const TX_FILTER_OPTS = [
   { value: "", label: "Tất cả" },
@@ -371,6 +372,8 @@ function TopupModal({
 
 export default function WalletPage() {
   const { user } = useAuthStore();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [summary, setSummary] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -378,6 +381,7 @@ export default function WalletPage() {
   const [txFilter, setTxFilter] = useState("");
   const [showTopupModal, setShowTopupModal] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any>(null);
+  const [loadingTxRef, setLoadingTxRef] = useState(false);
 
   const fetchAll = async () => {
     const [{ data: s }, { data: t }] = await Promise.all([
@@ -392,6 +396,28 @@ export default function WalletPage() {
     setLoading(true);
     fetchAll().finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const txRef = searchParams.get("tx_ref");
+    if (!txRef) return;
+
+    setLoadingTxRef(true);
+    walletApi
+      .getTransactions({ reference_id: txRef })
+      .then(({ data }) => {
+        const tx = data.data?.[0];
+        if (tx) {
+          setSelectedTx(tx);
+        } else {
+          toast.error("Không tìm thấy giao dịch tương ứng");
+        }
+      })
+      .catch(() => toast.error("Không tải được giao dịch"))
+      .finally(() => {
+        setLoadingTxRef(false);
+        router.replace("/wallet", { scroll: false });
+      });
+  }, [searchParams]);
 
   useEffect(() => {
     walletApi
@@ -484,9 +510,9 @@ export default function WalletPage() {
               )}
             </button>
           </span>
-          <button className="flex items-center gap-1 text-xs font-medium bg-white/15 px-2.5 py-1 rounded-full hover:bg-white/25 transition-colors">
+          {/* <button className="flex items-center gap-1 text-xs font-medium bg-white/15 px-2.5 py-1 rounded-full hover:bg-white/25 transition-colors">
             Chi tiết <ChevronRight className="w-3 h-3" />
-          </button>
+          </button> */}
         </div>
         <p className="relative text-3xl font-black mb-3">
           {hideBalance ? "••••••••" : smt(wallet.balance)}
@@ -672,6 +698,14 @@ export default function WalletPage() {
           </ul>
         )}
       </div>
+
+      {loadingTxRef && createPortal(
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/20">
+          <Loader2 className="w-6 h-6 text-white animate-spin" />
+        </div>,
+        document.body
+      )}
+
       {selectedTx && (
         <TransactionDetailModal
           tx={selectedTx}
@@ -679,6 +713,7 @@ export default function WalletPage() {
           transactions={transactions}
         />
       )}
+
       {showTopupModal && (
         <TopupModal
           onClose={() => setShowTopupModal(false)}

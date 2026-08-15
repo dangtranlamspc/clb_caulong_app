@@ -17,6 +17,7 @@ import {
   Link2,
   Loader2,
   Plus,
+  AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -24,6 +25,12 @@ import toast from "react-hot-toast";
 import { eventsAdminApi, walletAdminApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import { createPortal } from "react-dom";
+
+const PAYMENT_METHOD_LABEL: Record<string, string> = {
+  wallet: "Ví BNB",
+  transfer: "Chuyển khoản",
+  cash: "Tiền mặt",
+};
 
 const HIDE_SCROLLBAR_CLASS =
   "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
@@ -519,6 +526,8 @@ function AdminAddTournamentRegistrationModal({
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [paymentMethod, setPaymentMethod] = useState<"wallet" | "member_choice">("wallet");
+
   useEffect(() => {
     if (mode !== "member" || !memberSearch.trim()) {
       setMemberResults([]);
@@ -581,16 +590,13 @@ function AdminAddTournamentRegistrationModal({
         role,
         level: role === "nam" ? level : undefined,
         notes: notes || undefined,
+        payment_method: mode === "member" ? paymentMethod : undefined,
       });
 
       if (mode === "guest" && data.mail_sent === false) {
         toast.error(data.message ?? "Đã đăng ký nhưng gửi email thất bại");
       } else {
-        toast.success(
-          mode === "member"
-            ? "Đã gửi yêu cầu xác nhận tham gia đến thành viên"
-            : "Đã đăng ký và gửi email cho khách",
-        );
+        toast.success(data.message ?? "Đã đăng ký thành công");
       }
       onAdded();
       handleClose();
@@ -624,7 +630,6 @@ function AdminAddTournamentRegistrationModal({
         </div>
 
         <div className="p-4 sm:p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-          {/* Tab switcher giữ nguyên */}
           <div className="relative flex rounded-lg border border-gray-200 overflow-hidden text-sm bg-gray-50 p-0.5">
             <div
               className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md bg-blue-600 shadow-sm transition-transform duration-300 ease-out"
@@ -739,6 +744,43 @@ function AdminAddTournamentRegistrationModal({
             )}
           </FadeSwitch>
 
+
+          {mode === "member" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Phương thức thanh toán
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("wallet")}
+                  className={`px-3 py-2.5 rounded-lg border text-sm font-medium text-left transition-colors ${paymentMethod === "wallet"
+                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                >
+                  Ví BNB
+                  <p className="text-[11px] font-normal text-gray-400 mt-0.5">
+                    Trừ ví ngay, xác nhận luôn
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("member_choice")}
+                  className={`px-3 py-2.5 rounded-lg border text-sm font-medium text-left transition-colors ${paymentMethod === "member_choice"
+                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                >
+                  Thành viên tự chọn
+                  <p className="text-[11px] font-normal text-gray-400 mt-0.5">
+                    Gửi yêu cầu xác nhận
+                  </p>
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Vai trò" required>
               <CustomSelect
@@ -792,9 +834,11 @@ function AdminAddTournamentRegistrationModal({
           >
             {submitting
               ? "Đang lưu..."
-              : mode === "member"
-                ? "Gửi yêu cầu xác nhận"
-                : "Đăng ký & gửi email"}
+              : mode === "guest"
+                ? "Đăng ký & gửi email"
+                : paymentMethod === "wallet"
+                  ? "Đăng ký & trừ ví"
+                  : "Gửi yêu cầu xác nhận"}
           </button>
         </div>
       </div>
@@ -847,6 +891,8 @@ export default function TournamentRegistrationsPage() {
   const [statModal, setStatModal] = useState<{ title: string; items: any[] } | null>(null);
 
   const [payingAction, setPayingAction] = useState<{ id: string; type: "confirm" | "reject" } | null>(null);
+
+  const [deleteRegModal, setDeleteRegModal] = useState<{ id: string; isInTeam: boolean } | null>(null);
 
   const publicLink = useMemo(() => {
     if (typeof window === "undefined" || !id) return "";
@@ -1096,15 +1142,6 @@ export default function TournamentRegistrationsPage() {
     }
   };
 
-  const handleDeleteReg = async (regId: string) => {
-    if (!confirm("Xoá đăng ký này?")) return;
-    try {
-      await eventsAdminApi.removeRegistration("tournament", regId);
-      toast.success("Đã xoá đăng ký");
-      load();
-    } catch { }
-  };
-
   const handleConfirmPayment = async (regId: string) => {
     setPayingAction({ id: regId, type: "confirm" });
     try {
@@ -1145,6 +1182,28 @@ export default function TournamentRegistrationsPage() {
     } finally {
       setDrawing(false);
     }
+  };
+
+
+  const handleDeleteReg = (regId: string) => {
+    const reg = registrations.find((r) => r.id === regId);
+    setDeleteRegModal({ id: regId, isInTeam: Boolean(reg?.team_id) });
+  };
+
+  const confirmDeleteReg = async () => {
+    if (!deleteRegModal) return;
+    const { id } = deleteRegModal;
+    setDeleteRegModal(null);
+    try {
+      const { data } = await eventsAdminApi.removeRegistration("tournament", id);
+      if (data.teams_cleared) {
+        toast.success("Đã xoá đăng ký và xoá kết quả chia đội, vui lòng chia lại");
+      } else {
+        toast.success("Đã xoá đăng ký");
+      }
+      load();
+      loadTeams();
+    } catch { }
   };
 
 
@@ -1576,10 +1635,19 @@ export default function TournamentRegistrationsPage() {
                       </td>
                       <td className="px-4 py-3.5">
                         {r.payment_status === "confirmed" ? (
-                          <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-green-50 text-green-700">
-                            Đã thanh toán
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-green-50 text-green-700">
+                              Đã thanh toán
+                            </span>
+                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                              {PAYMENT_METHOD_LABEL[r.payment_method] ?? r.payment_method}
+                            </span>
+                          </div>
+                        ) : r.payment_status === "rejected" ? (
+                          <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-red-50 text-red-600">
+                            Đã từ chối
                           </span>
-                        ) : (
+                        ) : r.payment_method ? (
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleConfirmPayment(r.id)}
@@ -1596,6 +1664,23 @@ export default function TournamentRegistrationsPage() {
                               onClick={() => handleRejectPayment(r.id)}
                               disabled={payingAction?.id === r.id}
                               className="flex items-center justify-center gap-1.5 min-w-[92px] px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-60 transition-colors"
+                            >
+                              {payingAction && payingAction.id === r.id && payingAction.type === "reject" ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                "Từ chối"
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-amber-50 text-amber-600">
+                              Chờ thanh toán
+                            </span>
+                            <button
+                              onClick={() => handleRejectPayment(r.id)}
+                              disabled={payingAction?.id === r.id}
+                              className="flex items-center justify-center gap-1.5 min-w-[80px] px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-60 transition-colors"
                             >
                               {payingAction && payingAction.id === r.id && payingAction.type === "reject" ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -1732,23 +1817,29 @@ export default function TournamentRegistrationsPage() {
                     </div>
                     <div>
                       <p className="text-gray-400 mb-0.5">Thanh toán</p>
-                      <button
-                        onClick={() =>
-                          r.payment_status !== "confirmed" && handleConfirmPayment(r.id)
-                        }
-                        disabled={payingAction?.id === r.id}
-                        className={`text-xs font-semibold px-2 py-1 rounded-full transition-colors disabled:opacity-60 ${r.payment_status === "confirmed"
-                          ? "bg-green-50 text-green-700"
-                          : "bg-amber-50 text-amber-600 hover:bg-amber-100"
-                          }`}
-                      >
-                        {r.payment_status === "confirmed" ? "Đã thanh toán" : "Chưa thanh toán"}
-                      </button>
+                      {r.payment_status === "confirmed" ? (
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-50 text-green-700">
+                            Đã thanh toán
+                          </span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
+                            {PAYMENT_METHOD_LABEL[r.payment_method] ?? r.payment_method}
+                          </span>
+                        </div>
+                      ) : r.payment_method ? (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-600">
+                          Chờ admin xác nhận
+                        </span>
+                      ) : (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-600">
+                          Chờ thanh toán
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-50">
-                    {r.payment_status !== "confirmed" ? (
+                    {r.payment_status !== "confirmed" && r.payment_method ? (
                       <div className="flex items-center gap-2 flex-1">
                         <button
                           onClick={() => handleConfirmPayment(r.id)}
@@ -2034,7 +2125,112 @@ export default function TournamentRegistrationsPage() {
         )
       }
 
+
+      {deleteRegModal && (
+        <ConfirmDeleteRegistrationModal
+          isInTeam={deleteRegModal.isInTeam}
+          onConfirm={confirmDeleteReg}
+          onCancel={() => setDeleteRegModal(null)}
+        />
+      )}
+
+
     </div >
+  );
+}
+
+function ConfirmDeleteRegistrationModal({
+  isInTeam,
+  onConfirm,
+  onCancel,
+}: {
+  isInTeam: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleCancel();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const handleCancel = () => {
+    setVisible(false);
+    setTimeout(onCancel, 200);
+  };
+
+  const handleConfirm = () => {
+    setVisible(false);
+    setTimeout(onConfirm, 200);
+  };
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center px-4 transition-opacity"
+      style={{
+        background: "rgba(0,0,0,0.5)",
+        opacity: visible ? 1 : 0,
+        transitionDuration: "200ms",
+      }}
+      onClick={(e) => e.target === e.currentTarget && handleCancel()}
+    >
+      <div
+        className="w-full max-w-xs bg-white rounded-2xl overflow-hidden transition-transform"
+        style={{
+          transform: visible ? "scale(1)" : "scale(0.92)",
+          transitionDuration: "200ms",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
+          <div
+            className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${isInTeam ? "bg-amber-50" : "bg-red-50"
+              }`}
+          >
+            <AlertTriangle
+              className={`w-5 h-5 ${isInTeam ? "text-amber-500" : "text-red-500"}`}
+            />
+          </div>
+          <p className="text-sm font-bold text-gray-900">
+            {isInTeam ? "VĐV đã được xếp vào đội" : "Xoá đăng ký này?"}
+          </p>
+          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+            {isInTeam
+              ? "Xoá đăng ký sẽ xoá TOÀN BỘ kết quả chia đội hiện tại của giải đấu. Bạn sẽ cần chia lại đội từ đầu."
+              : "Hành động này không thể hoàn tác."}
+          </p>
+        </div>
+        <div className="flex border-t border-gray-100">
+          <button
+            onClick={handleCancel}
+            className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100"
+          >
+            Huỷ
+          </button>
+          <button
+            onClick={handleConfirm}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${isInTeam
+              ? "text-amber-600 hover:bg-amber-50"
+              : "text-red-500 hover:bg-red-50"
+              }`}
+          >
+            {isInTeam ? "Xoá & chia lại" : "Xoá đăng ký"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
