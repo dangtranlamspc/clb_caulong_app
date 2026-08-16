@@ -314,6 +314,11 @@ export const activitiesApi = {
   registerAndPayShirtOrderBatch: (activityId: string, dto: any) =>
     api.post(`/activities/${activityId}/register/shirt-order/batch-with-payment`, dto),
 
+  payAdminPendingShirtOrder: (
+    regId: string,
+    data: { method: "wallet" | "transfer" | "cash"; payment_reference?: string },
+  ) => api.post(`/activities/register/shirt-order/${regId}/admin-pending-payment`, data),
+
 };
 
 //admin
@@ -449,6 +454,8 @@ export const eventsAdminApi = {
     api.get(`/admin/activities/${id}/registrations`),
   confirmShirtOrder: (regId: string) =>
     api.patch(`/admin/activities/shirt-order-registrations/${regId}/confirm`),
+  deductWalletShirtOrder: (regId: string) =>
+    api.patch(`/admin/activities/shirt-order-registrations/${regId}/deduct-wallet`),
   removeRegistration: (type: string, regId: string) =>
     api.delete(`/admin/activities/${type}/registrations/${regId}`),
   createPoll: (data: any) => api.post("/admin/activities/polls", data),

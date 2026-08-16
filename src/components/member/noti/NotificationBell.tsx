@@ -17,6 +17,8 @@ import { useRouter } from 'next/navigation';
 
 const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     payment_added: { icon: Wallet, cls: 'text-blue-600', bg: 'bg-blue-50' },
+    shirt_order_payment_request: { icon: Wallet, cls: 'text-orange-600', bg: 'bg-orange-50' },
+    shirt_order_registered_by_admin: { icon: Wallet, cls: 'text-orange-600', bg: 'bg-orange-50' },
     payment_confirmed: { icon: CheckCircle2, cls: 'text-emerald-600', bg: 'bg-emerald-50' },
     payment_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
     bill_issued: { icon: Wallet, cls: 'text-amber-600', bg: 'bg-amber-50' },
@@ -110,6 +112,7 @@ function NotificationItem({
     onRead,
     onDelete,
     onNavigateWalletTx,
+    onNavigateShirtOrderHistory,
     guestActionId,
     guestHandled,
     onGuestConfirm,
@@ -124,6 +127,7 @@ function NotificationItem({
     onRead: (id: string) => void;
     onDelete: (id: string) => void;
     onNavigateWalletTx: (n: any) => void;
+    onNavigateShirtOrderHistory: (n: any) => void;
     guestActionId: string | null;
     guestHandled: Set<string>;
     onGuestConfirm: (n: any, mode: 'grouped' | 'separate') => void;
@@ -223,6 +227,10 @@ function NotificationItem({
 
     const hasWalletTx = Boolean(n.data?.wallet_reference_id);
 
+    const isShirtOrderNavigable =
+        n.type === 'shirt_order_payment_request' ||
+        n.type === 'shirt_order_registered_by_admin';
+
     return (
         <li className="relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-5">
@@ -233,6 +241,10 @@ function NotificationItem({
                 ref={rowRef}
                 onClick={() => {
                     if (movedRef.current) return;
+                    if (isShirtOrderNavigable) {
+                        onNavigateShirtOrderHistory(n);
+                        return;
+                    }
                     if (hasWalletTx) {
                         onNavigateWalletTx(n);
                         return;
@@ -412,6 +424,14 @@ export function NotificationBell() {
     } | null>(null);
 
     const guestChannelsRef = useRef<Map<string, RealtimeChannel>>(new Map());
+
+    const handleNavigateShirtOrderHistory = (n: any) => {
+        const activityId = n.data?.activity_id;
+        if (!activityId) return;
+        if (!n.is_read) markRead(n.id);
+        setOpen(false);
+        router.push(`/events/${activityId}/history`);
+    };
 
     const load = async () => {
         setLoading(true);
@@ -821,6 +841,7 @@ export function NotificationBell() {
                                         onRead={markRead}
                                         onDelete={handleDelete}
                                         onNavigateWalletTx={handleNavigateWalletTx}
+                                        onNavigateShirtOrderHistory={handleNavigateShirtOrderHistory}
                                         guestActionId={guestActionId}
                                         guestHandled={guestHandled}
                                         onGuestConfirm={handleGuestConfirm}

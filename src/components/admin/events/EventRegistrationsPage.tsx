@@ -139,6 +139,17 @@ export default function EventRegistrationsPage({
         fetchAll();
     }, [id]);
 
+    const handleDeductWallet = async (regIds: string[]) => {
+        try {
+            await Promise.all(regIds.map((id) => eventsAdminApi.deductWalletShirtOrder(id)));
+            toast.success("Đã trừ ví thành viên");
+            notifyWalletChanged();
+            fetchAll();
+        } catch {
+            toast.error("Trừ ví thất bại");
+        }
+    };
+
     const handleConfirmPayment = async (regId: string | string[], type: string) => {
         const ids = Array.isArray(regId) ? regId : [regId];
         try {
@@ -375,6 +386,7 @@ export default function EventRegistrationsPage({
                                 onApproveCancel={handleApproveCancel}
                                 onRejectCancel={handleRejectCancel}
                                 onViewProof={setProofImageUrl}
+                                onDeductWallet={handleDeductWallet}
                             />
                         ) : activity.type === "tournament" ? (
                             <TournamentTable
@@ -752,6 +764,9 @@ function paymentStatusBadge(r: any) {
     if (r.payment_status === "rejected") {
         return { label: "Đã từ chối", cls: "bg-red-50 text-red-600", showIcon: false };
     }
+    if (isAdminTransferRequestPending(r)) {
+        return { label: "Chờ thanh toán", cls: "bg-orange-50 text-orange-600", showIcon: false };
+    }
     if (r.payment_method) {
         return { label: "Chờ xác nhận", cls: "bg-orange-50 text-orange-600", showIcon: false };
     }
@@ -771,6 +786,14 @@ function samePaymentGroup(groupRegs: any[]) {
     if (groupRegs.length === 0) return true;
     const key = paymentKey(groupRegs[0]);
     return groupRegs.every((r) => paymentKey(r) === key);
+}
+
+function isAdminTransferRequestPending(r: any) {
+    return (
+        r.registered_by_admin &&
+        r.payment_method === "transfer" &&
+        r.payment_status !== "confirmed"
+    );
 }
 
 
@@ -794,6 +817,20 @@ function handleConfirmClick(
     onConfirm(regs.map((r: any) => r.id));
 }
 
+function handleDeductWalletClick(
+    onDeductWallet: (ids: string[]) => void,
+    regs: any[],
+    label: string,
+) {
+    if (
+        !confirm(
+            `Trừ ví cho "${label}"?\n\nSố tiền sẽ được TRỪ THẲNG vào ví BNB của thành viên. Hành động này không thể hoàn tác.`,
+        )
+    )
+        return;
+    onDeductWallet(regs.map((r: any) => r.id));
+}
+
 function registrantTypeBadge(r: any) {
     return r.user_id
         ? { label: "Thành viên", cls: "bg-blue-50 text-blue-600" }
@@ -810,6 +847,7 @@ function ShirtOrderTable({
     onApproveCancel,
     onRejectCancel,
     onViewProof,
+    onDeductWallet,
 }: {
     registrations: any[];
     paymentFilter: PaymentFilter;
@@ -820,6 +858,7 @@ function ShirtOrderTable({
     onApproveCancel: (regId: string) => void;
     onRejectCancel: (regId: string, label: string) => void;
     onViewProof: (url: string) => void;
+    onDeductWallet: (regIds: string[]) => void;
 }) {
 
 
@@ -1179,12 +1218,13 @@ function ShirtOrderTable({
                                         const methodBadge = getPaymentMethodBadge(repReg);
                                         const canConfirmReject =
                                             repReg.payment_status !== "confirmed" &&
-                                            (!!repReg.payment_method || repReg.registered_by_admin);
+                                            !isAdminTransferRequestPending(repReg) &&
+                                            (!!repReg.payment_method || (repReg.registered_by_admin && !repReg.user_id));
                                         const canDeductWallet =
                                             !canConfirmReject &&
                                             !!repReg.user_id &&
                                             repReg.payment_status !== "confirmed" &&
-                                            !repReg.payment_method;
+                                            (!repReg.payment_method || isAdminTransferRequestPending(repReg));
                                         const label = repReg.users?.full_name ?? repReg.guest_full_name ?? "";
 
                                         return (
@@ -1237,7 +1277,7 @@ function ShirtOrderTable({
                                                     {canDeductWallet && (
                                                         <div className="pt-1.5">
                                                             <button
-                                                                onClick={() => handleConfirmClick(onConfirm, targetRegs, label)}
+                                                                onClick={() => handleDeductWalletClick(onDeductWallet, targetRegs, label)}
                                                                 className="py-1 px-3 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1 whitespace-nowrap"
                                                             >
                                                                 <Wallet className="w-3.5 h-3.5" /> Trừ vào ví
@@ -1340,13 +1380,14 @@ function ShirtOrderTable({
                     const canConfirmReject =
                         mergePayment &&
                         repReg.payment_status !== "confirmed" &&
-                        (!!repReg.payment_method || repReg.registered_by_admin);
+                        !isAdminTransferRequestPending(repReg) &&
+                        (!!repReg.payment_method || (repReg.registered_by_admin && !repReg.user_id));
                     const canDeductWallet =
                         mergePayment &&
                         !canConfirmReject &&
                         !!repReg.user_id &&
                         repReg.payment_status !== "confirmed" &&
-                        !repReg.payment_method;
+                        (!repReg.payment_method || isAdminTransferRequestPending(repReg));
                     const groupIds = groupRegs.map((g: any) => g.id);
                     const memberLabel = repReg.users?.full_name ?? repReg.guest_full_name ?? "";
 
@@ -1411,13 +1452,14 @@ function ShirtOrderTable({
                                                     const itemCanConfirmReject =
                                                         !mergePayment &&
                                                         r.payment_status !== "confirmed" &&
-                                                        (!!r.payment_method || r.registered_by_admin);
+                                                        !isAdminTransferRequestPending(r) &&
+                                                        (!!r.payment_method || (r.registered_by_admin && !r.user_id));
                                                     const itemCanDeductWallet =
                                                         !mergePayment &&
                                                         !itemCanConfirmReject &&
                                                         !!r.user_id &&
                                                         r.payment_status !== "confirmed" &&
-                                                        !r.payment_method;
+                                                        (!r.payment_method || isAdminTransferRequestPending(r));
 
                                                     return (
                                                         <div
@@ -1518,7 +1560,7 @@ function ShirtOrderTable({
                                                             {itemCanDeductWallet && (
                                                                 <div className="mt-2">
                                                                     <button
-                                                                        onClick={() => handleConfirmClick(onConfirm, [r], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                        onClick={() => handleDeductWalletClick(onDeductWallet, [r], r.users?.full_name ?? r.guest_full_name ?? "")}
                                                                         className="w-full py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5"
                                                                     >
                                                                         <Wallet className="w-3.5 h-3.5" /> Trừ vào ví
@@ -1590,7 +1632,7 @@ function ShirtOrderTable({
                             {canDeductWallet && (
                                 <div className="pt-1">
                                     <button
-                                        onClick={() => handleConfirmClick(onConfirm, groupRegs, memberLabel)}
+                                        onClick={() => handleDeductWalletClick(onDeductWallet, groupRegs, memberLabel)}
                                         className="w-full py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5"
                                     >
                                         <Wallet className="w-4 h-4" /> Trừ vào ví

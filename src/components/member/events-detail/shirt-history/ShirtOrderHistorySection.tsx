@@ -7,6 +7,7 @@ import { fmt } from "@/utils/utils";
 
 const STATUS_CFG: Record<string, { label: string; cls: string }> = {
     confirmed: { label: "Đã thanh toán", cls: "bg-emerald-50 text-emerald-600" },
+    needs_payment: { label: "Chờ thanh toán", cls: "bg-orange-50 text-orange-600" },
     pending_review: {
         label: "Chờ admin xác nhận",
         cls: "bg-orange-50 text-orange-600",
@@ -15,27 +16,43 @@ const STATUS_CFG: Record<string, { label: string; cls: string }> = {
     rejected: { label: "Bị từ chối", cls: "bg-red-50 text-red-500" },
 };
 
+function needsMemberPayment(r: any) {
+    return (
+        r.registered_by_admin &&
+        r.payment_status !== "confirmed" &&
+        r.payment_status !== "rejected" &&
+        !r.payment_method
+    );
+}
+
 function regStatus(r: any) {
     if (r.payment_status === "confirmed") return "confirmed";
     if (r.payment_status === "rejected") return "rejected";
+    if (needsMemberPayment(r)) return "needs_payment";
     if (r.payment_reference) return "pending_review";
     return "unpaid";
 }
+
+
 
 export function ShirtOrderHistorySection({
     activity,
     myRegistrations,
     shirtTypes,
-    onCancel
+    onCancel,
+    onPay,
 }: {
     activity: any;
     myRegistrations: any[];
     shirtTypes: any[];
     onCancel: (registrationId: string) => void;
+    onPay: (registrations: any[]) => void;
 }) {
     const router = useRouter();
 
     const canModify = activity.status === "open";
+
+    const pendingPaymentRegs = myRegistrations.filter(needsMemberPayment);
 
     const priceOf = (r: any) => {
         const t = shirtTypes.find((x) => x.id === r.shirt_type_id);
@@ -55,6 +72,22 @@ export function ShirtOrderHistorySection({
         (s, r) => s + (r.quantity ?? 1),
         0,
     );
+
+    const adminAddedByType = new Map<string, { name: string; qty: number }>();
+    for (const r of myRegistrations) {
+        if (!r.registered_by_admin) continue;
+        const t = shirtTypes.find((x) => x.id === r.shirt_type_id);
+        const key = r.shirt_type_id;
+        const name = t?.name ?? "—";
+        const qty = r.quantity ?? 1;
+        if (!adminAddedByType.has(key)) {
+            adminAddedByType.set(key, { name, qty });
+        } else {
+            adminAddedByType.get(key)!.qty += qty;
+        }
+    }
+    const adminAddedGroups = Array.from(adminAddedByType.values());
+    const adminAddedTotal = adminAddedGroups.reduce((s, g) => s + g.qty, 0);
 
     const handleBack = () => {
         sessionStorage.setItem("activity:return-tab", "events");
@@ -83,18 +116,38 @@ export function ShirtOrderHistorySection({
 
                 {/* Summary strip */}
                 {typeGroups.length > 0 && (
-                    <div className="flex items-center gap-3 bg-blue-50/70 border border-blue-100 rounded-2xl px-4 py-3">
-                        <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                            <Receipt className="w-4 h-4 text-blue-500" />
+                    adminAddedTotal > 0 ? (
+                        <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3">
+                            <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                                <span className="text-base">🎁</span>
+                            </div>
+                            <div className="text-xs text-amber-700">
+                                Admin đã đặt giúp bạn{" "}
+                                <span className="font-semibold">{adminAddedTotal} sản phẩm</span>{" "}
+                                trong{" "}
+                                <span className="font-semibold">
+                                    {adminAddedGroups.map((g, i) => (
+                                        <span key={i}>
+                                            "{g.name}"{i < adminAddedGroups.length - 1 ? ", " : ""}
+                                        </span>
+                                    ))}
+                                </span>
+                            </div>
                         </div>
-                        <div className="text-xs text-gray-600">
-                            Bạn đã đặt{" "}
-                            <span className="font-semibold text-gray-900">
-                                {totalItems} sản phẩm
-                            </span>{" "}
-                            trong {typeGroups.length} loại áo
+                    ) : (
+                        <div className="flex items-center gap-3 bg-blue-50/70 border border-blue-100 rounded-2xl px-4 py-3">
+                            <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                                <Receipt className="w-4 h-4 text-blue-500" />
+                            </div>
+                            <div className="text-xs text-gray-600">
+                                Bạn đã đặt{" "}
+                                <span className="font-semibold text-gray-900">
+                                    {totalItems} sản phẩm
+                                </span>{" "}
+                                trong {typeGroups.length} loại áo
+                            </div>
                         </div>
-                    </div>
+                    )
                 )}
 
                 {/* Order list */}
@@ -153,6 +206,7 @@ export function ShirtOrderHistorySection({
                                                     const status = regStatus(r);
                                                     const cfg = STATUS_CFG[status];
                                                     const waitingCancel = !!r.cancel_requested_at;
+                                                    const showCancelBtn = !waitingCancel && canModify;
                                                     return (
                                                         <div
                                                             key={r.id}
@@ -182,7 +236,7 @@ export function ShirtOrderHistorySection({
                                                                     {cfg.label}
                                                                 </span>
 
-                                                                {!waitingCancel && canModify && (
+                                                                {showCancelBtn && (
                                                                     <button
                                                                         onClick={() => onCancel(r.id)}
                                                                         className="text-[10px] font-semibold px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors whitespace-nowrap"
@@ -223,6 +277,15 @@ export function ShirtOrderHistorySection({
                     )}
                 </div>
 
+                {pendingPaymentRegs.length > 0 && (
+                    <button
+                        onClick={() => onPay(pendingPaymentRegs)}
+                        className="hidden md:flex w-full py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-bold text-sm items-center justify-center gap-2 shadow-sm shadow-orange-200 transition-all"
+                    >
+                        💳 Thanh toán ({pendingPaymentRegs.length} sản phẩm)
+                    </button>
+                )}
+
                 {canModify && (
                     <Link
                         href={`/events/${activity.id}`}
@@ -236,11 +299,19 @@ export function ShirtOrderHistorySection({
                 )}
             </div>
 
-            {canModify && (
+            {(canModify || pendingPaymentRegs.length > 0) && (
                 <div
                     className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-gray-100 px-4 pt-3"
                     style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
                 >
+                    {pendingPaymentRegs.length > 0 && (
+                        <button
+                            onClick={() => onPay(pendingPaymentRegs)}
+                            className="w-full mb-2 py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm shadow-orange-200 transition-all"
+                        >
+                            💳 Thanh toán ({pendingPaymentRegs.length} sản phẩm)
+                        </button>
+                    )}
                     <Link href={`/events/${activity.id}`} className="block">
                         <button className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm shadow-blue-200 transition-all">
                             <Plus className="w-4 h-4" />

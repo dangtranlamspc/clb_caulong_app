@@ -136,7 +136,8 @@ export default function AdminAddShirtOrderModal({
     }, [shirtTypeId, gender]);
 
     useEffect(() => {
-        if (mode === "guest") setPayment((p) => (p === "wallet" || p === "transfer" ? "cash" : p));
+        if (mode === "guest" && payment === "wallet") setPayment("none");
+        if (mode === "member" && payment === "cash") setPayment("none");
     }, [mode]);
 
     useEffect(() => {
@@ -858,69 +859,68 @@ export default function AdminAddShirtOrderModal({
                         <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                             Phương thức thanh toán
                         </label>
-                        <div className="grid grid-cols-2 gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setPayment("none")}
-                                className={`py-2.5 rounded-xl text-sm font-medium border transition-colors ${payment === "none"
-                                    ? "bg-gray-900 text-white border-gray-900"
-                                    : "bg-white text-gray-600 border-gray-200"
-                                    }`}
-                            >
-                                Chưa thanh toán
-                            </button>
-                            <button
-                                type="button"
-                                disabled={mode === "guest"}
-                                onClick={() => setPayment("wallet")}
-                                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${payment === "wallet"
-                                    ? "bg-blue-600 text-white border-blue-600"
-                                    : "bg-white text-gray-600 border-gray-200"
-                                    }`}
-                            >
-                                <Wallet className="w-3.5 h-3.5" /> Ví BNB
-                            </button>
-                            <button
-                                type="button"
-                                disabled={mode === "guest"}
-                                onClick={() => setPayment("transfer")}
-                                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${payment === "transfer"
-                                    ? "bg-sky-600 text-white border-sky-600"
-                                    : "bg-white text-gray-600 border-gray-200"
-                                    }`}
-                            >
-                                <Landmark className="w-3.5 h-3.5" /> Chuyển khoản
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setPayment("cash")}
-                                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition-colors ${payment === "cash"
-                                    ? "bg-emerald-600 text-white border-emerald-600"
-                                    : "bg-white text-gray-600 border-gray-200"
-                                    }`}
-                            >
-                                <Banknote className="w-3.5 h-3.5" /> Tiền mặt
-                            </button>
-                        </div>
 
-                        {payment === "wallet" && (
+                        {mode === "member" ? (
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setPayment("wallet")}
+                                    className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition-colors ${payment === "wallet"
+                                        ? "bg-blue-600 text-white border-blue-600"
+                                        : "bg-white text-gray-600 border-gray-200"
+                                        }`}
+                                >
+                                    <Wallet className="w-3.5 h-3.5" /> Trừ ví BNB
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPayment("none")}
+                                    className={`py-2.5 rounded-xl text-sm font-medium border transition-colors ${payment === "none"
+                                        ? "bg-gray-900 text-white border-gray-900"
+                                        : "bg-white text-gray-600 border-gray-200"
+                                        }`}
+                                >
+                                    Member tự chọn
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setPayment("none")}
+                                    className={`py-2.5 rounded-xl text-sm font-medium border transition-colors ${payment === "none"
+                                        ? "bg-gray-900 text-white border-gray-900"
+                                        : "bg-white text-gray-600 border-gray-200"
+                                        }`}
+                                >
+                                    Chưa thanh toán
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPayment("cash")}
+                                    className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition-colors ${payment === "cash"
+                                        ? "bg-emerald-600 text-white border-emerald-600"
+                                        : "bg-white text-gray-600 border-gray-200"
+                                        }`}
+                                >
+                                    <Banknote className="w-3.5 h-3.5" /> Tiền mặt
+                                </button>
+                            </div>
+                        )}
+
+                        {payment === "wallet" && mode === "member" && (
                             <p className="text-xs text-blue-600 mt-2">
                                 Số dư ví của thành viên sẽ bị trừ ngay cho toàn bộ đơn và ghi lại lịch sử giao dịch.
                             </p>
                         )}
-                        {payment === "transfer" && (
-                            <p className="text-xs text-sky-600 mt-2">
-                                Hệ thống sẽ gửi yêu cầu chuyển khoản đến thành viên cho từng sản phẩm, chờ admin xác nhận sau.
+                        {payment === "none" && mode === "member" && (
+                            <p className="text-xs text-gray-500 mt-2">
+                                Đơn sẽ ở trạng thái chờ, thành viên tự vào app chọn Ví BNB / Chuyển khoản / Tiền mặt để thanh toán.
                             </p>
                         )}
-                        {payment === "cash" && (
+                        {payment === "cash" && mode === "guest" && (
                             <p className="text-xs text-emerald-600 mt-2">
-                                Toàn bộ đơn sẽ được đánh dấu "Đã xác nhận" ngay lập tức.
-                            </p>
-                        )}
-                        {mode === "guest" && (
-                            <p className="text-xs text-gray-400 mt-2">
-                                Khách không có tài khoản nên chỉ hỗ trợ tiền mặt hoặc để trống.
+                                Đơn sẽ ở trạng thái chờ xác nhận, vào bảng đăng ký và bấm "Xác nhận" khi đã nhận đủ tiền mặt.
                             </p>
                         )}
                     </div>

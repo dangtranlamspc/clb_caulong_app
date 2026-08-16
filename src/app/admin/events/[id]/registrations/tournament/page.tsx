@@ -705,7 +705,7 @@ function AdminAddTournamentRegistrationModal({
     <div
       className={`fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"
         }`}
-      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    // onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
         className={`bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transition-all duration-200 ease-out ${visible
@@ -2197,7 +2197,7 @@ export default function TournamentRegistrationsPage() {
           <AdminAddTournamentRegistrationModal
             activityId={id!}
             onClose={() => setShowAddModal(false)}
-            onAdded={load}
+            onAdded={() => load(true)}
           />,
           document.body
         )
