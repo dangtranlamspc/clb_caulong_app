@@ -189,43 +189,99 @@ function SessionCostDetailModal({
               </div>
 
               {detail.chi_phi.other_fee > 0 && (
-                <div className="rounded-xl bg-amber-50 p-3 space-y-1.5">
-                  <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1">
-                    Khoản thu khác
-                  </p>
-                  <div className="flex justify-between text-sm">
-                    <span className="font-semibold text-gray-700">
-                      Tổng thu khác
+                <div className="rounded-xl border border-amber-100 bg-amber-50/40 overflow-hidden">
+                  <div className="px-3 py-2 text-sm font-medium text-gray-600 border-b border-amber-100/70">
+                    💰 Khoản thu khác
+                    {detail.chi_phi.other_fee_note && (
+                      <span className="text-gray-400 italic"> ({detail.chi_phi.other_fee_note})</span>
+                    )}
+                  </div>
+
+                  {(detail.chi_phi.other_fee_list ?? []).length > 0 && (
+                    <div className="p-3 space-y-2">
+                      {detail.chi_phi.other_fee_list.map((item: any, i: number) => {
+                        const noteLines = (item.note ?? "")
+                          .split("\n")
+                          .map((l: string) => l.trim())
+                          .filter(Boolean);
+
+                        return (
+                          <div
+                            key={i}
+                            className="rounded-lg border border-amber-200/70 bg-white/70 px-2.5 py-2 space-y-1"
+                          >
+                            <p className="text-xs font-semibold text-gray-600">
+                              {item.name}
+                            </p>
+
+                            {noteLines.length > 0 && (
+                              <div className="pl-2 space-y-0.5">
+                                {noteLines.map((line: string, li: number) => (
+                                  <p key={li} className="text-[11px] text-gray-400 italic">
+                                    — {line}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="flex justify-between text-xs pt-1 border-t border-dashed border-amber-200/70">
+                              <span className="text-gray-500">Tổng ({item.name})</span>
+                              <span className="font-semibold text-amber-600">
+                                {fmtFull(item.amount)}
+                              </span>
+                            </div>
+
+                            {item.guests?.map((g: any, gi: number) => {
+                              const gNoteLines = (g.note ?? "")
+                                .split("\n")
+                                .map((l: string) => l.trim())
+                                .filter(Boolean);
+                              return (
+                                <div key={gi} className="pl-3">
+                                  <div className="flex justify-between text-xs text-gray-400">
+                                    <span>
+                                      + {g.name}{" "}
+                                      <span className="text-gray-300">(đi cùng)</span>
+                                    </span>
+                                    <span className="font-medium text-amber-500">
+                                      {fmtFull(g.amount)}
+                                    </span>
+                                  </div>
+                                  {gNoteLines.length > 0 && (
+                                    <div className="pl-3 space-y-0.5">
+                                      {gNoteLines.map((line: string, li: number) => (
+                                        <p key={li} className="text-[11px] text-gray-300 italic">
+                                          — {line}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+
+                            {item.guests && item.guests.length > 0 && (
+                              <div className="flex justify-between text-[11px] text-gray-400 pl-3 pt-0.5 border-t border-dashed border-gray-200">
+                                <span>= Tổng cộng</span>
+                                <span className="font-semibold text-amber-700">
+                                  {fmtFull(item.total ?? item.amount)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center px-3 py-2 bg-amber-100/50">
+                    <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">
+                      Tổng khoản thu khác
                     </span>
-                    <span className="font-bold text-amber-600">
+                    <span className="text-base font-bold text-amber-700">
                       {fmtFull(detail.chi_phi.other_fee)}
                     </span>
                   </div>
-                  {(detail.chi_phi.other_fee_list ?? []).length > 0 && (
-                    <div className="pt-1 space-y-1 border-t border-amber-100 mt-1">
-                      {detail.chi_phi.other_fee_list.map(
-                        (f: any, i: number) => (
-                          <div
-                            key={i}
-                            className="flex justify-between text-xs text-gray-500"
-                          >
-                            <span>
-                              {f.name}
-                              {f.note && (
-                                <span className="text-amber-500 italic">
-                                  {" "}
-                                  ({f.note})
-                                </span>
-                              )}
-                            </span>
-                            <span className="font-medium text-gray-600">
-                              {fmtFull(f.amount)}
-                            </span>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -234,48 +290,79 @@ function SessionCostDetailModal({
                   Khoản từng người cần thanh toán (
                   {detail.paid_list?.length ?? 0} người)
                 </p>
-                <div className="rounded-xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
-                  {(detail.paid_list ?? []).map((p: any) => (
-                    <div key={p.registration_id} className="px-3 py-2.5">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium text-gray-800">
-                          {p.full_name}
-                          {p.is_guest && (
-                            <span className="text-gray-400 text-xs ml-1">
-                              (khách)
-                            </span>
-                          )}
-                        </span>
-                        <span className="font-bold text-gray-900">
-                          {fmtFull(p.total_amount)}
-                        </span>
-                      </div>
-                      {p.guest_names?.length > 0 && (
-                        <p className="text-xs text-purple-500 mt-0.5">
-                          Gộp cùng: {p.guest_names.join(", ")}
-                        </p>
-                      )}
-                      {p.other_fee_amount > 0 && (
-                        <p className="text-xs mt-0.5">
-                          <span className="text-amber-600 font-medium">
-                            Khoản khác: {fmtFull(p.other_fee_amount)}
-                          </span>
-                          {p.other_fee_note && (
-                            <span className="text-gray-400 italic">
-                              {" "}
-                              ({p.other_fee_note})
-                            </span>
-                          )}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                  {(!detail.paid_list || detail.paid_list.length === 0) && (
+
+                {(!detail.paid_list || detail.paid_list.length === 0) ? (
+                  <div className="rounded-xl border border-gray-100">
                     <p className="text-sm text-gray-400 text-center py-4">
                       Chưa có ai được chốt thanh toán
                     </p>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {detail.paid_list.map((p: any) => {
+                      const otherFeeNoteLines = (p.other_fee_note ?? "")
+                        .split("\n")
+                        .map((l: string) => l.trim())
+                        .filter(Boolean);
+                      const hasOtherFee = (p.other_fee_amount ?? 0) > 0;
+
+                      return (
+                        <div
+                          key={p.registration_id}
+                          className={`rounded-xl border px-3 py-2.5 ${hasOtherFee
+                            ? "border-amber-200/70 bg-amber-50/30"
+                            : "border-gray-100"
+                            }`}
+                        >
+                          <div className="flex justify-between text-sm">
+                            <span className="font-medium text-gray-800">
+                              {p.full_name}
+                              {p.is_guest && (
+                                <span className="text-gray-400 text-xs ml-1">
+                                  (khách)
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-bold text-gray-900">
+                              {fmtFull(p.total_amount)}
+                            </span>
+                          </div>
+
+                          {p.guest_names?.length > 0 && (
+                            <p className="text-xs text-purple-500 mt-0.5">
+                              Gộp cùng: {p.guest_names.join(", ")}
+                            </p>
+                          )}
+
+                          {hasOtherFee && (
+                            <div className="mt-1.5 pt-1.5 border-t border-dashed border-amber-200/70 space-y-0.5">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-amber-600 font-medium">
+                                  + Khoản khác
+                                </span>
+                                <span className="font-semibold text-amber-600">
+                                  {fmtFull(p.other_fee_amount)}
+                                </span>
+                              </div>
+                              {otherFeeNoteLines.length > 0 && (
+                                <div className="pl-2 space-y-0.5">
+                                  {otherFeeNoteLines.map((line: string, li: number) => (
+                                    <p
+                                      key={li}
+                                      className="text-[11px] text-gray-400 italic"
+                                    >
+                                      — {line}
+                                    </p>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </>
           )}
