@@ -1,7 +1,6 @@
 "use client";
 
 import { sortSizes } from "@/utils/utils";
-import { Loader2 } from "lucide-react";
 
 export function ShirtOrderForm({
   canRegister,

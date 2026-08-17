@@ -319,6 +319,24 @@ export const activitiesApi = {
     data: { method: "wallet" | "transfer" | "cash"; payment_reference?: string },
   ) => api.post(`/activities/register/shirt-order/${regId}/admin-pending-payment`, data),
 
+  getShirtOrderRegistrationsDetailBatch: (ids: string[]) =>
+    api.get(`/activities/shirt-order-registrations/detail-batch`, {
+      params: { ids: ids.join(",") },
+      skipErrorToast: true,
+    } as any),
+
+  payAdminPendingShirtOrderBatch: (
+    registrationIds: string[],
+    data: { method: "wallet" | "transfer" | "cash"; payment_reference?: string },
+  ) =>
+    api.post(`/activities/register/shirt-order/admin-pending-payment-batch`, {
+      registration_ids: registrationIds,
+      ...data,
+    }),
+
+  cancelShirtOrderQuantity: (activityId: string, regId: string, quantity: number) =>
+    api.patch(`/activities/${activityId}/register/shirt-order/${regId}/cancel-quantity`, { quantity }),
+
 };
 
 //admin
@@ -546,6 +564,34 @@ export const eventsAdminApi = {
   exportTournamentTeams: (id: string) =>
     api.get(`/admin/activities/${id}/tournament/teams/export`, {
       responseType: "blob",
+    }),
+
+  adminAddShirtOrderRegistrationBatch: (
+    activityId: string,
+    data: {
+      user_id?: string;
+      guest_full_name?: string;
+      guest_phone?: string;
+      items: {
+        shirt_type_id: string;
+        color_id?: string;
+        gender: "nam" | "nu";
+        size: string;
+        quantity?: number;
+        jersey_number?: string;
+        print_name?: string;
+      }[];
+      payment_method?: "wallet" | "transfer" | "cash";
+    },
+  ) =>
+    api.post(
+      `/admin/activities/${activityId}/shirt-order-registrations/batch`,
+      data,
+    ),
+
+  removeShirtOrderRegistrationsBatch: (ids: string[]) =>
+    api.delete(`/admin/activities/shirt-order-registrations/batch`, {
+      data: { registration_ids: ids },
     }),
 };
 

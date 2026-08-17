@@ -8,6 +8,8 @@ import { ShirtOrderHistorySkeleton, SkeletonStyles } from "@/components/skeleton
 import toast from "react-hot-toast";
 import { ShirtOrderPaymentModal } from "@/components/member/modals/ShirtOrderPaymentModal";
 import { useAuthStore } from "@/store/auth.store";
+import { supabase } from "@/lib/supabase";
+import { CancelShirtOrderModal } from "@/components/member/modals/CancelShirtOrderModal";
 
 export default function ShirtOrderHistoryPage() {
     const { id } = useParams<{ id: string }>();
@@ -16,6 +18,7 @@ export default function ShirtOrderHistoryPage() {
     const [activity, setActivity] = useState<any>(null);
     const [myRegistrations, setMyRegistrations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showCancelModal, setShowCancelModal] = useState(false);
 
     const [payTargets, setPayTargets] = useState<any[] | null>(null);
 
@@ -47,23 +50,37 @@ export default function ShirtOrderHistoryPage() {
         load();
     }, [id, router]);
 
+    useEffect(() => {
+        if (!currentUser?.id) return;
+
+        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+        const refetch = () => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(async () => {
+                const { data } = await activitiesApi.getMyStatus(id);
+                setMyRegistrations(data.my_registrations ?? []);
+            }, 500);
+        };
+
+        const channel = supabase
+            .channel(`my-shirt-regs:${currentUser.id}`)
+            .on("broadcast", { event: "shirt_order_changed" }, refetch)
+            .subscribe();
+
+        return () => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            supabase.removeChannel(channel);
+        };
+    }, [currentUser?.id, id]);
+
     const handleCancel = async (registrationId: string) => {
         if (!confirm("Bạn có chắc muốn hủy đăng ký áo này?")) return;
-
         try {
-            const res = await activitiesApi.cancelRegistration(
-                id,
-                registrationId
-            );
-
+            const res = await activitiesApi.cancelRegistration(id, registrationId);
             toast.success(res.data.message);
-
-            const { data } = await activitiesApi.getMyStatus(id);
-            setMyRegistrations(data.my_registrations ?? []);
         } catch (e: any) {
-            toast.error(
-                e.response?.data?.message || "Không thể hủy đăng ký"
-            );
+            toast.error(e.response?.data?.message || "Không thể hủy đăng ký");
         }
     };
 
@@ -71,19 +88,16 @@ export default function ShirtOrderHistoryPage() {
     const handlePay = async (method: "wallet" | "transfer" | "cash", paymentReference?: string) => {
         if (!payTargets?.length) return;
         try {
-            for (const reg of payTargets) {
-                await activitiesApi.payAdminPendingShirtOrder(reg.id, {
-                    method,
-                    payment_reference: paymentReference,
-                });
-            }
+            const regIds = payTargets.map((r) => r.id);
+            await activitiesApi.payAdminPendingShirtOrderBatch(regIds, {
+                method,
+                payment_reference: paymentReference,
+            });
             toast.success(
                 method === "wallet"
                     ? "Đã thanh toán bằng ví"
                     : "Đã ghi nhận thanh toán, chờ admin xác nhận",
             );
-            const { data } = await activitiesApi.getMyStatus(id);
-            setMyRegistrations(data.my_registrations ?? []);
             setPayTargets(null);
         } catch (e: any) {
             toast.error(e.response?.data?.message || "Thanh toán thất bại");
@@ -99,13 +113,22 @@ export default function ShirtOrderHistoryPage() {
         );
     }
 
+    const cancellableRegs = myRegistrations.filter(
+        (r) => !r.cancelled_at && !r.cancel_requested_at,
+    );
+
+    const refetchStatus = async () => {
+        const { data } = await activitiesApi.getMyStatus(id);
+        setMyRegistrations(data.my_registrations ?? []);
+    };
+
     return (
         <>
             <ShirtOrderHistorySection
                 activity={activity}
                 myRegistrations={myRegistrations}
                 shirtTypes={activity.detail?.shirt_types ?? []}
-                onCancel={handleCancel}
+                onOpenCancel={() => setShowCancelModal(true)}
                 onPay={(regs) => setPayTargets(regs)}
             />
             {payTargets && (
@@ -115,6 +138,15 @@ export default function ShirtOrderHistoryPage() {
                     memberName={currentUser?.full_name}
                     onSubmit={handlePay}
                     onClose={() => setPayTargets(null)}
+                />
+            )}
+            {showCancelModal && (
+                <CancelShirtOrderModal
+                    activityId={id}
+                    registrations={cancellableRegs}
+                    shirtTypes={activity.detail?.shirt_types ?? []}
+                    onClose={() => setShowCancelModal(false)}
+                    onDone={refetchStatus}
                 />
             )}
         </>

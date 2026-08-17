@@ -23,6 +23,7 @@ import {
 import { eventsAdminApi } from "@/lib/api";
 import { createPortal } from "react-dom";
 import { notifyWalletChanged } from "@/lib/wallet-events";
+import { supabase } from "@/lib/supabase";
 
 type PaymentFilter = "all" | "unpaid" | "paid";
 
@@ -62,6 +63,52 @@ export default function EventRegistrationsPage({
     const [removing, setRemoving] = useState(false);
 
 
+    const [deleteGroupModal, setDeleteGroupModal] = useState<{ regs: any[]; label: string } | null>(null);
+    const [deletingItemIds, setDeletingItemIds] = useState<string[]>([]);
+    const [deletingAllGroup, setDeletingAllGroup] = useState(false);
+    const [approvingCancelId, setApprovingCancelId] = useState<string | null>(null);
+
+    const openDeleteGroupModal = (regs: any[], label: string) => {
+        setDeleteGroupModal({ regs, label });
+    };
+
+    const handleDeleteGroupItem = async (regId: string) => {
+        setDeletingItemIds((prev) => [...prev, regId]);
+        try {
+            await eventsAdminApi.removeRegistration("shirt_order", regId);
+            toast.success("Đã xoá sản phẩm");
+            notifyWalletChanged();
+            setDeleteGroupModal((prev) => {
+                if (!prev) return prev;
+                const remaining = prev.regs.filter((r) => r.id !== regId);
+                return remaining.length ? { ...prev, regs: remaining } : null;
+            });
+            fetchAll();
+        } catch {
+            toast.error("Xoá thất bại");
+        } finally {
+            setDeletingItemIds((prev) => prev.filter((i) => i !== regId));
+        }
+    };
+
+    const handleDeleteGroupAll = async () => {
+        if (!deleteGroupModal) return;
+        setDeletingAllGroup(true);
+        try {
+            const ids = deleteGroupModal.regs.map((r) => r.id);
+            await eventsAdminApi.removeShirtOrderRegistrationsBatch(ids);
+            toast.success("Đã xoá tất cả sản phẩm");
+            notifyWalletChanged();
+            setDeleteGroupModal(null);
+            fetchAll();
+        } catch {
+            toast.error("Xoá thất bại");
+        } finally {
+            setDeletingAllGroup(false);
+        }
+    };
+
+
     const handleRefresh = async () => {
         setRefreshing(true);
         try {
@@ -85,12 +132,19 @@ export default function EventRegistrationsPage({
     };
 
     const handleApproveCancel = async (regId: string) => {
+        if (approvingCancelId) return;
+
+        setApprovingCancelId(regId);
         try {
             await eventsAdminApi.approveCancelRequest(regId);
             toast.success("Đã duyệt huỷ và hoàn tiền");
             notifyWalletChanged();
             fetchAll();
-        } catch { }
+        } catch (e: any) {
+            toast.error(e?.response?.data?.message || "Duyệt huỷ thất bại");
+        } finally {
+            setApprovingCancelId(null);
+        }
     };
 
     const handleFinalize = async () => {
@@ -137,6 +191,22 @@ export default function EventRegistrationsPage({
 
     useEffect(() => {
         fetchAll();
+    }, [id]);
+
+
+    useEffect(() => {
+        if (!id) return;
+
+        const channel = supabase
+            .channel(`activity-shirt-regs:${id}`)
+            .on("broadcast", { event: "shirt_order_changed" }, () => {
+                fetchAll();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [id]);
 
     const handleDeductWallet = async (regIds: string[]) => {
@@ -254,8 +324,8 @@ export default function EventRegistrationsPage({
 
     return (
         <div className="w-full mx-auto">
-            <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-4">
-                <div className="pr-12">
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-4 md:pr-14 md:flex md:items-center md:justify-between md:gap-4">
+                <div className="pr-12 md:pr-0">
                     <h1 className="text-xl font-bold text-gray-900">
                         {activity.emoji} {activity.title}
                     </h1>
@@ -265,7 +335,7 @@ export default function EventRegistrationsPage({
                             : `${registrations.length} đăng ký`}
                     </p>
                 </div>
-                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:flex-wrap w-full sm:w-auto mt-3">
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:flex-wrap w-full sm:w-auto mt-3 md:mt-0 md:flex-shrink-0">
                     <button
                         onClick={handleRefresh}
                         disabled={refreshing}
@@ -382,7 +452,7 @@ export default function EventRegistrationsPage({
                                 shirtTypes={activity.detail?.shirt_types ?? []}
                                 onConfirm={(regIds: string[]) => handleConfirmPayment(regIds, "shirt_order")}
                                 onReject={handleRejectPayment}
-                                onRemove={(regId: string, label: string) => handleRemove("shirt_order", regId, label)}
+                                onRemoveGroup={openDeleteGroupModal}
                                 onApproveCancel={handleApproveCancel}
                                 onRejectCancel={handleRejectCancel}
                                 onViewProof={setProofImageUrl}
@@ -543,6 +613,18 @@ export default function EventRegistrationsPage({
                 )}
 
 
+                {deleteGroupModal && (
+                    <DeleteShirtOrderGroupModal
+                        label={deleteGroupModal.label}
+                        regs={deleteGroupModal.regs}
+                        deletingIds={deletingItemIds}
+                        deletingAll={deletingAllGroup}
+                        onDeleteOne={handleDeleteGroupItem}
+                        onDeleteAll={handleDeleteGroupAll}
+                        onClose={() => setDeleteGroupModal(null)}
+                    />
+                )}
+
                 {removeConfirm && (
                     <ConfirmModal
                         title="Xoá đăng ký"
@@ -559,6 +641,99 @@ export default function EventRegistrationsPage({
 
             </div>
         </div>
+    );
+}
+
+function DeleteShirtOrderGroupModal({
+    label,
+    regs,
+    deletingIds,
+    deletingAll,
+    onDeleteOne,
+    onDeleteAll,
+    onClose,
+}: {
+    label: string;
+    regs: any[];
+    deletingIds: string[];
+    deletingAll: boolean;
+    onDeleteOne: (regId: string) => void;
+    onDeleteAll: () => void;
+    onClose: () => void;
+}) {
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[999999] bg-black/40 flex items-center justify-center p-4"
+            onClick={(e) => e.target === e.currentTarget && !deletingAll && onClose()}
+        >
+            <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div>
+                        <h2 className="font-bold text-gray-900">Xoá đăng ký đặt áo</h2>
+                        <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        disabled={deletingAll}
+                        className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                    {regs.map((r: any) => (
+                        <div
+                            key={r.id}
+                            className="flex items-center justify-between gap-3 border border-gray-100 rounded-lg px-3 py-2 text-sm"
+                        >
+                            <div className="min-w-0">
+                                <p className="font-medium text-gray-900 truncate">
+                                    {r.shirt_type_name ?? "—"}
+                                    {r.color_name ? ` · ${r.color_name}` : ""}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                    {r.gender === "nu" ? "Nữ" : "Nam"} · Size {r.size} · SL {r.quantity}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => onDeleteOne(r.id)}
+                                disabled={deletingIds.includes(r.id) || deletingAll}
+                                className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 disabled:opacity-50 flex-shrink-0"
+                            >
+                                {deletingIds.includes(r.id) ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                )}
+                            </button>
+                        </div>
+                    ))}
+                    {regs.length === 0 && (
+                        <p className="text-center text-gray-400 py-8">Không còn sản phẩm nào</p>
+                    )}
+                </div>
+                {regs.length > 0 && (
+                    <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">
+                        <button
+                            onClick={onClose}
+                            disabled={deletingAll}
+                            className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                            Đóng
+                        </button>
+                        <button
+                            onClick={onDeleteAll}
+                            disabled={deletingAll}
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-700 text-white disabled:opacity-60 flex items-center gap-1.5"
+                        >
+                            {deletingAll && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                            Xoá tất cả ({regs.length})
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>,
+        document.body,
     );
 }
 
@@ -792,7 +967,8 @@ function isAdminTransferRequestPending(r: any) {
     return (
         r.registered_by_admin &&
         r.payment_method === "transfer" &&
-        r.payment_status !== "confirmed"
+        r.payment_status !== "confirmed" &&
+        !r.member_reported_payment
     );
 }
 
@@ -843,7 +1019,7 @@ function ShirtOrderTable({
     shirtTypes,
     onConfirm,
     onReject,
-    onRemove,
+    onRemoveGroup,
     onApproveCancel,
     onRejectCancel,
     onViewProof,
@@ -854,14 +1030,12 @@ function ShirtOrderTable({
     shirtTypes: any[];
     onConfirm: (regIds: string[]) => void;
     onReject: (regId: string | string[], label: string) => void;
-    onRemove: (regId: string, label: string) => void;
+    onRemoveGroup: (regs: any[], label: string) => void;
     onApproveCancel: (regId: string) => void;
     onRejectCancel: (regId: string, label: string) => void;
     onViewProof: (url: string) => void;
     onDeductWallet: (regIds: string[]) => void;
 }) {
-
-
 
     const imgSrc = (img: any) => (img ? (typeof img === "string" ? img : img.url) : null);
 
@@ -916,6 +1090,7 @@ function ShirtOrderTable({
         colorGroupQuantity: number;
         showSizeCell: boolean;
         sizeCellSpan: number;
+        sizeGroupQuantity: number;
     }[] = [];
 
     groupList.forEach((groupRegs) => {
@@ -1001,6 +1176,13 @@ function ShirtOrderTable({
                 }
             }
 
+            let sizeGroupQuantity = 0;
+            if (!sameSizeAsPrev) {
+                for (let i = idx; i < idx + sizeCellSpan; i++) {
+                    sizeGroupQuantity += Number(groupRegs[i].quantity ?? 1);
+                }
+            }
+
             rowsWithMeta.push({
                 reg: r,
                 isFirstOfGroup: idx === 0,
@@ -1015,6 +1197,7 @@ function ShirtOrderTable({
                 colorGroupQuantity,
                 showSizeCell: !sameSizeAsPrev,
                 sizeCellSpan,
+                sizeGroupQuantity,
             });
         });
     });
@@ -1082,6 +1265,7 @@ function ShirtOrderTable({
                             colorGroupQuantity,
                             showSizeCell,
                             sizeCellSpan,
+                            sizeGroupQuantity,
                         }) => {
                             const unitPrice = r.unit_price ?? 0;
                             const groupTotal = groupRegs.reduce(
@@ -1187,9 +1371,9 @@ function ShirtOrderTable({
                                     <td className="px-4 py-3 border border-gray-200 text-gray-600 text-center">
                                         {r.print_name || "—"}
                                     </td>
-                                    {showColorCell && (
-                                        <td rowSpan={colorCellSpan} className="px-4 py-3 border border-gray-200 text-gray-700 font-semibold text-center align-middle">
-                                            {colorGroupQuantity}
+                                    {showSizeCell && (
+                                        <td rowSpan={sizeCellSpan} className="px-4 py-3 border border-gray-200 text-gray-700 font-semibold text-center align-middle">
+                                            {sizeGroupQuantity}
                                         </td>
                                     )}
                                     {showColorCell && (
@@ -1300,39 +1484,61 @@ function ShirtOrderTable({
                                         </td>
                                     )}
 
-                                    <td className="px-4 py-3 border border-gray-200 text-center">
-                                        {r.cancel_requested_at ? (
-                                            <div className="flex flex-col items-center gap-1">
-                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold whitespace-nowrap">
-                                                    Yêu cầu huỷ
-                                                </span>
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <button
-                                                        onClick={() => onApproveCancel(r.id)}
-                                                        title="Duyệt huỷ & hoàn tiền"
-                                                        className="p-1.5 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600"
-                                                    >
-                                                        <CheckCircle2 className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => onRejectCancel(r.id, r.users?.full_name ?? r.guest_full_name ?? "")}
-                                                        title="Từ chối yêu cầu huỷ"
-                                                        className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
-                                                    >
-                                                        <XCircle className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
-                                                title="Xoá đăng ký"
-                                                className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </td>
+                                    {(() => {
+                                        const groupHasCancelRequest = groupRegs.some((g: any) => g.cancel_requested_at);
+
+                                        if (groupHasCancelRequest) {
+                                            return (
+                                                <td className="px-4 py-3 border border-gray-200 text-center">
+                                                    {r.cancel_requested_at ? (
+                                                        <div className="flex flex-col items-center gap-1.5">
+                                                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold whitespace-nowrap">
+                                                                {r.cancel_requested_quantity != null
+                                                                    ? `Yêu cầu huỷ ${r.cancel_requested_quantity}/${r.quantity} áo`
+                                                                    : "Yêu cầu huỷ toàn bộ"}
+                                                            </span>
+                                                            <div className="flex flex-col items-stretch gap-1.5 w-full">
+                                                                <button
+                                                                    onClick={() => onApproveCancel(r.id)}
+                                                                    className="py-1.5 px-3 rounded-lg text-xs font-medium bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-1 whitespace-nowrap"
+                                                                >
+                                                                    <CheckCircle2 className="w-3.5 h-3.5" /> Duyệt
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => onRejectCancel(r.id, r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                    className="py-1.5 px-3 rounded-lg text-xs font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1 whitespace-nowrap"
+                                                                >
+                                                                    <XCircle className="w-3.5 h-3.5" /> Từ chối
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => onRemoveGroup([r], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                            title="Xoá đăng ký"
+                                                            className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            );
+                                        }
+
+                                        if (!isFirstOfGroup) return null;
+
+                                        return (
+                                            <td rowSpan={rowSpan} className="px-4 py-3 border border-gray-200 text-center align-middle">
+                                                <button
+                                                    onClick={() => onRemoveGroup(groupRegs, r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                    title="Xoá đăng ký"
+                                                    className="py-1.5 px-3 rounded-lg text-xs font-medium bg-red-50 hover:bg-red-100 text-red-600 flex items-center gap-1 mx-auto whitespace-nowrap"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" /> Xoá
+                                                </button>
+                                            </td>
+                                        );
+                                    })()}
                                 </tr>
                             );
                         })}
@@ -1344,6 +1550,8 @@ function ShirtOrderTable({
                 {groupList.map((groupRegs) => {
                     const first = groupRegs[0];
                     const mergePayment = samePaymentGroup(groupRegs);
+
+                    const removableRegs = groupRegs.filter((r: any) => !r.cancel_requested_at);
 
                     const colorBuckets = new Map<string, { shirt_type_name: string; color_name?: string; shirt_type_id?: string; color_id?: string; unitPrice: number; totalQty: number; items: any[] }>();
                     for (const r of groupRegs) {
@@ -1460,112 +1668,112 @@ function ShirtOrderTable({
                                                         !!r.user_id &&
                                                         r.payment_status !== "confirmed" &&
                                                         (!r.payment_method || isAdminTransferRequestPending(r));
+                                                    const hasCancelRequest = !!r.cancel_requested_at;
 
                                                     return (
                                                         <div
                                                             key={r.id}
                                                             className="flex flex-col gap-1.5 text-xs rounded-lg px-1.5 py-1 -mx-1.5"
                                                         >
-                                                            <div className="flex items-center justify-between gap-2">
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-gray-500">
-                                                                        <strong className={r.gender === "nu" ? "text-pink-600" : "text-blue-600"}>
-                                                                            {r.gender === "nu" ? "Nữ" : "Nam"}
-                                                                        </strong>
-                                                                        {" · "}Size <strong className="text-gray-700">{r.size}</strong>
-                                                                        {r.jersey_number && <> · Số <strong className="text-gray-700">{r.jersey_number}</strong></>}
-                                                                        {r.print_name && <> · Tên <strong className="text-gray-700">"{r.print_name}"</strong></>}
-                                                                        {" · SL "}
-                                                                        <strong className="text-gray-700">{r.quantity}</strong>
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className="text-gray-500">
+                                                                    <strong className={r.gender === "nu" ? "text-pink-600" : "text-blue-600"}>
+                                                                        {r.gender === "nu" ? "Nữ" : "Nam"}
+                                                                    </strong>
+                                                                    {" · "}Size <strong className="text-gray-700">{r.size}</strong>
+                                                                    {r.jersey_number && <> · Số <strong className="text-gray-700">{r.jersey_number}</strong></>}
+                                                                    {r.print_name && <> · Tên <strong className="text-gray-700">"{r.print_name}"</strong></>}
+                                                                    {" · SL "}
+                                                                    <strong className="text-gray-700">{r.quantity}</strong>
+                                                                </span>
+                                                                {hasCancelRequest && (
+                                                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold w-fit">
+                                                                        Yêu cầu huỷ
                                                                     </span>
-                                                                    {r.cancel_requested_at && (
-                                                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold w-fit">
-                                                                            Yêu cầu huỷ
+                                                                )}
+                                                                {!mergePayment && (
+                                                                    <div className="flex flex-wrap items-center gap-1">
+                                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1 w-fit ${itemStatusBadge.cls}`}>
+                                                                            {itemStatusBadge.showIcon && <CheckCircle2 className="w-2.5 h-2.5" />}
+                                                                            {itemStatusBadge.label}
                                                                         </span>
-                                                                    )}
-                                                                    {!mergePayment && (
-                                                                        <div className="flex flex-wrap items-center gap-1">
-                                                                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1 w-fit ${itemStatusBadge.cls}`}>
-                                                                                {itemStatusBadge.showIcon && <CheckCircle2 className="w-2.5 h-2.5" />}
-                                                                                {itemStatusBadge.label}
+                                                                        {r.registered_by_admin && (
+                                                                            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-600 w-fit">
+                                                                                Admin thêm
                                                                             </span>
-                                                                            {r.registered_by_admin && (
-                                                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-600 w-fit">
-                                                                                    Admin thêm
+                                                                        )}
+                                                                        {itemMethodBadge && (
+                                                                            <span className="flex items-center gap-1">
+                                                                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold w-fit ${itemMethodBadge.cls}`}>
+                                                                                    {itemMethodBadge.label}
                                                                                 </span>
-                                                                            )}
-                                                                            {itemMethodBadge && (
-                                                                                <span className="flex items-center gap-1">
-                                                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold w-fit ${itemMethodBadge.cls}`}>
-                                                                                        {itemMethodBadge.label}
-                                                                                    </span>
-                                                                                    {r.payment_proof_url && (
-                                                                                        <button
-                                                                                            onClick={() => onViewProof(r.payment_proof_url)}
-                                                                                            title="Xem ảnh chuyển khoản"
-                                                                                            className="p-0.5 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50"
-                                                                                        >
-                                                                                            <Eye className="w-3 h-3" />
-                                                                                        </button>
-                                                                                    )}
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-
-                                                                {r.cancel_requested_at ? (
-                                                                    <div className="flex items-center gap-1 flex-shrink-0">
-                                                                        <button
-                                                                            onClick={() => onApproveCancel(r.id)}
-                                                                            className="p-1 -m-1 text-gray-400 hover:text-green-600"
-                                                                            title="Duyệt huỷ & hoàn tiền"
-                                                                        >
-                                                                            <CheckCircle2 className="w-4 h-4" />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => onRejectCancel(r.id, r.users?.full_name ?? "")}
-                                                                            className="p-1 -m-1 text-gray-400 hover:text-red-500"
-                                                                            title="Từ chối yêu cầu huỷ"
-                                                                        >
-                                                                            <XCircle className="w-4 h-4" />
-                                                                        </button>
+                                                                                {r.payment_proof_url && (
+                                                                                    <button
+                                                                                        onClick={() => onViewProof(r.payment_proof_url)}
+                                                                                        title="Xem ảnh chuyển khoản"
+                                                                                        className="p-0.5 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                                                                    >
+                                                                                        <Eye className="w-3 h-3" />
+                                                                                    </button>
+                                                                                )}
+                                                                            </span>
+                                                                        )}
                                                                     </div>
-                                                                ) : (
-                                                                    <button
-                                                                        onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
-                                                                        className="p-1 -m-1 text-gray-300 hover:text-red-500 flex-shrink-0"
-                                                                    >
-                                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                                    </button>
                                                                 )}
                                                             </div>
 
-                                                            {itemCanConfirmReject && (
+                                                            {hasCancelRequest ? (
                                                                 <div className="flex items-center gap-2 mt-2">
                                                                     <button
-                                                                        onClick={() => handleConfirmClick(onConfirm, [r], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                        onClick={() => onApproveCancel(r.id)}
                                                                         className="flex-1 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-1.5"
                                                                     >
-                                                                        <CheckCircle2 className="w-3.5 h-3.5" /> Xác nhận
+                                                                        <CheckCircle2 className="w-3.5 h-3.5" /> Duyệt
                                                                     </button>
                                                                     <button
-                                                                        onClick={() => onReject([r.id], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                        onClick={() => onRejectCancel(r.id, r.users?.full_name ?? r.guest_full_name ?? "")}
                                                                         className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5"
                                                                     >
                                                                         <XCircle className="w-3.5 h-3.5" /> Từ chối
                                                                     </button>
                                                                 </div>
-                                                            )}
-                                                            {itemCanDeductWallet && (
-                                                                <div className="mt-2">
-                                                                    <button
-                                                                        onClick={() => handleDeductWalletClick(onDeductWallet, [r], r.users?.full_name ?? r.guest_full_name ?? "")}
-                                                                        className="w-full py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5"
-                                                                    >
-                                                                        <Wallet className="w-3.5 h-3.5" /> Trừ vào ví
-                                                                    </button>
-                                                                </div>
+                                                            ) : (
+                                                                <>
+                                                                    {itemCanConfirmReject && (
+                                                                        <div className="flex items-center gap-2 mt-2">
+                                                                            <button
+                                                                                onClick={() => handleConfirmClick(onConfirm, [r], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                                className="flex-1 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-1.5"
+                                                                            >
+                                                                                <CheckCircle2 className="w-3.5 h-3.5" /> Xác nhận
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => onReject([r.id], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                                className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-1.5"
+                                                                            >
+                                                                                <XCircle className="w-3.5 h-3.5" /> Từ chối
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                    {itemCanDeductWallet && (
+                                                                        <div className="mt-2">
+                                                                            <button
+                                                                                onClick={() => handleDeductWalletClick(onDeductWallet, [r], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                                className="w-full py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5"
+                                                                            >
+                                                                                <Wallet className="w-3.5 h-3.5" /> Trừ vào ví
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="pt-1">
+                                                                        <button
+                                                                            onClick={() => onRemoveGroup([r], r.users?.full_name ?? r.guest_full_name ?? "")}
+                                                                            className="w-full py-2 rounded-lg text-sm font-medium bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center gap-1.5"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" /> Xoá đăng ký
+                                                                        </button>
+                                                                    </div>
+                                                                </>
                                                             )}
                                                         </div>
                                                     );
@@ -1770,7 +1978,7 @@ function exportToExcel(activity: any, regData: any) {
                     span++;
                 }
                 if (span > 1) {
-                    for (const c of [4, 8, 9]) {
+                    for (const c of [4, 9]) {
                         merges.push({
                             s: { r: startRow + colorCursor, c },
                             e: { r: startRow + colorCursor + span - 1, c },
@@ -1780,47 +1988,81 @@ function exportToExcel(activity: any, regData: any) {
                 colorCursor += span;
             }
 
-            let cIdx = 0;
-            while (cIdx < groupRegs.length) {
+            let sizeMergeCursor = 0;
+            while (sizeMergeCursor < groupRegs.length) {
                 let span = 1;
                 while (
-                    cIdx + span < groupRegs.length &&
-                    groupRegs[cIdx + span].shirt_type_name === groupRegs[cIdx].shirt_type_name &&
-                    groupRegs[cIdx + span].gender === groupRegs[cIdx].gender &&
-                    groupRegs[cIdx + span].color_name === groupRegs[cIdx].color_name
+                    sizeMergeCursor + span < groupRegs.length &&
+                    groupRegs[sizeMergeCursor + span].shirt_type_name === groupRegs[sizeMergeCursor].shirt_type_name &&
+                    groupRegs[sizeMergeCursor + span].gender === groupRegs[sizeMergeCursor].gender &&
+                    groupRegs[sizeMergeCursor + span].color_name === groupRegs[sizeMergeCursor].color_name &&
+                    groupRegs[sizeMergeCursor + span].size === groupRegs[sizeMergeCursor].size
                 ) {
                     span++;
                 }
-                const colorGroupQty = groupRegs
-                    .slice(cIdx, cIdx + span)
-                    .reduce((s: number, g: any) => s + Number(g.quantity ?? 1), 0);
-
-                for (let i = cIdx; i < cIdx + span; i++) {
-                    const r = groupRegs[i];
-                    rows.push({
-                        "Thành viên": r.users?.full_name ?? r.guest_full_name ?? "—",
-                        "SĐT": r.users?.phone ?? r.guest_phone ?? "—",
-                        "Loại áo": r.shirt_type_name ?? "—",
-                        "Form áo": r.gender === "nu" ? "Nữ" : "Nam",
-                        "Màu sắc": r.color_name ?? "—",
-                        "Size": r.size,
-                        "Số áo": r.jersey_number ?? "—",
-                        "Tên in": r.print_name ?? "—",
-                        "SL": i === cIdx ? colorGroupQty : "",
-                        "Đơn giá": i === cIdx ? (r.unit_price ?? 0) : "",
-                        "Tổng tiền (theo thành viên)": groupTotal,
-                        "Trạng thái TT":
-                            r.payment_status === "confirmed" ? "Đã xác nhận" : "Chưa xác nhận",
-                        "Trạng thái huỷ": r.cancel_requested_at
-                            ? "Đang chờ duyệt huỷ"
-                            : "—",
-                        "Phương thức": paymentMethodExcelLabel(r),
-                        "Nguồn": r.registered_by_admin ? "Admin thêm" : "Tự đăng ký",
+                if (span > 1) {
+                    merges.push({
+                        s: { r: startRow + sizeMergeCursor, c: 8 },
+                        e: { r: startRow + sizeMergeCursor + span - 1, c: 8 },
                     });
-                    rowGroupIndex.push(groupIdx);
-                    rowIsUnpaidFinalized.push(!!r.finalized_as_unpaid);
                 }
-                cIdx += span;
+                sizeMergeCursor += span;
+            }
+
+            let cIdx = 0;
+            while (cIdx < groupRegs.length) {
+                let colorSpan = 1;
+                while (
+                    cIdx + colorSpan < groupRegs.length &&
+                    groupRegs[cIdx + colorSpan].shirt_type_name === groupRegs[cIdx].shirt_type_name &&
+                    groupRegs[cIdx + colorSpan].gender === groupRegs[cIdx].gender &&
+                    groupRegs[cIdx + colorSpan].color_name === groupRegs[cIdx].color_name
+                ) {
+                    colorSpan++;
+                }
+
+                let sIdx = cIdx;
+                while (sIdx < cIdx + colorSpan) {
+                    let sizeSpan = 1;
+                    while (
+                        sIdx + sizeSpan < cIdx + colorSpan &&
+                        groupRegs[sIdx + sizeSpan].size === groupRegs[sIdx].size
+                    ) {
+                        sizeSpan++;
+                    }
+                    const sizeGroupQty = groupRegs
+                        .slice(sIdx, sIdx + sizeSpan)
+                        .reduce((s: number, g: any) => s + Number(g.quantity ?? 1), 0);
+
+                    for (let i = sIdx; i < sIdx + sizeSpan; i++) {
+                        const r = groupRegs[i];
+                        rows.push({
+                            "Thành viên": r.users?.full_name ?? r.guest_full_name ?? "—",
+                            "SĐT": r.users?.phone ?? r.guest_phone ?? "—",
+                            "Loại áo": r.shirt_type_name ?? "—",
+                            "Form áo": r.gender === "nu" ? "Nữ" : "Nam",
+                            "Màu sắc": r.color_name ?? "—",
+                            "Size": r.size,
+                            "Số áo": r.jersey_number ?? "—",
+                            "Tên in": r.print_name ?? "—",
+                            "SL": i === sIdx ? sizeGroupQty : "",
+                            "Đơn giá": i === cIdx ? (r.unit_price ?? 0) : "",
+                            "Tổng tiền (theo thành viên)": groupTotal,
+                            "Trạng thái TT":
+                                r.payment_status === "confirmed" ? "Đã xác nhận" : "Chưa xác nhận",
+                            "Trạng thái huỷ": r.cancel_requested_at
+                                ? "Đang chờ duyệt huỷ"
+                                : "—",
+                            "Phương thức": paymentMethodExcelLabel(r),
+                            "Nguồn": r.registered_by_admin ? "Admin thêm" : "Tự đăng ký",
+                        });
+                        rowGroupIndex.push(groupIdx);
+                        rowIsUnpaidFinalized.push(!!r.finalized_as_unpaid);
+                    }
+                    sIdx += sizeSpan;
+                }
+
+                cIdx += colorSpan;
             }
 
             currentRowIndex += groupRegs.length;

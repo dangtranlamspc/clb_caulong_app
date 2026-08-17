@@ -270,15 +270,12 @@ export default function AdminAddShirtOrderModal({
         if (submitting) return;
         setSubmitting(true);
 
-        let successCount = 0;
-        let failed = false;
-
-        for (const item of cart) {
-            try {
-                await eventsAdminApi.adminAddShirtOrderRegistration(activityId, {
-                    user_id: mode === "member" ? selectedMember?.id : undefined,
-                    guest_full_name: mode === "guest" ? guestName.trim() : undefined,
-                    guest_phone: mode === "guest" ? guestPhone.trim() || undefined : undefined,
+        try {
+            await eventsAdminApi.adminAddShirtOrderRegistrationBatch(activityId, {
+                user_id: mode === "member" ? selectedMember?.id : undefined,
+                guest_full_name: mode === "guest" ? guestName.trim() : undefined,
+                guest_phone: mode === "guest" ? guestPhone.trim() || undefined : undefined,
+                items: cart.map((item) => ({
                     shirt_type_id: item.shirt_type_id,
                     color_id: item.color_id,
                     gender: item.gender,
@@ -286,26 +283,21 @@ export default function AdminAddShirtOrderModal({
                     quantity: item.quantity,
                     jersey_number: item.jersey_number,
                     print_name: item.print_name,
-                    payment_method: payment === "none" ? undefined : payment,
-                });
-                successCount++;
-            } catch {
-                failed = true;
-                break;
-            }
-        }
+                })),
+                payment_method: payment === "none" ? undefined : payment,
+            });
 
-        if (successCount > 0) {
-            toast.success(`Đã thêm ${successCount}/${cart.length} sản phẩm vào đơn hàng`);
+            toast.success(`Đã thêm ${cart.length} sản phẩm vào đơn hàng`);
 
             if (payment === "wallet") {
                 notifyWalletChanged();
             }
 
             onSuccess();
+        } catch {
+        } finally {
+            setSubmitting(false);
         }
-
-        setSubmitting(false);
     };
 
     const groupedCart = useMemo(() => {

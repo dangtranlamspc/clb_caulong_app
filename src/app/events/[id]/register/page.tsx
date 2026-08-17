@@ -342,7 +342,6 @@ export default function TournamentRegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#F4F6FA]">
-      {/* ── Header cố định: nút back + breadcrumb + tiêu đề ── */}
       <div
         className="sticky top-0 z-40 bg-[#F4F6FA]/95 backdrop-blur-sm border-b border-gray-100 px-4 sm:px-6 md:px-8"
         style={{
@@ -420,9 +419,7 @@ export default function TournamentRegisterPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] items-start gap-4 sm:gap-5">
-            {/* Cột phải (desktop): sidebar — chiều cao độc lập với cột trái */}
             <div className="contents lg:flex lg:flex-col lg:gap-5 lg:col-start-2 lg:row-start-1">
-              {/* ── Nhóm 1 (mobile): Thông tin giải đấu + Lệ phí ── */}
               <div className="space-y-4 sm:space-y-5 order-1 lg:order-none">
                 <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
                   <p className="font-bold text-gray-900 text-sm">
@@ -484,7 +481,6 @@ export default function TournamentRegisterPage() {
                 )}
               </div>
 
-              {/* ── Nhóm 3 (mobile): Thông tin đăng ký ── */}
               <div className="order-3 lg:order-none">
                 <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-2.5">
                   <p className="font-bold text-gray-900 text-sm">
@@ -513,7 +509,6 @@ export default function TournamentRegisterPage() {
                 </div>
               </div>
 
-              {/* ── Nhóm 5 (mobile): Bạn cần hỗ trợ ── */}
               <div className="order-5 lg:order-none">
                 <div className="bg-blue-50 rounded-2xl p-4 sm:p-5 space-y-2">
                   <p className="font-bold text-gray-900 text-sm">Bạn cần hỗ trợ?</p>
@@ -532,9 +527,7 @@ export default function TournamentRegisterPage() {
               </div>
             </div>
 
-            {/* Cột trái (desktop): form + nút điều hướng — chiều cao độc lập với cột phải */}
             <div className="contents lg:flex lg:flex-col lg:gap-5 lg:col-start-1 lg:row-start-1">
-              {/* ── Nhóm 2 (mobile): Nội dung form theo bước ── */}
               <div className="space-y-4 sm:space-y-5 min-w-0 order-2 lg:order-none">
                 {step === 1 && (
                   <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">

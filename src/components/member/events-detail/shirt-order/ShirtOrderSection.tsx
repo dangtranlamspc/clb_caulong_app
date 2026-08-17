@@ -12,10 +12,12 @@ import { ShirtPayMethodPanel } from "./ShirtPayMethodPanel";
 import { ShirtPaymentConfirmPanel } from "./ShirtPaymentConfirmPanel";
 import { CartItem } from "@/types/types";
 import { fmt, sortSizes } from "@/utils/utils";
+import { useRouter } from "next/navigation";
 
 const TRANSITION_MS = 280;
 
 export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
+  const router = useRouter();
   const shirtTypes: any[] = activity.detail?.shirt_types ?? [];
   const myRegistrations: any[] = myStatus?.my_registrations ?? [];
   const pendingRegistrations = myRegistrations.filter(
@@ -334,6 +336,8 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
       );
       closeConfirmPanel();
       onChanged();
+
+      router.push(`/events/${activity.id}/history`);
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Thao tác thất bại");
     } finally {

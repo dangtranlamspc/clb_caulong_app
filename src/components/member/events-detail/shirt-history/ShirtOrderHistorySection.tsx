@@ -39,13 +39,13 @@ export function ShirtOrderHistorySection({
     activity,
     myRegistrations,
     shirtTypes,
-    onCancel,
+    onOpenCancel,
     onPay,
 }: {
     activity: any;
     myRegistrations: any[];
     shirtTypes: any[];
-    onCancel: (registrationId: string) => void;
+    onOpenCancel: () => void;
     onPay: (registrations: any[]) => void;
 }) {
     const router = useRouter();
@@ -206,7 +206,6 @@ export function ShirtOrderHistorySection({
                                                     const status = regStatus(r);
                                                     const cfg = STATUS_CFG[status];
                                                     const waitingCancel = !!r.cancel_requested_at;
-                                                    const showCancelBtn = !waitingCancel && canModify;
                                                     return (
                                                         <div
                                                             key={r.id}
@@ -235,15 +234,6 @@ export function ShirtOrderHistorySection({
                                                                 >
                                                                     {cfg.label}
                                                                 </span>
-
-                                                                {showCancelBtn && (
-                                                                    <button
-                                                                        onClick={() => onCancel(r.id)}
-                                                                        className="text-[10px] font-semibold px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors whitespace-nowrap"
-                                                                    >
-                                                                        Hủy
-                                                                    </button>
-                                                                )}
                                                             </div>
                                                         </div>
                                                     );
@@ -286,6 +276,15 @@ export function ShirtOrderHistorySection({
                     </button>
                 )}
 
+                {typeGroups.length > 0 && canModify && (
+                    <button
+                        onClick={onOpenCancel}
+                        className="hidden md:flex w-full py-3.5 rounded-xl border-2 border-red-100 bg-white hover:bg-red-50 active:scale-[0.99] text-red-600 font-bold text-sm items-center justify-center gap-2 transition-all"
+                    >
+                        Huỷ đơn
+                    </button>
+                )}
+
                 {canModify && (
                     <Link
                         href={`/events/${activity.id}`}
@@ -313,6 +312,14 @@ export function ShirtOrderHistorySection({
                         </button>
                     )}
                     <Link href={`/events/${activity.id}`} className="block">
+                        {typeGroups.length > 0 && canModify && (
+                            <button
+                                onClick={onOpenCancel}
+                                className="w-full mb-2 py-3.5 rounded-xl border-2 border-red-100 bg-white active:scale-[0.99] text-red-600 font-bold text-sm flex items-center justify-center gap-2"
+                            >
+                                Huỷ đơn
+                            </button>
+                        )}
                         <button className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm shadow-blue-200 transition-all">
                             <Plus className="w-4 h-4" />
                             Mua thêm
