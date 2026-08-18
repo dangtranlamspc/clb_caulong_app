@@ -576,6 +576,18 @@ export function NotificationBell() {
 
                         return prev.map((n) => (n.id === updated.id ? updated : n));
                     });
+
+                    if (updated.type === 'session_created') {
+                        setJoinedSessions((prev) => {
+                            const next = new Set(prev);
+                            if (updated.data?.registered) {
+                                next.add(updated.id);
+                            } else {
+                                next.delete(updated.id);
+                            }
+                            return next;
+                        });
+                    }
                 },
             )
             .on(

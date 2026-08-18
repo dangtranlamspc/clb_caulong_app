@@ -120,6 +120,16 @@ function toUtcIso(localValue: string): string | undefined {
     return d.toISOString();
 }
 
+function formatThousands(value: string): string {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) return "";
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function parseThousands(value: string): string {
+    return value.replace(/\D/g, "");
+}
+
 function slugify(input: string): string {
     return input
         .normalize("NFD")
@@ -232,6 +242,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
     const router = useRouter();
 
     const [form, setForm] = useState<TournamentFormState>(initialForm);
+    const [initialSnapshot, setInitialSnapshot] = useState<TournamentFormState>(initialForm);
     const [loading, setLoading] = useState(!!id);
     const [saving, setSaving] = useState(false);
     const [togglingStatus, setTogglingStatus] = useState(false);
@@ -241,6 +252,9 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
 
     const logoInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
+
+    const isDirty = JSON.stringify(form) !== JSON.stringify(initialSnapshot);
+    const canSubmit = !id || isDirty;
 
     useEffect(() => {
         if (!id) return;
@@ -290,7 +304,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                     rules_content: rulesData.rules_content ?? "",
                 };
 
-                setForm({
+                const built: TournamentFormState = {
                     title: data.title ?? "",
                     slug: data.slug ?? "",
                     emoji: data.emoji ?? "🏆",
@@ -321,7 +335,11 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                             : "",
                     composition: resizeComposition(composition, teamSize),
                     rules,
-                });
+                };
+
+                setForm(built);
+                setInitialSnapshot(built);
+
                 if (data.slug) setSlugTouched(true);
             })
             .catch(() => toast.error("Không tải được dữ liệu giải đấu"))
@@ -546,6 +564,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
         try {
             await eventsAdminApi.updateStatus(id, nextStatus);
             setForm((f) => ({ ...f, status: nextStatus }));
+            setInitialSnapshot((s) => ({ ...s, status: nextStatus }));
             toast.success(isOpen ? "Đã đóng đăng ký" : "Đã mở lại đăng ký");
         } catch {
             toast.error("Cập nhật trạng thái thất bại");
@@ -604,13 +623,15 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                 </button>
                             )}
 
-                            <button
-                                disabled={saving}
-                                onClick={handleSubmit}
-                                className="btn-primary disabled:opacity-50 px-8"
-                            >
-                                {saving ? "Đang lưu..." : id ? "Lưu thay đổi" : "Tạo giải đấu"}
-                            </button>
+                            {canSubmit && (
+                                <button
+                                    disabled={saving}
+                                    onClick={handleSubmit}
+                                    className="btn-primary disabled:opacity-50 px-8"
+                                >
+                                    {saving ? "Đang lưu..." : id ? "Lưu thay đổi" : "Tạo giải đấu"}
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -628,13 +649,15 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                             </button>
                         )}
 
-                        <button
-                            disabled={saving}
-                            onClick={handleSubmit}
-                            className="btn-primary flex-1 disabled:opacity-50 text-center"
-                        >
-                            {saving ? "Đang lưu..." : id ? "Lưu thay đổi" : "Tạo giải đấu"}
-                        </button>
+                        {canSubmit && (
+                            <button
+                                disabled={saving}
+                                onClick={handleSubmit}
+                                className="btn-primary flex-1 disabled:opacity-50 text-center"
+                            >
+                                {saving ? "Đang lưu..." : id ? "Lưu thay đổi" : "Tạo giải đấu"}
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -920,15 +943,15 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                         <SectionCard icon="💰" title="LỆ PHÍ">
                             <Field label="Lệ phí / người">
                                 <input
-                                    type="number"
-                                    min={0}
+                                    type="text"
+                                    inputMode="numeric"
                                     className="input-field"
                                     placeholder="0"
-                                    value={form.entry_fee_per_person}
+                                    value={formatThousands(form.entry_fee_per_person)}
                                     onChange={(e) =>
                                         setForm((f) => ({
                                             ...f,
-                                            entry_fee_per_person: e.target.value,
+                                            entry_fee_per_person: parseThousands(e.target.value),
                                         }))
                                     }
                                 />
@@ -1104,7 +1127,17 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                         </SectionCard>
                     </div>
                 </div>
-
+                {canSubmit && (
+                    <div className="flex justify-end pt-2 pb-4">
+                        <button
+                            disabled={saving}
+                            onClick={handleSubmit}
+                            className="btn-primary disabled:opacity-50 px-8 w-full sm:w-auto"
+                        >
+                            {saving ? "Đang lưu..." : id ? "Lưu thay đổi" : "Tạo giải đấu"}
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
