@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { X, Save, Loader2, CalendarDays, Calculator } from "lucide-react";
 import toast from "react-hot-toast";
@@ -26,6 +26,8 @@ export default function SessionFormModal({
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+
+  const continueAfterSaveRef = useRef(false);
 
   const id = target?.id;
   const isEdit = Boolean(id);
@@ -107,6 +109,7 @@ export default function SessionFormModal({
   };
 
   const onSubmit = async (values: any) => {
+    const shouldContinue = continueAfterSaveRef.current;
     setLoading(true);
     try {
       const payload: any = {
@@ -127,18 +130,40 @@ export default function SessionFormModal({
       if (isEdit && id) {
         await sessionsAdminApi.update(id, payload);
         toast.success("Đã cập nhật buổi đánh");
+        setVisible(false);
+        setTimeout(() => {
+          onClose();
+          onSuccess();
+        }, 200);
       } else {
         await sessionsAdminApi.create(payload);
-        toast.success("Tạo buổi đánh thành công");
-      }
-      setVisible(false);
-      setTimeout(() => {
-        onClose();
         onSuccess();
-      }, 200);
+
+        if (shouldContinue) {
+          toast.success("Đã tạo buổi, tiếp tục tạo buổi mới");
+          reset({
+            title: "",
+            description: "",
+            scheduled_at: "",
+            duration_minutes: values.duration_minutes,
+            location: values.location,
+            max_slots: values.max_slots,
+            court_fee: 0,
+            shuttle_count: 0,
+            shuttle_price: 0,
+          });
+        } else {
+          toast.success("Tạo buổi đánh thành công");
+          setVisible(false);
+          setTimeout(() => {
+            onClose();
+          }, 200);
+        }
+      }
     } catch {
     } finally {
       setLoading(false);
+      continueAfterSaveRef.current = false;
     }
   };
 
@@ -366,6 +391,7 @@ export default function SessionFormModal({
         </div>
 
         {/* Footer */}
+        {/* Footer */}
         <div className="flex justify-end items-center gap-3 px-5 py-4 border-t border-gray-100 flex-shrink-0">
           <button
             type="button"
@@ -374,13 +400,36 @@ export default function SessionFormModal({
           >
             Hủy
           </button>
+
+          {!isEdit && (
+            <button
+              type="submit"
+              form="session-form"
+              onClick={() => {
+                continueAfterSaveRef.current = true;
+              }}
+              disabled={loading || fetching}
+              className="flex items-center justify-center gap-2 text-sm flex-none w-auto px-4 py-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium disabled:opacity-50"
+            >
+              {loading && continueAfterSaveRef.current ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Lưu và tiếp tục
+            </button>
+          )}
+
           <button
             type="submit"
             form="session-form"
+            onClick={() => {
+              continueAfterSaveRef.current = false;
+            }}
             disabled={loading || fetching}
             className="btn-primary flex items-center justify-center gap-2 text-sm flex-none w-auto"
           >
-            {loading ? (
+            {loading && !continueAfterSaveRef.current ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Save className="w-4 h-4" />
