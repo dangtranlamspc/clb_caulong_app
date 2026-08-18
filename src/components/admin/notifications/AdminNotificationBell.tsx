@@ -10,12 +10,20 @@ import bellAnimation from "../../../../public/lottie/noti.json";
 import { usePathname, useRouter } from "next/navigation";
 import { fmt } from "@/lib/fund-constants";
 
-function ResolvedBadge({ action }: { action?: "approved" | "rejected" | "cancelled" }) {
-    if (action === "cancelled") {
+function ResolvedBadge({ action }: { action?: "approved" | "rejected" | "cancelled" | "session_cancelled" }) {
+    if (action === "session_cancelled") {
         return (
             <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-gray-400">
                 <XCircle className="w-3.5 h-3.5" />
                 Buổi đã huỷ
+            </div>
+        );
+    }
+    if (action === "cancelled") {
+        return (
+            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-gray-400">
+                <XCircle className="w-3.5 h-3.5" />
+                Đã huỷ đăng ký
             </div>
         );
     }
