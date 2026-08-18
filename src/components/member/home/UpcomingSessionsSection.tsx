@@ -519,8 +519,8 @@ export function UpcomingSessionsSection({
         .filter((s) => s.status !== "completed" && s.status !== "cancelled")
         .sort(
             (a, b) =>
-                new Date(b.created_at ?? b.scheduled_at).getTime() -
-                new Date(a.created_at ?? a.scheduled_at).getTime(),
+                new Date(a.scheduled_at).getTime() -
+                new Date(b.scheduled_at).getTime(),
         )
         .slice(0, 4);
 

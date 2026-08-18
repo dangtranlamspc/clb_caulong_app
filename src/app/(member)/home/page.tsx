@@ -97,7 +97,7 @@ export default function HomePage() {
 
   useEffect(() => {
     Promise.all([
-      sessionsApi.list({ limit: 4 }),
+      sessionsApi.list({ limit: 20 }),
       registrationsApi.getMyRegistrations({ limit: 3 }),
       rankingsApi.myStats(),
       rankingsApi.myRank(),
