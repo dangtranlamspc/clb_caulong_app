@@ -1,3 +1,5 @@
+import { supabase } from "./supabase";
+
 const CHANNEL_NAME = "wallet-data-changed";
 
 let channel: BroadcastChannel | null = null;
@@ -20,5 +22,18 @@ export function subscribeWalletChanged(callback: () => void) {
     return () => {
         ch?.removeEventListener("message", onMessage);
         window.removeEventListener("wallet-data-changed-local", onMessage);
+    };
+}
+
+export function subscribeAdminTopupRequests(callback: (payload?: any) => void) {
+    const channel = supabase
+        .channel("admin_topup_requests")
+        .on("broadcast", { event: "topup_request_changed" }, (msg) => {
+            callback(msg.payload);
+        })
+        .subscribe();
+
+    return () => {
+        supabase.removeChannel(channel);
     };
 }

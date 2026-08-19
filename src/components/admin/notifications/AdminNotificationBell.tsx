@@ -655,6 +655,7 @@ export function AdminNotificationBell() {
             await walletAdminApi.approveTopup(topupRequestId);
             toast.success("Đã duyệt nạp tiền");
             await markRead(notifId);
+            markResolved(notifId, "approved");
             reload();
         } catch (err: any) {
             toast.error(err?.response?.data?.message || "Duyệt thất bại, vui lòng thử lại");
@@ -671,6 +672,7 @@ export function AdminNotificationBell() {
             await walletAdminApi.rejectTopup(topupRequestId, reason.trim());
             toast.success("Đã từ chối yêu cầu");
             await markRead(notifId);
+            markResolved(notifId, "rejected");
             reload();
         } catch (err: any) {
             toast.error(err?.response?.data?.message || "Từ chối thất bại, vui lòng thử lại");
