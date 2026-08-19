@@ -291,20 +291,24 @@ function ConfettiCanvas() {
 type GiftPhase = 'box' | 'settling' | 'exploding' | 'revealed';
 
 const PULLS_NEEDED = 3;
-const DRAG_DISTANCE = 78;      // px of finger travel = one full pull
-const COMMIT_THRESHOLD = 0.42; // fraction of DRAG_DISTANCE needed to commit a pull
-const TILT_PER_PULL = 32;      // deg
-const LIFT_PER_PULL = 9;       // px
+const DRAG_DISTANCE = 78;       // px of finger travel = one full pull
+const COMMIT_THRESHOLD = 0.42;  // fraction of DRAG_DISTANCE needed to commit a pull
+const FLING_VELOCITY = 2.4;     // progress-units/sec — a fast short flick also commits
+const TILT_PER_PULL = 34;       // deg
+const LIFT_PER_PULL = 10;       // px
+const SPRING_STIFFNESS = 260;
+const SPRING_DAMPING = 23;      // slightly under-damped -> a small, satisfying overshoot
 
 /** Imperatively drive the lid's transform — kept OUT of React's style prop
- *  so per-pixel drag updates never trigger a re-render and never fight
- *  with React's own reconciliation. This is what keeps it silky at 60fps. */
-function paintLid(el: HTMLDivElement, progress: number) {
-    const p = Math.max(-0.4, Math.min(PULLS_NEEDED + 0.15, progress));
+ *  so per-pixel drag/spring updates never trigger a re-render and never
+ *  fight with React's own reconciliation. This is what keeps it silky at
+ *  a full 60fps even on mid-range phones. */
+function paintLid(el: HTMLDivElement, progress: number, wobble = 0) {
+    const p = Math.max(-0.4, Math.min(PULLS_NEEDED + 0.2, progress));
     const tilt = -p * TILT_PER_PULL;
     const lift = -p * LIFT_PER_PULL;
-    const scale = 1 - Math.min(p, PULLS_NEEDED) * 0.015;
-    el.style.transform = `translateX(-50%) translateY(${lift}px) rotateX(${tilt}deg) scale(${scale})`;
+    const scale = 1 - Math.min(p, PULLS_NEEDED) * 0.014;
+    el.style.transform = `translateX(-50%) translateY(${lift}px) rotateX(${tilt}deg) rotateZ(${wobble}deg) scale(${scale})`;
 }
 
 interface Spark { id: number; dx: number; dy: number; rot: number; emoji: string }
@@ -320,49 +324,25 @@ function GiftBox({
     onCommitPull: () => void;
 }) {
     const wrapRef = useRef<HTMLDivElement>(null);
+    const bodyRef = useRef<HTMLDivElement>(null);
     const lidRef = useRef<HTMLDivElement>(null);
-    const draggingRef = useRef(false);
-    const startYRef = useRef(0);
-    const progressRef = useRef(0);
     const pullCountRef = useRef(0);
     const [isDragging, setIsDragging] = useState(false);
     const [sparks, setSparks] = useState<Spark[]>([]);
     const sparkIdRef = useRef(0);
 
+    // Drag bookkeeping
+    const draggingRef = useRef(false);
+    const startYRef = useRef(0);
+    const posRef = useRef(0);      // current live progress (0..3), single source of truth
+    const samplesRef = useRef<{ t: number; y: number }[]>([]);
+
+    // rAF spring, used to animate the lid smoothly after release
+    const rafRef = useRef<number | null>(null);
+    const velRef = useRef(0);
+    const lastTsRef = useRef<number | null>(null);
+
     useEffect(() => { pullCountRef.current = pullCount; }, [pullCount]);
-
-    // Keep the lid in sync whenever the committed count changes for reasons
-    // other than an in-progress drag (e.g. programmatic reset, mount).
-    useEffect(() => {
-        if (!lidRef.current || draggingRef.current) return;
-        if (phase !== 'box' && phase !== 'settling') return;
-        lidRef.current.style.transition = 'transform .45s cubic-bezier(.34,1.56,.64,1)';
-        paintLid(lidRef.current, pullCount);
-    }, [pullCount, phase]);
-
-    // Fly the lid off once we enter the exploding phase.
-    useEffect(() => {
-        if (phase !== 'exploding' || !lidRef.current) return;
-        const el = lidRef.current;
-        el.style.transition = 'transform .7s cubic-bezier(.34,1.15,.64,1), opacity .55s ease .12s';
-        el.style.transform = 'translateX(-50%) translateY(-186px) rotateX(-150deg) scale(0.88)';
-        el.style.opacity = '0';
-    }, [phase]);
-
-    const spawnSparks = () => {
-        const n = 6;
-        const batch: Spark[] = Array.from({ length: n }, () => ({
-            id: sparkIdRef.current++,
-            dx: (Math.random() - 0.5) * 120,
-            dy: -40 - Math.random() * 60,
-            rot: (Math.random() - 0.5) * 200,
-            emoji: SPARK_EMOJI[Math.floor(Math.random() * SPARK_EMOJI.length)],
-        }));
-        setSparks(prev => [...prev, ...batch]);
-        setTimeout(() => {
-            setSparks(prev => prev.filter(s => !batch.includes(s)));
-        }, 650);
-    };
 
     const setProgressVar = (v: number) => {
         if (wrapRef.current) {
@@ -370,42 +350,146 @@ function GiftBox({
         }
     };
 
+    const stopSpring = () => {
+        if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+        lastTsRef.current = null;
+    };
+
+    /** Animate posRef -> target with a light mass-spring-damper, seeded with
+     *  the finger's release velocity so the motion continues naturally
+     *  instead of visibly "catching" to a new easing curve. */
+    const startSpring = (target: number) => {
+        stopSpring();
+        const step = (ts: number) => {
+            if (lastTsRef.current == null) lastTsRef.current = ts;
+            const dt = Math.min((ts - lastTsRef.current) / 1000, 1 / 30);
+            lastTsRef.current = ts;
+
+            const disp = posRef.current - target;
+            const acc = -SPRING_STIFFNESS * disp - SPRING_DAMPING * velRef.current;
+            velRef.current += acc * dt;
+            posRef.current += velRef.current * dt;
+
+            if (lidRef.current) paintLid(lidRef.current, posRef.current);
+            setProgressVar(posRef.current);
+
+            if (Math.abs(disp) < 0.004 && Math.abs(velRef.current) < 0.01) {
+                posRef.current = target;
+                velRef.current = 0;
+                if (lidRef.current) paintLid(lidRef.current, target);
+                setProgressVar(target);
+                rafRef.current = null;
+                lastTsRef.current = null;
+                return;
+            }
+            rafRef.current = requestAnimationFrame(step);
+        };
+        rafRef.current = requestAnimationFrame(step);
+    };
+
+    // Keep the lid in sync whenever the committed count changes for reasons
+    // other than an in-progress drag (mount, or a resync after phase change).
+    useEffect(() => {
+        if (draggingRef.current || rafRef.current != null) return;
+        if (phase !== 'box' && phase !== 'settling') return;
+        posRef.current = pullCount;
+        if (lidRef.current) paintLid(lidRef.current, pullCount);
+        setProgressVar(pullCount);
+    }, [pullCount, phase]);
+
+    // Fly the lid off once we enter the exploding phase.
+    useEffect(() => {
+        if (phase !== 'exploding' || !lidRef.current) return;
+        stopSpring();
+        const el = lidRef.current;
+        el.style.transition = 'transform .7s cubic-bezier(.34,1.15,.64,1), opacity .55s ease .12s';
+        el.style.transform = 'translateX(-50%) translateY(-190px) rotateX(-152deg) scale(0.86)';
+        el.style.opacity = '0';
+    }, [phase]);
+
+    useEffect(() => () => stopSpring(), []);
+
+    const spawnSparks = () => {
+        const n = 7;
+        const batch: Spark[] = Array.from({ length: n }, () => ({
+            id: sparkIdRef.current++,
+            dx: (Math.random() - 0.5) * 130,
+            dy: -44 - Math.random() * 64,
+            rot: (Math.random() - 0.5) * 220,
+            emoji: SPARK_EMOJI[Math.floor(Math.random() * SPARK_EMOJI.length)],
+        }));
+        setSparks(prev => [...prev, ...batch]);
+        setTimeout(() => setSparks(prev => prev.filter(s => !batch.includes(s))), 650);
+    };
+
     const onPointerDown = (e: React.PointerEvent) => {
         if (phase !== 'box') return;
+        stopSpring();
         draggingRef.current = true;
-        startYRef.current = e.clientY;
-        progressRef.current = pullCountRef.current;
         setIsDragging(true);
+        startYRef.current = e.clientY;
+        posRef.current = pullCountRef.current;
+        velRef.current = 0;
+        samplesRef.current = [{ t: e.timeStamp, y: e.clientY }];
         try { (e.target as Element).setPointerCapture(e.pointerId); } catch { }
         if (lidRef.current) lidRef.current.style.transition = 'none';
     };
 
     const onPointerMove = (e: React.PointerEvent) => {
         if (!draggingRef.current || phase !== 'box') return;
+
         const deltaY = startYRef.current - e.clientY; // dragging up => positive
         let add = deltaY / DRAG_DISTANCE;
         if (add < 0) add *= 0.28; // rubber-band resistance when pulling the "wrong" way
-        add = Math.max(-0.18, Math.min(1.12, add));
+        add = Math.max(-0.18, Math.min(1.15, add));
         const total = pullCountRef.current + add;
-        progressRef.current = total;
-        if (lidRef.current) paintLid(lidRef.current, total);
+        posRef.current = total;
+
+        if (lidRef.current) {
+            // A tiny torque on the body while dragging fast makes the box feel
+            // like it's genuinely resisting the pull — cheap (transform-only)
+            // but reads as "physical".
+            const wobble = Math.max(-3.5, Math.min(3.5, add * 6));
+            if (bodyRef.current) bodyRef.current.style.transform = `translateX(-50%) rotate(${wobble * 0.4}deg)`;
+        }
+        if (lidRef.current) paintLid(lidRef.current, total, Math.max(-3.5, Math.min(3.5, add * 6)));
         setProgressVar(total);
+
+        const samples = samplesRef.current;
+        samples.push({ t: e.timeStamp, y: e.clientY });
+        if (samples.length > 6) samples.shift();
     };
 
     const finishDrag = () => {
         if (!draggingRef.current) return;
         draggingRef.current = false;
         setIsDragging(false);
+        if (bodyRef.current) bodyRef.current.style.transform = 'translateX(-50%) rotate(0deg)';
         if (phase !== 'box') return;
 
-        const add = progressRef.current - pullCountRef.current;
-        const committed = add >= COMMIT_THRESHOLD;
-
-        if (lidRef.current) {
-            lidRef.current.style.transition = 'transform .45s cubic-bezier(.34,1.56,.64,1)';
-            paintLid(lidRef.current, committed ? pullCountRef.current + 1 : pullCountRef.current);
+        // Velocity from the last couple of samples (px/ms -> progress-units/sec)
+        const samples = samplesRef.current;
+        let velocity = 0;
+        if (samples.length >= 2) {
+            const a = samples[0];
+            const b = samples[samples.length - 1];
+            const dt = b.t - a.t;
+            if (dt > 0) {
+                const pxPerMs = (a.y - b.y) / dt; // up = positive
+                velocity = (pxPerMs * 1000) / DRAG_DISTANCE;
+            }
         }
-        setProgressVar(committed ? pullCountRef.current + 1 : pullCountRef.current);
+
+        const add = posRef.current - pullCountRef.current;
+        const committed = add >= COMMIT_THRESHOLD || velocity >= FLING_VELOCITY;
+        const target = committed ? Math.min(PULLS_NEEDED, pullCountRef.current + 1) : pullCountRef.current;
+
+        // Seed the spring with the release velocity so the lid keeps moving
+        // through the release instead of abruptly changing curves.
+        velRef.current = committed ? Math.max(velocity, 0.6) : Math.min(velocity, -0.2);
+        startSpring(target);
+        setProgressVar(target);
 
         if (committed) {
             if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(14);
@@ -415,7 +499,7 @@ function GiftBox({
     };
 
     const exploding = phase === 'exploding';
-    const dotsFilled = pullCount;
+    const idle = phase === 'box' && pullCount === 0 && !isDragging;
 
     return (
         <div
@@ -428,29 +512,49 @@ function GiftBox({
             aria-label="Vuốt lên để mở nắp hộp quà"
             style={{
                 position: 'relative',
-                width: 220,
-                height: 204,
+                width: 224,
+                height: 210,
                 touchAction: 'none',
                 cursor: phase === 'box' ? (isDragging ? 'grabbing' : 'grab') : 'default',
-                perspective: 620,
+                perspective: 640,
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
                 WebkitTapHighlightColor: 'transparent',
+                animation: idle ? 'boxIdle 3.2s ease-in-out infinite' : undefined,
                 ['--progress' as any]: '0',
             }}
         >
             {/* Ambient glow, brightens as you pull */}
             <div
                 style={{
-                    position: 'absolute', left: '50%', top: '56%', width: 200, height: 200,
-                    transform: `translate(-50%,-50%) scale(${isDragging ? 1.08 : 1})`,
+                    position: 'absolute', left: '50%', top: '56%', width: 210, height: 210,
+                    transform: `translate(-50%,-50%) scale(${isDragging ? 1.1 : 1})`,
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(255,180,80,0.4) 0%, rgba(255,120,180,0.14) 45%, transparent 70%)',
-                    opacity: 'calc(0.55 + var(--progress) * 0.55)',
-                    filter: 'blur(2px)', pointerEvents: 'none',
+                    background: 'radial-gradient(circle, rgba(255,180,80,0.42) 0%, rgba(255,120,180,0.15) 45%, transparent 70%)',
+                    opacity: 'calc(0.5 + var(--progress) * 0.6)',
+                    filter: 'blur(3px)', pointerEvents: 'none',
                     transition: 'transform .25s ease',
                 }}
             />
+
+            {/* Slow-floating glitter around the box */}
+            {[
+                { l: 8, t: 18, d: 0, s: 12 },
+                { l: 88, t: 6, d: 0.6, s: 9 },
+                { l: 4, t: 62, d: 1.1, s: 8 },
+                { l: 92, t: 58, d: 1.7, s: 11 },
+            ].map((g, i) => (
+                <span
+                    key={i}
+                    style={{
+                        position: 'absolute', left: `${g.l}%`, top: `${g.t}%`, fontSize: g.s,
+                        pointerEvents: 'none', opacity: 0.55,
+                        animation: `glitterFloat 2.8s ease-in-out ${g.d}s infinite`,
+                    }}
+                >
+                    ✦
+                </span>
+            ))}
 
             {/* Sparkle bursts on each committed pull */}
             {sparks.map(s => (
@@ -471,51 +575,86 @@ function GiftBox({
 
             {/* Box body */}
             <div
+                ref={bodyRef}
                 style={{
-                    position: 'absolute', left: '50%', bottom: 16, transform: `translateX(-50%) scale(${isDragging ? 1.015 : 1})`,
-                    width: 150, height: 110, borderRadius: '10px 10px 14px 14px',
-                    background: 'linear-gradient(135deg,#f857a6,#c2185b)',
-                    boxShadow: `0 ${18 + dotsFilled * 2}px 34px rgba(200,20,100,${0.35 + dotsFilled * 0.05}), inset 0 -6px 0 rgba(0,0,0,0.12)`,
+                    position: 'absolute', left: '50%', bottom: 18, transform: 'translateX(-50%)',
+                    width: 156, height: 112, borderRadius: '12px 12px 16px 16px',
+                    background: 'linear-gradient(145deg,#ff86bd 0%,#f857a6 42%,#c2185b 100%)',
+                    boxShadow: `0 ${20 + pullCount * 2}px 38px rgba(200,20,100,${0.32 + pullCount * 0.05}), inset 0 -8px 0 rgba(0,0,0,0.14), inset 0 2px 0 rgba(255,255,255,0.25)`,
                     opacity: exploding ? 0 : 1,
-                    transition: 'opacity .5s ease .2s, transform .2s ease, box-shadow .3s ease',
+                    overflow: 'hidden',
+                    transition: 'opacity .5s ease .2s, transform .18s ease, box-shadow .3s ease',
                 }}
             >
+                {/* diagonal shimmer sweep */}
                 <div
                     style={{
-                        position: 'absolute', left: '50%', top: 0, bottom: 0, width: 26,
+                        position: 'absolute', top: 0, left: '-60%', width: '60%', height: '100%',
+                        background: 'linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.35) 45%, transparent 100%)',
+                        animation: 'shimmerSweep 3.6s ease-in-out infinite',
+                        pointerEvents: 'none',
+                    }}
+                />
+                {/* horizontal ribbon band */}
+                <div
+                    style={{
+                        position: 'absolute', left: 0, right: 0, top: '50%', height: 28,
+                        transform: 'translateY(-50%)',
+                        background: 'linear-gradient(180deg,#ffe27a,#ffb347)',
+                        boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -2px 0 rgba(0,0,0,0.08)',
+                    }}
+                />
+                {/* vertical ribbon band */}
+                <div
+                    style={{
+                        position: 'absolute', left: '50%', top: 0, bottom: 0, width: 30,
                         transform: 'translateX(-50%)',
-                        background: 'linear-gradient(180deg,#ffd93d,#ffb347)',
+                        background: 'linear-gradient(90deg,#ffb347,#ffd93d,#ffb347)',
+                        boxShadow: 'inset 2px 0 0 rgba(255,255,255,0.35), inset -2px 0 0 rgba(0,0,0,0.08)',
                     }}
                 />
             </div>
 
-            {/* Lid — transform is driven imperatively via lidRef, never via React style */}
+            {/* Lid — transform driven imperatively via lidRef, never via React style */}
             <div
                 ref={lidRef}
                 style={{
-                    position: 'absolute', left: '50%', bottom: 124,
+                    position: 'absolute', left: '50%', bottom: 128,
                     transformOrigin: 'bottom center', transformStyle: 'preserve-3d',
-                    width: 170, height: 34, borderRadius: 10,
-                    background: 'linear-gradient(135deg,#ff8fc0,#f857a6)',
-                    boxShadow: '0 8px 18px rgba(200,20,100,0.3)',
+                    width: 176, height: 36, borderRadius: 11,
+                    background: 'linear-gradient(150deg,#ffa4d2 0%,#ff6fcb 45%,#e84fa8 100%)',
+                    boxShadow: '0 10px 20px rgba(200,20,100,0.32), inset 0 2px 0 rgba(255,255,255,0.35)',
                     zIndex: 3,
                     willChange: 'transform',
                 }}
             >
                 <div
                     style={{
-                        position: 'absolute', left: '50%', top: 0, bottom: 0, width: 30,
+                        position: 'absolute', left: '50%', top: 0, bottom: 0, width: 32,
                         transform: 'translateX(-50%)',
-                        background: 'linear-gradient(180deg,#ffd93d,#ffb347)', borderRadius: 4,
+                        background: 'linear-gradient(90deg,#ffb347,#ffd93d,#ffb347)', borderRadius: 5,
+                        boxShadow: 'inset 2px 0 0 rgba(255,255,255,0.35), inset -2px 0 0 rgba(0,0,0,0.08)',
                     }}
                 />
-                <div
-                    style={{
-                        position: 'absolute', left: '50%', top: -22, transform: 'translateX(-50%)',
-                        fontSize: 34, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.25))',
-                    }}
-                >
-                    🎀
+
+                {/* Bow: two loops + a knot, sits on top of the lid as the pull handle */}
+                <div style={{ position: 'absolute', left: '50%', top: -30, transform: 'translateX(-50%)', width: 76, height: 34 }}>
+                    <div style={{
+                        position: 'absolute', left: 0, top: 6, width: 34, height: 24, borderRadius: '60% 40% 50% 50% / 70% 70% 30% 30%',
+                        background: 'linear-gradient(135deg,#ffd93d,#ffb347)', transform: 'rotate(-18deg)',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.4)',
+                    }} />
+                    <div style={{
+                        position: 'absolute', right: 0, top: 6, width: 34, height: 24, borderRadius: '40% 60% 50% 50% / 70% 70% 30% 30%',
+                        background: 'linear-gradient(225deg,#ffd93d,#ffb347)', transform: 'rotate(18deg)',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.4)',
+                    }} />
+                    <div style={{
+                        position: 'absolute', left: '50%', top: 8, transform: 'translateX(-50%)',
+                        width: 16, height: 16, borderRadius: '50%',
+                        background: 'radial-gradient(circle at 35% 30%, #fff3c4, #ffb347)',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
+                    }} />
                 </div>
             </div>
 
@@ -523,23 +662,25 @@ function GiftBox({
             {phase === 'box' && (
                 <div
                     style={{
-                        position: 'absolute', left: '50%', bottom: -10, transform: 'translateX(-50%)',
+                        position: 'absolute', left: '50%', bottom: -12, transform: 'translateX(-50%)',
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                        opacity: isDragging ? 0.35 : 1, transition: 'opacity .2s ease',
+                        opacity: isDragging ? 0.3 : 1, transition: 'opacity .2s ease',
                         width: '100%',
                     }}
                 >
                     <span
                         style={{
-                            fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.6)',
-                            animation: isDragging ? undefined : 'pulseHint 1.5s ease-in-out infinite',
-                            display: 'flex', alignItems: 'center', gap: 4,
+                            fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.65)',
+                            display: 'flex', alignItems: 'center', gap: 5,
                         }}
                     >
-                        <span style={{ display: 'inline-block', animation: isDragging ? undefined : 'swipeHand 1.5s ease-in-out infinite' }}>👆</span>
+                        <span style={{ display: 'flex', flexDirection: 'column', lineHeight: '5px', animation: isDragging ? undefined : 'chevronFloat 1.4s ease-in-out infinite' }}>
+                            <span style={{ fontSize: 9, opacity: 0.5 }}>﹀</span>
+                            <span style={{ fontSize: 9 }}>﹀</span>
+                        </span>
                         Vuốt lên để mở nắp hộp quà
                     </span>
-                    <div style={{ width: 130, height: 6, borderRadius: 999, background: 'rgba(255,255,255,.12)', overflow: 'hidden', position: 'relative' }}>
+                    <div style={{ width: 134, height: 7, borderRadius: 999, background: 'rgba(255,255,255,.12)', overflow: 'hidden', position: 'relative' }}>
                         <div
                             style={{
                                 position: 'absolute', inset: 0, borderRadius: 999,
@@ -607,10 +748,17 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
         setPullCount(next);
 
         if (next >= PULLS_NEEDED) {
+            // Let the lid finish its "fully open" settle animation before it
+            // flies off — gives the gesture a satisfying two-beat rhythm
+            // instead of an abrupt cut to the explosion.
             setPhase('settling');
             setTimeout(() => {
                 setPhase('exploding');
 
+                // We're still within the same gesture's task chain that
+                // started from a real pointerup, so this counts as a user
+                // gesture and autoplay is allowed. Fall back to a
+                // retry-on-click in case the browser still blocks it.
                 const audio = audioRef.current;
                 if (audio) {
                     audio.play().then(() => setMusicPlaying(true)).catch(() => {
@@ -651,6 +799,7 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
             >
                 {phase === 'exploding' || phase === 'revealed' ? <ConfettiCanvas /> : null}
 
+                {/* Close */}
                 <button
                     onClick={(e) => { e.stopPropagation(); handleClose(); }}
                     style={{
@@ -663,6 +812,7 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                 </button>
 
                 {phase !== 'revealed' ? (
+                    /* ---------------- Gift box phase ---------------- */
                     <div
                         style={{
                             position: 'relative', zIndex: 10, padding: '32px 24px 30px',
@@ -682,6 +832,7 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                         <GiftBox phase={phase} pullCount={pullCount} onCommitPull={handleCommitPull} />
                     </div>
                 ) : (
+                    /* ---------------- Revealed (cake) phase ---------------- */
                     <div
                         style={{
                             position: 'relative', zIndex: 10, padding: '28px 24px 24px',
@@ -707,6 +858,7 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                             Chúc bạn sinh nhật thật vui, sức khỏe dồi dào — và tiếp tục đánh cầu thật đẹp nhé!
                         </div>
 
+                        {/* Music indicator */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, height: 20, opacity: 0, animation: 'fadeUp .5s ease-out .45s forwards' }}>
                             {musicPlaying ? (
                                 <>
@@ -754,13 +906,21 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                     from{height:4px}
                     to{height:14px}
                 }
-                @keyframes pulseHint {
-                    0%,100%{opacity:.55;transform:translateY(0)}
-                    50%{opacity:1;transform:translateY(-2px)}
+                @keyframes boxIdle {
+                    0%,100%{transform:translateY(0) rotate(0deg)}
+                    50%{transform:translateY(-5px) rotate(-1.2deg)}
                 }
-                @keyframes swipeHand {
-                    0%,100%{transform:translateY(0)}
-                    50%{transform:translateY(-6px)}
+                @keyframes glitterFloat {
+                    0%,100%{transform:translateY(0) scale(1);opacity:.35}
+                    50%{transform:translateY(-10px) scale(1.25);opacity:.85}
+                }
+                @keyframes shimmerSweep {
+                    0%{left:-60%}
+                    45%,100%{left:120%}
+                }
+                @keyframes chevronFloat {
+                    0%,100%{opacity:.4;transform:translateY(2px)}
+                    50%{opacity:1;transform:translateY(-3px)}
                 }
                 @keyframes sparkBurst {
                     0%{transform:translate(-50%,-50%) rotate(0deg) scale(.4);opacity:0}
