@@ -286,12 +286,287 @@ function ConfettiCanvas() {
     );
 }
 
+/* ---------------- Gift box (swipe-to-open interaction) ---------------- */
+
+type GiftPhase = 'box' | 'settling' | 'exploding' | 'revealed';
+
+const PULLS_NEEDED = 3;
+const DRAG_DISTANCE = 78;      // px of finger travel = one full pull
+const COMMIT_THRESHOLD = 0.42; // fraction of DRAG_DISTANCE needed to commit a pull
+const TILT_PER_PULL = 32;      // deg
+const LIFT_PER_PULL = 9;       // px
+
+/** Imperatively drive the lid's transform — kept OUT of React's style prop
+ *  so per-pixel drag updates never trigger a re-render and never fight
+ *  with React's own reconciliation. This is what keeps it silky at 60fps. */
+function paintLid(el: HTMLDivElement, progress: number) {
+    const p = Math.max(-0.4, Math.min(PULLS_NEEDED + 0.15, progress));
+    const tilt = -p * TILT_PER_PULL;
+    const lift = -p * LIFT_PER_PULL;
+    const scale = 1 - Math.min(p, PULLS_NEEDED) * 0.015;
+    el.style.transform = `translateX(-50%) translateY(${lift}px) rotateX(${tilt}deg) scale(${scale})`;
+}
+
+interface Spark { id: number; dx: number; dy: number; rot: number; emoji: string }
+const SPARK_EMOJI = ['✨', '⭐', '💫'];
+
+function GiftBox({
+    phase,
+    pullCount,
+    onCommitPull,
+}: {
+    phase: GiftPhase;
+    pullCount: number;
+    onCommitPull: () => void;
+}) {
+    const wrapRef = useRef<HTMLDivElement>(null);
+    const lidRef = useRef<HTMLDivElement>(null);
+    const draggingRef = useRef(false);
+    const startYRef = useRef(0);
+    const progressRef = useRef(0);
+    const pullCountRef = useRef(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const [sparks, setSparks] = useState<Spark[]>([]);
+    const sparkIdRef = useRef(0);
+
+    useEffect(() => { pullCountRef.current = pullCount; }, [pullCount]);
+
+    // Keep the lid in sync whenever the committed count changes for reasons
+    // other than an in-progress drag (e.g. programmatic reset, mount).
+    useEffect(() => {
+        if (!lidRef.current || draggingRef.current) return;
+        if (phase !== 'box' && phase !== 'settling') return;
+        lidRef.current.style.transition = 'transform .45s cubic-bezier(.34,1.56,.64,1)';
+        paintLid(lidRef.current, pullCount);
+    }, [pullCount, phase]);
+
+    // Fly the lid off once we enter the exploding phase.
+    useEffect(() => {
+        if (phase !== 'exploding' || !lidRef.current) return;
+        const el = lidRef.current;
+        el.style.transition = 'transform .7s cubic-bezier(.34,1.15,.64,1), opacity .55s ease .12s';
+        el.style.transform = 'translateX(-50%) translateY(-186px) rotateX(-150deg) scale(0.88)';
+        el.style.opacity = '0';
+    }, [phase]);
+
+    const spawnSparks = () => {
+        const n = 6;
+        const batch: Spark[] = Array.from({ length: n }, () => ({
+            id: sparkIdRef.current++,
+            dx: (Math.random() - 0.5) * 120,
+            dy: -40 - Math.random() * 60,
+            rot: (Math.random() - 0.5) * 200,
+            emoji: SPARK_EMOJI[Math.floor(Math.random() * SPARK_EMOJI.length)],
+        }));
+        setSparks(prev => [...prev, ...batch]);
+        setTimeout(() => {
+            setSparks(prev => prev.filter(s => !batch.includes(s)));
+        }, 650);
+    };
+
+    const setProgressVar = (v: number) => {
+        if (wrapRef.current) {
+            wrapRef.current.style.setProperty('--progress', String(Math.max(0, Math.min(1, v / PULLS_NEEDED))));
+        }
+    };
+
+    const onPointerDown = (e: React.PointerEvent) => {
+        if (phase !== 'box') return;
+        draggingRef.current = true;
+        startYRef.current = e.clientY;
+        progressRef.current = pullCountRef.current;
+        setIsDragging(true);
+        try { (e.target as Element).setPointerCapture(e.pointerId); } catch { }
+        if (lidRef.current) lidRef.current.style.transition = 'none';
+    };
+
+    const onPointerMove = (e: React.PointerEvent) => {
+        if (!draggingRef.current || phase !== 'box') return;
+        const deltaY = startYRef.current - e.clientY; // dragging up => positive
+        let add = deltaY / DRAG_DISTANCE;
+        if (add < 0) add *= 0.28; // rubber-band resistance when pulling the "wrong" way
+        add = Math.max(-0.18, Math.min(1.12, add));
+        const total = pullCountRef.current + add;
+        progressRef.current = total;
+        if (lidRef.current) paintLid(lidRef.current, total);
+        setProgressVar(total);
+    };
+
+    const finishDrag = () => {
+        if (!draggingRef.current) return;
+        draggingRef.current = false;
+        setIsDragging(false);
+        if (phase !== 'box') return;
+
+        const add = progressRef.current - pullCountRef.current;
+        const committed = add >= COMMIT_THRESHOLD;
+
+        if (lidRef.current) {
+            lidRef.current.style.transition = 'transform .45s cubic-bezier(.34,1.56,.64,1)';
+            paintLid(lidRef.current, committed ? pullCountRef.current + 1 : pullCountRef.current);
+        }
+        setProgressVar(committed ? pullCountRef.current + 1 : pullCountRef.current);
+
+        if (committed) {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(14);
+            spawnSparks();
+            onCommitPull();
+        }
+    };
+
+    const exploding = phase === 'exploding';
+    const dotsFilled = pullCount;
+
+    return (
+        <div
+            ref={wrapRef}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={finishDrag}
+            onPointerCancel={finishDrag}
+            role="button"
+            aria-label="Vuốt lên để mở nắp hộp quà"
+            style={{
+                position: 'relative',
+                width: 220,
+                height: 204,
+                touchAction: 'none',
+                cursor: phase === 'box' ? (isDragging ? 'grabbing' : 'grab') : 'default',
+                perspective: 620,
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                WebkitTapHighlightColor: 'transparent',
+                ['--progress' as any]: '0',
+            }}
+        >
+            {/* Ambient glow, brightens as you pull */}
+            <div
+                style={{
+                    position: 'absolute', left: '50%', top: '56%', width: 200, height: 200,
+                    transform: `translate(-50%,-50%) scale(${isDragging ? 1.08 : 1})`,
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(255,180,80,0.4) 0%, rgba(255,120,180,0.14) 45%, transparent 70%)',
+                    opacity: 'calc(0.55 + var(--progress) * 0.55)',
+                    filter: 'blur(2px)', pointerEvents: 'none',
+                    transition: 'transform .25s ease',
+                }}
+            />
+
+            {/* Sparkle bursts on each committed pull */}
+            {sparks.map(s => (
+                <span
+                    key={s.id}
+                    style={{
+                        position: 'absolute', left: '50%', top: '46%', fontSize: 18,
+                        pointerEvents: 'none', zIndex: 6,
+                        animation: 'sparkBurst .65s ease-out forwards',
+                        ['--dx' as any]: `${s.dx}px`,
+                        ['--dy' as any]: `${s.dy}px`,
+                        ['--rot' as any]: `${s.rot}deg`,
+                    }}
+                >
+                    {s.emoji}
+                </span>
+            ))}
+
+            {/* Box body */}
+            <div
+                style={{
+                    position: 'absolute', left: '50%', bottom: 16, transform: `translateX(-50%) scale(${isDragging ? 1.015 : 1})`,
+                    width: 150, height: 110, borderRadius: '10px 10px 14px 14px',
+                    background: 'linear-gradient(135deg,#f857a6,#c2185b)',
+                    boxShadow: `0 ${18 + dotsFilled * 2}px 34px rgba(200,20,100,${0.35 + dotsFilled * 0.05}), inset 0 -6px 0 rgba(0,0,0,0.12)`,
+                    opacity: exploding ? 0 : 1,
+                    transition: 'opacity .5s ease .2s, transform .2s ease, box-shadow .3s ease',
+                }}
+            >
+                <div
+                    style={{
+                        position: 'absolute', left: '50%', top: 0, bottom: 0, width: 26,
+                        transform: 'translateX(-50%)',
+                        background: 'linear-gradient(180deg,#ffd93d,#ffb347)',
+                    }}
+                />
+            </div>
+
+            {/* Lid — transform is driven imperatively via lidRef, never via React style */}
+            <div
+                ref={lidRef}
+                style={{
+                    position: 'absolute', left: '50%', bottom: 124,
+                    transformOrigin: 'bottom center', transformStyle: 'preserve-3d',
+                    width: 170, height: 34, borderRadius: 10,
+                    background: 'linear-gradient(135deg,#ff8fc0,#f857a6)',
+                    boxShadow: '0 8px 18px rgba(200,20,100,0.3)',
+                    zIndex: 3,
+                    willChange: 'transform',
+                }}
+            >
+                <div
+                    style={{
+                        position: 'absolute', left: '50%', top: 0, bottom: 0, width: 30,
+                        transform: 'translateX(-50%)',
+                        background: 'linear-gradient(180deg,#ffd93d,#ffb347)', borderRadius: 4,
+                    }}
+                />
+                <div
+                    style={{
+                        position: 'absolute', left: '50%', top: -22, transform: 'translateX(-50%)',
+                        fontSize: 34, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.25))',
+                    }}
+                >
+                    🎀
+                </div>
+            </div>
+
+            {/* Hint + progress track */}
+            {phase === 'box' && (
+                <div
+                    style={{
+                        position: 'absolute', left: '50%', bottom: -10, transform: 'translateX(-50%)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                        opacity: isDragging ? 0.35 : 1, transition: 'opacity .2s ease',
+                        width: '100%',
+                    }}
+                >
+                    <span
+                        style={{
+                            fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.6)',
+                            animation: isDragging ? undefined : 'pulseHint 1.5s ease-in-out infinite',
+                            display: 'flex', alignItems: 'center', gap: 4,
+                        }}
+                    >
+                        <span style={{ display: 'inline-block', animation: isDragging ? undefined : 'swipeHand 1.5s ease-in-out infinite' }}>👆</span>
+                        Vuốt lên để mở nắp hộp quà
+                    </span>
+                    <div style={{ width: 130, height: 6, borderRadius: 999, background: 'rgba(255,255,255,.12)', overflow: 'hidden', position: 'relative' }}>
+                        <div
+                            style={{
+                                position: 'absolute', inset: 0, borderRadius: 999,
+                                width: 'calc(var(--progress) * 100%)',
+                                background: 'linear-gradient(90deg,#FFD93D,#FF6FCB)',
+                                transition: isDragging ? 'none' : 'width .3s ease',
+                            }}
+                        />
+                        {[1, 2].map(i => (
+                            <div key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: `${(i / PULLS_NEEDED) * 100}%`, width: 2, background: 'rgba(0,0,0,.25)' }} />
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [hasEverShown, setHasEverShown] = useState(false);
     const [musicPlaying, setMusicPlaying] = useState(false);
     const closingRef = useRef(false);
+
+    const [phase, setPhase] = useState<GiftPhase>('box');
+    const [pullCount, setPullCount] = useState(0);
 
     useEffect(() => {
         if (show) {
@@ -309,25 +584,6 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
         return () => { audio.pause(); audio.src = ''; };
     }, [hasEverShown]);
 
-
-    useEffect(() => {
-        if (!hasEverShown) return;
-        let played = false;
-        const tryPlay = () => {
-            if (played || !audioRef.current) return;
-            audioRef.current.play().then(() => { played = true; setMusicPlaying(true); }).catch(() => { });
-        };
-        const onGesture = () => { tryPlay(); cleanup(); };
-        const cleanup = () => {
-            document.removeEventListener('touchstart', onGesture);
-            document.removeEventListener('click', onGesture);
-        };
-        const t = setTimeout(tryPlay, 700);
-        document.addEventListener('touchstart', onGesture, { once: true });
-        document.addEventListener('click', onGesture, { once: true });
-        return () => { clearTimeout(t); cleanup(); };
-    }, [hasEverShown]);
-
     if (!hasEverShown) return null;
 
     const handleClose = () => {
@@ -343,6 +599,32 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
         }
         setIsVisible(false);
         setTimeout(onClose, 400);
+    };
+
+    const handleCommitPull = () => {
+        if (phase !== 'box') return;
+        const next = pullCount + 1;
+        setPullCount(next);
+
+        if (next >= PULLS_NEEDED) {
+            setPhase('settling');
+            setTimeout(() => {
+                setPhase('exploding');
+
+                const audio = audioRef.current;
+                if (audio) {
+                    audio.play().then(() => setMusicPlaying(true)).catch(() => {
+                        const retry = () => {
+                            audio.play().then(() => setMusicPlaying(true)).catch(() => { });
+                            document.removeEventListener('click', retry);
+                        };
+                        document.addEventListener('click', retry, { once: true });
+                    });
+                }
+
+                setTimeout(() => setPhase('revealed'), 750);
+            }, 420);
+        }
     };
 
     const firstName = userName.split(' ').pop() ?? userName;
@@ -367,9 +649,8 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                     boxShadow: '0 32px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)',
                 }}
             >
-                <ConfettiCanvas />
+                {phase === 'exploding' || phase === 'revealed' ? <ConfettiCanvas /> : null}
 
-                {/* Close */}
                 <button
                     onClick={(e) => { e.stopPropagation(); handleClose(); }}
                     style={{
@@ -381,59 +662,82 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                     <X size={16} color="rgba(255,255,255,0.6)" />
                 </button>
 
-                <div style={{ position: 'relative', zIndex: 10, padding: '28px 24px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-
-                    {/* Cake canvas */}
-                    <div style={{ animation: 'cakeDrop .7s cubic-bezier(.34,1.56,.64,1) both', marginBottom: 4 }}>
-                        <CakeCanvas />
-                    </div>
-
-                    <p style={{ color: '#FFD93D', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0, animation: 'fadeUp .5s ease-out .4s forwards', marginBottom: 4 }}>
-                        🎉 chúc mừng sinh nhật 🎉
-                    </p>
-                    <h2 style={{ color: 'white', fontSize: 30, fontWeight: 900, opacity: 0, animation: 'fadeUp .5s ease-out .55s forwards', margin: '0 0 4px', textShadow: '0 2px 24px rgba(255,180,100,.3)' }}>
-                        {firstName}!
-                    </h2>
-                    <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, opacity: 0, animation: 'fadeUp .5s ease-out .65s forwards', marginBottom: 16 }}>
-                        Bạn có sinh nhật trong tháng này 🎈
-                    </p>
-
-                    <div style={{ width: '100%', borderRadius: 16, padding: '12px 16px', marginBottom: 14, background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.10)', color: 'rgba(255,255,255,.8)', fontSize: 14, lineHeight: 1.6, textAlign: 'left', opacity: 0, animation: 'fadeUp .5s ease-out .75s forwards' }}>
-                        <span style={{ fontSize: 16, marginRight: 6 }}>🏸</span>
-                        Chúc bạn sinh nhật thật vui, sức khỏe dồi dào — và tiếp tục đánh cầu thật đẹp nhé!
-                    </div>
-
-                    {/* Music indicator */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, height: 20, opacity: 0, animation: 'fadeUp .5s ease-out .8s forwards' }}>
-                        {musicPlaying ? (
-                            <>
-                                <span style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 16 }}>
-                                    {[0, 0.15, 0.3, 0.15, 0].map((delay, i) => (
-                                        <span key={i} style={{ width: 3, background: '#6BCB77', borderRadius: 2, animation: `bar .65s ease-in-out ${delay}s infinite alternate`, height: 6 }} />
-                                    ))}
-                                </span>
-                                <span style={{ fontSize: 12, fontWeight: 700, color: '#6BCB77' }}>Đang phát nhạc...</span>
-                            </>
-                        ) : (
-                            <span style={{ fontSize: 12, color: 'rgba(255,255,255,.3)' }}>🎵 Nhạc sẽ phát tự động</span>
-                        )}
-                    </div>
-
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleClose();
-                        }}
+                {phase !== 'revealed' ? (
+                    <div
                         style={{
-                            width: '100%', padding: '13px 0', borderRadius: 18, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 14,
-                            background: 'linear-gradient(135deg,#f857a6,#FF6FCB)', color: 'white',
-                            boxShadow: '0 4px 20px rgba(248,87,166,.4)',
-                            opacity: 0, animation: 'fadeUp .5s ease-out .85s forwards',
+                            position: 'relative', zIndex: 10, padding: '32px 24px 30px',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
                         }}
                     >
-                        Cảm ơn! 🎉
-                    </button>
-                </div>
+                        <p
+                            style={{
+                                color: '#FFD93D', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em',
+                                textTransform: 'uppercase', marginBottom: 8, opacity: phase === 'box' ? 1 : 0,
+                                transition: 'opacity .3s ease',
+                            }}
+                        >
+                            🎁 có một món quà cho {firstName}
+                        </p>
+
+                        <GiftBox phase={phase} pullCount={pullCount} onCommitPull={handleCommitPull} />
+                    </div>
+                ) : (
+                    <div
+                        style={{
+                            position: 'relative', zIndex: 10, padding: '28px 24px 24px',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                        }}
+                    >
+                        <div style={{ animation: 'cakeDrop .7s cubic-bezier(.34,1.56,.64,1) both', marginBottom: 4 }}>
+                            <CakeCanvas />
+                        </div>
+
+                        <p style={{ color: '#FFD93D', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0, animation: 'fadeUp .5s ease-out .1s forwards', marginBottom: 4 }}>
+                            🎉 chúc mừng sinh nhật 🎉
+                        </p>
+                        <h2 style={{ color: 'white', fontSize: 30, fontWeight: 900, opacity: 0, animation: 'fadeUp .5s ease-out .2s forwards', margin: '0 0 4px', textShadow: '0 2px 24px rgba(255,180,100,.3)' }}>
+                            {firstName}!
+                        </h2>
+                        <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, opacity: 0, animation: 'fadeUp .5s ease-out .3s forwards', marginBottom: 16 }}>
+                            Bạn có sinh nhật trong tháng này 🎈
+                        </p>
+
+                        <div style={{ width: '100%', borderRadius: 16, padding: '12px 16px', marginBottom: 14, background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.10)', color: 'rgba(255,255,255,.8)', fontSize: 14, lineHeight: 1.6, textAlign: 'left', opacity: 0, animation: 'fadeUp .5s ease-out .4s forwards' }}>
+                            <span style={{ fontSize: 16, marginRight: 6 }}>🏸</span>
+                            Chúc bạn sinh nhật thật vui, sức khỏe dồi dào — và tiếp tục đánh cầu thật đẹp nhé!
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, height: 20, opacity: 0, animation: 'fadeUp .5s ease-out .45s forwards' }}>
+                            {musicPlaying ? (
+                                <>
+                                    <span style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 16 }}>
+                                        {[0, 0.15, 0.3, 0.15, 0].map((delay, i) => (
+                                            <span key={i} style={{ width: 3, background: '#6BCB77', borderRadius: 2, animation: `bar .65s ease-in-out ${delay}s infinite alternate`, height: 6 }} />
+                                        ))}
+                                    </span>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#6BCB77' }}>Đang phát nhạc...</span>
+                                </>
+                            ) : (
+                                <span style={{ fontSize: 12, color: 'rgba(255,255,255,.3)' }}>🎵 Nhạc sinh nhật</span>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleClose();
+                            }}
+                            style={{
+                                width: '100%', padding: '13px 0', borderRadius: 18, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 14,
+                                background: 'linear-gradient(135deg,#f857a6,#FF6FCB)', color: 'white',
+                                boxShadow: '0 4px 20px rgba(248,87,166,.4)',
+                                opacity: 0, animation: 'fadeUp .5s ease-out .5s forwards',
+                            }}
+                        >
+                            Cảm ơn! 🎉
+                        </button>
+                    </div>
+                )}
             </div>
 
             <style>{`
@@ -449,6 +753,19 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                 @keyframes bar {
                     from{height:4px}
                     to{height:14px}
+                }
+                @keyframes pulseHint {
+                    0%,100%{opacity:.55;transform:translateY(0)}
+                    50%{opacity:1;transform:translateY(-2px)}
+                }
+                @keyframes swipeHand {
+                    0%,100%{transform:translateY(0)}
+                    50%{transform:translateY(-6px)}
+                }
+                @keyframes sparkBurst {
+                    0%{transform:translate(-50%,-50%) rotate(0deg) scale(.4);opacity:0}
+                    15%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}
+                    100%{transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)) scale(.5);opacity:0}
                 }
             `}</style>
         </div>
