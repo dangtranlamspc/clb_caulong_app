@@ -163,8 +163,9 @@ export default function CreateMatchPage() {
             if (note.trim()) payload.note = note.trim();
 
             await matchesApi.create(payload);
-            toast.success('Đã gửi lời thách đấu! 🏸');
-            router.push('/activity?tab=matches');
+            toast.success('Đã tạo trận đấu! Đối thủ đã được thông báo 🏸');
+            sessionStorage.setItem('activity:return-tab', 'matches');
+            router.push('/activity');
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? 'Tạo trận thất bại');
         } finally {

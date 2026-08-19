@@ -201,6 +201,7 @@ export const matchesApi = {
   ) => api.patch(`/matches/${id}/result`, data),
   getUnseenResults: () => api.get("/matches/results/unseen"),
   markResultSeen: (id: string) => api.patch(`/matches/${id}/seen`),
+  cancel: (id: string) => api.patch(`/matches/${id}/cancel`),
 };
 
 export const usersApi = {

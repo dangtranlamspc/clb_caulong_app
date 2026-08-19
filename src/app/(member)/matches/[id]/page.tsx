@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
     ArrowLeft, CheckCircle2, XCircle, Hourglass,
-    Clock, Trophy, Loader2, Gem,
+    Clock, Trophy, Loader2, Gem, Ban,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { matchesApi } from '@/lib/api';
@@ -93,6 +93,7 @@ export default function MatchDetailPage() {
     const [match, setMatch] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [cancelling, setCancelling] = useState(false);
     const channelRef = useRef<RealtimeChannel | null>(null);
     const [scoreA, setScoreA] = useState(0);
     const [scoreB, setScoreB] = useState(0);
@@ -185,6 +186,8 @@ export default function MatchDetailPage() {
     const iWonFinal = match.winner_team === (isTeamA ? 'A' : 'B');
     const pointsNet = iWonFinal ? WIN_POINTS : LOSE_POINTS;
 
+    const canCancel = isCreator && (match.status === 'pending_result' || match.status === 'pending_approval');
+
     const handleAccept = async () => {
         setSubmitting(true);
         try {
@@ -219,6 +222,21 @@ export default function MatchDetailPage() {
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? 'Gửi thất bại');
         } finally { setSubmitting(false); }
+    };
+
+    const handleCancel = async () => {
+        if (!confirm('Huỷ trận đấu này? Hành động không thể hoàn tác.')) return;
+        setCancelling(true);
+        try {
+            await matchesApi.cancel(id);
+            toast.success('Đã huỷ trận đấu');
+            sessionStorage.setItem('activity:return-tab', 'matches');
+            router.push('/activity');
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Huỷ trận thất bại');
+        } finally {
+            setCancelling(false);
+        }
     };
 
     return (
@@ -381,6 +399,11 @@ export default function MatchDetailPage() {
                         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                         Gửi kết quả để duyệt 📋
                     </button>
+
+                    <button onClick={handleCancel} disabled={cancelling || submitting} className="w-full py-3 rounded-2xl border border-red-200 text-red-500 text-sm font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50">
+                        {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />}
+                        Huỷ trận đấu
+                    </button>
                 </div>
             )}
 
@@ -389,6 +412,27 @@ export default function MatchDetailPage() {
                     <Clock className="w-6 h-6 mx-auto text-blue-400 mb-2" />
                     <p className="text-sm font-semibold text-blue-700">Chờ đối thủ nhập kết quả</p>
                     <p className="text-xs text-blue-400 mt-1"><span className="font-medium">{match.player_a1?.full_name}</span> sẽ nhập tỉ số</p>
+                </div>
+            )}
+
+            {match.status === 'pending_approval' && isCreator && (
+                <div className="space-y-2">
+                    <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 text-center">
+                        <Hourglass className="w-6 h-6 mx-auto text-amber-500 mb-2" />
+                        <p className="text-sm font-semibold text-amber-700">Đang chờ admin duyệt kết quả</p>
+                        <p className="text-xs text-amber-500 mt-1">Bạn có thể huỷ trận nếu nhập nhầm tỉ số</p>
+                    </div>
+                    <button onClick={handleCancel} disabled={cancelling} className="w-full py-3 rounded-2xl border border-red-200 text-red-500 text-sm font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50">
+                        {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />}
+                        Huỷ trận đấu
+                    </button>
+                </div>
+            )}
+
+            {match.status === 'pending_approval' && !isCreator && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 text-center">
+                    <Hourglass className="w-6 h-6 mx-auto text-amber-500 mb-2" />
+                    <p className="text-sm font-semibold text-amber-700">Đang chờ admin duyệt kết quả</p>
                 </div>
             )}
         </div>

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2, AlertTriangle } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2, AlertTriangle, Swords, Trophy, XCircle, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -29,6 +29,16 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     shirt_order_cancel_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
     session_created: { icon: CalendarDays, cls: 'text-indigo-600', bg: 'bg-indigo-50' },
     member_declined_session: { icon: AlertCircle, cls: 'text-orange-500', bg: 'bg-orange-50' },
+
+
+    match_created: { icon: Swords, cls: 'text-indigo-600', bg: 'bg-indigo-50' },
+    match_created_by_admin: { icon: Swords, cls: 'text-indigo-600', bg: 'bg-indigo-50' },
+    match_result_pending: { icon: Swords, cls: 'text-amber-600', bg: 'bg-amber-50' },
+    match_result_approved_win: { icon: Trophy, cls: 'text-emerald-600', bg: 'bg-emerald-50' },
+    match_result_approved_lose: { icon: Trophy, cls: 'text-red-500', bg: 'bg-red-50' },
+    match_result_rejected: { icon: XCircle, cls: 'text-red-500', bg: 'bg-red-50' },
+    match_result_rolled_back: { icon: RotateCcw, cls: 'text-orange-600', bg: 'bg-orange-50' },
+    match_cancelled: { icon: XCircle, cls: 'text-red-500', bg: 'bg-red-50' },
 };
 
 const SWIPE_THRESHOLD = -70;
@@ -208,7 +218,11 @@ function NotificationItem({
         };
     }, [n.id, onDelete]);
 
-    const cfg = TYPE_CFG[n.type] ?? TYPE_CFG.payment_added;
+    const cfgKey =
+        n.type === 'match_result_approved'
+            ? (n.data?.won ? 'match_result_approved_win' : 'match_result_approved_lose')
+            : n.type;
+    const cfg = TYPE_CFG[cfgKey] ?? TYPE_CFG.payment_added;
     const Icon = cfg.icon;
     const isGuestConfirm = n.type === 'wallet_guest_confirm' || n.data?.type === 'wallet_guest_confirm';
     const alreadyHandled = guestHandled.has(n.id);

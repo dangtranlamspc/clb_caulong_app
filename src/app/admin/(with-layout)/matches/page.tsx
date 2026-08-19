@@ -100,21 +100,23 @@ function getTier(p: any): string {
     return tier ?? DEFAULT_TIER;
 }
 
-function AlertDot() {
+function AlertDot({ count }: { count?: number }) {
     return (
         <>
             <style jsx global>{`
                 @keyframes alertDotPop {
                     0%, 100% { transform: scale(1); }
-                    50% { transform: scale(1.35); }
+                    50% { transform: scale(1.08); }
                 }
                 .alert-dot-core {
                     animation: alertDotPop 1s ease-in-out infinite;
                 }
             `}</style>
-            <span className="absolute -top-1.5 -right-1.5 flex h-3 w-3 z-20">
+            <span className="absolute -top-2 -right-2 flex items-center justify-center z-20">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                <span className="alert-dot-core relative inline-flex rounded-full h-3 w-3 bg-red-500 ring-2 ring-white" />
+                <span className="alert-dot-core relative inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 ring-2 ring-white text-[10px] font-bold text-white leading-none">
+                    {count}
+                </span>
             </span>
         </>
     );
@@ -189,10 +191,17 @@ export default function MatchesAdminPage() {
     const [rollbackId, setRollbackId] = useState<string | null>(null);
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
     const [showStatusModal, setShowStatusModal] = useState(false);
+    const [statusModalVisible, setStatusModalVisible] = useState(false);
 
     const [approvePhase, setApprovePhase] = useState<Record<string, ActionPhase>>({});
     const [deletePhase, setDeletePhase] = useState<Record<string, ActionPhase>>({});
     const [rollbackPhase, setRollbackPhase] = useState<Record<string, ActionPhase>>({});
+
+    const [approveConfirm, setApproveConfirm] = useState<{
+        id: string;
+        scoreA: number;
+        scoreB: number;
+    } | null>(null);
 
     const setPhase = (
         setter: React.Dispatch<React.SetStateAction<Record<string, ActionPhase>>>,
@@ -238,20 +247,26 @@ export default function MatchesAdminPage() {
 
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+
     useEffect(() => {
+        const scheduleRefresh = () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+            debounceRef.current = setTimeout(() => {
+                fetchMatches({ silent: true });
+                fetchStatusCounts();
+            }, 250);
+        };
+
         const channel = supabase
             .channel("matches-admin-realtime")
             .on(
                 "postgres_changes",
                 { event: "*", schema: "public", table: "friendly_matches" },
-                () => {
-                    if (debounceRef.current) clearTimeout(debounceRef.current);
-                    debounceRef.current = setTimeout(() => {
-                        fetchMatches({ silent: true });
-                        fetchStatusCounts();
-                    }, 250);
-                },
+                scheduleRefresh,
             )
+            .on("broadcast", { event: "match_created" }, scheduleRefresh)
+            .on("broadcast", { event: "match_status_changed" }, scheduleRefresh)
+            .on("broadcast", { event: "match_deleted" }, scheduleRefresh)
             .subscribe();
 
         return () => {
@@ -259,53 +274,6 @@ export default function MatchesAdminPage() {
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
     }, [fetchMatches, fetchStatusCounts]);
-
-    // const handleApprove = async (
-    //     id: string,
-    //     scorePayload?: { score_a: number; score_b: number },
-    // ) => {
-    //     setActionId(id);
-    //     setPhase(setApprovePhase, id, "loading");
-    //     try {
-    //         const match = matches.find((m) => m.id === id);
-    //         const nameById = new Map<string, string>();
-    //         if (match) {
-    //             [match.player_a1, match.player_a2, match.player_a3, match.player_b1, match.player_b2, match.player_b3]
-    //                 .filter(Boolean)
-    //                 .forEach((p: any) => nameById.set(p.id, p.full_name));
-    //         }
-
-    //         const { data } = await matchesAdminApi.approve(id, scorePayload);
-
-    //         const updates = data.rank_updates ?? [];
-    //         const winners = updates.filter((u: any) => u.delta > 0);
-    //         const losers = updates.filter((u: any) => u.delta < 0);
-
-    //         const fmt = (u: any) =>
-    //             `${nameById.get(u.userId) ?? "Người chơi"} ${u.delta > 0 ? "+" : ""}${u.delta}đ`;
-
-    //         if (winners.length > 0) {
-    //             toast.success(`🟢 Cộng điểm: ${winners.map(fmt).join(", ")}`);
-    //         }
-    //         if (losers.length > 0) {
-    //             toast.error(`🔴 Trừ điểm: ${losers.map(fmt).join(", ")}`);
-    //         }
-    //         if (winners.length === 0 && losers.length === 0) {
-    //             toast.success("✅ Đã duyệt trận đấu");
-    //         }
-
-    //         setPhase(setApprovePhase, id, "success");
-    //         setShowScoreInput(null);
-    //         fetchMatches();
-    //         fetchStatusCounts();
-    //         setTimeout(() => setPhase(setApprovePhase, id, "idle"), 1200);
-    //     } catch (err: any) {
-    //         toast.error(err?.response?.data?.message ?? "Duyệt thất bại");
-    //         setPhase(setApprovePhase, id, "idle");
-    //     } finally {
-    //         setActionId(null);
-    //     }
-    // };
 
 
     const handleApprove = async (
@@ -355,13 +323,29 @@ export default function MatchesAdminPage() {
         }
     };
 
+    const openStatusModal = () => {
+        setShowStatusModal(true);
+        requestAnimationFrame(() => requestAnimationFrame(() => setStatusModalVisible(true)));
+    };
+    const closeStatusModal = () => {
+        setStatusModalVisible(false);
+        setTimeout(() => setShowStatusModal(false), 300);
+    };
+
     const handleApproveClick = (m: any) => {
         if (m.status === "pending_result") {
             setShowScoreInput(m.id);
             return;
         }
-        handleApprove(m.id);
+
+        const s = m.sets?.[0];
+        setApproveConfirm({
+            id: m.id,
+            scoreA: s?.score_a ?? m.score_a,
+            scoreB: s?.score_b ?? m.score_b,
+        });
     };
+
 
     const handleConfirmScoreAndApprove = (id: string) => {
         const input = scoreInputs[id];
@@ -376,7 +360,8 @@ export default function MatchesAdminPage() {
             toast.error("Tỉ số không được hoà");
             return;
         }
-        handleApprove(id, { score_a: scoreA, score_b: scoreB });
+        setShowScoreInput(null);
+        setApproveConfirm({ id, scoreA, scoreB });
     };
 
     const handleReject = async (id: string) => {
@@ -494,16 +479,12 @@ export default function MatchesAdminPage() {
                                     }
                                 `}
                             >
-                                {needsAttention && <AlertDot />}
+                                {needsAttention && <AlertDot count={count} />}
                                 <Icon className="w-4 h-4 flex-shrink-0" />
                                 {shortLabel ?? label}
-                                {showCount && (
+                                {showCount && !needsAttention && (
                                     <span
-                                        className={`text-[10px] px-1.5 rounded-full transition-colors duration-200 ${needsAttention
-                                            ? "bg-red-500 text-white animate-pulse"
-                                            : isActive
-                                                ? "bg-white/25 text-white"
-                                                : "bg-gray-100 text-gray-600"
+                                        className={`text-[10px] px-1.5 rounded-full transition-colors duration-200 ${isActive ? "bg-white/25 text-white" : "bg-gray-100 text-gray-600"
                                             }`}
                                     >
                                         {count}
@@ -515,18 +496,16 @@ export default function MatchesAdminPage() {
                 </div>
 
                 <button
-                    onClick={() => setShowStatusModal(true)}
+                    onClick={openStatusModal}
                     className="sm:hidden flex-1 flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700"
                 >
-                    <span className="flex items-center gap-2">
+                    <span className="relative flex items-center gap-2">
+                        {ALERT_TAB_VALUES.has(activeTab) && (statusCounts[activeTab] ?? 0) > 0 && (
+                            <AlertDot count={statusCounts[activeTab]} />
+                        )}
                         {STATUS_TABS.find((x) => x.value === activeTab)?.label}
-                        {(statusCounts[activeTab] ?? 0) > 0 && (
-                            <span
-                                className={`text-xs px-2 py-0.5 rounded-full ${ALERT_TAB_VALUES.has(activeTab)
-                                    ? "bg-red-500 text-white animate-pulse"
-                                    : "bg-gray-100 text-gray-600"
-                                    }`}
-                            >
+                        {(statusCounts[activeTab] ?? 0) > 0 && !ALERT_TAB_VALUES.has(activeTab) && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
                                 {statusCounts[activeTab]}
                             </span>
                         )}
@@ -765,10 +744,9 @@ export default function MatchesAdminPage() {
                                         )}
                                     </div>
 
-                                    {/* Action bar */}
                                     <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-50 bg-gray-50/50 rounded-b-2xl">
                                         <div className="flex items-center gap-2">
-                                            {m.status !== "approved" && (
+                                            {m.status === "rejected" && (
                                                 <MorphButtonMatches
                                                     phase={deletePhase[m.id] ?? "idle"}
                                                     idleIcon={<Trash2 className="w-3 h-3" />}
@@ -779,35 +757,50 @@ export default function MatchesAdminPage() {
                                                     disabled={actionId === m.id}
                                                 />
                                             )}
+
                                             {m.status === "approved" && (
-                                                <MorphButtonMatches
-                                                    phase={rollbackPhase[m.id] ?? "idle"}
-                                                    idleIcon={<Undo2 className="w-3 h-3" />}
-                                                    label="Hoàn tác"
-                                                    idleClassName="border border-orange-200 bg-white text-orange-600 hover:bg-orange-50"
-                                                    idleWidthClass="w-[6.5rem]"
-                                                    onClick={() => setRollbackId(m.id)}
-                                                    disabled={actionId === m.id}
-                                                />
+                                                <>
+                                                    {/* <MorphButtonMatches
+                                                        phase={rollbackPhase[m.id] ?? "idle"}
+                                                        idleIcon={<Undo2 className="w-3 h-3" />}
+                                                        label="Hoàn tác"
+                                                        idleClassName="border border-orange-200 bg-white text-orange-600 hover:bg-orange-50"
+                                                        idleWidthClass="w-[6.5rem]"
+                                                        onClick={() => setRollbackId(m.id)}
+                                                        disabled={actionId === m.id}
+                                                    /> */}
+                                                    <MorphButtonMatches
+                                                        phase={rollbackPhase[m.id] ?? "idle"}
+                                                        idleIcon={<XCircle className="w-3 h-3" />}
+                                                        label="Huỷ tỉ số"
+                                                        idleClassName="border border-red-200 bg-white text-red-500 hover:bg-red-50"
+                                                        idleWidthClass="w-[6.5rem]"
+                                                        onClick={() => setRollbackId(m.id)}
+                                                        disabled={actionId === m.id}
+                                                    />
+                                                </>
                                             )}
-                                            <button
-                                                onClick={() => handleToggleHidden(m.id)}
-                                                className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg border transition-colors ${isHidden
-                                                    ? "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
-                                                    : "bg-white border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
-                                                    }`}
-                                                title={isHidden ? "Hiện lại với member" : "Ẩn khỏi member"}
-                                            >
-                                                {isHidden ? (
-                                                    <>
-                                                        <RefreshCw className="w-3 h-3" /> Khôi phục
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <EyeOff className="w-3 h-3" /> Ẩn
-                                                    </>
-                                                )}
-                                            </button>
+
+                                            {(m.status === "rejected") && (
+                                                <button
+                                                    onClick={() => handleToggleHidden(m.id)}
+                                                    className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg border transition-colors ${isHidden
+                                                        ? "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
+                                                        : "bg-white border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                                                        }`}
+                                                    title={isHidden ? "Hiện lại với member" : "Ẩn khỏi member"}
+                                                >
+                                                    {isHidden ? (
+                                                        <>
+                                                            <RefreshCw className="w-3 h-3" /> Khôi phục
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <EyeOff className="w-3 h-3" /> Ẩn
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
                                         </div>
 
                                         {canApprove && showReject !== m.id && showScoreInput !== m.id && (
@@ -853,6 +846,26 @@ export default function MatchesAdminPage() {
             )}
 
             <ConfirmModal
+                open={!!approveConfirm}
+                onClose={() => setApproveConfirm(null)}
+                onConfirm={() => {
+                    if (!approveConfirm) return;
+                    const m = matches.find((x) => x.id === approveConfirm.id);
+                    const payload =
+                        m?.status === "pending_result"
+                            ? { score_a: approveConfirm.scoreA, score_b: approveConfirm.scoreB }
+                            : undefined;
+                    handleApprove(approveConfirm.id, payload);
+                    setApproveConfirm(null);
+                }}
+                title="Xác nhận duyệt kết quả?"
+                description={`Tỉ số: ${approveConfirm?.scoreA ?? ""} – ${approveConfirm?.scoreB ?? ""}\nBạn có đồng ý với kết quả này? Điểm rank sẽ được cộng/trừ cho các người chơi ngay sau khi duyệt.`}
+                confirmLabel="Đồng ý & Duyệt"
+                confirmColor="bg-green-500 hover:bg-green-600"
+                phase={approveConfirm ? approvePhase[approveConfirm.id] ?? "idle" : "idle"}
+            />
+
+            <ConfirmModal
                 open={!!rollbackId}
                 onClose={() => setRollbackId(null)}
                 onConfirm={() => rollbackId && handleRollback(rollbackId)}
@@ -891,17 +904,27 @@ export default function MatchesAdminPage() {
                 typeof document !== "undefined" &&
                 createPortal(
                     <div
-                        className="fixed inset-0 z-[999] bg-black/40 flex items-end sm:hidden animate-in fade-in"
-                        onClick={() => setShowStatusModal(false)}
+                        className="fixed inset-0 z-[999] flex items-end sm:hidden"
+                        style={{
+                            background: statusModalVisible ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)",
+                            transition: "background 0.3s ease",
+                        }}
+                        onClick={closeStatusModal}
                     >
                         <div
-                            className="w-full bg-white rounded-t-3xl p-5 shadow-xl animate-slide-up"
+                            className="w-[92%] mx-auto bg-white rounded-t-3xl p-5 shadow-xl"
+                            style={{
+                                transform: statusModalVisible ? "translateY(0)" : "translateY(100%)",
+                                opacity: statusModalVisible ? 1 : 0,
+                                transition: "transform 0.3s cubic-bezier(0.32,0.72,0,1), opacity 0.25s ease",
+                                paddingBottom: "env(safe-area-inset-bottom)",
+                            }}
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="font-semibold text-lg">Lọc trạng thái</h3>
                                 <button
-                                    onClick={() => setShowStatusModal(false)}
+                                    onClick={closeStatusModal}   // 👈 đổi
                                     className="p-2 rounded-full hover:bg-gray-100"
                                 >
                                     <X className="w-5 h-5" />
@@ -919,24 +942,23 @@ export default function MatchesAdminPage() {
                                             key={value}
                                             onClick={() => {
                                                 setTab(value);
-                                                setShowStatusModal(false);
+                                                closeStatusModal();
                                             }}
-                                            className={`relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium ${isActive
-                                                ? "bg-blue-50 text-blue-600"
-                                                : "hover:bg-gray-50 text-gray-700"
+                                            className={`relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium ${isActive ? "bg-blue-50 text-blue-600" : "hover:bg-gray-50 text-gray-700"
                                                 }`}
                                         >
-                                            {needsAttention && <AlertDot />}
                                             <Icon className="w-5 h-5 flex-shrink-0" />
 
-                                            <span className="flex-1 text-left">{label}</span>
+                                            <span className="flex-1 flex items-center">
+                                                <span className={`relative inline-block ${needsAttention ? "pr-4" : ""}`}>
+                                                    {label}
+                                                    {needsAttention && <AlertDot count={count} />}
+                                                </span>
+                                            </span>
 
-                                            {count > 0 && (
+                                            {count > 0 && !needsAttention && (
                                                 <span
-                                                    className={`text-xs px-2 py-0.5 rounded-full font-semibold ${needsAttention
-                                                        ? "bg-red-500 text-white animate-pulse"
-                                                        : STATUS_COUNT_BADGE[value] ?? "bg-gray-200 text-gray-700"
-                                                        }`}
+                                                    className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COUNT_BADGE[value] ?? "bg-gray-200 text-gray-700"}`}
                                                 >
                                                     {count}
                                                 </span>

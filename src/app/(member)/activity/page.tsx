@@ -1348,6 +1348,7 @@ function MatchesTab({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [activeMatch, setActiveMatch] = useState<any>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const fadeIn = useFadeIn(!loading);
 
@@ -1394,18 +1395,11 @@ function MatchesTab({
     if (!user?.id) return;
     const channel = supabase
       .channel(`matches-list:${user.id}`)
-      .on("broadcast", { event: "match_result" }, () => {
-        fetchMatchesRef.current();
-      })
-      .on("broadcast", { event: "new_challenge" }, () => {
-        fetchMatchesRef.current();
-      })
-      .on("broadcast", { event: "match_status_changed" }, () => {
-        fetchMatchesRef.current();
-      })
-      .on("broadcast", { event: "admin_match_created" }, () => {
-        fetchMatchesRef.current();
-      })
+      .on("broadcast", { event: "match_result" }, () => fetchMatchesRef.current())
+      .on("broadcast", { event: "match_created" }, () => fetchMatchesRef.current())
+      .on("broadcast", { event: "match_status_changed" }, () => fetchMatchesRef.current())
+      .on("broadcast", { event: "admin_match_created" }, () => fetchMatchesRef.current())
+      .on("broadcast", { event: "match_deleted" }, () => fetchMatchesRef.current())
       .subscribe();
     channelRef.current = channel;
     return () => {
@@ -1422,6 +1416,20 @@ function MatchesTab({
       document.body.style.overflow = "";
     };
   }, [sheetOpen]);
+
+  const handleCancelMatch = async (matchId: string) => {
+    if (!confirm("Huỷ trận đấu này? Hành động không thể hoàn tác.")) return;
+    setCancellingId(matchId);
+    try {
+      await matchesApi.cancel(matchId);
+      toast.success("Đã huỷ trận đấu");
+      fetchMatchesRef.current();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Huỷ trận thất bại");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const activeOpt =
     MATCH_FILTER_OPTS.find((o) => o.value === filter) ?? MATCH_FILTER_OPTS[0];
@@ -1493,39 +1501,36 @@ function MatchesTab({
           </div>
         ) : (
           matches.map((m, idx) => {
-            const cfg =
-              MATCH_STATUS_CFG[m.status] ?? MATCH_STATUS_CFG.pending_opponent;
+            const cfg = MATCH_STATUS_CFG[m.status] ?? MATCH_STATUS_CFG.pending_opponent;
             const isTeamA =
               m.player_a1?.id === user?.id ||
               m.player_a2?.id === user?.id ||
               m.player_a3?.id === user?.id;
             const myTeam = isTeamA ? "A" : "B";
             const iWon = m.status === "approved" && m.winner_team === myTeam;
-            const iLost =
-              m.status === "approved" &&
-              m.winner_team &&
-              m.winner_team !== myTeam;
+            const iLost = m.status === "approved" && m.winner_team && m.winner_team !== myTeam;
             const myNames = isTeamA
               ? [m.player_a1, m.player_a2, m.player_a3].filter(Boolean)
               : [m.player_b1, m.player_b2, m.player_b3].filter(Boolean);
             const oppNames = isTeamA
               ? [m.player_b1, m.player_b2, m.player_b3].filter(Boolean)
               : [m.player_a1, m.player_a2, m.player_a3].filter(Boolean);
-            const isPendingMe =
-              m.status === "pending_opponent" && m.player_b1?.id === user?.id;
+            const isPendingMe = m.status === "pending_opponent" && m.player_b1?.id === user?.id;
 
-            const avatarSizeCls =
-              myNames.length >= 3 ? "w-9 h-9" : "w-12 h-12";
-            const initialsTextCls =
-              myNames.length >= 3 ? "text-[10px]" : "text-[11px]";
+            const avatarSizeCls = myNames.length >= 3 ? "w-9 h-9" : "w-12 h-12";
+            const initialsTextCls = myNames.length >= 3 ? "text-[10px]" : "text-[11px]";
+
+            const canCancel =
+              m.created_by === user?.id &&
+              (m.status === "pending_result" || m.status === "pending_approval");
+            const isCancelling = cancellingId === m.id;
 
             return (
               <Link key={m.id} href={`/matches/${m.id}`} className="block mb-1">
                 <div
                   className={`bg-white rounded-2xl p-4 shadow-md border transition-all active:scale-[0.99] ${isPendingMe ? "border-blue-200 border-[1.5px]" : "border-gray-100"}`}
                   style={{
-                    boxShadow:
-                      "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
                     animation: "fadeSlideUp .35s ease both",
                     animationDelay: `${idx * 50}ms`,
                   }}
@@ -1641,14 +1646,31 @@ function MatchesTab({
                   <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-50">
                     <span className="text-[10px] text-gray-400">
                       {m.played_at
-                        ? format(new Date(m.played_at), "EEE dd/MM/yyyy", {
-                          locale: vi,
-                        })
-                        : format(new Date(m.created_at), "dd/MM/yyyy", {
-                          locale: vi,
-                        })}
+                        ? format(new Date(m.played_at), "EEE dd/MM/yyyy", { locale: vi })
+                        : format(new Date(m.created_at), "dd/MM/yyyy", { locale: vi })}
                     </span>
-                    <ChevronRight className="w-4 h-4 text-gray-300" />
+
+                    <div className="flex items-center gap-2">
+                      {canCancel && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleCancelMatch(m.id);
+                          }}
+                          disabled={isCancelling}
+                          className="flex items-center gap-1 text-[11px] font-semibold text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          {isCancelling ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <X className="w-3 h-3" />
+                          )}
+                          Huỷ trận
+                        </button>
+                      )}
+                      <ChevronRight className="w-4 h-4 text-gray-300" />
+                    </div>
                   </div>
                 </div>
               </Link>
