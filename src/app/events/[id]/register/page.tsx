@@ -970,7 +970,6 @@ export default function TournamentRegisterPage() {
                 )}
               </div>
 
-              {/* ── Nhóm 4 (mobile): Nút Quay lại / Tiếp tục — nút chính nổi bật, chiếm phần lớn chiều rộng ── */}
               <div className="order-4 lg:order-none">
                 {step === 1 && (
                   <div className="flex items-center gap-3">

@@ -28,9 +28,6 @@ import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import { createPortal } from "react-dom";
 
 
-// Cách làm: khi xác nhận xoá, không xoá ngay khỏi state — thay vào đó phát a animation "co lại"
-//  (collapse chiều cao + mờ dần) cho đúng dòng/card đó, đợi animation xong rồi mới gọi API xoá thật. 
-//  Nhờ vậy các mục phía dưới sẽ tự trượt lên mượt mà thay vì biến mất đột ngột.
 
 const PAYMENT_METHOD_LABEL: Record<string, string> = {
   wallet: "Ví BNB",
@@ -1207,19 +1204,24 @@ export default function TournamentRegistrationsPage() {
     stats.total ? ((count / stats.total) * 100).toFixed(2) : "0.00";
 
   const filtered = useMemo(() => {
-    return registrations.filter((r) => {
-      const name = (r.users?.full_name ?? r.guest_full_name ?? "").toLowerCase();
-      const email = (r.users?.email ?? r.guest_email ?? "").toLowerCase();
-      const phone = r.users?.phone ?? r.guest_phone ?? "";
-      const q = search.trim().toLowerCase();
-      if (q && !name.includes(q) && !email.includes(q) && !phone.includes(q))
-        return false;
-      if (genderFilter && r.role !== genderFilter) return false;
-      if (levelFilter && r.level !== levelFilter) return false;
-      if (roleFilter && r.role !== roleFilter) return false;
-      if (paymentFilter && r.payment_status !== paymentFilter) return false;
-      return true;
-    });
+    return registrations
+      .filter((r) => {
+        const name = (r.users?.full_name ?? r.guest_full_name ?? "").toLowerCase();
+        const email = (r.users?.email ?? r.guest_email ?? "").toLowerCase();
+        const phone = r.users?.phone ?? r.guest_phone ?? "";
+        const q = search.trim().toLowerCase();
+        if (q && !name.includes(q) && !email.includes(q) && !phone.includes(q))
+          return false;
+        if (genderFilter && r.role !== genderFilter) return false;
+        if (levelFilter && r.level !== levelFilter) return false;
+        if (roleFilter && r.role !== roleFilter) return false;
+        if (paymentFilter && r.payment_status !== paymentFilter) return false;
+        return true;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
   }, [
     registrations,
     search,

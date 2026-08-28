@@ -206,8 +206,6 @@ export default function TournamentRegistrationsPage() {
         } catch { }
     };
 
-    // Mở modal xác nhận thay vì confirm ngay khi bấm — để admin thấy rõ
-    // phương thức (chuyển khoản / tiền mặt) và nội dung trước khi xác nhận.
     const openConfirmPayment = (r: any) => {
         if (r.payment_status === "confirmed") return;
         setConfirmTarget(r);
