@@ -10,6 +10,7 @@ import {
   Trash2,
   Plus,
   AlertTriangle,
+  Mail,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { sessionsAdminApi } from "@/lib/api";
@@ -82,6 +83,8 @@ export default function SessionFinishPage() {
   const [courts, setCourts] = useState<CourtItem[]>([
     { id: newCourtId(), name: "", minutes: 0, pricePerHour: 0 },
   ]);
+
+  const [emailIds, setEmailIds] = useState<Set<string>>(new Set());
 
   const startNavLoading = useNavLoadingStore((s) => s.start);
 
@@ -177,6 +180,49 @@ export default function SessionFinishPage() {
       const items = prev[regId] ?? [];
       if (items.length <= 1) return prev;
       return { ...prev, [regId]: items.filter((i) => i.id !== itemId) };
+    });
+  };
+
+
+  const isMailEligible = (r: any) => {
+    if (!r.host_registration_id) {
+      // host row: chỉ guest độc lập/guest đứng tên
+      return r.is_guest;
+    }
+    // guest row: tìm host tương ứng
+    const host = registrations.find((h) => h.id === r.host_registration_id);
+    if (host?.is_guest) return false; // gộp qua host guest, không có nút riêng
+    return (
+      walletDeductIds.has(host?.id) &&
+      (walletModes[host?.id] ?? "grouped") === "separate"
+    );
+  };
+
+  const eligibleRegs = registrations.filter(isMailEligible);
+  const mailAll = eligibleRegs.length > 0 && eligibleRegs.every((r) => emailIds.has(r.id));
+
+  const toggleMailAll = () => {
+    if (mailAll) {
+      setEmailIds((prev) => {
+        const next = new Set(prev);
+        eligibleRegs.forEach((r) => next.delete(r.id));
+        return next;
+      });
+    } else {
+      setEmailIds((prev) => {
+        const next = new Set(prev);
+        eligibleRegs.forEach((r) => next.add(r.id));
+        return next;
+      });
+    }
+  };
+
+  const toggleEmailFor = (registrationId: string) => {
+    setEmailIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(registrationId)) next.delete(registrationId);
+      else next.add(registrationId);
+      return next;
     });
   };
 
@@ -382,6 +428,7 @@ export default function SessionFinishPage() {
         base_amount: number;
         other_fee_amount: number;
         other_fee_note?: string;
+        send_email: boolean;
       }[] = [];
 
       hostRows.forEach((h) => {
@@ -393,6 +440,7 @@ export default function SessionFinishPage() {
           base_amount: base,
           other_fee_amount: other,
           other_fee_note: otherFeeNoteJoined(h.id),
+          send_email: emailIds.has(h.id),
         });
 
         guestsOf(h.id).forEach((g) => {
@@ -404,6 +452,7 @@ export default function SessionFinishPage() {
             base_amount: gBase,
             other_fee_amount: gOther,
             other_fee_note: otherFeeNoteJoined(g.id),
+            send_email: emailIds.has(g.id),
           });
         });
       });
@@ -615,13 +664,26 @@ export default function SessionFinishPage() {
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
             Số tiền từng người phải trả
           </p>
-          <button
-            onClick={handleSplitEqually}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
-          >
-            <Divide className="w-4 h-4" /> Chia đều
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleMailAll}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${mailAll
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "bg-gray-100 hover:bg-gray-200 text-gray-600"
+                }`}
+            >
+              <Mail className="w-4 h-4" /> {mailAll ? "Mail all: Bật" : "Mail all"}
+            </button>
+            <button
+              onClick={handleSplitEqually}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+            >
+              <Divide className="w-4 h-4" /> Chia đều
+            </button>
+          </div>
         </div>
+
+
 
         <div className="p-4 space-y-4">
           {hostRows.map((h) => {
@@ -661,6 +723,20 @@ export default function SessionFinishPage() {
                       </div>
 
                       <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+                        {h.is_guest && (
+                          <button
+                            type="button"
+                            onClick={() => toggleEmailFor(h.id)}
+                            title={emailIds.has(h.id) ? "Sẽ gửi mail" : "Không gửi mail"}
+                            className={`flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${emailIds.has(h.id)
+                              ? "bg-emerald-600 border-emerald-600 text-white"
+                              : "border-gray-200 text-gray-300 hover:border-emerald-300 hover:text-emerald-400"
+                              }`}
+                          >
+                            <Mail className="w-4 h-4 flex-shrink-0" />
+                            <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">Mail</span>
+                          </button>
+                        )}
                         {isRealUser && (
                           <button
                             type="button"
@@ -844,6 +920,24 @@ export default function SessionFinishPage() {
                                     </span>
                                   )}
                                 </p>
+
+                                {!h.is_guest &&
+                                  isWalletDeduct &&
+                                  (walletModes[h.id] ?? "grouped") === "separate" && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleEmailFor(g.id)}
+                                      title={emailIds.has(g.id) ? "Sẽ gửi mail" : "Không gửi mail"}
+                                      className={`flex-shrink-0 h-7 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${emailIds.has(g.id)
+                                        ? "bg-emerald-600 border-emerald-600 text-white"
+                                        : "border-gray-200 text-gray-300 hover:border-emerald-300 hover:text-emerald-400"
+                                        }`}
+                                    >
+                                      <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+                                      <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">Mail</span>
+                                    </button>
+                                  )}
+
                                 {!!g.user_id && !g.is_guest && (
                                   <button
                                     type="button"

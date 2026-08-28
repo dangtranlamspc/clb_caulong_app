@@ -382,8 +382,10 @@ export const sessionsAdminApi = {
   getCost: (id: string) => api.get(`/sessions/${id}/cost`),
   finish: (id: string, data: any) => api.patch(`/sessions/${id}/finish`, data),
   complete: (id: string) => api.patch(`/sessions/${id}/complete`),
-  rollbackFinish: (id: string, dto?: { refund_penalties?: boolean }) =>
-    api.patch(`/sessions/${id}/rollback-finish`, dto ?? {}),
+  rollbackFinish: (
+    id: string,
+    dto?: { refund_penalties?: boolean; email_registration_ids?: string[] },
+  ) => api.patch(`/sessions/${id}/rollback-finish`, dto ?? {}),
 };
 
 export const registrationsAdminApi = {

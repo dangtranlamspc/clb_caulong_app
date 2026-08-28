@@ -155,6 +155,7 @@ export default function SessionDetailPage() {
   const [hostRegId, setHostRegId] = useState<string>("");
   const [guestPaidNow, setGuestPaidNow] = useState(false);
   const [guestPaySeparately, setGuestPaySeparately] = useState(false);
+  const [guestSendEmail, setGuestSendEmail] = useState(false);
 
   const [checkingInAll, setCheckingInAll] = useState(false);
   const [closingList, setClosingList] = useState(false);
@@ -163,6 +164,7 @@ export default function SessionDetailPage() {
   const [rollingBack, setRollingBack] = useState(false);
 
   const [showRollbackModal, setShowRollbackModal] = useState(false);
+  const [rollbackEmailIds, setRollbackEmailIds] = useState<Set<string>>(new Set());
 
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
@@ -827,6 +829,7 @@ export default function SessionDetailPage() {
     try {
       const { data } = await sessionsAdminApi.rollbackFinish(id, {
         refund_penalties: refundPenalties,
+        email_registration_ids: Array.from(rollbackEmailIds),
       });
       if (data.errors?.length > 0) {
         toast.error(
@@ -855,6 +858,26 @@ export default function SessionDetailPage() {
     } finally {
       setRollingBack(false);
     }
+  };
+
+  const getRollbackEmailCandidates = () => {
+    return registrations.filter((r) => {
+      if (!r.is_guest) return false;
+
+      if (!r.host_registration_id) return true;
+
+      const host = registrations.find((h) => h.id === r.host_registration_id);
+      const hostIsGuest = Boolean(host?.is_guest);
+
+      if (hostIsGuest) return true;
+
+      const isGroupedWithHost =
+        r.payment_method === "grouped_with_host" ||
+        r.payment_method === "wallet_grouped" ||
+        r.payment_method === "wallet_pending_confirm";
+
+      return !isGroupedWithHost;
+    });
   };
 
   const handleConfirmRollback = async () => {
@@ -1002,6 +1025,7 @@ export default function SessionDetailPage() {
 
   useEffect(() => {
     if (showRollbackModal) {
+      setRollbackEmailIds(new Set());
       const raf = requestAnimationFrame(() => setRollbackModalVisible(true));
       return () => cancelAnimationFrame(raf);
     }
@@ -1017,6 +1041,15 @@ export default function SessionDetailPage() {
   const closeRollbackModal = () => {
     setRollbackModalVisible(false);
     setTimeout(() => setShowRollbackModal(false), 200);
+  };
+
+  const toggleRollbackEmail = (registrationId: string) => {
+    setRollbackEmailIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(registrationId)) next.delete(registrationId);
+      else next.add(registrationId);
+      return next;
+    });
   };
 
   const handleApproveRegistration = (regId: string) =>
@@ -1132,6 +1165,7 @@ export default function SessionDetailPage() {
       setHostRegId("");
       setGuestPaidNow(false);
       setGuestPaySeparately(false);
+      setGuestSendEmail(false);
     }, 200);
   };
 
@@ -1190,6 +1224,7 @@ export default function SessionDetailPage() {
           pay_type: hostRegId ? (guestPaySeparately ? "solo" : "grouped") : undefined,
           payment_status: guestPaySeparately ? (guestPaidNow ? "confirmed" : "pending") : undefined,
           notes: addNotes || undefined,
+          send_email: guestSendEmail,
         });
         toast.success(`Đã thêm khách ${guestForm.full_name} vào buổi`);
       }
@@ -1199,6 +1234,8 @@ export default function SessionDetailPage() {
       setAdding(false);
     }
   };
+
+
 
   if (loading) {
     return (
@@ -1600,20 +1637,29 @@ export default function SessionDetailPage() {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-x-2 mt-0.5 text-xs text-gray-400">
+            <div className="flex flex-wrap items-center gap-1.5 mt-1">
               {displayGender && (
-                <span>{displayGender === "male" ? "Nam" : "Nữ"}</span>
+                <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-gray-50 text-gray-500 border-gray-200 font-medium">
+                  {displayGender === "male" ? "Nam" : "Nữ"}
+                </span>
               )}
               {reg.is_guest
                 ? reg.guest_skill_level && (
-                  <span>
+                  <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-violet-50 text-violet-600 border-violet-200 font-medium">
                     {SKILL_LABEL[reg.guest_skill_level] ??
                       reg.guest_skill_level}
                   </span>
                 )
                 : user?.level && (
-                  <span>{LEVEL_LABELS[user.level] ?? user.level}</span>
+                  <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-violet-50 text-violet-600 border-violet-200 font-medium">
+                    {LEVEL_LABELS[user.level] ?? user.level}
+                  </span>
                 )}
+              {reg.is_guest && reg.guest_email && (
+                <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200 font-medium truncate max-w-[180px]">
+                  {reg.guest_email}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-1.5 flex-wrap mt-2">
@@ -2741,6 +2787,30 @@ export default function SessionDetailPage() {
                           className="input-field"
                           placeholder="vidu@email.com"
                         />
+
+                        {guestForm.email.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => setGuestSendEmail((v) => !v)}
+                            className="mt-2 w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                          >
+                            <span className="flex items-center gap-2 text-sm text-gray-700">
+                              <Mail className="w-4 h-4 text-gray-400" />
+                              Gửi email thông báo ngay
+                            </span>
+                            <span
+                              className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${guestSendEmail ? "bg-emerald-500" : "bg-gray-300"
+                                }`}
+                            >
+                              <span
+                                className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                                style={{
+                                  transform: guestSendEmail ? "translateX(18px)" : "translateX(2px)",
+                                }}
+                              />
+                            </span>
+                          </button>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -3029,6 +3099,50 @@ export default function SessionDetailPage() {
                       </span>
                     </li>
                   </ul>
+
+                  {(() => {
+                    const emailCandidates = getRollbackEmailCandidates();
+                    if (emailCandidates.length === 0) return null;
+                    return (
+                      <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3 space-y-2">
+                        <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5" />
+                          Gửi mail "hóa đơn bị huỷ" cho khách (mặc định: không gửi)
+                        </p>
+                        <ul className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                          {emailCandidates.map((g) => {
+                            const name = g.guest_full_name ?? "?";
+                            const checked = rollbackEmailIds.has(g.id);
+                            return (
+                              <li
+                                key={g.id}
+                                className="flex items-center justify-between gap-2"
+                              >
+                                <span className="text-sm text-gray-700 truncate">
+                                  {name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleRollbackEmail(g.id)}
+                                  className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${checked ? "bg-emerald-500" : "bg-gray-300"
+                                    }`}
+                                >
+                                  <span
+                                    className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                                    style={{
+                                      transform: checked
+                                        ? "translateX(18px)"
+                                        : "translateX(2px)",
+                                    }}
+                                  />
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
