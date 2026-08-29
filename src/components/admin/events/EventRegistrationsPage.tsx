@@ -18,7 +18,8 @@ import {
     RefreshCw,
     X,
     Eye,
-    Wallet
+    Wallet,
+    Truck
 } from "lucide-react";
 import { eventsAdminApi } from "@/lib/api";
 import { createPortal } from "react-dom";
@@ -217,6 +218,16 @@ export default function EventRegistrationsPage({
             fetchAll();
         } catch {
             toast.error("Trừ ví thất bại");
+        }
+    };
+
+    const handleMarkDelivered = async (regIds: string[]) => {
+        try {
+            await eventsAdminApi.markShirtOrderDeliveredBatch(regIds);
+            toast.success("Đã đánh dấu giao hàng");
+            fetchAll();
+        } catch {
+            toast.error("Đánh dấu giao hàng thất bại");
         }
     };
 
@@ -457,6 +468,7 @@ export default function EventRegistrationsPage({
                                 onRejectCancel={handleRejectCancel}
                                 onViewProof={setProofImageUrl}
                                 onDeductWallet={handleDeductWallet}
+                                onMarkDelivered={handleMarkDelivered}
                             />
                         ) : activity.type === "tournament" ? (
                             <TournamentTable
@@ -1024,6 +1036,7 @@ function ShirtOrderTable({
     onRejectCancel,
     onViewProof,
     onDeductWallet,
+    onMarkDelivered,
 }: {
     registrations: any[];
     paymentFilter: PaymentFilter;
@@ -1035,6 +1048,7 @@ function ShirtOrderTable({
     onRejectCancel: (regId: string, label: string) => void;
     onViewProof: (url: string) => void;
     onDeductWallet: (regIds: string[]) => void;
+    onMarkDelivered: (regIds: string[]) => void;
 }) {
 
     const imgSrc = (img: any) => (img ? (typeof img === "string" ? img : img.url) : null);
@@ -1468,6 +1482,23 @@ function ShirtOrderTable({
                                                             </button>
                                                         </div>
                                                     )}
+
+                                                    {repReg.payment_status === "confirmed" && (
+                                                        repReg.delivered_at ? (
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-teal-50 text-teal-600 whitespace-nowrap">
+                                                                Đã giao hàng
+                                                            </span>
+                                                        ) : (
+                                                            <div className="pt-1.5">
+                                                                <button
+                                                                    onClick={() => onMarkDelivered(targetIds)}
+                                                                    className="py-1 px-3 rounded-lg text-xs font-medium bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1 whitespace-nowrap"
+                                                                >
+                                                                    <Truck className="w-3.5 h-3.5" /> Đã giao hàng
+                                                                </button>
+                                                            </div>
+                                                        )
+                                                    )}
                                                 </div>
                                             </td>
                                         );
@@ -1847,6 +1878,26 @@ function ShirtOrderTable({
                                     </button>
                                 </div>
                             )}
+
+                            {repReg.payment_status === "confirmed" && (
+                                repReg.delivered_at ? (
+                                    <div className="flex justify-center pt-1">
+                                        <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-teal-50 text-teal-600">
+                                            Đã giao hàng
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="pt-1">
+                                        <button
+                                            onClick={() => onMarkDelivered(groupIds)}
+                                            className="w-full py-2 rounded-lg text-sm font-medium bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1.5"
+                                        >
+                                            <Truck className="w-4 h-4" /> Đã giao hàng
+                                        </button>
+                                    </div>
+                                )
+                            )}
+
                         </div>
                     );
                 })}

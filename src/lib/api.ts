@@ -475,6 +475,10 @@ export const eventsAdminApi = {
     api.get(`/admin/activities/${id}/registrations`),
   confirmShirtOrder: (regId: string) =>
     api.patch(`/admin/activities/shirt-order-registrations/${regId}/confirm`),
+  markShirtOrderDeliveredBatch: (registrationIds: string[]) =>
+    api.patch(`/admin/activities/shirt-order-registrations/deliver-batch`, {
+      registration_ids: registrationIds,
+    }),
   deductWalletShirtOrder: (regId: string) =>
     api.patch(`/admin/activities/shirt-order-registrations/${regId}/deduct-wallet`),
   removeRegistration: (type: string, regId: string) =>
