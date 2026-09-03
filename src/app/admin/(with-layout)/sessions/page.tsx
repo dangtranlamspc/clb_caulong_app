@@ -7,8 +7,6 @@ import {
   MapPin,
   Users,
   Clock,
-  ChevronLeft,
-  ChevronRight,
   Pencil,
   Trash2,
   XCircle,
@@ -90,7 +88,11 @@ export default function SessionsPage() {
   const [sessions, setSessions] = useState<any[]>([]);
   const [meta, setMeta] = useState<any>({});
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState({ status: "", page: 1, limit: 15 });
+  const [query, setQuery] = useState({ status: "", limit: 15 });
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
   const [formTarget, setFormTarget] = useState<{ id?: string } | null>(null);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
@@ -121,27 +123,61 @@ export default function SessionsPage() {
   } | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const fetchSessions = useCallback(async (opts?: { silent?: boolean }) => {
-    if (!opts?.silent) setLoading(true);
-    try {
-      const params = Object.fromEntries(
-        Object.entries(query).filter(([, v]) => v !== ""),
-      );
-      const { data } = await sessionsAdminApi.list(params);
-      const sorted = [...(data.data ?? [])].sort((a: any, b: any) => {
-        const aTime = new Date(a.scheduled_at).getTime();
-        const bTime = new Date(b.scheduled_at).getTime();
-        if (aTime !== bTime) return bTime - aTime;
-        const aCreated = new Date(a.created_at).getTime();
-        const bCreated = new Date(b.created_at).getTime();
-        return bCreated - aCreated;
-      });
-      setSessions(sorted);
-      setMeta(data.meta);
-    } finally {
-      if (!opts?.silent) setLoading(false);
-    }
-  }, [query]);
+  const sortSessions = (arr: any[]) =>
+    [...arr].sort((a: any, b: any) => {
+      const aTime = new Date(a.scheduled_at).getTime();
+      const bTime = new Date(b.scheduled_at).getTime();
+      if (aTime !== bTime) return bTime - aTime;
+      const aCreated = new Date(a.created_at).getTime();
+      const bCreated = new Date(b.created_at).getTime();
+      return bCreated - aCreated;
+    });
+
+  const fetchSessions = useCallback(
+    async (
+      pageToFetch: number,
+      opts?: { silent?: boolean; append?: boolean },
+    ) => {
+      if (opts?.append) setLoadingMore(true);
+      else if (!opts?.silent) setLoading(true);
+
+      try {
+        const params = Object.fromEntries(
+          Object.entries({ ...query, page: pageToFetch }).filter(
+            ([, v]) => v !== "",
+          ),
+        );
+        const { data } = await sessionsAdminApi.list(params);
+        const sorted = sortSessions(data.data ?? []);
+
+        setSessions((prev) => (opts?.append ? [...prev, ...sorted] : sorted));
+        setMeta(data.meta);
+        setPage(pageToFetch);
+        setHasMore(
+          data.meta?.total_pages != null
+            ? pageToFetch < data.meta.total_pages
+            : sorted.length >= query.limit,
+        );
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [query],
+  );
+
+  // Refetch lại đúng số lượng buổi đang hiển thị (dùng sau khi xóa/đổi trạng thái)
+  const refreshLoaded = useCallback(async () => {
+    const loadedCount = page * query.limit;
+    const params = Object.fromEntries(
+      Object.entries({ ...query, page: 1, limit: loadedCount }).filter(
+        ([, v]) => v !== "",
+      ),
+    );
+    const { data } = await sessionsAdminApi.list(params);
+    setSessions(sortSessions(data.data ?? []));
+    setMeta(data.meta);
+  }, [page, query]);
 
   useEffect(() => {
     if (!isPending) {
@@ -157,8 +193,24 @@ export default function SessionsPage() {
   }, [isPending]);
 
   useEffect(() => {
-    fetchSessions();
+    fetchSessions(1);
   }, [fetchSessions]);
+
+  // Tự động tải thêm buổi khi cuộn tới gần cuối danh sách
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          fetchSessions(page + 1, { append: true });
+        }
+      },
+      { rootMargin: "300px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, page, fetchSessions]);
 
   useEffect(() => {
     if (completeTarget) {
@@ -201,7 +253,7 @@ export default function SessionsPage() {
             : s,
         ),
       );
-      fetchSessions({ silent: true });
+      refreshLoaded();
     } finally {
       setActionId(null);
     }
@@ -220,7 +272,7 @@ export default function SessionsPage() {
       setSessions((prev) =>
         prev.map((s) => (s.id === id ? { ...s, status: next } : s)),
       );
-      fetchSessions({ silent: true });
+      refreshLoaded();
     } finally {
       setActionId(null);
     }
@@ -240,7 +292,7 @@ export default function SessionsPage() {
       toast.success("Đã xóa buổi");
       setSessions((prev) => prev.filter((s) => s.id !== id));
       setMeta((prev: any) => ({ ...prev, total: Math.max((prev.total ?? 1) - 1, 0) }));
-      fetchSessions({ silent: true });
+      refreshLoaded();
     } finally {
       setActionId(null);
     }
@@ -279,7 +331,7 @@ export default function SessionsPage() {
       setSessions((prev) =>
         prev.map((s) => (s.id === id ? { ...s, status: "completed" } : s)),
       );
-      fetchSessions({ silent: true });
+      refreshLoaded();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Thất bại");
     } finally {
@@ -547,10 +599,10 @@ export default function SessionsPage() {
                       setQuery((q) => ({
                         ...q,
                         status: val,
-                        page: 1,
                       }))
                     }
-                    className="relative flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors"
+                    className={`relative flex-1 h-[46px] px-3 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors flex items-center justify-center ${!isActive ? "bg-gray-200/60 backdrop-blur-sm" : ""
+                      }`}
                   >
                     {isActive && (
                       <motion.span
@@ -564,9 +616,7 @@ export default function SessionsPage() {
                       />
                     )}
                     <span
-                      className={`relative z-10 transition-colors ${isActive
-                        ? "text-white"
-                        : "text-gray-500 hover:text-gray-800"
+                      className={`relative z-10 transition-colors ${isActive ? "text-white" : "text-gray-500 hover:text-gray-800"
                         }`}
                     >
                       {lbl}
@@ -579,9 +629,10 @@ export default function SessionsPage() {
 
           <button
             onClick={() => setFormTarget({})}
-            className="flex items-center justify-center w-12 h-[46px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0"
+            className="flex items-center justify-center gap-1.5 w-12 md:w-auto h-[58px] px-0 md:px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0 whitespace-nowrap"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-5 h-5 shrink-0" />
+            <span className="hidden md:inline text-sm font-medium">Thêm buổi đánh</span>
           </button>
         </div>
       </div>
@@ -599,7 +650,7 @@ export default function SessionsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
-          <AnimatePresence initial={false}>
+          <AnimatePresence mode="popLayout" initial={false}>
             {sessions.map((s) => {
               const cfg =
                 s.status === "waiting_payment"
@@ -768,34 +819,20 @@ export default function SessionsPage() {
         </div>
       )}
 
-      {meta.total_pages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
-            Trang {meta.page}/{meta.total_pages}
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setQuery((q) => ({ ...q, page: q.page - 1 }))}
-              disabled={meta.page <= 1}
-              className="p-2.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 active:bg-gray-100"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setQuery((q) => ({ ...q, page: q.page + 1 }))}
-              disabled={meta.page >= meta.total_pages}
-              className="p-2.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 active:bg-gray-100"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+      {hasMore && (
+        <div ref={sentinelRef} className="flex justify-center py-6">
+          {loadingMore && (
+            <div className="flex items-center gap-2 text-gray-400 text-sm">
+              <Loader2 className="w-4 h-4 animate-spin" /> Đang tải thêm...
+            </div>
+          )}
         </div>
       )}
 
       <SessionFormModal
         target={formTarget}
         onClose={() => setFormTarget(null)}
-        onSuccess={() => fetchSessions({ silent: true })}
+        onSuccess={() => refreshLoaded()}
       />
 
       {deleteTarget &&
