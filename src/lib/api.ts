@@ -461,6 +461,10 @@ export const walletAdminApi = {
     api.get("/wallet/admin/finance-history", { params }),
   getFinanceYears: () => api.get("/wallet/admin/finance-years"),
   exportReport: () => api.get("/wallet/admin/export", { responseType: "blob" }),
+  deleteTransactions: (userId: string, transactionIds: string[]) =>
+    api.delete(`/wallet/admin/users/${userId}/transactions`, {
+      data: { transaction_ids: transactionIds },
+    }),
 };
 
 export const eventsAdminApi = {

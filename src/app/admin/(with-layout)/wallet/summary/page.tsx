@@ -23,6 +23,7 @@ import {
   XCircle,
   Bell,
   Inbox,
+  Check,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -177,6 +178,39 @@ function MemberMobileCard({
   );
 }
 
+function Checkbox({
+  checked,
+  indeterminate,
+  onChange,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  onChange: () => void;
+}) {
+  const active = checked || indeterminate;
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`relative w-[18px] h-[18px] rounded-[6px] border-[1.5px] flex items-center justify-center transition-all duration-150 ease-out active:scale-80 ${active
+        ? "bg-blue-600 border-blue-600 shadow-sm shadow-blue-200"
+        : "bg-white border-gray-300 hover:border-blue-400 hover:bg-blue-50/50"
+        }`}
+    >
+      <Minus
+        className={`absolute w-2.5 h-2.5 text-white transition-all duration-150 ease-out ${indeterminate ? "scale-100 opacity-100" : "scale-0 opacity-0"
+          }`}
+        strokeWidth={3}
+      />
+      <Check
+        className={`absolute w-3 h-3 text-white transition-all duration-150 ease-out ${checked && !indeterminate ? "scale-100 opacity-100" : "scale-0 opacity-0"
+          }`}
+        strokeWidth={3}
+      />
+    </button>
+  );
+}
+
 function MemberPanel({
   member,
   onClose,
@@ -191,7 +225,6 @@ function MemberPanel({
   onTransactionsLoaded: (transactions: any[]) => void;
 }) {
   const [showTopup, setShowTopup] = useState(false);
-  const [showAdjust, setShowAdjust] = useState(false);
   const [showDeduct, setShowDeduct] = useState(false);
   const [amountDisplay, setAmountDisplay] = useState("");
   const [note, setNote] = useState("");
@@ -199,34 +232,68 @@ function MemberPanel({
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loadingTx, setLoadingTx] = useState(true);
 
+  // ── Chọn & xoá giao dịch ──
+  const [selectedTxIds, setSelectedTxIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+
+  const toggleTxSelect = (id: string) => {
+    setSelectedTxIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedTxIds.size === 0) return;
+    if (!window.confirm(`Xoá ${selectedTxIds.size} giao dịch đã chọn? Số dư ví sẽ được hoàn tác tương ứng.`)) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const { data } = await walletAdminApi.deleteTransactions(
+        member.id,
+        Array.from(selectedTxIds),
+      );
+      toast.success(data.message ?? "Đã xoá giao dịch");
+      setSelectedTxIds(new Set());
+      await fetchTx();
+      onChanged(data.new_balance);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Xoá giao dịch thất bại");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const receiptRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
 
   const amount = parseThousands(amountDisplay);
-  const formOpen = showTopup || showAdjust || showDeduct;
+  const formOpen = showTopup || showDeduct;
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAmountDisplay(formatThousands(e.target.value, showAdjust));
+    setAmountDisplay(formatThousands(e.target.value, false));
   };
 
   const fetchTx = useCallback(async () => {
     setLoadingTx(true);
     try {
       const { data } = await walletAdminApi.getMemberTransactions(member.id, {
-        limit: 20,
+        limit: 1000,
       });
       const tx = data.data ?? [];
-      setTransactions(data.data ?? []);
+      setTransactions(tx);
       onTransactionsLoaded(tx);
     } finally {
       setLoadingTx(false);
     }
   }, [member.id, onTransactionsLoaded]);
 
-
-
   useEffect(() => {
     fetchTx();
+    setSelectedTxIds(new Set());
   }, [fetchTx]);
 
   useEffect(() => {
@@ -236,13 +303,12 @@ function MemberPanel({
 
   const closeForm = () => {
     setShowTopup(false);
-    setShowAdjust(false);
     setShowDeduct(false);
     setAmountDisplay("");
     setNote("");
   };
 
-  const handleSubmit = async (mode: "topup" | "adjust" | "deduct") => {
+  const handleSubmit = async (mode: "topup" | "deduct") => {
     const finalAmount = mode === "deduct" ? -Math.abs(amount) : amount;
 
     if (!finalAmount || (mode === "topup" && finalAmount < 1000)) {
@@ -325,6 +391,17 @@ function MemberPanel({
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-white lg:border-l border-gray-100">
+      <style jsx>{`
+        @media (max-width: 639px) {
+          .hide-scrollbar-mobile {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          .hide-scrollbar-mobile::-webkit-scrollbar {
+            display: none;
+          }
+        }
+      `}</style>
       <div className="flex items-start justify-between p-4 sm:p-5 border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-base sm:text-lg font-bold text-white flex-shrink-0 overflow-hidden">
@@ -381,14 +458,13 @@ function MemberPanel({
         </p>
       </div>
 
-      <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex gap-2 flex-shrink-0">
+      <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center gap-2 flex-shrink-0">
         <button
           onClick={() => {
             setShowTopup(true);
-            setShowAdjust(false);
             setShowDeduct(false);
           }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-transform duration-150 active:scale-95 text-white text-xs sm:text-sm font-semibold"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-transform duration-150 active:scale-95 text-white text-xs sm:text-sm font-semibold flex-shrink-0"
         >
           <Plus className="w-3.5 h-3.5" /> Nạp tiền
         </button>
@@ -396,22 +472,33 @@ function MemberPanel({
           onClick={() => {
             setShowDeduct(true);
             setShowTopup(false);
-            setShowAdjust(false);
           }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-transform duration-150 active:scale-95 text-red-600 text-xs sm:text-sm font-medium"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-transform duration-150 active:scale-95 text-red-600 text-xs sm:text-sm font-medium flex-shrink-0"
         >
           <Minus className="w-3.5 h-3.5" /> Trừ tiền
         </button>
-        <button
-          onClick={() => {
-            setShowAdjust(true);
-            setShowTopup(false);
-            setShowDeduct(false);
-          }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-transform duration-150 active:scale-95 text-gray-700 text-xs sm:text-sm font-medium"
+
+        <div
+          className={`grid transition-[grid-template-columns,opacity] duration-250 ease-[cubic-bezier(0.32,0.72,0,1)] ${selectedTxIds.size > 0
+            ? "grid-cols-[1fr] opacity-100"
+            : "grid-cols-[0fr] opacity-0"
+            }`}
         >
-          <SlidersHorizontal className="w-3.5 h-3.5" /> Điều chỉnh
-        </button>
+          <div className="overflow-hidden">
+            <button
+              onClick={handleDeleteSelected}
+              disabled={deleting}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition-transform duration-150 active:scale-95 text-white text-xs sm:text-sm font-semibold disabled:opacity-50 whitespace-nowrap"
+            >
+              {deleting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <X className="w-3.5 h-3.5" />
+              )}
+              Xoá ({selectedTxIds.size})
+            </button>
+          </div>
+        </div>
       </div>
 
       <div
@@ -420,47 +507,23 @@ function MemberPanel({
       >
         <div className="overflow-hidden">
           <div
-            className={`px-4 sm:px-5 py-3 border-b ${showDeduct ? "bg-red-50 border-red-100" : "bg-blue-50 border-blue-100"
-              }`}
+            className={`px-4 sm:px-5 py-3 border-b ${showDeduct ? "bg-red-50 border-red-100" : "bg-blue-50 border-blue-100"}`}
           >
             <p className={`text-xs font-semibold mb-2 ${showDeduct ? "text-red-800" : "text-blue-800"}`}>
-              {showTopup
-                ? "Nạp tiền thủ công"
-                : showDeduct
-                  ? "Trừ tiền thủ công"
-                  : "Điều chỉnh số dư (có thể nhập số âm)"}
+              {showTopup ? "Nạp tiền thủ công" : "Trừ tiền thủ công"}
             </p>
             <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                {showAdjust && (
-                  <button
-                    type="button"
-                    onClick={toggleSign}
-                    className={`flex-shrink-0 w-11 rounded-lg border text-base font-bold transition-colors ${isNegativeAmount
-                      ? "bg-red-50 border-red-300 text-red-600"
-                      : "bg-emerald-50 border-emerald-300 text-emerald-600"
-                      }`}
-                    title={
-                      isNegativeAmount
-                        ? "Đang trừ tiền — bấm để đổi thành cộng"
-                        : "Đang cộng tiền — bấm để đổi thành trừ"
-                    }
-                  >
-                    {isNegativeAmount ? "−" : "+"}
-                  </button>
-                )}
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={amountDisplay}
-                  onChange={handleAmountChange}
-                  placeholder="Số tiền"
-                  className={`flex-1 min-w-0 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow duration-150 bg-white ${showDeduct
-                    ? "border-red-200 focus:border-red-400 focus:ring-red-100"
-                    : "border-blue-200 focus:border-blue-400 focus:ring-blue-100"
-                    }`}
-                />
-              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={amountDisplay}
+                onChange={handleAmountChange}
+                placeholder="Số tiền"
+                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow duration-150 bg-white ${showDeduct
+                  ? "border-red-200 focus:border-red-400 focus:ring-red-100"
+                  : "border-blue-200 focus:border-blue-400 focus:ring-blue-100"
+                  }`}
+              />
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -479,18 +542,11 @@ function MemberPanel({
                   Thu lại
                 </button>
                 <button
-                  onClick={() =>
-                    handleSubmit(showTopup ? "topup" : showDeduct ? "deduct" : "adjust")
-                  }
+                  onClick={() => handleSubmit(showTopup ? "topup" : "deduct")}
                   disabled={submitting}
-                  className={`flex-1 px-3 py-2 transition-transform duration-150 active:scale-[0.98] text-white text-sm font-semibold rounded-lg disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-1.5 ${showDeduct ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
-                    }`}
+                  className={`flex-1 px-3 py-2 transition-transform duration-150 active:scale-[0.98] text-white text-sm font-semibold rounded-lg disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-1.5 ${showDeduct ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}
                 >
-                  {submitting ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    "Xác nhận"
-                  )}
+                  {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Xác nhận"}
                 </button>
               </div>
             </div>
@@ -498,7 +554,7 @@ function MemberPanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
+      <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 hide-scrollbar-mobile">
         <div className="px-4 sm:px-5 pt-4 pb-2">
           <p className="font-bold text-gray-900 text-sm">Lịch sử giao dịch</p>
         </div>
@@ -513,36 +569,84 @@ function MemberPanel({
             Chưa có giao dịch nào
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs sm:text-sm">
+          <div
+            className="overflow-x-hidden sm:overflow-x-auto hide-scrollbar-mobile touch-pan-y"
+            style={{ touchAction: "pan-y" }}
+          >
+            <table className="w-full text-xs sm:text-sm table-fixed sm:table-auto">
+              <colgroup>
+                <col className="w-9" />
+                <col className="w-12 sm:w-auto" />
+                <col />
+                <col className="w-[82px] sm:w-auto" />
+                <col className="w-[78px] sm:w-auto" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th className="px-3 sm:px-5 py-2">
+                    <Checkbox
+                      checked={transactions.length > 0 && selectedTxIds.size === transactions.length}
+                      indeterminate={selectedTxIds.size > 0 && selectedTxIds.size < transactions.length}
+                      onChange={() => {
+                        setSelectedTxIds((prev) =>
+                          prev.size === transactions.length
+                            ? new Set()
+                            : new Set(transactions.map((t: any) => t.id)),
+                        );
+                      }}
+                    />
+                  </th>
+                  <th />
+                  <th />
+                  <th />
+                  <th />
+                </tr>
+              </thead>
               <tbody>
-                {transactions.map((tx: any) => (
-                  <tr
-                    key={tx.id}
-                    onClick={() => onSelectTx(tx)}
-                    className="hover:bg-gray-50 border-b border-gray-50 animate-row-fade"
-                  >
-                    <td className="px-4 sm:px-5 py-2.5 text-xs text-gray-400 whitespace-nowrap">
-                      {format(new Date(tx.created_at), "dd/MM/yyyy", {
-                        locale: vi,
-                      })}
-                    </td>
-                    <td className="px-2 py-2.5 text-gray-700">
-                      {(tx.type === "manual_expense" || tx.type === "manual_credit") && tx.description
-                        ? tx.description
-                        : tx.title}
-                    </td>
-                    <td
-                      className={`px-2 py-2.5 font-bold text-right whitespace-nowrap ${tx.amount > 0 ? "text-emerald-600" : "text-red-500"}`}
+                {transactions.map((tx: any) => {
+                  const isSelected = selectedTxIds.has(tx.id);
+                  return (
+                    <tr
+                      key={tx.id}
+                      className={`border-b border-gray-50 animate-row-fade transition-colors duration-200 align-middle ${isSelected ? "bg-blue-50/70 hover:bg-blue-50" : "hover:bg-gray-50"
+                        }`}
                     >
-                      {tx.amount > 0 ? "+" : ""}
-                      {fmt(tx.amount)}
-                    </td>
-                    <td className="px-4 sm:px-5 py-2.5 text-xs text-gray-400 text-right whitespace-nowrap">
-                      {fmt(tx.balance_after)}
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-3 sm:px-5 py-2.5" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={isSelected} onChange={() => toggleTxSelect(tx.id)} />
+                      </td>
+                      <td
+                        onClick={() => onSelectTx(tx)}
+                        className="pl-1 pr-2 py-2.5 text-[11px] sm:text-xs text-gray-400 whitespace-nowrap cursor-pointer"
+                      >
+                        {format(new Date(tx.created_at), "dd/MM", { locale: vi })}
+                        <span className="hidden sm:inline">
+                          /{format(new Date(tx.created_at), "yyyy", { locale: vi })}
+                        </span>
+                      </td>
+                      <td
+                        onClick={() => onSelectTx(tx)}
+                        className="px-2 py-2.5 text-gray-700 cursor-pointer whitespace-normal break-words leading-snug"
+                      >
+                        {(tx.type === "manual_expense" || tx.type === "manual_credit") && tx.description
+                          ? tx.description
+                          : tx.title}
+                      </td>
+                      <td
+                        onClick={() => onSelectTx(tx)}
+                        className={`pl-2 pr-1.5 py-2.5 font-bold text-right whitespace-nowrap cursor-pointer ${tx.amount > 0 ? "text-emerald-600" : "text-red-500"}`}
+                      >
+                        {tx.amount > 0 ? "+" : ""}
+                        {fmt(tx.amount)}
+                      </td>
+                      <td
+                        onClick={() => onSelectTx(tx)}
+                        className="pl-1.5 pr-3 sm:pr-5 py-2.5 text-[11px] sm:text-xs text-gray-400 text-right whitespace-nowrap cursor-pointer"
+                      >
+                        {fmt(tx.balance_after)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1687,11 +1791,16 @@ export default function WalletAdminSummaryPage() {
               </div>
             </>
           )}
+
           {selectedTx && (
             <AdminTransactionDetailModal
               tx={selectedTx}
               onClose={() => setSelectedTx(null)}
               transactions={memberTransactions}
+              onDeleted={() => {
+                fetchMembers();
+                fetchSummary();
+              }}
             />
           )}
 

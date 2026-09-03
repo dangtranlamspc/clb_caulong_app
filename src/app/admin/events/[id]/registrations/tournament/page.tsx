@@ -124,12 +124,6 @@ const PAYMENT_OPTIONS = [
   { value: "pending", label: "Chưa thanh toán" },
 ];
 
-const DRAW_CONTENT_OPTIONS = [
-  { value: "nam", label: "Đội Nam (Nam A, B+, B, C)" },
-  { value: "nu", label: "Đội Nữ (Nữ)" },
-  { value: "mix", label: "Đội Nam - Nữ (Mix)" },
-];
-
 const PAGE_SIZE = 8;
 
 function levelPillStyle(level?: string | null) {
@@ -953,8 +947,8 @@ export default function TournamentRegistrationsPage() {
   const [paymentFilter, setPaymentFilter] = useState("");
   const [page, setPage] = useState(1);
 
-  const [drawContent, setDrawContent] = useState("nam");
   const [teamCount, setTeamCount] = useState("7");
+  const [teamCountTouched, setTeamCountTouched] = useState(false);
   const [drawing, setDrawing] = useState(false);
 
   const [modalReg, setModalReg] = useState<any>(null);
@@ -1019,6 +1013,17 @@ export default function TournamentRegistrationsPage() {
       toast.error("Không thể sao chép, vui lòng copy thủ công");
     }
   };
+
+  const compositionSlots: { role: "nam" | "nu"; level?: string | null; label?: string }[] =
+    activity?.detail?.composition ?? [];
+
+  const drawContent = useMemo<"nam" | "nu" | "mix">(() => {
+    const hasNam = compositionSlots.some((c) => c.role === "nam");
+    const hasNu = compositionSlots.some((c) => c.role === "nu");
+    if (hasNam && hasNu) return "mix";
+    if (hasNu) return "nu";
+    return "nam";
+  }, [compositionSlots]);
 
 
   const getStatMembers = (key: string) => {
@@ -1172,6 +1177,12 @@ export default function TournamentRegistrationsPage() {
     load();
     loadTeams();
   }, [id]);
+
+  useEffect(() => {
+    if (!teamCountTouched && activity?.detail?.max_teams != null) {
+      setTeamCount(String(activity.detail.max_teams));
+    }
+  }, [activity?.detail?.max_teams, teamCountTouched]);
 
   useEffect(() => {
     setPage(1);
@@ -2085,28 +2096,32 @@ export default function TournamentRegistrationsPage() {
                   </p>
 
                   <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Chọn nội dung chia đội
+                    Thành phần chia đội
                   </label>
-                  <div className="space-y-2 mb-4">
-                    {DRAW_CONTENT_OPTIONS.map((opt) => (
-                      <label
-                        key={opt.value}
-                        className={`flex items-center gap-2 text-sm px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${drawContent === opt.value
-                          ? "border-blue-200 bg-blue-50/50 text-blue-700 font-medium"
-                          : "border-gray-100 text-gray-700 hover:bg-gray-50"
-                          }`}
-                      >
-                        <input
-                          type="radio"
-                          name="draw_content"
-                          checked={drawContent === opt.value}
-                          onChange={() => setDrawContent(opt.value)}
-                          className="accent-blue-600"
-                        />
-                        {opt.label}
-                      </label>
-                    ))}
-                  </div>
+                  {compositionSlots.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 mb-1.5">
+                      {compositionSlots.map((slot, idx) => {
+                        const isNu = slot.role === "nu";
+                        return (
+                          <span
+                            key={idx}
+                            className={`text-xs font-semibold px-2.5 py-1.5 rounded-full ${isNu ? "bg-pink-50 text-pink-600" : ""
+                              }`}
+                            style={isNu ? undefined : levelPillStyle(slot.level)}
+                          >
+                            {slot.label ?? (isNu ? "Nữ" : `Nam ${slot.level}`)}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-amber-600 mb-1.5">
+                      ⚠️ Giải đấu chưa cấu hình thành phần đội. Vui lòng chỉnh sửa giải đấu để thêm thành phần trước khi chia đội.
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                    Nội dung chia đội (Nam / Nữ / Mix) được hệ thống tự động xác định dựa trên thành phần đội đã cấu hình ở trên.
+                  </p>
 
                   <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
                     Số lượng đội
@@ -2117,17 +2132,29 @@ export default function TournamentRegistrationsPage() {
                       min={1}
                       className="input-field"
                       value={teamCount}
-                      onChange={(e) => setTeamCount(e.target.value)}
+                      onChange={(e) => {
+                        setTeamCount(e.target.value);
+                        setTeamCountTouched(true);
+                      }}
                     />
                     <span className="text-sm text-gray-500 flex-shrink-0">đội</span>
                   </div>
+                  {activity?.detail?.max_teams != null && (
+                    <p className="text-xs text-gray-400 -mt-3 mb-4">
+                      Mặc định lấy theo "Số lượng đội tham gia" đã cấu hình ở giải đấu ({activity.detail.max_teams} đội). Bạn có thể sửa lại nếu cần.
+                    </p>
+                  )}
 
                   <button
-                    disabled={drawing}
+                    disabled={drawing || compositionSlots.length === 0}
                     onClick={handleDrawTeams}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
                   >
-                    {drawing ? "Đang chia..." : "Chia đội theo trình độ"}
+                    {compositionSlots.length === 0
+                      ? "Chưa có thành phần đội"
+                      : drawing
+                        ? "Đang chia..."
+                        : "Chia đội theo trình độ"}
                   </button>
 
                   {teams.length > 0 && (

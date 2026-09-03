@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, Users, X, CalendarDays, ArrowDownToLine, ShoppingCart, PlusCircle, RotateCcw, Wallet, Ban, Share2 } from 'lucide-react';
+import { Loader2, Users, X, CalendarDays, ArrowDownToLine, ShoppingCart, PlusCircle, RotateCcw, Wallet, Ban, Share2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { eventsAdminApi, registrationsAdminApi } from '@/lib/api';
+import { eventsAdminApi, registrationsAdminApi, walletAdminApi } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 function fmt(n: number) {
@@ -30,13 +30,25 @@ function txIcon(tx: any) {
     }
 }
 
-export default function AdminTransactionDetailModal({ tx, onClose, transactions = [], }: { tx: any; onClose: () => void; transactions?: any[] }) {
+export default function AdminTransactionDetailModal({
+    tx,
+    onClose,
+    transactions = [],
+    onDeleted,
+}: {
+    tx: any;
+    onClose: () => void;
+    transactions?: any[];
+    onDeleted?: (txId: string) => void;
+}) {
     const isPositive = tx.amount > 0;
     const { Icon, cls } = txIcon(tx);
 
     const [detail, setDetail] = useState<any>(null);
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [visible, setVisible] = useState(false);
+
+    const [deleting, setDeleting] = useState(false);
 
     const isSessionPayment =
         tx.type === 'session_payment' && tx.reference_type === 'registration' && tx.reference_id;
@@ -190,6 +202,22 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
         }
     };
 
+    const handleDelete = async () => {
+        if (deleting) return;
+        if (!window.confirm('Xoá giao dịch này? Số dư ví sẽ được hoàn tác tương ứng.')) return;
+        setDeleting(true);
+        try {
+            await walletAdminApi.deleteTransactions(tx.user_id, [tx.id]);
+            toast.success('Đã xoá giao dịch');
+            onDeleted?.(tx.id);
+            handleClose();
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Xoá giao dịch thất bại');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     const isManualType = tx.type === 'manual_expense' || tx.type === 'manual_credit';
     const badgeUsesDescription = !isShirtOrder && isManualType && Boolean(tx.description);
 
@@ -243,6 +271,19 @@ export default function AdminTransactionDetailModal({ tx, onClose, transactions 
                                 <Share2 className="w-3.5 h-3.5" />
                             )}
                             <span>Chia sẻ</span>
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            disabled={deleting}
+                            className="flex items-center gap-1.5 px-3 h-7 rounded-full bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold transition-transform duration-150 active:scale-95 disabled:opacity-50"
+                            title="Xoá giao dịch"
+                        >
+                            {deleting ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                                <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                            <span className="hidden sm:inline">Xoá</span>
                         </button>
                         <button onClick={handleClose} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-transform duration-150 active:scale-90">
                             <X className="w-4 h-4 text-gray-500" />

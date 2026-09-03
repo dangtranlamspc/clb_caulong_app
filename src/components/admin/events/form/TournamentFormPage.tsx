@@ -57,7 +57,7 @@ interface TournamentFormState {
     display_order: string;
     show_registration_list: boolean;
     admin_notes: string;
-    team_size: 4 | 6;
+    team_size: number;
     max_teams: string;
     entry_fee_per_person: string;
     composition: CompositionSlot[];
@@ -67,6 +67,14 @@ interface TournamentFormState {
 const FORMAT_TYPE_OPTIONS = [
     { value: "don", label: "Đơn" },
     { value: "doi_bong", label: "Đồng đội" },
+];
+
+const TEAM_SIZE_PRESETS = [2, 4, 6, 8];
+
+
+const TEAM_SIZE_SELECT_OPTIONS = [
+    ...TEAM_SIZE_PRESETS.map((n) => ({ value: String(n), label: `${n} người` })),
+    { value: "custom", label: "Khác" },
 ];
 
 const SLOT_OPTIONS: CompositionSlot[] = [
@@ -158,7 +166,7 @@ function resizeComposition(
     ];
 }
 
-function defaultComposition(size: 4 | 6): CompositionSlot[] {
+function defaultComposition(size: number): CompositionSlot[] {
     const base: CompositionSlot[] = [
         { role: "nam", level: "A", label: "Nam A" },
         { role: "nam", level: "B+", label: "Nam B+" },
@@ -166,11 +174,15 @@ function defaultComposition(size: 4 | 6): CompositionSlot[] {
         { role: "nu", level: null, label: "Nữ" },
     ];
     if (size === 4) return base;
-    return [
-        ...base,
-        { role: "nam", level: "C", label: "Nam C" },
-        { role: "nu", level: null, label: "Nữ" },
-    ];
+    if (size === 6) {
+        return [
+            ...base,
+            { role: "nam", level: "C", label: "Nam C" },
+            { role: "nu", level: null, label: "Nữ" },
+        ];
+    }
+
+    return resizeComposition(base, size);
 }
 
 const MATCH_CONTENT_OPTIONS = [
@@ -250,6 +262,9 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [uploadingBanner, setUploadingBanner] = useState(false);
 
+    const [teamSizeMode, setTeamSizeMode] = useState<"preset" | "custom">("preset");
+    const [customTeamSizeInput, setCustomTeamSizeInput] = useState("");
+
     const logoInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -262,7 +277,10 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
             .get(id)
             .then(({ data }) => {
                 const detail = data.detail ?? {};
-                const teamSize: 4 | 6 = detail.team_size === 6 ? 6 : 4;
+                const teamSize: number =
+                    Number.isInteger(detail.team_size) && detail.team_size > 0
+                        ? detail.team_size
+                        : 4;
                 const composition: CompositionSlot[] =
                     Array.isArray(detail.composition) && detail.composition.length
                         ? detail.composition.map((c: any) => ({
@@ -340,6 +358,14 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                 setForm(built);
                 setInitialSnapshot(built);
 
+                if (TEAM_SIZE_PRESETS.includes(teamSize)) {
+                    setTeamSizeMode("preset");
+                    setCustomTeamSizeInput("");
+                } else {
+                    setTeamSizeMode("custom");
+                    setCustomTeamSizeInput(String(teamSize));
+                }
+
                 if (data.slug) setSlugTouched(true);
             })
             .catch(() => toast.error("Không tải được dữ liệu giải đấu"))
@@ -359,12 +385,39 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
         setForm((f) => ({ ...f, slug: slugify(slug) }));
     };
 
-    const handleTeamSizeChange = (size: 4 | 6) => {
+    const handleTeamSizeChange = (size: number) => {
         setForm((f) => ({
             ...f,
             team_size: size,
             composition: resizeComposition(f.composition, size),
         }));
+    };
+
+    const handleTeamSizeSelectChange = (val: string) => {
+        if (val === "custom") {
+            setTeamSizeMode("custom");
+            setCustomTeamSizeInput(form.team_size ? String(form.team_size) : "");
+            return;
+        }
+        setTeamSizeMode("preset");
+        handleTeamSizeChange(Number(val));
+    };
+
+    const customTeamSizeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleCustomTeamSizeChange = (raw: string) => {
+        const digits = raw.replace(/\D/g, "").slice(0, 2);
+        setCustomTeamSizeInput(digits);
+
+        if (customTeamSizeDebounceRef.current) {
+            clearTimeout(customTeamSizeDebounceRef.current);
+        }
+        customTeamSizeDebounceRef.current = setTimeout(() => {
+            const num = digits ? parseInt(digits, 10) : 0;
+            if (num > 0) {
+                handleTeamSizeChange(num);
+            }
+        }, 400);
     };
 
     const handleSlotChange = (index: number, key: string) => {
@@ -466,6 +519,9 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
             return "Số lượng đội tham gia không hợp lệ";
         }
         if (form.format_type === "doi_bong") {
+            if (!form.team_size || form.team_size < 1) {
+                return "Vui lòng nhập số người mỗi đội hợp lệ";
+            }
             if (form.composition.length !== form.team_size) {
                 return "Thành phần mỗi đội chưa khớp với số người/đội";
             }
@@ -744,29 +800,28 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                         <label className="text-sm font-medium text-gray-700">
                                             Thành phần mỗi đội <span className="text-red-500">*</span>
                                         </label>
-                                        <div className="relative flex rounded-lg border border-gray-200 overflow-hidden text-xs bg-gray-50 p-0.5 w-[152px]">
-                                            <div
-                                                className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md bg-blue-600 shadow-sm transition-transform duration-300 ease-out"
-                                                style={{
-                                                    transform:
-                                                        form.team_size === 4
-                                                            ? "translateX(0%)"
-                                                            : "translateX(calc(100% + 4px))",
-                                                }}
-                                            />
-                                            {[4, 6].map((size) => (
-                                                <button
-                                                    key={size}
-                                                    type="button"
-                                                    onClick={() => handleTeamSizeChange(size as 4 | 6)}
-                                                    className={`relative z-10 flex-1 px-3 py-1.5 font-medium rounded-md transition-colors duration-300 ${form.team_size === size
-                                                        ? "text-white"
-                                                        : "text-gray-500 hover:text-gray-900"
-                                                        }`}
-                                                >
-                                                    {size} người
-                                                </button>
-                                            ))}
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-[132px]">
+                                                <CustomSelect
+                                                    value={
+                                                        teamSizeMode === "custom"
+                                                            ? "custom"
+                                                            : String(form.team_size)
+                                                    }
+                                                    onChange={handleTeamSizeSelectChange}
+                                                    options={TEAM_SIZE_SELECT_OPTIONS}
+                                                />
+                                            </div>
+                                            {teamSizeMode === "custom" && (
+                                                <input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    className="input-field w-[90px]"
+                                                    placeholder="Số người"
+                                                    value={customTeamSizeInput}
+                                                    onChange={(e) => handleCustomTeamSizeChange(e.target.value)}
+                                                />
+                                            )}
                                         </div>
                                     </div>
 
@@ -1153,22 +1208,32 @@ function CompositionGrid({
     const [displayed, setDisplayed] = useState<
         { slot: CompositionSlot; index: number; phase: "idle" | "entering" | "leaving" }[]
     >(slots.map((s, i) => ({ slot: s, index: i, phase: "idle" })));
-    const prevLength = useRef(slots.length);
+    const prevSlotsRef = useRef(slots);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
-        const prevLen = prevLength.current;
+        const prevSlots = prevSlotsRef.current;
+        const prevLen = prevSlots.length;
         const newLen = slots.length;
 
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+
         if (newLen > prevLen) {
-            setDisplayed((prev) => {
-                const base = prev.map((d, i) => ({ ...d, slot: slots[i] }));
-                const added = slots.slice(prevLen).map((s, i) => ({
+            setDisplayed([
+                ...slots.slice(0, prevLen).map((s, i) => ({
+                    slot: s,
+                    index: i,
+                    phase: "idle" as const,
+                })),
+                ...slots.slice(prevLen).map((s, i) => ({
                     slot: s,
                     index: prevLen + i,
                     phase: "entering" as const,
-                }));
-                return [...base, ...added];
-            });
+                })),
+            ]);
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     setDisplayed((prev) =>
@@ -1179,20 +1244,30 @@ function CompositionGrid({
                 });
             });
         } else if (newLen < prevLen) {
-            setDisplayed((prev) =>
-                prev.map((d, i) =>
-                    i < newLen ? { ...d, slot: slots[i] } : { ...d, phase: "leaving" },
-                ),
-            );
-            setTimeout(() => {
+            setDisplayed([
+                ...slots.map((s, i) => ({ slot: s, index: i, phase: "idle" as const })),
+                ...prevSlots.slice(newLen).map((s, i) => ({
+                    slot: s,
+                    index: newLen + i,
+                    phase: "leaving" as const,
+                })),
+            ]);
+            timeoutRef.current = setTimeout(() => {
                 setDisplayed((prev) => prev.filter((d) => d.index < newLen));
+                timeoutRef.current = null;
             }, 200);
         } else {
-            setDisplayed((prev) => prev.map((d, i) => ({ ...d, slot: slots[i] })));
+            setDisplayed(slots.map((s, i) => ({ slot: s, index: i, phase: "idle" as const })));
         }
 
-        prevLength.current = newLen;
+        prevSlotsRef.current = slots;
     }, [slots]);
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
 
     return (
         <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -1206,10 +1281,12 @@ function CompositionGrid({
                             : "opacity-100 scale-100"
                         }`}
                 >
-                    <CompositionSlotCard
-                        slot={d.slot}
-                        onChange={(key) => onChange(d.index, key)}
-                    />
+                    {d.slot && (
+                        <CompositionSlotCard
+                            slot={d.slot}
+                            onChange={(key) => onChange(d.index, key)}
+                        />
+                    )}
                 </div>
             ))}
         </div>
