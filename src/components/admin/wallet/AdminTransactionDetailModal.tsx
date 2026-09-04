@@ -755,7 +755,7 @@ export default function AdminTransactionDetailModal({
                                 Quét mã để chuyển khoản
                             </p>
                             <img
-                                src="/qr/qr-tech-ngoi.png"
+                                src="/qr/qr-ng-ngoi.png"
                                 alt="QR chuyển khoản Techcombank"
                                 crossOrigin="anonymous"
                                 style={{ width: 160, height: 'auto', margin: '0 auto', display: 'block', borderRadius: 8 }}
