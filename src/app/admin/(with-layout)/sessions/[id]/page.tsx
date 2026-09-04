@@ -395,6 +395,15 @@ export default function SessionDetailPage() {
           ${guestRowsHtml}
           ${row("Tổng cộng", formatVnd(totalAmount), { bold: true, shaded: true })}
         </div>
+
+        <div style="margin-top:20px;padding-top:16px;border-top:1px dashed #e5e7eb;text-align:center;">
+          <p style="font-size:11px;color:#6b7280;margin-bottom:10px;font-weight:600;">Quét mã để chuyển khoản</p>
+          <img
+            src="/qr/qr-tech-ngoi.png"
+            crossorigin="anonymous"
+            style="width:160px;height:auto;margin:0 auto;display:block;border-radius:8px;"
+          />
+        </div>
         <p style="text-align:center;font-size:10px;color:#d1d5db;margin-top:20px;">
           Xuất lúc ${format(new Date(), "HH:mm, dd/MM/yyyy", { locale: vi })}
         </p>

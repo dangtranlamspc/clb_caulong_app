@@ -750,6 +750,18 @@ export default function AdminTransactionDetailModal({
                             </div>
                         )}
 
+                        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px dashed #e5e7eb', textAlign: 'center' }}>
+                            <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 10, fontWeight: 600 }}>
+                                Quét mã để chuyển khoản
+                            </p>
+                            <img
+                                src="/qr/qr-tech-ngoi.png"
+                                alt="QR chuyển khoản Techcombank"
+                                crossOrigin="anonymous"
+                                style={{ width: 160, height: 'auto', margin: '0 auto', display: 'block', borderRadius: 8 }}
+                            />
+                        </div>
+
                         <p style={{ textAlign: 'center', fontSize: 10, color: '#d1d5db', marginTop: 20 }}>
                             Xuất lúc {format(new Date(), 'HH:mm, dd/MM/yyyy', { locale: vi })}
                         </p>
