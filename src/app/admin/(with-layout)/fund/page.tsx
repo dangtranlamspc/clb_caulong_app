@@ -330,6 +330,18 @@ export default function FundManagementPage() {
         tx.payment_method === "member_choice" &&
         tx.payment_status !== "rejected";
 
+
+    const monthBtnRef = useRef<HTMLButtonElement | null>(null);
+    const [monthPickerPos, setMonthPickerPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
+
+    const toggleMonthPicker = () => {
+        if (!monthPickerOpen && monthBtnRef.current) {
+            const rect = monthBtnRef.current.getBoundingClientRect();
+            setMonthPickerPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+        }
+        setMonthPickerOpen((v) => !v);
+    };
+
     return (
         <div className="max-w-[1680px] mx-auto space-y-4 pb-8 px-2">
             <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -343,7 +355,8 @@ export default function FundManagementPage() {
                 <div className="flex items-center justify-end gap-1.5 sm:gap-2 flex-nowrap overflow-x-auto no-scrollbar w-full sm:w-auto">
                     <div className="relative flex-shrink-0">
                         <button
-                            onClick={() => setMonthPickerOpen((v) => !v)}
+                            ref={monthBtnRef}
+                            onClick={toggleMonthPicker}
                             className="flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 rounded-xl px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:border-gray-300 whitespace-nowrap"
                         >
                             <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -351,10 +364,13 @@ export default function FundManagementPage() {
                             <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform flex-shrink-0 ${monthPickerOpen ? "rotate-180" : ""}`} />
                         </button>
 
-                        {monthPickerOpen && (
+                        {monthPickerOpen && typeof document !== "undefined" && createPortal(
                             <>
-                                <div className="fixed inset-0 z-10" onClick={() => setMonthPickerOpen(false)} />
-                                <div className="absolute right-0 top-11 z-20 w-56 bg-white border border-gray-100 rounded-xl shadow-lg p-3">
+                                <div className="fixed inset-0 z-[9998]" onClick={() => setMonthPickerOpen(false)} />
+                                <div
+                                    style={{ position: "fixed", top: monthPickerPos.top, right: monthPickerPos.right }}
+                                    className="z-[9999] w-56 bg-white border border-gray-100 rounded-xl shadow-lg p-3"
+                                >
                                     <div className="flex items-center justify-between mb-2">
                                         <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100">
                                             <ChevronLeft className="w-4 h-4" />
@@ -378,7 +394,8 @@ export default function FundManagementPage() {
                                         ))}
                                     </div>
                                 </div>
-                            </>
+                            </>,
+                            document.body,
                         )}
                     </div>
 

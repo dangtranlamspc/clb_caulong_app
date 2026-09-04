@@ -9,6 +9,8 @@ import {
     Loader2,
     X,
     Plus,
+    Calendar,
+    ChevronLeft,
 } from "lucide-react";
 import { fundApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
@@ -625,9 +627,129 @@ function ContributionMethodModal({
     );
 }
 
+function MonthYearFilterModal({
+    month,
+    year,
+    onClose,
+    onApply,
+}: {
+    month: number;
+    year: number;
+    onClose: () => void;
+    onApply: (month: number, year: number) => void;
+}) {
+    const [visible, setVisible] = useState(false);
+    const [selMonth, setSelMonth] = useState(month);
+    const [selYear, setSelYear] = useState(year);
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const handleClose = () => {
+        setVisible(false);
+        setTimeout(onClose, 200);
+    };
+
+    const handleApply = () => {
+        onApply(selMonth, selYear);
+        handleClose();
+    };
+
+    const monthLabels = ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"];
+
+    if (typeof document === "undefined") return null;
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center"
+            style={{
+                background: "rgba(0,0,0,0.5)",
+                backdropFilter: "blur(2px)",
+                opacity: visible ? 1 : 0,
+                transition: "opacity 200ms ease-out",
+            }}
+            onClick={(e) => e.target === e.currentTarget && handleClose()}
+        >
+            <div
+                className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden relative"
+                style={{
+                    transform: visible ? "translateY(0)" : "translateY(24px)",
+                    opacity: visible ? 1 : 0,
+                    transition: "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <button
+                    onClick={handleClose}
+                    className="absolute top-4 right-4 z-20 w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                    <X className="w-4 h-4 text-gray-600" />
+                </button>
+
+                <div className="px-5 pt-6 pb-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+                            <Calendar className="w-4.5 h-4.5 text-blue-600" />
+                        </div>
+                        <div>
+                            <p className="text-base font-bold text-gray-900">Chọn tháng xem quỹ</p>
+                            <p className="text-[11px] text-gray-400">Lọc số dư và giao dịch theo tháng</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4 bg-gray-50 rounded-xl px-3 py-2">
+                        <button
+                            onClick={() => setSelYear((y) => y - 1)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="text-sm font-bold text-gray-900">Năm {selYear}</span>
+                        <button
+                            onClick={() => setSelYear((y) => y + 1)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-2 mb-5">
+                        {monthLabels.map((label, i) => {
+                            const m = i + 1;
+                            const isActive = m === selMonth;
+                            return (
+                                <button
+                                    key={m}
+                                    type="button"
+                                    onClick={() => setSelMonth(m)}
+                                    className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${isActive
+                                        ? "bg-blue-600 text-white border-blue-600"
+                                        : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                                        }`}
+                                >
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <button
+                        onClick={handleApply}
+                        className="w-full py-3 rounded-xl bg-blue-600 text-white text-sm font-bold"
+                    >
+                        Xem tháng {selMonth}/{selYear}
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+}
+
 
 export default function FundPage() {
-    const now = new Date();
     const [showBalance, setShowBalance] = useState(true);
     const [summary, setSummary] = useState<any>(null);
     const [txs, setTxs] = useState<any[]>([]);
@@ -636,20 +758,22 @@ export default function FundPage() {
     const [contributeDraft, setContributeDraft] = useState<{ category: string; title: string; description: string; amount: number } | null>(null);
     const [showWithdrawRequest, setShowWithdrawRequest] = useState(false);
 
+    const [filterMonth, setFilterMonth] = useState(() => new Date().getMonth() + 1);
+    const [filterYear, setFilterYear] = useState(() => new Date().getFullYear());
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+
     const load = useCallback((silent = false) => {
         if (!silent) setLoading(true);
-        const month = now.getMonth() + 1;
-        const year = now.getFullYear();
         return Promise.all([
-            fundApi.getSummary(month, year),
-            fundApi.listTransactions({ month, year, status: "approved", limit: 200, page: 1 }),
+            fundApi.getSummary(filterMonth, filterYear),
+            fundApi.listTransactions({ month: filterMonth, year: filterYear, status: "approved", limit: 200, page: 1 }),
         ])
             .then(([sumRes, txRes]) => {
                 setSummary(sumRes.data);
                 setTxs(txRes.data.data ?? []);
             })
             .finally(() => setLoading(false));
-    }, []);
+    }, [filterMonth, filterYear]);
 
     useEffect(() => { load(); }, [load]);
 
@@ -696,9 +820,16 @@ export default function FundPage() {
 
     return (
         <div className="max-w-md mx-auto space-y-5 pb-8 px-3">
-            <div className="flex items-center justify-between px-1 pt-2">
-                <h1 className="text-base font-bold text-gray-900">Quỹ chung</h1>
-                <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between px-1 pt-2 gap-2">
+                <h1 className="text-base font-bold text-gray-900 flex-shrink-0">Quỹ chung</h1>
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <button
+                        onClick={() => setShowMonthPicker(true)}
+                        className="flex items-center gap-1 bg-white border border-gray-200 text-gray-600 text-xs font-semibold px-2.5 py-2 rounded-xl active:scale-95 transition-transform"
+                    >
+                        <Calendar className="w-3.5 h-3.5" />
+                        {filterMonth}/{filterYear}
+                    </button>
                     <button
                         onClick={() => setShowWithdrawRequest(true)}
                         className="flex items-center gap-1.5 bg-white border border-red-200 text-red-500 text-xs font-semibold px-3 py-2 rounded-xl active:scale-95 transition-transform"
@@ -751,7 +882,7 @@ export default function FundPage() {
                     <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center">
                         <ArrowUp className="w-3.5 h-3.5 text-emerald-500" />
                     </div>
-                    <p className="text-[10px] text-gray-400">Thu tháng này</p>
+                    <p className="text-[10px] text-gray-400">Thu T{filterMonth}/{filterYear}</p>
                     <p className="text-sm font-bold text-emerald-600">
                         +{fmt(summary?.month_overview?.total_thu ?? 0)}
                     </p>
@@ -760,7 +891,7 @@ export default function FundPage() {
                     <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center">
                         <ArrowDown className="w-3.5 h-3.5 text-red-400" />
                     </div>
-                    <p className="text-[10px] text-gray-400">Chi tháng này</p>
+                    <p className="text-[10px] text-gray-400">Chi T{filterMonth}/{filterYear}</p>
                     <p className="text-sm font-bold text-red-500">
                         -{fmt(summary?.month_overview?.total_chi ?? 0)}
                     </p>
@@ -913,6 +1044,18 @@ export default function FundPage() {
                 <RequestWithdrawModal
                     onClose={() => setShowWithdrawRequest(false)}
                     onSuccess={() => load(true)}
+                />
+            )}
+
+            {showMonthPicker && (
+                <MonthYearFilterModal
+                    month={filterMonth}
+                    year={filterYear}
+                    onClose={() => setShowMonthPicker(false)}
+                    onApply={(m, y) => {
+                        setFilterMonth(m);
+                        setFilterYear(y);
+                    }}
                 />
             )}
         </div>

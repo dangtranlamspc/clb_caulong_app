@@ -350,7 +350,7 @@ export default function MemberLayout({
                 />
             )}
 
-            <header className="sticky top-0 z-30 flex justify-center">
+            <header className="fixed top-0 left-0 right-0 z-30 flex justify-center">
                 <div
                     className="relative w-full max-w-lg overflow-hidden"
                     style={{
@@ -444,7 +444,12 @@ export default function MemberLayout({
                 </div>
             </header>
 
-            <main className="max-w-lg mx-auto px-4 py-5">{children}</main>
+            <main
+                className="max-w-lg mx-auto px-4 pb-5"
+                style={{ paddingTop: "calc(64px + env(safe-area-inset-top, 0px) + 1.25rem)" }}
+            >
+                {children}
+            </main>
 
             <FeedbackWidget />
 
