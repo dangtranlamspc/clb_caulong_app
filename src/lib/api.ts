@@ -616,6 +616,48 @@ export const uploadsAdminApi = {
   },
 };
 
+export const drinksAdminApi = {
+  list: (includeInactive?: boolean) =>
+    api.get("/admin/drinks", { params: { includeInactive } }),
+
+  get: (id: string) => api.get(`/admin/drinks/${id}`),
+
+  create: (data: { name: string; price: number; quantity?: number; file?: File }) => {
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("price", String(data.price));
+    if (data.quantity !== undefined) formData.append("quantity", String(data.quantity));
+    if (data.file) formData.append("file", data.file);
+    return api.post("/admin/drinks", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
+  consume: (id: string, quantity: number) =>
+    api.patch(`/admin/drinks/${id}/consume`, { quantity }),
+
+  update: (
+    id: string,
+    data: { name?: string; price?: number; quantity?: number; file?: File },
+  ) => {
+    const formData = new FormData();
+    if (data.name !== undefined) formData.append("name", data.name);
+    if (data.price !== undefined) formData.append("price", String(data.price));
+    if (data.quantity !== undefined) formData.append("quantity", String(data.quantity));
+    if (data.file) formData.append("file", data.file);
+    return api.patch(`/admin/drinks/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
+  restock: (id: string, quantity: number, note?: string) =>
+    api.patch(`/admin/drinks/${id}/stock`, { quantity, note }),
+
+  toggleActive: (id: string) => api.patch(`/admin/drinks/${id}/toggle-active`),
+
+  delete: (id: string) => api.delete(`/admin/drinks/${id}`),
+};
+
 
 export const guestShirtOrderApi = {
   getActivity: (id: string) => api.get(`/activities/${id}/public`),
@@ -749,7 +791,6 @@ export const fundApi = {
   listPendingConfirmations: (params?: { page?: number; limit?: number }) =>
     api.get("/fund/transactions", { params: { ...params, payment_status: "submitted" } }),
 
-  // ADMIN
   createPenalty: (data: {
     session_id?: string;
     deduct_from_member_id: string;
@@ -834,3 +875,28 @@ export const pushApi = {
   subscribe: (sub: PushSubscriptionJSON) => api.post("/push/subscribe", sub),
   unsubscribe: (endpoint: string) => api.post("/push/unsubscribe", { endpoint }),
 };
+
+export const userDrinksApi = {
+  getMyInventory: () => api.get("/users/me/drinks"),
+  getMyHistory: (params?: { page?: number; limit?: number }) =>
+    api.get("/users/me/drinks/history", { params }),
+  gift: (data: { drink_id: string; to_user_id: string; quantity: number; note?: string }) =>
+    api.post("/users/me/drinks/gift", data),
+};
+
+export const userDrinksAdminApi = {
+  getInventory: (userId: string) => api.get(`/users/${userId}/drinks`),
+  getHistory: (userId: string, params?: { page?: number; limit?: number }) =>
+    api.get(`/users/${userId}/drinks/history`, { params }),
+  grant: (userId: string, data: { drink_id: string; quantity: number; note?: string }) =>
+    api.post(`/users/${userId}/drinks/grant`, data),
+  deduct: (userId: string, data: { drink_id: string; quantity: number; note?: string }) =>
+    api.post(`/users/${userId}/drinks/deduct`, data),
+
+  getOverviewStats: () => api.get("/users/drinks/overview/stats"),
+  getOverviewMembers: (params?: { search?: string; page?: number; limit?: number }) =>
+    api.get("/users/drinks/overview/members", { params }),
+  getOverviewHistory: (params?: { page?: number; limit?: number; type?: string; search?: string }) =>
+    api.get("/users/drinks/overview/history", { params }),
+};
+

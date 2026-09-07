@@ -13,13 +13,14 @@ import {
   Mail,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { sessionsAdminApi } from "@/lib/api";
+import { sessionsAdminApi, drinksAdminApi } from "@/lib/api";
 import { MorphButton } from "@/components/effect-button/MorphButton";
 import PenaltyModal from "@/components/admin/wallet/PenaltyModal";
 import SessionPenaltiesCard, {
   SessionPenaltiesCardHandle,
 } from "@/components/admin/sessions/SessionPenaltiesCard";
 import { useNavLoadingStore } from "@/store/nav-loading.store";
+import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 
 interface CourtItem {
   id: string;
@@ -32,6 +33,19 @@ interface OtherFeeItem {
   id: string;
   amount: number;
   note: string;
+  drinkId?: string | null;
+  quantity?: number;
+  quantityInput?: string;
+  deductStock?: boolean;
+}
+
+interface Drink {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image_url?: string | null;
+  is_active?: boolean;
 }
 
 let courtIdCounter = 0;
@@ -46,6 +60,18 @@ let otherFeeItemIdCounter = 0;
 function newOtherFeeItemId() {
   otherFeeItemIdCounter += 1;
   return `fee_${Date.now()}_${otherFeeItemIdCounter}`;
+}
+
+function emptyOtherFeeItem(): OtherFeeItem {
+  return {
+    id: newOtherFeeItemId(),
+    amount: 0,
+    note: "",
+    drinkId: null,
+    quantity: 1,
+    quantityInput: "1",
+    deductStock: false,
+  };
 }
 
 function courtTotal(c: CourtItem): number {
@@ -85,6 +111,8 @@ export default function SessionFinishPage() {
   ]);
 
   const [emailIds, setEmailIds] = useState<Set<string>>(new Set());
+
+  const [drinks, setDrinks] = useState<Drink[]>([]);
 
   const startNavLoading = useNavLoadingStore((s) => s.start);
 
@@ -145,33 +173,58 @@ export default function SessionFinishPage() {
     setWalletModes((prev) => ({ ...prev, [registrationId]: mode }));
   };
 
+  const effectiveQuantity = (item: OtherFeeItem) =>
+    item.quantity && item.quantity >= 1 ? item.quantity : 1;
+
+  const effectiveAmount = (item: OtherFeeItem) => {
+    if (item.drinkId) {
+      const drink = drinks.find((d) => d.id === item.drinkId);
+      if (drink) return drink.price * effectiveQuantity(item);
+    }
+    return Number(item.amount) || 0;
+  };
+
   const otherFeeSum = (regId: string) =>
-    (otherFeeItems[regId] ?? []).reduce(
-      (s, i) => s + (Number(i.amount) || 0),
-      0,
-    );
+    (otherFeeItems[regId] ?? []).reduce((s, i) => s + effectiveAmount(i), 0);
 
   const otherFeeNoteJoined = (regId: string) => {
     const items = (otherFeeItems[regId] ?? []).filter(
-      (i) => (Number(i.amount) || 0) > 0 || i.note.trim(),
+      (i) => effectiveAmount(i) > 0 || i.note.trim(),
     );
     if (items.length === 0) return undefined;
 
     return items
       .map((i) => {
-        const amountText = fmt(Number(i.amount) || 0);
-        return i.note.trim() ? `${amountText} - ${i.note.trim()}` : amountText;
+        const amountText = fmt(effectiveAmount(i));
+        const label = i.drinkId
+          ? `${i.note.trim() || "Nước"} x${effectiveQuantity(i)}`
+          : i.note.trim();
+        return label ? `${amountText} - ${label}` : amountText;
       })
       .join("\n");
+  };
+
+  const handleQuantityBlur = (regId: string, itemId: string) => {
+    setOtherFeeItems((prev) => ({
+      ...prev,
+      [regId]: (prev[regId] ?? []).map((i) => {
+        if (i.id !== itemId) return i;
+        if (i.quantity && i.quantity >= 1) return i;
+        const drink = i.drinkId ? drinks.find((d) => d.id === i.drinkId) : null;
+        return {
+          ...i,
+          quantity: 1,
+          quantityInput: "1",
+          amount: drink ? drink.price * 1 : i.amount,
+        };
+      }),
+    }));
   };
 
   const addOtherFeeItem = (regId: string) => {
     setOtherFeeItems((prev) => ({
       ...prev,
-      [regId]: [
-        ...(prev[regId] ?? []),
-        { id: newOtherFeeItemId(), amount: 0, note: "" },
-      ],
+      [regId]: [...(prev[regId] ?? []), emptyOtherFeeItem()],
     }));
   };
 
@@ -186,12 +239,10 @@ export default function SessionFinishPage() {
 
   const isMailEligible = (r: any) => {
     if (!r.host_registration_id) {
-      // host row: chỉ guest độc lập/guest đứng tên
       return r.is_guest;
     }
-    // guest row: tìm host tương ứng
     const host = registrations.find((h) => h.id === r.host_registration_id);
-    if (host?.is_guest) return false; // gộp qua host guest, không có nút riêng
+    if (host?.is_guest) return false;
     return (
       walletDeductIds.has(host?.id) &&
       (walletModes[host?.id] ?? "grouped") === "separate"
@@ -229,14 +280,58 @@ export default function SessionFinishPage() {
   const updateOtherFeeItem = (
     regId: string,
     itemId: string,
-    field: "amount" | "note",
-    value: string | number,
+    field: "amount" | "note" | "drinkId" | "quantity" | "deductStock",
+    value: string | number | boolean,
   ) => {
     setOtherFeeItems((prev) => ({
       ...prev,
-      [regId]: (prev[regId] ?? []).map((i) =>
-        i.id === itemId ? { ...i, [field]: value } : i,
-      ),
+      [regId]: (prev[regId] ?? []).map((i) => {
+        if (i.id !== itemId) return i;
+
+        if (field === "drinkId") {
+          const drinkId = (value as string) || null;
+          if (!drinkId) {
+            return {
+              ...i,
+              drinkId: null,
+              deductStock: false,
+              amount: 0,
+              note: "",
+            };
+          }
+          const drink = drinks.find((d) => d.id === drinkId);
+          const qty = i.quantity && i.quantity > 0 ? i.quantity : 1;
+          return {
+            ...i,
+            drinkId,
+            quantity: qty,
+            quantityInput: String(qty),
+            note: drink?.name ?? i.note,
+            amount: (drink?.price ?? 0) * qty,
+          };
+        }
+
+        if (field === "quantity") {
+          const raw = String(value);
+          const numeric = raw === "" ? 0 : parseInt(raw, 10) || 0;
+          if (i.drinkId) {
+            const drink = drinks.find((d) => d.id === i.drinkId);
+            return {
+              ...i,
+              quantity: numeric,
+              quantityInput: raw,
+              amount: (drink?.price ?? 0) * numeric,
+            };
+          }
+          return { ...i, quantity: numeric, quantityInput: raw };
+        }
+
+        if (field === "deductStock") {
+          return { ...i, deductStock: value as boolean };
+        }
+
+        return { ...i, [field]: value };
+      }),
     }));
   };
 
@@ -299,23 +394,33 @@ export default function SessionFinishPage() {
           initOtherFeeItems[reg.id] = reg.other_fee_amount
             ? [
               {
-                id: newOtherFeeItemId(),
+                ...emptyOtherFeeItem(),
                 amount: reg.other_fee_amount,
                 note: reg.other_fee_note ?? "",
               },
             ]
-            : [{ id: newOtherFeeItemId(), amount: 0, note: "" }];
+            : [emptyOtherFeeItem()];
         });
         setOtherFeeItems(initOtherFeeItems);
       })
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    drinksAdminApi
+      .list()
+      .then(({ data }: any) => {
+        setDrinks((data ?? []).filter((d: Drink) => d.is_active !== false));
+      })
+      .catch((err: any) => {
+        console.error("[SessionFinishPage] Không tải được danh sách nước:", err);
+      });
+  }, []);
+
   const shuttleCost = shuttleCount * shuttlePrice;
   const splittableCost = courtFee + shuttleCost;
   const totalOtherFees = Object.values(otherFeeItems).reduce(
-    (sum, items) =>
-      sum + items.reduce((s, i) => s + (Number(i.amount) || 0), 0),
+    (sum, items) => sum + items.reduce((s, i) => s + effectiveAmount(i), 0),
     0,
   );
   const totalCost = splittableCost + totalOtherFees;
@@ -479,6 +584,30 @@ export default function SessionFinishPage() {
         ),
       });
 
+      const deductions = new Map<string, number>();
+      Object.values(otherFeeItems).forEach((items) => {
+        items.forEach((item) => {
+          if (item.drinkId && item.deductStock) {
+            const qty = item.quantity && item.quantity > 0 ? item.quantity : 1;
+            deductions.set(item.drinkId, (deductions.get(item.drinkId) ?? 0) + qty);
+          }
+        });
+      });
+
+      if (deductions.size > 0) {
+        const results = await Promise.allSettled(
+          Array.from(deductions.entries()).map(([drinkId, qty]) =>
+            drinksAdminApi.consume(drinkId, qty),
+          ),
+        );
+        const failedCount = results.filter((r) => r.status === "rejected").length;
+        if (failedCount > 0) {
+          toast.error(
+            `Gửi hóa đơn thành công nhưng trừ kho thất bại cho ${failedCount} loại nước, vui lòng kiểm tra lại kho thủ công`,
+          );
+        }
+      }
+
       setSubmitPhase("success");
       toast.success("Đã kết thúc buổi và gửi hóa đơn thanh toán!");
       setTimeout(() => {
@@ -491,6 +620,142 @@ export default function SessionFinishPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const drinkSelectOptions = [
+    { value: "", label: "✏️ Khoản khác (nhập tay)" },
+    ...drinks.map((d) => ({
+      value: d.id,
+      label: d.name,
+      subLabel: `Còn ${d.quantity}`,
+      imageUrl: d.image_url ?? null,
+    })),
+  ];
+
+  const renderOtherFeeEditor = (
+    regId: string,
+    placeholder: string,
+    wrapperClassName: string,
+  ) => {
+    const items = otherFeeItems[regId] ?? [];
+    return (
+      <div className={wrapperClassName}>
+        {items.map((item) => {
+          const selectedDrink = item.drinkId
+            ? drinks.find((d) => d.id === item.drinkId)
+            : null;
+
+          return (
+            <div
+              key={item.id}
+              className="rounded-lg border border-gray-100 bg-white/70 p-2 space-y-1.5"
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <CustomSelect
+                    value={item.drinkId ?? ""}
+                    onChange={(val) =>
+                      updateOtherFeeItem(regId, item.id, "drinkId", val)
+                    }
+                    options={drinkSelectOptions}
+                    placeholder="✏️ Khoản khác (nhập tay)"
+                    triggerClassName="input-field w-full flex items-center justify-between text-left text-xs text-gray-500"
+                  />
+                </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={formatNumberInput(item.amount)}
+                  onChange={(e) =>
+                    updateOtherFeeItem(
+                      regId,
+                      item.id,
+                      "amount",
+                      parseNumberInput(e.target.value),
+                    )
+                  }
+                  className="input-field w-20 text-right text-xs text-gray-500 flex-shrink-0"
+                  placeholder="0"
+                />
+                {items.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeOtherFeeItem(regId, item.id)}
+                    className="flex-shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    title="Xóa dòng này"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {selectedDrink ? (
+                <div className="flex items-center gap-2 pl-1">
+                  <span className="text-[11px] text-gray-400">SL</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={item.quantityInput ?? String(item.quantity ?? "")}
+                    onChange={(e) =>
+                      updateOtherFeeItem(
+                        regId,
+                        item.id,
+                        "quantity",
+                        e.target.value.replace(/\D/g, ""),
+                      )
+                    }
+                    onBlur={() => handleQuantityBlur(regId, item.id)}
+                    className="input-field w-14 text-right text-xs text-gray-500"
+                  />
+                  <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                    × {fmt(selectedDrink.price)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateOtherFeeItem(
+                        regId,
+                        item.id,
+                        "deductStock",
+                        !item.deductStock,
+                      )
+                    }
+                    className={`ml-auto flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold border-2 transition-all ${item.deductStock
+                      ? "bg-amber-500 border-amber-500 text-white"
+                      : "border-gray-200 text-gray-400 hover:border-amber-300 hover:text-amber-500"
+                      }`}
+                    title={
+                      item.deductStock
+                        ? "Sẽ trừ tồn kho khi gửi hóa đơn"
+                        : "Không trừ tồn kho"
+                    }
+                  >
+                    {item.deductStock ? "Trừ kho" : "Không trừ kho"}
+                  </button>
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={item.note}
+                  onChange={(e) =>
+                    updateOtherFeeItem(regId, item.id, "note", e.target.value)
+                  }
+                  className="input-field w-full text-xs text-gray-500"
+                  placeholder={placeholder}
+                />
+              )}
+            </div>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => addOtherFeeItem(regId)}
+          className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" /> Thêm khoản khác
+        </button>
+      </div>
+    );
   };
 
   if (loading)
@@ -660,14 +925,14 @@ export default function SessionFinishPage() {
       {id && <SessionPenaltiesCard ref={penaltiesCardRef} sessionId={id} />}
 
       <div className="card !p-0 overflow-hidden">
-        <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <div className="flex flex-col gap-2 px-4 pt-4 pb-3">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
             Số tiền từng người phải trả
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2">
             <button
               onClick={toggleMailAll}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${mailAll
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${mailAll
                 ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                 : "bg-gray-100 hover:bg-gray-200 text-gray-600"
                 }`}
@@ -676,7 +941,7 @@ export default function SessionFinishPage() {
             </button>
             <button
               onClick={handleSplitEqually}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold whitespace-nowrap transition-colors"
             >
               <Divide className="w-4 h-4" /> Chia đều
             </button>
@@ -781,53 +1046,11 @@ export default function SessionFinishPage() {
                     />
                   </div>
 
-                  <div className="space-y-1.5 pl-2">
-                    {(otherFeeItems[h.id] ?? []).map((item) => (
-                      <div key={item.id} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={formatNumberInput(item.amount)}
-                          onChange={(e) =>
-                            updateOtherFeeItem(
-                              h.id,
-                              item.id,
-                              "amount",
-                              parseNumberInput(e.target.value),
-                            )
-                          }
-                          className="input-field w-28 text-right text-xs text-gray-500"
-                          placeholder="0"
-                        />
-                        <input
-                          type="text"
-                          value={item.note}
-                          onChange={(e) =>
-                            updateOtherFeeItem(h.id, item.id, "note", e.target.value)
-                          }
-                          className="input-field flex-1 text-xs text-gray-500"
-                          placeholder="💰 Khoản khác của host..."
-                        />
-                        {(otherFeeItems[h.id]?.length ?? 0) > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeOtherFeeItem(h.id, item.id)}
-                            className="flex-shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                            title="Xóa dòng này"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => addOtherFeeItem(h.id)}
-                      className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Thêm khoản khác
-                    </button>
-                  </div>
+                  {renderOtherFeeEditor(
+                    h.id,
+                    "💰 Khoản khác của host...",
+                    "space-y-1.5 pl-2",
+                  )}
 
                   <div className="flex justify-end">
                     <div className="w-fit text-right text-xs font-bold text-gray-800 bg-white border border-gray-200 rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">
@@ -975,53 +1198,11 @@ export default function SessionFinishPage() {
                               />
                             </div>
 
-                            <div className="space-y-1.5">
-                              {(otherFeeItems[g.id] ?? []).map((item) => (
-                                <div key={item.id} className="flex items-center gap-2">
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={formatNumberInput(item.amount)}
-                                    onChange={(e) =>
-                                      updateOtherFeeItem(
-                                        g.id,
-                                        item.id,
-                                        "amount",
-                                        parseNumberInput(e.target.value),
-                                      )
-                                    }
-                                    className="input-field w-28 text-right text-xs text-gray-500"
-                                    placeholder="0"
-                                  />
-                                  <input
-                                    type="text"
-                                    value={item.note}
-                                    onChange={(e) =>
-                                      updateOtherFeeItem(g.id, item.id, "note", e.target.value)
-                                    }
-                                    className="input-field flex-1 text-xs text-gray-500"
-                                    placeholder="💰 Khoản khác của khách..."
-                                  />
-                                  {(otherFeeItems[g.id]?.length ?? 0) > 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeOtherFeeItem(g.id, item.id)}
-                                      className="flex-shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                                      title="Xóa dòng này"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                              <button
-                                type="button"
-                                onClick={() => addOtherFeeItem(g.id)}
-                                className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
-                              >
-                                <Plus className="w-3.5 h-3.5" /> Thêm khoản khác
-                              </button>
-                            </div>
+                            {renderOtherFeeEditor(
+                              g.id,
+                              "💰 Khoản khác của khách...",
+                              "space-y-1.5",
+                            )}
 
                             <div className="flex justify-end">
                               <div className="w-fit text-right text-xs font-bold text-gray-800 bg-white border border-purple-200 rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">

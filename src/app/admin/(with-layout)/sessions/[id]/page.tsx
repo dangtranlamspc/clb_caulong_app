@@ -1644,14 +1644,6 @@ export default function SessionDetailPage() {
                   Khách
                 </span>
               )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5 mt-1">
-              {displayGender && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-gray-50 text-gray-500 border-gray-200 font-medium">
-                  {displayGender === "male" ? "Nam" : "Nữ"}
-                </span>
-              )}
               {reg.is_guest
                 ? reg.guest_skill_level && (
                   <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-violet-50 text-violet-600 border-violet-200 font-medium">
@@ -1664,6 +1656,14 @@ export default function SessionDetailPage() {
                     {LEVEL_LABELS[user.level] ?? user.level}
                   </span>
                 )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+              {displayGender && (
+                <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-gray-50 text-gray-500 border-gray-200 font-medium">
+                  {displayGender === "male" ? "Nam" : "Nữ"}
+                </span>
+              )}
               {reg.is_guest && reg.guest_email && (
                 <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200 font-medium truncate max-w-[180px]">
                   {reg.guest_email}

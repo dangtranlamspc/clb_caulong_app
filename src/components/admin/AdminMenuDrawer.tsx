@@ -5,6 +5,7 @@ import {
     X, Home, LayoutDashboard, Users, CalendarDays, Wallet, Megaphone, ChevronRight, ChevronDown,
     Swords,
     BookOpen,
+    GlassWater,
 } from 'lucide-react';
 
 type AdminMenuChild = { href: string; label: string };
@@ -35,6 +36,16 @@ export const ADMIN_MENU: AdminMenuItem[] = [
         ],
     },
     { href: '/admin/events', icon: Megaphone, label: 'Hoạt động', desc: 'Sự kiện, giải đấu, đặt áo', iconBg: 'bg-rose-500' },
+    {
+        icon: GlassWater,
+        label: 'Nước',
+        desc: 'Kho nước, tổng quan sở hữu',
+        iconBg: 'bg-sky-500',
+        children: [
+            { href: '/admin/drinks/stocks', label: 'Kho nước' },
+            { href: '/admin/drinks/overview', label: 'Tổng quan' },
+        ],
+    },
     { href: '/admin/handbook', icon: BookOpen, label: 'Sổ tay CLB', desc: 'Quản lý các trang sổ tay', iconBg: 'bg-teal-500' },
     { href: '/admin/feedback', icon: BookOpen, label: 'Feedbacks', desc: 'Feedbacks', iconBg: 'bg-teal-500' },
     { href: '/admin/fund', icon: BookOpen, label: 'Quỹ', desc: 'Quỹ', iconBg: 'bg-teal-500' },
