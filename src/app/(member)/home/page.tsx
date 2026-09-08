@@ -5,7 +5,8 @@ import {
   CalendarDays,
   Trophy,
   ClipboardList,
-  Wallet2
+  Wallet2,
+  GlassWater
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import {
@@ -282,9 +283,9 @@ export default function HomePage() {
               ring: "ring-amber-100",
             },
             {
-              href: "/leaderboard",
-              icon: Trophy,
-              label: "Bảng\nxếp hạng",
+              href: "/drinks/my",
+              icon: GlassWater,
+              label: "Nước",
               bg: "bg-purple-50",
               ic: "text-purple-600",
               ring: "ring-purple-100",

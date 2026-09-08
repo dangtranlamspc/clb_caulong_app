@@ -46,12 +46,18 @@ const TYPE_LABEL: Record<string, string> = {
     admin_grant: "Admin tặng",
     admin_deduct: "Admin trừ",
     gift: "Tặng nhau",
+    self_add: "Tự cộng",
+    self_deduct: "Tự trừ",
+    to_club: "Gửi về CLB",
 };
 
 const TYPE_COLOR: Record<string, string> = {
     admin_grant: "bg-emerald-100 text-emerald-700",
     admin_deduct: "bg-red-100 text-red-700",
     gift: "bg-blue-100 text-blue-700",
+    self_add: "bg-teal-100 text-teal-700",
+    self_deduct: "bg-orange-100 text-orange-700",
+    to_club: "bg-amber-100 text-amber-700",
 };
 
 export default function DrinksOverviewPage() {
@@ -306,11 +312,9 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
     );
 }
 
-// ─── Modal: Thêm nước cho 1 thành viên bất kỳ (tìm kiếm trước, chọn xong mới tặng) ───
 function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
     const [drinks, setDrinks] = useState<Drink[]>([]);
-    const [drinkId, setDrinkId] = useState("");
-    const [quantity, setQuantity] = useState<number | "">("");
+    const [amounts, setAmounts] = useState<Record<string, string>>({});
     const [note, setNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
@@ -321,10 +325,7 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
-        drinksAdminApi.list(false).then(({ data }) => {
-            setDrinks(data);
-            if (data.length > 0) setDrinkId(data[0].id);
-        });
+        drinksAdminApi.list(false).then(({ data }) => setDrinks(data));
     }, []);
 
     useEffect(() => {
@@ -346,18 +347,23 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
         return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
     }, [query]);
 
+    const selectedDrinks = drinks
+        .map((d) => ({ drink: d, quantity: Number(amounts[d.id]) || 0 }))
+        .filter((x) => x.quantity > 0);
+
     const handleSubmit = async () => {
         if (!selectedUser) return toast.error("Vui lòng chọn thành viên");
-        if (!drinkId) return toast.error("Vui lòng chọn loại nước");
-        if (!quantity || quantity <= 0) return toast.error("Số lượng phải lớn hơn 0");
+        if (selectedDrinks.length === 0) return toast.error("Vui lòng nhập số lượng ít nhất 1 loại nước");
 
         setSubmitting(true);
         try {
-            await userDrinksAdminApi.grant(selectedUser.id, {
-                drink_id: drinkId,
-                quantity: Number(quantity),
-                note: note || undefined,
-            });
+            for (const { drink, quantity } of selectedDrinks) {
+                await userDrinksAdminApi.grant(selectedUser.id, {
+                    drink_id: drink.id,
+                    quantity,
+                    note: note || undefined,
+                });
+            }
             toast.success(`Đã tặng nước cho ${selectedUser.full_name}`);
             onSuccess();
         } catch {
@@ -369,15 +375,15 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-5">
-                <div className="flex items-center justify-between mb-4">
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 max-h-[85vh] flex flex-col">
+                <div className="flex items-center justify-between mb-4 flex-shrink-0">
                     <h3 className="font-bold text-gray-900">Thêm nước cho thành viên</h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                <div className="space-y-3.5">
+                <div className="space-y-3.5 overflow-y-auto pr-0.5">
                     <div>
                         <label className="text-xs font-semibold text-gray-500">Thành viên</label>
                         {selectedUser ? (
@@ -445,27 +451,40 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold text-gray-500">Loại nước</label>
-                        <div className="mt-1">
-                            <CustomSelect
-                                value={drinkId}
-                                onChange={setDrinkId}
-                                options={drinks.map((d) => ({ value: d.id, label: d.name, imageUrl: d.image_url ?? null }))}
-                                placeholder="-- Chọn loại nước --"
-                            />
+                        <label className="text-xs font-semibold text-gray-500">Loại nước &amp; số lượng</label>
+                        <div className="mt-1.5 space-y-2 max-h-64 overflow-y-auto">
+                            {drinks.length === 0 && (
+                                <p className="text-xs text-gray-400 py-2">Đang tải danh sách nước...</p>
+                            )}
+                            {drinks.map((d) => (
+                                <div
+                                    key={d.id}
+                                    className="flex items-center gap-3 rounded-xl border border-gray-100 p-2.5"
+                                >
+                                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                                        {d.image_url ? (
+                                            <img src={d.image_url} alt={d.name} className="h-full w-full object-cover" />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center">
+                                                <GlassWater className="h-4 w-4 text-gray-300" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium text-gray-800">{d.name}</p>
+                                        <p className="text-[11px] text-gray-400">{formatCurrency(d.price)}</p>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        placeholder="0"
+                                        value={amounts[d.id] ?? ""}
+                                        onChange={(e) => setAmounts((prev) => ({ ...prev, [d.id]: e.target.value }))}
+                                        className="w-16 flex-shrink-0 rounded-lg border border-gray-200 px-2 py-1.5 text-center text-sm focus:border-sky-400 focus:outline-none"
+                                    />
+                                </div>
+                            ))}
                         </div>
-                    </div>
-
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500">Số lượng</label>
-                        <input
-                            type="number"
-                            min={1}
-                            value={quantity}
-                            onChange={(e) => setQuantity(e.target.value === "" ? "" : Number(e.target.value))}
-                            className="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
-                            placeholder="Nhập số lượng"
-                        />
                     </div>
 
                     <div>
@@ -480,7 +499,7 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 
                     <button
                         onClick={handleSubmit}
-                        disabled={submitting || !selectedUser}
+                        disabled={submitting || !selectedUser || selectedDrinks.length === 0}
                         className="w-full py-3 rounded-xl font-semibold text-white bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60"
                     >
                         {submitting ? "Đang xử lý..." : "Xác nhận tặng"}
@@ -494,37 +513,41 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; onClose: () => void; onSuccess: () => void }) {
     const [drinks, setDrinks] = useState<Drink[]>([]);
     const [action, setAction] = useState<"grant" | "deduct">("grant");
-    const [drinkId, setDrinkId] = useState("");
-    const [quantity, setQuantity] = useState<number | "">("");
+    const [amounts, setAmounts] = useState<Record<string, string>>({});
     const [note, setNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        drinksAdminApi.list(false).then(({ data }) => {
-            setDrinks(data);
-            if (data.length > 0) setDrinkId(data[0].id);
-        });
+        drinksAdminApi.list(false).then(({ data }) => setDrinks(data));
     }, []);
 
-    const currentOwned = member.drinks.find((d) => d.drink_id === drinkId)?.quantity ?? 0;
+    const ownedMap = new Map(member.drinks.map((d) => [d.drink_id, d.quantity]));
+
+    // Trừ bớt: chỉ hiện các loại nước thành viên đang sở hữu > 0
+    const visibleDrinks =
+        action === "deduct" ? drinks.filter((d) => (ownedMap.get(d.id) ?? 0) > 0) : drinks;
+
+    const selectedDrinks = visibleDrinks
+        .map((d) => ({ drink: d, quantity: Number(amounts[d.id]) || 0, owned: ownedMap.get(d.id) ?? 0 }))
+        .filter((x) => x.quantity > 0);
+
+    const invalidDeduct = action === "deduct" && selectedDrinks.some((x) => x.quantity > x.owned);
 
     const handleSubmit = async () => {
-        if (!drinkId) return toast.error("Vui lòng chọn loại nước");
-        if (!quantity || quantity <= 0) return toast.error("Số lượng phải lớn hơn 0");
-        if (action === "deduct" && quantity > currentOwned) {
-            return toast.error("Số lượng trừ vượt quá số lượng đang sở hữu");
-        }
+        if (selectedDrinks.length === 0) return toast.error("Vui lòng nhập số lượng ít nhất 1 loại nước");
+        if (invalidDeduct) return toast.error("Có loại nước bị trừ vượt quá số lượng đang sở hữu");
 
         setSubmitting(true);
         try {
-            const payload = { drink_id: drinkId, quantity: Number(quantity), note: note || undefined };
-            if (action === "grant") {
-                await userDrinksAdminApi.grant(member.user_id, payload);
-                toast.success("Đã tặng nước cho thành viên");
-            } else {
-                await userDrinksAdminApi.deduct(member.user_id, payload);
-                toast.success("Đã trừ nước của thành viên");
+            for (const { drink, quantity } of selectedDrinks) {
+                const payload = { drink_id: drink.id, quantity, note: note || undefined };
+                if (action === "grant") {
+                    await userDrinksAdminApi.grant(member.user_id, payload);
+                } else {
+                    await userDrinksAdminApi.deduct(member.user_id, payload);
+                }
             }
+            toast.success(action === "grant" ? "Đã tặng nước cho thành viên" : "Đã trừ nước của thành viên");
             onSuccess();
         } catch {
         } finally {
@@ -535,15 +558,15 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-5">
-                <div className="flex items-center justify-between mb-4">
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 max-h-[85vh] flex flex-col">
+                <div className="flex items-center justify-between mb-4 flex-shrink-0">
                     <h3 className="font-bold text-gray-900">Điều chỉnh nước — {member.full_name}</h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                <div className="space-y-3.5">
+                <div className="space-y-3.5 overflow-y-auto pr-0.5">
                     <div className="grid grid-cols-2 gap-2">
                         <button
                             onClick={() => setAction("grant")}
@@ -560,30 +583,54 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold text-gray-500">Loại nước</label>
-                        <div className="mt-1">
-                            <CustomSelect
-                                value={drinkId}
-                                onChange={setDrinkId}
-                                options={drinks.map((d) => ({ value: d.id, label: d.name, imageUrl: d.image_url ?? null }))}
-                                placeholder="-- Chọn loại nước --"
-                            />
+                        <label className="text-xs font-semibold text-gray-500">Loại nước &amp; số lượng</label>
+                        <div className="mt-1.5 space-y-2 max-h-64 overflow-y-auto">
+                            {drinks.length === 0 && (
+                                <p className="text-xs text-gray-400 py-2">Đang tải danh sách nước...</p>
+                            )}
+                            {drinks.length > 0 && visibleDrinks.length === 0 && (
+                                <p className="text-xs text-gray-400 py-2">Thành viên chưa sở hữu loại nước nào để trừ.</p>
+                            )}
+                            {visibleDrinks.map((d) => {
+                                const owned = ownedMap.get(d.id) ?? 0;
+                                const qty = Number(amounts[d.id]) || 0;
+                                const exceeds = action === "deduct" && qty > owned;
+                                return (
+                                    <div
+                                        key={d.id}
+                                        className={`flex items-center gap-3 rounded-xl border p-2.5 ${exceeds ? "border-red-300 bg-red-50" : "border-gray-100"
+                                            }`}
+                                    >
+                                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                                            {d.image_url ? (
+                                                <img src={d.image_url} alt={d.name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center">
+                                                    <GlassWater className="h-4 w-4 text-gray-300" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-medium text-gray-800">{d.name}</p>
+                                            <p className="text-[11px] text-gray-400">
+                                                {action === "deduct" ? `Đang sở hữu: ${owned}` : formatCurrency(d.price)}
+                                            </p>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            placeholder="0"
+                                            value={amounts[d.id] ?? ""}
+                                            onChange={(e) => setAmounts((prev) => ({ ...prev, [d.id]: e.target.value }))}
+                                            className={`w-16 flex-shrink-0 rounded-lg border px-2 py-1.5 text-center text-sm focus:outline-none ${exceeds
+                                                ? "border-red-300 focus:border-red-400"
+                                                : "border-gray-200 focus:border-sky-400"
+                                                }`}
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
-                        {action === "deduct" && (
-                            <p className="text-xs text-gray-400 mt-1">Đang sở hữu: {currentOwned}</p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500">Số lượng</label>
-                        <input
-                            type="number"
-                            min={1}
-                            value={quantity}
-                            onChange={(e) => setQuantity(e.target.value === "" ? "" : Number(e.target.value))}
-                            className="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
-                            placeholder="Nhập số lượng"
-                        />
                     </div>
 
                     <div>
@@ -598,7 +645,7 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
 
                     <button
                         onClick={handleSubmit}
-                        disabled={submitting}
+                        disabled={submitting || selectedDrinks.length === 0 || invalidDeduct}
                         className={`w-full py-3 rounded-xl font-semibold text-white ${action === "grant" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"} disabled:opacity-60`}
                     >
                         {submitting ? "Đang xử lý..." : action === "grant" ? "Xác nhận tặng" : "Xác nhận trừ"}
@@ -632,7 +679,11 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
     const describeAction = (r: HistoryRow) => {
         if (r.type === "gift") return `${r.from_user?.full_name ?? "?"} tặng ${r.to_user?.full_name ?? "?"}`;
         if (r.type === "admin_grant") return `${r.performed_by_user?.full_name ?? "Admin"} tặng ${r.to_user?.full_name ?? "?"}`;
-        return `${r.performed_by_user?.full_name ?? "Admin"} trừ của ${r.to_user?.full_name ?? "?"}`;
+        if (r.type === "admin_deduct") return `${r.performed_by_user?.full_name ?? "Admin"} trừ của ${r.to_user?.full_name ?? "?"}`;
+        if (r.type === "self_add") return `${r.to_user?.full_name ?? "?"} tự cộng`;
+        if (r.type === "self_deduct") return `${r.from_user?.full_name ?? "?"} tự trừ`;
+        if (r.type === "to_club") return `${r.from_user?.full_name ?? "?"} gửi về kho CLB`;
+        return "—";
     };
 
     return (

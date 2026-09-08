@@ -882,6 +882,16 @@ export const userDrinksApi = {
     api.get("/users/me/drinks/history", { params }),
   gift: (data: { drink_id: string; to_user_id: string; quantity: number; note?: string }) =>
     api.post("/users/me/drinks/gift", data),
+  selfAdd: (data: { drink_id: string; quantity: number; note?: string }) =>
+    api.post("/users/me/drinks/self-add", data),
+  selfDeduct: (data: { drink_id: string; quantity: number; note?: string }) =>
+    api.post("/users/me/drinks/self-deduct", data),
+  sendToClub: (data: { drink_id: string; quantity: number; note?: string }) =>
+    api.post("/users/me/drinks/send-to-club", data),
+};
+
+export const drinksApi = {
+  list: () => api.get("/drinks"),
 };
 
 export const userDrinksAdminApi = {
