@@ -42,7 +42,8 @@ export const ADMIN_MENU: AdminMenuItem[] = [
         desc: 'Kho nước, tổng quan sở hữu',
         iconBg: 'bg-sky-500',
         children: [
-            { href: '/admin/drinks/stocks', label: 'Kho nước' },
+            { href: '/admin/drinks/category', label: 'Loại nước' },
+            { href: '/admin/drinks/stocks-clb', label: 'Kho nước BNB' },
             { href: '/admin/drinks/overview', label: 'Tổng quan' },
         ],
     },

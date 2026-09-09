@@ -888,6 +888,8 @@ export const userDrinksApi = {
     api.post("/users/me/drinks/self-deduct", data),
   sendToClub: (data: { drink_id: string; quantity: number; note?: string }) =>
     api.post("/users/me/drinks/send-to-club", data),
+  getMyRequests: (params?: { page?: number; limit?: number }) =>
+    api.get("/users/me/drinks/requests", { params }),
 };
 
 export const drinksApi = {
@@ -908,5 +910,23 @@ export const userDrinksAdminApi = {
     api.get("/users/drinks/overview/members", { params }),
   getOverviewHistory: (params?: { page?: number; limit?: number; type?: string; search?: string }) =>
     api.get("/users/drinks/overview/history", { params }),
+  deleteOverviewHistory: (ids: string[]) =>
+    api.delete("/users/drinks/overview/history", { data: { ids } }),
+  getRequests: (params?: { status?: string; page?: number; limit?: number }) =>
+    api.get("/users/drinks/requests", { params }),
+  getPendingRequestsCount: () => api.get("/users/drinks/requests/pending-count"),
+  approveRequest: (id: string) => api.patch(`/users/drinks/requests/${id}/approve`),
+  rejectRequest: (id: string, reason?: string) =>
+    api.patch(`/users/drinks/requests/${id}/reject`, { reason }),
+};
+
+export const clubDrinksAdminApi = {
+  getStock: () => api.get("/admin/club-drinks"),
+
+  restock: (payload: { drink_id: string; quantity: number; note?: string }) =>
+    api.post("/admin/club-drinks/restock", payload),
+
+  consume: (payload: { drink_id: string; quantity: number; note?: string }) =>
+    api.post("/admin/club-drinks/consume", payload),
 };
 

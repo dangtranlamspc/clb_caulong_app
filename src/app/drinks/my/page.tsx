@@ -35,7 +35,7 @@ export default function MyDrinksPage() {
     const totalValue = inventory.reduce((s, i) => s + i.quantity * (i.drinks?.price ?? 0), 0);
 
     return (
-        <div className="mx-auto max-w-md space-y-5 p-4">
+        <div className="mx-auto max-w-md space-y-5 p-4 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
             <div className="space-y-3">
                 <div className="flex items-center gap-2">
                     <Link href="/" className="rounded-lg p-2 hover:bg-gray-100 flex-shrink-0">

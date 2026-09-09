@@ -75,9 +75,16 @@ export default function AdminLayout({
 
     if (!mounted || user?.role !== "admin") return null;
 
-    const currentPage = ADMIN_MENU.filter((item) =>
-        isAdminMenuActive(item.href ?? "", pathname ?? ""),
-    ).sort((a, b) => (b.href ?? "").length - (a.href ?? "").length)[0];
+    const currentPage = ADMIN_MENU
+        .flatMap((item) => {
+            if (item.href) return [{ label: item.label, href: item.href }];
+            if (item.children) {
+                return item.children.map((c) => ({ label: item.label, href: c.href }));
+            }
+            return [];
+        })
+        .filter((entry) => isAdminMenuActive(entry.href, pathname ?? ""))
+        .sort((a, b) => b.href.length - a.href.length)[0];
 
     const headerTitle = currentPage?.label ?? "Quản trị";
 

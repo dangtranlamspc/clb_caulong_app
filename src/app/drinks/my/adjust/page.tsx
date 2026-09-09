@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { GlassWater, Plus, X, ArrowLeft } from "lucide-react";
+import { GlassWater, Plus, X, ArrowLeft, Clock, Check, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { userDrinksApi, drinksApi } from "@/lib/api";
 import { createPortal } from "react-dom";
@@ -14,7 +14,28 @@ type InventoryItem = {
 
 type CatalogDrink = { id: string; name: string; price: number; image_url?: string | null };
 
+type MyRequest = {
+    id: string;
+    quantity: number;
+    note?: string;
+    status: "pending" | "approved" | "rejected";
+    created_at: string;
+    reject_reason?: string;
+    drinks?: { name: string; image_url?: string | null };
+};
+
 const formatVND = (n: number) => n.toLocaleString("vi-VN") + " đ";
+
+const REQ_STATUS_BADGE: Record<string, string> = {
+    pending: "bg-amber-100 text-amber-700",
+    approved: "bg-emerald-100 text-emerald-700",
+    rejected: "bg-red-100 text-red-700",
+};
+const REQ_STATUS_LABEL: Record<string, string> = {
+    pending: "Chờ duyệt",
+    approved: "Đã duyệt",
+    rejected: "Từ chối",
+};
 
 export default function AdjustMyDrinksPage() {
     const [tab, setTab] = useState<"deduct" | "add">("deduct");
@@ -25,6 +46,9 @@ export default function AdjustMyDrinksPage() {
     const [notes, setNotes] = useState<Record<string, string>>({});
     const [submittingId, setSubmittingId] = useState<string | null>(null);
     const [showAddDrinkModal, setShowAddDrinkModal] = useState(false);
+
+    const [myRequests, setMyRequests] = useState<MyRequest[]>([]);
+    const [loadingRequests, setLoadingRequests] = useState(true);
 
     const loadInventory = useCallback(async () => {
         setLoading(true);
@@ -37,10 +61,22 @@ export default function AdjustMyDrinksPage() {
         }
     }, []);
 
+    const loadMyRequests = useCallback(async () => {
+        setLoadingRequests(true);
+        try {
+            const { data } = await userDrinksApi.getMyRequests({ limit: 10 });
+            setMyRequests(data.data ?? []);
+        } catch {
+        } finally {
+            setLoadingRequests(false);
+        }
+    }, []);
+
     useEffect(() => {
         loadInventory();
+        loadMyRequests();
         drinksApi.list().then(({ data }) => setCatalog(data ?? [])).catch(() => { });
-    }, [loadInventory]);
+    }, [loadInventory, loadMyRequests]);
 
     const handleSelfDeduct = async (drinkId: string, owned: number) => {
         const raw = amounts[drinkId];
@@ -77,10 +113,10 @@ export default function AdjustMyDrinksPage() {
                 quantity: qty,
                 note: notes[drinkId]?.trim() || undefined,
             });
-            toast.success(`Đã cộng ${qty} nước vào kho của bạn`);
+            toast.success(`Đã gửi yêu cầu thêm ${qty}, chờ admin duyệt`);
             setAmounts((prev) => ({ ...prev, [drinkId]: "" }));
             setNotes((prev) => ({ ...prev, [drinkId]: "" }));
-            loadInventory();
+            loadMyRequests();
         } catch {
         } finally {
             setSubmittingId(null);
@@ -91,7 +127,7 @@ export default function AdjustMyDrinksPage() {
     const addableCatalog = catalog.filter((d) => !ownedIds.has(d.id));
 
     return (
-        <div className="mx-auto max-w-md space-y-5 p-4">
+        <div className="mx-auto max-w-md space-y-5 p-4 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
             <div className="flex items-center gap-2">
                 <Link href="/drinks/my" className="rounded-lg p-2 hover:bg-gray-100">
                     <ArrowLeft className="h-5 w-5" />
@@ -117,6 +153,13 @@ export default function AdjustMyDrinksPage() {
                     </button>
                 ))}
             </div>
+
+            {tab === "add" && (
+                <div className="flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-xs text-sky-700">
+                    <Clock className="h-4 w-4 flex-shrink-0" />
+                    Yêu cầu thêm nước sẽ được gửi tới admin duyệt trước khi cộng vào kho của bạn.
+                </div>
+            )}
 
             {loading && (
                 <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center text-sm text-gray-400">
@@ -176,7 +219,7 @@ export default function AdjustMyDrinksPage() {
                                         disabled={submittingId === item.drink_id}
                                         className="flex-shrink-0 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
                                     >
-                                        Cộng
+                                        Gửi yêu cầu
                                     </button>
                                 )}
                             </div>
@@ -202,13 +245,59 @@ export default function AdjustMyDrinksPage() {
                 </button>
             )}
 
+            {tab === "add" && (
+                <div className="space-y-2.5">
+                    <h2 className="text-sm font-bold text-gray-900">Yêu cầu gần đây</h2>
+                    {loadingRequests && (
+                        <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center text-xs text-gray-400">
+                            Đang tải...
+                        </div>
+                    )}
+                    {!loadingRequests && myRequests.length === 0 && (
+                        <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-4 text-center text-xs text-gray-400">
+                            Bạn chưa gửi yêu cầu thêm nước nào.
+                        </div>
+                    )}
+                    {!loadingRequests && myRequests.map((r) => (
+                        <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3">
+                            <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                                {r.drinks?.image_url ? (
+                                    <img src={r.drinks.image_url} alt={r.drinks?.name} className="h-full w-full object-cover" />
+                                ) : (
+                                    <div className="flex h-full w-full items-center justify-center">
+                                        <GlassWater className="h-4 w-4 text-gray-300" />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <p className="truncate text-sm font-semibold text-gray-900">{r.drinks?.name}</p>
+                                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-0.5 ${REQ_STATUS_BADGE[r.status]}`}>
+                                        {r.status === "pending" && <Clock className="w-2.5 h-2.5" />}
+                                        {r.status === "approved" && <Check className="w-2.5 h-2.5" />}
+                                        {r.status === "rejected" && <XCircle className="w-2.5 h-2.5" />}
+                                        {REQ_STATUS_LABEL[r.status]}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-400">
+                                    Số lượng: {r.quantity} · {new Date(r.created_at).toLocaleDateString("vi-VN")}
+                                </p>
+                                {r.status === "rejected" && r.reject_reason && (
+                                    <p className="text-xs text-red-500 mt-0.5">Lý do: {r.reject_reason}</p>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {showAddDrinkModal && createPortal(
                 <AddNewDrinkModal
                     options={addableCatalog}
                     onClose={() => setShowAddDrinkModal(false)}
                     onSuccess={() => {
                         setShowAddDrinkModal(false);
-                        loadInventory();
+                        loadMyRequests();
                     }}
                 />,
                 document.body
@@ -243,7 +332,7 @@ function AddNewDrinkModal({
                 quantity: qty,
                 note: note.trim() || undefined,
             });
-            toast.success("Đã thêm loại nước mới vào kho của bạn");
+            toast.success("Đã gửi yêu cầu, chờ admin duyệt để thêm vào kho của bạn");
             onSuccess();
         } catch {
         } finally {
@@ -260,6 +349,11 @@ function AddNewDrinkModal({
                     <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400">
                         <X className="h-4 w-4" />
                     </button>
+                </div>
+
+                <div className="mb-3.5 flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-xs text-sky-700">
+                    <Clock className="h-4 w-4 flex-shrink-0" />
+                    Yêu cầu sẽ được gửi tới admin duyệt trước khi cộng vào kho.
                 </div>
 
                 {options.length === 0 ? (
@@ -322,7 +416,7 @@ function AddNewDrinkModal({
                             disabled={submitting || !drinkId}
                             className="w-full rounded-xl bg-emerald-500 py-3 font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
                         >
-                            {submitting ? "Đang xử lý..." : "Xác nhận thêm"}
+                            {submitting ? "Đang gửi..." : "Gửi yêu cầu"}
                         </button>
                     </div>
                 )}

@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { GlassWater, TrendingUp, Users, Package, History, Search, Plus, Minus, X, UserPlus } from "lucide-react";
+import { GlassWater, TrendingUp, Users, Package, History, Search, Plus, Minus, X, UserPlus, Trash2, ClipboardList, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import { userDrinksAdminApi, drinksAdminApi, membersAdminApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
+import { createPortal } from "react-dom";
 
 type Drink = { id: string; name: string; price: number; image_url?: string };
 
@@ -71,11 +72,20 @@ export default function DrinksOverviewPage() {
     const [adjustTarget, setAdjustTarget] = useState<MemberRow | null>(null);
     const [historyOpen, setHistoryOpen] = useState(false);
     const [grantOpen, setGrantOpen] = useState(false);
+    const [requestsOpen, setRequestsOpen] = useState(false);
+    const [pendingCount, setPendingCount] = useState(0);
 
     const loadStats = useCallback(async () => {
         try {
             const { data } = await userDrinksAdminApi.getOverviewStats();
             setStats(data);
+        } catch { }
+    }, []);
+
+    const loadPendingCount = useCallback(async () => {
+        try {
+            const { data } = await userDrinksAdminApi.getPendingRequestsCount();
+            setPendingCount(data.count);
         } catch { }
     }, []);
 
@@ -97,10 +107,12 @@ export default function DrinksOverviewPage() {
 
     useEffect(() => { loadStats(); }, [loadStats]);
     useEffect(() => { loadMembers(); }, [loadMembers]);
+    useEffect(() => { loadPendingCount(); }, [loadPendingCount]);
 
     const refreshAll = () => {
         loadStats();
         loadMembers();
+        loadPendingCount();
     };
 
     return (
@@ -123,7 +135,19 @@ export default function DrinksOverviewPage() {
                         className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
                     />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                    <button
+                        onClick={() => setRequestsOpen(true)}
+                        className="relative flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+                    >
+                        <ClipboardList className="w-4 h-4" />
+                        Yêu cầu chờ duyệt
+                        {pendingCount > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                                {pendingCount}
+                            </span>
+                        )}
+                    </button>
                     <button
                         onClick={() => setGrantOpen(true)}
                         className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 shadow-sm"
@@ -293,7 +317,15 @@ export default function DrinksOverviewPage() {
                 />
             )}
 
-            {historyOpen && <HistoryModal onClose={() => setHistoryOpen(false)} />}
+            {historyOpen && createPortal(
+                <HistoryModal onClose={() => setHistoryOpen(false)} />,
+                document.body
+            )}
+
+            {requestsOpen && createPortal(
+                <RequestsModal onClose={() => setRequestsOpen(false)} onChanged={refreshAll} />,
+                document.body
+            )}
         </div>
     );
 }
@@ -523,7 +555,6 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
 
     const ownedMap = new Map(member.drinks.map((d) => [d.drink_id, d.quantity]));
 
-    // Trừ bớt: chỉ hiện các loại nước thành viên đang sở hữu > 0
     const visibleDrinks =
         action === "deduct" ? drinks.filter((d) => (ownedMap.get(d.id) ?? 0) > 0) : drinks;
 
@@ -656,21 +687,111 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
     );
 }
 
+function AnimatedCheckbox({
+    checked,
+    onChange,
+    className = "",
+}: {
+    checked: boolean;
+    onChange: () => void;
+    className?: string;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onChange}
+            aria-checked={checked}
+            role="checkbox"
+            className={`relative w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center
+                transition-all duration-200 ease-out active:scale-75
+                ${checked ? "bg-sky-500 border-sky-500 scale-100" : "bg-white border-gray-300 hover:border-sky-400 scale-100"}
+                ${className}`}
+        >
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className={`w-3 h-3 transition-all duration-200 ease-out ${checked ? "scale-100 opacity-100" : "scale-50 opacity-0"
+                    }`}
+            >
+                <path
+                    d="M5 13l4 4L19 7"
+                    stroke="white"
+                    strokeWidth={3}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeDasharray={20}
+                    strokeDashoffset={checked ? 0 : 20}
+                    style={{ transition: "stroke-dashoffset 0.25s ease-out 0.05s" }}
+                />
+            </svg>
+        </button>
+    );
+}
+
+function SkeletonBlock({ className = "" }: { className?: string }) {
+    return (
+        <div className={`rounded-md bg-gray-200 relative overflow-hidden ${className}`}>
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+        </div>
+    );
+}
+
+function HistoryRowSkeletonMobile() {
+    return (
+        <div className="p-4 flex gap-3">
+            <div className="flex-shrink-0 self-center">
+                <SkeletonBlock className="w-[18px] h-[18px] rounded-md" />
+            </div>
+            <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                    <SkeletonBlock className="h-5 w-20 rounded-full" />
+                    <SkeletonBlock className="h-3 w-24" />
+                </div>
+                <SkeletonBlock className="h-4 w-40" />
+                <div className="flex items-center justify-between">
+                    <SkeletonBlock className="h-3.5 w-24" />
+                    <SkeletonBlock className="h-3.5 w-10" />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function HistoryRowSkeletonDesktop() {
+    return (
+        <tr>
+            <td className="px-4 py-2.5"><SkeletonBlock className="w-[18px] h-[18px] rounded-md" /></td>
+            <td className="px-4 py-2.5"><SkeletonBlock className="h-3.5 w-28" /></td>
+            <td className="px-4 py-2.5"><SkeletonBlock className="h-5 w-56" /></td>
+            <td className="px-4 py-2.5"><SkeletonBlock className="h-3.5 w-20" /></td>
+            <td className="px-4 py-2.5 text-right"><SkeletonBlock className="h-3.5 w-8 ml-auto" /></td>
+            <td className="px-4 py-2.5 text-right"><SkeletonBlock className="h-6 w-14 ml-auto rounded-lg" /></td>
+        </tr>
+    );
+}
+
 function HistoryModal({ onClose }: { onClose: () => void }) {
     const [rows, setRows] = useState<HistoryRow[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [fetching, setFetching] = useState(false);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [type, setType] = useState<string>("");
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [deleting, setDeleting] = useState(false);
+    const hasLoadedOnce = useRef(false);
 
     const load = useCallback(async () => {
-        setLoading(true);
+        setFetching(true);
         try {
             const { data } = await userDrinksAdminApi.getOverviewHistory({ page, limit: 15, type: type || undefined });
             setRows(data.data);
             setTotalPages(data.meta.total_pages || 1);
+            setSelected(new Set());
         } finally {
-            setLoading(false);
+            setFetching(false);
+            setInitialLoading(false);
+            hasLoadedOnce.current = true;
         }
     }, [page, type]);
 
@@ -678,18 +799,89 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
 
     const describeAction = (r: HistoryRow) => {
         if (r.type === "gift") return `${r.from_user?.full_name ?? "?"} tặng ${r.to_user?.full_name ?? "?"}`;
-        if (r.type === "admin_grant") return `${r.performed_by_user?.full_name ?? "Admin"} tặng ${r.to_user?.full_name ?? "?"}`;
-        if (r.type === "admin_deduct") return `${r.performed_by_user?.full_name ?? "Admin"} trừ của ${r.to_user?.full_name ?? "?"}`;
+        if (r.type === "admin_grant") return `Admin tặng ${r.to_user?.full_name ?? "?"}`;
+        if (r.type === "admin_deduct") return `Admin trừ của ${r.from_user?.full_name ?? "?"}`;
         if (r.type === "self_add") return `${r.to_user?.full_name ?? "?"} tự cộng`;
         if (r.type === "self_deduct") return `${r.from_user?.full_name ?? "?"} tự trừ`;
         if (r.type === "to_club") return `${r.from_user?.full_name ?? "?"} gửi về kho CLB`;
         return "—";
     };
 
+    const toggleOne = (id: string) => {
+        setSelected((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+    const toggleAll = () => {
+        if (allSelected) {
+            setSelected(new Set());
+        } else {
+            setSelected(new Set(rows.map((r) => r.id)));
+        }
+    };
+
+    const deleteOne = async (id: string) => {
+        if (!confirm("Xoá giao dịch này khỏi lịch sử?")) return;
+        setDeleting(true);
+        try {
+            await userDrinksAdminApi.deleteOverviewHistory([id]);
+            toast.success("Đã xoá giao dịch");
+            load();
+        } catch {
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    const deleteSelected = async () => {
+        if (selected.size === 0) return;
+        if (!confirm(`Xoá ${selected.size} giao dịch đã chọn?`)) return;
+        setDeleting(true);
+        try {
+            await userDrinksAdminApi.deleteOverviewHistory(Array.from(selected));
+            toast.success(`Đã xoá ${selected.size} giao dịch`);
+            load();
+        } catch {
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    const TYPE_OPTIONS = [
+        { value: "", label: "Tất cả" },
+        { value: "admin_grant", label: "Admin tặng" },
+        { value: "admin_deduct", label: "Admin trừ" },
+        { value: "gift", label: "Tặng nhau" },
+    ];
+
+    const skeletonCount = 8;
+    const showSkeleton = initialLoading && !hasLoadedOnce.current;
+
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <style>{`
+                @keyframes deleteBtnIn {
+                    from { opacity: 0; transform: translateX(8px) scale(0.9); }
+                    to { opacity: 1; transform: translateX(0) scale(1); }
+                }
+                @keyframes shimmer {
+                    100% { transform: translateX(100%); }
+                }
+                @keyframes rowFadeIn {
+                    from { opacity: 0; transform: translateY(4px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .history-fade-in {
+                    animation: rowFadeIn 0.25s ease-out both;
+                }
+            `}</style>
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                     <h3 className="font-bold text-gray-900">Lịch sử giao dịch nước</h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
@@ -697,48 +889,76 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
                     </button>
                 </div>
 
-                <div className="px-5 py-3 border-b border-gray-100 flex gap-2">
-                    {[
-                        { v: "", label: "Tất cả" },
-                        { v: "admin_grant", label: "Admin tặng" },
-                        { v: "admin_deduct", label: "Admin trừ" },
-                        { v: "gift", label: "Tặng nhau" },
-                    ].map((t) => (
+                <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
+                    <div className="w-48">
+                        <CustomSelect
+                            value={type}
+                            onChange={(v) => { setPage(1); setType(v); }}
+                            options={TYPE_OPTIONS}
+                            triggerClassName="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700 text-left"
+                        />
+                    </div>
+
+                    {selected.size > 0 && (
                         <button
-                            key={t.v}
-                            onClick={() => { setPage(1); setType(t.v); }}
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold ${type === t.v ? "bg-sky-500 text-white" : "bg-gray-100 text-gray-600"}`}
+                            onClick={deleteSelected}
+                            disabled={deleting}
+                            style={{ animation: "deleteBtnIn 0.2s ease-out" }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-red-600 border-2 border-red-800 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 shadow-sm"
                         >
-                            {t.label}
+                            <Trash2 className="w-3.5 h-3.5 text-white" />
+                            Xoá đã chọn ({selected.size})
                         </button>
-                    ))}
+                    )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
                     {/* Mobile: card list */}
-                    <div className="sm:hidden divide-y divide-gray-100">
-                        {loading && (
-                            <div className="text-center py-8 text-gray-400 text-sm">Đang tải...</div>
-                        )}
-                        {!loading && rows.length === 0 && (
+                    <div
+                        className="sm:hidden divide-y divide-gray-100 transition-opacity duration-200"
+                        style={{ opacity: fetching && !showSkeleton ? 0.45 : 1 }}
+                    >
+                        {showSkeleton && Array.from({ length: skeletonCount }).map((_, i) => (
+                            <HistoryRowSkeletonMobile key={i} />
+                        ))}
+                        {!showSkeleton && rows.length === 0 && (
                             <div className="text-center py-8 text-gray-400 text-sm">Chưa có giao dịch nào</div>
                         )}
-                        {rows.map((r) => (
-                            <div key={r.id} className="p-4 space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${TYPE_COLOR[r.type]}`}>
-                                        {TYPE_LABEL[r.type]}
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                        {new Date(r.created_at).toLocaleString("vi-VN")}
-                                    </span>
+                        {!showSkeleton && rows.map((r, i) => (
+                            <div
+                                key={r.id}
+                                className="p-4 flex gap-3 history-fade-in"
+                                style={{ animationDelay: `${Math.min(i, 10) * 20}ms` }}
+                            >
+                                <div className="flex-shrink-0 self-center">
+                                    <AnimatedCheckbox checked={selected.has(r.id)} onChange={() => toggleOne(r.id)} />
                                 </div>
-                                <p className="text-sm text-gray-700">{describeAction(r)}</p>
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-600">{r.drinks?.name}</span>
-                                    <span className="font-semibold text-gray-900">SL: {r.quantity}</span>
+                                <div className="flex-1 min-w-0 space-y-1.5">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${TYPE_COLOR[r.type]}`}>
+                                            {TYPE_LABEL[r.type]}
+                                        </span>
+                                        <span className="text-xs text-gray-400 flex-shrink-0">
+                                            {new Date(r.created_at).toLocaleString("vi-VN")}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-700">{describeAction(r)}</p>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-600">{r.drinks?.name}</span>
+                                        <span className="font-semibold text-gray-900">SL: {r.quantity}</span>
+                                    </div>
+                                    {r.note && <p className="text-xs text-gray-400">{r.note}</p>}
+                                    <div className="flex justify-end">
+                                        <button
+                                            onClick={() => deleteOne(r.id)}
+                                            disabled={deleting}
+                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-red-600 border-2 border-red-800 hover:bg-red-700 disabled:opacity-40"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5 text-white" />
+                                            Xoá
+                                        </button>
+                                    </div>
                                 </div>
-                                {r.note && <p className="text-xs text-gray-400">{r.note}</p>}
                             </div>
                         ))}
                     </div>
@@ -747,21 +967,35 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
                     <table className="hidden sm:table w-full text-sm">
                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase sticky top-0">
                             <tr>
+                                <th className="w-10 px-4 py-2.5">
+                                    <AnimatedCheckbox checked={allSelected} onChange={toggleAll} />
+                                </th>
                                 <th className="text-left px-4 py-2.5 font-semibold">Thời gian</th>
                                 <th className="text-left px-4 py-2.5 font-semibold">Hành động</th>
                                 <th className="text-left px-4 py-2.5 font-semibold">Loại nước</th>
                                 <th className="text-right px-4 py-2.5 font-semibold">SL</th>
+                                <th className="text-right px-4 py-2.5 font-semibold whitespace-nowrap">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {loading && (
-                                <tr><td colSpan={4} className="text-center py-8 text-gray-400">Đang tải...</td></tr>
+                        <tbody
+                            className="divide-y divide-gray-100 transition-opacity duration-200"
+                            style={{ opacity: fetching && !showSkeleton ? 0.45 : 1 }}
+                        >
+                            {showSkeleton && Array.from({ length: skeletonCount }).map((_, i) => (
+                                <HistoryRowSkeletonDesktop key={i} />
+                            ))}
+                            {!showSkeleton && rows.length === 0 && (
+                                <tr><td colSpan={6} className="text-center py-8 text-gray-400">Chưa có giao dịch nào</td></tr>
                             )}
-                            {!loading && rows.length === 0 && (
-                                <tr><td colSpan={4} className="text-center py-8 text-gray-400">Chưa có giao dịch nào</td></tr>
-                            )}
-                            {rows.map((r) => (
-                                <tr key={r.id}>
+                            {!showSkeleton && rows.map((r, i) => (
+                                <tr
+                                    key={r.id}
+                                    className={`history-fade-in transition-colors ${selected.has(r.id) ? "bg-sky-50/60" : ""}`}
+                                    style={{ animationDelay: `${Math.min(i, 10) * 20}ms` }}
+                                >
+                                    <td className="px-4 py-2.5">
+                                        <AnimatedCheckbox checked={selected.has(r.id)} onChange={() => toggleOne(r.id)} />
+                                    </td>
                                     <td className="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">
                                         {new Date(r.created_at).toLocaleString("vi-VN")}
                                     </td>
@@ -774,10 +1008,213 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
                                     </td>
                                     <td className="px-4 py-2.5 text-gray-700">{r.drinks?.name}</td>
                                     <td className="px-4 py-2.5 text-right font-semibold">{r.quantity}</td>
+                                    <td className="px-4 py-2.5 text-right">
+                                        <button
+                                            onClick={() => deleteOne(r.id)}
+                                            disabled={deleting}
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-red-600 border-2 border-red-800 hover:bg-red-700 transition-colors disabled:opacity-40"
+                                            title="Xoá giao dịch"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5 text-white" />
+                                            Xoá
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 py-3 border-t border-gray-100">
+                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Trước</button>
+                        <span className="text-sm text-gray-500">Trang {page}/{totalPages}</span>
+                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Sau</button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+
+type DrinkRequestRow = {
+    id: string;
+    user_id: string;
+    quantity: number;
+    note?: string;
+    status: "pending" | "approved" | "rejected";
+    created_at: string;
+    reviewed_at?: string;
+    reject_reason?: string;
+    drinks?: { name: string; image_url?: string; price?: number };
+    users?: { full_name: string; avatar_url?: string; phone?: string };
+};
+
+function RequestsModal({ onClose, onChanged }: { onClose: () => void; onChanged: () => void }) {
+    const [rows, setRows] = useState<DrinkRequestRow[]>([]);
+    const [status, setStatus] = useState<string>("pending");
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [fetching, setFetching] = useState(false);
+    const [processingId, setProcessingId] = useState<string | null>(null);
+    const hasLoadedOnce = useRef(false);
+
+    const load = useCallback(async () => {
+        setFetching(true);
+        try {
+            const { data } = await userDrinksAdminApi.getRequests({ status, page, limit: 15 });
+            setRows(data.data);
+            setTotalPages(data.meta.total_pages || 1);
+        } finally {
+            setFetching(false);
+            setInitialLoading(false);
+            hasLoadedOnce.current = true;
+        }
+    }, [status, page]);
+
+    useEffect(() => { load(); }, [load]);
+
+    const approve = async (id: string) => {
+        setProcessingId(id);
+        try {
+            await userDrinksAdminApi.approveRequest(id);
+            toast.success("Đã duyệt yêu cầu");
+            load();
+            onChanged();
+        } catch {
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const reject = async (id: string) => {
+        const reason = prompt("Lý do từ chối (không bắt buộc):") || undefined;
+        setProcessingId(id);
+        try {
+            await userDrinksAdminApi.rejectRequest(id, reason);
+            toast.success("Đã từ chối yêu cầu");
+            load();
+            onChanged();
+        } catch {
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const STATUS_OPTIONS = [
+        { value: "pending", label: "Chờ duyệt" },
+        { value: "approved", label: "Đã duyệt" },
+        { value: "rejected", label: "Đã từ chối" },
+        { value: "all", label: "Tất cả" },
+    ];
+
+    const STATUS_BADGE: Record<string, string> = {
+        pending: "bg-amber-100 text-amber-700",
+        approved: "bg-emerald-100 text-emerald-700",
+        rejected: "bg-red-100 text-red-700",
+    };
+    const STATUS_LABEL: Record<string, string> = {
+        pending: "Chờ duyệt",
+        approved: "Đã duyệt",
+        rejected: "Từ chối",
+    };
+
+    const showSkeleton = initialLoading && !hasLoadedOnce.current;
+
+    return (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <style>{`
+                @keyframes shimmer { 100% { transform: translateX(100%); } }
+                @keyframes rowFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+                .req-fade-in { animation: rowFadeIn 0.25s ease-out both; }
+            `}</style>
+            <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                    <h3 className="font-bold text-gray-900">Yêu cầu tự thêm nước</h3>
+                    <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                <div className="px-5 py-3 border-b border-gray-100">
+                    <div className="w-48">
+                        <CustomSelect
+                            value={status}
+                            onChange={(v) => { setPage(1); setStatus(v); }}
+                            options={STATUS_OPTIONS}
+                            triggerClassName="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700 text-left"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto divide-y divide-gray-100" style={{ opacity: fetching && !showSkeleton ? 0.45 : 1, transition: "opacity 0.2s" }}>
+                    {showSkeleton && Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="p-4 flex items-center gap-3">
+                            <SkeletonBlock className="w-10 h-10 rounded-full flex-shrink-0" />
+                            <div className="flex-1 space-y-2">
+                                <SkeletonBlock className="h-4 w-40" />
+                                <SkeletonBlock className="h-3 w-24" />
+                            </div>
+                            <SkeletonBlock className="h-8 w-20 rounded-lg" />
+                        </div>
+                    ))}
+
+                    {!showSkeleton && rows.length === 0 && (
+                        <div className="text-center py-10 text-gray-400 text-sm">Không có yêu cầu nào</div>
+                    )}
+
+                    {!showSkeleton && rows.map((r, i) => (
+                        <div key={r.id} className="p-4 flex items-center gap-3 req-fade-in" style={{ animationDelay: `${Math.min(i, 10) * 20}ms` }}>
+                            {r.users?.avatar_url ? (
+                                <img src={r.users.avatar_url} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-xs flex-shrink-0">
+                                    {r.users?.full_name?.[0]?.toUpperCase()}
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="font-semibold text-gray-900 text-sm">{r.users?.full_name}</p>
+                                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_BADGE[r.status]}`}>
+                                        {STATUS_LABEL[r.status]}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    Muốn thêm <span className="font-semibold text-gray-700">{r.quantity}</span> {r.drinks?.name}
+                                </p>
+                                {r.note && <p className="text-xs text-gray-400 mt-0.5">Ghi chú: {r.note}</p>}
+                                {r.status === "rejected" && r.reject_reason && (
+                                    <p className="text-xs text-red-500 mt-0.5">Lý do từ chối: {r.reject_reason}</p>
+                                )}
+                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                    {new Date(r.created_at).toLocaleString("vi-VN")}
+                                </p>
+                            </div>
+                            {r.status === "pending" && (
+                                <div className="flex gap-1.5 flex-shrink-0">
+                                    <button
+                                        onClick={() => approve(r.id)}
+                                        disabled={processingId === r.id}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40"
+                                    >
+                                        <Check className="w-3.5 h-3.5" />
+                                        Duyệt
+                                    </button>
+                                    <button
+                                        onClick={() => reject(r.id)}
+                                        disabled={processingId === r.id}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-red-600 border-2 border-red-800 hover:bg-red-700 disabled:opacity-40"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                        Từ chối
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
 
                 {totalPages > 1 && (

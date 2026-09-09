@@ -117,7 +117,7 @@ export default function SendDrinksPage() {
     };
 
     return (
-        <div className="mx-auto max-w-md space-y-5 p-4">
+        <div className="mx-auto max-w-md space-y-5 p-4 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
             <div className="flex items-center gap-2">
                 <Link href="/drinks/my" className="rounded-lg p-2 hover:bg-gray-100 flex-shrink-0">
                     <ArrowLeft className="h-5 w-5" />

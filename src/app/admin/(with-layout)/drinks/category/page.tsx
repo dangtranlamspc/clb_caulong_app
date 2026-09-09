@@ -11,7 +11,6 @@ type Drink = {
     name: string;
     image_url: string | null;
     price: number;
-    quantity: number;
     is_active: boolean;
 };
 
@@ -43,12 +42,9 @@ export default function AdminDrinksManager() {
 
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
-    const [quantity, setQuantity] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const [restockAmount, setRestockAmount] = useState<Record<string, string>>({});
 
     const loadDrinks = async () => {
         setLoading(true);
@@ -88,7 +84,6 @@ export default function AdminDrinksManager() {
         setEditingId(drink.id);
         setName(drink.name);
         setPrice(String(drink.price));
-        setQuantity(String(drink.quantity));
         setFile(null);
         setPreview(drink.image_url ?? null);
         setModalOpen(true);
@@ -105,7 +100,6 @@ export default function AdminDrinksManager() {
     const resetForm = () => {
         setName("");
         setPrice("");
-        setQuantity("");
         setFile(null);
         setPreview(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -122,7 +116,6 @@ export default function AdminDrinksManager() {
                 await drinksAdminApi.update(editingId, {
                     name: name.trim(),
                     price: Number(price),
-                    quantity: quantity ? Number(quantity) : 0,
                     file: file ?? undefined,
                 });
                 toast.success("Đã cập nhật loại nước");
@@ -130,7 +123,6 @@ export default function AdminDrinksManager() {
                 await drinksAdminApi.create({
                     name: name.trim(),
                     price: Number(price),
-                    quantity: quantity ? Number(quantity) : 0,
                     file: file ?? undefined,
                 });
                 toast.success("Đã thêm loại nước mới");
@@ -141,20 +133,6 @@ export default function AdminDrinksManager() {
         } catch {
         } finally {
             setSubmitting(false);
-        }
-    };
-
-    const handleRestock = async (id: string) => {
-        const raw = restockAmount[id];
-        const amount = Number(raw);
-        if (!raw || amount <= 0) return toast.error("Nhập số lượng cần nhập kho");
-
-        try {
-            await drinksAdminApi.restock(id, amount);
-            toast.success(`Đã nhập thêm ${amount} vào kho`);
-            setRestockAmount((prev) => ({ ...prev, [id]: "" }));
-            loadDrinks();
-        } catch {
         }
     };
 
@@ -180,9 +158,9 @@ export default function AdminDrinksManager() {
         <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
             <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                    <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Kho nước</h1>
+                    <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Loại nước</h1>
                     <p className="mt-1 text-sm text-slate-500">
-                        Theo dõi giá bán và số lượng tồn kho từng loại nước.
+                        Quản lý danh mục các loại nước: tên, ảnh và giá bán.
                     </p>
                 </div>
                 <button
@@ -240,56 +218,21 @@ export default function AdminDrinksManager() {
                                     </button>
                                 </div>
 
-                                <div className="mt-3 space-y-2.5 border-t border-slate-100 pt-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm text-slate-500">
-                                            Tồn kho:{" "}
-                                            <span
-                                                className={
-                                                    drink.quantity <= 5
-                                                        ? "font-semibold text-amber-600"
-                                                        : "font-semibold text-slate-700"
-                                                }
-                                            >
-                                                {drink.quantity}
-                                            </span>
-                                        </span>
-                                        <div className="flex items-center gap-1">
-                                            <button
-                                                onClick={() => openEditModal(drink)}
-                                                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100"
-                                                aria-label={`Sửa ${drink.name}`}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(drink.id, drink.name)}
-                                                className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 active:bg-red-50"
-                                                aria-label={`Xóa ${drink.name}`}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            placeholder="Số lượng nhập"
-                                            value={restockAmount[drink.id] ?? ""}
-                                            onChange={(e) =>
-                                                setRestockAmount((prev) => ({ ...prev, [drink.id]: e.target.value }))
-                                            }
-                                            className="w-full flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none"
-                                        />
-                                        <button
-                                            onClick={() => handleRestock(drink.id)}
-                                            className="flex-shrink-0 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 active:bg-slate-200"
-                                        >
-                                            Nhập kho
-                                        </button>
-                                    </div>
+                                <div className="mt-3 flex items-center justify-end gap-1 border-t border-slate-100 pt-3">
+                                    <button
+                                        onClick={() => openEditModal(drink)}
+                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100"
+                                        aria-label={`Sửa ${drink.name}`}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(drink.id, drink.name)}
+                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 active:bg-red-50"
+                                        aria-label={`Xóa ${drink.name}`}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -301,8 +244,6 @@ export default function AdminDrinksManager() {
                                 <tr>
                                     <th className="px-4 py-3 font-medium">Nước</th>
                                     <th className="px-4 py-3 font-medium">Giá</th>
-                                    <th className="px-4 py-3 font-medium">Tồn kho</th>
-                                    <th className="px-4 py-3 font-medium">Nhập thêm</th>
                                     <th className="px-4 py-3 font-medium">Trạng thái</th>
                                     <th className="px-4 py-3"></th>
                                 </tr>
@@ -325,37 +266,6 @@ export default function AdminDrinksManager() {
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-slate-600">{formatVND(drink.price)}</td>
-                                        <td className="px-4 py-3">
-                                            <span
-                                                className={
-                                                    drink.quantity <= 5
-                                                        ? "font-medium text-amber-600"
-                                                        : "font-medium text-slate-700"
-                                                }
-                                            >
-                                                {drink.quantity}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="number"
-                                                    min={1}
-                                                    placeholder="SL"
-                                                    value={restockAmount[drink.id] ?? ""}
-                                                    onChange={(e) =>
-                                                        setRestockAmount((prev) => ({ ...prev, [drink.id]: e.target.value }))
-                                                    }
-                                                    className="w-16 rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-cyan-500 focus:outline-none"
-                                                />
-                                                <button
-                                                    onClick={() => handleRestock(drink.id)}
-                                                    className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
-                                                >
-                                                    Nhập kho
-                                                </button>
-                                            </div>
-                                        </td>
                                         <td className="px-4 py-3">
                                             <button
                                                 onClick={() => handleToggleActive(drink.id)}
@@ -448,32 +358,16 @@ export default function AdminDrinksManager() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">Giá tiền (đ)</label>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={formatNumberInput(price)}
-                                        onChange={(e) => setPrice(parseNumberInput(e.target.value))}
-                                        placeholder="10.000"
-                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                                        Số lượng ban đầu
-                                    </label>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={formatNumberInput(quantity)}
-                                        onChange={(e) => setQuantity(parseNumberInput(e.target.value))}
-                                        placeholder="0"
-                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
-                                    />
-                                </div>
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700">Giá tiền (đ)</label>
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formatNumberInput(price)}
+                                    onChange={(e) => setPrice(parseNumberInput(e.target.value))}
+                                    placeholder="10.000"
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                                />
                             </div>
 
                             <button
