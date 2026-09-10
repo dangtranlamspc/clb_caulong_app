@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { userDrinksAdminApi, drinksAdminApi, membersAdminApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import { createPortal } from "react-dom";
+import { supabase } from "@/lib/supabase";
 
 type Drink = { id: string; name: string; price: number; image_url?: string };
 
@@ -108,6 +109,21 @@ export default function DrinksOverviewPage() {
     useEffect(() => { loadStats(); }, [loadStats]);
     useEffect(() => { loadMembers(); }, [loadMembers]);
     useEffect(() => { loadPendingCount(); }, [loadPendingCount]);
+
+    useEffect(() => {
+        const channel = supabase
+            .channel(`drink-requests:admin`)
+            .on("broadcast", { event: "requests_updated" }, () => {
+                loadPendingCount();
+                loadMembers();
+                loadStats();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const refreshAll = () => {
         loadStats();

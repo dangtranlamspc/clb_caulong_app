@@ -94,13 +94,14 @@ export default function AdjustMyDrinksPage() {
             .channel(`drink-wallet:${userId}`)
             .on("broadcast", { event: "wallet_updated" }, () => {
                 loadInventory();
+                loadMyRequests();
             })
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userId, loadInventory]);
+    }, [userId, loadInventory, loadMyRequests]);
 
     const handleSelfDeduct = async (drinkId: string, owned: number) => {
         const raw = amounts[drinkId];
