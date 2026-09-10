@@ -1644,30 +1644,30 @@ export default function TournamentRegistrationsPage() {
                         onCollapsed={() => handleRowCollapsed(r.id)}
                         className="hover:bg-gray-50/60 transition-colors"
                       >
-                        <td className="px-4 py-3.5 text-gray-400">
+                        <td className="px-4 py-3.5 text-gray-400 align-middle">
                           {(page - 1) * PAGE_SIZE + i + 1}
                         </td>
-                        <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-2.5">
+                        <td className="px-4 py-3.5 align-middle">
+                          <div className="flex items-start gap-2.5">
                             <img
                               src={
                                 r.users?.avatar_url ||
                                 `https://ui-avatars.com/api/?name=${encodeURIComponent(r.users?.full_name ?? r.guest_full_name ?? "?")}`
                               }
-                              className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-50"
+                              className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-50 mt-0.5"
                               alt=""
                             />
-                            <div className="min-w-0">
-                              <p className="font-medium text-gray-900 truncate">
+                            <div className="min-w-0 max-w-[180px] lg:max-w-[220px]">
+                              <p className="font-medium text-gray-900 break-words leading-snug">
                                 {r.users?.full_name ?? r.guest_full_name ?? "—"}
                               </p>
-                              <p className="text-xs text-gray-400 truncate">
+                              <p className="text-xs text-gray-400 break-words leading-snug">
                                 {r.users?.email ?? r.guest_email ?? (r.user_id ? "" : "Khách")}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-3.5 align-middle">
                           <span
                             className={`text-xs font-semibold px-2.5 py-1 rounded-full ${r.user_id
                               ? "bg-indigo-50 text-indigo-600"
@@ -1677,10 +1677,10 @@ export default function TournamentRegistrationsPage() {
                             {r.user_id ? "Thành viên" : "Khách"}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 text-gray-600">
+                        <td className="px-4 py-3.5 text-gray-600 align-middle">
                           {r.role === "nam" ? "Nam" : "Nữ"}
                         </td>
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-3.5 align-middle">
                           <div className="w-20">
                             <CustomSelect
                               value={r.level ?? ""}
@@ -1689,7 +1689,7 @@ export default function TournamentRegistrationsPage() {
                             />
                           </div>
                         </td>
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-3.5 align-middle">
                           <span
                             className={`text-xs font-semibold px-2.5 py-1 rounded-full ${r.role === "nam"
                               ? "bg-blue-50 text-blue-600"
@@ -1699,15 +1699,15 @@ export default function TournamentRegistrationsPage() {
                             {r.role === "nam" ? "VĐV Nam" : "VĐV Nữ"}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 text-gray-600">
+                        <td className="px-4 py-3.5 text-gray-600 align-middle">
                           {r.users?.phone ?? r.guest_phone ?? "—"}
                         </td>
-                        <td className="px-4 py-3.5 text-gray-500">
+                        <td className="px-4 py-3.5 text-gray-500 align-middle">
                           {r.created_at
                             ? format(new Date(r.created_at), "dd/MM/yyyy HH:mm", { locale: vi })
                             : "—"}
                         </td>
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-3.5 align-middle">
                           {r.payment_status === "confirmed" ? (
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-green-50 text-green-700">
@@ -1765,7 +1765,7 @@ export default function TournamentRegistrationsPage() {
                             </div>
                           )}
                         </td>
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-3.5 align-middle">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => openModal(r, "view")}
@@ -1813,20 +1813,20 @@ export default function TournamentRegistrationsPage() {
                       className="p-4 space-y-3 rounded-2xl border border-gray-100 shadow-md bg-white"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="flex items-start gap-2.5 min-w-0">
                           <img
                             src={
                               r.users?.avatar_url ||
                               `https://ui-avatars.com/api/?name=${encodeURIComponent(r.users?.full_name ?? r.guest_full_name ?? "?")}`
                             }
-                            className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-50"
+                            className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-50 mt-0.5"
                             alt=""
                           />
                           <div className="min-w-0">
-                            <p className="font-medium text-gray-900 truncate">
+                            <p className="font-medium text-gray-900 break-words leading-snug">
                               {r.users?.full_name ?? r.guest_full_name ?? "—"}
                             </p>
-                            <p className="text-xs text-gray-400 truncate">
+                            <p className="text-xs text-gray-400 break-words leading-snug">
                               {r.users?.email ?? r.guest_email ?? (r.user_id ? "" : "Khách")}
                             </p>
                           </div>
