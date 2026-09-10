@@ -21,15 +21,6 @@ import {
     Wallet as WalletIcon,
 } from "lucide-react";
 
-/**
- * REDESIGN
- * Premium badminton tournament landing page:
- * - Hero ảnh lớn + gradient tối, thay cho poster dạng editorial cũ.
- * - Card kính / border mờ, hierarchy rõ hơn.
- * - Desktop: nội dung 2 cột, sidebar thông tin giải đấu sticky.
- * - Mobile: stack tự nhiên, CTA luôn nổi ở đáy.
- * - Giữ nguyên toàn bộ data/API/business logic của trang cũ.
- */
 
 function formatCurrency(n: number) {
     return (n ?? 0).toLocaleString("vi-VN") + "đ";
@@ -346,7 +337,18 @@ export default function TournamentLandingPage() {
             );
         }
 
-        if (hasNuRole) parts.push("Nữ");
+        if (hasNuRole) {
+            const levels = [
+                ...new Set(
+                    composition
+                        .filter((c) => c.role === "nu")
+                        .map((c) => c.level),
+                ),
+            ];
+            parts.push(
+                `Nữ${levels.length ? ` (${levels.join(", ")})` : ""}`,
+            );
+        }
 
         return parts.join(" · ") || "—";
     }, [matchContents, composition, hasNamRole, hasNuRole]);
@@ -626,7 +628,7 @@ export default function TournamentLandingPage() {
                                                             <span className={`condensed text-xl font-bold ${c.role === "nu" ? "text-[#D91C2E]" : "text-[#171515]"}`}>{String(idx + 1).padStart(2, "0")}</span>
                                                             <span className="text-sm font-bold">{c.role === "nu" ? "Nữ" : "Nam"}</span>
                                                         </div>
-                                                        {c.role === "nam" && c.level && (
+                                                        {c.level && (
                                                             <span className="text-[9px] font-extrabold uppercase tracking-wide text-[#8B827A]">Trình {c.level}</span>
                                                         )}
                                                     </div>

@@ -177,6 +177,7 @@ export default function TournamentPublicRegisterPage() {
     const [loadError, setLoadError] = useState<string | null>(null);
 
     const [step, setStep] = useState(1);
+    const [direction, setDirection] = useState<"forward" | "backward">("forward");
     const [submitting, setSubmitting] = useState(false);
     const [done, setDone] = useState(false);
     const [registration, setRegistration] = useState<any>(null);
@@ -197,6 +198,11 @@ export default function TournamentPublicRegisterPage() {
 
     const update = (patch: Partial<typeof form>) =>
         setForm((f) => ({ ...f, ...patch }));
+
+    const goToStep = (target: number) => {
+        setDirection(target >= step ? "forward" : "backward");
+        setStep(target);
+    };
 
     useEffect(() => {
         if (!activityId) return;
@@ -307,7 +313,7 @@ export default function TournamentPublicRegisterPage() {
 
     const registerGuest = async () => {
         if (regId) {
-            setStep(4);
+            goToStep(4);
             return;
         }
         setSubmitting(true);
@@ -325,7 +331,7 @@ export default function TournamentPublicRegisterPage() {
             });
             setRegId(data.registration.id);
             setRegistration(data.registration);
-            setStep(4);
+            goToStep(4);
         } catch (err: any) {
             toast.error(
                 err?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại",
@@ -370,13 +376,13 @@ export default function TournamentPublicRegisterPage() {
         if (step === 1) {
             const err = validateStep1();
             if (err) return toast.error(err);
-            setStep(2);
+            goToStep(2);
             return;
         }
         if (step === 2) {
             const err = validateStep2();
             if (err) return toast.error(err);
-            setStep(3);
+            goToStep(3);
             return;
         }
         if (step === 3) {
@@ -394,7 +400,7 @@ export default function TournamentPublicRegisterPage() {
             router.back();
             return;
         }
-        setStep((s) => s - 1);
+        goToStep(step - 1);
     };
 
     if (loading) {
@@ -475,7 +481,7 @@ export default function TournamentPublicRegisterPage() {
                                 </div>
                                 {idx < STEPS.length - 1 && (
                                     <div
-                                        className={`flex-1 h-px mx-3 ${step > s.id || done ? "bg-emerald-300" : "bg-gray-200"
+                                        className={`flex-1 h-px mx-3 transition-colors duration-500 ${step > s.id || done ? "bg-emerald-300" : "bg-gray-200"
                                             }`}
                                     />
                                 )}
@@ -483,491 +489,527 @@ export default function TournamentPublicRegisterPage() {
                         );
                     })}
                 </div>
-
-                {done ? (
-                    <SuccessView
-                        activity={activity}
-                        registration={registration}
-                        form={form}
-                        hasFee={hasFee}
-                        entryFee={entryFee}
-                        transferRef={transferRef}
-                        vietQrUrl={vietQrUrl}
-                        bankDisplayName={bankDisplayName}
-                        bankAccount={bankAccount}
-                        bankAccountName={bankAccountName}
-                        copyRef={copyRef}
-                        copied={copied}
-                        router={router}
-                    />
-                ) : (
-                    <>
-                        {step === 1 && (
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
-                                <div className="flex items-center gap-2.5 mb-4">
-                                    <div
-                                        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                                        style={{ background: "#eef2ff" }}
-                                    >
-                                        <ListChecks className="w-4.5 h-4.5 text-indigo-600" />
-                                    </div>
-                                    <h3 className="font-bold text-gray-900">Thông tin giải đấu</h3>
-                                </div>
-
-                                {activity.cover_image_url && (
-                                    <img
-                                        src={activity.cover_image_url}
-                                        alt={activity.title}
-                                        className="w-full h-100 sm:h-100 object-cover rounded-xl mb-5"
-                                    />
-                                )}
-
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
-                                    <SummaryRow
-                                        icon={<Calendar className="w-3.5 h-3.5" />}
-                                        label="Thời gian"
-                                        value={formatDateTime(activity.event_date)}
-                                    />
-                                    <SummaryRow
-                                        icon={<MapPin className="w-3.5 h-3.5" />}
-                                        label="Địa điểm"
-                                        value={activity.location || "—"}
-                                    />
-                                    <SummaryRow
-                                        icon={<Users className="w-3.5 h-3.5" />}
-                                        label="Hình thức"
-                                        value="Đội"
-                                    />
-                                    <SummaryRow
-                                        icon={<ListChecks className="w-3.5 h-3.5" />}
-                                        label="Nội dung"
-                                        value={contentSummary}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
-                            <div className="space-y-4 min-w-0">
-                                {step === 1 && (
-                                    <SectionCard
-                                        icon={<User className="w-4.5 h-4.5 text-blue-600" />}
-                                        iconBg="#eef2ff"
-                                        title="Thông tin cá nhân"
-                                    >
-                                        <div className="bg-blue-50 border border-blue-100 rounded-xl px-3.5 py-2.5 text-xs text-blue-700 mb-4 flex items-center justify-between gap-2">
-                                            <span>Đã là thành viên CLB? Đăng nhập để đăng ký nhanh hơn.</span>
-                                            <button
-                                                onClick={() =>
-                                                    router.push(
-                                                        `/auth/login?redirect=/activities/${activityId}`,
-                                                    )
-                                                }
-                                                className="text-blue-700 font-semibold whitespace-nowrap hover:underline flex-shrink-0"
+                <StepFade stepKey={done ? "done" : "form"} direction="forward">
+                    {done ? (
+                        <SuccessView
+                            activity={activity}
+                            registration={registration}
+                            form={form}
+                            hasFee={hasFee}
+                            entryFee={entryFee}
+                            transferRef={transferRef}
+                            vietQrUrl={vietQrUrl}
+                            bankDisplayName={bankDisplayName}
+                            bankAccount={bankAccount}
+                            bankAccountName={bankAccountName}
+                            copyRef={copyRef}
+                            copied={copied}
+                            router={router}
+                        />
+                    ) : (
+                        <>
+                            {step === 1 && (
+                                <StepFade stepKey={step} direction={direction}>
+                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
+                                        <div className="flex items-center gap-2.5 mb-4">
+                                            <div
+                                                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                                                style={{ background: "#eef2ff" }}
                                             >
-                                                Đăng nhập
-                                            </button>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <Field label="Họ và tên" required>
-                                                <input
-                                                    className="input-field"
-                                                    placeholder="Nguyễn Văn A"
-                                                    value={form.full_name}
-                                                    onChange={(e) => update({ full_name: e.target.value })}
-                                                />
-                                            </Field>
-                                            <Field label="Số điện thoại" required>
-                                                <div className="relative">
-                                                    <Phone className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
-                                                    <input
-                                                        className="input-field pl-9"
-                                                        placeholder="0912 345 678"
-                                                        value={form.phone}
-                                                        onChange={(e) => update({ phone: e.target.value })}
-                                                    />
-                                                </div>
-                                            </Field>
-                                            <Field label="Ngày sinh" required>
-                                                <input
-                                                    type="date"
-                                                    className="input-field"
-                                                    value={form.date_of_birth}
-                                                    onChange={(e) => update({ date_of_birth: e.target.value })}
-                                                />
-                                            </Field>
-                                            <Field label="Email" required>
-                                                <div className="relative">
-                                                    <Mail className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
-                                                    <input
-                                                        type="email"
-                                                        className="input-field pl-9"
-                                                        placeholder="ban@email.com"
-                                                        value={form.email}
-                                                        onChange={(e) => update({ email: e.target.value })}
-                                                    />
-                                                </div>
-                                            </Field>
-                                            <Field label="Giới tính" required>
-                                                <div className="flex items-center gap-5 h-[42px]">
-                                                    {(["nam", "nu"] as const).map((g) => (
-                                                        <label
-                                                            key={g}
-                                                            className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
-                                                        >
-                                                            <input
-                                                                type="radio"
-                                                                name="gender"
-                                                                checked={form.gender === g}
-                                                                onChange={() => update({ gender: g })}
-                                                                className="accent-blue-600 w-4 h-4"
-                                                            />
-                                                            {g === "nam" ? "Nam" : "Nữ"}
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </Field>
-                                            <Field label="Địa chỉ">
-                                                <div className="relative">
-                                                    <MapPin className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
-                                                    <input
-                                                        className="input-field pl-9"
-                                                        placeholder="TP. Thủ Đức, TP. Hồ Chí Minh"
-                                                        value={form.address}
-                                                        onChange={(e) => update({ address: e.target.value })}
-                                                    />
-                                                </div>
-                                            </Field>
-                                        </div>
-                                    </SectionCard>
-                                )}
-
-                                {step === 2 && (
-                                    <SectionCard
-                                        icon={<MessageCircle className="w-4.5 h-4.5 text-purple-600" />}
-                                        iconBg="#f3e8ff"
-                                        title="Thông tin thi đấu"
-                                    >
-                                        <div className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-3.5 py-2.5 mb-4">
-                                            <div>
-                                                <p className="text-xs text-gray-400 mb-0.5">
-                                                    Vai trò đăng ký (theo giới tính đã chọn)
-                                                </p>
-                                                <span
-                                                    className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${form.gender === "nam"
-                                                        ? "bg-blue-50 text-blue-600"
-                                                        : "bg-pink-50 text-pink-600"
-                                                        }`}
-                                                >
-                                                    {form.gender === "nam" ? "VĐV Nam" : "VĐV Nữ"}
-                                                </span>
+                                                <ListChecks className="w-4.5 h-4.5 text-indigo-600" />
                                             </div>
-                                            <button
-                                                onClick={() => setStep(1)}
-                                                className="text-xs font-semibold text-blue-600 hover:underline flex-shrink-0"
-                                            >
-                                                Đổi giới tính
-                                            </button>
+                                            <h3 className="font-bold text-gray-900">Thông tin giải đấu</h3>
                                         </div>
 
-                                        {!genderRoleSupported && (
-                                            <div className="bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5 text-xs text-red-600 mb-4">
-                                                Giải đấu này hiện không tổ chức nội dung dành cho{" "}
-                                                {form.gender === "nam" ? "Nam" : "Nữ"}. Vui lòng quay lại
-                                                đổi giới tính hoặc liên hệ BTC.
-                                            </div>
+                                        {activity.cover_image_url && (
+                                            <img
+                                                src={activity.cover_image_url}
+                                                alt={activity.title}
+                                                className="w-full h-100 sm:h-100 object-cover rounded-xl mb-5"
+                                            />
                                         )}
 
-                                        <Field label="Trình độ hiện tại" required>
-                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-                                                {LEVELS.map((l) => {
-                                                    const disabled =
-                                                        derivedRole === "nam" &&
-                                                        availableLevels.length > 0 &&
-                                                        !availableLevels.some((a) => a.value === l.value);
-                                                    return (
-                                                        <PickCard
-                                                            key={l.value}
-                                                            active={form.level === l.value}
-                                                            onClick={() => update({ level: l.value })}
-                                                            title={l.label}
-                                                            sub={l.sub}
-                                                            disabled={disabled}
-                                                        />
-                                                    );
-                                                })}
-                                            </div>
-                                        </Field>
-
-                                        <Field label="Ghi chú thêm (nếu có)">
-                                            <textarea
-                                                rows={3}
-                                                maxLength={200}
-                                                className="input-field w-full resize-none"
-                                                placeholder="Nhập ghi chú..."
-                                                value={form.notes}
-                                                onChange={(e) => update({ notes: e.target.value })}
-                                            />
-                                            <p className="text-right text-[11px] text-gray-300 mt-1">
-                                                {form.notes.length}/200
-                                            </p>
-                                        </Field>
-                                    </SectionCard>
-                                )}
-
-                                {step === 3 && (
-                                    <SectionCard
-                                        icon={<ListChecks className="w-4.5 h-4.5 text-indigo-600" />}
-                                        iconBg="#eef2ff"
-                                        title="Xác nhận thông tin đăng ký"
-                                    >
-                                        <div className="divide-y divide-gray-50">
-                                            <ReviewRow label="Họ và tên" value={form.full_name} />
-                                            <ReviewRow label="Số điện thoại" value={form.phone} />
-                                            <ReviewRow
-                                                label="Ngày sinh"
-                                                value={
-                                                    form.date_of_birth
-                                                        ? new Date(form.date_of_birth).toLocaleDateString("vi-VN")
-                                                        : "—"
-                                                }
-                                            />
-                                            <ReviewRow label="Email" value={form.email} />
-                                            <ReviewRow
-                                                label="Giới tính"
-                                                value={form.gender === "nam" ? "Nam" : "Nữ"}
-                                            />
-                                            <ReviewRow label="Địa chỉ" value={form.address || "—"} />
-                                            <ReviewRow
-                                                label="Vai trò đăng ký"
-                                                value={form.gender === "nam" ? "VĐV Nam" : "VĐV Nữ"}
-                                            />
-                                            <ReviewRow
-                                                label="Trình độ"
-                                                value={form.level ? `Trình ${form.level}` : "—"}
-                                            />
-                                            <ReviewRow label="Ghi chú" value={form.notes || "—"} />
-                                        </div>
-
-                                        <div className="flex items-center gap-3 mt-4 pt-3 border-t border-gray-50">
-                                            <button
-                                                onClick={() => setStep(1)}
-                                                className="text-xs font-semibold text-blue-600 hover:underline"
-                                            >
-                                                Sửa thông tin cá nhân
-                                            </button>
-                                            <span className="text-gray-200">•</span>
-                                            <button
-                                                onClick={() => setStep(2)}
-                                                className="text-xs font-semibold text-blue-600 hover:underline"
-                                            >
-                                                Sửa thông tin thi đấu
-                                            </button>
-                                        </div>
-                                    </SectionCard>
-                                )}
-
-                                {step === 4 && (
-                                    hasFee ? (
-                                        <SectionCard
-                                            icon={<WalletIcon className="w-4.5 h-4.5 text-amber-600" />}
-                                            iconBg="#fef3c7"
-                                            title="Thanh toán lệ phí"
-                                        >
-                                            <div className="bg-amber-50 border border-amber-100 rounded-xl px-3.5 py-2.5 text-xs text-amber-700 mb-4">
-                                                Lệ phí thi đấu: <b>{formatCurrency(entryFee)}</b> / người.
-                                                Vui lòng hoàn tất thanh toán để xác nhận đăng ký.
-                                            </div>
-
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
-                                                <PickCard
-                                                    active={form.payment_method === "transfer"}
-                                                    onClick={() => update({ payment_method: "transfer" })}
-                                                    title="Chuyển khoản ngân hàng"
-                                                    sub="Chuyển khoản qua tài khoản ngân hàng"
-                                                    icon={<Landmark className="w-5 h-5 text-blue-500 mb-1" />}
-                                                />
-                                                <PickCard
-                                                    active={form.payment_method === "cash"}
-                                                    onClick={() => update({ payment_method: "cash" })}
-                                                    title="Thanh toán tiền mặt"
-                                                    sub="Thanh toán trực tiếp cho BTC"
-                                                    icon={<WalletIcon className="w-5 h-5 text-emerald-500 mb-1" />}
-                                                />
-                                            </div>
-
-                                            {form.payment_method === "transfer" && (
-                                                <div className="rounded-xl border border-gray-100 p-3.5">
-                                                    {vietQrUrl && (
-                                                        <img
-                                                            src={vietQrUrl}
-                                                            alt="VietQR"
-                                                            className="w-36 h-auto mx-auto rounded-lg border border-gray-100 mb-3"
-                                                        />
-                                                    )}
-                                                    <p className="text-xs text-gray-400 mb-1">
-                                                        Nội dung chuyển khoản
-                                                    </p>
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <span className="font-mono font-semibold text-gray-900 text-sm truncate">
-                                                            {transferRef}
-                                                        </span>
-                                                        <button
-                                                            onClick={copyRef}
-                                                            className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 flex-shrink-0"
-                                                        >
-                                                            {copied ? (
-                                                                <Check className="w-3.5 h-3.5" />
-                                                            ) : (
-                                                                <Copy className="w-3.5 h-3.5" />
-                                                            )}
-                                                            Sao chép
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </SectionCard>
-                                    ) : (
-                                        <SectionCard
-                                            icon={<WalletIcon className="w-4.5 h-4.5 text-emerald-600" />}
-                                            iconBg="#e6f7ee"
-                                            title="Hoàn tất đăng ký"
-                                        >
-                                            <p className="text-sm text-gray-500 leading-relaxed">
-                                                Giải đấu này không thu lệ phí tham gia. Nhấn{" "}
-                                                <b>&ldquo;Hoàn tất đăng ký&rdquo;</b> để gửi thông tin đăng ký
-                                                của bạn. Xác nhận đăng ký sẽ được gửi về email bạn đã cung cấp.
-                                            </p>
-                                        </SectionCard>
-                                    )
-                                )}
-
-                                <div className="flex items-center justify-between pt-1">
-                                    {step < 4 ? (
-                                        <button
-                                            onClick={handleBack}
-                                            className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 px-4 py-2.5"
-                                        >
-                                            <ChevronLeft className="w-4 h-4" /> Quay lại
-                                        </button>
-                                    ) : (
-                                        <span />
-                                    )}
-                                    <button
-                                        disabled={submitting}
-                                        onClick={handleNext}
-                                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors ml-auto"
-                                    >
-                                        {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                                        {step === 3
-                                            ? "Xác nhận & Gửi đăng ký"
-                                            : step === 4
-                                                ? hasFee
-                                                    ? "Thanh toán & Hoàn tất"
-                                                    : "Hoàn tất đăng ký"
-                                                : "Tiếp tục"}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Cột phải: thông tin phụ theo từng bước */}
-                            <div className="space-y-4">
-                                {step >= 2 && (
-                                    <SectionCard
-                                        icon={<User className="w-4.5 h-4.5 text-blue-600" />}
-                                        iconBg="#eef2ff"
-                                        title="Thông tin đăng ký"
-                                    >
-                                        <div className="flex items-center gap-3.5 mb-3.5">
-                                            <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center font-bold text-blue-600 text-lg flex-shrink-0">
-                                                {initials(form.full_name)}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="font-semibold text-gray-900 truncate">
-                                                    {form.full_name || "—"}
-                                                </p>
-                                                <p className="text-xs text-gray-400">Người đăng ký</p>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2 text-xs">
-                                            <SummaryRow label="SĐT" value={form.phone || "—"} plain />
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
                                             <SummaryRow
-                                                label="Giới tính"
-                                                value={form.gender ? (form.gender === "nam" ? "Nam" : "Nữ") : "—"}
-                                                plain
+                                                icon={<Calendar className="w-3.5 h-3.5" />}
+                                                label="Thời gian"
+                                                value={formatDateTime(activity.event_date)}
                                             />
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-gray-400">Vai trò</span>
-                                                {form.gender ? (
+                                            <SummaryRow
+                                                icon={<MapPin className="w-3.5 h-3.5" />}
+                                                label="Địa điểm"
+                                                value={activity.location || "—"}
+                                            />
+                                            <SummaryRow
+                                                icon={<Users className="w-3.5 h-3.5" />}
+                                                label="Hình thức"
+                                                value="Đội"
+                                            />
+                                            <SummaryRow
+                                                icon={<ListChecks className="w-3.5 h-3.5" />}
+                                                label="Nội dung"
+                                                value={contentSummary}
+                                            />
+                                        </div>
+                                    </div>
+                                </StepFade>
+                            )}
+
+                            <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
+                                <div className="space-y-4 min-w-0">
+                                    <StepFade stepKey={step} direction={direction}>
+                                        {step === 1 && (
+                                            <SectionCard
+                                                icon={<User className="w-4.5 h-4.5 text-blue-600" />}
+                                                iconBg="#eef2ff"
+                                                title="Thông tin cá nhân"
+                                            >
+                                                <div className="bg-blue-50 border border-blue-100 rounded-xl px-3.5 py-2.5 text-xs text-blue-700 mb-4 flex items-center justify-between gap-2">
+                                                    <span>Đã là thành viên CLB? Đăng nhập để đăng ký nhanh hơn.</span>
+                                                    <button
+                                                        onClick={() =>
+                                                            router.push(
+                                                                `/auth/login?redirect=/activities/${activityId}`,
+                                                            )
+                                                        }
+                                                        className="text-blue-700 font-semibold whitespace-nowrap hover:underline flex-shrink-0"
+                                                    >
+                                                        Đăng nhập
+                                                    </button>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <Field label="Họ và tên" required>
+                                                        <input
+                                                            className="input-field"
+                                                            placeholder="Nguyễn Văn A"
+                                                            value={form.full_name}
+                                                            onChange={(e) => update({ full_name: e.target.value })}
+                                                        />
+                                                    </Field>
+                                                    <Field label="Số điện thoại" required>
+                                                        <div className="relative">
+                                                            <Phone className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                                                            <input
+                                                                className="input-field pl-9"
+                                                                placeholder="0912 345 678"
+                                                                value={form.phone}
+                                                                onChange={(e) => update({ phone: e.target.value })}
+                                                            />
+                                                        </div>
+                                                    </Field>
+                                                    <Field label="Ngày sinh" required>
+                                                        <input
+                                                            type="date"
+                                                            className="input-field"
+                                                            value={form.date_of_birth}
+                                                            onChange={(e) => update({ date_of_birth: e.target.value })}
+                                                        />
+                                                    </Field>
+                                                    <Field label="Email" required>
+                                                        <div className="relative">
+                                                            <Mail className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                                                            <input
+                                                                type="email"
+                                                                className="input-field pl-9"
+                                                                placeholder="ban@email.com"
+                                                                value={form.email}
+                                                                onChange={(e) => update({ email: e.target.value })}
+                                                            />
+                                                        </div>
+                                                    </Field>
+                                                    <Field label="Giới tính" required>
+                                                        <div className="flex items-center gap-5 h-[42px]">
+                                                            {(["nam", "nu"] as const).map((g) => (
+                                                                <label
+                                                                    key={g}
+                                                                    className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                                                                >
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="gender"
+                                                                        checked={form.gender === g}
+                                                                        onChange={() => update({ gender: g })}
+                                                                        className="accent-blue-600 w-4 h-4"
+                                                                    />
+                                                                    {g === "nam" ? "Nam" : "Nữ"}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </Field>
+                                                    <Field label="Địa chỉ">
+                                                        <div className="relative">
+                                                            <MapPin className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                                                            <input
+                                                                className="input-field pl-9"
+                                                                placeholder="TP. Thủ Đức, TP. Hồ Chí Minh"
+                                                                value={form.address}
+                                                                onChange={(e) => update({ address: e.target.value })}
+                                                            />
+                                                        </div>
+                                                    </Field>
+                                                </div>
+                                            </SectionCard>
+                                        )}
+                                    </StepFade>
+
+                                    {step === 2 && (
+                                        <SectionCard
+                                            icon={<MessageCircle className="w-4.5 h-4.5 text-purple-600" />}
+                                            iconBg="#f3e8ff"
+                                            title="Thông tin thi đấu"
+                                        >
+                                            <div className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-3.5 py-2.5 mb-4">
+                                                <div>
+                                                    <p className="text-xs text-gray-400 mb-0.5">
+                                                        Vai trò đăng ký (theo giới tính đã chọn)
+                                                    </p>
                                                     <span
-                                                        className={`text-xs font-semibold px-2 py-0.5 rounded-full ${form.gender === "nam"
+                                                        className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${form.gender === "nam"
                                                             ? "bg-blue-50 text-blue-600"
                                                             : "bg-pink-50 text-pink-600"
                                                             }`}
                                                     >
-                                                        VĐV {form.gender === "nam" ? "Nam" : "Nữ"}
+                                                        {form.gender === "nam" ? "VĐV Nam" : "VĐV Nữ"}
                                                     </span>
-                                                ) : (
-                                                    <span className="text-gray-400">—</span>
-                                                )}
+                                                </div>
+                                                <button
+                                                    onClick={() => goToStep(1)}
+                                                    className="text-xs font-semibold text-blue-600 hover:underline flex-shrink-0"
+                                                >
+                                                    Đổi giới tính
+                                                </button>
                                             </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-gray-400">Trình độ</span>
-                                                {form.level ? (
-                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-                                                        Trình {form.level}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-gray-400">—</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </SectionCard>
-                                )}
 
-                                {step === 4 && hasFee && (
-                                    <SectionCard
-                                        icon={<WalletIcon className="w-4.5 h-4.5 text-red-500" />}
-                                        iconBg="#fee2e2"
-                                        title="Lệ phí thi đấu"
-                                    >
-                                        <p className="text-2xl font-bold text-red-500">
-                                            {formatCurrency(entryFee)}
-                                            <span className="text-xs font-medium text-gray-400"> / người</span>
-                                        </p>
-                                        <div className="mt-3 space-y-1.5 text-xs">
-                                            <SummaryRow label="Số lượng" value="1 người" plain />
-                                            <div className="flex items-center justify-between pt-1.5 border-t border-gray-50">
-                                                <span className="text-gray-500 font-semibold">Tổng cộng</span>
-                                                <span className="font-bold text-gray-900">
+                                            {!genderRoleSupported && (
+                                                <div className="bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5 text-xs text-red-600 mb-4">
+                                                    Giải đấu này hiện không tổ chức nội dung dành cho{" "}
+                                                    {form.gender === "nam" ? "Nam" : "Nữ"}. Vui lòng quay lại
+                                                    đổi giới tính hoặc liên hệ BTC.
+                                                </div>
+                                            )}
+
+                                            <Field label="Trình độ hiện tại" required>
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+                                                    {LEVELS.map((l) => {
+                                                        const disabled =
+                                                            derivedRole === "nam" &&
+                                                            availableLevels.length > 0 &&
+                                                            !availableLevels.some((a) => a.value === l.value);
+                                                        return (
+                                                            <PickCard
+                                                                key={l.value}
+                                                                active={form.level === l.value}
+                                                                onClick={() => update({ level: l.value })}
+                                                                title={l.label}
+                                                                sub={l.sub}
+                                                                disabled={disabled}
+                                                            />
+                                                        );
+                                                    })}
+                                                </div>
+                                            </Field>
+
+                                            <Field label="Ghi chú thêm (nếu có)">
+                                                <textarea
+                                                    rows={3}
+                                                    maxLength={200}
+                                                    className="input-field w-full resize-none"
+                                                    placeholder="Nhập ghi chú..."
+                                                    value={form.notes}
+                                                    onChange={(e) => update({ notes: e.target.value })}
+                                                />
+                                                <p className="text-right text-[11px] text-gray-300 mt-1">
+                                                    {form.notes.length}/200
+                                                </p>
+                                            </Field>
+                                        </SectionCard>
+                                    )}
+
+                                    {step === 3 && (
+                                        <SectionCard
+                                            icon={<ListChecks className="w-4.5 h-4.5 text-indigo-600" />}
+                                            iconBg="#eef2ff"
+                                            title="Xác nhận thông tin đăng ký"
+                                        >
+                                            <div className="divide-y divide-gray-50">
+                                                <ReviewRow label="Họ và tên" value={form.full_name} />
+                                                <ReviewRow label="Số điện thoại" value={form.phone} />
+                                                <ReviewRow
+                                                    label="Ngày sinh"
+                                                    value={
+                                                        form.date_of_birth
+                                                            ? new Date(form.date_of_birth).toLocaleDateString("vi-VN")
+                                                            : "—"
+                                                    }
+                                                />
+                                                <ReviewRow label="Email" value={form.email} />
+                                                <ReviewRow
+                                                    label="Giới tính"
+                                                    value={form.gender === "nam" ? "Nam" : "Nữ"}
+                                                />
+                                                <ReviewRow label="Địa chỉ" value={form.address || "—"} />
+                                                <ReviewRow
+                                                    label="Vai trò đăng ký"
+                                                    value={form.gender === "nam" ? "VĐV Nam" : "VĐV Nữ"}
+                                                />
+                                                <ReviewRow
+                                                    label="Trình độ"
+                                                    value={form.level ? `Trình ${form.level}` : "—"}
+                                                />
+                                                <ReviewRow label="Ghi chú" value={form.notes || "—"} />
+                                            </div>
+
+                                            <div className="flex items-center gap-3 mt-4 pt-3 border-t border-gray-50">
+                                                <button
+                                                    onClick={() => goToStep(1)}
+                                                    className="text-xs font-semibold text-blue-600 hover:underline"
+                                                >
+                                                    Sửa thông tin cá nhân
+                                                </button>
+                                                <span className="text-gray-200">•</span>
+                                                <button
+                                                    onClick={() => goToStep(2)}
+                                                    className="text-xs font-semibold text-blue-600 hover:underline"
+                                                >
+                                                    Sửa thông tin thi đấu
+                                                </button>
+                                            </div>
+                                        </SectionCard>
+                                    )}
+
+                                    {step === 4 && (
+                                        hasFee ? (
+                                            <SectionCard
+                                                icon={<WalletIcon className="w-4.5 h-4.5 text-amber-600" />}
+                                                iconBg="#fef3c7"
+                                                title="Thanh toán lệ phí"
+                                            >
+                                                <div className="bg-amber-50 border border-amber-100 rounded-xl px-3.5 py-2.5 text-xs text-amber-700 mb-4">
+                                                    Lệ phí thi đấu: <b>{formatCurrency(entryFee)}</b> / người.
+                                                    Vui lòng hoàn tất thanh toán để xác nhận đăng ký.
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                                                    <PickCard
+                                                        active={form.payment_method === "transfer"}
+                                                        onClick={() => update({ payment_method: "transfer" })}
+                                                        title="Chuyển khoản ngân hàng"
+                                                        sub="Chuyển khoản qua tài khoản ngân hàng"
+                                                        icon={<Landmark className="w-5 h-5 text-blue-500 mb-1" />}
+                                                    />
+                                                    <PickCard
+                                                        active={form.payment_method === "cash"}
+                                                        onClick={() => update({ payment_method: "cash" })}
+                                                        title="Thanh toán tiền mặt"
+                                                        sub="Thanh toán trực tiếp cho BTC"
+                                                        icon={<WalletIcon className="w-5 h-5 text-emerald-500 mb-1" />}
+                                                    />
+                                                </div>
+
+                                                {form.payment_method === "transfer" && (
+                                                    <div className="rounded-xl border border-gray-100 p-3.5">
+                                                        {vietQrUrl && (
+                                                            <img
+                                                                src={vietQrUrl}
+                                                                alt="VietQR"
+                                                                className="w-36 h-auto mx-auto rounded-lg border border-gray-100 mb-3"
+                                                            />
+                                                        )}
+                                                        <p className="text-xs text-gray-400 mb-1">
+                                                            Nội dung chuyển khoản
+                                                        </p>
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span className="font-mono font-semibold text-gray-900 text-sm truncate">
+                                                                {transferRef}
+                                                            </span>
+                                                            <button
+                                                                onClick={copyRef}
+                                                                className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 flex-shrink-0"
+                                                            >
+                                                                {copied ? (
+                                                                    <Check className="w-3.5 h-3.5" />
+                                                                ) : (
+                                                                    <Copy className="w-3.5 h-3.5" />
+                                                                )}
+                                                                Sao chép
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </SectionCard>
+                                        ) : (
+                                            <SectionCard
+                                                icon={<WalletIcon className="w-4.5 h-4.5 text-emerald-600" />}
+                                                iconBg="#e6f7ee"
+                                                title="Hoàn tất đăng ký"
+                                            >
+                                                <p className="text-sm text-gray-500 leading-relaxed">
+                                                    Giải đấu này không thu lệ phí tham gia. Nhấn{" "}
+                                                    <b>&ldquo;Hoàn tất đăng ký&rdquo;</b> để gửi thông tin đăng ký
+                                                    của bạn. Xác nhận đăng ký sẽ được gửi về email bạn đã cung cấp.
+                                                </p>
+                                            </SectionCard>
+                                        )
+                                    )}
+
+                                    <div className="flex items-center justify-between pt-1">
+                                        {step < 4 ? (
+                                            <button
+                                                onClick={handleBack}
+                                                className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 px-4 py-2.5"
+                                            >
+                                                <ChevronLeft className="w-4 h-4" /> Quay lại
+                                            </button>
+                                        ) : (
+                                            <span />
+                                        )}
+                                        <button
+                                            disabled={submitting}
+                                            onClick={handleNext}
+                                            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors ml-auto"
+                                        >
+                                            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                            {step === 3
+                                                ? "Xác nhận & Gửi đăng ký"
+                                                : step === 4
+                                                    ? hasFee
+                                                        ? "Thanh toán & Hoàn tất"
+                                                        : "Hoàn tất đăng ký"
+                                                    : "Tiếp tục"}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <StepFade stepKey={step} direction={direction}>
+                                        {step >= 2 && (
+                                            <SectionCard
+                                                icon={<User className="w-4.5 h-4.5 text-blue-600" />}
+                                                iconBg="#eef2ff"
+                                                title="Thông tin đăng ký"
+                                            >
+                                                <div className="flex items-center gap-3.5 mb-3.5">
+                                                    <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center font-bold text-blue-600 text-lg flex-shrink-0">
+                                                        {initials(form.full_name)}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold text-gray-900 truncate">
+                                                            {form.full_name || "—"}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400">Người đăng ký</p>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2 text-xs">
+                                                    <SummaryRow label="SĐT" value={form.phone || "—"} plain />
+                                                    <SummaryRow
+                                                        label="Giới tính"
+                                                        value={form.gender ? (form.gender === "nam" ? "Nam" : "Nữ") : "—"}
+                                                        plain
+                                                    />
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-gray-400">Vai trò</span>
+                                                        {form.gender ? (
+                                                            <span
+                                                                className={`text-xs font-semibold px-2 py-0.5 rounded-full ${form.gender === "nam"
+                                                                    ? "bg-blue-50 text-blue-600"
+                                                                    : "bg-pink-50 text-pink-600"
+                                                                    }`}
+                                                            >
+                                                                VĐV {form.gender === "nam" ? "Nam" : "Nữ"}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-400">—</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-gray-400">Trình độ</span>
+                                                        {form.level ? (
+                                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                                                                Trình {form.level}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-400">—</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </SectionCard>
+                                        )}
+
+                                        {step === 4 && hasFee && (
+                                            <SectionCard
+                                                icon={<WalletIcon className="w-4.5 h-4.5 text-red-500" />}
+                                                iconBg="#fee2e2"
+                                                title="Lệ phí thi đấu"
+                                            >
+                                                <p className="text-2xl font-bold text-red-500">
                                                     {formatCurrency(entryFee)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </SectionCard>
-                                )}
+                                                    <span className="text-xs font-medium text-gray-400"> / người</span>
+                                                </p>
+                                                <div className="mt-3 space-y-1.5 text-xs">
+                                                    <SummaryRow label="Số lượng" value="1 người" plain />
+                                                    <div className="flex items-center justify-between pt-1.5 border-t border-gray-50">
+                                                        <span className="text-gray-500 font-semibold">Tổng cộng</span>
+                                                        <span className="font-bold text-gray-900">
+                                                            {formatCurrency(entryFee)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </SectionCard>
+                                        )}
+                                    </StepFade>
 
-                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                                    <h3 className="font-bold text-gray-900 text-sm mb-1.5">
-                                        Bạn cần hỗ trợ?
-                                    </h3>
-                                    <p className="text-xs text-gray-400 leading-relaxed mb-3">
-                                        Liên hệ BTC qua số điện thoại hoặc Fanpage để được hỗ trợ
-                                        nhanh chóng.
-                                    </p>
-                                    <a
-                                        href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`}
-                                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-                                    >
-                                        <Phone className="w-4 h-4" /> Liên hệ BTC
-                                    </a>
+                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                                        <h3 className="font-bold text-gray-900 text-sm mb-1.5">
+                                            Bạn cần hỗ trợ?
+                                        </h3>
+                                        <p className="text-xs text-gray-400 leading-relaxed mb-3">
+                                            Liên hệ BTC qua số điện thoại hoặc Fanpage để được hỗ trợ
+                                            nhanh chóng.
+                                        </p>
+                                        <a
+                                            href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`}
+                                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                        >
+                                            <Phone className="w-4 h-4" /> Liên hệ BTC
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </>
-                )}
+                        </>
+                    )}
+                </StepFade>
             </div>
+        </div>
+    );
+}
+
+
+function StepFade({
+    stepKey,
+    direction,
+    children,
+}: {
+    stepKey: number | string;
+    direction: "forward" | "backward";
+    children: React.ReactNode;
+}) {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        setVisible(false);
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, [stepKey]);
+
+    const hiddenTranslate = direction === "forward" ? "translate-x-3" : "-translate-x-3";
+
+    return (
+        <div
+            className={`transition-all duration-300 ease-out ${visible ? "opacity-100 translate-x-0" : `opacity-0 ${hiddenTranslate}`
+                }`}
+        >
+            {children}
         </div>
     );
 }
