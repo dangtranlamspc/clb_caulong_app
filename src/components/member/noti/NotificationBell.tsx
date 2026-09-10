@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2, AlertTriangle, Swords, Trophy, XCircle, RotateCcw } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2, AlertTriangle, Swords, Trophy, XCircle, RotateCcw, GlassWater } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -39,6 +39,11 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     match_result_rejected: { icon: XCircle, cls: 'text-red-500', bg: 'bg-red-50' },
     match_result_rolled_back: { icon: RotateCcw, cls: 'text-orange-600', bg: 'bg-orange-50' },
     match_cancelled: { icon: XCircle, cls: 'text-red-500', bg: 'bg-red-50' },
+
+    drink_request_approved: { icon: CheckCircle2, cls: 'text-emerald-600', bg: 'bg-emerald-50' },
+    drink_request_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
+
+    drink_gift_received: { icon: GlassWater, cls: 'text-cyan-600', bg: 'bg-cyan-50' },
 };
 
 const SWIPE_THRESHOLD = -70;
@@ -123,6 +128,7 @@ function NotificationItem({
     onDelete,
     onNavigateWalletTx,
     onNavigateShirtOrderHistory,
+    onNavigateDrinkRequest,
     guestActionId,
     guestHandled,
     onGuestConfirm,
@@ -138,6 +144,7 @@ function NotificationItem({
     onDelete: (id: string) => void;
     onNavigateWalletTx: (n: any) => void;
     onNavigateShirtOrderHistory: (n: any) => void;
+    onNavigateDrinkRequest: (n: any) => void;
     guestActionId: string | null;
     guestHandled: Set<string>;
     onGuestConfirm: (n: any, mode: 'grouped' | 'separate') => void;
@@ -245,6 +252,11 @@ function NotificationItem({
         n.type === 'shirt_order_payment_request' ||
         n.type === 'shirt_order_registered_by_admin';
 
+    const isDrinkRequestNavigable =
+        n.type === 'drink_request_approved' ||
+        n.type === 'drink_request_rejected' ||
+        n.type === 'drink_gift_received';
+
     return (
         <li className="relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-5">
@@ -257,6 +269,10 @@ function NotificationItem({
                     if (movedRef.current) return;
                     if (isShirtOrderNavigable) {
                         onNavigateShirtOrderHistory(n);
+                        return;
+                    }
+                    if (isDrinkRequestNavigable) {
+                        onNavigateDrinkRequest(n);
                         return;
                     }
                     if (hasWalletTx) {
@@ -445,6 +461,12 @@ export function NotificationBell() {
         if (!n.is_read) markRead(n.id);
         setOpen(false);
         router.push(`/events/${activityId}/history`);
+    };
+
+    const handleNavigateDrinkRequest = (n: any) => {
+        if (!n.is_read) markRead(n.id);
+        setOpen(false);
+        router.push('/drinks/my');
     };
 
     const load = async () => {
@@ -868,6 +890,7 @@ export function NotificationBell() {
                                         onDelete={handleDelete}
                                         onNavigateWalletTx={handleNavigateWalletTx}
                                         onNavigateShirtOrderHistory={handleNavigateShirtOrderHistory}
+                                        onNavigateDrinkRequest={handleNavigateDrinkRequest}
                                         guestActionId={guestActionId}
                                         guestHandled={guestHandled}
                                         onGuestConfirm={handleGuestConfirm}

@@ -41,6 +41,8 @@ self.addEventListener("notificationclick", (event) => {
 
     if (data.url) {
         targetUrl = data.url;
+    } else if (data.notif_type === "drink_request_pending") {
+        targetUrl = "/admin/drinks/overview";
     } else if (data.session_id) {
         targetUrl = isAdmin
             ? `/admin/sessions/${data.session_id}`

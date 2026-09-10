@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import { userDrinksApi, drinksApi } from "@/lib/api";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store/auth.store";
 
 type InventoryItem = {
     drink_id: string;
@@ -39,6 +41,7 @@ const REQ_STATUS_LABEL: Record<string, string> = {
 };
 
 export default function AdjustMyDrinksPage() {
+    const userId = useAuthStore((s) => s.user?.id);
     const [tab, setTab] = useState<"deduct" | "add">("deduct");
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [catalog, setCatalog] = useState<CatalogDrink[]>([]);
@@ -83,6 +86,21 @@ export default function AdjustMyDrinksPage() {
         loadMyRequests();
         drinksApi.list().then(({ data }) => setCatalog(data ?? [])).catch(() => { });
     }, [loadInventory, loadMyRequests]);
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const channel = supabase
+            .channel(`drink-wallet:${userId}`)
+            .on("broadcast", { event: "wallet_updated" }, () => {
+                loadInventory();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [userId, loadInventory]);
 
     const handleSelfDeduct = async (drinkId: string, owned: number) => {
         const raw = amounts[drinkId];

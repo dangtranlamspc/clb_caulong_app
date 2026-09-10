@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { GlassWater, SlidersHorizontal, Send, History, ArrowLeft } from "lucide-react";
 import { userDrinksApi } from "@/lib/api";
+import { useAuthStore } from "@/store/auth.store";
+import { supabase } from "@/lib/supabase";
 
 type InventoryItem = {
     drink_id: string;
@@ -13,6 +15,7 @@ type InventoryItem = {
 const formatVND = (n: number) => n.toLocaleString("vi-VN") + " đ";
 
 export default function MyDrinksPage() {
+    const userId = useAuthStore((s) => s.user?.id);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -30,6 +33,22 @@ export default function MyDrinksPage() {
     useEffect(() => {
         loadInventory();
     }, [loadInventory]);
+
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const channel = supabase
+            .channel(`drink-wallet:${userId}`)
+            .on("broadcast", { event: "wallet_updated" }, () => {
+                loadInventory();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [userId, loadInventory]);
 
     const totalQuantity = inventory.reduce((s, i) => s + i.quantity, 0);
     const totalValue = inventory.reduce((s, i) => s + i.quantity * (i.drinks?.price ?? 0), 0);

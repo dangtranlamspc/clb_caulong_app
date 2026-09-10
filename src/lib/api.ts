@@ -868,6 +868,8 @@ export const notificationsAdminApi = {
   markAllRead: () => api.patch("/admin/notifications/read-all"),
   delete: (id: string) => api.delete(`/admin/notifications/${id}`),
   deleteAll: () => api.delete("/admin/notifications"),
+  resolve: (id: string, action: "approved" | "rejected") =>
+    api.patch(`/admin/notifications/${id}/resolve`, { action }),
 };
 
 

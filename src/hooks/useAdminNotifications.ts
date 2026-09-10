@@ -183,13 +183,19 @@ export function useAdminNotifications() {
         }
     }, [notifications, load]);
 
-    const markResolved = useCallback((id: string, action: "approved" | "rejected") => {
+    const markResolved = useCallback(async (id: string, action: "approved" | "rejected") => {
         setNotifications((prev) =>
             prev.map((n) =>
                 n.id === id ? { ...n, data: { ...(n.data ?? {}), resolved: true, resolved_action: action } } : n,
             ),
         );
-    }, []);
+        try {
+            await notificationsAdminApi.resolve(id, action);
+        } catch (err) {
+            console.error("[useAdminNotifications] Lỗi đánh dấu đã xử lý:", err);
+            load();
+        }
+    }, [load]);
 
     return { notifications, unreadCount, loading, markRead, markAllRead, remove, markResolved, deleteAll, reload: load };
 }

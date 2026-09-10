@@ -4,6 +4,8 @@ import Link from "next/link";
 import { GlassWater, Search, Send, Building2, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { userDrinksApi, usersApi } from "@/lib/api";
+import { useAuthStore } from "@/store/auth.store";
+import { supabase } from "@/lib/supabase";
 
 type InventoryItem = {
     drink_id: string;
@@ -14,6 +16,7 @@ type InventoryItem = {
 type SearchedUser = { id: string; full_name: string; phone?: string; avatar_url?: string };
 
 export default function SendDrinksPage() {
+    const userId = useAuthStore((s) => s.user?.id);
     const [tab, setTab] = useState<"member" | "club">("member");
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,6 +44,21 @@ export default function SendDrinksPage() {
     }, []);
 
     useEffect(() => { loadInventory(); }, [loadInventory]);
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const channel = supabase
+            .channel(`drink-wallet:${userId}`)
+            .on("broadcast", { event: "wallet_updated" }, () => {
+                loadInventory();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [userId, loadInventory]);
 
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);

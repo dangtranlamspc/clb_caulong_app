@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import Lottie, { LottieRefCurrentProps } from "lottie-react";
 import { Trash2, Loader2, CheckCircle2, XCircle, Phone, X, Wallet } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
-import { walletAdminApi, registrationsAdminApi, matchesAdminApi, eventsAdminApi } from "@/lib/api";
+import { walletAdminApi, registrationsAdminApi, matchesAdminApi, eventsAdminApi, userDrinksAdminApi } from "@/lib/api";
 import toast from "react-hot-toast";
 import bellAnimation from "../../../../public/lottie/noti.json";
 import { usePathname, useRouter } from "next/navigation";
@@ -42,6 +42,7 @@ function ResolvedBadge({ action }: { action?: "approved" | "rejected" | "cancell
         </div>
     );
 }
+
 
 function ShirtOrderPaymentModal({
     registrationIds,
@@ -711,6 +712,40 @@ export function AdminNotificationBell() {
     };
 
 
+    const handleApproveDrinkRequest = async (notifId: string, requestId: string) => {
+        setProcessingId(notifId);
+        setProcessingAction("approve");
+        try {
+            await userDrinksAdminApi.approveRequest(requestId);
+            toast.success("Đã duyệt yêu cầu thêm nước");
+            await markRead(notifId);
+            markResolved(notifId, "approved");
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Duyệt thất bại, vui lòng thử lại");
+        } finally {
+            setProcessingId(null);
+            setProcessingAction(null);
+        }
+    };
+
+    const handleRejectDrinkRequest = async (notifId: string, requestId: string) => {
+        const reason = window.prompt("Nhập lý do từ chối (không bắt buộc):") ?? undefined;
+        setProcessingId(notifId);
+        setProcessingAction("reject");
+        try {
+            await userDrinksAdminApi.rejectRequest(requestId, reason?.trim() || undefined);
+            toast.success("Đã từ chối yêu cầu thêm nước");
+            await markRead(notifId);
+            markResolved(notifId, "rejected");
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Từ chối thất bại, vui lòng thử lại");
+        } finally {
+            setProcessingId(null);
+            setProcessingAction(null);
+        }
+    };
+
+
     const handleOpenShirtOrderCancel = (notifId: string, registrationIds: string[]) => {
         markRead(notifId);
         setShirtOrderCancelModal({ notifId, registrationIds });
@@ -840,6 +875,9 @@ export function AdminNotificationBell() {
 
                                 const isFeedbackReceived = n.type === "feedback_received";
                                 const feedbackUserId = n.data?.user_id;
+
+                                const isDrinkRequestPending = n.type === "drink_request_pending";
+                                const drinkRequestId = n.data?.request_id;
 
                                 const isResolved = n.data?.resolved === true;
                                 const resolvedAction = n.data?.resolved_action as "approved" | "rejected" | undefined;
@@ -1039,6 +1077,31 @@ export function AdminNotificationBell() {
                                                         Chi tiết
                                                     </button>
                                                 </div>
+                                            )}
+
+                                            {isDrinkRequestPending && drinkRequestId && (
+                                                isResolved ? (
+                                                    <ResolvedBadge action={resolvedAction} />
+                                                ) : (
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <button
+                                                            onClick={() => handleApproveDrinkRequest(n.id, drinkRequestId)}
+                                                            disabled={isProcessing}
+                                                            className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                        >
+                                                            {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                            Duyệt
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRejectDrinkRequest(n.id, drinkRequestId)}
+                                                            disabled={isProcessing}
+                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                        >
+                                                            {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                            Từ chối
+                                                        </button>
+                                                    </div>
+                                                )
                                             )}
 
                                         </div>
