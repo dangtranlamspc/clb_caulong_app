@@ -5,6 +5,7 @@ import { GlassWater, Plus, X, ArrowLeft, Clock, Check, XCircle } from "lucide-re
 import toast from "react-hot-toast";
 import { userDrinksApi, drinksApi } from "@/lib/api";
 import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 type InventoryItem = {
     drink_id: string;
@@ -291,15 +292,19 @@ export default function AdjustMyDrinksPage() {
                 </div>
             )}
 
-            {showAddDrinkModal && createPortal(
-                <AddNewDrinkModal
-                    options={addableCatalog}
-                    onClose={() => setShowAddDrinkModal(false)}
-                    onSuccess={() => {
-                        setShowAddDrinkModal(false);
-                        loadMyRequests();
-                    }}
-                />,
+            {createPortal(
+                <AnimatePresence>
+                    {showAddDrinkModal && (
+                        <AddNewDrinkModal
+                            options={addableCatalog}
+                            onClose={() => setShowAddDrinkModal(false)}
+                            onSuccess={() => {
+                                setShowAddDrinkModal(false);
+                                loadMyRequests();
+                            }}
+                        />
+                    )}
+                </AnimatePresence>,
                 document.body
             )}
         </div>
@@ -342,8 +347,21 @@ function AddNewDrinkModal({
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            <motion.div
+                className="absolute inset-0 bg-black/50"
+                onClick={onClose}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+            />
+            <motion.div
+                className="relative w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl"
+                initial={{ opacity: 0, scale: 0.92, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 16 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="font-bold text-gray-900">Thêm loại nước mới</h3>
                     <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400">
@@ -364,7 +382,7 @@ function AddNewDrinkModal({
                     <div className="space-y-3.5">
                         <div>
                             <label className="text-xs font-semibold text-gray-500">Chọn loại nước</label>
-                            <div className="mt-1.5 grid max-h-56 grid-cols-3 gap-2 overflow-y-auto">
+                            <div className="mt-1.5 grid max-h-56 grid-cols-3 gap-2 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 {options.map((d) => (
                                     <button
                                         key={d.id}
@@ -420,7 +438,7 @@ function AddNewDrinkModal({
                         </button>
                     </div>
                 )}
-            </div>
-        </div>
+            </motion.div>
+        </div >
     );
 }
