@@ -90,12 +90,6 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }
   cancelled: { bg: "#fdecec", text: "#dc2626", border: "#f9cfcf" },
 };
 
-const GENDER_OPTIONS = [
-  { value: "", label: "Tất cả" },
-  { value: "nam", label: "Nam" },
-  { value: "nu", label: "Nữ" },
-];
-
 const ROLES_OPTIONS = [
   { value: "", label: "Tất cả" },
   { value: "nam", label: "VĐV Nam" },
@@ -693,7 +687,6 @@ function AdminAddTournamentRegistrationModal({
     <div
       className={`fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"
         }`}
-    // onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
         className={`bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transition-all duration-200 ease-out ${visible
@@ -1027,12 +1020,11 @@ export default function TournamentRegistrationsPage() {
         return registrations.filter((r) => r.role === "nam");
       case "nu":
         return registrations.filter((r) => r.role === "nu");
-      case "A":
-      case "B+":
-      case "B":
-      case "C":
-        return registrations.filter((r) => r.level === key);
       default:
+        if (key.includes("-")) {
+          const [role, level] = key.split("-");
+          return registrations.filter((r) => r.role === role && r.level === level);
+        }
         return [];
     }
   };
@@ -1202,6 +1194,25 @@ export default function TournamentRegistrationsPage() {
       C: byLevel("C"),
       revenue,
     };
+  }, [registrations]);
+
+
+  const genderLevelStats = useMemo(() => {
+    const levels = ["A", "B+", "B", "C"];
+    const roles: { value: "nam" | "nu"; label: string }[] = [
+      { value: "nam", label: "Nam" },
+      { value: "nu", label: "Nữ" },
+    ];
+    const result: { key: string; label: string; value: number; level: string }[] = [];
+    for (const r of roles) {
+      for (const lv of levels) {
+        const count = registrations.filter((x) => x.role === r.value && x.level === lv).length;
+        if (count > 0) {
+          result.push({ key: `${r.value}-${lv}`, label: `${r.label} ${lv}`, value: count, level: lv });
+        }
+      }
+    }
+    return result;
   }, [registrations]);
 
   const levelPct = (count: number) =>
@@ -1526,7 +1537,7 @@ export default function TournamentRegistrationsPage() {
       <div
         className={`flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 ${HIDE_SCROLLBAR_CLASS}`}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
           <StatCard
             label="Tổng số đăng ký"
             value={stats.total}
@@ -1535,7 +1546,7 @@ export default function TournamentRegistrationsPage() {
             icon="👥"
             onClick={() => openStatModal("total", "Tổng số đăng ký")}
           />
-          <StatCard
+          {/* <StatCard
             label="Nam"
             value={stats.nam}
             subPercent={Number(stats.namPct)}
@@ -1550,35 +1561,17 @@ export default function TournamentRegistrationsPage() {
             iconBg="#fdf0f4"
             icon="♀"
             onClick={() => openStatModal("nu", "Vận động viên Nữ")}
-          />
-          <StatCard
-            label="Trình A"
-            value={stats.A}
-            subPercent={Number(levelPct(stats.A))}
-            pillLevel="A"
-            onClick={() => openStatModal("A", "Vận động viên Trình A")}
-          />
-          <StatCard
-            label="Trình B+"
-            value={stats["B+"]}
-            subPercent={Number(levelPct(stats["B+"]))}
-            pillLevel="B+"
-            onClick={() => openStatModal("B+", "Vận động viên Trình B+")}
-          />
-          <StatCard
-            label="Trình B"
-            value={stats.B}
-            subPercent={Number(levelPct(stats.B))}
-            pillLevel="B"
-            onClick={() => openStatModal("B", "Vận động viên Trình B")}
-          />
-          <StatCard
-            label="Trình C"
-            value={stats.C}
-            subPercent={Number(levelPct(stats.C))}
-            pillLevel="C"
-            onClick={() => openStatModal("C", "Vận động viên Trình C")}
-          />
+          /> */}
+          {genderLevelStats.map((g) => (
+            <StatCard
+              key={g.key}
+              label={g.label}
+              value={g.value}
+              subPercent={Number(((g.value / (stats.total || 1)) * 100).toFixed(2))}
+              pillLevel={g.level}
+              onClick={() => openStatModal(g.key, `Vận động viên ${g.label}`)}
+            />
+          ))}
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 sm:gap-6">
