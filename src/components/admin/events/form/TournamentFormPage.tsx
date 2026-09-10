@@ -82,13 +82,16 @@ const SLOT_OPTIONS: CompositionSlot[] = [
     { role: "nam", level: "B+", label: "Nam B+" },
     { role: "nam", level: "B", label: "Nam B" },
     { role: "nam", level: "C", label: "Nam C" },
-    { role: "nu", level: null, label: "Nữ" },
+    { role: "nu", level: "A", label: "Nữ A" },
+    { role: "nu", level: "B+", label: "Nữ B+" },
+    { role: "nu", level: "B", label: "Nữ B" },
+    { role: "nu", level: "C", label: "Nữ C" },
 ];
 
 const slotOptionKey = (role: Role, level: Level | null) =>
     `${role}_${level ?? "x"}`;
 
-const DEFAULT_SLOT: CompositionSlot = { role: "nu", level: null, label: "Nữ" };
+const DEFAULT_SLOT: CompositionSlot = { role: "nu", level: "A", label: "Nữ A" };
 
 const SET_TYPE_OPTIONS = ["01 set", "02 set (best of 2)", "03 set (best of 3)"];
 
@@ -171,17 +174,16 @@ function defaultComposition(size: number): CompositionSlot[] {
         { role: "nam", level: "A", label: "Nam A" },
         { role: "nam", level: "B+", label: "Nam B+" },
         { role: "nam", level: "B", label: "Nam B" },
-        { role: "nu", level: null, label: "Nữ" },
+        { role: "nu", level: "A", label: "Nữ A" },
     ];
     if (size === 4) return base;
     if (size === 6) {
         return [
             ...base,
             { role: "nam", level: "C", label: "Nam C" },
-            { role: "nu", level: null, label: "Nữ" },
+            { role: "nu", level: "B", label: "Nữ B" },
         ];
     }
-
     return resizeComposition(base, size);
 }
 
@@ -189,7 +191,9 @@ const MATCH_CONTENT_OPTIONS = [
     { value: "Đôi Nam", label: "Đôi Nam" },
     { value: "Đôi Nam - Nữ", label: "Đôi Nam - Nữ" },
     { value: "Đôi Nữ", label: "Đôi Nữ" },
-    { value: "Đơn", label: "Đơn" },
+    { value: "Đơn Nam", label: "Đơn Nam" },
+    { value: "Đơn Nữ", label: "Đơn Nữ" },
+    { value: "3vs3", label: "3vs3" },
 ];
 
 function getMatchContentVisual(label: string) {
@@ -204,10 +208,20 @@ function getMatchContentVisual(label: string) {
                 background: "linear-gradient(135deg,#7c3aed,#a78bfa)",
                 icon: <TwoPeopleIcon />,
             };
-        case "Đơn":
+        case "Đơn Nam":
             return {
                 background: "linear-gradient(135deg,#374151,#6b7280)",
                 icon: <OnePersonIcon />,
+            };
+        case "Đơn Nữ":
+            return {
+                background: "linear-gradient(135deg,#c2185b,#f472b6)",
+                icon: <OnePersonIcon />,
+            };
+        case "3vs3":
+            return {
+                background: "linear-gradient(135deg,#0f766e,#14b8a6)",
+                icon: <ThreePeopleIcon />,
             };
         case "Đôi Nam":
         default:
@@ -285,8 +299,8 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                     Array.isArray(detail.composition) && detail.composition.length
                         ? detail.composition.map((c: any) => ({
                             role: c.role,
-                            level: c.role === "nu" ? null : c.level,
-                            label: c.label ?? (c.role === "nu" ? "Nữ" : `Nam ${c.level}`),
+                            level: c.level,
+                            label: c.label ?? (c.role === "nu" ? `Nữ ${c.level}` : `Nam ${c.level}`),
                         }))
                         : defaultComposition(teamSize);
 
@@ -526,8 +540,8 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                 return "Thành phần mỗi đội chưa khớp với số người/đội";
             }
             for (const slot of form.composition) {
-                if (slot.role === "nam" && !slot.level) {
-                    return "Vui lòng chọn trình độ cho từng ô Nam trong thành phần đội";
+                if (!slot.level) {
+                    return "Vui lòng chọn trình độ cho từng ô trong thành phần đội";
                 }
             }
         }
@@ -547,7 +561,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                 emoji: form.emoji,
                 event_date: toUtcIso(form.event_date),
                 deadline: form.deadline ? toUtcIso(form.deadline) : undefined,
-                status: form.status, // tạo mới: luôn "open"; sửa: giữ trạng thái hiện tại
+                status: form.status,
                 location: form.location || undefined,
                 description: form.description || undefined,
                 cover_image_url: form.cover_image_url || undefined,
@@ -564,7 +578,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                     max_teams: Number(form.max_teams),
                     composition: form.composition.map(({ role, level, label }) => ({
                         role,
-                        level: role === "nu" ? null : level,
+                        level,
                         label,
                     })),
                     entry_fee_per_person: form.entry_fee_per_person
@@ -1499,6 +1513,25 @@ function TwoPeopleIcon() {
             <g transform="translate(9,0)">
                 <circle cx="14" cy="6" r="4" fill="white" />
                 <path d="M14 12c-5 0-9 2.5-9 6v3h18v-3c0-3.5-4-6-9-6z" fill="white" />
+            </g>
+        </svg>
+    );
+}
+
+function ThreePeopleIcon() {
+    return (
+        <svg viewBox="0 0 48 24" className="w-6 h-6" fill="none">
+            <g>
+                <circle cx="10" cy="6" r="3.6" fill="white" />
+                <path d="M10 11.5c-4.5 0-8 2.3-8 5.5v3h16v-3c0-3.2-3.5-5.5-8-5.5z" fill="white" />
+            </g>
+            <g transform="translate(15,0)">
+                <circle cx="9" cy="4" r="3.6" fill="white" fillOpacity="0.9" />
+                <path d="M9 9.5c-4.5 0-8 2.3-8 5.5v3h16v-3c0-3.2-3.5-5.5-8-5.5z" fill="white" fillOpacity="0.9" />
+            </g>
+            <g transform="translate(30,0)">
+                <circle cx="8" cy="6" r="3.6" fill="white" />
+                <path d="M8 11.5c-4.5 0-8 2.3-8 5.5v3h16v-3c0-3.2-3.5-5.5-8-5.5z" fill="white" />
             </g>
         </svg>
     );

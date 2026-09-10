@@ -101,6 +101,7 @@ const emptyForm: RegisterForm = {
 };
 
 function applyMemberToForm(f: RegisterForm, m: any): RegisterForm {
+  const gender: "nam" | "nu" = m.gender === "nu" ? "nu" : "nam";
   return {
     ...f,
     member: m,
@@ -108,7 +109,8 @@ function applyMemberToForm(f: RegisterForm, m: any): RegisterForm {
     phone: m.phone ?? "",
     date_of_birth: m.date_of_birth ? m.date_of_birth.slice(0, 10) : "",
     email: m.email ?? "",
-    gender: m.gender === "nu" ? "nu" : "nam",
+    gender,
+    role: gender,
     address: m.address ?? "",
     level: m.skill_level ?? f.level,
   };
@@ -188,7 +190,6 @@ export default function TournamentRegisterPage() {
     setForm({
       ...emptyForm,
       level: form.level,
-      role: form.role,
       notes: form.notes,
     });
   };
@@ -636,57 +637,15 @@ export default function TournamentRegisterPage() {
                       </label>
                       <div className="flex gap-4">
                         {(["nam", "nu"] as const).map((g) => (
-                          <label
-                            key={g}
-                            className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
-                          >
+                          <label key={g} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                             <input
                               type="radio"
                               checked={form.gender === g}
-                              onChange={() => setForm((f) => ({ ...f, gender: g }))}
+                              onChange={() => setForm((f) => ({ ...f, gender: g, role: g }))}
                               className="accent-blue-600"
                             />
                             {g === "nam" ? "Nam" : "Nữ"}
                           </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Trình độ hiện tại <span className="text-red-500">*</span>
-                      </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-                        {LEVEL_OPTIONS.map((lv) => (
-                          <button
-                            key={lv.value}
-                            type="button"
-                            onClick={() =>
-                              setForm((f) => ({ ...f, level: lv.value as any }))
-                            }
-                            className={`relative rounded-2xl border-2 p-2.5 sm:p-3 text-center transition-colors ${form.level === lv.value
-                              ? "border-blue-500 bg-blue-50/40"
-                              : "border-gray-200"
-                              }`}
-                          >
-                            {form.level === lv.value && (
-                              <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-4 h-4 rounded bg-blue-600 flex items-center justify-center">
-                                <CheckCircle2 className="w-3 h-3 text-white" />
-                              </span>
-                            )}
-                            <span
-                              className="w-8 h-8 sm:w-9 sm:h-9 mx-auto rounded-full flex items-center justify-center text-sm font-bold mb-1.5"
-                              style={{ background: lv.bg, color: lv.color }}
-                            >
-                              {lv.value}
-                            </span>
-                            <p className="text-xs sm:text-sm font-semibold text-gray-800">
-                              {lv.label}
-                            </p>
-                            <p className="text-[11px] sm:text-xs text-gray-400">
-                              {lv.sub}
-                            </p>
-                          </button>
                         ))}
                       </div>
                     </div>
@@ -698,45 +657,65 @@ export default function TournamentRegisterPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {(
                           [
-                            {
-                              value: "nam",
-                              label: "Vận động viên Nam",
-                              sub: "Đăng ký thi đấu nội dung nam",
-                            },
-                            {
-                              value: "nu",
-                              label: "Vận động viên Nữ",
-                              sub: "Đăng ký thi đấu nội dung nữ",
-                            },
+                            { value: "nam", label: "Vận động viên Nam", sub: "Đăng ký thi đấu nội dung nam" },
+                            { value: "nu", label: "Vận động viên Nữ", sub: "Đăng ký thi đấu nội dung nữ" },
                           ] as const
-                        ).map((r) => (
-                          <button
-                            key={r.value}
-                            type="button"
-                            onClick={() =>
-                              setForm((f) => ({ ...f, role: r.value }))
-                            }
-                            className={`flex items-center gap-3 rounded-2xl border-2 p-3 sm:p-3.5 text-left transition-colors ${form.role === r.value
-                              ? "border-blue-500 bg-blue-50/40"
-                              : "border-gray-200"
-                              }`}
-                          >
-                            <span
-                              className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${r.value === "nam"
-                                ? "bg-blue-50 text-blue-600"
-                                : "bg-pink-50 text-pink-600"
-                                }`}
+                        ).map((r) => {
+                          const isLocked = isMember && r.value !== form.gender;
+                          return (
+                            <button
+                              key={r.value}
+                              type="button"
+                              disabled={isLocked}
+                              onClick={() => setForm((f) => ({ ...f, role: r.value }))}
+                              className={`flex items-center gap-3 rounded-2xl border-2 p-3 sm:p-3.5 text-left transition-colors ${form.role === r.value ? "border-blue-500 bg-blue-50/40" : "border-gray-200"
+                                } ${isLocked ? "opacity-40 cursor-not-allowed grayscale" : ""}`}
                             >
-                              {r.value === "nam" ? "♂" : "♀"}
+                              <span
+                                className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${r.value === "nam" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"
+                                  }`}
+                              >
+                                {r.value === "nam" ? "♂" : "♀"}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 truncate">{r.label}</p>
+                                <p className="text-xs text-gray-400 truncate">
+                                  {isLocked ? "Không khớp giới tính tài khoản" : r.sub}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {isMember && (
+                        <p className="text-xs text-gray-400 mt-1.5">
+                          Vai trò đăng ký tự động khớp với giới tính tài khoản của bạn.
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Trình độ hiện tại <span className="text-red-500">*</span>
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                        {LEVEL_OPTIONS.map((lv) => (
+                          <button
+                            key={lv.value}
+                            type="button"
+                            onClick={() => setForm((f) => ({ ...f, level: lv.value as any }))}
+                            className={`relative rounded-2xl border-2 p-2.5 sm:p-3 text-center transition-colors ${form.level === lv.value ? "border-blue-500 bg-blue-50/40" : "border-gray-200"}`}
+                          >
+                            {form.level === lv.value && (
+                              <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-4 h-4 rounded bg-blue-600 flex items-center justify-center">
+                                <CheckCircle2 className="w-3 h-3 text-white" />
+                              </span>
+                            )}
+                            <span className="w-8 h-8 sm:w-9 sm:h-9 mx-auto rounded-full flex items-center justify-center text-sm font-bold mb-1.5" style={{ background: lv.bg, color: lv.color }}>
+                              {lv.value}
                             </span>
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-gray-900 truncate">
-                                {r.label}
-                              </p>
-                              <p className="text-xs text-gray-400 truncate">
-                                {r.sub}
-                              </p>
-                            </div>
+                            <p className="text-xs sm:text-sm font-semibold text-gray-800">{lv.label}</p>
+                            <p className="text-[11px] sm:text-xs text-gray-400">{lv.sub}</p>
                           </button>
                         ))}
                       </div>

@@ -124,6 +124,7 @@ const PAYMENT_OPTIONS = [
   { value: "pending", label: "Chưa thanh toán" },
 ];
 
+
 const PAGE_SIZE = 8;
 
 function levelPillStyle(level?: string | null) {
@@ -471,23 +472,19 @@ function RegistrationDetailModal({
             </div>
             <div>
               <p className="text-xs text-gray-400 mb-1">Trình độ</p>
-              {currentRole === "nam" ? (
-                mode === "edit" ? (
-                  <CustomSelect
-                    value={editLevel}
-                    onChange={onEditLevel}
-                    options={LEVEL_SELECT_OPTIONS}
-                  />
-                ) : (
-                  <span
-                    className="inline-block text-xs font-semibold rounded-lg px-2.5 py-1.5"
-                    style={levelPillStyle(reg.level)}
-                  >
-                    {reg.level ?? "—"}
-                  </span>
-                )
+              {mode === "edit" ? (
+                <CustomSelect
+                  value={editLevel}
+                  onChange={onEditLevel}
+                  options={LEVEL_SELECT_OPTIONS}
+                />
               ) : (
-                <span className="text-gray-400 text-sm">—</span>
+                <span
+                  className="inline-block text-xs font-semibold rounded-lg px-2.5 py-1.5"
+                  style={levelPillStyle(reg.level)}
+                >
+                  {reg.level ?? "—"}
+                </span>
               )}
             </div>
             <div>
@@ -671,7 +668,7 @@ function AdminAddTournamentRegistrationModal({
         guest_email: mode === "guest" ? guestEmail : undefined,
         guest_gender: mode === "guest" ? guestGender : undefined,
         role,
-        level: role === "nam" ? level : undefined,
+        level,
         notes: notes || undefined,
         payment_method: mode === "member" ? paymentMethod : undefined,
       });
@@ -877,21 +874,17 @@ function AdminAddTournamentRegistrationModal({
                 ]}
               />
             </Field>
-            <Field label="Trình độ" required={role === "nam"}>
-              {role === "nam" ? (
-                <CustomSelect
-                  value={level}
-                  onChange={(v) => setLevel(v as any)}
-                  options={[
-                    { value: "A", label: "A" },
-                    { value: "B+", label: "B+" },
-                    { value: "B", label: "B" },
-                    { value: "C", label: "C" },
-                  ]}
-                />
-              ) : (
-                <div className="input-field flex items-center text-gray-400">—</div>
-              )}
+            <Field label="Trình độ" required>
+              <CustomSelect
+                value={level}
+                onChange={(v) => setLevel(v as any)}
+                options={[
+                  { value: "A", label: "A" },
+                  { value: "B+", label: "B+" },
+                  { value: "B", label: "B" },
+                  { value: "C", label: "C" },
+                ]}
+              />
             </Field>
           </div>
 
@@ -1038,7 +1031,7 @@ export default function TournamentRegistrationsPage() {
       case "B+":
       case "B":
       case "C":
-        return registrations.filter((r) => r.role === "nam" && r.level === key);
+        return registrations.filter((r) => r.level === key);
       default:
         return [];
     }
@@ -1125,13 +1118,13 @@ export default function TournamentRegistrationsPage() {
 
   const handleSaveEdit = async (): Promise<boolean> => {
     if (!modalReg) return false;
-    if (editRole === "nam" && !editLevel) {
-      toast.error("Vui lòng chọn trình độ cho VĐV Nam");
+    if (!editLevel) {
+      toast.error("Vui lòng chọn trình độ");
       return false;
     }
 
     const prevRegs = registrations;
-    const nextLevel = editRole === "nam" ? editLevel : null;
+    const nextLevel = editLevel;
 
     setRegistrations((prev) =>
       prev.map((r) =>
@@ -1193,7 +1186,7 @@ export default function TournamentRegistrationsPage() {
     const nam = registrations.filter((r) => r.role === "nam").length;
     const nu = registrations.filter((r) => r.role === "nu").length;
     const byLevel = (lv: string) =>
-      registrations.filter((r) => r.role === "nam" && r.level === lv).length;
+      registrations.filter((r) => r.level === lv).length;
     const revenue = registrations
       .filter((r) => r.payment_status === "confirmed")
       .reduce((sum, r) => sum + (r.amount_override ?? 0), 0);
@@ -1695,22 +1688,13 @@ export default function TournamentRegistrationsPage() {
                           {r.role === "nam" ? "Nam" : "Nữ"}
                         </td>
                         <td className="px-4 py-3.5">
-                          {r.role === "nam" ? (
-                            <div className="w-20">
-                              <CustomSelect
-                                value={r.level ?? ""}
-                                onChange={(val) => handleLevelChange(r.id, val)}
-                                options={LEVEL_SELECT_OPTIONS}
-                              />
-                            </div>
-                          ) : (
-                            <span
-                              className="text-xs font-semibold rounded-lg px-2.5 py-1.5"
-                              style={levelPillStyle(null)}
-                            >
-                              —
-                            </span>
-                          )}
+                          <div className="w-20">
+                            <CustomSelect
+                              value={r.level ?? ""}
+                              onChange={(val) => handleLevelChange(r.id, val)}
+                              options={LEVEL_SELECT_OPTIONS}
+                            />
+                          </div>
                         </td>
                         <td className="px-4 py-3.5">
                           <span
@@ -1890,20 +1874,11 @@ export default function TournamentRegistrationsPage() {
                         </div>
                         <div>
                           <p className="text-gray-400 mb-0.5">Trình độ</p>
-                          {r.role === "nam" ? (
-                            <CustomSelect
-                              value={r.level ?? ""}
-                              onChange={(val) => handleLevelChange(r.id, val)}
-                              options={LEVEL_SELECT_OPTIONS}
-                            />
-                          ) : (
-                            <span
-                              className="inline-block text-xs font-semibold rounded-lg px-2 py-1"
-                              style={levelPillStyle(null)}
-                            >
-                              —
-                            </span>
-                          )}
+                          <CustomSelect
+                            value={r.level ?? ""}
+                            onChange={(val) => handleLevelChange(r.id, val)}
+                            options={LEVEL_SELECT_OPTIONS}
+                          />
                         </div>
                         <div>
                           <p className="text-gray-400 mb-0.5">SĐT</p>
@@ -2100,19 +2075,15 @@ export default function TournamentRegistrationsPage() {
                   </label>
                   {compositionSlots.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5 mb-1.5">
-                      {compositionSlots.map((slot, idx) => {
-                        const isNu = slot.role === "nu";
-                        return (
-                          <span
-                            key={idx}
-                            className={`text-xs font-semibold px-2.5 py-1.5 rounded-full ${isNu ? "bg-pink-50 text-pink-600" : ""
-                              }`}
-                            style={isNu ? undefined : levelPillStyle(slot.level)}
-                          >
-                            {slot.label ?? (isNu ? "Nữ" : `Nam ${slot.level}`)}
-                          </span>
-                        );
-                      })}
+                      {compositionSlots.map((slot, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-full"
+                          style={levelPillStyle(slot.level)}
+                        >
+                          {slot.label ?? (slot.role === "nu" ? `Nữ ${slot.level}` : `Nam ${slot.level}`)}
+                        </span>
+                      ))}
                     </div>
                   ) : (
                     <p className="text-xs text-amber-600 mb-1.5">
@@ -2506,14 +2477,12 @@ function StatMembersModal({
                   >
                     {r.role === "nam" ? "Nam" : "Nữ"}
                   </span>
-                  {r.role === "nam" && (
-                    <span
-                      className="text-[10px] font-semibold rounded-full px-1.5 py-0.5"
-                      style={levelPillStyle(r.level)}
-                    >
-                      {r.level ?? "—"}
-                    </span>
-                  )}
+                  <span
+                    className="text-[10px] font-semibold rounded-full px-1.5 py-0.5"
+                    style={levelPillStyle(r.level)}
+                  >
+                    {r.level ?? "—"}
+                  </span>
                   <span
                     className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${r.payment_status === "confirmed"
                       ? "bg-green-50 text-green-700"
@@ -2742,14 +2711,12 @@ function TeamsModal({
                           >
                             {m.role === "nam" ? "Nam" : "Nữ"}
                           </span>
-                          {m.role === "nam" && (
-                            <span
-                              className="text-[10px] font-semibold rounded-full px-1.5 py-0.5"
-                              style={levelPillStyle(m.level)}
-                            >
-                              {m.level ?? "—"}
-                            </span>
-                          )}
+                          <span
+                            className="text-[10px] font-semibold rounded-full px-1.5 py-0.5"
+                            style={levelPillStyle(m.level)}
+                          >
+                            {m.level ?? "—"}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -2789,14 +2756,12 @@ function TeamsModal({
                             >
                               {m.role === "nam" ? "Nam" : "Nữ"}
                             </span>
-                            {m.role === "nam" && (
-                              <span
-                                className="text-[10px] font-semibold rounded-full px-1.5 py-0.5"
-                                style={levelPillStyle(m.level)}
-                              >
-                                {m.level ?? "—"}
-                              </span>
-                            )}
+                            <span
+                              className="text-[10px] font-semibold rounded-full px-1.5 py-0.5"
+                              style={levelPillStyle(m.level)}
+                            >
+                              {m.level ?? "—"}
+                            </span>
                           </div>
                         </div>
                       </div>
