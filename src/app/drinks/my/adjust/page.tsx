@@ -47,9 +47,14 @@ export default function AdjustMyDrinksPage() {
     const [notes, setNotes] = useState<Record<string, string>>({});
     const [submittingId, setSubmittingId] = useState<string | null>(null);
     const [showAddDrinkModal, setShowAddDrinkModal] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     const [myRequests, setMyRequests] = useState<MyRequest[]>([]);
     const [loadingRequests, setLoadingRequests] = useState(true);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const loadInventory = useCallback(async () => {
         setLoading(true);
@@ -292,7 +297,7 @@ export default function AdjustMyDrinksPage() {
                 </div>
             )}
 
-            {createPortal(
+            {mounted && createPortal(
                 <AnimatePresence>
                     {showAddDrinkModal && (
                         <AddNewDrinkModal
