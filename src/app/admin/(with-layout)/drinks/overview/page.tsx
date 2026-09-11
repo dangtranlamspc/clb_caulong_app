@@ -215,39 +215,41 @@ export default function DrinksOverviewPage() {
                         className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
                     />
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                    <button
-                        onClick={() => setRequestsOpen(true)}
-                        className="relative flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
-                    >
-                        <ClipboardList className="w-4 h-4" />
-                        Yêu cầu chờ duyệt
-                        {pendingCount > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                                {pendingCount}
-                            </span>
-                        )}
-                    </button>
-                    <button
-                        onClick={() => setHistoryOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
-                    >
-                        <History className="w-4 h-4" />
-                        Lịch sử giao dịch
-                    </button>
+                <div className="flex flex-col sm:flex-row gap-2 sm:flex-wrap sm:justify-end">
                     <button
                         onClick={() => setGrantOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 shadow-sm"
+                        className="w-1/2 sm:w-auto ml-auto sm:ml-0 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 shadow-sm order-1 sm:order-3"
                     >
                         <UserPlus className="w-4 h-4" />
                         Thêm nước
                     </button>
+
+                    <div className="flex gap-2 order-2 sm:contents">
+                        <button
+                            onClick={() => setRequestsOpen(true)}
+                            className="relative flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+                        >
+                            <ClipboardList className="w-4 h-4" />
+                            Yêu cầu chờ duyệt
+                            {pendingCount > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                                    {pendingCount}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setHistoryOpen(true)}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+                        >
+                            <History className="w-4 h-4" />
+                            Lịch sử giao dịch
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                {/* ─── Mobile: card list ─── */}
-                <div className="sm:hidden divide-y divide-gray-100">
+            <div className="sm:bg-white sm:rounded-2xl sm:shadow-sm sm:border sm:border-gray-100 overflow-hidden">
+                <div className="sm:hidden p-3 space-y-3">
                     {loadingMembers && (
                         <div className="text-center py-10 text-gray-400 text-sm">Đang tải...</div>
                     )}
@@ -255,7 +257,7 @@ export default function DrinksOverviewPage() {
                         <div className="text-center py-10 text-gray-400 text-sm">Chưa có thành viên nào sở hữu nước</div>
                     )}
                     {members.map((m) => (
-                        <div key={m.user_id} className="p-4 space-y-3">
+                        <div key={m.user_id} className="p-4 space-y-3 rounded-2xl border border-gray-100 shadow-md bg-white">
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2.5 min-w-0">
                                     {m.avatar_url ? (
@@ -272,7 +274,7 @@ export default function DrinksOverviewPage() {
                                 </div>
                                 <div className="text-right flex-shrink-0">
                                     <p className="text-xs text-gray-400">Tổng SL</p>
-                                    <p className="font-bold text-gray-900">{formatNumber(m.total_quantity)}</p>
+                                    <p className="font-bold text-sky-600 text-lg">{formatNumber(m.total_quantity)}</p>
                                 </div>
                             </div>
 
@@ -294,17 +296,18 @@ export default function DrinksOverviewPage() {
                                 ))}
                             </div>
 
-                            <button
-                                onClick={() => setAdjustTarget(m)}
-                                className="w-full py-2 rounded-xl bg-sky-500 text-white text-xs font-semibold hover:bg-sky-600"
-                            >
-                                Điều chỉnh
-                            </button>
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={() => setAdjustTarget(m)}
+                                    className="px-8 py-3 rounded-xl bg-sky-500 text-white text-xs font-semibold hover:bg-sky-600"
+                                >
+                                    Điều chỉnh
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
 
-                {/* ─── Desktop / tablet: table ─── */}
                 <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
@@ -711,7 +714,7 @@ function TotalMembersModal({ onClose }: { onClose: () => void }) {
                                 </div>
                                 <div className="text-right flex-shrink-0">
                                     <p className="text-xs text-gray-400">Tổng SL</p>
-                                    <p className="font-bold text-gray-900">{formatNumber(m.total_quantity)}</p>
+                                    <p className="font-bold text-sky-600 text-lg">{formatNumber(m.total_quantity)}</p>
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-1.5">
@@ -924,7 +927,7 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                     </button>
                 </div>
 
-                <div className="space-y-3.5 overflow-y-auto pr-0.5">
+                <div className="space-y-3.5 overflow-y-auto pr-0.5 no-scrollbar">
                     <div>
                         <label className="text-xs font-semibold text-gray-500">Thành viên</label>
                         {selectedUser ? (
@@ -993,7 +996,7 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 
                     <div>
                         <label className="text-xs font-semibold text-gray-500">Loại nước &amp; số lượng</label>
-                        <div className="mt-1.5 space-y-2 max-h-64 overflow-y-auto">
+                        <div className="mt-1.5 space-y-2 max-h-64 overflow-y-auto no-scrollbar">
                             {drinks.length === 0 && (
                                 <p className="text-xs text-gray-400 py-2">Đang tải danh sách nước...</p>
                             )}

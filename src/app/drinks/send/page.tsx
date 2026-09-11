@@ -20,8 +20,7 @@ export default function SendDrinksPage() {
     const [tab, setTab] = useState<"member" | "club">("member");
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [loading, setLoading] = useState(true);
-    const [drinkId, setDrinkId] = useState("");
-    const [quantity, setQuantity] = useState("");
+    const [amounts, setAmounts] = useState<Record<string, string>>({});
     const [note, setNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
@@ -36,7 +35,6 @@ export default function SendDrinksPage() {
         try {
             const { data } = await userDrinksApi.getMyInventory();
             setInventory(data ?? []);
-            if (data?.length > 0) setDrinkId((prev) => prev || data[0].drink_id);
         } catch {
         } finally {
             setLoading(false);
@@ -79,10 +77,16 @@ export default function SendDrinksPage() {
         return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
     }, [query]);
 
-    const owned = inventory.find((i) => i.drink_id === drinkId)?.quantity ?? 0;
+    const selectedItems = inventory
+        .map((item) => ({ item, quantity: Number(amounts[item.drink_id]) || 0 }))
+        .filter((x) => x.quantity > 0);
+
+    const totalSelectedQuantity = selectedItems.reduce((s, x) => s + x.quantity, 0);
+
+    const invalidQuantity = selectedItems.some((x) => x.quantity > x.item.quantity);
 
     const resetForm = () => {
-        setQuantity("");
+        setAmounts({});
         setNote("");
         setSelectedUser(null);
         setQuery("");
@@ -90,19 +94,19 @@ export default function SendDrinksPage() {
 
     const handleSendToMember = async () => {
         if (!selectedUser) return toast.error("Vui lòng chọn người nhận");
-        if (!drinkId) return toast.error("Vui lòng chọn loại nước");
-        const qty = Number(quantity);
-        if (!quantity || qty <= 0) return toast.error("Số lượng phải lớn hơn 0");
-        if (qty > owned) return toast.error("Số lượng vượt quá số bạn đang sở hữu");
+        if (selectedItems.length === 0) return toast.error("Vui lòng nhập số lượng ít nhất 1 loại nước");
+        if (invalidQuantity) return toast.error("Có loại nước vượt quá số lượng bạn đang sở hữu");
 
         setSubmitting(true);
         try {
-            await userDrinksApi.gift({
-                drink_id: drinkId,
-                to_user_id: selectedUser.id,
-                quantity: qty,
-                note: note || undefined,
-            });
+            for (const { item, quantity } of selectedItems) {
+                await userDrinksApi.gift({
+                    drink_id: item.drink_id,
+                    to_user_id: selectedUser.id,
+                    quantity,
+                    note: note || undefined,
+                });
+            }
             toast.success(`Đã gửi nước cho ${selectedUser.full_name}`);
             resetForm();
             loadInventory();
@@ -113,18 +117,18 @@ export default function SendDrinksPage() {
     };
 
     const handleSendToClub = async () => {
-        if (!drinkId) return toast.error("Vui lòng chọn loại nước");
-        const qty = Number(quantity);
-        if (!quantity || qty <= 0) return toast.error("Số lượng phải lớn hơn 0");
-        if (qty > owned) return toast.error("Số lượng vượt quá số bạn đang sở hữu");
+        if (selectedItems.length === 0) return toast.error("Vui lòng nhập số lượng ít nhất 1 loại nước");
+        if (invalidQuantity) return toast.error("Có loại nước vượt quá số lượng bạn đang sở hữu");
 
         setSubmitting(true);
         try {
-            await userDrinksApi.sendToClub({
-                drink_id: drinkId,
-                quantity: qty,
-                note: note || undefined,
-            });
+            for (const { item, quantity } of selectedItems) {
+                await userDrinksApi.sendToClub({
+                    drink_id: item.drink_id,
+                    quantity,
+                    note: note || undefined,
+                });
+            }
             toast.success("Đã gửi nước về kho CLB");
             resetForm();
             loadInventory();
@@ -245,44 +249,53 @@ export default function SendDrinksPage() {
                     )}
 
                     <div>
-                        <label className="text-xs font-semibold text-gray-500">Loại nước</label>
-                        <div className="mt-1.5 grid grid-cols-3 gap-2">
-                            {inventory.map((item) => (
-                                <button
-                                    key={item.drink_id}
-                                    onClick={() => setDrinkId(item.drink_id)}
-                                    className={`flex flex-col items-center gap-1 rounded-xl border p-2 text-center transition-colors ${drinkId === item.drink_id ? "border-cyan-500 bg-cyan-50" : "border-gray-200"
-                                        }`}
-                                >
-                                    <div className="h-12 w-12 overflow-hidden rounded-lg bg-gray-100">
-                                        {item.drinks.image_url ? (
-                                            <img src={item.drinks.image_url} alt={item.drinks.name} className="h-full w-full object-cover" />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center">
-                                                <GlassWater className="h-5 w-5 text-gray-300" />
-                                            </div>
-                                        )}
+                        <label className="text-xs font-semibold text-gray-500">Loại nước &amp; số lượng</label>
+                        <div className="mt-1.5 space-y-2">
+                            {inventory.map((item) => {
+                                const qty = Number(amounts[item.drink_id]) || 0;
+                                const exceeds = qty > item.quantity;
+                                return (
+                                    <div
+                                        key={item.drink_id}
+                                        className={`flex items-center gap-3 rounded-xl border p-2.5 ${exceeds ? "border-red-300 bg-red-50" : "border-gray-100"
+                                            }`}
+                                    >
+                                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                                            {item.drinks.image_url ? (
+                                                <img src={item.drinks.image_url} alt={item.drinks.name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center">
+                                                    <GlassWater className="h-4 w-4 text-gray-300" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-medium text-gray-800">{item.drinks.name}</p>
+                                            <p className="text-[11px] text-gray-400">Đang sở hữu: {item.quantity}</p>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={item.quantity}
+                                            placeholder="0"
+                                            value={amounts[item.drink_id] ?? ""}
+                                            onChange={(e) =>
+                                                setAmounts((prev) => ({ ...prev, [item.drink_id]: e.target.value }))
+                                            }
+                                            className={`w-16 flex-shrink-0 rounded-lg border px-2 py-1.5 text-center text-sm focus:outline-none ${exceeds
+                                                ? "border-red-300 focus:border-red-400"
+                                                : "border-gray-200 focus:border-cyan-400"
+                                                }`}
+                                        />
                                     </div>
-                                    <p className="line-clamp-2 text-[11px] font-medium text-gray-700">{item.drinks.name}</p>
-                                    <p className="text-[10px] text-gray-400">Còn: {item.quantity}</p>
-                                </button>
-                            ))}
+                                );
+                            })}
                         </div>
-                    </div>
-
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500">
-                            Số lượng {drinkId && <span className="text-gray-400">(đang sở hữu: {owned})</span>}
-                        </label>
-                        <input
-                            type="number"
-                            min={1}
-                            max={owned}
-                            value={quantity}
-                            onChange={(e) => setQuantity(e.target.value)}
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
-                            placeholder="Nhập số lượng"
-                        />
+                        {totalSelectedQuantity > 0 && (
+                            <p className="mt-1.5 text-xs text-gray-400">
+                                Tổng số lượng đã chọn: <span className="font-semibold text-gray-600">{totalSelectedQuantity}</span>
+                            </p>
+                        )}
                     </div>
 
                     <div>
@@ -297,7 +310,7 @@ export default function SendDrinksPage() {
 
                     <button
                         onClick={tab === "member" ? handleSendToMember : handleSendToClub}
-                        disabled={submitting}
+                        disabled={submitting || selectedItems.length === 0 || invalidQuantity}
                         className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 py-3 font-semibold text-white hover:bg-cyan-700 disabled:opacity-60"
                     >
                         <Send className="h-4 w-4" />
