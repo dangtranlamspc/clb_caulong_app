@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   FilterX,
+  Trophy,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -975,6 +976,26 @@ export default function TournamentRegistrationsPage() {
 
   const [confirmMethodModal, setConfirmMethodModal] = useState<{ id: string } | null>(null)
 
+  const [showStartTournamentModal, setShowStartTournamentModal] = useState(false);
+  const [tournamentWizardStep, setTournamentWizardStep] = useState<
+    "round_robin_setup" | "team_list" | "schedule" | null
+  >(null);
+  const [generatingSchedule, setGeneratingSchedule] = useState(false);
+
+  const handleGenerateSchedule = async () => {
+    if (!id) return;
+    setGeneratingSchedule(true);
+    try {
+      await eventsAdminApi.generateTournamentSchedule(id);
+      setTournamentWizardStep("schedule");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Tạo lịch thi đấu thất bại");
+    } finally {
+      setGeneratingSchedule(false);
+    }
+  };
+  const [savingFormat, setSavingFormat] = useState(false);
+
   const handleReload = async () => {
     setReloading(true);
     try {
@@ -1334,6 +1355,46 @@ export default function TournamentRegistrationsPage() {
   };
 
 
+  const handleCreateRoundRobinSchedule = async () => {
+    if (!id || !activity) return;
+    const matchContents = activity?.detail?.rules?.match_contents ?? [];
+    const courtsCount = matchContents.length;
+    if (courtsCount < 1) {
+      toast.error("Vui lòng cấu hình ít nhất 1 nội dung thi đấu trước khi tạo lịch");
+      return;
+    }
+    setSavingFormat(true);
+    try {
+      await eventsAdminApi.update(id, {
+        type: "tournament",
+        title: activity.title,
+        status: activity.status,
+        detail: {
+          ...activity.detail,
+          format: "round_robin",
+          courts_count: courtsCount,
+        },
+      });
+      setTournamentWizardStep("team_list");
+      load(true);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Lưu thiết lập thất bại");
+    } finally {
+      setSavingFormat(false);
+    }
+  };
+
+  const handleRenameTournamentTeam = async (teamId: string, name: string) => {
+    try {
+      await eventsAdminApi.renameTournamentTeam(teamId, name);
+      toast.success("Đã đổi tên đội");
+      await loadTeams();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Đổi tên đội thất bại");
+      throw err;
+    }
+  };
+
   const handleDeleteReg = (regId: string) => {
     const reg = registrations.find((r) => r.id === regId);
     setDeleteRegModal({ id: regId, isInTeam: Boolean(reg?.team_id) });
@@ -1555,22 +1616,6 @@ export default function TournamentRegistrationsPage() {
             icon="👥"
             onClick={() => openStatModal("total", "Tổng số đăng ký")}
           />
-          {/* <StatCard
-            label="Nam"
-            value={stats.nam}
-            subPercent={Number(stats.namPct)}
-            iconBg="#eef5fe"
-            icon="♂"
-            onClick={() => openStatModal("nam", "Vận động viên Nam")}
-          />
-          <StatCard
-            label="Nữ"
-            value={stats.nu}
-            subPercent={Number(stats.nuPct)}
-            iconBg="#fdf0f4"
-            icon="♀"
-            onClick={() => openStatModal("nu", "Vận động viên Nữ")}
-          /> */}
           {genderLevelStats.map((g) => (
             <StatCard
               key={g.key}
@@ -2150,6 +2195,15 @@ export default function TournamentRegistrationsPage() {
                   <span className="text-xs text-gray-400 font-normal">({teams.length} đội)</span>
                 )}
               </button>
+
+              {teams.length > 0 && (
+                <button
+                  onClick={() => setShowStartTournamentModal(true)}
+                  className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold shadow-sm shadow-emerald-200 transition-colors"
+                >
+                  <Trophy className="w-4 h-4" /> Bắt đầu giải đấu
+                </button>
+              )}
             </div>
 
             <LevelDonutCard stats={stats} />
@@ -2213,9 +2267,12 @@ export default function TournamentRegistrationsPage() {
             loading={loadingTeams}
             clearing={clearingTeams}
             exporting={exportingTeams}
+            drawing={drawing}
+            composition={compositionSlots}
             onClose={() => setShowTeamsModal(false)}
             onClear={handleClearTeams}
             onExport={handleExportTeamsExcel}
+            onDrawTeams={() => setShowDrawConfirm(true)}
           />,
           document.body
         )
@@ -2264,6 +2321,136 @@ export default function TournamentRegistrationsPage() {
       )}
 
       {drawing && createPortal(<DrawingTeamsOverlay />, document.body)}
+
+
+      {showStartTournamentModal && createPortal(
+        <StartTournamentModal
+          onClose={() => setShowStartTournamentModal(false)}
+          onSelectRoundRobin={() => {
+            setShowStartTournamentModal(false);
+            setTournamentWizardStep("round_robin_setup");
+          }}
+        />,
+        document.body
+      )}
+
+      {tournamentWizardStep === "round_robin_setup" && createPortal(
+        <RoundRobinSetupScreen
+          activity={activity}
+          teamsCount={teams.length}
+          matchContents={activity?.detail?.rules?.match_contents ?? []}
+          saving={savingFormat}
+          onBack={() => setTournamentWizardStep(null)}
+          onCreateSchedule={handleCreateRoundRobinSchedule}
+        />,
+        document.body
+      )}
+
+      {tournamentWizardStep === "team_list" && createPortal(
+        <TeamListRenameScreen
+          teams={teams}
+          onBack={() => setTournamentWizardStep("round_robin_setup")}
+          onRenameTeam={handleRenameTournamentTeam}
+          onContinue={handleGenerateSchedule}
+          continuing={generatingSchedule}
+        />,
+        document.body
+      )}
+
+      {tournamentWizardStep === "schedule" && createPortal(
+        <ScheduleScreen
+          activityId={id!}
+          onBack={() => setTournamentWizardStep("team_list")}
+        />,
+        document.body
+      )}
+    </div>
+  );
+}
+
+
+function SetScheduleModal({
+  title,
+  initialValue,
+  onClose,
+  onSave,
+}: {
+  title: string;
+  initialValue?: string | null;
+  onClose: () => void;
+  onSave: (value: string) => Promise<void>;
+}) {
+  const { visible, handleClose } = useModalTransition(onClose);
+  const [value, setValue] = useState(() => {
+    if (!initialValue) return "";
+    const d = new Date(initialValue);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+      d.getHours(),
+    )}:${pad(d.getMinutes())}`;
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!value) {
+      toast.error("Vui lòng chọn ngày giờ");
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(new Date(value).toISOString());
+      handleClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className={`fixed inset-0 z-[230] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"
+        }`}
+      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+          }`}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">{title}</h3>
+          <button
+            onClick={handleClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="p-5">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Ngày & giờ thi đấu
+          </label>
+          <input
+            type="datetime-local"
+            className="input-field w-full"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-gray-100">
+          <button
+            onClick={handleClose}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Huỷ
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold disabled:opacity-60"
+          >
+            {saving ? "Đang lưu..." : "Lưu giờ thi đấu"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2488,6 +2675,489 @@ function ConfirmDrawTeamsModal({
   );
 }
 
+function StartTournamentModal({
+  onClose,
+  onSelectRoundRobin,
+}: {
+  onClose: () => void;
+  onSelectRoundRobin: () => void;
+}) {
+  const { visible, handleClose } = useModalTransition(onClose);
+
+  return (
+    <div
+      className={`fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"
+        }`}
+      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-md transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+          }`}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">Chọn thể thức thi đấu</h3>
+          <button
+            onClick={handleClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="p-5 space-y-3">
+          <button
+            onClick={() => onSelectRoundRobin()}
+            className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors"
+          >
+            <p className="font-semibold text-gray-900">Vòng tròn</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Các đội lần lượt gặp nhau, mỗi đội thi đấu với tất cả các đội còn lại.
+            </p>
+          </button>
+          <div className="w-full text-left p-4 rounded-xl border-2 border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed relative">
+            <span className="absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+              Sắp ra mắt
+            </span>
+            <p className="font-semibold text-gray-500">Chia bảng</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Chia các đội thành nhiều bảng đấu vòng tròn nhỏ.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RoundRobinSetupScreen({
+  activity,
+  teamsCount,
+  matchContents,
+  saving,
+  onBack,
+  onCreateSchedule,
+}: {
+  activity: any;
+  teamsCount: number;
+  matchContents: { id?: string; label: string }[];
+  saving: boolean;
+  onBack: () => void;
+  onCreateSchedule: () => void;
+}) {
+  const courtsCount = matchContents.length;
+
+  return (
+    <div className="fixed inset-0 z-[220] bg-white flex flex-col">
+      <div
+        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-gray-100"
+        style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
+      >
+        <button
+          onClick={onBack}
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 leading-tight">Thiết lập vòng tròn</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Cấu hình lịch thi đấu trước khi tạo</p>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4 max-w-xl mx-auto w-full">
+        <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500">Tên giải đấu</span>
+            <span className="font-semibold text-gray-900 text-right truncate max-w-[60%]">
+              {activity?.title}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500">Số đội tham dự</span>
+            <span className="font-semibold text-gray-900">{teamsCount} đội</span>
+          </div>
+        </div>
+
+        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-emerald-800">Số sân thi đấu</p>
+            <p className="text-xs text-emerald-600 mt-0.5 leading-relaxed">
+              Tự động tính theo số nội dung thi đấu bên dưới
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-xl font-bold text-emerald-700 shadow-sm flex-shrink-0">
+            {courtsCount}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Nội dung thi đấu
+          </label>
+          {matchContents.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {matchContents.map((c, idx) => (
+                <span
+                  key={c.id ?? idx}
+                  className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-indigo-50 text-indigo-600"
+                >
+                  {c.label}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed">
+              ⚠️ Chưa có nội dung thi đấu nào được cấu hình cho giải này. Vui lòng vào chỉnh sửa giải đấu để thêm trước khi tạo lịch.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div
+        className="flex-shrink-0 px-4 sm:px-6 pt-4 border-t border-gray-100 max-w-xl mx-auto w-full"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+      >
+        <button
+          onClick={onCreateSchedule}
+          disabled={saving || courtsCount < 1}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold disabled:opacity-50 transition-colors"
+        >
+          {saving ? "Đang lưu..." : "Tạo lịch thi đấu"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TeamListRenameScreen({
+  teams,
+  onBack,
+  onRenameTeam,
+  onContinue,
+  continuing,
+}: {
+  teams: any[];
+  onBack: () => void;
+  onRenameTeam: (teamId: string, name: string) => Promise<void>;
+  onContinue: () => void;
+  continuing: boolean;
+}) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  const startEdit = (team: any) => {
+    setEditingId(team.id);
+    setEditValue(team.name);
+  };
+
+  const saveEdit = async (teamId: string) => {
+    if (!editValue.trim()) {
+      toast.error("Tên đội không được để trống");
+      return;
+    }
+    setSavingId(teamId);
+    try {
+      await onRenameTeam(teamId, editValue.trim());
+      setEditingId(null);
+    } catch {
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[220] bg-white flex flex-col">
+      <div
+        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-gray-100"
+        style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
+      >
+        <button
+          onClick={onBack}
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h2 className="text-lg font-bold text-gray-900">Danh sách đội</h2>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 max-w-xl mx-auto w-full space-y-2.5">
+        <p className="text-xs text-gray-400 mb-2">
+          Bạn có thể đổi tên các đội trước khi tạo lịch thi đấu chính thức.
+        </p>
+        {teams.map((t) => (
+          <div
+            key={t.id}
+            className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm"
+          >
+            {editingId === t.id ? (
+              <>
+                <input
+                  autoFocus
+                  className="input-field flex-1"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && saveEdit(t.id)}
+                />
+                <button
+                  onClick={() => saveEdit(t.id)}
+                  disabled={savingId === t.id}
+                  className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+                >
+                  {savingId === t.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setEditingId(null)}
+                  className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+                >
+                  ✕
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="flex-1 font-semibold text-gray-900">{t.name}</span>
+                <span className="text-xs text-gray-400">{t.members?.length ?? 0} người</span>
+                <button
+                  onClick={() => startEdit(t)}
+                  className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-blue-600"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div
+        className="flex-shrink-0 px-4 sm:px-6 pt-4 border-t border-gray-100 max-w-xl mx-auto w-full"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+      >
+        <button
+          onClick={onContinue}
+          disabled={continuing}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold disabled:opacity-50 transition-colors"
+        >
+          {continuing ? "Đang tạo lịch..." : "Tiếp tục → Xem lịch thi đấu"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+function ScheduleScreen({
+  activityId,
+  onBack,
+}: {
+  activityId: string;
+  onBack: () => void;
+}) {
+  const [tab, setTab] = useState<"all" | "pending">("all");
+  const [rounds, setRounds] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [scheduleModal, setScheduleModal] = useState<
+    | { type: "round"; roundNumber: number }
+    | { type: "match"; matchId: string; currentValue?: string | null }
+    | null
+  >(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const { data } = await eventsAdminApi.getTournamentSchedule(activityId);
+      setRounds(data.rounds ?? []);
+    } catch {
+      toast.error("Không tải được lịch thi đấu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [activityId]);
+
+  const displayRounds =
+    tab === "all"
+      ? rounds
+      : rounds
+        .map((r) => ({ ...r, matches: r.matches.filter((m: any) => m.status !== "completed") }))
+        .filter((r) => r.matches.length > 0);
+
+  const handleSaveRoundSchedule = async (roundNumber: number, value: string) => {
+    try {
+      await eventsAdminApi.setRoundSchedule(activityId, roundNumber, value);
+      toast.success(`Đã đặt giờ cho lượt ${roundNumber}`);
+      load();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Đặt giờ thất bại");
+    }
+  };
+
+  const handleSaveMatchSchedule = async (matchId: string, value: string) => {
+    try {
+      await eventsAdminApi.setMatchSchedule(matchId, value);
+      toast.success("Đã cập nhật giờ thi đấu");
+      load();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Cập nhật thất bại");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[220] bg-white flex flex-col">
+      <div
+        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-3 border-b border-gray-100"
+        style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
+      >
+        <button
+          onClick={onBack}
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h2 className="text-lg font-bold text-gray-900">Lịch thi đấu</h2>
+      </div>
+
+      <div className="flex-shrink-0 px-4 sm:px-6 pt-3">
+        <div className="relative flex rounded-lg border border-gray-200 overflow-hidden text-sm bg-gray-50 p-0.5 max-w-md">
+          <div
+            className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md bg-blue-600 shadow-sm transition-transform duration-300 ease-out"
+            style={{ transform: tab === "all" ? "translateX(0%)" : "translateX(calc(100% + 4px))" }}
+          />
+          <button
+            onClick={() => setTab("all")}
+            className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors ${tab === "all" ? "text-white" : "text-gray-600"
+              }`}
+          >
+            Tất cả các lượt
+          </button>
+          <button
+            onClick={() => setTab("pending")}
+            className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors ${tab === "pending" ? "text-white" : "text-gray-600"
+              }`}
+          >
+            Chưa đấu
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5 max-w-2xl mx-auto w-full">
+        {loading ? (
+          <div className="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+          </div>
+        ) : displayRounds.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-14">
+            {tab === "pending" ? "Không còn lượt nào chưa đấu" : "Chưa có lịch thi đấu"}
+          </p>
+        ) : (
+          displayRounds.map((r) => (
+            <div key={r.round_number}>
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h3 className="font-bold text-gray-900 text-sm flex-shrink-0">
+                    Lượt {r.round_number}
+                  </h3>
+                  {r.bye_team_name && (
+                    <span className="text-xs text-gray-400 truncate">
+                      Nghỉ: <span className="font-medium text-gray-600">{r.bye_team_name}</span>
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setScheduleModal({ type: "round", roundNumber: r.round_number })}
+                  className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
+                >
+                  🕒 Đặt giờ cả lượt
+                </button>
+              </div>
+              <div className="space-y-2">
+                {r.matches.map((m: any) => (
+                  <div
+                    key={m.id}
+                    className="px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="font-medium text-gray-900 truncate">{m.team1?.name}</span>
+                        <span className="text-gray-300 flex-shrink-0">vs</span>
+                        <span className="font-medium text-gray-900 truncate">{m.team2?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {m.court_number && (
+                          <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                            Sân {m.court_number}
+                          </span>
+                        )}
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-1 rounded-full ${m.status === "completed"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-amber-50 text-amber-600"
+                            }`}
+                        >
+                          {m.status === "completed"
+                            ? `${m.team1_score}-${m.team2_score}`
+                            : "Chưa đấu"}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() =>
+                        setScheduleModal({
+                          type: "match",
+                          matchId: m.id,
+                          currentValue: m.scheduled_at,
+                        })
+                      }
+                      className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                    >
+                      🕒{" "}
+                      {m.scheduled_at ? (
+                        <span className="font-medium text-gray-700">
+                          {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
+                        </span>
+                      ) : (
+                        <span className="italic text-gray-400">Chưa đặt giờ — bấm để đặt</span>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {scheduleModal?.type === "round" &&
+        createPortal(
+          <SetScheduleModal
+            title={`Đặt giờ cho Lượt ${scheduleModal.roundNumber}`}
+            onClose={() => setScheduleModal(null)}
+            onSave={(value) => handleSaveRoundSchedule(scheduleModal.roundNumber, value)}
+          />,
+          document.body,
+        )}
+
+      {scheduleModal?.type === "match" &&
+        createPortal(
+          <SetScheduleModal
+            title="Đặt giờ thi đấu"
+            initialValue={scheduleModal.currentValue}
+            onClose={() => setScheduleModal(null)}
+            onSave={(value) => handleSaveMatchSchedule(scheduleModal.matchId, value)}
+          />,
+          document.body,
+        )}
+    </div>
+  );
+}
+
+
 function StatMembersModal({
   title,
   items,
@@ -2637,7 +3307,6 @@ function PublicLinkPopover({
 
   return (
     <>
-      {/* Lớp nền chỉ để bắt click ra ngoài để đóng, trong suốt hoàn toàn trên desktop */}
       <div
         className="fixed inset-0 z-[200]"
         onMouseDown={handleClose}
@@ -2701,18 +3370,24 @@ function TeamsModal({
   loading,
   clearing,
   exporting,
+  drawing,
+  composition,
   onClose,
   onClear,
   onExport,
+  onDrawTeams,
 }: {
   teams: any[];
   unassigned: any[];
   loading: boolean;
   clearing: boolean;
   exporting: boolean;
+  drawing: boolean;
+  composition: { role: "nam" | "nu"; level?: string | null; label?: string }[];
   onClose: () => void;
   onClear: () => void;
   onExport: () => void;
+  onDrawTeams: () => void;
 }) {
   const { visible, handleClose } = useModalTransition(onClose);
 
@@ -2725,6 +3400,23 @@ function TeamsModal({
   }, []);
 
   const hasData = teams.length > 0 || unassigned.length > 0;
+
+  const compositionOrder = useMemo(() => {
+    const order = new Map<string, number>();
+    (composition ?? []).forEach((c, idx) => {
+      const key = `${c.role}_${c.level ?? "x"}`;
+      if (!order.has(key)) order.set(key, idx);
+    });
+    return order;
+  }, [composition]);
+
+  const sortByComposition = (members: any[]) => {
+    return [...(members ?? [])].sort((a, b) => {
+      const rankA = compositionOrder.get(`${a.role}_${a.level ?? "x"}`) ?? 999;
+      const rankB = compositionOrder.get(`${b.role}_${b.level ?? "x"}`) ?? 999;
+      return rankA - rankB;
+    });
+  };
 
   return (
     <div
@@ -2743,6 +3435,19 @@ function TeamsModal({
             Kết quả chia đội {teams.length > 0 && `(${teams.length} đội)`}
           </h3>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={onDrawTeams}
+              disabled={drawing}
+              title="Chia lại theo trình độ"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {drawing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RotateCcw className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden sm:inline">Chia theo trình độ</span>
+            </button>
             <button
               onClick={onExport}
               disabled={!hasData || exporting}
@@ -2783,7 +3488,7 @@ function TeamsModal({
                     <span className="text-xs text-gray-400">{t.members?.length ?? 0} người</span>
                   </div>
                   <div className="divide-y divide-gray-50">
-                    {(t.members ?? []).map((m: any) => (
+                    {sortByComposition(t.members).map((m: any) => (
                       <div key={m.id} className="px-3.5 py-2.5 text-sm">
                         <div className="flex items-center gap-2 min-w-0 mb-1.5">
                           <img
@@ -2837,7 +3542,7 @@ function TeamsModal({
                     </p>
                   </div>
                   <div className="divide-y divide-amber-50">
-                    {unassigned.map((m: any) => (
+                    {sortByComposition(unassigned).map((m: any) => (
                       <div key={m.id} className="px-3.5 py-2.5 text-sm">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-gray-700 truncate">

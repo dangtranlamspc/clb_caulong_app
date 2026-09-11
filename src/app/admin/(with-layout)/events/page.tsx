@@ -26,6 +26,7 @@ import EventRegistrationsPage from "@/components/admin/events/EventRegistrations
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import AdminAddShirtOrderModal from "@/components/admin/events/form/AdminAddShirtOrderModal";
 import ActivitiesOverview from "@/components/admin/events/ActivitiesOverview";
+import { createPortal } from "react-dom";
 
 const TYPE_LABEL: Record<string, string> = {
     shirt_order: "👕 Đặt áo",
@@ -168,6 +169,8 @@ function SkeletonMobileCard() {
     );
 }
 
+const NAVIGATE_DELAY_MS = 1000;
+
 export default function ActivitiesListPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -177,6 +180,8 @@ export default function ActivitiesListPage() {
 
     const [showTypePicker, setShowTypePicker] = useState(false);
     const [selectedType, setSelectedType] = useState<string | null>(null);
+
+    const [navigating, setNavigating] = useState(false);
 
     const [editingActivity, setEditingActivity] = useState<{
         id: string;
@@ -268,7 +273,10 @@ export default function ActivitiesListPage() {
 
     const handleEditClick = (a: any) => {
         if (a.type === "tournament") {
-            router.push(`/admin/events/${a.id}/edit/tournament`);
+            setNavigating(true);
+            setTimeout(() => {
+                router.push(`/admin/events/${a.id}/edit/tournament`);
+            }, NAVIGATE_DELAY_MS);
             return;
         }
         setEditingActivity({ id: a.id, type: a.type });
@@ -276,7 +284,10 @@ export default function ActivitiesListPage() {
 
     const handleViewRegistrations = (a: any) => {
         if (a.type === "tournament") {
-            router.push(`/admin/events/${a.id}/registrations/tournament`);
+            setNavigating(true);
+            setTimeout(() => {
+                router.push(`/admin/events/${a.id}/registrations/tournament`);
+            }, NAVIGATE_DELAY_MS);
             return;
         }
         openRegistrations(a);
@@ -640,6 +651,18 @@ export default function ActivitiesListPage() {
                     />
                 )}
             </ModalEvent>
+
+            {navigating && createPortal(
+                <div className="fixed inset-0 z-[300] flex items-center justify-center bg-gray-900/60 backdrop-blur-[2px]">
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="w-10 h-10 text-white animate-spin" />
+                        <p className="text-white font-semibold text-sm tracking-wide animate-pulse">
+                            Đang chuyển trang...
+                        </p>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 }

@@ -604,6 +604,25 @@ export const eventsAdminApi = {
     api.delete(`/admin/activities/shirt-order-registrations/batch`, {
       data: { registration_ids: ids },
     }),
+
+  renameTournamentTeam: (teamId: string, name: string) =>
+    api.patch(`/admin/activities/tournament-teams/${teamId}/rename`, { name }),
+
+  generateTournamentSchedule: (id: string) =>
+    api.post(`/admin/activities/${id}/tournament/generate-schedule`),
+  getTournamentSchedule: (id: string) =>
+    api.get(`/admin/activities/${id}/tournament/schedule`),
+
+
+  setMatchSchedule: (matchId: string, scheduledAt: string | null) =>
+    api.patch(`/admin/activities/tournament-matches/${matchId}/schedule`, {
+      scheduled_at: scheduledAt,
+    }),
+  setRoundSchedule: (id: string, roundNumber: number, scheduledAt: string) =>
+    api.patch(
+      `/admin/activities/${id}/tournament/rounds/${roundNumber}/schedule`,
+      { scheduled_at: scheduledAt },
+    ),
 };
 
 export const uploadsAdminApi = {

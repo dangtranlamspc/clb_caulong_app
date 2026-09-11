@@ -660,8 +660,8 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
             style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}
         >
             <div className="flex-shrink-0 bg-[#F4F6FA] px-4 sm:px-6 pt-4 sm:pt-6">
-                <div className="mb-5 sm:mb-6 space-y-3 sm:space-y-0">
-                    <div className="flex items-center justify-between gap-3">
+                <div className="mb-5 sm:mb-6 space-y-3 md:space-y-0">
+                    <div className="flex flex-wrap items-center gap-3 gap-y-2">
                         <div className="flex items-center gap-3 min-w-0">
                             <button
                                 onClick={handleClose}
@@ -675,7 +675,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                             </h1>
                         </div>
 
-                        <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+                        <div className="hidden md:flex items-center gap-2 flex-shrink-0 ml-auto">
                             {canToggleRegistration && (
                                 <button
                                     disabled={togglingStatus}
@@ -697,7 +697,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                 <button
                                     disabled={saving}
                                     onClick={handleSubmit}
-                                    className="btn-primary disabled:opacity-50 px-8"
+                                    className="btn-primary disabled:opacity-50 whitespace-nowrap"
                                 >
                                     {saving ? "Đang lưu..." : id ? "Lưu thay đổi" : "Tạo giải đấu"}
                                 </button>
@@ -705,7 +705,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                         </div>
                     </div>
 
-                    <div className="flex sm:hidden items-center gap-2">
+                    <div className="flex md:hidden items-center gap-2">
                         {canToggleRegistration && (
                             <button
                                 disabled={togglingStatus}
