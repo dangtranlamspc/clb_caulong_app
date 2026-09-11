@@ -959,6 +959,8 @@ export default function TournamentRegistrationsPage() {
 
   const [showDrawForm, setShowDrawForm] = useState(false);
 
+  const [showDrawConfirm, setShowDrawConfirm] = useState(false);
+
   const [statModal, setStatModal] = useState<{ title: string; items: any[] } | null>(null);
 
   const [payingAction, setPayingAction] = useState<{ id: string; type: "confirm" | "reject" } | null>(null);
@@ -1011,6 +1013,13 @@ export default function TournamentRegistrationsPage() {
     return "nam";
   }, [compositionSlots]);
 
+
+  const unpaidEligibleCount = useMemo(() => {
+    let elig = registrations;
+    if (drawContent === "nam") elig = elig.filter((r) => r.role === "nam");
+    else if (drawContent === "nu") elig = elig.filter((r) => r.role === "nu");
+    return elig.filter((r) => r.payment_status !== "confirmed").length;
+  }, [registrations, drawContent]);
 
   const getStatMembers = (key: string) => {
     switch (key) {
@@ -2111,7 +2120,7 @@ export default function TournamentRegistrationsPage() {
 
                   <button
                     disabled={drawing || compositionSlots.length === 0}
-                    onClick={handleDrawTeams}
+                    onClick={() => setShowDrawConfirm(true)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
                   >
                     {compositionSlots.length === 0
@@ -2239,6 +2248,22 @@ export default function TournamentRegistrationsPage() {
         />,
         document.body
       )}
+
+
+      {showDrawConfirm && createPortal(
+        <ConfirmDrawTeamsModal
+          unpaidCount={unpaidEligibleCount}
+          drawing={drawing}
+          onConfirm={async () => {
+            setShowDrawConfirm(false);
+            await handleDrawTeams();
+          }}
+          onCancel={() => setShowDrawConfirm(false)}
+        />,
+        document.body
+      )}
+
+      {drawing && createPortal(<DrawingTeamsOverlay />, document.body)}
     </div>
   );
 }
@@ -2392,6 +2417,77 @@ function ConfirmDeleteRegistrationModal({
   );
 }
 
+
+function ConfirmDrawTeamsModal({
+  unpaidCount,
+  drawing,
+  onConfirm,
+  onCancel,
+}: {
+  unpaidCount: number;
+  drawing: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const { visible, handleClose } = useModalTransition(onCancel);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div
+      className={`fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"
+        }`}
+      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+          }`}
+      >
+        <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
+          <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mb-3">
+            <AlertTriangle className="w-5 h-5 text-amber-500" />
+          </div>
+          <p className="text-sm font-bold text-gray-900">Xác nhận chia đội</p>
+          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+            {unpaidCount > 0 ? (
+              <>
+                Có <span className="font-semibold text-amber-600">{unpaidCount}</span> vận
+                động viên <span className="font-semibold">chưa thanh toán</span> — những người
+                này sẽ <span className="font-semibold">không được đưa vào chia đội</span> lần
+                này. Bạn có muốn tiếp tục?
+              </>
+            ) : (
+              "Tất cả vận động viên đủ điều kiện đều đã thanh toán. Tiếp tục chia đội?"
+            )}
+          </p>
+        </div>
+        <div className="flex border-t border-gray-100">
+          <button
+            onClick={handleClose}
+            disabled={drawing}
+            className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 disabled:opacity-50"
+          >
+            Huỷ
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={drawing}
+            className="flex-1 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+          >
+            Tiếp tục chia đội
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StatMembersModal({
   title,
   items,
@@ -2498,6 +2594,19 @@ function StatMembersModal({
             Đóng
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function DrawingTeamsOverlay() {
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-gray-900/60 backdrop-blur-[2px]">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="w-10 h-10 text-white animate-spin" />
+        <p className="text-white font-semibold text-sm tracking-wide animate-pulse">
+          Đang chia đội...
+        </p>
       </div>
     </div>
   );

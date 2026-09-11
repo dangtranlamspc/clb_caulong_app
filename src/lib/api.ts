@@ -920,6 +920,12 @@ export const userDrinksAdminApi = {
   approveRequest: (id: string) => api.patch(`/users/drinks/requests/${id}/approve`),
   rejectRequest: (id: string, reason?: string) =>
     api.patch(`/users/drinks/requests/${id}/reject`, { reason }),
+  transfer: (userId: string, data: { to_user_id: string; drink_id: string; quantity: number; note?: string }) =>
+    api.post(`/users/${userId}/drinks/transfer`, data),
+
+  getDrinksBreakdown: () => api.get(`/users/drinks/overview/breakdown`),
+  getMembersOwningDrink: (drinkId: string, params: { search?: string; page?: number; limit?: number }) =>
+    api.get(`/users/drinks/overview/by-drink/${drinkId}/members`, { params }),
 };
 
 export const clubDrinksAdminApi = {
