@@ -10,6 +10,7 @@ import {
     Megaphone,
     Calendar,
     Flag,
+    Trophy,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -169,6 +170,62 @@ function SkeletonMobileCard() {
     );
 }
 
+function ContinueTournamentModal({
+    activity,
+    onClose,
+    onContinue,
+}: {
+    activity: any;
+    onClose: () => void;
+    onContinue: () => void;
+}) {
+    const [visible, setVisible] = useState(false);
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const handleClose = () => {
+        setVisible(false);
+        setTimeout(onClose, 180);
+    };
+
+    return (
+        <div
+            className={`fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+            onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+        >
+            <div
+                className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+            >
+                <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
+                    <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
+                        <Trophy className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <p className="text-sm font-bold text-gray-900">Giải đấu đang diễn ra</p>
+                    <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                        "{activity?.title}" đã bắt đầu thi đấu. Bạn có muốn tiếp tục xem lịch thi đấu?
+                    </p>
+                </div>
+                <div className="flex border-t border-gray-100">
+                    <button
+                        onClick={handleClose}
+                        className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100"
+                    >
+                        Đóng
+                    </button>
+                    <button
+                        onClick={onContinue}
+                        className="flex-1 py-3 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    >
+                        Tiếp tục giải đấu
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 const NAVIGATE_DELAY_MS = 1000;
 
 export default function ActivitiesListPage() {
@@ -198,6 +255,8 @@ export default function ActivitiesListPage() {
     const [selectedActivity, setSelectedActivity] = useState<any>(null);
     const [showRegistrations, setShowRegistrations] = useState(false);
     const [showAddRegistration, setShowAddRegistration] = useState(false);
+
+    const [continueTournamentModal, setContinueTournamentModal] = useState<any>(null);
 
     useEffect(() => {
         const openId = searchParams.get("openRegistrations");
@@ -284,6 +343,10 @@ export default function ActivitiesListPage() {
 
     const handleViewRegistrations = (a: any) => {
         if (a.type === "tournament") {
+            if (a.started_at) {
+                setContinueTournamentModal(a);
+                return;
+            }
             setNavigating(true);
             setTimeout(() => {
                 router.push(`/admin/events/${a.id}/registrations/tournament`);
@@ -291,6 +354,16 @@ export default function ActivitiesListPage() {
             return;
         }
         openRegistrations(a);
+    };
+
+    const handleContinueTournament = () => {
+        const a = continueTournamentModal;
+        setContinueTournamentModal(null);
+        if (!a) return;
+        setNavigating(true);
+        setTimeout(() => {
+            router.push(`/admin/events/${a.id}/registrations/tournament?step=schedule`);
+        }, NAVIGATE_DELAY_MS);
     };
 
     const handleFormSaved = () => {
@@ -651,6 +724,15 @@ export default function ActivitiesListPage() {
                     />
                 )}
             </ModalEvent>
+
+            {continueTournamentModal && createPortal(
+                <ContinueTournamentModal
+                    activity={continueTournamentModal}
+                    onClose={() => setContinueTournamentModal(null)}
+                    onContinue={handleContinueTournament}
+                />,
+                document.body
+            )}
 
             {navigating && createPortal(
                 <div className="fixed inset-0 z-[300] flex items-center justify-center bg-gray-900/60 backdrop-blur-[2px]">

@@ -23,6 +23,7 @@ import { UpcomingEvents } from "@/components/member/home/UpcomingEvents";
 import { UpcomingSessionsSection } from "@/components/member/home/UpcomingSessionsSection";
 import { ParticipantsModal } from "@/components/member/home/ParticipantsModal";
 import { supabase } from "@/lib/supabase";
+import { BirthdayModal } from "@/components/member/home/BirthdayModal";
 
 const LEVEL_LABELS: Record<string, string> = {
   yeu: "Yếu",
@@ -92,6 +93,8 @@ export default function HomePage() {
     sessionId: string | null;
     sessionTitle?: string;
   }>({ open: false, sessionId: null });
+
+  const [selectedBirthdayMember, setSelectedBirthdayMember] = useState<any | null>(null);
   const [participants, setParticipants] = useState<any[]>([]);
   const [participantsLoading, setParticipantsLoading] = useState(false);
   const [handbookOpen, setHandbookOpen] = useState(false);
@@ -378,8 +381,8 @@ export default function HomePage() {
 
                 return (
                   <div
-                    key={m.id}
-                    className="flex flex-col items-center gap-1.5 py-3 px-1.5 rounded-2xl relative overflow-hidden"
+                    onClick={() => setSelectedBirthdayMember(m)}
+                    className="flex flex-col items-center gap-1.5 py-3 px-1.5 rounded-2xl relative overflow-hidden active:scale-95 transition-transform cursor-pointer"
                     style={{
                       ...(isToday
                         ? {
@@ -568,6 +571,16 @@ export default function HomePage() {
           participants={participants}
           loading={participantsLoading}
           onClose={() => setParticipantsModal({ open: false, sessionId: null })}
+        />
+
+        <BirthdayModal
+          open={!!selectedBirthdayMember}
+          member={selectedBirthdayMember}
+          currentUserId={user?.id}
+          onClose={() => setSelectedBirthdayMember(null)}
+          onSendWishes={async (memberId, message) => {
+            await usersApi.sendBirthdayWish(memberId, { message });
+          }}
         />
       </div>
     </>

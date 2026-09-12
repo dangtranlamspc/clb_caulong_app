@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2, AlertTriangle, Swords, Trophy, XCircle, RotateCcw, GlassWater } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2, AlertTriangle, Swords, Trophy, XCircle, RotateCcw, GlassWater, Cake } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -44,6 +44,8 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     drink_request_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
 
     drink_gift_received: { icon: GlassWater, cls: 'text-cyan-600', bg: 'bg-cyan-50' },
+
+    birthday_wish_received: { icon: Cake, cls: 'text-pink-600', bg: 'bg-pink-50' },
 };
 
 const SWIPE_THRESHOLD = -70;

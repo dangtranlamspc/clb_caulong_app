@@ -304,6 +304,9 @@ export default function AdminMembersPage() {
     });
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
     const [rejectConfirm, setRejectConfirm] = useState<{ id: string; name: string } | null>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+    const [toggleConfirm, setToggleConfirm] = useState<{ id: string; name: string; isActive: boolean } | null>(null);
+
 
 
     const openCreateModal = () => setFormModal({ open: true, mode: 'create', memberId: null });
@@ -354,7 +357,15 @@ export default function AdminMembersPage() {
         }
     };
 
-    const handleToggleActive = async (id: string) => {
+    const handleToggleActive = (id: string) => {
+        const user = users.find((u) => u.id === id);
+        if (!user) return;
+        setToggleConfirm({ id, name: user.full_name, isActive: user.is_active });
+    };
+
+    const confirmToggleActive = async () => {
+        if (!toggleConfirm) return;
+        const { id } = toggleConfirm;
         setActionLoading(id);
         try {
             const { data } = await membersAdminApi.toggleActive(id);
@@ -364,11 +375,17 @@ export default function AdminMembersPage() {
             toast.error(err?.response?.data?.message ?? 'Thao tác thất bại');
         } finally {
             setActionLoading(null);
+            setToggleConfirm(null);
         }
     };
 
-    const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Xóa thành viên "${name}"? Hành động này không thể hoàn tác.`)) return;
+    const handleDelete = (id: string, name: string) => {
+        setDeleteConfirm({ id, name });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm) return;
+        const { id } = deleteConfirm;
         setActionLoading(id);
         try {
             await membersAdminApi.delete(id);
@@ -378,6 +395,7 @@ export default function AdminMembersPage() {
             toast.error(err?.response?.data?.message ?? 'Xóa thất bại');
         } finally {
             setActionLoading(null);
+            setDeleteConfirm(null);
         }
     };
 
@@ -427,7 +445,6 @@ export default function AdminMembersPage() {
 
     return (
         <div className="space-y-4">
-            {/* Header */}
             <div className="flex flex-wrap items-center gap-3">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Quản lý thành viên</h1>
@@ -450,8 +467,6 @@ export default function AdminMembersPage() {
                     <span className="hidden sm:inline">Thêm mới</span>
                 </GradientBorderButton>
             </div>
-
-            {/* Search + filter */}
             <div className="bg-white rounded-2xl p-4 border border-gray-100 space-y-3">
                 <div className="flex gap-3">
                     <div className="relative flex-1">
@@ -497,7 +512,6 @@ export default function AdminMembersPage() {
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                {/* Mobile card view */}
                 <div className="md:hidden bg-gray-50 p-3 space-y-3">
                     {loading ? (
                         [...Array(6)].map((_, i) => (
@@ -563,7 +577,6 @@ export default function AdminMembersPage() {
                     ))}
                 </div>
 
-                {/* Desktop table view */}
                 <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 border-b border-gray-200">
@@ -648,7 +661,6 @@ export default function AdminMembersPage() {
                     </table>
                 </div>
 
-                {/* Pagination — chung cho cả mobile & desktop */}
                 {meta.total_pages > 1 && (
                     <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
                         <p className="text-sm text-gray-500">
@@ -724,6 +736,81 @@ export default function AdminMembersPage() {
                                     <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                                 )}
                                 Xác nhận từ chối
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+
+                <Modal
+                    isOpen={!!deleteConfirm}
+                    onClose={() => setDeleteConfirm(null)}
+                    title="Xóa thành viên"
+                >
+                    <div className="space-y-4">
+                        <p className="text-sm text-gray-600">
+                            Xóa thành viên{' '}
+                            <span className="font-semibold text-gray-900">{deleteConfirm?.name}</span>?
+                            Hành động này <span className="font-medium text-red-600">không thể hoàn tác</span>.
+                        </p>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button
+                                onClick={() => setDeleteConfirm(null)}
+                                className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                disabled={actionLoading === deleteConfirm?.id}
+                                className="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {actionLoading === deleteConfirm?.id && (
+                                    <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                )}
+                                Xác nhận xóa
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+
+                <Modal
+                    isOpen={!!toggleConfirm}
+                    onClose={() => setToggleConfirm(null)}
+                    title={toggleConfirm?.isActive ? 'Tạm vô hiệu hóa tài khoản' : 'Kích hoạt tài khoản'}
+                >
+                    <div className="space-y-4">
+                        <p className="text-sm text-gray-600">
+                            {toggleConfirm?.isActive ? (
+                                <>
+                                    Tạm vô hiệu hóa tài khoản của{' '}
+                                    <span className="font-semibold text-gray-900">{toggleConfirm?.name}</span>?
+                                    Thành viên sẽ <span className="font-medium text-amber-600">không thể đăng nhập</span> cho đến khi được kích hoạt lại.
+                                </>
+                            ) : (
+                                <>
+                                    Kích hoạt lại tài khoản của{' '}
+                                    <span className="font-semibold text-gray-900">{toggleConfirm?.name}</span>?
+                                    Thành viên sẽ có thể đăng nhập và sử dụng hệ thống bình thường.
+                                </>
+                            )}
+                        </p>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button
+                                onClick={() => setToggleConfirm(null)}
+                                className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={confirmToggleActive}
+                                disabled={actionLoading === toggleConfirm?.id}
+                                className={`px-4 py-2 rounded-xl text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2 ${toggleConfirm?.isActive ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'
+                                    }`}
+                            >
+                                {actionLoading === toggleConfirm?.id && (
+                                    <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                )}
+                                {toggleConfirm?.isActive ? 'Xác nhận vô hiệu hóa' : 'Xác nhận kích hoạt'}
                             </button>
                         </div>
                     </div>

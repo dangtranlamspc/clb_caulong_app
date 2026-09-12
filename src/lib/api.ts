@@ -208,6 +208,8 @@ export const usersApi = {
   birthdaysThisMonth: () => api.get("/users/birthday/this-month"),
   searchMembers: (q: string) =>
     api.get("/users/search/members", { params: { q } }),
+  sendBirthdayWish: (memberId: string, payload: { message: string }) =>
+    api.post(`/users/${memberId}/birthday-wish`, payload),
 };
 
 export const notificationsApi = {
@@ -614,15 +616,20 @@ export const eventsAdminApi = {
     api.get(`/admin/activities/${id}/tournament/schedule`),
 
 
-  setMatchSchedule: (matchId: string, scheduledAt: string | null) =>
+  setMatchSchedule: (matchId: string, scheduledAt: string | null, courtNumber?: number | null) =>
     api.patch(`/admin/activities/tournament-matches/${matchId}/schedule`, {
       scheduled_at: scheduledAt,
+      court_number: courtNumber,
     }),
+
   setRoundSchedule: (id: string, roundNumber: number, scheduledAt: string) =>
     api.patch(
       `/admin/activities/${id}/tournament/rounds/${roundNumber}/schedule`,
       { scheduled_at: scheduledAt },
     ),
+
+  confirmTournamentSchedule: (id: string, force?: boolean) =>
+    api.post(`/admin/activities/${id}/tournament/confirm-schedule`, { force }),
 };
 
 export const uploadsAdminApi = {

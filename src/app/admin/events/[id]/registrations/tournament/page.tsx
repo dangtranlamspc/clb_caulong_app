@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import {
   Download,
   Users,
@@ -21,7 +21,20 @@ import {
   FilterX,
   Trophy,
 } from "lucide-react";
-import { format } from "date-fns";
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameDay,
+  isSameMonth,
+  isBefore,
+  startOfDay,
+} from "date-fns";
 import { vi } from "date-fns/locale";
 import toast from "react-hot-toast";
 import { eventsAdminApi, walletAdminApi } from "@/lib/api";
@@ -73,6 +86,27 @@ const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
   C: { bg: "#e3f7fb", text: "#0f9db0" },
 };
 
+
+const MATCH_CONTENT_OPTIONS = [
+  { value: "Đôi Nam", label: "Đôi Nam" },
+  { value: "Đôi Nam - Nữ", label: "Đôi Nam - Nữ" },
+  { value: "Đôi Nữ", label: "Đôi Nữ" },
+  { value: "Đơn Nam", label: "Đơn Nam" },
+  { value: "Đơn Nữ", label: "Đơn Nữ" },
+  { value: "3vs3", label: "3vs3" },
+];
+
+const MATCH_CONTENT_COLOR: Record<string, string> = {
+  "Đôi Nam": "#1c3d5a",
+  "Đôi Nam - Nữ": "#7c3aed",
+  "Đôi Nữ": "#c2185b",
+  "Đơn Nam": "#374151",
+  "Đơn Nữ": "#db2777",
+  "3vs3": "#0f766e",
+};
+
+const genId = () => Math.random().toString(36).slice(2, 10);
+
 const STATUS_LABEL: Record<string, string> = {
   draft: "Nháp",
   open: "Đang mở đăng ký",
@@ -90,6 +124,18 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }
   completed: { bg: "#eef2ff", text: "#4f46e5", border: "#d6ddfb" },
   cancelled: { bg: "#fdecec", text: "#dc2626", border: "#f9cfcf" },
 };
+
+const WEEKDAYS_VI = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => ({
+  value: String(i),
+  label: String(i).padStart(2, "0"),
+}));
+
+const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => ({
+  value: String(i),
+  label: String(i).padStart(2, "0"),
+}));
 
 const ROLES_OPTIONS = [
   { value: "", label: "Tất cả" },
@@ -948,6 +994,8 @@ export default function TournamentRegistrationsPage() {
 
   const [showAddModal, setShowAddModal] = useState(false);
 
+  const [showStartTournamentModal, setShowStartTournamentModal] = useState(false);
+
   const [teams, setTeams] = useState<any[]>([]);
   const [unassigned, setUnassigned] = useState<any[]>([]);
   const [loadingTeams, setLoadingTeams] = useState(false);
@@ -975,25 +1023,69 @@ export default function TournamentRegistrationsPage() {
   const [publicLinkAnchor, setPublicLinkAnchor] = useState<{ top: number; left: number; right: number } | null>(null);
 
   const [confirmMethodModal, setConfirmMethodModal] = useState<{ id: string } | null>(null)
-
-  const [showStartTournamentModal, setShowStartTournamentModal] = useState(false);
-  const [tournamentWizardStep, setTournamentWizardStep] = useState<
-    "round_robin_setup" | "team_list" | "schedule" | null
-  >(null);
+  type WizardStep = "round_robin_setup" | "team_list" | "schedule";
+  const [wizardStack, setWizardStack] = useState<WizardStep[]>([]);
+  const tournamentWizardStep: WizardStep | null =
+    wizardStack.length > 0 ? wizardStack[wizardStack.length - 1] : null;
+  const isEditingTournamentInfo =
+    wizardStack.length > 1 && tournamentWizardStep === "round_robin_setup";
+  const pushWizardStep = (step: WizardStep) => setWizardStack((prev) => [...prev, step]);
+  const popWizardStep = () => setWizardStack((prev) => prev.slice(0, -1));
   const [generatingSchedule, setGeneratingSchedule] = useState(false);
+  const [scheduleGenerated, setScheduleGenerated] = useState(false);
+
+  const searchParams = useSearchParams();
+
+  const [confirmingSchedule, setConfirmingSchedule] = useState(false);
+  const [confirmScheduleWarning, setConfirmScheduleWarning] = useState<{ unscheduled: number; total: number } | null>(null);
+
+  const tournamentStarted = Boolean(activity?.started_at);
+
+  const handleConfirmSchedule = async (force: boolean) => {
+    if (!id) return;
+    setConfirmingSchedule(true);
+    try {
+      const { data } = await eventsAdminApi.confirmTournamentSchedule(id, force);
+      if (data.needs_confirmation) {
+        setConfirmScheduleWarning({ unscheduled: data.unscheduled_count, total: data.total_count });
+        return;
+      }
+      setConfirmScheduleWarning(null);
+      toast.success(data.message ?? "Đã xác nhận lịch thi đấu");
+      await load(true);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Xác nhận lịch thi đấu thất bại");
+    } finally {
+      setConfirmingSchedule(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!activity) return;
+    if (activity.started_at && searchParams.get("step") === "schedule" && wizardStack.length === 0) {
+      setWizardStack(["schedule"]);
+      router.replace(`/admin/events/${id}/registrations/tournament`);
+    }
+  }, [activity]);
 
   const handleGenerateSchedule = async () => {
     if (!id) return;
     setGeneratingSchedule(true);
     try {
       await eventsAdminApi.generateTournamentSchedule(id);
-      setTournamentWizardStep("schedule");
+      setScheduleGenerated(true);
+      pushWizardStep("schedule");
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Tạo lịch thi đấu thất bại");
     } finally {
       setGeneratingSchedule(false);
     }
   };
+
+  const handleBackToSchedule = () => {
+    pushWizardStep("schedule");
+  };
+
   const [savingFormat, setSavingFormat] = useState(false);
 
   const handleReload = async () => {
@@ -1085,6 +1177,7 @@ export default function TournamentRegistrationsPage() {
       toast.success("Đã xoá kết quả chia đội");
       setTeams([]);
       setUnassigned(registrations);
+      setScheduleGenerated(false);
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Xoá kết quả chia đội thất bại");
     } finally {
@@ -1355,9 +1448,10 @@ export default function TournamentRegistrationsPage() {
   };
 
 
-  const handleCreateRoundRobinSchedule = async () => {
+  const handleCreateRoundRobinSchedule = async (
+    matchContents: { id: string; label: string }[]
+  ) => {
     if (!id || !activity) return;
-    const matchContents = activity?.detail?.rules?.match_contents ?? [];
     const courtsCount = matchContents.length;
     if (courtsCount < 1) {
       toast.error("Vui lòng cấu hình ít nhất 1 nội dung thi đấu trước khi tạo lịch");
@@ -1373,10 +1467,18 @@ export default function TournamentRegistrationsPage() {
           ...activity.detail,
           format: "round_robin",
           courts_count: courtsCount,
+          rules: {
+            ...activity.detail?.rules,
+            match_contents: matchContents,
+          },
         },
       });
-      setTournamentWizardStep("team_list");
-      load(true);
+      await load(true);
+      if (isEditingTournamentInfo) {
+        popWizardStep();
+      } else {
+        pushWizardStep("team_list");
+      }
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Lưu thiết lập thất bại");
     } finally {
@@ -2198,10 +2300,16 @@ export default function TournamentRegistrationsPage() {
 
               {teams.length > 0 && (
                 <button
-                  onClick={() => setShowStartTournamentModal(true)}
+                  onClick={() => {
+                    if (tournamentStarted) {
+                      setWizardStack(["schedule"]);
+                    } else {
+                      setShowStartTournamentModal(true);
+                    }
+                  }}
                   className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold shadow-sm shadow-emerald-200 transition-colors"
                 >
-                  <Trophy className="w-4 h-4" /> Bắt đầu giải đấu
+                  <Trophy className="w-4 h-4" /> {tournamentStarted ? "Tiếp tục giải đấu" : "Bắt đầu giải đấu"}
                 </button>
               )}
             </div>
@@ -2328,7 +2436,7 @@ export default function TournamentRegistrationsPage() {
           onClose={() => setShowStartTournamentModal(false)}
           onSelectRoundRobin={() => {
             setShowStartTournamentModal(false);
-            setTournamentWizardStep("round_robin_setup");
+            setWizardStack(["round_robin_setup"]);
           }}
         />,
         document.body
@@ -2340,7 +2448,8 @@ export default function TournamentRegistrationsPage() {
           teamsCount={teams.length}
           matchContents={activity?.detail?.rules?.match_contents ?? []}
           saving={savingFormat}
-          onBack={() => setTournamentWizardStep(null)}
+          mode={isEditingTournamentInfo ? "edit" : "create"}
+          onBack={popWizardStep}
           onCreateSchedule={handleCreateRoundRobinSchedule}
         />,
         document.body
@@ -2349,10 +2458,11 @@ export default function TournamentRegistrationsPage() {
       {tournamentWizardStep === "team_list" && createPortal(
         <TeamListRenameScreen
           teams={teams}
-          onBack={() => setTournamentWizardStep("round_robin_setup")}
+          onBack={popWizardStep}
           onRenameTeam={handleRenameTournamentTeam}
-          onContinue={handleGenerateSchedule}
+          onContinue={scheduleGenerated ? handleBackToSchedule : handleGenerateSchedule}
           continuing={generatingSchedule}
+          mode={scheduleGenerated ? "edit" : "create"}
         />,
         document.body
       )}
@@ -2360,10 +2470,386 @@ export default function TournamentRegistrationsPage() {
       {tournamentWizardStep === "schedule" && createPortal(
         <ScheduleScreen
           activityId={id!}
-          onBack={() => setTournamentWizardStep("team_list")}
+          onBack={popWizardStep}
+          onEditInfo={() => pushWizardStep("round_robin_setup")}
+          tournamentStarted={tournamentStarted}
+          confirming={confirmingSchedule}
+          onConfirmSchedule={() => handleConfirmSchedule(false)}
         />,
         document.body
       )}
+
+      {confirmScheduleWarning && createPortal(
+        <ConfirmScheduleWarningModal
+          unscheduledCount={confirmScheduleWarning.unscheduled}
+          totalCount={confirmScheduleWarning.total}
+          confirming={confirmingSchedule}
+          onCancel={() => setConfirmScheduleWarning(null)}
+          onStillSave={() => handleConfirmSchedule(true)}
+        />,
+        document.body
+      )}
+    </div>
+  );
+}
+
+const MONTHS_VI = [
+  "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+  "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12",
+];
+
+function PickerFade({ children, pickerKey }: { children: React.ReactNode; pickerKey: string }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    setVisible(false);
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, [pickerKey]);
+  return (
+    <div
+      className={`transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100" : "opacity-0 scale-[0.98]"
+        }`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function CustomDatePicker({
+  selected,
+  onSelect,
+}: {
+  selected: Date | null;
+  onSelect: (d: Date) => void;
+}) {
+  const [viewMonth, setViewMonth] = useState(() => selected ?? new Date());
+  const [mode, setMode] = useState<"days" | "months" | "years">("days");
+  const [yearRangeStart, setYearRangeStart] = useState(() => {
+    const base = (selected ?? new Date()).getFullYear();
+    return base - 5;
+  });
+
+  const today = startOfDay(new Date());
+  const selectedYear = selected?.getFullYear();
+  const selectedMonthIdx = selected?.getMonth();
+  const todayYear = today.getFullYear();
+  const todayMonthIdx = today.getMonth();
+
+  const monthStart = startOfMonth(viewMonth);
+  const monthEnd = endOfMonth(viewMonth);
+  const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const days = eachDayOfInterval({ start: gridStart, end: gridEnd });
+
+  const viewYear = viewMonth.getFullYear();
+  const years = Array.from({ length: 12 }, (_, i) => yearRangeStart + i);
+
+  const openMonths = () => {
+    setYearRangeStart(viewYear - 5);
+    setMode("months");
+  };
+  const openYears = () => {
+    setYearRangeStart(viewYear - 5);
+    setMode("years");
+  };
+
+  const goPrev = () => {
+    if (mode === "days") setViewMonth((m) => subMonths(m, 1));
+    else if (mode === "years") setYearRangeStart((s) => s - 12);
+  };
+  const goNext = () => {
+    if (mode === "days") setViewMonth((m) => addMonths(m, 1));
+    else if (mode === "years") setYearRangeStart((s) => s + 12);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          onClick={goPrev}
+          className={`w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors ${mode === "months" ? "invisible" : ""
+            }`}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        {mode === "days" && (
+          <button
+            type="button"
+            onClick={openMonths}
+            className="text-sm font-semibold text-gray-900 capitalize px-2 py-1 rounded-lg hover:bg-gray-100 active:scale-95 transition-all"
+          >
+            {format(viewMonth, "MMMM yyyy", { locale: vi })}
+          </button>
+        )}
+        {mode === "months" && (
+          <button
+            type="button"
+            onClick={openYears}
+            className="text-sm font-semibold text-gray-900 px-2 py-1 rounded-lg hover:bg-gray-100 active:scale-95 transition-all"
+          >
+            {viewYear}
+          </button>
+        )}
+        {mode === "years" && (
+          <p className="text-sm font-semibold text-gray-900">
+            {years[0]} - {years[years.length - 1]}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={goNext}
+          className={`w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors ${mode === "months" ? "invisible" : ""
+            }`}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {mode === "days" && (
+        <PickerFade pickerKey={`days-${format(viewMonth, "yyyy-MM")}`}>
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {WEEKDAYS_VI.map((w) => (
+              <div key={w} className="text-center text-[11px] font-semibold text-gray-400 py-1">
+                {w}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {days.map((d) => {
+              const inMonth = isSameMonth(d, viewMonth);
+              const isSelected = selected && isSameDay(d, selected);
+              const isTodayDay = isSameDay(d, today);
+              const isPast = isBefore(d, today) && !isTodayDay;
+              return (
+                <button
+                  type="button"
+                  key={d.toISOString()}
+                  onClick={() => onSelect(d)}
+                  className={`h-9 rounded-lg text-sm font-medium transition-colors flex items-center justify-center
+                      ${!inMonth || isPast ? "text-gray-300" : "text-gray-700"}
+                      ${isSelected ? "bg-blue-600 text-white hover:bg-blue-600" : "hover:bg-gray-100"}
+                      ${isTodayDay && !isSelected ? "border border-blue-300 text-blue-600 font-semibold" : ""}
+                    `}
+                >
+                  {d.getDate()}
+                </button>
+              );
+            })}
+          </div>
+        </PickerFade>
+      )}
+
+      {mode === "months" && (
+        <PickerFade pickerKey={`months-${viewYear}`}>
+          <div className="grid grid-cols-3 gap-2">
+            {MONTHS_VI.map((label, idx) => {
+              const isSelectedMonth = selectedYear === viewYear && selectedMonthIdx === idx;
+              const isTodayMonth = todayYear === viewYear && todayMonthIdx === idx;
+              return (
+                <button
+                  type="button"
+                  key={label}
+                  onClick={() => {
+                    setViewMonth(new Date(viewYear, idx, 1));
+                    setMode("days");
+                  }}
+                  className={`py-2.5 rounded-lg text-sm font-medium transition-colors
+                      ${isSelectedMonth ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}
+                      ${isTodayMonth && !isSelectedMonth ? "border border-blue-300 text-blue-600 font-semibold" : ""}
+                    `}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </PickerFade>
+      )}
+
+      {mode === "years" && (
+        <PickerFade pickerKey={`years-${yearRangeStart}`}>
+          <div className="grid grid-cols-3 gap-2">
+            {years.map((y) => {
+              const isSelectedYear = y === selectedYear;
+              const isTodayYear = y === todayYear;
+              return (
+                <button
+                  type="button"
+                  key={y}
+                  onClick={() => {
+                    setViewMonth(new Date(y, viewMonth.getMonth(), 1));
+                    setMode("months");
+                  }}
+                  className={`py-2.5 rounded-lg text-sm font-medium transition-colors
+                      ${isSelectedYear ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}
+                      ${isTodayYear && !isSelectedYear ? "border border-blue-300 text-blue-600 font-semibold" : ""}
+                    `}
+                >
+                  {y}
+                </button>
+              );
+            })}
+          </div>
+        </PickerFade>
+      )}
+    </div>
+  );
+}
+
+function EditMatchModal({
+  initialValue,
+  initialCourt,
+  onClose,
+  onSave,
+}: {
+  initialValue?: string | null;
+  initialCourt?: number | null;
+  onClose: () => void;
+  onSave: (value: string, courtNumber: number | null) => Promise<void>;
+}) {
+  const { visible, handleClose } = useModalTransition(onClose);
+
+  const initialDate = initialValue ? new Date(initialValue) : null;
+
+  const [selectedDay, setSelectedDay] = useState<Date | null>(initialDate);
+  const [hour, setHour] = useState<string>(initialDate ? String(initialDate.getHours()) : "18");
+  const [minute, setMinute] = useState<string>(initialDate ? String(initialDate.getMinutes()) : "0");
+  const [courtNumber, setCourtNumber] = useState<string>(
+    initialCourt != null ? String(initialCourt) : "",
+  );
+  const [saving, setSaving] = useState(false);
+
+  const handleQuickPick = (offsetDays: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    setSelectedDay(d);
+  };
+
+  const handleSave = async () => {
+    if (!selectedDay) {
+      toast.error("Vui lòng chọn ngày thi đấu");
+      return;
+    }
+    const result = new Date(selectedDay);
+    result.setHours(Number(hour), Number(minute), 0, 0);
+
+    const trimmed = courtNumber.trim();
+    let court: number | null = null;
+    if (trimmed) {
+      const parsed = Number(trimmed);
+      if (!Number.isInteger(parsed) || parsed < 1) {
+        toast.error("Số sân không hợp lệ");
+        return;
+      }
+      court = parsed;
+    }
+
+    setSaving(true);
+    try {
+      await onSave(result.toISOString(), court);
+      handleClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className={`fixed inset-0 z-[230] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">Sửa trận đấu</h3>
+          <button
+            onClick={handleClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Số sân thi đấu
+            </label>
+            <input
+              type="number"
+              min={1}
+              className="input-field"
+              placeholder="Ví dụ: 1"
+              value={courtNumber}
+              onChange={(e) => setCourtNumber(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleQuickPick(0)}
+              className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Hôm nay
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickPick(1)}
+              className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Ngày mai
+            </button>
+          </div>
+
+          <CustomDatePicker selected={selectedDay} onSelect={setSelectedDay} />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Giờ thi đấu
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <CustomSelect value={hour} onChange={setHour} options={HOUR_OPTIONS} />
+              </div>
+              <span className="text-gray-400 font-semibold">:</span>
+              <div className="flex-1">
+                <CustomSelect value={minute} onChange={setMinute} options={MINUTE_OPTIONS} />
+              </div>
+            </div>
+          </div>
+
+          {selectedDay && (
+            <p className="text-xs text-gray-400 text-center">
+              Đã chọn:{" "}
+              <span className="font-semibold text-gray-700">
+                {format(selectedDay, "EEEE, dd/MM/yyyy", { locale: vi })} lúc{" "}
+                {hour.padStart(2, "0")}:{minute.padStart(2, "0")}
+              </span>
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-gray-100">
+          <button
+            onClick={handleClose}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Huỷ
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !selectedDay}
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold disabled:opacity-60"
+          >
+            {saving ? "Đang lưu..." : "Lưu thay đổi"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2381,24 +2867,30 @@ function SetScheduleModal({
   onSave: (value: string) => Promise<void>;
 }) {
   const { visible, handleClose } = useModalTransition(onClose);
-  const [value, setValue] = useState(() => {
-    if (!initialValue) return "";
-    const d = new Date(initialValue);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-      d.getHours(),
-    )}:${pad(d.getMinutes())}`;
-  });
+
+  const initialDate = initialValue ? new Date(initialValue) : null;
+
+  const [selectedDay, setSelectedDay] = useState<Date | null>(initialDate);
+  const [hour, setHour] = useState<string>(initialDate ? String(initialDate.getHours()) : "18");
+  const [minute, setMinute] = useState<string>(initialDate ? String(initialDate.getMinutes()) : "0");
   const [saving, setSaving] = useState(false);
 
+  const handleQuickPick = (offsetDays: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    setSelectedDay(d);
+  };
+
   const handleSave = async () => {
-    if (!value) {
-      toast.error("Vui lòng chọn ngày giờ");
+    if (!selectedDay) {
+      toast.error("Vui lòng chọn ngày thi đấu");
       return;
     }
+    const result = new Date(selectedDay);
+    result.setHours(Number(hour), Number(minute), 0, 0);
     setSaving(true);
     try {
-      await onSave(new Date(value).toISOString());
+      await onSave(result.toISOString());
       handleClose();
     } finally {
       setSaving(false);
@@ -2407,13 +2899,11 @@ function SetScheduleModal({
 
   return (
     <div
-      className={`fixed inset-0 z-[230] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"
-        }`}
+      className={`fixed inset-0 z-[230] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
-          }`}
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h3 className="font-bold text-gray-900">{title}</h3>
@@ -2424,17 +2914,53 @@ function SetScheduleModal({
             ✕
           </button>
         </div>
-        <div className="p-5">
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Ngày & giờ thi đấu
-          </label>
-          <input
-            type="datetime-local"
-            className="input-field w-full"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-          />
+
+        <div className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleQuickPick(0)}
+              className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Hôm nay
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickPick(1)}
+              className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Ngày mai
+            </button>
+          </div>
+
+          <CustomDatePicker selected={selectedDay} onSelect={setSelectedDay} />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Giờ thi đấu
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <CustomSelect value={hour} onChange={setHour} options={HOUR_OPTIONS} />
+              </div>
+              <span className="text-gray-400 font-semibold">:</span>
+              <div className="flex-1">
+                <CustomSelect value={minute} onChange={setMinute} options={MINUTE_OPTIONS} />
+              </div>
+            </div>
+          </div>
+
+          {selectedDay && (
+            <p className="text-xs text-gray-400 text-center">
+              Đã chọn:{" "}
+              <span className="font-semibold text-gray-700">
+                {format(selectedDay, "EEEE, dd/MM/yyyy", { locale: vi })} lúc{" "}
+                {hour.padStart(2, "0")}:{minute.padStart(2, "0")}
+              </span>
+            </p>
+          )}
         </div>
+
         <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-gray-100">
           <button
             onClick={handleClose}
@@ -2444,7 +2970,7 @@ function SetScheduleModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !selectedDay}
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold disabled:opacity-60"
           >
             {saving ? "Đang lưu..." : "Lưu giờ thi đấu"}
@@ -2604,6 +3130,68 @@ function ConfirmDeleteRegistrationModal({
   );
 }
 
+function ConfirmScheduleWarningModal({
+  unscheduledCount,
+  totalCount,
+  confirming,
+  onCancel,
+  onStillSave,
+}: {
+  unscheduledCount: number;
+  totalCount: number;
+  confirming: boolean;
+  onCancel: () => void;
+  onStillSave: () => void;
+}) {
+  const { visible, handleClose } = useModalTransition(onCancel);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div
+      className={`fixed inset-0 z-[230] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+      >
+        <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
+          <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mb-3">
+            <AlertTriangle className="w-5 h-5 text-amber-500" />
+          </div>
+          <p className="text-sm font-bold text-gray-900">Còn lượt chưa đặt giờ</p>
+          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+            Có <span className="font-semibold text-amber-600">{unscheduledCount}/{totalCount}</span> trận
+            đấu chưa được đặt giờ thi đấu. Bạn vẫn có thể đặt giờ cho các trận này sau khi giải đấu đã bắt đầu.
+          </p>
+        </div>
+        <div className="flex border-t border-gray-100">
+          <button
+            onClick={handleClose}
+            disabled={confirming}
+            className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 disabled:opacity-50"
+          >
+            Huỷ
+          </button>
+          <button
+            onClick={onStillSave}
+            disabled={confirming}
+            className="flex-1 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+          >
+            {confirming ? "Đang lưu..." : "Vẫn lưu"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function ConfirmDrawTeamsModal({
   unpaidCount,
@@ -2728,11 +3316,77 @@ function StartTournamentModal({
   );
 }
 
+function AnimatedCheckbox({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      aria-checked={checked}
+      role="checkbox"
+      className={`relative w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0
+          transition-all duration-200 ease-out active:scale-75
+          ${checked
+          ? "bg-blue-600 border-blue-600 scale-100"
+          : "bg-white border-gray-300 hover:border-blue-400 scale-100"
+        }`}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        className={`w-3.5 h-3.5 transition-all duration-200 ease-out ${checked ? "scale-100 opacity-100" : "scale-50 opacity-0"
+          }`}
+      >
+        <path
+          d="M5 13l4 4L19 7"
+          stroke="white"
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={20}
+          strokeDashoffset={checked ? 0 : 20}
+          style={{ transition: "stroke-dashoffset 0.25s ease-out 0.05s" }}
+        />
+      </svg>
+    </button>
+  );
+}
+
+function AnimatedCourtsCount({ value }: { value: number }) {
+  const [displayValue, setDisplayValue] = useState(value);
+  const [pulsing, setPulsing] = useState(false);
+  const prevRef = useRef(value);
+
+  useEffect(() => {
+    if (prevRef.current === value) return;
+    prevRef.current = value;
+    setPulsing(true);
+    const t = setTimeout(() => setPulsing(false), 280);
+    setDisplayValue(value);
+    return () => clearTimeout(t);
+  }, [value]);
+
+  return (
+    <div
+      className={`w-12 h-12 rounded-xl bg-white flex items-center justify-center text-xl font-bold text-emerald-700 shadow-sm flex-shrink-0 transition-transform duration-200 ease-out ${pulsing ? "scale-125" : "scale-100"
+        }`}
+    >
+      {displayValue}
+    </div>
+  );
+}
+
 function RoundRobinSetupScreen({
   activity,
   teamsCount,
   matchContents,
   saving,
+  mode,
   onBack,
   onCreateSchedule,
 }: {
@@ -2740,10 +3394,43 @@ function RoundRobinSetupScreen({
   teamsCount: number;
   matchContents: { id?: string; label: string }[];
   saving: boolean;
+  mode: "create" | "edit";
   onBack: () => void;
-  onCreateSchedule: () => void;
+  onCreateSchedule: (matchContents: { id: string; label: string }[]) => void;
 }) {
   const courtsCount = matchContents.length;
+
+  const [items, setItems] = useState<{ id: string; label: string; checked: boolean }[]>(() =>
+    matchContents.map((c) => ({ id: c.id ?? genId(), label: c.label, checked: true })),
+  );
+
+  const activeCount = items.filter((it) => it.checked).length;
+
+  const toggleChecked = (id: string) => {
+    setItems((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, checked: !it.checked } : it)),
+    );
+  };
+
+  const addItem = () => {
+    setItems((prev) => [
+      ...prev,
+      { id: genId(), label: MATCH_CONTENT_OPTIONS[0].value, checked: true },
+    ]);
+  };
+
+  const updateItem = (id: string, label: string) => {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, label } : it)));
+  };
+
+  const removeItem = (id: string) => {
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  };
+
+  const handleSubmit = () => {
+    const kept = items.filter((it) => it.checked).map(({ id, label }) => ({ id, label }));
+    onCreateSchedule(kept);
+  };
 
   return (
     <div className="fixed inset-0 z-[220] bg-white flex flex-col">
@@ -2781,34 +3468,82 @@ function RoundRobinSetupScreen({
           <div>
             <p className="text-sm font-semibold text-emerald-800">Số sân thi đấu</p>
             <p className="text-xs text-emerald-600 mt-0.5 leading-relaxed">
-              Tự động tính theo số nội dung thi đấu bên dưới
+              Tự động tính theo số nội dung thi đấu đang được chọn bên dưới
             </p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-xl font-bold text-emerald-700 shadow-sm flex-shrink-0">
-            {courtsCount}
-          </div>
+          <AnimatedCourtsCount value={activeCount} />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Nội dung thi đấu
           </label>
-          {matchContents.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {matchContents.map((c, idx) => (
-                <span
-                  key={c.id ?? idx}
-                  className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-indigo-50 text-indigo-600"
-                >
-                  {c.label}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed">
-              ⚠️ Chưa có nội dung thi đấu nào được cấu hình cho giải này. Vui lòng vào chỉnh sửa giải đấu để thêm trước khi tạo lịch.
+          <p className="text-xs text-gray-400 mb-2 leading-relaxed">
+            Nội dung đang tick là đang áp dụng. Bỏ tick để đánh dấu xoá — thay đổi chỉ có hiệu lực khi bạn bấm {mode === "edit" ? "Lưu" : "Tạo lịch thi đấu"}.
+          </p>
+
+          {items.length === 0 && (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed mb-2">
+              ⚠️ Chưa có nội dung thi đấu nào. Vui lòng thêm ít nhất 1 nội dung trước khi tiếp tục.
             </p>
           )}
+
+          <div className="space-y-2">
+            {items.map((item) => {
+              const color = MATCH_CONTENT_COLOR[item.label] ?? "#1c3d5a";
+              return (
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-3 rounded-xl border p-3 transition-all duration-300 ease-out ${item.checked
+                    ? "border-gray-200 bg-white"
+                    : "border-gray-100 bg-gray-50/70"
+                    }`}
+                >
+                  <AnimatedCheckbox
+                    checked={item.checked}
+                    onChange={() => toggleChecked(item.id)}
+                  />
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold transition-all duration-300 ease-out"
+                    style={{
+                      background: color,
+                      opacity: item.checked ? 1 : 0.45,
+                      transform: item.checked ? "scale(1)" : "scale(0.92)",
+                    }}
+                  >
+                    {item.label.slice(0, 1)}
+                  </div>
+                  <div
+                    className={`flex-1 min-w-0 transition-all duration-300 ease-out ${item.checked ? "opacity-100" : "opacity-45"
+                      }`}
+                    style={{ textDecoration: item.checked ? "none" : "line-through" }}
+                  >
+                    <CustomSelect
+                      value={item.label}
+                      onChange={(v) => updateItem(item.id, v)}
+                      options={MATCH_CONTENT_OPTIONS}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0 transition-colors"
+                    title="Xoá hẳn khỏi danh sách"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={addItem}
+            className="mt-3 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-400"
+          >
+            <Plus className="w-4 h-4" /> Thêm nội dung
+          </button>
         </div>
       </div>
 
@@ -2817,11 +3552,13 @@ function RoundRobinSetupScreen({
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
       >
         <button
-          onClick={onCreateSchedule}
-          disabled={saving || courtsCount < 1}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold disabled:opacity-50 transition-colors"
+          onClick={handleSubmit}
+          disabled={saving || activeCount < 1}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
         >
-          {saving ? "Đang lưu..." : "Tạo lịch thi đấu"}
+          {mode === "edit"
+            ? (saving ? "Đang lưu..." : "Lưu")
+            : (saving ? "Đang tạo lịch..." : "Tạo lịch thi đấu")}
         </button>
       </div>
     </div>
@@ -2834,12 +3571,14 @@ function TeamListRenameScreen({
   onRenameTeam,
   onContinue,
   continuing,
+  mode = "create",
 }: {
   teams: any[];
   onBack: () => void;
   onRenameTeam: (teamId: string, name: string) => Promise<void>;
   onContinue: () => void;
   continuing: boolean;
+  mode?: "create" | "edit";
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -2941,7 +3680,9 @@ function TeamListRenameScreen({
           disabled={continuing}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold disabled:opacity-50 transition-colors"
         >
-          {continuing ? "Đang tạo lịch..." : "Tiếp tục → Xem lịch thi đấu"}
+          {mode === "edit"
+            ? (continuing ? "Đang lưu..." : "Lưu")
+            : (continuing ? "Đang chuyển trang..." : "Tiếp tục")}
         </button>
       </div>
     </div>
@@ -2952,28 +3693,36 @@ function TeamListRenameScreen({
 function ScheduleScreen({
   activityId,
   onBack,
+  onEditInfo,
+  tournamentStarted,
+  confirming,
+  onConfirmSchedule,
 }: {
   activityId: string;
   onBack: () => void;
+  onEditInfo: () => void;
+  tournamentStarted: boolean;
+  confirming: boolean;
+  onConfirmSchedule: () => void;
 }) {
   const [tab, setTab] = useState<"all" | "pending">("all");
   const [rounds, setRounds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [scheduleModal, setScheduleModal] = useState<
-    | { type: "round"; roundNumber: number }
-    | { type: "match"; matchId: string; currentValue?: string | null }
+    | { type: "round"; roundNumber: number; currentValue?: string | null }
+    | { type: "match"; matchId: string; currentValue?: string | null; currentCourt?: number | null }
     | null
   >(null);
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const { data } = await eventsAdminApi.getTournamentSchedule(activityId);
       setRounds(data.rounds ?? []);
     } catch {
       toast.error("Không tải được lịch thi đấu");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -2992,17 +3741,17 @@ function ScheduleScreen({
     try {
       await eventsAdminApi.setRoundSchedule(activityId, roundNumber, value);
       toast.success(`Đã đặt giờ cho lượt ${roundNumber}`);
-      load();
+      load(true);
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Đặt giờ thất bại");
     }
   };
 
-  const handleSaveMatchSchedule = async (matchId: string, value: string) => {
+  const handleSaveMatchSchedule = async (matchId: string, value: string, courtNumber: number | null) => {
     try {
-      await eventsAdminApi.setMatchSchedule(matchId, value);
-      toast.success("Đã cập nhật giờ thi đấu");
-      load();
+      await eventsAdminApi.setMatchSchedule(matchId, value, courtNumber);
+      toast.success("Đã cập nhật thông tin trận đấu");
+      load(true);
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Cập nhật thất bại");
     }
@@ -3023,30 +3772,66 @@ function ScheduleScreen({
         <h2 className="text-lg font-bold text-gray-900">Lịch thi đấu</h2>
       </div>
 
-      <div className="flex-shrink-0 px-4 sm:px-6 pt-3">
-        <div className="relative flex rounded-lg border border-gray-200 overflow-hidden text-sm bg-gray-50 p-0.5 max-w-md">
-          <div
-            className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md bg-blue-600 shadow-sm transition-transform duration-300 ease-out"
-            style={{ transform: tab === "all" ? "translateX(0%)" : "translateX(calc(100% + 4px))" }}
-          />
+      <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 px-4 sm:px-6 py-3 border-t border-gray-100">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => setTab("all")}
-            className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors ${tab === "all" ? "text-white" : "text-gray-600"
-              }`}
+            onClick={onEditInfo}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Tất cả các lượt
+            <Pencil className="w-4 h-4" /> Sửa thông tin giải đấu
           </button>
           <button
-            onClick={() => setTab("pending")}
-            className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors ${tab === "pending" ? "text-white" : "text-gray-600"
-              }`}
+            onClick={onBack}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Chưa đấu
+            <Users className="w-4 h-4" /> Sửa danh sách đội
           </button>
+        </div>
+
+        <div className="flex justify-end">
+          {tournamentStarted ? (
+            <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
+              <Trophy className="w-3.5 h-3.5" /> Đã bắt đầu thi đấu
+            </span>
+          ) : (
+            <button
+              onClick={onConfirmSchedule}
+              disabled={confirming}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold shadow-sm shadow-emerald-200 disabled:opacity-50 transition-colors"
+            >
+              {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              Xác nhận lịch thi đấu
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5 max-w-2xl mx-auto w-full">
+      <div className="flex-shrink-0 px-4 sm:px-6 pt-3">
+        <div className="max-w-6xl mx-auto w-full">
+          <div className="relative flex rounded-lg border border-gray-200 overflow-hidden text-sm bg-gray-50 p-0.5 max-w-md sm:mx-auto">
+            <div
+              className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md bg-blue-600 shadow-sm transition-transform duration-300 ease-out"
+              style={{ transform: tab === "all" ? "translateX(0%)" : "translateX(calc(100% + 4px))" }}
+            />
+            <button
+              onClick={() => setTab("all")}
+              className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors ${tab === "all" ? "text-white" : "text-gray-600"
+                }`}
+            >
+              Tất cả các lượt
+            </button>
+            <button
+              onClick={() => setTab("pending")}
+              className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors ${tab === "pending" ? "text-white" : "text-gray-600"
+                }`}
+            >
+              Chưa đấu
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 max-w-6xl mx-auto w-full">
         {loading ? (
           <div className="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
             <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
@@ -3056,87 +3841,92 @@ function ScheduleScreen({
             {tab === "pending" ? "Không còn lượt nào chưa đấu" : "Chưa có lịch thi đấu"}
           </p>
         ) : (
-          displayRounds.map((r) => (
-            <div key={r.round_number}>
-              <div className="flex items-center justify-between mb-2 gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <h3 className="font-bold text-gray-900 text-sm flex-shrink-0">
-                    Lượt {r.round_number}
-                  </h3>
-                  {r.bye_team_name && (
-                    <span className="text-xs text-gray-400 truncate">
-                      Nghỉ: <span className="font-medium text-gray-600">{r.bye_team_name}</span>
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={() => setScheduleModal({ type: "round", roundNumber: r.round_number })}
-                  className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+            {displayRounds.map((r) => {
+              const roundHasSchedule = r.matches.some((m: any) => m.scheduled_at);
+              return (
+                <div
+                  key={r.round_number}
+                  className="bg-gray-50/60 border border-gray-100 rounded-2xl p-3 sm:p-4 h-fit"
                 >
-                  🕒 Đặt giờ cả lượt
-                </button>
-              </div>
-              <div className="space-y-2">
-                {r.matches.map((m: any) => (
-                  <div
-                    key={m.id}
-                    className="px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="font-medium text-gray-900 truncate">{m.team1?.name}</span>
-                        <span className="text-gray-300 flex-shrink-0">vs</span>
-                        <span className="font-medium text-gray-900 truncate">{m.team2?.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {m.court_number && (
-                          <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">
-                            Sân {m.court_number}
-                          </span>
-                        )}
-                        <span
-                          className={`text-[10px] font-semibold px-2 py-1 rounded-full ${m.status === "completed"
-                            ? "bg-green-50 text-green-700"
-                            : "bg-amber-50 text-amber-600"
-                            }`}
-                        >
-                          {m.status === "completed"
-                            ? `${m.team1_score}-${m.team2_score}`
-                            : "Chưa đấu"}
+                  <div className="flex items-center justify-between mb-3 gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h3 className="font-bold text-gray-900 text-sm flex-shrink-0">
+                        Lượt {r.round_number}
+                      </h3>
+                      {r.bye_team_name && (
+                        <span className="text-xs text-gray-400 truncate">
+                          Nghỉ: <span className="font-medium text-gray-600">{r.bye_team_name}</span>
                         </span>
-                      </div>
+                      )}
                     </div>
                     <button
                       onClick={() =>
                         setScheduleModal({
-                          type: "match",
-                          matchId: m.id,
-                          currentValue: m.scheduled_at,
+                          type: "round",
+                          roundNumber: r.round_number,
+                          currentValue: r.matches.find((m: any) => m.scheduled_at)?.scheduled_at ?? null,
                         })
                       }
-                      className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                      className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors"
                     >
-                      🕒{" "}
-                      {m.scheduled_at ? (
-                        <span className="font-medium text-gray-700">
-                          {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
-                        </span>
-                      ) : (
-                        <span className="italic text-gray-400">Chưa đặt giờ — bấm để đặt</span>
-                      )}
+                      🕒 {roundHasSchedule ? "Đặt lại cả lượt" : "Đặt giờ cả lượt"}
                     </button>
                   </div>
-                ))}
-              </div>
-            </div>
-          ))
+                  <div className="space-y-2">
+                    {r.matches.map((m: any) => (
+                      <div key={m.id} className="px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2 min-w-0 flex-1 pt-1">
+                            <span className="font-medium text-gray-900 truncate">{m.team1?.name}</span>
+                            <span className="text-gray-300 flex-shrink-0">vs</span>
+                            <span className="font-medium text-gray-900 truncate">{m.team2?.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {m.court_number && (
+                              <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                                Sân {m.court_number}
+                              </span>
+                            )}
+                            <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${m.status === "completed" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"}`}>
+                              {m.status === "completed" ? `${m.team1_score}-${m.team2_score}` : "Chưa đấu"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            🕒{" "}
+                            {m.scheduled_at ? (
+                              <span className="font-medium text-gray-700">
+                                {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
+                              </span>
+                            ) : (
+                              <span className="italic text-gray-400">Chưa đặt giờ</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => setScheduleModal({ type: "match", matchId: m.id, currentValue: m.scheduled_at, currentCourt: m.court_number })}
+                            className="flex items-center gap-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition-colors flex-shrink-0"
+                          >
+                            <Pencil className="w-3 h-3" /> Sửa
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
       {scheduleModal?.type === "round" &&
         createPortal(
           <SetScheduleModal
+            key={`round-${scheduleModal.roundNumber}`}
             title={`Đặt giờ cho Lượt ${scheduleModal.roundNumber}`}
+            initialValue={scheduleModal.currentValue}
             onClose={() => setScheduleModal(null)}
             onSave={(value) => handleSaveRoundSchedule(scheduleModal.roundNumber, value)}
           />,
@@ -3145,11 +3935,12 @@ function ScheduleScreen({
 
       {scheduleModal?.type === "match" &&
         createPortal(
-          <SetScheduleModal
-            title="Đặt giờ thi đấu"
+          <EditMatchModal
+            key={`match-${scheduleModal.matchId}`}
             initialValue={scheduleModal.currentValue}
+            initialCourt={scheduleModal.currentCourt}
             onClose={() => setScheduleModal(null)}
-            onSave={(value) => handleSaveMatchSchedule(scheduleModal.matchId, value)}
+            onSave={(value, court) => handleSaveMatchSchedule(scheduleModal.matchId, value, court)}
           />,
           document.body,
         )}

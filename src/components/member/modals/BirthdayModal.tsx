@@ -291,18 +291,14 @@ function ConfettiCanvas() {
 type GiftPhase = 'box' | 'settling' | 'exploding' | 'revealed';
 
 const PULLS_NEEDED = 3;
-const DRAG_DISTANCE = 78;       // px of finger travel = one full pull
-const COMMIT_THRESHOLD = 0.42;  // fraction of DRAG_DISTANCE needed to commit a pull
-const FLING_VELOCITY = 2.4;     // progress-units/sec — a fast short flick also commits
-const TILT_PER_PULL = 34;       // deg
-const LIFT_PER_PULL = 10;       // px
+const DRAG_DISTANCE = 78;
+const COMMIT_THRESHOLD = 0.42;
+const FLING_VELOCITY = 2.4;
+const TILT_PER_PULL = 34;
+const LIFT_PER_PULL = 10;
 const SPRING_STIFFNESS = 260;
-const SPRING_DAMPING = 23;      // slightly under-damped -> a small, satisfying overshoot
+const SPRING_DAMPING = 23;
 
-/** Imperatively drive the lid's transform — kept OUT of React's style prop
- *  so per-pixel drag/spring updates never trigger a re-render and never
- *  fight with React's own reconciliation. This is what keeps it silky at
- *  a full 60fps even on mid-range phones. */
 function paintLid(el: HTMLDivElement, progress: number, wobble = 0) {
     const p = Math.max(-0.4, Math.min(PULLS_NEEDED + 0.2, progress));
     const tilt = -p * TILT_PER_PULL;
@@ -312,6 +308,7 @@ function paintLid(el: HTMLDivElement, progress: number, wobble = 0) {
 }
 
 interface Spark { id: number; dx: number; dy: number; rot: number; emoji: string }
+interface Trail { id: number; x: number; y: number }
 const SPARK_EMOJI = ['✨', '⭐', '💫'];
 
 function GiftBox({
@@ -330,14 +327,15 @@ function GiftBox({
     const [isDragging, setIsDragging] = useState(false);
     const [sparks, setSparks] = useState<Spark[]>([]);
     const sparkIdRef = useRef(0);
+    const [trail, setTrail] = useState<Trail[]>([]);
+    const trailIdRef = useRef(0);
+    const lastTrailTsRef = useRef(0);
 
-    // Drag bookkeeping
     const draggingRef = useRef(false);
     const startYRef = useRef(0);
-    const posRef = useRef(0);      // current live progress (0..3), single source of truth
+    const posRef = useRef(0);
     const samplesRef = useRef<{ t: number; y: number }[]>([]);
 
-    // rAF spring, used to animate the lid smoothly after release
     const rafRef = useRef<number | null>(null);
     const velRef = useRef(0);
     const lastTsRef = useRef<number | null>(null);
@@ -356,9 +354,6 @@ function GiftBox({
         lastTsRef.current = null;
     };
 
-    /** Animate posRef -> target with a light mass-spring-damper, seeded with
-     *  the finger's release velocity so the motion continues naturally
-     *  instead of visibly "catching" to a new easing curve. */
     const startSpring = (target: number) => {
         stopSpring();
         const step = (ts: number) => {
@@ -388,8 +383,6 @@ function GiftBox({
         rafRef.current = requestAnimationFrame(step);
     };
 
-    // Keep the lid in sync whenever the committed count changes for reasons
-    // other than an in-progress drag (mount, or a resync after phase change).
     useEffect(() => {
         if (draggingRef.current || rafRef.current != null) return;
         if (phase !== 'box' && phase !== 'settling') return;
@@ -398,7 +391,6 @@ function GiftBox({
         setProgressVar(pullCount);
     }, [pullCount, phase]);
 
-    // Fly the lid off once we enter the exploding phase.
     useEffect(() => {
         if (phase !== 'exploding' || !lidRef.current) return;
         stopSpring();
@@ -423,6 +415,19 @@ function GiftBox({
         setTimeout(() => setSparks(prev => prev.filter(s => !batch.includes(s))), 650);
     };
 
+    // Squash-stretch "punch" trên thân hộp mỗi lần commit 1 pull
+    const punchBody = () => {
+        const el = bodyRef.current;
+        if (!el) return;
+        el.style.transition = 'transform .32s cubic-bezier(.34,1.9,.4,1)';
+        el.style.transform = 'translateX(-50%) scaleY(0.92) scaleX(1.04)';
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (bodyRef.current) bodyRef.current.style.transform = 'translateX(-50%) scale(1)';
+            });
+        });
+    };
+
     const onPointerDown = (e: React.PointerEvent) => {
         if (phase !== 'box') return;
         stopSpring();
@@ -439,22 +444,37 @@ function GiftBox({
     const onPointerMove = (e: React.PointerEvent) => {
         if (!draggingRef.current || phase !== 'box') return;
 
-        const deltaY = startYRef.current - e.clientY; // dragging up => positive
+        const deltaY = startYRef.current - e.clientY;
         let add = deltaY / DRAG_DISTANCE;
-        if (add < 0) add *= 0.28; // rubber-band resistance when pulling the "wrong" way
-        add = Math.max(-0.18, Math.min(1.15, add));
+
+        if (add < 0) {
+            // easing bậc 2: cản nhẹ lúc đầu, cản mạnh dần khi kéo ngược sâu
+            const t = Math.min(1, -add);
+            add = -(t * t) * 0.35;
+        } else if (add > 1) {
+            // overshoot resistance thay vì clamp cứng
+            const over = add - 1;
+            add = 1 + Math.min(0.15, over * 0.4);
+        }
+
+        add = Math.max(-0.25, Math.min(1.15, add));
         const total = pullCountRef.current + add;
         posRef.current = total;
 
         if (lidRef.current) {
-            // A tiny torque on the body while dragging fast makes the box feel
-            // like it's genuinely resisting the pull — cheap (transform-only)
-            // but reads as "physical".
             const wobble = Math.max(-3.5, Math.min(3.5, add * 6));
             if (bodyRef.current) bodyRef.current.style.transform = `translateX(-50%) rotate(${wobble * 0.4}deg)`;
+            paintLid(lidRef.current, total, wobble);
         }
-        if (lidRef.current) paintLid(lidRef.current, total, Math.max(-3.5, Math.min(3.5, add * 6)));
         setProgressVar(total);
+
+        // Bụi lấp lánh bám theo ngón tay khi kéo đủ nhanh/xa
+        if (e.timeStamp - lastTrailTsRef.current > 60 && Math.abs(add) > 0.05) {
+            lastTrailTsRef.current = e.timeStamp;
+            const id = trailIdRef.current++;
+            setTrail(prev => [...prev.slice(-8), { id, x: (Math.random() - 0.5) * 40, y: -20 - Math.random() * 20 }]);
+            setTimeout(() => setTrail(prev => prev.filter(t => t.id !== id)), 500);
+        }
 
         const samples = samplesRef.current;
         samples.push({ t: e.timeStamp, y: e.clientY });
@@ -468,7 +488,6 @@ function GiftBox({
         if (bodyRef.current) bodyRef.current.style.transform = 'translateX(-50%) rotate(0deg)';
         if (phase !== 'box') return;
 
-        // Velocity from the last couple of samples (px/ms -> progress-units/sec)
         const samples = samplesRef.current;
         let velocity = 0;
         if (samples.length >= 2) {
@@ -476,7 +495,7 @@ function GiftBox({
             const b = samples[samples.length - 1];
             const dt = b.t - a.t;
             if (dt > 0) {
-                const pxPerMs = (a.y - b.y) / dt; // up = positive
+                const pxPerMs = (a.y - b.y) / dt;
                 velocity = (pxPerMs * 1000) / DRAG_DISTANCE;
             }
         }
@@ -485,8 +504,6 @@ function GiftBox({
         const committed = add >= COMMIT_THRESHOLD || velocity >= FLING_VELOCITY;
         const target = committed ? Math.min(PULLS_NEEDED, pullCountRef.current + 1) : pullCountRef.current;
 
-        // Seed the spring with the release velocity so the lid keeps moving
-        // through the release instead of abruptly changing curves.
         velRef.current = committed ? Math.max(velocity, 0.6) : Math.min(velocity, -0.2);
         startSpring(target);
         setProgressVar(target);
@@ -494,6 +511,7 @@ function GiftBox({
         if (committed) {
             if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(14);
             spawnSparks();
+            punchBody();
             onCommitPull();
         }
     };
@@ -573,6 +591,21 @@ function GiftBox({
                 </span>
             ))}
 
+            {/* Bụi lấp lánh bám theo ngón tay trong lúc kéo */}
+            {trail.map(t => (
+                <span
+                    key={t.id}
+                    style={{
+                        position: 'absolute', left: `calc(50% + ${t.x}px)`, top: `calc(42% + ${t.y}px)`,
+                        width: 4, height: 4, borderRadius: '50%',
+                        background: 'rgba(255,217,61,0.9)',
+                        boxShadow: '0 0 6px rgba(255,180,60,0.8)',
+                        pointerEvents: 'none', zIndex: 5,
+                        animation: 'trailFade .5s ease-out forwards',
+                    }}
+                />
+            ))}
+
             {/* Box body */}
             <div
                 ref={bodyRef}
@@ -583,10 +616,9 @@ function GiftBox({
                     boxShadow: `0 ${20 + pullCount * 2}px 38px rgba(200,20,100,${0.32 + pullCount * 0.05}), inset 0 -8px 0 rgba(0,0,0,0.14), inset 0 2px 0 rgba(255,255,255,0.25)`,
                     opacity: exploding ? 0 : 1,
                     overflow: 'hidden',
-                    transition: 'opacity .5s ease .2s, transform .18s ease, box-shadow .3s ease',
+                    transition: 'opacity .5s ease .2s, box-shadow .3s ease',
                 }}
             >
-                {/* diagonal shimmer sweep */}
                 <div
                     style={{
                         position: 'absolute', top: 0, left: '-60%', width: '60%', height: '100%',
@@ -595,7 +627,6 @@ function GiftBox({
                         pointerEvents: 'none',
                     }}
                 />
-                {/* horizontal ribbon band */}
                 <div
                     style={{
                         position: 'absolute', left: 0, right: 0, top: '50%', height: 28,
@@ -604,7 +635,6 @@ function GiftBox({
                         boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -2px 0 rgba(0,0,0,0.08)',
                     }}
                 />
-                {/* vertical ribbon band */}
                 <div
                     style={{
                         position: 'absolute', left: '50%', top: 0, bottom: 0, width: 30,
@@ -614,6 +644,20 @@ function GiftBox({
                     }}
                 />
             </div>
+
+            {/* Khe sáng rò ra giữa thân và nắp khi kéo — báo hiệu sắp bung */}
+            <div
+                style={{
+                    position: 'absolute', left: '50%', bottom: 122,
+                    width: 150, height: 24, borderRadius: 8,
+                    background: 'radial-gradient(ellipse at center, rgba(255,220,120,0.9) 0%, rgba(255,180,80,0.4) 50%, transparent 80%)',
+                    opacity: 'calc(var(--progress) * 0.9)',
+                    transform: 'translateX(-50%) scaleY(calc(0.3 + var(--progress) * 1.4))',
+                    filter: 'blur(2px)',
+                    zIndex: 2, pointerEvents: 'none',
+                    transition: isDragging ? 'none' : 'opacity .3s ease, transform .3s ease',
+                }}
+            />
 
             {/* Lid — transform driven imperatively via lidRef, never via React style */}
             <div
@@ -669,16 +713,20 @@ function GiftBox({
                     }}
                 >
                     <span
+                        key={pullCount}
                         style={{
                             fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.65)',
                             display: 'flex', alignItems: 'center', gap: 5,
+                            animation: pullCount > 0 ? 'hintPulse .4s ease-out' : undefined,
                         }}
                     >
                         <span style={{ display: 'flex', flexDirection: 'column', lineHeight: '5px', animation: isDragging ? undefined : 'chevronFloat 1.4s ease-in-out infinite' }}>
                             <span style={{ fontSize: 9, opacity: 0.5 }}>﹀</span>
                             <span style={{ fontSize: 9 }}>﹀</span>
                         </span>
-                        Vuốt lên để mở nắp hộp quà
+                        {pullCount === 0 && 'Vuốt lên để mở nắp hộp quà'}
+                        {pullCount === 1 && 'Còn 2 lần nữa thôi!'}
+                        {pullCount === 2 && 'Sắp rồi, vuốt lần cuối!'}
                     </span>
                     <div style={{ width: 134, height: 7, borderRadius: 999, background: 'rgba(255,255,255,.12)', overflow: 'hidden', position: 'relative' }}>
                         <div
@@ -748,17 +796,10 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
         setPullCount(next);
 
         if (next >= PULLS_NEEDED) {
-            // Let the lid finish its "fully open" settle animation before it
-            // flies off — gives the gesture a satisfying two-beat rhythm
-            // instead of an abrupt cut to the explosion.
             setPhase('settling');
             setTimeout(() => {
                 setPhase('exploding');
 
-                // We're still within the same gesture's task chain that
-                // started from a real pointerup, so this counts as a user
-                // gesture and autoplay is allowed. Fall back to a
-                // retry-on-click in case the browser still blocks it.
                 const audio = audioRef.current;
                 if (audio) {
                     audio.play().then(() => setMusicPlaying(true)).catch(() => {
@@ -797,99 +838,102 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                     boxShadow: '0 32px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)',
                 }}
             >
-                {phase === 'exploding' || phase === 'revealed' ? <ConfettiCanvas /> : null}
+                {/* Wrapper riêng cho hiệu ứng rung khi nắp bung — tách khỏi transform mở modal ở div cha để không đè lên nhau */}
+                <div style={{ animation: phase === 'exploding' ? 'modalShake .4s ease-out' : undefined }}>
+                    {phase === 'exploding' || phase === 'revealed' ? <ConfettiCanvas /> : null}
 
-                {/* Close */}
-                <button
-                    onClick={(e) => { e.stopPropagation(); handleClose(); }}
-                    style={{
-                        position: 'absolute', top: 12, right: 12, zIndex: 20,
-                        width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                        background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                >
-                    <X size={16} color="rgba(255,255,255,0.6)" />
-                </button>
-
-                {phase !== 'revealed' ? (
-                    /* ---------------- Gift box phase ---------------- */
-                    <div
+                    {/* Close */}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleClose(); }}
                         style={{
-                            position: 'relative', zIndex: 10, padding: '32px 24px 30px',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                            position: 'absolute', top: 12, right: 12, zIndex: 20,
+                            width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                            background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}
                     >
-                        <p
+                        <X size={16} color="rgba(255,255,255,0.6)" />
+                    </button>
+
+                    {phase !== 'revealed' ? (
+                        /* ---------------- Gift box phase ---------------- */
+                        <div
                             style={{
-                                color: '#FFD93D', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em',
-                                textTransform: 'uppercase', marginBottom: 8, opacity: phase === 'box' ? 1 : 0,
-                                transition: 'opacity .3s ease',
+                                position: 'relative', zIndex: 10, padding: '32px 24px 30px',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
                             }}
                         >
-                            🎁 có một món quà cho {firstName}
-                        </p>
+                            <p
+                                style={{
+                                    color: '#FFD93D', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em',
+                                    textTransform: 'uppercase', marginBottom: 8, opacity: phase === 'box' ? 1 : 0,
+                                    transition: 'opacity .3s ease',
+                                }}
+                            >
+                                🎁 có một món quà cho {firstName}
+                            </p>
 
-                        <GiftBox phase={phase} pullCount={pullCount} onCommitPull={handleCommitPull} />
-                    </div>
-                ) : (
-                    /* ---------------- Revealed (cake) phase ---------------- */
-                    <div
-                        style={{
-                            position: 'relative', zIndex: 10, padding: '28px 24px 24px',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-                        }}
-                    >
-                        <div style={{ animation: 'cakeDrop .7s cubic-bezier(.34,1.56,.64,1) both', marginBottom: 4 }}>
-                            <CakeCanvas />
+                            <GiftBox phase={phase} pullCount={pullCount} onCommitPull={handleCommitPull} />
                         </div>
-
-                        <p style={{ color: '#FFD93D', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0, animation: 'fadeUp .5s ease-out .1s forwards', marginBottom: 4 }}>
-                            🎉 chúc mừng sinh nhật 🎉
-                        </p>
-                        <h2 style={{ color: 'white', fontSize: 30, fontWeight: 900, opacity: 0, animation: 'fadeUp .5s ease-out .2s forwards', margin: '0 0 4px', textShadow: '0 2px 24px rgba(255,180,100,.3)' }}>
-                            {firstName}!
-                        </h2>
-                        <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, opacity: 0, animation: 'fadeUp .5s ease-out .3s forwards', marginBottom: 16 }}>
-                            Bạn có sinh nhật trong tháng này 🎈
-                        </p>
-
-                        <div style={{ width: '100%', borderRadius: 16, padding: '12px 16px', marginBottom: 14, background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.10)', color: 'rgba(255,255,255,.8)', fontSize: 14, lineHeight: 1.6, textAlign: 'left', opacity: 0, animation: 'fadeUp .5s ease-out .4s forwards' }}>
-                            <span style={{ fontSize: 16, marginRight: 6 }}>🏸</span>
-                            Chúc bạn sinh nhật thật vui, sức khỏe dồi dào — và tiếp tục đánh cầu thật đẹp nhé!
-                        </div>
-
-                        {/* Music indicator */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, height: 20, opacity: 0, animation: 'fadeUp .5s ease-out .45s forwards' }}>
-                            {musicPlaying ? (
-                                <>
-                                    <span style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 16 }}>
-                                        {[0, 0.15, 0.3, 0.15, 0].map((delay, i) => (
-                                            <span key={i} style={{ width: 3, background: '#6BCB77', borderRadius: 2, animation: `bar .65s ease-in-out ${delay}s infinite alternate`, height: 6 }} />
-                                        ))}
-                                    </span>
-                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#6BCB77' }}>Đang phát nhạc...</span>
-                                </>
-                            ) : (
-                                <span style={{ fontSize: 12, color: 'rgba(255,255,255,.3)' }}>🎵 Nhạc sinh nhật</span>
-                            )}
-                        </div>
-
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleClose();
-                            }}
+                    ) : (
+                        /* ---------------- Revealed (cake) phase ---------------- */
+                        <div
                             style={{
-                                width: '100%', padding: '13px 0', borderRadius: 18, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 14,
-                                background: 'linear-gradient(135deg,#f857a6,#FF6FCB)', color: 'white',
-                                boxShadow: '0 4px 20px rgba(248,87,166,.4)',
-                                opacity: 0, animation: 'fadeUp .5s ease-out .5s forwards',
+                                position: 'relative', zIndex: 10, padding: '28px 24px 24px',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
                             }}
                         >
-                            Cảm ơn! 🎉
-                        </button>
-                    </div>
-                )}
+                            <div style={{ animation: 'cakeDrop .7s cubic-bezier(.34,1.56,.64,1) both', marginBottom: 4 }}>
+                                <CakeCanvas />
+                            </div>
+
+                            <p style={{ color: '#FFD93D', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0, animation: 'fadeUp .5s ease-out .1s forwards', marginBottom: 4 }}>
+                                🎉 chúc mừng sinh nhật 🎉
+                            </p>
+                            <h2 style={{ color: 'white', fontSize: 30, fontWeight: 900, opacity: 0, animation: 'fadeUp .5s ease-out .2s forwards', margin: '0 0 4px', textShadow: '0 2px 24px rgba(255,180,100,.3)' }}>
+                                {firstName}!
+                            </h2>
+                            <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 12, opacity: 0, animation: 'fadeUp .5s ease-out .3s forwards', marginBottom: 16 }}>
+                                Bạn có sinh nhật trong tháng này 🎈
+                            </p>
+
+                            <div style={{ width: '100%', borderRadius: 16, padding: '12px 16px', marginBottom: 14, background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.10)', color: 'rgba(255,255,255,.8)', fontSize: 14, lineHeight: 1.6, textAlign: 'left', opacity: 0, animation: 'fadeUp .5s ease-out .4s forwards' }}>
+                                <span style={{ fontSize: 16, marginRight: 6 }}>🏸</span>
+                                Chúc bạn sinh nhật thật vui, sức khỏe dồi dào — và tiếp tục đánh cầu thật đẹp nhé!
+                            </div>
+
+                            {/* Music indicator */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, height: 20, opacity: 0, animation: 'fadeUp .5s ease-out .45s forwards' }}>
+                                {musicPlaying ? (
+                                    <>
+                                        <span style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 16 }}>
+                                            {[0, 0.15, 0.3, 0.15, 0].map((delay, i) => (
+                                                <span key={i} style={{ width: 3, background: '#6BCB77', borderRadius: 2, animation: `bar .65s ease-in-out ${delay}s infinite alternate`, height: 6 }} />
+                                            ))}
+                                        </span>
+                                        <span style={{ fontSize: 12, fontWeight: 700, color: '#6BCB77' }}>Đang phát nhạc...</span>
+                                    </>
+                                ) : (
+                                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,.3)' }}>🎵 Nhạc sinh nhật</span>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleClose();
+                                }}
+                                style={{
+                                    width: '100%', padding: '13px 0', borderRadius: 18, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 14,
+                                    background: 'linear-gradient(135deg,#f857a6,#FF6FCB)', color: 'white',
+                                    boxShadow: '0 4px 20px rgba(248,87,166,.4)',
+                                    opacity: 0, animation: 'fadeUp .5s ease-out .5s forwards',
+                                }}
+                            >
+                                Cảm ơn! 🎉
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <style>{`
@@ -926,6 +970,21 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                     0%{transform:translate(-50%,-50%) rotate(0deg) scale(.4);opacity:0}
                     15%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}
                     100%{transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)) scale(.5);opacity:0}
+                }
+                @keyframes trailFade {
+                    0% { opacity: 1; transform: scale(1) translateY(0); }
+                    100% { opacity: 0; transform: scale(0.3) translateY(-14px); }
+                }
+                @keyframes hintPulse {
+                    0% { transform: scale(1.35); color: #FFD93D; }
+                    100% { transform: scale(1); }
+                }
+                @keyframes modalShake {
+                    0%, 100% { transform: scale(1) translateX(0); }
+                    20% { transform: scale(1.015) translateX(-3px); }
+                    40% { transform: scale(1.015) translateX(3px); }
+                    60% { transform: scale(1.01) translateX(-2px); }
+                    80% { transform: scale(1.01) translateX(2px); }
                 }
             `}</style>
         </div>
