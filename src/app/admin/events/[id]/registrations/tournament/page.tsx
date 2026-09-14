@@ -20,6 +20,8 @@ import {
   ArrowLeft,
   FilterX,
   Trophy,
+  Swords,
+  Flag,
 } from "lucide-react";
 import {
   format,
@@ -103,6 +105,16 @@ const MATCH_CONTENT_COLOR: Record<string, string> = {
   "Đơn Nam": "#374151",
   "Đơn Nữ": "#db2777",
   "3vs3": "#0f766e",
+};
+
+
+const MATCH_CONTENT_LIGHT: Record<string, { bg: string; icon: string }> = {
+  "Đôi Nam": { bg: "#eff6ff", icon: "🏸" },
+  "Đôi Nam - Nữ": { bg: "#f5f3ff", icon: "🤝" },
+  "Đôi Nữ": { bg: "#fdf2f8", icon: "🏸" },
+  "Đơn Nam": { bg: "#eff6ff", icon: "🏸" },
+  "Đơn Nữ": { bg: "#fdf2f8", icon: "🏸" },
+  "3vs3": { bg: "#ecfdf5", icon: "👥" },
 };
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -996,6 +1008,9 @@ export default function TournamentRegistrationsPage() {
 
   const [showStartTournamentModal, setShowStartTournamentModal] = useState(false);
 
+  const [showResetResultsModal, setShowResetResultsModal] = useState(false);
+  const [resettingResults, setResettingResults] = useState(false);
+
   const [teams, setTeams] = useState<any[]>([]);
   const [unassigned, setUnassigned] = useState<any[]>([]);
   const [loadingTeams, setLoadingTeams] = useState(false);
@@ -1025,6 +1040,7 @@ export default function TournamentRegistrationsPage() {
   const [confirmMethodModal, setConfirmMethodModal] = useState<{ id: string } | null>(null)
   type WizardStep = "round_robin_setup" | "team_list" | "schedule";
   const [wizardStack, setWizardStack] = useState<WizardStep[]>([]);
+  const [restoringStep, setRestoringStep] = useState(true);
   const tournamentWizardStep: WizardStep | null =
     wizardStack.length > 0 ? wizardStack[wizardStack.length - 1] : null;
   const isEditingTournamentInfo =
@@ -1036,10 +1052,30 @@ export default function TournamentRegistrationsPage() {
 
   const searchParams = useSearchParams();
 
+  const [initialShowStandings] = useState(() => searchParams.get("view") === "standings");
+
+  const [openStandingsOnEnter, setOpenStandingsOnEnter] = useState(false);
+
   const [confirmingSchedule, setConfirmingSchedule] = useState(false);
   const [confirmScheduleWarning, setConfirmScheduleWarning] = useState<{ unscheduled: number; total: number } | null>(null);
 
   const tournamentStarted = Boolean(activity?.started_at);
+  const tournamentEnded = Boolean(activity?.ended_at);
+
+  const skipAutoSchedule = searchParams.get("view") === "list";
+
+  useEffect(() => {
+    if (!activity) return;
+
+    if (wizardStack.length === 0 && activity.started_at && !skipAutoSchedule) {
+      setWizardStack(["schedule"]);
+      if (searchParams.get("step") === "schedule") {
+        router.replace(`/admin/events/${id}/registrations/tournament`);
+      }
+    }
+
+    setRestoringStep(false);
+  }, [activity]);
 
   const handleConfirmSchedule = async (force: boolean) => {
     if (!id) return;
@@ -1060,13 +1096,9 @@ export default function TournamentRegistrationsPage() {
     }
   };
 
-  useEffect(() => {
-    if (!activity) return;
-    if (activity.started_at && searchParams.get("step") === "schedule" && wizardStack.length === 0) {
-      setWizardStack(["schedule"]);
-      router.replace(`/admin/events/${id}/registrations/tournament`);
-    }
-  }, [activity]);
+  const handleTournamentEnded = async () => {
+    await load(true);
+  };
 
   const handleGenerateSchedule = async () => {
     if (!id) return;
@@ -1117,6 +1149,17 @@ export default function TournamentRegistrationsPage() {
 
   const compositionSlots: { role: "nam" | "nu"; level?: string | null; label?: string }[] =
     activity?.detail?.composition ?? [];
+
+  const totalCapacity = useMemo(() => {
+    const maxTeams = activity?.detail?.max_teams;
+    if (!maxTeams || !compositionSlots.length) return null;
+    return compositionSlots.length * maxTeams;
+  }, [compositionSlots, activity?.detail?.max_teams]);
+
+  const isFullyRegistered = useMemo(() => {
+    if (totalCapacity == null) return false;
+    return registrations.length >= totalCapacity;
+  }, [registrations.length, totalCapacity]);
 
   const drawContent = useMemo<"nam" | "nu" | "mix">(() => {
     const hasNam = compositionSlots.some((c) => c.role === "nam");
@@ -1182,6 +1225,22 @@ export default function TournamentRegistrationsPage() {
       toast.error(err?.response?.data?.message ?? "Xoá kết quả chia đội thất bại");
     } finally {
       setClearingTeams(false);
+    }
+  };
+
+  const handleResetResults = async () => {
+    if (!id) return;
+    setResettingResults(true);
+    try {
+      await eventsAdminApi.resetTournamentResults(id);
+      toast.success("Đã xoá toàn bộ kết quả thi đấu");
+      setShowResetResultsModal(false);
+      setWizardStack([]);
+      await load(true);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Xoá kết quả thất bại");
+    } finally {
+      setResettingResults(false);
     }
   };
 
@@ -1533,7 +1592,7 @@ export default function TournamentRegistrationsPage() {
   };
 
 
-  if (loading) {
+  if (loading || restoringStep) {
     return (
       <div className="w-full p-4 sm:p-6 space-y-4 sm:space-y-5 bg-gray-50 min-h-screen">
         <div className="flex items-center gap-1.5 animate-pulse">
@@ -1644,15 +1703,17 @@ export default function TournamentRegistrationsPage() {
             </span>
 
             {!isClosed && (
-              <>
-                <button
-                  title="Xuất danh sách"
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm flex-shrink-0"
-                >
-                  <Download className="w-4 h-4" />
-                  <span className="hidden sm:inline">Xuất danh sách</span>
-                </button>
+              <button
+                title="Xuất danh sách"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm flex-shrink-0"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Xuất danh sách</span>
+              </button>
+            )}
 
+            {!isClosed && !tournamentStarted && !isFullyRegistered && (
+              <>
                 <button
                   onClick={() => setShowAddModal(true)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm shadow-blue-200 transition-colors flex-shrink-0"
@@ -2205,12 +2266,14 @@ export default function TournamentRegistrationsPage() {
                     )}
                     .
                   </p>
-                  <button
-                    onClick={() => setShowDrawForm(true)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 transition-colors"
-                  >
-                    <RotateCcw className="w-4 h-4" /> Chia lại
-                  </button>
+                  {!tournamentStarted && (
+                    <button
+                      onClick={() => setShowDrawForm(true)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 transition-colors"
+                    >
+                      <RotateCcw className="w-4 h-4" /> Chia lại
+                    </button>
+                  )}
                 </FadeSwitch>
               ) : (
                 <FadeSwitch transitionKey="form">
@@ -2302,6 +2365,9 @@ export default function TournamentRegistrationsPage() {
                 <button
                   onClick={() => {
                     if (tournamentStarted) {
+                      if (tournamentEnded) {
+                        setOpenStandingsOnEnter(true);
+                      }
                       setWizardStack(["schedule"]);
                     } else {
                       setShowStartTournamentModal(true);
@@ -2309,7 +2375,21 @@ export default function TournamentRegistrationsPage() {
                   }}
                   className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold shadow-sm shadow-emerald-200 transition-colors"
                 >
-                  <Trophy className="w-4 h-4" /> {tournamentStarted ? "Tiếp tục giải đấu" : "Bắt đầu giải đấu"}
+                  <Trophy className="w-4 h-4" />
+                  {tournamentEnded
+                    ? "Xem kết quả"
+                    : tournamentStarted
+                      ? "Tiếp tục giải đấu"
+                      : "Bắt đầu giải đấu"}
+                </button>
+              )}
+
+              {tournamentEnded && (
+                <button
+                  onClick={() => setShowResetResultsModal(true)}
+                  className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" /> Xoá tất cả kết quả
                 </button>
               )}
             </div>
@@ -2442,6 +2522,15 @@ export default function TournamentRegistrationsPage() {
         document.body
       )}
 
+      {showResetResultsModal && createPortal(
+        <ConfirmResetResultsModal
+          resetting={resettingResults}
+          onConfirm={handleResetResults}
+          onCancel={() => setShowResetResultsModal(false)}
+        />,
+        document.body
+      )}
+
       {tournamentWizardStep === "round_robin_setup" && createPortal(
         <RoundRobinSetupScreen
           activity={activity}
@@ -2460,7 +2549,7 @@ export default function TournamentRegistrationsPage() {
           teams={teams}
           onBack={popWizardStep}
           onRenameTeam={handleRenameTournamentTeam}
-          onContinue={scheduleGenerated ? handleBackToSchedule : handleGenerateSchedule}
+          onContinue={scheduleGenerated ? popWizardStep : handleGenerateSchedule}
           continuing={generatingSchedule}
           mode={scheduleGenerated ? "edit" : "create"}
         />,
@@ -2470,13 +2559,19 @@ export default function TournamentRegistrationsPage() {
       {tournamentWizardStep === "schedule" && createPortal(
         <ScheduleScreen
           activityId={id!}
+          teams={teams}
+          matchContents={activity?.detail?.rules?.match_contents ?? []}
           onBack={popWizardStep}
           onEditInfo={() => pushWizardStep("round_robin_setup")}
+          onEditTeamList={() => pushWizardStep("team_list")}
           tournamentStarted={tournamentStarted}
+          ended={tournamentEnded}
           confirming={confirmingSchedule}
           onConfirmSchedule={() => handleConfirmSchedule(false)}
+          onEnded={handleTournamentEnded}
+          autoOpenStandings={initialShowStandings || openStandingsOnEnter}
         />,
-        document.body
+        document.body,
       )}
 
       {confirmScheduleWarning && createPortal(
@@ -2857,11 +2952,13 @@ function EditMatchModal({
 
 function SetScheduleModal({
   title,
+  description,
   initialValue,
   onClose,
   onSave,
 }: {
   title: string;
+  description?: string;
   initialValue?: string | null;
   onClose: () => void;
   onSave: (value: string) => Promise<void>;
@@ -2916,6 +3013,12 @@ function SetScheduleModal({
         </div>
 
         <div className="p-5 space-y-4">
+          {description && (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed">
+              ⚠️ {description}
+            </p>
+          )}
+
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -3177,14 +3280,14 @@ function ConfirmScheduleWarningModal({
             disabled={confirming}
             className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 disabled:opacity-50"
           >
-            Huỷ
+            Đặt tiếp
           </button>
           <button
             onClick={onStillSave}
             disabled={confirming}
             className="flex-1 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
           >
-            {confirming ? "Đang lưu..." : "Vẫn lưu"}
+            {confirming ? "Đang lưu..." : "Vẫn bắt đầu"}
           </button>
         </div>
       </div>
@@ -3256,6 +3359,64 @@ function ConfirmDrawTeamsModal({
             className="flex-1 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
           >
             Tiếp tục chia đội
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function ConfirmResetResultsModal({
+  resetting,
+  onConfirm,
+  onCancel,
+}: {
+  resetting: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const { visible, handleClose } = useModalTransition(onCancel);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div
+      className={`fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+      >
+        <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
+          <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+          </div>
+          <p className="text-sm font-bold text-gray-900">Xoá toàn bộ kết quả thi đấu?</p>
+          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+            Toàn bộ tỉ số, lượt đấu, giờ và sân thi đấu sẽ bị xoá vĩnh viễn. Giải đấu sẽ quay lại trạng thái chưa bắt đầu — danh sách đội hiện tại vẫn được giữ nguyên. Hành động này không thể hoàn tác.
+          </p>
+        </div>
+        <div className="flex border-t border-gray-100">
+          <button
+            onClick={handleClose}
+            disabled={resetting}
+            className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 disabled:opacity-50"
+          >
+            Huỷ
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={resetting}
+            className="flex-1 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+          >
+            {resetting ? "Đang xoá..." : "Xoá kết quả"}
           </button>
         </div>
       </div>
@@ -3565,6 +3726,37 @@ function RoundRobinSetupScreen({
   );
 }
 
+const TEAM_BADGE_COLORS = [
+  "#2563eb", // blue
+  "#dc2626", // red
+  "#059669", // emerald
+  "#d97706", // amber
+  "#7c3aed", // violet
+  "#db2777", // pink
+  "#0891b2", // cyan
+  "#65a30d", // lime
+  "#ea580c", // orange
+  "#4f46e5", // indigo
+];
+
+function TeamBadge({ index }: { index: number | undefined }) {
+  if (index === undefined) {
+    return (
+      <span className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-gray-500 bg-gray-200 flex-shrink-0">
+        ?
+      </span>
+    );
+  }
+  return (
+    <span
+      className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+      style={{ background: TEAM_BADGE_COLORS[index % TEAM_BADGE_COLORS.length] }}
+    >
+      {index + 1}
+    </span>
+  );
+}
+
 function TeamListRenameScreen({
   teams,
   onBack,
@@ -3623,11 +3815,12 @@ function TeamListRenameScreen({
         <p className="text-xs text-gray-400 mb-2">
           Bạn có thể đổi tên các đội trước khi tạo lịch thi đấu chính thức.
         </p>
-        {teams.map((t) => (
+        {teams.map((t, idx) => (
           <div
             key={t.id}
             className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm"
           >
+            <TeamBadge index={idx} />
             {editingId === t.id ? (
               <>
                 <input
@@ -3689,21 +3882,46 @@ function TeamListRenameScreen({
   );
 }
 
+function getMatchStatus(m: any): "completed" | "ongoing" | "pending" {
+  if (m.status === "completed") return "completed";
+  if (m.status === "ongoing") return "ongoing";
+  return "pending";
+}
+
+function roundStats(matches: any[]) {
+  const total = matches.length;
+  const completed = matches.filter((m: any) => m.status === "completed").length;
+  const ongoing = matches.filter((m: any) => getMatchStatus(m) === "ongoing").length;
+  return { total, completed, ongoing };
+}
+
 
 function ScheduleScreen({
   activityId,
+  teams,
+  matchContents,
   onBack,
   onEditInfo,
+  onEditTeamList,
   tournamentStarted,
+  ended,
   confirming,
   onConfirmSchedule,
+  onEnded,
+  autoOpenStandings,
 }: {
   activityId: string;
+  teams: any[];
+  matchContents: { id: string; label: string }[];
   onBack: () => void;
   onEditInfo: () => void;
+  onEditTeamList: () => void;
   tournamentStarted: boolean;
+  ended: boolean;
   confirming: boolean;
   onConfirmSchedule: () => void;
+  onEnded: () => Promise<void>;
+  autoOpenStandings?: boolean;
 }) {
   const [tab, setTab] = useState<"all" | "pending">("all");
   const [rounds, setRounds] = useState<any[]>([]);
@@ -3713,6 +3931,31 @@ function ScheduleScreen({
     | { type: "match"; matchId: string; currentValue?: string | null; currentCourt?: number | null }
     | null
   >(null);
+
+  const [showForceScheduleModal, setShowForceScheduleModal] = useState(false);
+  const [forceSaving, setForceSaving] = useState(false);
+
+  const [roundDetail, setRoundDetail] = useState<any | null>(null);
+
+  const [scoreEntryMatch, setScoreEntryMatch] = useState<any | null>(null);
+
+
+  const [startingMatchId, setStartingMatchId] = useState<string | null>(null);
+
+  const [showStandings, setShowStandings] = useState(false);
+  const [endingTournament, setEndingTournament] = useState(false);
+
+  useEffect(() => {
+    if (autoOpenStandings) {
+      setShowStandings(true);
+    }
+  }, [autoOpenStandings]);
+
+  const teamIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    (teams ?? []).forEach((t, idx) => map.set(t.id, idx));
+    return map;
+  }, [teams]);
 
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -3729,6 +3972,21 @@ function ScheduleScreen({
   useEffect(() => {
     load();
   }, [activityId]);
+
+  const hasAnySchedule = useMemo(
+    () => rounds.some((r) => (r.matches ?? []).some((m: any) => m.scheduled_at)),
+    [rounds],
+  );
+
+  const hasAnyCompletedMatch = useMemo(
+    () => rounds.some((r) => (r.matches ?? []).some((m: any) => m.status === "completed")),
+    [rounds],
+  );
+
+  const allMatchesCompleted = useMemo(() => {
+    const allMatches = rounds.flatMap((r: any) => r.matches ?? []);
+    return allMatches.length > 0 && allMatches.every((m: any) => m.status === "completed");
+  }, [rounds]);
 
   const displayRounds =
     tab === "all"
@@ -3747,6 +4005,24 @@ function ScheduleScreen({
     }
   };
 
+  const handleStartMatch = async (matchId: string) => {
+    setStartingMatchId(matchId);
+    try {
+      await eventsAdminApi.startMatch(matchId);
+      const { data } = await eventsAdminApi.getTournamentSchedule(activityId);
+      setRounds(data.rounds ?? []);
+      setRoundDetail((prev: any) => {
+        if (!prev) return prev;
+        return (data.rounds ?? []).find((r: any) => r.round_number === prev.round_number) ?? prev;
+      });
+      toast.success("Đã bắt đầu trận đấu");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Bắt đầu trận đấu thất bại");
+    } finally {
+      setStartingMatchId(null);
+    }
+  };
+
   const handleSaveMatchSchedule = async (matchId: string, value: string, courtNumber: number | null) => {
     try {
       await eventsAdminApi.setMatchSchedule(matchId, value, courtNumber);
@@ -3756,6 +4032,88 @@ function ScheduleScreen({
       toast.error(err?.response?.data?.message ?? "Cập nhật thất bại");
     }
   };
+
+  const handleForceInitialSchedule = async (value: string) => {
+    const targetRound = rounds[0]?.round_number ?? 1;
+    setForceSaving(true);
+    try {
+      await eventsAdminApi.setRoundSchedule(activityId, targetRound, value);
+      toast.success(`Đã đặt giờ cho lượt ${targetRound}`);
+      await load(true);
+      setShowForceScheduleModal(false);
+      onConfirmSchedule();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Đặt giờ thất bại");
+    } finally {
+      setForceSaving(false);
+    }
+  };
+
+  const handleConfirmClick = () => {
+    if (!hasAnySchedule) {
+      setShowForceScheduleModal(true);
+      return;
+    }
+    onConfirmSchedule();
+  };
+
+  const handleSaveMatchResult = async (
+    matchId: string,
+    contentScores: { content_id: string; label: string; score1: number; score2: number }[],
+    team1Score: number,
+    team2Score: number,
+  ) => {
+    await eventsAdminApi.markMatchResult(matchId, {
+      team1_score: team1Score,
+      team2_score: team2Score,
+      content_scores: contentScores,
+    });
+    const { data } = await eventsAdminApi.getTournamentSchedule(activityId);
+    setRounds(data.rounds ?? []);
+    setRoundDetail((prev: any) => {
+      if (!prev) return prev;
+      return (data.rounds ?? []).find((r: any) => r.round_number === prev.round_number) ?? prev;
+    });
+  };
+
+  const handleEndTournament = async () => {
+    if (
+      !confirm(
+        "Kết thúc giải đấu? Sau khi kết thúc, bạn sẽ không thể chỉnh sửa lịch thi đấu hay danh sách đội nữa.",
+      )
+    )
+      return;
+    setEndingTournament(true);
+    try {
+      await eventsAdminApi.endTournament(activityId);
+      toast.success("Đã kết thúc giải đấu");
+      await onEnded();
+      setShowStandings(true);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Kết thúc giải đấu thất bại");
+    } finally {
+      setEndingTournament(false);
+    }
+  };
+
+  const statusBlock = ended ? (
+    <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+      <Check className="w-3.5 h-3.5" /> Đã kết thúc
+    </span>
+  ) : tournamentStarted ? (
+    <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">
+      <Trophy className="w-3.5 h-3.5" /> Đã bắt đầu thi đấu
+    </span>
+  ) : (
+    <button
+      onClick={handleConfirmClick}
+      disabled={confirming}
+      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold shadow-sm shadow-emerald-200 disabled:opacity-50 transition-colors whitespace-nowrap"
+    >
+      {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+      Xác nhận lịch thi đấu
+    </button>
+  );
 
   return (
     <div className="fixed inset-0 z-[220] bg-white flex flex-col">
@@ -3769,41 +4127,70 @@ function ScheduleScreen({
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h2 className="text-lg font-bold text-gray-900">Lịch thi đấu</h2>
+        <h2 className="text-lg font-bold text-gray-900 flex-1">Lịch thi đấu</h2>
+        <button
+          onClick={() => setShowStandings(true)}
+          className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex-shrink-0"
+        >
+          <Trophy className="w-4 h-4" />
+          <span className="hidden sm:inline">Bảng xếp hạng</span>
+          <span className="sm:hidden">BXH</span>
+        </button>
       </div>
 
-      <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 px-4 sm:px-6 py-3 border-t border-gray-100">
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={onEditInfo}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <Pencil className="w-4 h-4" /> Sửa thông tin giải đấu
-          </button>
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <Users className="w-4 h-4" /> Sửa danh sách đội
-          </button>
-        </div>
-
-        <div className="flex justify-end">
-          {tournamentStarted ? (
-            <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
-              <Trophy className="w-3.5 h-3.5" /> Đã bắt đầu thi đấu
-            </span>
-          ) : (
+      <div className="flex-shrink-0 flex flex-col items-end sm:flex-row sm:items-center sm:justify-end gap-2 px-4 sm:px-6 py-3 border-t border-gray-100">
+        {ended ? (
+          <div className="flex items-center justify-end gap-2 flex-wrap">
             <button
-              onClick={onConfirmSchedule}
-              disabled={confirming}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold shadow-sm shadow-emerald-200 disabled:opacity-50 transition-colors"
+              onClick={onBack}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 transition-colors"
             >
-              {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              Xác nhận lịch thi đấu
+              Về trang hoạt động
             </button>
-          )}
-        </div>
+            {statusBlock}
+          </div>
+        ) : allMatchesCompleted ? (
+          <div className="flex items-center justify-end gap-2 flex-wrap">
+            <button
+              onClick={handleEndTournament}
+              disabled={endingTournament}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
+            >
+              {endingTournament ? <Loader2 className="w-4 h-4 animate-spin" /> : <Flag className="w-4 h-4" />}
+              Kết thúc
+            </button>
+            {statusBlock}
+          </div>
+        ) : hasAnyCompletedMatch ? (
+          <div className="flex items-center justify-end gap-2 flex-wrap">
+            <button
+              onClick={onEditTeamList}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Users className="w-4 h-4" /> Sửa danh sách đội
+            </button>
+            {statusBlock}
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={onEditInfo}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Pencil className="w-4 h-4" /> Sửa thông tin giải đấu
+              </button>
+              <button
+                onClick={onEditTeamList}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Users className="w-4 h-4" /> Sửa danh sách đội
+              </button>
+            </div>
+
+            <div className="flex justify-end">{statusBlock}</div>
+          </>
+        )}
       </div>
 
       <div className="flex-shrink-0 px-4 sm:px-6 pt-3">
@@ -3860,60 +4247,118 @@ function ScheduleScreen({
                         </span>
                       )}
                     </div>
-                    <button
-                      onClick={() =>
-                        setScheduleModal({
-                          type: "round",
-                          roundNumber: r.round_number,
-                          currentValue: r.matches.find((m: any) => m.scheduled_at)?.scheduled_at ?? null,
-                        })
-                      }
-                      className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors"
-                    >
-                      🕒 {roundHasSchedule ? "Đặt lại cả lượt" : "Đặt giờ cả lượt"}
-                    </button>
+                    {!ended && (
+                      <button
+                        onClick={() =>
+                          setScheduleModal({
+                            type: "round",
+                            roundNumber: r.round_number,
+                            currentValue: r.matches.find((m: any) => m.scheduled_at)?.scheduled_at ?? null,
+                          })
+                        }
+                        className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        🕒 {roundHasSchedule ? "Đặt lại cả lượt" : "Đặt giờ cả lượt"}
+                      </button>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    {r.matches.map((m: any) => (
-                      <div key={m.id} className="px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm space-y-2">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2 min-w-0 flex-1 pt-1">
-                            <span className="font-medium text-gray-900 truncate">{m.team1?.name}</span>
-                            <span className="text-gray-300 flex-shrink-0">vs</span>
-                            <span className="font-medium text-gray-900 truncate">{m.team2?.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {m.court_number && (
-                              <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">
-                                Sân {m.court_number}
+                    {r.matches.map((m: any) => {
+                      const st = getMatchStatus(m);
+                      const isCompleted = st === "completed";
+                      const team1Won = isCompleted && m.team1_score > m.team2_score;
+                      const team2Won = isCompleted && m.team2_score > m.team1_score;
+                      const winnerName = team1Won ? m.team1?.name : team2Won ? m.team2?.name : null;
+
+                      return (
+                        <div key={m.id} className="px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm space-y-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0 flex-1 pt-1">
+                              <TeamBadge index={teamIndexMap.get(m.team1?.id)} />
+                              <span
+                                className={`font-medium truncate ${team1Won ? "text-emerald-600" : team2Won ? "text-red-500" : "text-gray-900"
+                                  }`}
+                              >
+                                {m.team1?.name}
                               </span>
+                              <span className="text-gray-300 flex-shrink-0">vs</span>
+                              <TeamBadge index={teamIndexMap.get(m.team2?.id)} />
+                              <span
+                                className={`font-medium truncate ${team2Won ? "text-emerald-600" : team1Won ? "text-red-500" : "text-gray-900"
+                                  }`}
+                              >
+                                {m.team2?.name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {m.court_number && (
+                                <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                                  Sân {m.court_number}
+                                </span>
+                              )}
+                              {isCompleted ? (
+                                <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-gray-50">
+                                  <span className={team1Won ? "text-emerald-600" : "text-red-500"}>
+                                    {m.team1_score}
+                                  </span>
+                                  <span className="text-gray-300 mx-0.5">-</span>
+                                  <span className={team2Won ? "text-emerald-600" : "text-red-500"}>
+                                    {m.team2_score}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span
+                                  className={`text-[10px] font-semibold px-2 py-1 rounded-full ${st === "ongoing" ? "bg-blue-50 text-blue-600 animate-pulse" : "bg-amber-50 text-amber-600"
+                                    }`}
+                                >
+                                  {st === "ongoing" ? "Đang thi đấu" : "Chưa đấu"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {winnerName && (
+                            <p className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                              <Trophy className="w-3.5 h-3.5" /> {winnerName} thắng
+                            </p>
+                          )}
+
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                              🕒{" "}
+                              {m.scheduled_at ? (
+                                <span className="font-medium text-gray-700">
+                                  {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
+                                </span>
+                              ) : (
+                                <span className="italic text-gray-400">Chưa đặt giờ</span>
+                              )}
+                            </div>
+                            {!ended && (
+                              <button
+                                onClick={() => setScheduleModal({ type: "match", matchId: m.id, currentValue: m.scheduled_at, currentCourt: m.court_number })}
+                                className="flex items-center gap-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition-colors flex-shrink-0"
+                              >
+                                <Pencil className="w-3 h-3" /> Sửa
+                              </button>
                             )}
-                            <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${m.status === "completed" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"}`}>
-                              {m.status === "completed" ? `${m.team1_score}-${m.team2_score}` : "Chưa đấu"}
-                            </span>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                            🕒{" "}
-                            {m.scheduled_at ? (
-                              <span className="font-medium text-gray-700">
-                                {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
-                              </span>
-                            ) : (
-                              <span className="italic text-gray-400">Chưa đặt giờ</span>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => setScheduleModal({ type: "match", matchId: m.id, currentValue: m.scheduled_at, currentCourt: m.court_number })}
-                            className="flex items-center gap-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition-colors flex-shrink-0"
-                          >
-                            <Pencil className="w-3 h-3" /> Sửa
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
+
+                  <button
+                    onClick={() => setRoundDetail(r)}
+                    className="w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-blue-200 bg-white text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
+                  >
+                    Chi tiết lượt {r.round_number}
+                    {roundStats(r.matches).ongoing > 0 && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 animate-pulse ml-1">
+                        Đang thi đấu
+                      </span>
+                    )}
+                  </button>
                 </div>
               );
             })}
@@ -3944,6 +4389,568 @@ function ScheduleScreen({
           />,
           document.body,
         )}
+
+      {showForceScheduleModal &&
+        createPortal(
+          <SetScheduleModal
+            key="force-initial-schedule"
+            title={`Đặt giờ cho Lượt ${rounds[0]?.round_number ?? 1}`}
+            description="Bạn cần đặt giờ cho ít nhất 1 lượt đấu trước khi xác nhận lịch thi đấu. Các lượt khác có thể đặt giờ sau."
+            onClose={() => setShowForceScheduleModal(false)}
+            onSave={handleForceInitialSchedule}
+          />,
+          document.body,
+        )}
+
+      {roundDetail &&
+        createPortal(
+          <RoundDetailScreen
+            round={roundDetail}
+            onClose={() => setRoundDetail(null)}
+            onOpenMatch={(matchId) => {
+              const m = roundDetail.matches.find((x: any) => x.id === matchId);
+              if (m) setScoreEntryMatch(m);
+            }}
+            onStartMatch={handleStartMatch}
+            startingMatchId={startingMatchId}
+          />,
+          document.body,
+        )}
+
+      {scoreEntryMatch &&
+        createPortal(
+          <MatchScoreEntryScreen
+            match={scoreEntryMatch}
+            round={rounds.find((r: any) => r.matches.some((m: any) => m.id === scoreEntryMatch.id))}
+            matchContents={matchContents}
+            onClose={() => setScoreEntryMatch(null)}
+            onSaved={handleSaveMatchResult}
+          />,
+          document.body,
+        )}
+
+      {showStandings &&
+        createPortal(
+          <TournamentStandingsScreen
+            teams={teams}
+            rounds={rounds}
+            ended={ended}
+            onClose={() => setShowStandings(false)}
+            onBackToActivity={onBack}
+          />,
+          document.body,
+        )}
+    </div>
+  );
+}
+
+
+function MatchStatusBadge({ status }: { status: "completed" | "ongoing" | "pending" }) {
+  const config = {
+    completed: { bg: "bg-emerald-500", border: "border-emerald-600", label: "Đã xong" },
+    ongoing: { bg: "bg-amber-500", border: "border-amber-600", label: "Đang thi đấu" },
+    pending: { bg: "bg-gray-400", border: "border-gray-500", label: "Chưa thi đấu" },
+  }[status];
+
+  return (
+    <span
+      className={`text-[10px] font-semibold text-white px-2.5 py-1 rounded-full border ${config.bg} ${config.border}`}
+    >
+      {config.label}
+    </span>
+  );
+}
+
+const COURT_BORDER_COLORS = ["#8b5cf6", "#ec4899", "#3b82f6", "#10b981", "#f59e0b", "#06b6d4"];
+
+
+function MatchCard({
+  m,
+  onStart,
+  onEnterScore,
+  starting,
+}: {
+  m: any;
+  onStart: (matchId: string) => void;
+  onEnterScore: (m: any) => void;
+  starting: boolean;
+}) {
+  const st = getMatchStatus(m);
+  const isCompleted = st === "completed";
+  const team1Won = isCompleted && m.team1_score > m.team2_score;
+  const team2Won = isCompleted && m.team2_score > m.team1_score;
+  const winnerName = team1Won ? m.team1?.name : team2Won ? m.team2?.name : null;
+
+  return (
+    <div className="bg-white rounded-xl shadow-[0_8px_24px_-6px_rgba(0,0,0,0.15)] border border-gray-100 px-3.5 pt-3.5 pb-3.5">
+      <div className="flex justify-end mb-1.5">
+        <MatchStatusBadge status={st} />
+      </div>
+
+      <div className="text-center">
+        <p className="text-base font-semibold leading-snug">
+          <span className={team1Won ? "text-emerald-600" : team2Won ? "text-red-500" : "text-gray-900"}>
+            {m.team1?.name}
+          </span>
+          <span className="text-gray-300 font-normal mx-1.5">vs</span>
+          <span className={team2Won ? "text-emerald-600" : team1Won ? "text-red-500" : "text-gray-900"}>
+            {m.team2?.name}
+          </span>
+        </p>
+
+        {isCompleted && (
+          <>
+            <p className="text-2xl font-bold tabular-nums mt-2">
+              <span className={team1Won ? "text-emerald-600" : "text-red-500"}>
+                {m.team1_score}
+              </span>
+              <span className="text-gray-300 mx-1.5">-</span>
+              <span className={team2Won ? "text-emerald-600" : "text-red-500"}>
+                {m.team2_score}
+              </span>
+            </p>
+            {winnerName && (
+              <p className="flex items-center justify-center gap-1 text-xs font-semibold text-emerald-600 mt-1.5">
+                <Trophy className="w-3.5 h-3.5" /> {winnerName} thắng
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="mt-3">
+        {st === "pending" && (
+          <button
+            onClick={() => onStart(m.id)}
+            disabled={starting}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold disabled:opacity-60 transition-colors"
+          >
+            {starting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Swords className="w-3.5 h-3.5" />
+            )}
+            Bắt đầu
+          </button>
+        )}
+
+        {st === "ongoing" && (
+          <button
+            onClick={() => onEnterScore(m)}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors"
+          >
+            📝 Nhập tỉ số
+          </button>
+        )}
+
+        {st === "completed" && (
+          <button
+            onClick={() => onEnterScore(m)}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold transition-colors"
+          >
+            <Pencil className="w-3.5 h-3.5" /> Sửa kết quả
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RoundDetailScreen({
+  round,
+  onClose,
+  onOpenMatch,
+  onStartMatch,
+  startingMatchId,
+}: {
+  round: any;
+  onClose: () => void;
+  onOpenMatch: (matchId: string) => void;
+  onStartMatch: (matchId: string) => void;
+  startingMatchId: string | null;
+}) {
+  const stats = roundStats(round.matches);
+
+  const byCourtMap = new Map<number, any[]>();
+  const noCourt: any[] = [];
+  for (const m of round.matches as any[]) {
+    if (m.court_number) {
+      if (!byCourtMap.has(m.court_number)) byCourtMap.set(m.court_number, []);
+      byCourtMap.get(m.court_number)!.push(m);
+    } else {
+      noCourt.push(m);
+    }
+  }
+  const courtGroups = [...byCourtMap.entries()].sort((a, b) => a[0] - b[0]);
+
+  const roundDateLabel = round.matches.find((m: any) => m.scheduled_at)?.scheduled_at
+    ? format(new Date(round.matches.find((m: any) => m.scheduled_at).scheduled_at), "EEEE, dd/MM/yyyy", { locale: vi })
+    : null;
+
+  return (
+    <div className="fixed inset-0 z-[240] bg-gray-50 flex flex-col">
+      <div
+        className="flex-shrink-0 bg-white flex items-center gap-3 px-4 pb-4 border-b border-gray-100"
+        style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
+      >
+        <button
+          onClick={onClose}
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="min-w-0">
+          <h2 className="text-base font-bold text-gray-900 leading-tight truncate">
+            Chi tiết lượt {round.round_number}
+          </h2>
+          {roundDateLabel && (
+            <p className="text-xs text-gray-400 mt-0.5 capitalize">{roundDateLabel}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full space-y-4">
+        {stats.ongoing > 0 ? (
+          <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-center">
+            <p className="inline-flex items-center gap-1.5 text-amber-700 font-bold text-sm">
+              <Swords className="w-4 h-4" /> Đang thi đấu
+            </p>
+            <p className="text-xs text-amber-600 mt-1">
+              {stats.completed}/{stats.total} trận hoàn thành
+            </p>
+          </div>
+        ) : stats.completed === stats.total ? (
+          <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-center">
+            <p className="inline-flex items-center gap-1.5 text-emerald-700 font-bold text-sm">
+              <Check className="w-4 h-4" /> Đã hoàn thành
+            </p>
+            <p className="text-xs text-emerald-600 mt-1">
+              {stats.completed}/{stats.total} trận hoàn thành
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-gray-100 border border-gray-200 p-4 text-center">
+            <p className="text-gray-500 font-semibold text-sm">Chưa bắt đầu</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {stats.completed}/{stats.total} trận hoàn thành
+            </p>
+          </div>
+        )}
+
+        {courtGroups.map(([courtNumber, matches], idx) => (
+          <div key={courtNumber}>
+            <p className="text-xs font-semibold text-gray-500 mb-2 px-1">Sân {courtNumber}</p>
+            <div className="space-y-2">
+              {matches.map((m: any) => (
+                <MatchCard
+                  key={m.id}
+                  m={m}
+                  onStart={onStartMatch}
+                  onEnterScore={(match) => onOpenMatch(match.id)}
+                  starting={startingMatchId === m.id}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {noCourt.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-gray-500 mb-2 px-1">Chưa xếp sân</p>
+            <div className="space-y-2">
+              {noCourt.map((m: any) => (
+                <MatchCard
+                  key={m.id}
+                  m={m}
+                  onStart={onStartMatch}
+                  onEnterScore={(match) => onOpenMatch(match.id)}
+                  starting={startingMatchId === m.id}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+function ScoreStepper({
+  value,
+  onChange,
+  color,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  color: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90 transition-all"
+      >
+        <Plus className="w-5 h-5" />
+      </button>
+      <div
+        className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl font-bold tabular-nums shadow-sm"
+        style={{ background: `${color}14`, color }}
+      >
+        {value}
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(0, value - 1))}
+        disabled={value <= 0}
+        className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90 transition-all disabled:opacity-30"
+      >
+        <span className="text-xl font-bold leading-none">−</span>
+      </button>
+    </div>
+  );
+}
+
+function ScoreInput({
+  value,
+  onChange,
+  status = "neutral",
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  status?: "win" | "lose" | "neutral";
+}) {
+  const [raw, setRaw] = useState(String(value));
+
+  useEffect(() => {
+    setRaw(String(value));
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    if (v === "" || /^\d+$/.test(v)) {
+      setRaw(v);
+      if (v !== "") {
+        onChange(parseInt(v, 10));
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    if (raw === "") {
+      setRaw("0");
+      onChange(0);
+    }
+  };
+
+  const colorClass =
+    status === "win"
+      ? "text-emerald-600"
+      : status === "lose"
+        ? "text-red-500"
+        : "text-gray-900";
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={raw}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      onFocus={(e) => e.target.select()}
+      className={`w-16 h-14 rounded-xl bg-white border border-gray-200 text-center text-2xl font-bold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all ${colorClass}`}
+    />
+  );
+}
+
+function ContentScoreCard({
+  label,
+  score1,
+  score2,
+  onChange1,
+  onChange2,
+}: {
+  label: string;
+  score1: number;
+  score2: number;
+  onChange1: (v: number) => void;
+  onChange2: (v: number) => void;
+}) {
+  const color = MATCH_CONTENT_COLOR[label] ?? "#1c3d5a";
+  const light = MATCH_CONTENT_LIGHT[label] ?? { bg: "#f3f4f6", icon: "🏆" };
+
+  const status1 = score1 > score2 ? "win" : score1 < score2 ? "lose" : "neutral";
+  const status2 = score2 > score1 ? "win" : score2 < score1 ? "lose" : "neutral";
+
+  return (
+    <div
+      className="rounded-2xl p-4 border"
+      style={{ background: light.bg, borderColor: `${color}22` }}
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-base">{light.icon}</span>
+        <p className="text-sm font-bold" style={{ color }}>
+          {label}
+        </p>
+      </div>
+      <div className="flex items-center justify-center gap-4">
+        <ScoreInput value={score1} onChange={onChange1} status={status1} />
+        <span className="text-gray-300 font-bold text-lg">-</span>
+        <ScoreInput value={score2} onChange={onChange2} status={status2} />
+      </div>
+    </div>
+  );
+}
+
+function MatchScoreEntryScreen({
+  match,
+  round,
+  matchContents,
+  onClose,
+  onSaved,
+}: {
+  match: any;
+  round?: { round_number: number };
+  matchContents: { id: string; label: string }[];
+  onClose: () => void;
+  onSaved: (
+    matchId: string,
+    contentScores: { content_id: string; label: string; score1: number; score2: number }[],
+    team1Score: number,
+    team2Score: number,
+  ) => Promise<void>;
+}) {
+  const { visible, handleClose } = useModalTransition(onClose);
+  const [saving, setSaving] = useState(false);
+
+  const initialScores: Record<string, { score1: number; score2: number }> = {};
+  for (const c of matchContents) {
+    const existing = (match.content_scores ?? []).find((s: any) => s.content_id === c.id);
+    initialScores[c.id] = {
+      score1: existing?.score1 ?? 0,
+      score2: existing?.score2 ?? 0,
+    };
+  }
+  const [scores, setScores] = useState(initialScores);
+
+  const setScore = (contentId: string, side: "score1" | "score2", value: number) => {
+    setScores((prev) => ({
+      ...prev,
+      [contentId]: { ...prev[contentId], [side]: value },
+    }));
+  };
+
+  const total1 = Object.values(scores).reduce((s, v) => s + (v.score1 ?? 0), 0);
+  const total2 = Object.values(scores).reduce((s, v) => s + (v.score2 ?? 0), 0);
+
+  const isEditingResult = match.status === "completed";
+
+  const handleSave = async () => {
+    if (total1 === total2) {
+      toast.error("Tổng điểm không được hoà, vui lòng nhập lại");
+      return;
+    }
+    setSaving(true);
+    try {
+      const contentScores = matchContents.map((c) => ({
+        content_id: c.id,
+        label: c.label,
+        score1: scores[c.id]?.score1 ?? 0,
+        score2: scores[c.id]?.score2 ?? 0,
+      }));
+      await onSaved(match.id, contentScores, total1, total2);
+      toast.success("Đã lưu kết quả trận đấu");
+      handleClose();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Lưu kết quả thất bại");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className={`fixed inset-0 z-[250] bg-white flex flex-col transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"
+        }`}
+    >
+      <div
+        className="flex-shrink-0 flex items-center gap-3 px-4 pb-4 border-b border-gray-100"
+        style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
+      >
+        <button
+          onClick={handleClose}
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h2 className="text-base font-bold text-gray-900">
+          {isEditingResult ? "Sửa điểm trận đấu" : "Nhập điểm trận đấu"}
+        </h2>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-5 max-w-md mx-auto w-full space-y-4">
+        <div className="text-center">
+          <p className="text-base font-bold text-gray-900">
+            {match.team1?.name} <span className="text-gray-300 font-normal mx-1">vs</span>{" "}
+            {match.team2?.name}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {round ? `Lượt ${round.round_number}` : ""}
+            {match.court_number ? ` · Sân ${match.court_number}` : ""}
+          </p>
+        </div>
+
+        {matchContents.map((c) => (
+          <ContentScoreCard
+            key={c.id}
+            label={c.label}
+            score1={scores[c.id]?.score1 ?? 0}
+            score2={scores[c.id]?.score2 ?? 0}
+            onChange1={(v) => setScore(c.id, "score1", v)}
+            onChange2={(v) => setScore(c.id, "score2", v)}
+          />
+        ))}
+
+        {(() => {
+          const total1Status = total1 > total2 ? "win" : total1 < total2 ? "lose" : "neutral";
+          const total2Status = total2 > total1 ? "win" : total2 < total1 ? "lose" : "neutral";
+          const totalColorClass = (s: "win" | "lose" | "neutral") =>
+            s === "win" ? "text-emerald-600" : s === "lose" ? "text-red-500" : "text-gray-900";
+
+          return (
+            <div className="rounded-2xl p-4 bg-gray-50 border border-gray-100">
+              <p className="text-sm font-bold text-gray-700 mb-3">Tổng điểm</p>
+              <div className="flex items-center justify-center gap-4">
+                <div
+                  className={`w-16 h-14 rounded-xl bg-white flex items-center justify-center text-2xl font-bold shadow-sm ${totalColorClass(total1Status)}`}
+                >
+                  {total1}
+                </div>
+                <span className="text-gray-300 font-bold text-lg">-</span>
+                <div
+                  className={`w-16 h-14 rounded-xl bg-white flex items-center justify-center text-2xl font-bold shadow-sm ${totalColorClass(total2Status)}`}
+                >
+                  {total2}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      <div
+        className="flex-shrink-0 px-4 pt-4 border-t border-gray-100 max-w-md mx-auto w-full"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+      >
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold shadow-sm shadow-emerald-200 disabled:opacity-60 transition-colors"
+        >
+          {saving ? "Đang lưu..." : "Lưu kết quả"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -4533,6 +5540,194 @@ function LevelDonutCard({ stats }: { stats: any }) {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function computeStandings(teams: any[], rounds: any[]) {
+  const statsMap = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      played: number;
+      wins: number;
+      losses: number;
+      pointsFor: number;
+      pointsAgainst: number;
+    }
+  >();
+
+  for (const t of teams ?? []) {
+    statsMap.set(t.id, {
+      id: t.id,
+      name: t.name,
+      played: 0,
+      wins: 0,
+      losses: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+    });
+  }
+
+  for (const r of rounds ?? []) {
+    for (const m of r.matches ?? []) {
+      if (m.status !== "completed") continue;
+      const t1 = statsMap.get(m.team1?.id);
+      const t2 = statsMap.get(m.team2?.id);
+      if (!t1 || !t2) continue;
+
+      t1.played += 1;
+      t2.played += 1;
+      t1.pointsFor += m.team1_score ?? 0;
+      t1.pointsAgainst += m.team2_score ?? 0;
+      t2.pointsFor += m.team2_score ?? 0;
+      t2.pointsAgainst += m.team1_score ?? 0;
+
+      if (m.team1_score > m.team2_score) {
+        t1.wins += 1;
+        t2.losses += 1;
+      } else if (m.team2_score > m.team1_score) {
+        t2.wins += 1;
+        t1.losses += 1;
+      }
+    }
+  }
+
+  return Array.from(statsMap.values())
+    .map((t) => ({ ...t, diff: t.pointsFor - t.pointsAgainst }))
+    .sort((a, b) => {
+      if (b.pointsFor !== a.pointsFor) return b.pointsFor - a.pointsFor;
+      if (b.diff !== a.diff) return b.diff - a.diff;
+      return b.wins - a.wins;
+    });
+}
+
+function RankBadge({ rank }: { rank: number }) {
+  const topStyles: Record<number, string> = {
+    1: "bg-amber-400 text-white",
+    2: "bg-gray-300 text-white",
+    3: "bg-orange-400 text-white",
+  };
+  return (
+    <span
+      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${topStyles[rank] ?? "bg-gray-100 text-gray-500"
+        }`}
+    >
+      {rank}
+    </span>
+  );
+}
+
+function TournamentStandingsScreen({
+  teams,
+  rounds,
+  ended,
+  onClose,
+  onBackToActivity,
+}: {
+  teams: any[];
+  rounds: any[];
+  ended?: boolean;
+  onClose: () => void;
+  onBackToActivity?: () => void;
+}) {
+  const standings = useMemo(() => computeStandings(teams, rounds), [teams, rounds]);
+  const totalPlayed = standings.reduce((s, t) => s + t.played, 0);
+
+  return (
+    <div className="fixed inset-0 z-[225] bg-white flex flex-col">
+      <div
+        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-gray-100"
+        style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
+      >
+        <button
+          onClick={onClose}
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 leading-tight">Bảng xếp hạng</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {totalPlayed > 0 ? `Đã tính ${totalPlayed} trận đấu` : "Chưa có trận nào hoàn thành"}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 max-w-2xl mx-auto w-full">
+        {standings.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-14">Chưa có đội nào</p>
+        ) : (
+          <>
+            <div className="hidden sm:grid grid-cols-[2.5rem_1fr_5rem_3.5rem_3.5rem_3.5rem_4.5rem_4.5rem] gap-2 px-3 py-2 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+              <span></span>
+              <span>Đội</span>
+              <span className="text-center">Tổng điểm</span>
+              <span className="text-center">Trận</span>
+              <span className="text-center">Thắng</span>
+              <span className="text-center">Thua</span>
+              <span className="text-center">Điểm thua</span>
+              <span className="text-center">Hiệu số</span>
+            </div>
+
+            <div className="space-y-2">
+              {standings.map((t, idx) => (
+                <div
+                  key={t.id}
+                  className="flex items-center gap-3 sm:grid sm:grid-cols-[2.5rem_1fr_5rem_3.5rem_3.5rem_3.5rem_4.5rem_4.5rem] sm:gap-2 px-3 py-3 rounded-xl border border-gray-100 bg-white shadow-sm"
+                >
+                  <RankBadge rank={idx + 1} />
+                  <div className="flex-1 min-w-0 sm:flex-none">
+                    <p className="font-semibold text-gray-900 truncate">{t.name}</p>
+                  </div>
+                  <span className="text-right sm:text-center text-base font-bold text-blue-600 tabular-nums flex-shrink-0 sm:flex-shrink">
+                    {t.pointsFor}
+                  </span>
+                  <span className="hidden sm:block text-center text-sm text-gray-700 tabular-nums">
+                    {t.played}
+                  </span>
+                  <span className="hidden sm:block text-center text-sm font-semibold text-emerald-600 tabular-nums">
+                    {t.wins}
+                  </span>
+                  <span className="hidden sm:block text-center text-sm font-semibold text-red-500 tabular-nums">
+                    {t.losses}
+                  </span>
+                  <span className="hidden sm:block text-center text-sm text-gray-700 tabular-nums">
+                    {t.pointsAgainst}
+                  </span>
+                  <span
+                    className={`hidden sm:block text-center text-sm font-bold tabular-nums ${t.diff > 0 ? "text-emerald-600" : t.diff < 0 ? "text-red-500" : "text-gray-500"
+                      }`}
+                  >
+                    {t.diff > 0 ? `+${t.diff}` : t.diff}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {ended && (
+        <div
+          className="flex-shrink-0 flex items-center gap-2 px-4 sm:px-6 pt-4 border-t border-gray-100 max-w-2xl mx-auto w-full"
+          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+        >
+          <button
+            onClick={onClose}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
+          >
+            <RotateCcw className="w-4 h-4" /> Xem lịch sử
+          </button>
+          <button
+            onClick={onBackToActivity ?? onClose}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 transition-colors"
+          >
+            Về trang hoạt động
+          </button>
+        </div>
+      )}
     </div>
   );
 }

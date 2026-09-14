@@ -170,6 +170,85 @@ function SkeletonMobileCard() {
     );
 }
 
+function TournamentEndedOptionsModal({
+    activity,
+    onClose,
+    onSelectHistory,
+    onSelectStandings,
+    onSelectRegistrations,
+}: {
+    activity: any;
+    onClose: () => void;
+    onSelectHistory: () => void;
+    onSelectStandings: () => void;
+    onSelectRegistrations: () => void;
+}) {
+    const [visible, setVisible] = useState(false);
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const handleClose = () => {
+        setVisible(false);
+        setTimeout(onClose, 180);
+    };
+
+    return (
+        <div
+            className={`fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+            onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+        >
+            <div
+                className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+            >
+                <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                        <Trophy className="w-5 h-5 text-slate-500" />
+                    </div>
+                    <p className="text-sm font-bold text-gray-900">Giải đấu đã kết thúc</p>
+                    <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                        "{activity?.title}" đã kết thúc. Bạn muốn xem gì?
+                    </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 px-5 pb-2">
+                    <button
+                        onClick={onSelectHistory}
+                        className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                    >
+                        <Calendar className="w-5 h-5 text-blue-600" />
+                        <span className="text-xs font-semibold text-gray-700">Lịch sử đấu</span>
+                    </button>
+                    <button
+                        onClick={onSelectStandings}
+                        className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
+                    >
+                        <Trophy className="w-5 h-5 text-emerald-600" />
+                        <span className="text-xs font-semibold text-gray-700">BXH</span>
+                    </button>
+                </div>
+                <div className="px-5 pb-5">
+                    <button
+                        onClick={onSelectRegistrations}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+                    >
+                        <Users className="w-4 h-4 text-indigo-600" />
+                        <span className="text-xs font-semibold text-gray-700">Danh sách đăng ký</span>
+                    </button>
+                </div>
+                <div className="flex border-t border-gray-100">
+                    <button
+                        onClick={handleClose}
+                        className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+                    >
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function ContinueTournamentModal({
     activity,
     onClose,
@@ -257,6 +336,7 @@ export default function ActivitiesListPage() {
     const [showAddRegistration, setShowAddRegistration] = useState(false);
 
     const [continueTournamentModal, setContinueTournamentModal] = useState<any>(null);
+    const [tournamentEndedModal, setTournamentEndedModal] = useState<any>(null);
 
     useEffect(() => {
         const openId = searchParams.get("openRegistrations");
@@ -343,6 +423,10 @@ export default function ActivitiesListPage() {
 
     const handleViewRegistrations = (a: any) => {
         if (a.type === "tournament") {
+            if (a.ended_at) {
+                setTournamentEndedModal(a);
+                return;
+            }
             if (a.started_at) {
                 setContinueTournamentModal(a);
                 return;
@@ -363,6 +447,36 @@ export default function ActivitiesListPage() {
         setNavigating(true);
         setTimeout(() => {
             router.push(`/admin/events/${a.id}/registrations/tournament?step=schedule`);
+        }, NAVIGATE_DELAY_MS);
+    };
+
+    const handleSelectTournamentHistory = () => {
+        const a = tournamentEndedModal;
+        setTournamentEndedModal(null);
+        if (!a) return;
+        setNavigating(true);
+        setTimeout(() => {
+            router.push(`/admin/events/${a.id}/registrations/tournament?step=schedule`);
+        }, NAVIGATE_DELAY_MS);
+    };
+
+    const handleSelectTournamentStandings = () => {
+        const a = tournamentEndedModal;
+        setTournamentEndedModal(null);
+        if (!a) return;
+        setNavigating(true);
+        setTimeout(() => {
+            router.push(`/admin/events/${a.id}/registrations/tournament?step=schedule&view=standings`);
+        }, NAVIGATE_DELAY_MS);
+    };
+
+    const handleSelectTournamentRegistrations = () => {
+        const a = tournamentEndedModal;
+        setTournamentEndedModal(null);
+        if (!a) return;
+        setNavigating(true);
+        setTimeout(() => {
+            router.push(`/admin/events/${a.id}/registrations/tournament?view=list`);
         }, NAVIGATE_DELAY_MS);
     };
 
@@ -730,6 +844,17 @@ export default function ActivitiesListPage() {
                     activity={continueTournamentModal}
                     onClose={() => setContinueTournamentModal(null)}
                     onContinue={handleContinueTournament}
+                />,
+                document.body
+            )}
+
+            {tournamentEndedModal && createPortal(
+                <TournamentEndedOptionsModal
+                    activity={tournamentEndedModal}
+                    onClose={() => setTournamentEndedModal(null)}
+                    onSelectHistory={handleSelectTournamentHistory}
+                    onSelectStandings={handleSelectTournamentStandings}
+                    onSelectRegistrations={handleSelectTournamentRegistrations}
                 />,
                 document.body
             )}

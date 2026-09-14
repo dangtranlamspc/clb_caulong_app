@@ -630,6 +630,24 @@ export const eventsAdminApi = {
 
   confirmTournamentSchedule: (id: string, force?: boolean) =>
     api.post(`/admin/activities/${id}/tournament/confirm-schedule`, { force }),
+
+  markMatchResult: (
+    matchId: string,
+    dto: {
+      team1_score: number;
+      team2_score: number;
+      content_scores?: { content_id: string; label: string; score1: number; score2: number }[];
+    }
+  ) => api.patch(`/admin/activities/tournament-matches/${matchId}/result`, dto),
+
+  startMatch: (matchId: string) =>
+    api.patch(`/admin/activities/tournament-matches/${matchId}/start`),
+
+  endTournament: (id: string) =>
+    api.patch(`/admin/activities/${id}/tournament/end`),
+
+  resetTournamentResults: (id: string) =>
+    api.patch(`/admin/activities/${id}/tournament/reset-results`),
 };
 
 export const uploadsAdminApi = {
