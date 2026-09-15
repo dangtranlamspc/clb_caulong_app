@@ -313,6 +313,7 @@ export default function TournamentLandingPage() {
         activity?.detail?.team_size ?? composition.length;
     const rules = activity?.detail?.rules ?? {};
     const scoring = rules?.scoring ?? {};
+    const prizes: any[] = activity?.detail?.prizes ?? [];
 
     const hasNamRole = composition.some((c) => c.role === "nam");
     const hasNuRole = composition.some((c) => c.role === "nu");
@@ -440,7 +441,6 @@ export default function TournamentLandingPage() {
                     <div className="absolute inset-0 bg-[linear-gradient(90deg,#080808_0%,rgba(8,8,8,.86)_34%,rgba(8,8,8,.34)_72%,rgba(8,8,8,.82)_100%)]" />
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.2),#0B0B0C_98%)]" />
 
-                    {/* graphic court lines */}
                     <div className="pointer-events-none absolute -right-20 top-20 h-[520px] w-[520px] rotate-[-14deg] border-[1px] border-white/10 sm:h-[700px] sm:w-[700px]">
                         <div className="absolute left-1/2 top-0 h-full border-l border-white/10" />
                         <div className="absolute left-0 right-0 top-1/2 border-t border-white/10" />
@@ -459,7 +459,7 @@ export default function TournamentLandingPage() {
                                     </span>
                                 </div>
 
-                                <h1 className="hero-reveal condensed max-w-5xl text-[62px] font-black uppercase leading-[.82] tracking-[-.025em] sm:text-[94px] lg:text-[128px]">
+                                <h1 className="hero-reveal condensed max-w-5xl text-[62px] font-black uppercase leading-[1.25] tracking-[-.025em] sm:text-[94px] sm:leading-[1.5] lg:text-[128px] lg:leading-[1.15]">
                                     {activity.title}
                                 </h1>
 
@@ -544,8 +544,9 @@ export default function TournamentLandingPage() {
                                 ["02", "Đội hình", "sec-doi-hinh"],
                                 ["03", "Bốc thăm", "sec-boc-tham"],
                                 ["04", "Xếp hạng", "sec-xep-hang"],
-                                ["05", "Lệ phí", "sec-le-phi"],
-                                ["06", "Điều lệ", "sec-dieu-le"],
+                                ...(prizes.length ? [["05", "Giải thưởng", "sec-giai-thuong"]] : []),
+                                [prizes.length ? "06" : "05", "Lệ phí", "sec-le-phi"],
+                                [prizes.length ? "07" : "06", "Điều lệ", "sec-dieu-le"],
                             ].map(([n, label, targetId]) => (
                                 <button
                                     key={n}
@@ -678,7 +679,6 @@ export default function TournamentLandingPage() {
                                 </section>
                             )}
 
-                            {/* 04 */}
                             {rules.ranking_rules_content && (
                                 <section id="sec-xep-hang" className="scroll-mt-6 border-b border-black/10 py-12">
                                     <div className="flex gap-6">
@@ -697,11 +697,76 @@ export default function TournamentLandingPage() {
                                 </section>
                             )}
 
+                            {prizes.length > 0 && (
+                                <section id="sec-giai-thuong" className="scroll-mt-6 border-b border-black/10 py-12">
+                                    <div className="flex gap-6">
+                                        <div className="hidden shrink-0 sm:block">
+                                            <span className="condensed text-6xl font-black leading-none text-[#E7B84B]/50">05</span>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="mb-6 flex items-center gap-3">
+                                                <Trophy className="h-5 w-5 text-[#B98216]" />
+                                                <div>
+                                                    <p className="text-[9px] font-extrabold uppercase tracking-[.2em] text-[#A49D95]">Prizes</p>
+                                                    <h2 className="condensed text-3xl font-black uppercase tracking-tight">Cơ cấu giải thưởng</h2>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                                {prizes.map((prize, idx) => (
+                                                    <div
+                                                        key={prize.id ?? idx}
+                                                        className="relative overflow-hidden rounded-2xl border border-black/[0.07] bg-white p-5"
+                                                    >
+                                                        <div className="mb-4 flex items-center gap-3">
+                                                            <span className="text-3xl leading-none">{prize.emoji || "🏅"}</span>
+                                                            <h3 className="condensed text-2xl font-black uppercase tracking-tight text-[#171413]">
+                                                                {prize.rank_label}
+                                                            </h3>
+                                                        </div>
+
+                                                        {prize.medal_name && (
+                                                            <p className="mb-3 flex items-center gap-2 text-sm font-bold text-[#554E48]">
+                                                                <span>🏅</span> {prize.medal_name}
+                                                            </p>
+                                                        )}
+
+                                                        {!!prize.cash_amount && (
+                                                            <p className="condensed mb-4 text-3xl font-black text-[#D91C2E]">
+                                                                {formatCurrency(prize.cash_amount)}
+                                                            </p>
+                                                        )}
+
+                                                        {Array.isArray(prize.perks) && prize.perks.length > 0 && (
+                                                            <ul className="space-y-2">
+                                                                {prize.perks.map((perk: string, pIdx: number) => (
+                                                                    <li
+                                                                        key={pIdx}
+                                                                        className="flex items-start gap-2 text-sm leading-6 text-[#766E67]"
+                                                                    >
+                                                                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#D91C2E]" />
+                                                                        <span>{perk}</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
+
                             {/* 05 */}
                             {hasFee && (
                                 <section id="sec-le-phi" className="scroll-mt-6 border-b border-black/10 py-12">
                                     <div className="flex gap-6">
-                                        <div className="hidden shrink-0 sm:block"><span className="condensed text-6xl font-black leading-none text-[#D91C2E]/20">05</span></div>
+                                        <div className="hidden shrink-0 sm:block">
+                                            <span className="condensed text-6xl font-black leading-none text-[#D91C2E]/20">
+                                                {prizes.length ? "06" : "05"}
+                                            </span>
+                                        </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="mb-6 flex items-center gap-3">
                                                 <WalletIcon className="h-5 w-5 text-[#D91C2E]" />
@@ -726,7 +791,11 @@ export default function TournamentLandingPage() {
                             {rules.rules_content && (
                                 <section id="sec-dieu-le" className="scroll-mt-6 pt-12">
                                     <div className="flex gap-6">
-                                        <div className="hidden shrink-0 sm:block"><span className="condensed text-6xl font-black leading-none text-black/10">06</span></div>
+                                        <div className="hidden shrink-0 sm:block">
+                                            <span className="condensed text-6xl font-black leading-none text-black/10">
+                                                {prizes.length ? "07" : "06"}
+                                            </span>
+                                        </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="mb-6 flex items-center gap-3">
                                                 <Scale className="h-5 w-5 text-[#171515]" />

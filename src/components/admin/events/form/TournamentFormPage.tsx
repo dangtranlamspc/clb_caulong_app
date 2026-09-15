@@ -8,6 +8,8 @@ import { eventsAdminApi, uploadsAdminApi } from "@/lib/api";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 
+const genId = () => Math.random().toString(36).slice(2, 10);
+
 type Role = "nam" | "nu";
 type Level = "A" | "B+" | "B" | "C";
 
@@ -21,6 +23,42 @@ interface MatchContentItem {
     id: string;
     label: string;
 }
+
+interface PrizeItem {
+    id: string;
+    rank_label: string;
+    emoji: string;
+    medal_name: string;
+    cash_amount: string;
+    perks: string[];
+}
+
+const DEFAULT_PRIZES: PrizeItem[] = [
+    {
+        id: genId(),
+        rank_label: "Giải Nhất",
+        emoji: "🥇",
+        medal_name: "Huy chương Vàng",
+        cash_amount: "700000",
+        perks: ["01 buổi đánh cầu lông miễn phí", "Quà từ Nhà tài trợ"],
+    },
+    {
+        id: genId(),
+        rank_label: "Giải Nhì",
+        emoji: "🥈",
+        medal_name: "Huy chương Bạc",
+        cash_amount: "500000",
+        perks: ["01 buổi đánh cầu lông miễn phí", "Quà từ Nhà tài trợ"],
+    },
+    {
+        id: genId(),
+        rank_label: "Giải Ba",
+        emoji: "🥉",
+        medal_name: "Huy chương Đồng",
+        cash_amount: "350000",
+        perks: ["01 buổi đánh cầu lông miễn phí", "Quà từ Nhà tài trợ"],
+    },
+];
 
 interface ScoringState {
     set_type: string;
@@ -62,6 +100,7 @@ interface TournamentFormState {
     entry_fee_per_person: string;
     composition: CompositionSlot[];
     rules: RulesState;
+    prizes: PrizeItem[];
 }
 
 const FORMAT_TYPE_OPTIONS = [
@@ -94,8 +133,6 @@ const slotOptionKey = (role: Role, level: Level | null) =>
 const DEFAULT_SLOT: CompositionSlot = { role: "nu", level: "A", label: "Nữ A" };
 
 const SET_TYPE_OPTIONS = ["01 set", "02 set (best of 2)", "03 set (best of 3)"];
-
-const genId = () => Math.random().toString(36).slice(2, 10);
 
 const DEFAULT_MATCH_CONTENTS: MatchContentItem[] = [
     { id: genId(), label: "Đôi Nam" },
@@ -255,6 +292,7 @@ const initialForm: TournamentFormState = {
     entry_fee_per_person: "",
     composition: defaultComposition(4),
     rules: defaultRules(),
+    prizes: DEFAULT_PRIZES.map((p) => ({ ...p, id: genId() })),
 };
 
 const HIDE_SCROLLBAR_CLASS =
@@ -336,6 +374,18 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                     rules_content: rulesData.rules_content ?? "",
                 };
 
+                const prizes: PrizeItem[] =
+                    Array.isArray(detail.prizes) && detail.prizes.length
+                        ? detail.prizes.map((p: any) => ({
+                            id: p.id ?? genId(),
+                            rank_label: p.rank_label ?? "",
+                            emoji: p.emoji ?? "🏅",
+                            medal_name: p.medal_name ?? "",
+                            cash_amount: p.cash_amount != null ? String(p.cash_amount) : "",
+                            perks: Array.isArray(p.perks) ? p.perks : [],
+                        }))
+                        : DEFAULT_PRIZES.map((p) => ({ ...p, id: genId() }));
+
                 const built: TournamentFormState = {
                     title: data.title ?? "",
                     slug: data.slug ?? "",
@@ -367,6 +417,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                             : "",
                     composition: resizeComposition(composition, teamSize),
                     rules,
+                    prizes,
                 };
 
                 setForm(built);
@@ -467,6 +518,68 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                     { id: genId(), label: MATCH_CONTENT_OPTIONS[0].value },
                 ],
             },
+        }));
+    };
+
+    const addPrize = () => {
+        setForm((f) => ({
+            ...f,
+            prizes: [
+                ...f.prizes,
+                {
+                    id: genId(),
+                    rank_label: `Giải ${f.prizes.length + 1}`,
+                    emoji: "🏅",
+                    medal_name: "",
+                    cash_amount: "",
+                    perks: [],
+                },
+            ],
+        }));
+    };
+
+    const updatePrize = (prizeId: string, patch: Partial<PrizeItem>) => {
+        setForm((f) => ({
+            ...f,
+            prizes: f.prizes.map((p) => (p.id === prizeId ? { ...p, ...patch } : p)),
+        }));
+    };
+
+    const removePrize = (prizeId: string) => {
+        setForm((f) => ({
+            ...f,
+            prizes: f.prizes.filter((p) => p.id !== prizeId),
+        }));
+    };
+
+    const addPrizePerk = (prizeId: string) => {
+        setForm((f) => ({
+            ...f,
+            prizes: f.prizes.map((p) =>
+                p.id === prizeId ? { ...p, perks: [...p.perks, ""] } : p,
+            ),
+        }));
+    };
+
+    const updatePrizePerk = (prizeId: string, index: number, value: string) => {
+        setForm((f) => ({
+            ...f,
+            prizes: f.prizes.map((p) =>
+                p.id === prizeId
+                    ? { ...p, perks: p.perks.map((v, i) => (i === index ? value : v)) }
+                    : p,
+            ),
+        }));
+    };
+
+    const removePrizePerk = (prizeId: string, index: number) => {
+        setForm((f) => ({
+            ...f,
+            prizes: f.prizes.map((p) =>
+                p.id === prizeId
+                    ? { ...p, perks: p.perks.filter((_, i) => i !== index) }
+                    : p,
+            ),
         }));
     };
 
@@ -608,6 +721,16 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                             form.rules.ranking_rules_content || undefined,
                         rules_content: form.rules.rules_content || undefined,
                     },
+                    prizes: form.prizes
+                        .filter((p) => p.rank_label.trim())
+                        .map(({ id, rank_label, emoji, medal_name, cash_amount, perks }) => ({
+                            id,
+                            rank_label,
+                            emoji: emoji || undefined,
+                            medal_name: medal_name || undefined,
+                            cash_amount: cash_amount ? Number(cash_amount) : undefined,
+                            perks: perks.filter((p) => p.trim()),
+                        })),
                 },
             };
             if (id) await eventsAdminApi.update(id, payload);
@@ -1007,6 +1130,112 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                     minHeight={140}
                                 />
                             </Field>
+                        </SectionCard>
+
+                        <SectionCard icon="🏆" title="CƠ CẤU GIẢI THƯỞNG">
+                            <div className="space-y-4">
+                                {form.prizes.map((prize) => (
+                                    <div
+                                        key={prize.id}
+                                        className="rounded-xl border border-gray-200 p-4 space-y-3"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                className="input-field w-16 text-center text-xl"
+                                                maxLength={4}
+                                                value={prize.emoji}
+                                                onChange={(e) =>
+                                                    updatePrize(prize.id, { emoji: e.target.value })
+                                                }
+                                            />
+                                            <input
+                                                className="input-field flex-1 font-semibold"
+                                                placeholder="Giải Nhất"
+                                                value={prize.rank_label}
+                                                onChange={(e) =>
+                                                    updatePrize(prize.id, { rank_label: e.target.value })
+                                                }
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removePrize(prize.id)}
+                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <Field label="Huy chương / danh hiệu">
+                                                <input
+                                                    className="input-field"
+                                                    placeholder="Huy chương Vàng"
+                                                    value={prize.medal_name}
+                                                    onChange={(e) =>
+                                                        updatePrize(prize.id, { medal_name: e.target.value })
+                                                    }
+                                                />
+                                            </Field>
+                                            <Field label="Tiền thưởng (VNĐ)">
+                                                <input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    className="input-field"
+                                                    placeholder="0"
+                                                    value={formatThousands(prize.cash_amount)}
+                                                    onChange={(e) =>
+                                                        updatePrize(prize.id, {
+                                                            cash_amount: parseThousands(e.target.value),
+                                                        })
+                                                    }
+                                                />
+                                            </Field>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                                Quyền lợi khác
+                                            </label>
+                                            <div className="space-y-2">
+                                                {prize.perks.map((perk, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2">
+                                                        <input
+                                                            className="input-field flex-1"
+                                                            placeholder="VD: 01 buổi đánh cầu lông miễn phí"
+                                                            value={perk}
+                                                            onChange={(e) =>
+                                                                updatePrizePerk(prize.id, idx, e.target.value)
+                                                            }
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removePrizePerk(prize.id, idx)}
+                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => addPrizePerk(prize.id)}
+                                                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+                                            >
+                                                <Plus className="w-3.5 h-3.5" /> Thêm quyền lợi
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={addPrize}
+                                className="mt-1 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-400"
+                            >
+                                <Plus className="w-4 h-4" /> Thêm hạng giải
+                            </button>
                         </SectionCard>
 
                         <SectionCard icon="💰" title="LỆ PHÍ">

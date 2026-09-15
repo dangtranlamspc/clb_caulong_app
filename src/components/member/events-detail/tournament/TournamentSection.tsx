@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { CheckCircle2, ChevronDown, ChevronUp, Clock, Coins, Users } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Clock, Coins, Trophy, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import { activitiesApi } from "@/lib/api";
 import { TournamentPayModal } from "./TournamentPayModal";
@@ -28,6 +28,7 @@ export function TournamentSection({ activity, myStatus, onChanged }: any) {
 
   const entryFee = activity.detail?.entry_fee_per_person ?? 0;
   const maxTeams = activity.detail?.max_teams ?? null;
+  const prizes: any[] = activity.detail?.prizes ?? [];
   const amount = reg?.amount_override ?? entryFee;
 
   const isPaid = reg?.payment_status === "confirmed";
@@ -100,9 +101,7 @@ export function TournamentSection({ activity, myStatus, onChanged }: any) {
   return (
     <div className="space-y-4">
 
-      {/* ================= HERO COUNTDOWN ================= */}
       <section className="relative overflow-hidden rounded-[26px] bg-[#0B1220] p-5 text-white shadow-xl">
-        {/* Decorative background */}
         <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" />
         <div className="absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
 
@@ -197,7 +196,6 @@ export function TournamentSection({ activity, myStatus, onChanged }: any) {
         </div>
       </section>
 
-      {/* ================= REGISTRATION DEADLINE ================= */}
       {activity.deadline && (
         <section className="relative overflow-hidden rounded-[24px] border border-orange-100 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-3">
@@ -521,6 +519,67 @@ export function TournamentSection({ activity, myStatus, onChanged }: any) {
           )}
         </div>
       </section>
+      {prizes.length > 0 && (
+        <section className="overflow-hidden rounded-[26px] border border-gray-100 bg-white shadow-sm">
+          <div className="border-b border-gray-100 px-5 py-4">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100">
+                <Trophy className="h-4 w-4 text-amber-600" />
+              </div>
+              <h3 className="text-lg font-black tracking-tight text-gray-900">
+                Cơ cấu giải thưởng
+              </h3>
+            </div>
+          </div>
+
+          <div className="space-y-3 p-5">
+            {prizes.map((prize: any, idx: number) => (
+              <div
+                key={prize.id ?? idx}
+                className="relative overflow-hidden rounded-2xl border border-gray-100 bg-gray-50/70 p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white text-2xl shadow-sm">
+                    {prize.emoji || "🏅"}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-black text-gray-900">
+                        {prize.rank_label}
+                      </p>
+                      {!!prize.cash_amount && (
+                        <span className="text-sm font-black text-amber-600">
+                          {fmt(prize.cash_amount)}
+                        </span>
+                      )}
+                    </div>
+
+                    {prize.medal_name && (
+                      <p className="mt-0.5 text-[11px] font-semibold text-gray-500">
+                        {prize.medal_name}
+                      </p>
+                    )}
+
+                    {Array.isArray(prize.perks) && prize.perks.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {prize.perks.map((perk: string, pIdx: number) => (
+                          <span
+                            key={pIdx}
+                            className="rounded-lg bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-600 shadow-sm"
+                          >
+                            {perk}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       <TournamentPayModal
         open={showPayModal}
         onClose={() => setShowPayModal(false)}
