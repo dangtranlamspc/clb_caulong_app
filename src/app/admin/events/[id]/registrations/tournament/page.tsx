@@ -1158,8 +1158,9 @@ export default function TournamentRegistrationsPage() {
 
   const isFullyRegistered = useMemo(() => {
     if (totalCapacity == null) return false;
-    return registrations.length >= totalCapacity;
-  }, [registrations.length, totalCapacity]);
+    if (registrations.length < totalCapacity) return false;
+    return registrations.every((r) => r.payment_status === "confirmed");
+  }, [registrations, totalCapacity]);
 
   const drawContent = useMemo<"nam" | "nu" | "mix">(() => {
     const hasNam = compositionSlots.some((c) => c.role === "nam");
@@ -1170,12 +1171,14 @@ export default function TournamentRegistrationsPage() {
   }, [compositionSlots]);
 
 
-  const unpaidEligibleCount = useMemo(() => {
+  const unpaidEligibleMembers = useMemo(() => {
     let elig = registrations;
     if (drawContent === "nam") elig = elig.filter((r) => r.role === "nam");
     else if (drawContent === "nu") elig = elig.filter((r) => r.role === "nu");
-    return elig.filter((r) => r.payment_status !== "confirmed").length;
+    return elig.filter((r) => r.payment_status !== "confirmed");
   }, [registrations, drawContent]);
+
+  const unpaidEligibleCount = unpaidEligibleMembers.length;
 
   const getStatMembers = (key: string) => {
     switch (key) {
@@ -1657,16 +1660,26 @@ export default function TournamentRegistrationsPage() {
   }
 
   const isOpen = activity?.status === "open";
-  const isClosed = activity?.status === "closed";
-  const statusLabel = isOpen
-    ? "Đang mở"
-    : isClosed
-      ? "Đang đóng"
-      : (STATUS_LABEL[activity?.status] ?? activity?.status);
+  const isClosed = activity?.status === "closed" || isFullyRegistered;
+  const statusLabel = isFullyRegistered
+    ? "Đã đóng đăng ký"
+    : isOpen
+      ? "Đang mở"
+      : activity?.status === "closed"
+        ? "Đang đóng"
+        : (STATUS_LABEL[activity?.status] ?? activity?.status);
 
   const hasActiveFilters = Boolean(
     search || genderFilter || levelFilter || roleFilter || paymentFilter
   );
+
+  const handleDrawTeamsClick = () => {
+    if (unpaidEligibleMembers.length > 0) {
+      setShowDrawConfirm(true);
+    } else {
+      handleDrawTeams();
+    }
+  };
 
   return (
     <div className="w-full h-screen flex flex-col bg-gray-50">
@@ -1694,9 +1707,15 @@ export default function TournamentRegistrationsPage() {
             <span
               className="text-xs font-semibold px-3 py-1.5 rounded-full border flex-shrink-0"
               style={{
-                background: STATUS_COLORS[activity?.status]?.bg ?? "#f3f4f6",
-                color: STATUS_COLORS[activity?.status]?.text ?? "#6b7280",
-                borderColor: STATUS_COLORS[activity?.status]?.border ?? "#e5e7eb",
+                background: isFullyRegistered
+                  ? STATUS_COLORS.closed.bg
+                  : STATUS_COLORS[activity?.status]?.bg ?? "#f3f4f6",
+                color: isFullyRegistered
+                  ? STATUS_COLORS.closed.text
+                  : STATUS_COLORS[activity?.status]?.text ?? "#6b7280",
+                borderColor: isFullyRegistered
+                  ? STATUS_COLORS.closed.border
+                  : STATUS_COLORS[activity?.status]?.border ?? "#e5e7eb",
               }}
             >
               {statusLabel}
@@ -2330,7 +2349,7 @@ export default function TournamentRegistrationsPage() {
 
                   <button
                     disabled={drawing || compositionSlots.length === 0}
-                    onClick={() => setShowDrawConfirm(true)}
+                    onClick={handleDrawTeamsClick}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
                   >
                     {compositionSlots.length === 0
@@ -2460,7 +2479,7 @@ export default function TournamentRegistrationsPage() {
             onClose={() => setShowTeamsModal(false)}
             onClear={handleClearTeams}
             onExport={handleExportTeamsExcel}
-            onDrawTeams={() => setShowDrawConfirm(true)}
+            onDrawTeams={handleDrawTeamsClick}
           />,
           document.body
         )
@@ -2497,7 +2516,7 @@ export default function TournamentRegistrationsPage() {
 
       {showDrawConfirm && createPortal(
         <ConfirmDrawTeamsModal
-          unpaidCount={unpaidEligibleCount}
+          unpaidMembers={unpaidEligibleMembers}
           drawing={drawing}
           onConfirm={async () => {
             setShowDrawConfirm(false);
@@ -3297,12 +3316,12 @@ function ConfirmScheduleWarningModal({
 
 
 function ConfirmDrawTeamsModal({
-  unpaidCount,
+  unpaidMembers,
   drawing,
   onConfirm,
   onCancel,
 }: {
-  unpaidCount: number;
+  unpaidMembers: any[];
   drawing: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -3324,28 +3343,46 @@ function ConfirmDrawTeamsModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[85vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
+        <div className="flex flex-col items-center text-center px-5 pt-6 pb-4 flex-shrink-0">
           <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mb-3">
             <AlertTriangle className="w-5 h-5 text-amber-500" />
           </div>
           <p className="text-sm font-bold text-gray-900">Xác nhận chia đội</p>
           <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
-            {unpaidCount > 0 ? (
-              <>
-                Có <span className="font-semibold text-amber-600">{unpaidCount}</span> vận
-                động viên <span className="font-semibold">chưa thanh toán</span> — những người
-                này sẽ <span className="font-semibold">không được đưa vào chia đội</span> lần
-                này. Bạn có muốn tiếp tục?
-              </>
-            ) : (
-              "Tất cả vận động viên đủ điều kiện đều đã thanh toán. Tiếp tục chia đội?"
-            )}
+            Có <span className="font-semibold text-amber-600">{unpaidMembers.length}</span> vận
+            động viên <span className="font-semibold">chưa thanh toán</span> — những người
+            này sẽ <span className="font-semibold">không được đưa vào chia đội</span> lần này.
           </p>
         </div>
-        <div className="flex border-t border-gray-100">
+
+        <div className="flex-1 overflow-y-auto min-h-0 border-t border-gray-100 divide-y divide-gray-50">
+          {unpaidMembers.map((r: any) => (
+            <div key={r.id} className="flex items-center gap-2.5 px-5 py-2.5">
+              <img
+                src={
+                  r.users?.avatar_url ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(r.users?.full_name ?? r.guest_full_name ?? "?")}`
+                }
+                className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                alt=""
+              />
+              <span className="text-sm text-gray-700 truncate flex-1">
+                {r.users?.full_name ?? r.guest_full_name ?? "—"}
+              </span>
+              <span
+                className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${r.role === "nam" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"
+                  }`}
+              >
+                {r.role === "nam" ? "Nam" : "Nữ"} {r.level ?? ""}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex border-t border-gray-100 flex-shrink-0">
           <button
             onClick={handleClose}
             disabled={drawing}
@@ -4231,6 +4268,9 @@ function ScheduleScreen({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
             {displayRounds.map((r) => {
               const roundHasSchedule = r.matches.some((m: any) => m.scheduled_at);
+              const roundFullyCompleted =
+                r.matches.length > 0 && r.matches.every((m: any) => m.status === "completed");
+              const roundLocked = tournamentStarted && roundHasSchedule && roundFullyCompleted;
               return (
                 <div
                   key={r.round_number}
@@ -4247,7 +4287,7 @@ function ScheduleScreen({
                         </span>
                       )}
                     </div>
-                    {!ended && (
+                    {!ended && !roundLocked && (
                       <button
                         onClick={() =>
                           setScheduleModal({
@@ -4334,7 +4374,7 @@ function ScheduleScreen({
                                 <span className="italic text-gray-400">Chưa đặt giờ</span>
                               )}
                             </div>
-                            {!ended && (
+                            {!ended && !roundLocked && (
                               <button
                                 onClick={() => setScheduleModal({ type: "match", matchId: m.id, currentValue: m.scheduled_at, currentCourt: m.court_number })}
                                 className="flex items-center gap-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition-colors flex-shrink-0"

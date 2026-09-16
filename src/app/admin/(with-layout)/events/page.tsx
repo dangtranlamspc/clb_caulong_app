@@ -69,6 +69,19 @@ function ActivityThumbnail({ src, emoji }: { src?: string | null; emoji: string 
     return <span>{emoji}</span>;
 }
 
+function getStatusDisplay(a: any) {
+    if (a.type === "tournament" && a.is_full && a.status !== "cancelled" && a.status !== "completed") {
+        return {
+            label: "Đã đóng đăng ký",
+            className: "bg-green-50 text-green-700",
+        };
+    }
+    return {
+        label: STATUS_LABEL[a.status] ?? a.status,
+        className: STATUS_CFG[a.status] ?? "bg-gray-50 text-gray-500",
+    };
+}
+
 const STATUS_CFG: Record<string, string> = {
     draft: "bg-gray-50 text-gray-500",
     open: "bg-orange-50 text-orange-600",
@@ -653,9 +666,9 @@ export default function ActivitiesListPage() {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <span
-                                                    className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_CFG[a.status] ?? "bg-gray-50 text-gray-500"}`}
+                                                    className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusDisplay(a).className}`}
                                                 >
-                                                    {STATUS_LABEL[a.status] ?? a.status}
+                                                    {getStatusDisplay(a).label}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3">
@@ -713,9 +726,9 @@ export default function ActivitiesListPage() {
                                                     {a.title}
                                                 </p>
                                                 <span
-                                                    className={`text-[11px] px-2 py-1 rounded-full font-medium flex-shrink-0 whitespace-nowrap ${STATUS_CFG[a.status] ?? "bg-gray-50 text-gray-500"}`}
+                                                    className={`text-[11px] px-2 py-1 rounded-full font-medium flex-shrink-0 whitespace-nowrap ${getStatusDisplay(a).className}`}
                                                 >
-                                                    {STATUS_LABEL[a.status] ?? a.status}
+                                                    {getStatusDisplay(a).label}
                                                 </span>
                                             </div>
 

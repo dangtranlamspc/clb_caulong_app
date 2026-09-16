@@ -201,7 +201,7 @@ const EVENT_STATUS_CFG: Record<string, { label: string; cls: string }> = {
 };
 
 const EVENT_TYPE_STATUS_OVERRIDE: Record<string, Record<string, string>> = {
-  shirt_order: { open: "Đang nhận đăng ký" },
+  shirt_order: { open: "Đang nhận đăng ký", closed: "Đã đóng đăng ký" },
   tournament: { open: "Mở đăng ký" },
   birthday: { upcoming: "Sắp diễn ra" },
   offline_event: { ongoing: "Chuẩn bị", draft: "Chuẩn bị" },
@@ -1761,6 +1761,21 @@ function MatchesTab({
   );
 }
 
+function getEventCapacity(a: any): number | null {
+  if (a.type === "tournament") {
+    const composition = a.detail?.composition ?? [];
+    const maxTeams = a.detail?.max_teams ?? 0;
+    const capacity = composition.length * maxTeams;
+    return capacity > 0 ? capacity : null;
+  }
+  return (
+    a.detail?.max_slots ??
+    a.detail?.max_teams ??
+    a.detail?.max_participants ??
+    null
+  );
+}
+
 function EventsTab({
   onOpenEventsChange,
 }: {
@@ -1804,24 +1819,54 @@ function EventsTab({
     setTimeout(() => setSheetOpen(false), 300);
   };
 
-  const fetchEvents = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data } = await activitiesApi.list({
-        type: typeFilter || undefined,
-        limit: 30,
-      });
-      const list = data.data ?? [];
-      setItems(list);
-      onOpenEventsChange(list.some((a: any) => a.status === "open"));
-    } finally {
-      setLoading(false);
-    }
-  }, [typeFilter, onOpenEventsChange]);
+  const fetchEvents = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const silent = opts?.silent ?? false;
+      if (!silent) setLoading(true);
+      try {
+        const { data } = await activitiesApi.list({
+          type: typeFilter || undefined,
+          limit: 30,
+        });
+        const list = data.data ?? [];
+        setItems(list);
+        onOpenEventsChange(list.some((a: any) => a.status === "open"));
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [typeFilter, onOpenEventsChange],
+  );
 
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  const fetchEventsRef = useRef(fetchEvents);
+  useEffect(() => {
+    fetchEventsRef.current = fetchEvents;
+  }, [fetchEvents]);
+
+  const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const scheduleRefetch = () => {
+      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+      realtimeDebounceRef.current = setTimeout(() => {
+        fetchEventsRef.current({ silent: true });
+      }, 300);
+    };
+
+    const channel = supabase
+      .channel("activities-list-changes")
+      .on("broadcast", { event: "activities_changed" }, scheduleRefetch)
+      .subscribe();
+
+    return () => {
+      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = sheetOpen ? "hidden" : "";
@@ -1861,17 +1906,6 @@ function EventsTab({
         style={{ opacity: fadeIn ? 1 : 0, transition: "opacity 0.3s ease" }}
       >
         {loading ? (
-          // [...Array(4)].map((_, i) => (
-          //   <div
-          //     key={i}
-          //     style={{
-          //       animationDelay: `${i * 60}ms`,
-          //       animation: "fadeSlideUp .3s ease both",
-          //     }}
-          //   >
-          //     <EventSkeleton />
-          //   </div>
-          // ))
           <SkeletonList count={4} Component={EventSkeleton} />
         ) : items.length === 0 ? (
           <div
@@ -1883,24 +1917,30 @@ function EventsTab({
           </div>
         ) : (
           items.map((a, idx) => {
-            const cfg = EVENT_STATUS_CFG[a.status] ?? EVENT_STATUS_CFG.draft;
-            const overrideLabel =
-              a.status_label_override ??
-              EVENT_TYPE_STATUS_OVERRIDE[a.type]?.[a.status];
             const ParticipantIcon = getEventParticipantIcon(a.type);
             const dateValue = a.deadline ?? a.event_date;
             const isDeadline = Boolean(a.deadline);
 
-            const maxCapacity =
-              a.detail?.max_slots ??
-              a.detail?.max_teams ??
-              a.detail?.max_participants ??
-              null;
+            const maxCapacity = getEventCapacity(a);
             const participantCount = a.participant_count ?? 0;
             const hasCapacity = maxCapacity != null && maxCapacity > 0;
             const ratio = hasCapacity ? participantCount / maxCapacity : 0;
-            const isFull = hasCapacity && participantCount >= maxCapacity;
+            const isFull =
+              a.type === "tournament"
+                ? Boolean(a.is_full)
+                : hasCapacity && participantCount >= maxCapacity;
             const isChecking = checkingId === a.id;
+
+            const isEffectivelyClosed =
+              isFull && a.status !== "cancelled" && a.status !== "completed";
+
+            const cfg = isEffectivelyClosed
+              ? EVENT_STATUS_CFG.closed
+              : (EVENT_STATUS_CFG[a.status] ?? EVENT_STATUS_CFG.draft);
+
+            const overrideLabel = isEffectivelyClosed
+              ? "Đã đóng đăng ký"
+              : (a.status_label_override ?? EVENT_TYPE_STATUS_OVERRIDE[a.type]?.[a.status]);
 
             const cardContent = (
               <div

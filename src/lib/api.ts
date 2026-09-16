@@ -340,6 +340,11 @@ export const activitiesApi = {
   cancelShirtOrderQuantity: (activityId: string, regId: string, quantity: number) =>
     api.patch(`/activities/${activityId}/register/shirt-order/${regId}/cancel-quantity`, { quantity }),
 
+  getTournamentSchedule: (activityId: string) =>
+    api.get(`/activities/${activityId}/tournament/schedule`),
+
+  getTournamentTeams: (activityId: string) =>
+    api.get(`/activities/${activityId}/tournament/teams`),
 };
 
 //admin

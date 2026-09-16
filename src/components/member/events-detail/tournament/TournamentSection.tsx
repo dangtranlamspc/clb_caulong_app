@@ -15,7 +15,7 @@ import { fmt } from "@/utils/utils";
 export function TournamentSection({ activity, myStatus, onChanged }: any) {
   const router = useRouter();
   const reg = myStatus?.my_registration;
-  const canRegister = activity.status === "open";
+  const canRegister = activity.status === "open" && !activity.is_full;
 
   const [showRules, setShowRules] = useState(false);
 

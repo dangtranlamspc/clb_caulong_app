@@ -14,6 +14,8 @@ import { OfflineEventSection } from "./OfflineEventSection";
 import { PollSection } from "./PollSection";
 import { BirthdaySection } from "./BirthdaySection";
 import { TYPE_META } from "@/constants/constants";
+import { supabase } from "@/lib/supabase";
+import { TournamentLiveHub } from "./tournament/TournamentLiveHub";
 
 export default function EventsDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -37,6 +39,38 @@ export default function EventsDetailPage() {
 
     useEffect(() => {
         fetchAll();
+    }, [id]);
+
+    useEffect(() => {
+        if (!id) return;
+
+        const channel = supabase
+            .channel(`event-detail:${id}`)
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "tournament_registrations",
+                    filter: `activity_id=eq.${id}`,
+                },
+                () => fetchAll(),
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "activities",
+                    filter: `id=eq.${id}`,
+                },
+                () => fetchAll(),
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [id]);
 
     const handleBack = () => {
@@ -164,7 +198,11 @@ export default function EventsDetailPage() {
                     <ShirtOrderSection activity={activity} myStatus={myStatus} onChanged={fetchAll} />
                 )}
                 {activity.type === "tournament" && (
-                    <TournamentSection activity={activity} myStatus={myStatus} onChanged={fetchAll} />
+                    activity.started_at ? (
+                        <TournamentLiveHub activity={activity} />
+                    ) : (
+                        <TournamentSection activity={activity} myStatus={myStatus} onChanged={fetchAll} />
+                    )
                 )}
                 {activity.type === "offline_event" && (
                     <OfflineEventSection activity={activity} myStatus={myStatus} onChanged={fetchAll} />
