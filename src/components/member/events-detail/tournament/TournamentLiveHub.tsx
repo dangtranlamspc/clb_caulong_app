@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, CheckCircle2, BarChart3, Users2, ChevronRight, Trophy } from "lucide-react";
+import { CalendarDays, CheckCircle2, BarChart3, Users2, ChevronRight, Trophy, Swords } from "lucide-react";
 import { activitiesApi } from "@/lib/api";
 
 function useTournamentProgress(activityId: string) {
@@ -40,16 +40,31 @@ function useTournamentProgress(activityId: string) {
             done,
             total,
             allDone,
+            matches: currentRound.matches ?? [],
         };
     }, [rounds]);
 
     return { summary, loading };
 }
 
-export function TournamentLiveHub({ activity }: { activity: any }) {
+export function TournamentLiveHub({ activity, myStatus }: { activity: any; myStatus: any }) {
     const router = useRouter();
     const { summary, loading } = useTournamentProgress(activity.id);
     const ended = Boolean(activity.ended_at);
+
+    const myTeamId = myStatus?.my_registration?.team?.id ?? null;
+    const hasTeamAssigned = Boolean(myTeamId);
+
+    const myOngoingMatch = useMemo(() => {
+        if (!myTeamId || !summary) return null;
+        return (
+            summary.matches.find(
+                (m: any) =>
+                    m.status === "ongoing" &&
+                    (m.team1?.id === myTeamId || m.team2?.id === myTeamId),
+            ) ?? null
+        );
+    }, [summary, myTeamId]);
 
     const menuItems = [
         {
@@ -76,14 +91,18 @@ export function TournamentLiveHub({ activity }: { activity: any }) {
             iconColor: "text-violet-600",
             path: `/events/${activity.id}/standings`,
         },
-        {
-            key: "my-team",
-            label: "Đội của tôi",
-            icon: Users2,
-            iconBg: "bg-amber-50",
-            iconColor: "text-amber-600",
-            path: `/events/${activity.id}/my-team`,
-        },
+        ...(hasTeamAssigned
+            ? [
+                {
+                    key: "my-team",
+                    label: "Đội của tôi",
+                    icon: Users2,
+                    iconBg: "bg-amber-50",
+                    iconColor: "text-amber-600",
+                    path: `/events/${activity.id}/my-team`,
+                },
+            ]
+            : []),
     ];
 
     return (
@@ -128,7 +147,37 @@ export function TournamentLiveHub({ activity }: { activity: any }) {
                         />
                     </div>
                 )}
+
+                {!loading && myOngoingMatch && (
+                    <button
+                        onClick={() => router.push(`/events/${activity.id}/schedule`)}
+                        className="mt-3 w-full flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-left transition hover:bg-amber-100"
+                    >
+                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white">
+                            <Swords className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-black text-amber-800">
+                                Đội bạn đang thi đấu!
+                            </p>
+                            <p className="mt-0.5 truncate text-[11px] text-amber-600">
+                                {myOngoingMatch.team1?.name} vs {myOngoingMatch.team2?.name}
+                                {myOngoingMatch.court_number ? ` · Sân ${myOngoingMatch.court_number}` : ""}
+                            </p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 flex-shrink-0 text-amber-400" />
+                    </button>
+                )}
             </section>
+
+            {!hasTeamAssigned && (
+                <div className="flex items-start gap-2.5 rounded-2xl bg-gray-50 border border-gray-100 px-3.5 py-3">
+                    <Users2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+                    <p className="text-[11px] leading-relaxed text-gray-500">
+                        Bạn chưa được xếp vào đội thi đấu nào. BTC sẽ sớm cập nhật danh sách đội.
+                    </p>
+                </div>
+            )}
 
             <section className="overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-sm divide-y divide-gray-50">
                 {menuItems.map((item) => {

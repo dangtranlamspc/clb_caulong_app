@@ -345,6 +345,9 @@ export const activitiesApi = {
 
   getTournamentTeams: (activityId: string) =>
     api.get(`/activities/${activityId}/tournament/teams`),
+
+  getMatchLineups: (matchId: string) =>
+    api.get(`/activities/tournament-matches/${matchId}/lineups`),
 };
 
 //admin
@@ -653,6 +656,17 @@ export const eventsAdminApi = {
 
   resetTournamentResults: (id: string) =>
     api.patch(`/admin/activities/${id}/tournament/reset-results`),
+
+  getMatchLineups: (matchId: string) =>
+    api.get(`/admin/activities/tournament-matches/${matchId}/lineups`),
+
+  upsertMatchLineup: (
+    matchId: string,
+    dto: { content_id: string; content_label: string; team1_player_ids: string[]; team2_player_ids: string[] },
+  ) => api.put(`/admin/activities/tournament-matches/${matchId}/lineups`, dto),
+
+  removeMatchLineup: (matchId: string, contentId: string) =>
+    api.delete(`/admin/activities/tournament-matches/${matchId}/lineups/${contentId}`),
 };
 
 export const uploadsAdminApi = {

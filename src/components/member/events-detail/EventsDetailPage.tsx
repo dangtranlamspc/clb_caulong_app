@@ -198,8 +198,8 @@ export default function EventsDetailPage() {
                     <ShirtOrderSection activity={activity} myStatus={myStatus} onChanged={fetchAll} />
                 )}
                 {activity.type === "tournament" && (
-                    activity.started_at ? (
-                        <TournamentLiveHub activity={activity} />
+                    activity.started_at && myStatus?.my_registration ? (
+                        <TournamentLiveHub activity={activity} myStatus={myStatus} />
                     ) : (
                         <TournamentSection activity={activity} myStatus={myStatus} onChanged={fetchAll} />
                     )

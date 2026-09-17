@@ -98,6 +98,19 @@ const MATCH_CONTENT_OPTIONS = [
   { value: "3vs3", label: "3vs3" },
 ];
 
+const CONTENT_PLAYER_COUNT: Record<string, number> = {
+  "Đôi Nam": 2,
+  "Đôi Nam - Nữ": 2,
+  "Đôi Nữ": 2,
+  "Đơn Nam": 1,
+  "Đơn Nữ": 1,
+  "3vs3": 3,
+};
+
+function getContentPlayerCount(label: string) {
+  return CONTENT_PLAYER_COUNT[label] ?? 2;
+}
+
 const MATCH_CONTENT_COLOR: Record<string, string> = {
   "Đôi Nam": "#1c3d5a",
   "Đôi Nam - Nữ": "#7c3aed",
@@ -1575,7 +1588,7 @@ export default function TournamentRegistrationsPage() {
     try {
       const { data } = await eventsAdminApi.removeRegistration("tournament", id);
 
-      setRegistrations((prev) => prev.filter((r) => r.id !== id));
+      await load(true);
 
       if (data.teams_cleared) {
         toast.success("Đã xoá đăng ký và xoá kết quả chia đội, vui lòng chia lại");
@@ -2816,11 +2829,13 @@ function CustomDatePicker({
 function EditMatchModal({
   initialValue,
   initialCourt,
+  dateLocked = false,
   onClose,
   onSave,
 }: {
   initialValue?: string | null;
   initialCourt?: number | null;
+  dateLocked?: boolean;
   onClose: () => void;
   onSave: (value: string, courtNumber: number | null) => Promise<void>;
 }) {
@@ -2903,49 +2918,60 @@ function EditMatchModal({
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickPick(0)}
-              className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-            >
-              Hôm nay
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickPick(1)}
-              className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-            >
-              Ngày mai
-            </button>
-          </div>
-
-          <CustomDatePicker selected={selectedDay} onSelect={setSelectedDay} />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Giờ thi đấu
-            </label>
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <CustomSelect value={hour} onChange={setHour} options={HOUR_OPTIONS} />
-              </div>
-              <span className="text-gray-400 font-semibold">:</span>
-              <div className="flex-1">
-                <CustomSelect value={minute} onChange={setMinute} options={MINUTE_OPTIONS} />
-              </div>
-            </div>
-          </div>
-
-          {selectedDay && (
-            <p className="text-xs text-gray-400 text-center">
-              Đã chọn:{" "}
-              <span className="font-semibold text-gray-700">
-                {format(selectedDay, "EEEE, dd/MM/yyyy", { locale: vi })} lúc{" "}
-                {hour.padStart(2, "0")}:{minute.padStart(2, "0")}
-              </span>
+          {dateLocked && (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed">
+              ⚠️ Trận đấu đã bắt đầu thi đấu nên không thể đổi ngày/giờ. Chỉ có thể cập nhật số sân.
             </p>
           )}
+
+          <div
+            className={`space-y-4 transition-opacity ${dateLocked ? "opacity-50 pointer-events-none select-none" : ""}`}
+            aria-disabled={dateLocked}
+          >
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickPick(0)}
+                className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Hôm nay
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickPick(1)}
+                className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Ngày mai
+              </button>
+            </div>
+
+            <CustomDatePicker selected={selectedDay} onSelect={setSelectedDay} />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Giờ thi đấu
+              </label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <CustomSelect value={hour} onChange={setHour} options={HOUR_OPTIONS} />
+                </div>
+                <span className="text-gray-400 font-semibold">:</span>
+                <div className="flex-1">
+                  <CustomSelect value={minute} onChange={setMinute} options={MINUTE_OPTIONS} />
+                </div>
+              </div>
+            </div>
+
+            {selectedDay && (
+              <p className="text-xs text-gray-400 text-center">
+                Đã chọn:{" "}
+                <span className="font-semibold text-gray-700">
+                  {format(selectedDay, "EEEE, dd/MM/yyyy", { locale: vi })} lúc{" "}
+                  {hour.padStart(2, "0")}:{minute.padStart(2, "0")}
+                </span>
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-gray-100">
@@ -3794,6 +3820,198 @@ function TeamBadge({ index }: { index: number | undefined }) {
   );
 }
 
+
+type ConnectorSegment = {
+  key: string;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  kind: "stub" | "bar" | "bridge";
+  color: string;
+  dashed: boolean;
+  label?: string;
+  curveBias?: number;
+  labelDY?: number;
+  labelMaxX?: number;
+};
+
+type ConnectorPoint = { key: string; x: number; y: number; color: string };
+
+function buildGroupLines(
+  team1Ids: string[],
+  team2Ids: string[],
+  getPoint: (id: string, side: "left" | "right") => { x: number; y: number } | null,
+  opts: {
+    keyPrefix: string;
+    color: string;
+    dashed: boolean;
+    label?: string;
+    inset?: number;
+    curveBias?: number;
+    labelDY?: number;
+    labelMaxX?: number;
+    team1Side?: "left" | "right";
+    team2Side?: "left" | "right";
+    team1Direction?: 1 | -1;
+    team2Direction?: 1 | -1;
+  },
+): { segments: ConnectorSegment[]; points: ConnectorPoint[] } {
+  const segments: ConnectorSegment[] = [];
+  const points: ConnectorPoint[] = [];
+
+  const team1Side = opts.team1Side ?? "right";
+  const team2Side = opts.team2Side ?? "left";
+  const team1Direction = opts.team1Direction ?? 1;
+  const team2Direction = opts.team2Direction ?? -1;
+
+  const p1 = team1Ids
+    .map((id) => ({ id, pt: getPoint(id, team1Side) }))
+    .filter((x) => x.pt) as { id: string; pt: { x: number; y: number } }[];
+  const p2 = team2Ids
+    .map((id) => ({ id, pt: getPoint(id, team2Side) }))
+    .filter((x) => x.pt) as { id: string; pt: { x: number; y: number } }[];
+
+  p1.forEach(({ id, pt }) =>
+    points.push({ key: `${opts.keyPrefix}-p1-${id}`, x: pt.x, y: pt.y, color: opts.color }),
+  );
+  p2.forEach(({ id, pt }) =>
+    points.push({ key: `${opts.keyPrefix}-p2-${id}`, x: pt.x, y: pt.y, color: opts.color }),
+  );
+
+  if (p1.length === 0 && p2.length === 0) return { segments, points };
+
+  const inset = opts.inset ?? 22;
+
+  const buildSide = (pts: { x: number; y: number }[], direction: 1 | -1, sidePrefix: string) => {
+    if (pts.length === 0) return null;
+
+    const barX = pts[0].x + direction * inset;
+    const ys = pts.map((p) => p.y);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const midY = (minY + maxY) / 2;
+
+    pts.forEach((pt, i) => {
+      segments.push({
+        key: `${opts.keyPrefix}-${sidePrefix}-stub-${i}`,
+        x1: pt.x, y1: pt.y, x2: barX, y2: pt.y,
+        kind: "stub", color: opts.color, dashed: opts.dashed,
+      });
+    });
+
+    if (pts.length > 1) {
+      segments.push({
+        key: `${opts.keyPrefix}-${sidePrefix}-bar`,
+        x1: barX, y1: minY, x2: barX, y2: maxY,
+        kind: "bar", color: opts.color, dashed: opts.dashed,
+      });
+    }
+
+    return { barX, midY };
+  };
+
+  const side1 = buildSide(p1.map((x) => x.pt), team1Direction, "t1");
+  const side2 = buildSide(p2.map((x) => x.pt), team2Direction, "t2");
+
+  if (side1 && side2) {
+    segments.push({
+      key: `${opts.keyPrefix}-bridge`,
+      x1: side1.barX, y1: side1.midY, x2: side2.barX, y2: side2.midY,
+      kind: "bridge", color: opts.color, dashed: opts.dashed,
+      label: opts.label,
+      curveBias: opts.curveBias ?? 0,
+      labelDY: opts.labelDY ?? 0,
+      labelMaxX: opts.labelMaxX,
+    });
+  }
+
+  return { segments, points };
+}
+
+function ConnectorSegmentLine({ segment }: { segment: ConnectorSegment }) {
+  if (segment.kind === "stub") {
+    return (
+      <line
+        x1={segment.x1} y1={segment.y1} x2={segment.x2} y2={segment.y2}
+        stroke={segment.color}
+        strokeWidth={2}
+        strokeDasharray={segment.dashed ? "4 4" : undefined}
+        strokeLinecap="round"
+        opacity={0.9}
+      />
+    );
+  }
+
+  if (segment.kind === "bar") {
+    return (
+      <line
+        x1={segment.x1} y1={segment.y1} x2={segment.x2} y2={segment.y2}
+        stroke={segment.color}
+        strokeWidth={3}
+        strokeDasharray={segment.dashed ? "6 4" : undefined}
+        strokeLinecap="round"
+      />
+    );
+  }
+
+  // bridge — nối 2 thanh dọc của 2 đội, dùng đường cong nhẹ + nhãn nội dung
+  const dx = segment.x2 - segment.x1;
+  const bias = (segment.curveBias ?? 0) * Math.min(24, Math.abs(dx) * 0.3);
+  const midX = (segment.x1 + segment.x2) / 2 + bias;
+  const path = `M ${segment.x1} ${segment.y1} C ${midX} ${segment.y1}, ${midX} ${segment.y2}, ${segment.x2} ${segment.y2}`;
+
+  const rawLabelY = (segment.y1 + segment.y2) / 2 + (segment.labelDY ?? 0);
+
+  // Ước lượng chiều rộng badge — ký tự có dấu tiếng Việt rộng hơn Latin thường
+  const charWidth = 7.2;
+  const paddingX = 8;
+  const rectHalfWidth = segment.label ? (segment.label.length * charWidth) / 2 + paddingX : 0;
+
+  let labelX = midX;
+  if (segment.labelMaxX != null && segment.label) {
+    const minAllowed = rectHalfWidth + 6;
+    const maxAllowed = segment.labelMaxX - rectHalfWidth - 6;
+    labelX = Math.min(Math.max(midX, minAllowed), Math.max(minAllowed, maxAllowed));
+  }
+
+  return (
+    <g>
+      <path d={path} fill="none" stroke="#ffffff" strokeWidth={5} strokeLinecap="round" />
+      <path
+        d={path}
+        fill="none"
+        stroke={segment.color}
+        strokeWidth={2.5}
+        strokeDasharray={segment.dashed ? "6 5" : undefined}
+        strokeLinecap="round"
+      />
+      {segment.label && (
+        <g transform={`translate(${labelX}, ${rawLabelY})`}>
+          <rect
+            x={-rectHalfWidth}
+            y={-9}
+            width={rectHalfWidth * 2}
+            height={18}
+            rx={9}
+            fill={segment.color}
+          />
+          <text
+            x={0}
+            y={4}
+            textAnchor="middle"
+            fontSize="9"
+            fontWeight="700"
+            fill="#ffffff"
+          >
+            {segment.label}
+          </text>
+        </g>
+      )}
+    </g>
+  );
+}
+
 function TeamListRenameScreen({
   teams,
   onBack,
@@ -3965,7 +4183,13 @@ function ScheduleScreen({
   const [loading, setLoading] = useState(true);
   const [scheduleModal, setScheduleModal] = useState<
     | { type: "round"; roundNumber: number; currentValue?: string | null }
-    | { type: "match"; matchId: string; currentValue?: string | null; currentCourt?: number | null }
+    | {
+      type: "match";
+      matchId: string;
+      currentValue?: string | null;
+      currentCourt?: number | null;
+      currentStatus?: "completed" | "ongoing" | "pending";
+    }
     | null
   >(null);
 
@@ -3982,11 +4206,28 @@ function ScheduleScreen({
   const [showStandings, setShowStandings] = useState(false);
   const [endingTournament, setEndingTournament] = useState(false);
 
+  const [membersModalMatch, setMembersModalMatch] = useState<{ matchId: string; team1: any; team2: any } | null>(null);
+
+
   useEffect(() => {
     if (autoOpenStandings) {
       setShowStandings(true);
     }
   }, [autoOpenStandings]);
+
+  const teamById = useMemo(() => {
+    const map = new Map<string, any>();
+    (teams ?? []).forEach((t) => map.set(t.id, t));
+    return map;
+  }, [teams]);
+
+  const openMembersModal = (m: any) => {
+    setMembersModalMatch({
+      matchId: m.id,
+      team1: teamById.get(m.team1?.id) ?? m.team1,
+      team2: teamById.get(m.team2?.id) ?? m.team2,
+    });
+  };
 
   const teamIndexMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -4152,6 +4393,16 @@ function ScheduleScreen({
     </button>
   );
 
+
+  const getLiveMatchStatus = (matchId: string): "completed" | "ongoing" | "pending" => {
+    for (const r of rounds) {
+      const m = (r.matches ?? []).find((x: any) => x.id === matchId);
+      if (m) return getMatchStatus(m);
+    }
+    return "pending";
+  };
+
+
   return (
     <div className="fixed inset-0 z-[220] bg-white flex flex-col">
       <div
@@ -4271,6 +4522,7 @@ function ScheduleScreen({
               const roundFullyCompleted =
                 r.matches.length > 0 && r.matches.every((m: any) => m.status === "completed");
               const roundLocked = tournamentStarted && roundHasSchedule && roundFullyCompleted;
+              const roundStarted = r.matches.some((m: any) => getMatchStatus(m) !== "pending");
               return (
                 <div
                   key={r.round_number}
@@ -4287,7 +4539,7 @@ function ScheduleScreen({
                         </span>
                       )}
                     </div>
-                    {!ended && !roundLocked && (
+                    {!ended && !roundStarted && (
                       <button
                         onClick={() =>
                           setScheduleModal({
@@ -4374,14 +4626,30 @@ function ScheduleScreen({
                                 <span className="italic text-gray-400">Chưa đặt giờ</span>
                               )}
                             </div>
-                            {!ended && !roundLocked && (
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
                               <button
-                                onClick={() => setScheduleModal({ type: "match", matchId: m.id, currentValue: m.scheduled_at, currentCourt: m.court_number })}
-                                className="flex items-center gap-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition-colors flex-shrink-0"
+                                onClick={() => openMembersModal(m)}
+                                className="flex items-center gap-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-2.5 py-1.5 rounded-lg transition-colors"
                               >
-                                <Pencil className="w-3 h-3" /> Sửa
+                                <Users className="w-3 h-3" /> Xem thành viên
                               </button>
-                            )}
+                              {!ended && !roundLocked && (
+                                <button
+                                  onClick={() =>
+                                    setScheduleModal({
+                                      type: "match",
+                                      matchId: m.id,
+                                      currentValue: m.scheduled_at,
+                                      currentCourt: m.court_number,
+                                      currentStatus: st,
+                                    })
+                                  }
+                                  className="flex items-center gap-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition-colors"
+                                >
+                                  <Pencil className="w-3 h-3" /> Sửa
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
@@ -4424,6 +4692,7 @@ function ScheduleScreen({
             key={`match-${scheduleModal.matchId}`}
             initialValue={scheduleModal.currentValue}
             initialCourt={scheduleModal.currentCourt}
+            dateLocked={scheduleModal.currentStatus != null && scheduleModal.currentStatus !== "pending"}
             onClose={() => setScheduleModal(null)}
             onSave={(value, court) => handleSaveMatchSchedule(scheduleModal.matchId, value, court)}
           />,
@@ -4480,6 +4749,18 @@ function ScheduleScreen({
           />,
           document.body,
         )}
+
+      {membersModalMatch && createPortal(
+        <MatchMembersModal
+          matchId={membersModalMatch.matchId}
+          team1={membersModalMatch.team1}
+          team2={membersModalMatch.team2}
+          matchContents={matchContents}
+          matchStatus={getLiveMatchStatus(membersModalMatch.matchId)}
+          onClose={() => setMembersModalMatch(null)}
+        />,
+        document.body,
+      )}
     </div>
   );
 }
@@ -5442,6 +5723,671 @@ function TeamsModal({
     </div>
   );
 }
+
+
+function TeamMembersColumn({
+  team,
+  selectable = false,
+  selectedIds = [],
+  onToggle,
+  registerRef,
+  colorsMap,
+}: {
+  team: any;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onToggle?: (memberId: string) => void;
+  registerRef?: (memberId: string, el: HTMLButtonElement | null) => void;
+  colorsMap?: Record<string, { color: string; label: string }[]>;
+}) {
+  return (
+    <div className="bg-transparent">
+      <div className="px-3.5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl mb-2.5">
+        <p className="font-semibold text-gray-900 text-sm truncate">{team?.name ?? "—"}</p>
+        <p className="text-xs text-gray-400">{team?.members?.length ?? 0} người</p>
+      </div>
+
+      <div className="space-y-2.5">
+        {(team?.members ?? []).map((m: any) => {
+          const isSelected = selectedIds.includes(m.id);
+          const memberColors = colorsMap?.[m.id] ?? [];
+          const primaryColor = memberColors[0]?.color;
+
+          return (
+            <button
+              type="button"
+              key={m.id}
+              ref={(el) => registerRef?.(m.id, el)}
+              disabled={!selectable}
+              onClick={() => selectable && onToggle?.(m.id)}
+              style={
+                !isSelected && primaryColor
+                  ? {
+                    borderColor: primaryColor,
+                    boxShadow: `0 2px 10px -3px ${primaryColor}66, 0 1px 2px rgba(0,0,0,0.04)`,
+                  }
+                  : undefined
+              }
+              className={`relative z-10 w-[78%] sm:w-full text-left px-3.5 py-3 rounded-xl border-2 text-sm transition-all duration-200 ease-out
+                bg-white flex items-center gap-2.5
+                ${!primaryColor && !isSelected ? "shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]" : ""}
+                ${selectable ? "cursor-pointer hover:shadow-[0_6px_16px_-4px_rgba(0,0,0,0.12)] hover:-translate-y-0.5" : ""}
+                ${isSelected
+                  ? "border-blue-400 bg-blue-50 shadow-[0_4px_14px_-2px_rgba(37,99,235,0.3)] -translate-y-0.5"
+                  : primaryColor
+                    ? ""
+                    : "border-gray-100"
+                }`}
+            >
+              {selectable && (
+                <span
+                  className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? "bg-blue-600 border-blue-600" : "border-gray-300"
+                    }`}
+                >
+                  {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
+                </span>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0 mb-1.5">
+                  <img
+                    src={
+                      m.users?.avatar_url ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(m.users?.full_name ?? m.guest_full_name ?? "?")}`
+                    }
+                    className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                    alt=""
+                  />
+                  <span className="text-gray-800 font-medium break-words leading-snug min-w-0">
+                    {m.users?.full_name ?? m.guest_full_name ?? "—"}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap pl-9">
+                  <span
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.user_id ? "bg-indigo-50 text-indigo-600" : "bg-gray-100 text-gray-500"
+                      }`}
+                  >
+                    {m.user_id ? "Thành viên" : "Khách"}
+                  </span>
+                  <span
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.role === "nam" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"
+                      }`}
+                  >
+                    {m.role === "nam" ? "Nam" : "Nữ"}
+                  </span>
+                  <span className="text-[10px] font-semibold rounded-full px-1.5 py-0.5" style={levelPillStyle(m.level)}>
+                    {m.level ?? "—"}
+                  </span>
+                </div>
+
+                {memberColors.length > 0 && (
+                  <div className="flex items-center gap-1 flex-wrap mt-1.5 pl-9">
+                    {memberColors.map((c, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full text-white"
+                        style={{ background: c.color }}
+                      >
+                        {c.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </button>
+          );
+        })}
+        {(team?.members ?? []).length === 0 && (
+          <p className="text-xs text-gray-300 text-center py-3">Chưa có thành viên</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function sortMembersByLineupOrder(
+  members: any[],
+  lineups: any[],
+  side: "team1" | "team2",
+) {
+  const orderMap = new Map<string, number>();
+  let idx = 0;
+  for (const l of lineups) {
+    const ids: string[] = side === "team1" ? (l.team1_player_ids ?? []) : (l.team2_player_ids ?? []);
+    for (const id of ids) {
+      if (!orderMap.has(id)) orderMap.set(id, idx++);
+    }
+  }
+  return [...members].sort((a, b) => {
+    const ai = orderMap.has(a.id) ? orderMap.get(a.id)! : Infinity;
+    const bi = orderMap.has(b.id) ? orderMap.get(b.id)! : Infinity;
+    return ai - bi;
+  });
+}
+
+type ConnectorLine = { id: string; x1: number; y1: number; x2: number; y2: number };
+
+
+function MatchMembersModal({
+  matchId,
+  team1,
+  team2,
+  matchContents,
+  matchStatus = "pending",
+  onClose,
+}: {
+  matchId: string;
+  team1: any;
+  team2: any;
+  matchContents: { id: string; label: string }[];
+  matchStatus?: "completed" | "ongoing" | "pending";
+  onClose: () => void;
+}) {
+  const { visible, handleClose } = useModalTransition(onClose);
+
+  const [lineups, setLineups] = useState<any[]>([]);
+  const [loadingLineups, setLoadingLineups] = useState(true);
+  const [removingContentId, setRemovingContentId] = useState<string | null>(null);
+
+  const [selectedTeam1, setSelectedTeam1] = useState<string[]>([]);
+  const [selectedTeam2, setSelectedTeam2] = useState<string[]>([]);
+  const [showContentModal, setShowContentModal] = useState(false);
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  const [connectors, setConnectors] = useState<{ segments: ConnectorSegment[]; points: ConnectorPoint[] }>({
+    segments: [],
+    points: [],
+  });
+
+  const gridRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const memberElRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+
+  const registerMemberRef = (id: string, el: HTMLButtonElement | null) => {
+    if (el) memberElRefs.current.set(id, el);
+    else memberElRefs.current.delete(id);
+  };
+
+  const recalcLines = () => {
+    const container = gridRef.current;
+    if (!container) return;
+    const containerRect = container.getBoundingClientRect();
+
+    const getPoint = (id: string, side: "left" | "right") => {
+      const el = memberElRefs.current.get(id);
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      return {
+        x: (side === "right" ? rect.right : rect.left) - containerRect.left,
+        y: rect.top + rect.height / 2 - containerRect.top,
+      };
+    };
+
+    const allSegments: ConnectorSegment[] = [];
+    const allPoints: ConnectorPoint[] = [];
+
+    const sideOpts = isMobile
+      ? { team1Side: "right" as const, team2Side: "right" as const, team1Direction: 1 as const, team2Direction: 1 as const }
+      : { team1Side: "right" as const, team2Side: "left" as const, team1Direction: 1 as const, team2Direction: -1 as const };
+
+    const labelMaxX = containerRect.width;
+
+    lineups.forEach((l, idx) => {
+      const color = MATCH_CONTENT_COLOR[l.content_label] ?? "#1c3d5a";
+      const inset = 22 + idx * (isMobile ? 12 : 16);
+      const curveBias = idx % 2 === 0 ? -1 : 1;
+
+      const labelDY = (idx - (lineups.length - 1) / 2) * 22;
+      const { segments, points } = buildGroupLines(
+        l.team1_player_ids ?? [],
+        l.team2_player_ids ?? [],
+        getPoint,
+        {
+          keyPrefix: `saved-${l.content_id}`,
+          color,
+          dashed: false,
+          label: l.content_label,
+          inset,
+          curveBias,
+          labelDY,
+          labelMaxX,
+          ...sideOpts,
+        },
+      );
+      allSegments.push(...segments);
+      allPoints.push(...points);
+    });
+
+    if (selectedTeam1.length > 0 || selectedTeam2.length > 0) {
+      const { segments, points } = buildGroupLines(selectedTeam1, selectedTeam2, getPoint, {
+        keyPrefix: "live",
+        color: "#2563eb",
+        dashed: true,
+        inset: 22,
+        curveBias: 0,
+        labelMaxX,
+        ...sideOpts,
+      });
+      allSegments.push(...segments);
+      allPoints.push(...points);
+    }
+
+    setConnectors({ segments: allSegments, points: allPoints });
+  };
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(recalcLines);
+    return () => cancelAnimationFrame(raf);
+  }, [selectedTeam1, selectedTeam2, lineups, isMobile]);
+
+  useEffect(() => {
+    const onUpdate = () => recalcLines();
+    window.addEventListener("resize", onUpdate);
+    const scrollEl = scrollRef.current;
+    scrollEl?.addEventListener("scroll", onUpdate, { passive: true });
+    return () => {
+      window.removeEventListener("resize", onUpdate);
+      scrollEl?.removeEventListener("scroll", onUpdate);
+    };
+  }, [selectedTeam1, selectedTeam2, lineups, isMobile]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const loadLineups = async () => {
+    setLoadingLineups(true);
+    try {
+      const { data } = await eventsAdminApi.getMatchLineups(matchId);
+      setLineups(data.lineups ?? []);
+    } catch {
+      toast.error("Không tải được đội hình thi đấu");
+    } finally {
+      setLoadingLineups(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLineups();
+  }, [matchId]);
+
+  const toggleTeam1 = (id: string) =>
+    setSelectedTeam1((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const toggleTeam2 = (id: string) =>
+    setSelectedTeam2((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const clearSelection = () => {
+    setSelectedTeam1([]);
+    setSelectedTeam2([]);
+  };
+
+  const sortedTeam1 = useMemo(() => {
+    if (!team1) return team1;
+    return { ...team1, members: sortMembersByLineupOrder(team1.members ?? [], lineups, "team1") };
+  }, [team1, lineups]);
+
+  const sortedTeam2 = useMemo(() => {
+    if (!team2) return team2;
+    return { ...team2, members: sortMembersByLineupOrder(team2.members ?? [], lineups, "team2") };
+  }, [team2, lineups]);
+
+  const handleSelectContent = async (content: { id: string; label: string }) => {
+    try {
+      await eventsAdminApi.upsertMatchLineup(matchId, {
+        content_id: content.id,
+        content_label: content.label,
+        team1_player_ids: selectedTeam1,
+        team2_player_ids: selectedTeam2,
+      });
+      toast.success(`Đã ghép đội hình cho nội dung "${content.label}"`);
+      setShowContentModal(false);
+      clearSelection();
+      await loadLineups();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Ghép đội hình thất bại");
+    }
+  };
+
+  const handleRemoveLineup = async (contentId: string) => {
+    setRemovingContentId(contentId);
+    try {
+      await eventsAdminApi.removeMatchLineup(matchId, contentId);
+      toast.success("Đã xoá đội hình");
+      await loadLineups();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Xoá đội hình thất bại");
+    } finally {
+      setRemovingContentId(null);
+    }
+  };
+
+  const memberName = (team: any, id: string) => {
+    const m = (team?.members ?? []).find((x: any) => x.id === id);
+    return m?.users?.full_name ?? m?.guest_full_name ?? "—";
+  };
+
+  const hasSelection = selectedTeam1.length > 0 || selectedTeam2.length > 0;
+
+  const memberColorMap = useMemo(() => {
+    const map: Record<string, { color: string; label: string }[]> = {};
+    for (const l of lineups) {
+      const color = MATCH_CONTENT_COLOR[l.content_label] ?? "#1c3d5a";
+      for (const id of l.team1_player_ids ?? []) {
+        if (!map[id]) map[id] = [];
+        map[id].push({ color, label: l.content_label });
+      }
+      for (const id of l.team2_player_ids ?? []) {
+        if (!map[id]) map[id] = [];
+        map[id].push({ color, label: l.content_label });
+      }
+    }
+    return map;
+  }, [lineups]);
+
+  const allContentsMatched = useMemo(
+    () =>
+      matchContents.length > 0 &&
+      matchContents.every((c) => lineups.some((l) => l.content_id === c.id)),
+    [matchContents, lineups],
+  );
+
+  return (
+    <>
+      <div
+        className={`fixed inset-0 z-[240] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+        onMouseDown={(e) => e.target === e.currentTarget}
+      >
+        <div
+          className={`bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+            }`}
+        >
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0">
+            <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
+              {team1?.name} <span className="text-gray-300 font-normal mx-1.5">vs</span> {team2?.name}
+            </h3>
+            <button onClick={handleClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex-shrink-0">
+              ✕
+            </button>
+          </div>
+
+          <div ref={scrollRef} className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0 space-y-5">
+            {matchContents.length > 0 && (
+              allContentsMatched ? (
+                <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3">
+                  <p className="text-xs text-emerald-700 leading-relaxed flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 flex-shrink-0" />
+                    Đã ghép đội hình đủ cho tất cả nội dung thi đấu. Xoá một đội hình bên dưới nếu muốn ghép lại.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-3">
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    💡 Chọn vận động viên ở mỗi đội — người cùng đội sẽ tự nối cụm với nhau, rồi nối sang cụm đội kia. Đường{" "}
+                    <span className="font-semibold">nét đứt xanh</span> là đang chọn tạm, đường{" "}
+                    <span className="font-semibold">nét liền</span> là đội hình đã lưu.
+                  </p>
+                </div>
+              )
+            )}
+
+            <div ref={gridRef} className="relative grid grid-cols-1 sm:grid-cols-2 gap-10 sm:gap-[220px] items-start">
+              <svg
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                style={{ overflow: "visible", zIndex: 5 }}
+              >
+                {connectors.segments.map((s) => (
+                  <ConnectorSegmentLine key={s.key} segment={s} />
+                ))}
+                {connectors.points.map((p) => (
+                  <circle key={p.key} cx={p.x} cy={p.y} r={3.5} fill={p.color} />
+                ))}
+              </svg>
+
+              <div className="w-full sm:w-[220px] sm:ml-auto">
+                <TeamMembersColumn
+                  team={sortedTeam1}
+                  selectable={matchContents.length > 0 && !allContentsMatched}
+                  selectedIds={selectedTeam1}
+                  onToggle={toggleTeam1}
+                  registerRef={registerMemberRef}
+                  colorsMap={memberColorMap}
+                />
+              </div>
+              <div className="w-full sm:w-[220px] sm:mr-auto">
+                <TeamMembersColumn
+                  team={sortedTeam2}
+                  selectable={matchContents.length > 0 && !allContentsMatched}
+                  selectedIds={selectedTeam2}
+                  onToggle={toggleTeam2}
+                  registerRef={registerMemberRef}
+                  colorsMap={memberColorMap}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <h4 className="text-sm font-bold text-gray-900">Đội hình đã ghép</h4>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <MatchStatusBadge status={matchStatus} />
+                  {matchContents.length > 0 && (
+                    <span
+                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${allContentsMatched ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"
+                        }`}
+                    >
+                      {lineups.length}/{matchContents.length} nội dung
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {loadingLineups ? (
+                <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+                </div>
+              ) : lineups.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-1.5 py-8 border border-dashed border-gray-200 rounded-xl">
+                  <Users className="w-6 h-6 text-gray-300" />
+                  <p className="text-xs text-gray-400">Chưa ghép đội hình cho nội dung nào</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {lineups.map((l) => {
+                    const color = MATCH_CONTENT_COLOR[l.content_label] ?? "#1c3d5a";
+                    const light = MATCH_CONTENT_LIGHT[l.content_label] ?? { bg: "#f3f4f6", icon: "🏆" };
+                    return (
+                      <div
+                        key={l.content_id}
+                        className="relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]"
+                      >
+                        <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: color }} />
+                        <div className="pl-4 pr-3.5 py-3">
+                          <div className="flex items-center justify-between gap-2 mb-2.5">
+                            <span
+                              className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full text-white"
+                              style={{ background: color }}
+                            >
+                              <span className="text-[11px]">{light.icon}</span>
+                              {l.content_label}
+                            </span>
+                            <button
+                              onClick={() => handleRemoveLineup(l.content_id)}
+                              disabled={removingContentId === l.content_id}
+                              className="p-1.5 hover:bg-red-50 rounded-lg text-gray-300 hover:text-red-500 transition-colors flex-shrink-0 disabled:opacity-50"
+                            >
+                              {removingContentId === l.content_id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex items-start gap-2">
+                              <span className="text-[10px] font-semibold text-gray-400 mt-1 w-14 flex-shrink-0 truncate">
+                                {team1?.name}
+                              </span>
+                              <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+                                {l.team1_player_ids.map((id: string) => (
+                                  <span
+                                    key={id}
+                                    className="text-[11px] font-medium text-gray-700 bg-gray-50 border border-gray-100 rounded-md px-1.5 py-0.5"
+                                  >
+                                    {memberName(team1, id)}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <span className="text-[10px] font-semibold text-gray-400 mt-1 w-14 flex-shrink-0 truncate">
+                                {team2?.name}
+                              </span>
+                              <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+                                {l.team2_player_ids.map((id: string) => (
+                                  <span
+                                    key={id}
+                                    className="text-[11px] font-medium text-gray-700 bg-gray-50 border border-gray-100 rounded-md px-1.5 py-0.5"
+                                  >
+                                    {memberName(team2, id)}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 sm:py-3.5 border-t border-gray-100 flex-shrink-0">
+            {hasSelection ? (
+              <>
+                <button onClick={clearSelection} className="px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50">
+                  Bỏ chọn ({selectedTeam1.length + selectedTeam2.length})
+                </button>
+                <button
+                  onClick={() => setShowContentModal(true)}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold transition-colors"
+                >
+                  Ghép nội dung thi đấu ({selectedTeam1.length} + {selectedTeam2.length})
+                </button>
+              </>
+            ) : (
+              <>
+                <span />
+                <button onClick={handleClose} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">
+                  Đóng
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showContentModal && (
+        <SelectMatchContentModal
+          matchContents={matchContents}
+          team1Count={selectedTeam1.length}
+          team2Count={selectedTeam2.length}
+          onClose={() => setShowContentModal(false)}
+          onSelect={handleSelectContent}
+        />
+      )}
+    </>
+  );
+}
+
+function SelectMatchContentModal({
+  matchContents,
+  team1Count,
+  team2Count,
+  onClose,
+  onSelect,
+}: {
+  matchContents: { id: string; label: string }[];
+  team1Count: number;
+  team2Count: number;
+  onClose: () => void;
+  onSelect: (content: { id: string; label: string }) => void;
+}) {
+  const { visible, handleClose } = useModalTransition(onClose);
+
+  return (
+    <div
+      className={`fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+      >
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">Chọn nội dung thi đấu</h3>
+          <p className="text-xs text-gray-400 mt-1">
+            Đã chọn {team1Count} người đội 1 · {team2Count} người đội 2
+          </p>
+        </div>
+        <div className="p-3 space-y-1.5 max-h-[60vh] overflow-y-auto">
+          {matchContents.map((c) => {
+            const required = getContentPlayerCount(c.label);
+            const matched = team1Count === required && team2Count === required;
+            const color = MATCH_CONTENT_COLOR[c.label] ?? "#1c3d5a";
+            return (
+              <button
+                key={c.id}
+                disabled={!matched}
+                onClick={() => matched && onSelect(c)}
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border text-left transition-colors ${matched
+                  ? "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                  : "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed"
+                  }`}
+              >
+                <span
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                  style={{ background: color }}
+                >
+                  {c.label.slice(0, 1)}
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-semibold text-gray-900">{c.label}</span>
+                  <span className="block text-xs text-gray-400">Cần {required} người / đội</span>
+                </span>
+              </button>
+            );
+          })}
+          {matchContents.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-8">
+              Giải đấu chưa cấu hình nội dung thi đấu
+            </p>
+          )}
+        </div>
+        <div className="flex justify-end px-5 py-3 border-t border-gray-100">
+          <button onClick={handleClose} className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+            Huỷ
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function StatCard({
   label,

@@ -101,102 +101,104 @@ export function TournamentSection({ activity, myStatus, onChanged }: any) {
   return (
     <div className="space-y-4">
 
-      <section className="relative overflow-hidden rounded-[26px] bg-[#0B1220] p-5 text-white shadow-xl">
-        <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" />
-        <div className="absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
+      {!activity.started_at && (
+        <section className="relative overflow-hidden rounded-[26px] bg-[#0B1220] p-5 text-white shadow-xl">
+          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" />
+          <div className="absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
 
-        <div className="relative">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-400" />
-                </span>
-
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
-                  {startCountdown.expired
-                    ? "GIẢI ĐẤU TRỰC TIẾP"
-                    : "ĐIẾM NGƯỢC GIẢI ĐẤU"}
-                </span>
-              </div>
-
-              <h3 className="text-xl font-black tracking-tight">
-                {startCountdown.expired
-                  ? "Giải đấu đã bắt đầu"
-                  : "Sẵn sàng tranh tài?"}
-              </h3>
-
-              {!startCountdown.expired && (
-                <p className="mt-1 text-xs text-slate-400">
-                  Thời gian bắt đầu giải đấu
-                </p>
-              )}
-            </div>
-
-            <div className="hidden sm:flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-xl">
-              🏸
-            </div>
-          </div>
-
-          {!startCountdown.expired ? (
-            <div className="mt-5 grid grid-cols-4 gap-2">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-2 py-3 text-center backdrop-blur-sm">
-                <div className="text-2xl font-black tabular-nums">
-                  {String(startCountdown.days).padStart(2, "0")}
-                </div>
-                <div className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
-                  Ngày
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-2 py-3 text-center backdrop-blur-sm">
-                <div className="text-2xl font-black tabular-nums">
-                  {String(startCountdown.hours).padStart(2, "0")}
-                </div>
-                <div className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
-                  Giờ
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-2 py-3 text-center backdrop-blur-sm">
-                <div className="text-2xl font-black tabular-nums">
-                  {String(startCountdown.minutes).padStart(2, "0")}
-                </div>
-                <div className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
-                  Phút
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-2 py-3 text-center">
-                <div className="text-2xl font-black tabular-nums text-cyan-300">
-                  {String(startCountdown.seconds).padStart(2, "0")}
-                </div>
-                <div className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-cyan-400/70">
-                  Giây
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-5 flex items-center gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400/15">
-                🏆
-              </div>
-
+          <div className="relative">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-bold text-emerald-300">
-                  Chúc các đội thi đấu tốt!
-                </p>
-                <p className="mt-0.5 text-[11px] text-emerald-300/60">
-                  Hãy chiến đấu hết mình trên sân!
-                </p>
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-400" />
+                  </span>
+
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
+                    {startCountdown.expired
+                      ? "GIẢI ĐẤU TRỰC TIẾP"
+                      : "ĐIẾM NGƯỢC GIẢI ĐẤU"}
+                  </span>
+                </div>
+
+                <h3 className="text-xl font-black tracking-tight">
+                  {startCountdown.expired
+                    ? "Giải đấu đã bắt đầu"
+                    : "Sẵn sàng tranh tài?"}
+                </h3>
+
+                {!startCountdown.expired && (
+                  <p className="mt-1 text-xs text-slate-400">
+                    Thời gian bắt đầu giải đấu
+                  </p>
+                )}
+              </div>
+
+              <div className="hidden sm:flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-xl">
+                🏸
               </div>
             </div>
-          )}
-        </div>
-      </section>
 
-      {activity.deadline && (
+            {!startCountdown.expired ? (
+              <div className="mt-5 grid grid-cols-4 gap-2">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-2 py-3 text-center backdrop-blur-sm">
+                  <div className="text-2xl font-black tabular-nums">
+                    {String(startCountdown.days).padStart(2, "0")}
+                  </div>
+                  <div className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                    Ngày
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-2 py-3 text-center backdrop-blur-sm">
+                  <div className="text-2xl font-black tabular-nums">
+                    {String(startCountdown.hours).padStart(2, "0")}
+                  </div>
+                  <div className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                    Giờ
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-2 py-3 text-center backdrop-blur-sm">
+                  <div className="text-2xl font-black tabular-nums">
+                    {String(startCountdown.minutes).padStart(2, "0")}
+                  </div>
+                  <div className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                    Phút
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-2 py-3 text-center">
+                  <div className="text-2xl font-black tabular-nums text-cyan-300">
+                    {String(startCountdown.seconds).padStart(2, "0")}
+                  </div>
+                  <div className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-cyan-400/70">
+                    Giây
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-5 flex items-center gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400/15">
+                  🏆
+                </div>
+
+                <div>
+                  <p className="text-sm font-bold text-emerald-300">
+                    Chúc các đội thi đấu tốt!
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-emerald-300/60">
+                    Hãy chiến đấu hết mình trên sân!
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {!activity.started_at && activity.deadline && (
         <section className="relative overflow-hidden rounded-[24px] border border-orange-100 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -426,11 +428,10 @@ export function TournamentSection({ activity, myStatus, onChanged }: any) {
             </button>
           )}
 
-          {/* Closed */}
           {!reg && !canRegister && (
             <div className="rounded-2xl bg-gray-50 px-4 py-4 text-center">
               <p className="text-sm font-bold text-gray-500">
-                Đã đóng đăng ký
+                {activity.started_at ? "Trận đấu đã bắt đầu" : "Đã đóng đăng ký"}
               </p>
               <p className="mt-1 text-[10px] text-gray-400">
                 Hẹn gặp bạn ở những giải đấu tiếp theo
@@ -438,7 +439,7 @@ export function TournamentSection({ activity, myStatus, onChanged }: any) {
             </div>
           )}
 
-          {(entryFee > 0 || maxTeams) && (
+          {!activity.started_at && (entryFee > 0 || maxTeams) && (
             <div className="grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
 
               {entryFee > 0 && (

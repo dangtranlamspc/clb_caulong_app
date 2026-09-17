@@ -78,8 +78,6 @@ export default function TournamentMatchDetailPage() {
         loadRef.current = load;
     }, [load]);
 
-    // Nghe realtime để nếu admin sửa tỉ số/lịch trong lúc mình đang xem
-    // trang chi tiết thì dữ liệu tự cập nhật.
     useEffect(() => {
         if (!id) return;
         const channel = supabase
