@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Trophy } from "lucide-react";
 import { activitiesApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
+import { createPortal } from "react-dom";
 
 const HIDE_SCROLLBAR_CLASS =
     "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
@@ -84,6 +85,108 @@ function RankBadge({ rank }: { rank: number }) {
     );
 }
 
+
+function TeamStatsModal({
+    team,
+    rank,
+    isMyTeam,
+    onClose,
+}: {
+    team: any;
+    rank: number;
+    isMyTeam: boolean;
+    onClose: () => void;
+}) {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setVisible(true));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const handleClose = () => {
+        setVisible(false);
+        setTimeout(onClose, 180);
+    };
+
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") handleClose();
+        };
+        document.addEventListener("keydown", onKey);
+        return () => document.removeEventListener("keydown", onKey);
+    }, []);
+
+    const rows = [
+        { label: "Trận đã đấu", value: team.played, color: "text-gray-900" },
+        { label: "Thắng", value: team.wins, color: "text-emerald-600" },
+        { label: "Thua", value: team.losses, color: "text-red-500" },
+        { label: "Điểm ghi được", value: team.pointsFor, color: "text-blue-600" },
+        { label: "Điểm thua", value: team.pointsAgainst, color: "text-gray-700" },
+        {
+            label: "Hiệu số",
+            value: team.diff > 0 ? `+${team.diff}` : team.diff,
+            color: team.diff > 0 ? "text-emerald-600" : team.diff < 0 ? "text-red-500" : "text-gray-500",
+        },
+    ];
+
+    return typeof document === "undefined"
+        ? null
+        : createPortal(
+            <div
+                className={`fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+                onMouseDown={(e) => {
+                    if (e.target === e.currentTarget) handleClose();
+                }}
+            >
+                <div
+                    className={`bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+                        }`}
+                >
+                    <div className="px-5 pt-5 pb-4 text-center border-b border-gray-100 relative">
+                        <button
+                            onClick={handleClose}
+                            className="absolute right-3 top-3 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                        >
+                            ✕
+                        </button>
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                            <RankBadge rank={rank} />
+                            <h3 className="font-black text-gray-900 text-lg truncate">{team.name}</h3>
+                        </div>
+                        {isMyTeam && (
+                            <span className="inline-block text-[10px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded-full">
+                                Đội bạn
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="p-4 space-y-2">
+                        {rows.map((r) => (
+                            <div
+                                key={r.label}
+                                className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50"
+                            >
+                                <span className="text-sm text-gray-500">{r.label}</span>
+                                <span className={`text-base font-bold tabular-nums ${r.color}`}>{r.value}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="px-5 pb-5">
+                        <button
+                            onClick={handleClose}
+                            className="w-full py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>,
+            document.body,
+        );
+}
+
 export default function TournamentStandingsPage() {
     const params = useParams<{ id: string }>();
     const id = params?.id;
@@ -94,6 +197,7 @@ export default function TournamentStandingsPage() {
     const [myTeamId, setMyTeamId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [ended, setEnded] = useState(false);
+    const [selectedTeam, setSelectedTeam] = useState<any>(null);
 
     const load = useCallback(
         async (opts?: { silent?: boolean }) => {
@@ -195,28 +299,25 @@ export default function TournamentStandingsPage() {
                             </div>
                         ) : (
                             <>
-                                <div className="hidden sm:grid grid-cols-[2.5rem_1fr_5rem_3.5rem_3.5rem_3.5rem_4.5rem_4.5rem] gap-2 px-3 py-2 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                                <div className="grid grid-cols-[2.5rem_1fr_5rem] gap-2 px-3 py-2 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
                                     <span></span>
                                     <span>Đội</span>
                                     <span className="text-center">Tổng điểm</span>
-                                    <span className="text-center">Trận</span>
-                                    <span className="text-center">Thắng</span>
-                                    <span className="text-center">Thua</span>
-                                    <span className="text-center">Điểm thua</span>
-                                    <span className="text-center">Hiệu số</span>
                                 </div>
 
                                 <div className="space-y-2">
                                     {standings.map((t, idx) => {
                                         const isMine = !!myTeamId && t.id === myTeamId;
                                         return (
-                                            <div
+                                            <button
+                                                type="button"
                                                 key={t.id}
-                                                className={`flex items-center gap-3 sm:grid sm:grid-cols-[2.5rem_1fr_5rem_3.5rem_3.5rem_3.5rem_4.5rem_4.5rem] sm:gap-2 px-3 py-3 rounded-xl border shadow-sm ${isMine ? "border-blue-300 bg-blue-50/50" : "border-gray-100 bg-white"
+                                                onClick={() => setSelectedTeam({ team: t, rank: idx + 1 })}
+                                                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border shadow-sm text-left transition-colors active:bg-gray-50 ${isMine ? "border-blue-300 bg-blue-50/50" : "border-gray-100 bg-white"
                                                     }`}
                                             >
                                                 <RankBadge rank={idx + 1} />
-                                                <div className="flex-1 min-w-0 sm:flex-none flex items-center gap-1.5">
+                                                <div className="flex-1 min-w-0 flex items-center gap-1.5">
                                                     <p className="font-semibold text-gray-900 truncate">{t.name}</p>
                                                     {isMine && (
                                                         <span className="text-[10px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded-full flex-shrink-0">
@@ -224,32 +325,10 @@ export default function TournamentStandingsPage() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <span className="text-right sm:text-center text-base font-bold text-blue-600 tabular-nums flex-shrink-0 sm:flex-shrink">
+                                                <span className="text-base font-bold text-blue-600 tabular-nums flex-shrink-0">
                                                     {t.pointsFor}
                                                 </span>
-                                                <span className="hidden sm:block text-center text-sm text-gray-700 tabular-nums">
-                                                    {t.played}
-                                                </span>
-                                                <span className="hidden sm:block text-center text-sm font-semibold text-emerald-600 tabular-nums">
-                                                    {t.wins}
-                                                </span>
-                                                <span className="hidden sm:block text-center text-sm font-semibold text-red-500 tabular-nums">
-                                                    {t.losses}
-                                                </span>
-                                                <span className="hidden sm:block text-center text-sm text-gray-700 tabular-nums">
-                                                    {t.pointsAgainst}
-                                                </span>
-                                                <span
-                                                    className={`hidden sm:block text-center text-sm font-bold tabular-nums ${t.diff > 0
-                                                        ? "text-emerald-600"
-                                                        : t.diff < 0
-                                                            ? "text-red-500"
-                                                            : "text-gray-500"
-                                                        }`}
-                                                >
-                                                    {t.diff > 0 ? `+${t.diff}` : t.diff}
-                                                </span>
-                                            </div>
+                                            </button>
                                         );
                                     })}
                                 </div>
@@ -258,6 +337,14 @@ export default function TournamentStandingsPage() {
                     </>
                 )}
             </div>
+            {selectedTeam && (
+                <TeamStatsModal
+                    team={selectedTeam.team}
+                    rank={selectedTeam.rank}
+                    isMyTeam={!!myTeamId && selectedTeam.team.id === myTeamId}
+                    onClose={() => setSelectedTeam(null)}
+                />
+            )}
         </div>
     );
 }

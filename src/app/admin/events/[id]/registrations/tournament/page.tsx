@@ -111,6 +111,31 @@ function getContentPlayerCount(label: string) {
   return CONTENT_PLAYER_COUNT[label] ?? 2;
 }
 
+function getContentGenderRequirement(label: string): "nam" | "nu" | "mixed" | "any" {
+  if (label === "Đôi Nam" || label === "Đơn Nam") return "nam";
+  if (label === "Đôi Nữ" || label === "Đơn Nữ") return "nu";
+  if (label === "Đôi Nam - Nữ") return "mixed";
+  return "any";
+}
+
+function matchesContentRequirement(label: string, roles1: string[], roles2: string[]) {
+  const required = getContentPlayerCount(label);
+  if (roles1.length !== required || roles2.length !== required) return false;
+
+  const countNam = (arr: string[]) => arr.filter((r) => r === "nam").length;
+  const countNu = (arr: string[]) => arr.filter((r) => r === "nu").length;
+
+  const genderReq = getContentGenderRequirement(label);
+  const checkSide = (roles: string[]) => {
+    if (genderReq === "nam") return countNam(roles) === required;
+    if (genderReq === "nu") return countNu(roles) === required;
+    if (genderReq === "mixed") return countNam(roles) === 1 && countNu(roles) === 1;
+    return true;
+  };
+
+  return checkSide(roles1) && checkSide(roles2);
+}
+
 const MATCH_CONTENT_COLOR: Record<string, string> = {
   "Đôi Nam": "#1c3d5a",
   "Đôi Nam - Nữ": "#7c3aed",
@@ -4229,6 +4254,29 @@ function ScheduleScreen({
     });
   };
 
+  const handleLineupsChange = (matchId: string, lineups: any[]) => {
+    const contentIds = lineups.map((l: any) => l.content_id);
+
+    setRounds((prev) =>
+      prev.map((r: any) => ({
+        ...r,
+        matches: (r.matches ?? []).map((m: any) =>
+          m.id === matchId ? { ...m, lineup_content_ids: contentIds } : m,
+        ),
+      })),
+    );
+
+    setRoundDetail((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        matches: (prev.matches ?? []).map((m: any) =>
+          m.id === matchId ? { ...m, lineup_content_ids: contentIds } : m,
+        ),
+      };
+    });
+  };
+
   const teamIndexMap = useMemo(() => {
     const map = new Map<string, number>();
     (teams ?? []).forEach((t, idx) => map.set(t.id, idx));
@@ -4506,7 +4554,7 @@ function ScheduleScreen({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 max-w-6xl mx-auto w-full">
+      <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 max-w-6xl mx-auto w-full ${HIDE_SCROLLBAR_CLASS}`}>
         {loading ? (
           <div className="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
             <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
@@ -4627,12 +4675,6 @@ function ScheduleScreen({
                               )}
                             </div>
                             <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <button
-                                onClick={() => openMembersModal(m)}
-                                className="flex items-center gap-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-2.5 py-1.5 rounded-lg transition-colors"
-                              >
-                                <Users className="w-3 h-3" /> Xem thành viên
-                              </button>
                               {!ended && !roundLocked && (
                                 <button
                                   onClick={() =>
@@ -4722,10 +4764,11 @@ function ScheduleScreen({
             }}
             onStartMatch={handleStartMatch}
             startingMatchId={startingMatchId}
+            onOpenMembers={openMembersModal}
+            matchContents={matchContents}
           />,
           document.body,
         )}
-
       {scoreEntryMatch &&
         createPortal(
           <MatchScoreEntryScreen
@@ -4757,6 +4800,7 @@ function ScheduleScreen({
           team2={membersModalMatch.team2}
           matchContents={matchContents}
           matchStatus={getLiveMatchStatus(membersModalMatch.matchId)}
+          onLineupsChange={handleLineupsChange}
           onClose={() => setMembersModalMatch(null)}
         />,
         document.body,
@@ -4789,12 +4833,16 @@ function MatchCard({
   m,
   onStart,
   onEnterScore,
+  onViewMembers,
   starting,
+  readyToStart,
 }: {
   m: any;
   onStart: (matchId: string) => void;
   onEnterScore: (m: any) => void;
+  onViewMembers: (m: any) => void;
   starting: boolean;
+  readyToStart: boolean;
 }) {
   const st = getMatchStatus(m);
   const isCompleted = st === "completed";
@@ -4839,39 +4887,54 @@ function MatchCard({
         )}
       </div>
 
-      <div className="mt-3">
-        {st === "pending" && (
-          <button
-            onClick={() => onStart(m.id)}
-            disabled={starting}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold disabled:opacity-60 transition-colors"
-          >
-            {starting ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Swords className="w-3.5 h-3.5" />
-            )}
-            Bắt đầu
-          </button>
-        )}
+      {st === "pending" && !readyToStart && (
+        <p className="mt-2.5 text-[11px] text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5 leading-relaxed text-center">
+          ⚠️ Cần ghép đủ đội hình cho tất cả nội dung thi đấu trước khi bắt đầu
+        </p>
+      )}
 
-        {st === "ongoing" && (
-          <button
-            onClick={() => onEnterScore(m)}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors"
-          >
-            📝 Nhập tỉ số
-          </button>
-        )}
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          onClick={() => onViewMembers(m)}
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold transition-colors"
+        >
+          <Users className="w-3.5 h-3.5" /> Xem danh sách
+        </button>
+        <div className="flex-1">
+          {st === "pending" && (
+            <button
+              onClick={() => readyToStart && onStart(m.id)}
+              disabled={starting || !readyToStart}
+              title={!readyToStart ? "Cần ghép đủ đội hình cho tất cả nội dung thi đấu trước" : undefined}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-600 transition-colors"
+            >
+              {starting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Swords className="w-3.5 h-3.5" />
+              )}
+              Bắt đầu
+            </button>
+          )}
 
-        {st === "completed" && (
-          <button
-            onClick={() => onEnterScore(m)}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold transition-colors"
-          >
-            <Pencil className="w-3.5 h-3.5" /> Sửa kết quả
-          </button>
-        )}
+          {st === "ongoing" && (
+            <button
+              onClick={() => onEnterScore(m)}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors"
+            >
+              📝 Nhập tỉ số
+            </button>
+          )}
+
+          {st === "completed" && (
+            <button
+              onClick={() => onEnterScore(m)}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Sửa kết quả
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -4883,15 +4946,24 @@ function RoundDetailScreen({
   onOpenMatch,
   onStartMatch,
   startingMatchId,
+  onOpenMembers,
+  matchContents,
 }: {
   round: any;
   onClose: () => void;
   onOpenMatch: (matchId: string) => void;
   onStartMatch: (matchId: string) => void;
   startingMatchId: string | null;
+  onOpenMembers: (m: any) => void;
+  matchContents: { id: string; label: string }[];
 }) {
-  const stats = roundStats(round.matches);
+  const isMatchReady = (m: any) => {
+    if (!matchContents.length) return true;
+    const matched: string[] = m.lineup_content_ids ?? [];
+    return matchContents.every((c) => matched.includes(c.id));
+  };
 
+  const stats = roundStats(round.matches);
   const byCourtMap = new Map<number, any[]>();
   const noCourt: any[] = [];
   for (const m of round.matches as any[]) {
@@ -4930,7 +5002,7 @@ function RoundDetailScreen({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full space-y-4">
+      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full space-y-4 ${HIDE_SCROLLBAR_CLASS}`}>
         {stats.ongoing > 0 ? (
           <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-center">
             <p className="inline-flex items-center gap-1.5 text-amber-700 font-bold text-sm">
@@ -4968,6 +5040,8 @@ function RoundDetailScreen({
                   m={m}
                   onStart={onStartMatch}
                   onEnterScore={(match) => onOpenMatch(match.id)}
+                  onViewMembers={onOpenMembers}
+                  readyToStart={isMatchReady(m)}
                   starting={startingMatchId === m.id}
                 />
               ))}
@@ -4985,6 +5059,8 @@ function RoundDetailScreen({
                   m={m}
                   onStart={onStartMatch}
                   onEnterScore={(match) => onOpenMatch(match.id)}
+                  onViewMembers={onOpenMembers}
+                  readyToStart={isMatchReady(m)}
                   starting={startingMatchId === m.id}
                 />
               ))}
@@ -5729,6 +5805,7 @@ function TeamMembersColumn({
   team,
   selectable = false,
   selectedIds = [],
+  disabledIds,
   onToggle,
   registerRef,
   colorsMap,
@@ -5736,6 +5813,7 @@ function TeamMembersColumn({
   team: any;
   selectable?: boolean;
   selectedIds?: string[];
+  disabledIds?: Set<string>;
   onToggle?: (memberId: string) => void;
   registerRef?: (memberId: string, el: HTMLButtonElement | null) => void;
   colorsMap?: Record<string, { color: string; label: string }[]>;
@@ -5750,6 +5828,7 @@ function TeamMembersColumn({
       <div className="space-y-2.5">
         {(team?.members ?? []).map((m: any) => {
           const isSelected = selectedIds.includes(m.id);
+          const isDisabled = !isSelected && (disabledIds?.has(m.id) ?? false);
           const memberColors = colorsMap?.[m.id] ?? [];
           const primaryColor = memberColors[0]?.color;
 
@@ -5758,10 +5837,11 @@ function TeamMembersColumn({
               type="button"
               key={m.id}
               ref={(el) => registerRef?.(m.id, el)}
-              disabled={!selectable}
-              onClick={() => selectable && onToggle?.(m.id)}
+              disabled={!selectable || isDisabled}
+              onClick={() => selectable && !isDisabled && onToggle?.(m.id)}
+              title={isDisabled ? "Không khớp vai trò/trình độ với lựa chọn bên đội kia" : undefined}
               style={
-                !isSelected && primaryColor
+                !isSelected && !isDisabled && primaryColor
                   ? {
                     borderColor: primaryColor,
                     boxShadow: `0 2px 10px -3px ${primaryColor}66, 0 1px 2px rgba(0,0,0,0.04)`,
@@ -5770,11 +5850,12 @@ function TeamMembersColumn({
               }
               className={`relative z-10 w-[78%] sm:w-full text-left px-3.5 py-3 rounded-xl border-2 text-sm transition-all duration-200 ease-out
                 bg-white flex items-center gap-2.5
-                ${!primaryColor && !isSelected ? "shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]" : ""}
-                ${selectable ? "cursor-pointer hover:shadow-[0_6px_16px_-4px_rgba(0,0,0,0.12)] hover:-translate-y-0.5" : ""}
+                ${!primaryColor && !isSelected && !isDisabled ? "shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]" : ""}
+                ${selectable && !isDisabled ? "cursor-pointer hover:shadow-[0_6px_16px_-4px_rgba(0,0,0,0.12)] hover:-translate-y-0.5" : ""}
+                ${isDisabled ? "opacity-40 grayscale cursor-not-allowed" : ""}
                 ${isSelected
                   ? "border-blue-400 bg-blue-50 shadow-[0_4px_14px_-2px_rgba(37,99,235,0.3)] -translate-y-0.5"
-                  : primaryColor
+                  : primaryColor && !isDisabled
                     ? ""
                     : "border-gray-100"
                 }`}
@@ -5868,13 +5949,13 @@ function sortMembersByLineupOrder(
 
 type ConnectorLine = { id: string; x1: number; y1: number; x2: number; y2: number };
 
-
 function MatchMembersModal({
   matchId,
   team1,
   team2,
   matchContents,
   matchStatus = "pending",
+  onLineupsChange,
   onClose,
 }: {
   matchId: string;
@@ -5882,9 +5963,12 @@ function MatchMembersModal({
   team2: any;
   matchContents: { id: string; label: string }[];
   matchStatus?: "completed" | "ongoing" | "pending";
+  onLineupsChange?: (matchId: string, lineups: any[]) => void;
   onClose: () => void;
 }) {
   const { visible, handleClose } = useModalTransition(onClose);
+
+  const canEditLineup = matchStatus === "pending";
 
   const [lineups, setLineups] = useState<any[]>([]);
   const [loadingLineups, setLoadingLineups] = useState(true);
@@ -5908,6 +5992,11 @@ function MatchMembersModal({
     segments: [],
     points: [],
   });
+
+  const rolesOf = (team: any, ids: string[]) =>
+    ids
+      .map((id) => (team?.members ?? []).find((m: any) => m.id === id)?.role)
+      .filter(Boolean) as string[];
 
   const gridRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -6013,7 +6102,9 @@ function MatchMembersModal({
     setLoadingLineups(true);
     try {
       const { data } = await eventsAdminApi.getMatchLineups(matchId);
-      setLineups(data.lineups ?? []);
+      const fetched = data.lineups ?? [];
+      setLineups(fetched);
+      onLineupsChange?.(matchId, fetched);
     } catch {
       toast.error("Không tải được đội hình thi đấu");
     } finally {
@@ -6104,6 +6195,68 @@ function MatchMembersModal({
     [matchContents, lineups],
   );
 
+  const roleLevelKey = (m: any) => `${m.role}_${m.level ?? "x"}`;
+
+  const countsByKey = (team: any, ids: string[]) => {
+    const map = new Map<string, number>();
+    for (const id of ids) {
+      const m = (team?.members ?? []).find((x: any) => x.id === id);
+      if (!m) continue;
+      const k = roleLevelKey(m);
+      map.set(k, (map.get(k) ?? 0) + 1);
+    }
+    return map;
+  };
+
+  // Tính danh sách id bị khoá ở "thisTeam" dựa theo tổ hợp vai trò+trình độ mà "otherTeam" đã chọn
+  function computeDisabledIds(
+    otherTeamCounts: Map<string, number>,
+    thisTeam: any,
+    thisSelectedIds: string[],
+    otherSelectedLength: number,
+  ) {
+    if (otherSelectedLength === 0) return new Set<string>();
+    const disabled = new Set<string>();
+    for (const m of thisTeam?.members ?? []) {
+      if (thisSelectedIds.includes(m.id)) continue; // đã chọn thì vẫn cho bấm để bỏ chọn
+      const k = roleLevelKey(m);
+      const needed = otherTeamCounts.get(k) ?? 0;
+      const alreadySelectedSameKey = thisSelectedIds.filter((id) => {
+        const mm = (thisTeam?.members ?? []).find((x: any) => x.id === id);
+        return mm && roleLevelKey(mm) === k;
+      }).length;
+      if (alreadySelectedSameKey >= needed) disabled.add(m.id);
+    }
+    return disabled;
+  }
+
+  const team1Counts = useMemo(
+    () => countsByKey(team1, selectedTeam1),
+    [team1, selectedTeam1],
+  );
+  const team2Counts = useMemo(
+    () => countsByKey(team2, selectedTeam2),
+    [team2, selectedTeam2],
+  );
+
+  const isSinglesContext = selectedTeam1.length <= 1 && selectedTeam2.length <= 1;
+
+  const disabledTeam1Ids = useMemo(
+    () =>
+      isSinglesContext
+        ? computeDisabledIds(team2Counts, team1, selectedTeam1, selectedTeam2.length)
+        : new Set<string>(),
+    [isSinglesContext, team2Counts, team1, selectedTeam1, selectedTeam2.length],
+  );
+  const disabledTeam2Ids = useMemo(
+    () =>
+      isSinglesContext
+        ? computeDisabledIds(team1Counts, team2, selectedTeam2, selectedTeam1.length)
+        : new Set<string>(),
+    [isSinglesContext, team1Counts, team2, selectedTeam2, selectedTeam1.length],
+  );
+
+
   return (
     <>
       <div
@@ -6118,14 +6271,32 @@ function MatchMembersModal({
             <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
               {team1?.name} <span className="text-gray-300 font-normal mx-1.5">vs</span> {team2?.name}
             </h3>
-            <button onClick={handleClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex-shrink-0">
-              ✕
-            </button>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {(selectedTeam1.length > 0 || selectedTeam2.length > 0) && (
+                <button
+                  onClick={clearSelection}
+                  title="Đặt lại lựa chọn"
+                  className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> Đặt lại
+                </button>
+              )}
+              <button onClick={handleClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                ✕
+              </button>
+            </div>
           </div>
 
-          <div ref={scrollRef} className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0 space-y-5">
+          <div ref={scrollRef} className={`p-4 sm:p-5 overflow-y-auto flex-1 min-h-0 space-y-5 ${HIDE_SCROLLBAR_CLASS}`}>
             {matchContents.length > 0 && (
-              allContentsMatched ? (
+              !canEditLineup ? (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 leading-relaxed flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                    Trận đấu đã bắt đầu / đã có kết quả nên không thể chỉnh sửa đội hình. Chỉ có thể xem lại.
+                  </p>
+                </div>
+              ) : allContentsMatched ? (
                 <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3">
                   <p className="text-xs text-emerald-700 leading-relaxed flex items-center gap-1.5">
                     <Check className="w-3.5 h-3.5 flex-shrink-0" />
@@ -6159,8 +6330,9 @@ function MatchMembersModal({
               <div className="w-full sm:w-[220px] sm:ml-auto">
                 <TeamMembersColumn
                   team={sortedTeam1}
-                  selectable={matchContents.length > 0 && !allContentsMatched}
+                  selectable={canEditLineup && matchContents.length > 0 && !allContentsMatched}
                   selectedIds={selectedTeam1}
+                  disabledIds={disabledTeam1Ids}
                   onToggle={toggleTeam1}
                   registerRef={registerMemberRef}
                   colorsMap={memberColorMap}
@@ -6169,8 +6341,9 @@ function MatchMembersModal({
               <div className="w-full sm:w-[220px] sm:mr-auto">
                 <TeamMembersColumn
                   team={sortedTeam2}
-                  selectable={matchContents.length > 0 && !allContentsMatched}
+                  selectable={canEditLineup && matchContents.length > 0 && !allContentsMatched}
                   selectedIds={selectedTeam2}
+                  disabledIds={disabledTeam2Ids}
                   onToggle={toggleTeam2}
                   registerRef={registerMemberRef}
                   colorsMap={memberColorMap}
@@ -6223,17 +6396,19 @@ function MatchMembersModal({
                               <span className="text-[11px]">{light.icon}</span>
                               {l.content_label}
                             </span>
-                            <button
-                              onClick={() => handleRemoveLineup(l.content_id)}
-                              disabled={removingContentId === l.content_id}
-                              className="p-1.5 hover:bg-red-50 rounded-lg text-gray-300 hover:text-red-500 transition-colors flex-shrink-0 disabled:opacity-50"
-                            >
-                              {removingContentId === l.content_id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-3.5 h-3.5" />
-                              )}
-                            </button>
+                            {canEditLineup && (
+                              <button
+                                onClick={() => handleRemoveLineup(l.content_id)}
+                                disabled={removingContentId === l.content_id}
+                                className="p-1.5 hover:bg-red-50 rounded-lg text-gray-300 hover:text-red-500 transition-colors flex-shrink-0 disabled:opacity-50"
+                              >
+                                {removingContentId === l.content_id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            )}
                           </div>
 
                           <div className="space-y-1.5">
@@ -6278,7 +6453,7 @@ function MatchMembersModal({
           </div>
 
           <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 sm:py-3.5 border-t border-gray-100 flex-shrink-0">
-            {hasSelection ? (
+            {canEditLineup && hasSelection ? (
               <>
                 <button onClick={clearSelection} className="px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50">
                   Bỏ chọn ({selectedTeam1.length + selectedTeam2.length})
@@ -6305,8 +6480,10 @@ function MatchMembersModal({
       {showContentModal && (
         <SelectMatchContentModal
           matchContents={matchContents}
-          team1Count={selectedTeam1.length}
-          team2Count={selectedTeam2.length}
+          team1Name={team1?.name ?? "Đội 1"}
+          team2Name={team2?.name ?? "Đội 2"}
+          roles1={rolesOf(team1, selectedTeam1)}
+          roles2={rolesOf(team2, selectedTeam2)}
           onClose={() => setShowContentModal(false)}
           onSelect={handleSelectContent}
         />
@@ -6315,20 +6492,48 @@ function MatchMembersModal({
   );
 }
 
+function describeComposition(namCount: number, nuCount: number) {
+  const parts: string[] = [];
+  if (namCount > 0) parts.push(`${namCount} Nam`);
+  if (nuCount > 0) parts.push(`${nuCount} Nữ`);
+  return parts.length ? parts.join(" - ") : "chưa chọn ai";
+}
+
 function SelectMatchContentModal({
   matchContents,
-  team1Count,
-  team2Count,
+  team1Name,
+  team2Name,
+  roles1,
+  roles2,
   onClose,
   onSelect,
 }: {
   matchContents: { id: string; label: string }[];
-  team1Count: number;
-  team2Count: number;
+  team1Name: string;
+  team2Name: string;
+  roles1: string[];
+  roles2: string[];
   onClose: () => void;
   onSelect: (content: { id: string; label: string }) => void;
 }) {
   const { visible, handleClose } = useModalTransition(onClose);
+
+  const namCount1 = roles1.filter((r) => r === "nam").length;
+  const nuCount1 = roles1.filter((r) => r === "nu").length;
+  const namCount2 = roles2.filter((r) => r === "nam").length;
+  const nuCount2 = roles2.filter((r) => r === "nu").length;
+
+  const hasSelection1 = roles1.length > 0;
+  const hasSelection2 = roles2.length > 0;
+
+  const shapeMismatch =
+    hasSelection1 &&
+    hasSelection2 &&
+    (namCount1 !== namCount2 || nuCount1 !== nuCount2);
+
+  const anyMatched = matchContents.some((c) =>
+    matchesContentRequirement(c.label, roles1, roles2),
+  );
 
   return (
     <div
@@ -6341,14 +6546,39 @@ function SelectMatchContentModal({
         <div className="px-5 py-4 border-b border-gray-100">
           <h3 className="font-bold text-gray-900">Chọn nội dung thi đấu</h3>
           <p className="text-xs text-gray-400 mt-1">
-            Đã chọn {team1Count} người đội 1 · {team2Count} người đội 2
+            {team1Name}: {namCount1} Nam · {nuCount1} Nữ &nbsp;·&nbsp; {team2Name}: {namCount2} Nam · {nuCount2} Nữ
           </p>
         </div>
+
+        {shapeMismatch && !anyMatched && (
+          <div className="mx-5 mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3">
+            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 leading-relaxed">
+              Thành phần 2 đội đang lệch nhau: <span className="font-semibold">{team1Name}</span> chọn{" "}
+              <span className="font-semibold">{describeComposition(namCount1, nuCount1)}</span>,{" "}
+              <span className="font-semibold">{team2Name}</span> chọn{" "}
+              <span className="font-semibold">{describeComposition(namCount2, nuCount2)}</span>. Hai đội cần chọn
+              cùng thành phần (cùng số Nam, cùng số Nữ) mới ghép được vào một nội dung thi đấu.
+            </p>
+          </div>
+        )}
+
         <div className="p-3 space-y-1.5 max-h-[60vh] overflow-y-auto">
           {matchContents.map((c) => {
             const required = getContentPlayerCount(c.label);
-            const matched = team1Count === required && team2Count === required;
+            const genderReq = getContentGenderRequirement(c.label);
+            const matched = matchesContentRequirement(c.label, roles1, roles2);
             const color = MATCH_CONTENT_COLOR[c.label] ?? "#1c3d5a";
+
+            const requirementText =
+              genderReq === "nam"
+                ? `Cần ${required} Nam / đội`
+                : genderReq === "nu"
+                  ? `Cần ${required} Nữ / đội`
+                  : genderReq === "mixed"
+                    ? `Cần 1 Nam + 1 Nữ / đội`
+                    : `Cần ${required} người / đội`;
+
             return (
               <button
                 key={c.id}
@@ -6367,7 +6597,7 @@ function SelectMatchContentModal({
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block text-sm font-semibold text-gray-900">{c.label}</span>
-                  <span className="block text-xs text-gray-400">Cần {required} người / đội</span>
+                  <span className="block text-xs text-gray-400">{requirementText}</span>
                 </span>
               </button>
             );
@@ -6387,7 +6617,6 @@ function SelectMatchContentModal({
     </div>
   );
 }
-
 
 function StatCard({
   label,
@@ -6605,6 +6834,84 @@ function RankBadge({ rank }: { rank: number }) {
   );
 }
 
+
+function TeamStatsModal({
+  team,
+  rank,
+  onClose,
+}: {
+  team: any;
+  rank: number;
+  onClose: () => void;
+}) {
+  const { visible, handleClose } = useModalTransition(onClose);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const rows = [
+    { label: "Trận đã đấu", value: team.played, color: "text-gray-900" },
+    { label: "Thắng", value: team.wins, color: "text-emerald-600" },
+    { label: "Thua", value: team.losses, color: "text-red-500" },
+    { label: "Điểm ghi được", value: team.pointsFor, color: "text-blue-600" },
+    { label: "Điểm thua", value: team.pointsAgainst, color: "text-gray-700" },
+    {
+      label: "Hiệu số",
+      value: team.diff > 0 ? `+${team.diff}` : team.diff,
+      color: team.diff > 0 ? "text-emerald-600" : team.diff < 0 ? "text-red-500" : "text-gray-500",
+    },
+  ];
+
+  return (
+    <div
+      className={`fixed inset-0 z-[260] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+          }`}
+      >
+        <div className="px-5 pt-5 pb-4 text-center border-b border-gray-100 relative">
+          <button
+            onClick={handleClose}
+            className="absolute right-3 top-3 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          >
+            ✕
+          </button>
+          <div className="flex items-center justify-center gap-2">
+            <RankBadge rank={rank} />
+            <h3 className="font-black text-gray-900 text-lg truncate">{team.name}</h3>
+          </div>
+        </div>
+
+        <div className="p-4 space-y-2">
+          {rows.map((r) => (
+            <div key={r.label} className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50">
+              <span className="text-sm text-gray-500">{r.label}</span>
+              <span className={`text-base font-bold tabular-nums ${r.color}`}>{r.value}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="px-5 pb-5">
+          <button
+            onClick={handleClose}
+            className="w-full py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function TournamentStandingsScreen({
   teams,
   rounds,
@@ -6620,6 +6927,7 @@ function TournamentStandingsScreen({
 }) {
   const standings = useMemo(() => computeStandings(teams, rounds), [teams, rounds]);
   const totalPlayed = standings.reduce((s, t) => s + t.played, 0);
+  const [selectedTeam, setSelectedTeam] = useState<{ team: any; rank: number } | null>(null);
 
   return (
     <div className="fixed inset-0 z-[225] bg-white flex flex-col">
@@ -6646,49 +6954,28 @@ function TournamentStandingsScreen({
           <p className="text-sm text-gray-400 text-center py-14">Chưa có đội nào</p>
         ) : (
           <>
-            <div className="hidden sm:grid grid-cols-[2.5rem_1fr_5rem_3.5rem_3.5rem_3.5rem_4.5rem_4.5rem] gap-2 px-3 py-2 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+            <div className="grid grid-cols-[2.5rem_1fr_5rem] gap-2 px-3 py-2 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
               <span></span>
               <span>Đội</span>
               <span className="text-center">Tổng điểm</span>
-              <span className="text-center">Trận</span>
-              <span className="text-center">Thắng</span>
-              <span className="text-center">Thua</span>
-              <span className="text-center">Điểm thua</span>
-              <span className="text-center">Hiệu số</span>
             </div>
 
             <div className="space-y-2">
               {standings.map((t, idx) => (
-                <div
+                <button
+                  type="button"
                   key={t.id}
-                  className="flex items-center gap-3 sm:grid sm:grid-cols-[2.5rem_1fr_5rem_3.5rem_3.5rem_3.5rem_4.5rem_4.5rem] sm:gap-2 px-3 py-3 rounded-xl border border-gray-100 bg-white shadow-sm"
+                  onClick={() => setSelectedTeam({ team: t, rank: idx + 1 })}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-gray-100 bg-white shadow-sm text-left hover:border-blue-200 hover:bg-blue-50/30 active:bg-blue-50 transition-colors"
                 >
                   <RankBadge rank={idx + 1} />
-                  <div className="flex-1 min-w-0 sm:flex-none">
+                  <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{t.name}</p>
                   </div>
-                  <span className="text-right sm:text-center text-base font-bold text-blue-600 tabular-nums flex-shrink-0 sm:flex-shrink">
+                  <span className="text-base font-bold text-blue-600 tabular-nums flex-shrink-0">
                     {t.pointsFor}
                   </span>
-                  <span className="hidden sm:block text-center text-sm text-gray-700 tabular-nums">
-                    {t.played}
-                  </span>
-                  <span className="hidden sm:block text-center text-sm font-semibold text-emerald-600 tabular-nums">
-                    {t.wins}
-                  </span>
-                  <span className="hidden sm:block text-center text-sm font-semibold text-red-500 tabular-nums">
-                    {t.losses}
-                  </span>
-                  <span className="hidden sm:block text-center text-sm text-gray-700 tabular-nums">
-                    {t.pointsAgainst}
-                  </span>
-                  <span
-                    className={`hidden sm:block text-center text-sm font-bold tabular-nums ${t.diff > 0 ? "text-emerald-600" : t.diff < 0 ? "text-red-500" : "text-gray-500"
-                      }`}
-                  >
-                    {t.diff > 0 ? `+${t.diff}` : t.diff}
-                  </span>
-                </div>
+                </button>
               ))}
             </div>
           </>
@@ -6714,6 +7001,16 @@ function TournamentStandingsScreen({
           </button>
         </div>
       )}
+
+      {selectedTeam &&
+        createPortal(
+          <TeamStatsModal
+            team={selectedTeam.team}
+            rank={selectedTeam.rank}
+            onClose={() => setSelectedTeam(null)}
+          />,
+          document.body,
+        )}
     </div>
   );
 }
