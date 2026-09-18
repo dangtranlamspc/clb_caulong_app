@@ -3455,6 +3455,69 @@ function ConfirmDrawTeamsModal({
 }
 
 
+function ConfirmResetLineupModal({
+  isOngoing,
+  resetting,
+  onConfirm,
+  onCancel,
+}: {
+  isOngoing: boolean;
+  resetting: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const { visible, handleClose } = useModalTransition(onCancel);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div
+      className={`fixed inset-0 z-[260] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+      onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+      >
+        <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${isOngoing ? "bg-amber-50" : "bg-red-50"}`}>
+            <AlertTriangle className={`w-5 h-5 ${isOngoing ? "text-amber-500" : "text-red-500"}`} />
+          </div>
+          <p className="text-sm font-bold text-gray-900">
+            {isOngoing ? "Trận đấu đang diễn ra" : "Đặt lại đội hình?"}
+          </p>
+          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+            {isOngoing
+              ? "Xoá đội hình đã ghép có thể ảnh hưởng đến trận đang thi đấu, trận sẽ được đưa về trạng thái Chưa thi đấu. Bạn có chắc muốn tiếp tục?"
+              : "Xoá toàn bộ đội hình đã ghép của trận này? Bạn sẽ cần ghép lại từ đầu."}
+          </p>
+        </div>
+        <div className="flex border-t border-gray-100">
+          <button
+            onClick={handleClose}
+            disabled={resetting}
+            className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 disabled:opacity-50"
+          >
+            Huỷ
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={resetting}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors disabled:opacity-50 ${isOngoing ? "text-amber-600 hover:bg-amber-50" : "text-red-500 hover:bg-red-50"}`}
+          >
+            {resetting ? "Đang đặt lại..." : "Đặt lại đội hình"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ConfirmResetResultsModal({
   resetting,
   onConfirm,
@@ -4228,6 +4291,10 @@ function ScheduleScreen({
 
   const [startingMatchId, setStartingMatchId] = useState<string | null>(null);
 
+  const [resettingMatchId, setResettingMatchId] = useState<string | null>(null);
+
+  const [confirmResetModal, setConfirmResetModal] = useState<{ matchId: string; isOngoing: boolean } | null>(null);
+
   const [showStandings, setShowStandings] = useState(false);
   const [endingTournament, setEndingTournament] = useState(false);
 
@@ -4449,6 +4516,92 @@ function ScheduleScreen({
     }
     return "pending";
   };
+
+
+  const handleResetLineup = (matchId: string) => {
+    const isOngoing = rounds.some((r) =>
+      (r.matches ?? []).some((m: any) => m.id === matchId && getMatchStatus(m) === "ongoing"),
+    );
+    setConfirmResetModal({ matchId, isOngoing });
+  };
+
+  const confirmResetLineup = async () => {
+    if (!confirmResetModal) return;
+    const { matchId } = confirmResetModal;
+
+    setResettingMatchId(matchId);
+    try {
+      let contentIds: string[] = [];
+      for (const r of rounds) {
+        const found = (r.matches ?? []).find((m: any) => m.id === matchId);
+        if (found) {
+          contentIds = found.lineup_content_ids ?? [];
+          break;
+        }
+      }
+
+      let resetToPending = false;
+      for (const cid of contentIds) {
+        const { data } = await eventsAdminApi.removeMatchLineup(matchId, cid);
+        if (data?.match_reset_to_pending) resetToPending = true;
+      }
+
+      toast.success(
+        resetToPending
+          ? "Đã đặt lại đội hình và đưa trận về trạng thái Chưa thi đấu"
+          : "Đã đặt lại đội hình, vui lòng ghép lại",
+      );
+
+      setRounds((prev) =>
+        prev.map((r: any) => ({
+          ...r,
+          matches: (r.matches ?? []).map((m: any) =>
+            m.id === matchId
+              ? { ...m, lineup_content_ids: [], status: resetToPending ? "pending" : m.status }
+              : m,
+          ),
+        })),
+      );
+      setRoundDetail((prev: any) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          matches: (prev.matches ?? []).map((m: any) =>
+            m.id === matchId
+              ? { ...m, lineup_content_ids: [], status: resetToPending ? "pending" : m.status }
+              : m,
+          ),
+        };
+      });
+
+      setConfirmResetModal(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Đặt lại đội hình thất bại");
+    } finally {
+      setResettingMatchId(null);
+    }
+  };
+
+  const updateMatchStatusLocal = (matchId: string, status: "pending" | "ongoing" | "completed") => {
+    setRounds((prev) =>
+      prev.map((r: any) => ({
+        ...r,
+        matches: (r.matches ?? []).map((m: any) =>
+          m.id === matchId ? { ...m, status } : m,
+        ),
+      })),
+    );
+    setRoundDetail((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        matches: (prev.matches ?? []).map((m: any) =>
+          m.id === matchId ? { ...m, status } : m,
+        ),
+      };
+    });
+  };
+
 
 
   return (
@@ -4766,9 +4919,24 @@ function ScheduleScreen({
             startingMatchId={startingMatchId}
             onOpenMembers={openMembersModal}
             matchContents={matchContents}
+            onResetLineup={handleResetLineup}
+            resettingMatchId={resettingMatchId}
           />,
           document.body,
         )}
+
+      {confirmResetModal &&
+        createPortal(
+          <ConfirmResetLineupModal
+            isOngoing={confirmResetModal.isOngoing}
+            resetting={resettingMatchId === confirmResetModal.matchId}
+            onConfirm={confirmResetLineup}
+            onCancel={() => setConfirmResetModal(null)}
+          />,
+          document.body,
+        )}
+
+
       {scoreEntryMatch &&
         createPortal(
           <MatchScoreEntryScreen
@@ -4801,6 +4969,7 @@ function ScheduleScreen({
           matchContents={matchContents}
           matchStatus={getLiveMatchStatus(membersModalMatch.matchId)}
           onLineupsChange={handleLineupsChange}
+          onMatchStatusChanged={updateMatchStatusLocal}
           onClose={() => setMembersModalMatch(null)}
         />,
         document.body,
@@ -4834,6 +5003,8 @@ function MatchCard({
   onStart,
   onEnterScore,
   onViewMembers,
+  onReset,
+  resetting,
   starting,
   readyToStart,
 }: {
@@ -4841,6 +5012,8 @@ function MatchCard({
   onStart: (matchId: string) => void;
   onEnterScore: (m: any) => void;
   onViewMembers: (m: any) => void;
+  onReset?: (matchId: string) => void;
+  resetting?: boolean;
   starting: boolean;
   readyToStart: boolean;
 }) {
@@ -4849,6 +5022,7 @@ function MatchCard({
   const team1Won = isCompleted && m.team1_score > m.team2_score;
   const team2Won = isCompleted && m.team2_score > m.team1_score;
   const winnerName = team1Won ? m.team1?.name : team2Won ? m.team2?.name : null;
+  const hasLineup = (m.lineup_content_ids?.length ?? 0) > 0;
 
   return (
     <div className="bg-white rounded-xl shadow-[0_8px_24px_-6px_rgba(0,0,0,0.15)] border border-gray-100 px-3.5 pt-3.5 pb-3.5">
@@ -4894,6 +5068,21 @@ function MatchCard({
       )}
 
       <div className="mt-3 flex items-center gap-2">
+        {st !== "completed" && onReset && (
+          <button
+            onClick={() => hasLineup && onReset(m.id)}
+            disabled={resetting || !hasLineup}
+            title={hasLineup ? "Xoá đội hình đã ghép để ghép lại" : "Chưa ghép đội hình nào"}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold whitespace-nowrap"
+          >
+            {resetting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <RotateCcw className="w-3.5 h-3.5" />
+            )}
+            Đặt lại
+          </button>
+        )}
         <button
           onClick={() => onViewMembers(m)}
           className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold transition-colors"
@@ -4948,6 +5137,8 @@ function RoundDetailScreen({
   startingMatchId,
   onOpenMembers,
   matchContents,
+  onResetLineup,
+  resettingMatchId,
 }: {
   round: any;
   onClose: () => void;
@@ -4956,6 +5147,8 @@ function RoundDetailScreen({
   startingMatchId: string | null;
   onOpenMembers: (m: any) => void;
   matchContents: { id: string; label: string }[];
+  onResetLineup: (matchId: string) => void;
+  resettingMatchId: string | null;
 }) {
   const isMatchReady = (m: any) => {
     if (!matchContents.length) return true;
@@ -5041,6 +5234,8 @@ function RoundDetailScreen({
                   onStart={onStartMatch}
                   onEnterScore={(match) => onOpenMatch(match.id)}
                   onViewMembers={onOpenMembers}
+                  onReset={onResetLineup}
+                  resetting={resettingMatchId === m.id}
                   readyToStart={isMatchReady(m)}
                   starting={startingMatchId === m.id}
                 />
@@ -5060,6 +5255,8 @@ function RoundDetailScreen({
                   onStart={onStartMatch}
                   onEnterScore={(match) => onOpenMatch(match.id)}
                   onViewMembers={onOpenMembers}
+                  onReset={onResetLineup}
+                  resetting={resettingMatchId === m.id}
                   readyToStart={isMatchReady(m)}
                   starting={startingMatchId === m.id}
                 />
@@ -5956,6 +6153,7 @@ function MatchMembersModal({
   matchContents,
   matchStatus = "pending",
   onLineupsChange,
+  onMatchStatusChanged,
   onClose,
 }: {
   matchId: string;
@@ -5964,11 +6162,12 @@ function MatchMembersModal({
   matchContents: { id: string; label: string }[];
   matchStatus?: "completed" | "ongoing" | "pending";
   onLineupsChange?: (matchId: string, lineups: any[]) => void;
+  onMatchStatusChanged?: (matchId: string, status: "pending" | "ongoing" | "completed") => void;
   onClose: () => void;
 }) {
   const { visible, handleClose } = useModalTransition(onClose);
 
-  const canEditLineup = matchStatus === "pending";
+  const canEditLineup = matchStatus !== "completed";
 
   const [lineups, setLineups] = useState<any[]>([]);
   const [loadingLineups, setLoadingLineups] = useState(true);
@@ -6155,8 +6354,11 @@ function MatchMembersModal({
   const handleRemoveLineup = async (contentId: string) => {
     setRemovingContentId(contentId);
     try {
-      await eventsAdminApi.removeMatchLineup(matchId, contentId);
+      const { data } = await eventsAdminApi.removeMatchLineup(matchId, contentId);
       toast.success("Đã xoá đội hình");
+      if (data?.match_reset_to_pending) {
+        onMatchStatusChanged?.(matchId, "pending");
+      }
       await loadLineups();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Xoá đội hình thất bại");

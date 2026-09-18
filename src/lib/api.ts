@@ -1001,3 +1001,8 @@ export const clubDrinksAdminApi = {
     api.post("/admin/club-drinks/consume", payload),
 };
 
+
+
+
+// Hàm send() theo thời gian thực đang tự động chuyển sang sử dụng REST API. Cơ chế này sẽ bị loại bỏ trong tương lai. Vui lòng sử dụng trực tiếp httpSend() để gửi dữ liệu qua REST.
+
