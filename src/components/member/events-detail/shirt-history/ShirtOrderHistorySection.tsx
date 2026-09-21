@@ -97,22 +97,41 @@ export function ShirtOrderHistorySection({
 
 
     return (
-        <div className="min-h-screen bg-gray-50/60 md:bg-transparent">
-            <div className={`max-w-2xl mx-auto px-4 md:px-0 pt-4 ${canModify ? "pb-28 md:pb-8" : "pb-8"} space-y-4`}>
-                <div className="flex items-center gap-3">
+        <div className="min-h-screen bg-[#F4F6FA] md:bg-transparent">
+            {/* Header dính, giống EventsDetailPage */}
+            <div
+                className="sticky top-0 z-30"
+                style={{
+                    background: "rgba(244,246,250,0.85)",
+                    backdropFilter: "blur(12px)",
+                    WebkitBackdropFilter: "blur(12px)",
+                    borderBottom: "1px solid rgba(0,0,0,0.05)",
+                    paddingTop: "env(safe-area-inset-top)",
+                }}
+            >
+                <div className="max-w-lg lg:max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
                     <button
                         onClick={handleBack}
-                        className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform hover:border-gray-300"
+                        aria-label="Quay lại"
+                        className="p-2 -ml-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
                     >
-                        <ArrowLeft className="w-4 h-4 text-gray-600" />
+                        <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
-                    <div className="min-w-0">
-                        <h1 className="text-base md:text-lg font-bold text-gray-900 truncate">
+                    <div className="min-w-0 flex-1">
+                        <h1 className="text-base font-bold text-gray-900 truncate leading-tight">
                             Lịch sử mua hàng
                         </h1>
-                        <p className="text-xs text-gray-400 truncate">{activity.title}</p>
+                        <p className="text-[11px] text-gray-400 truncate leading-tight">
+                            {activity.title}
+                        </p>
                     </div>
                 </div>
+            </div>
+
+            <div
+                className={`max-w-lg lg:max-w-3xl mx-auto px-4 pt-4 ${canModify ? "pb-28 md:pb-8" : "pb-8"
+                    } space-y-4`}
+            >
 
                 {/* Summary strip */}
                 {typeGroups.length > 0 && (
@@ -296,6 +315,13 @@ export function ShirtOrderHistorySection({
                         </button>
                     </Link>
                 )}
+
+                {!canModify && (
+                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-gray-500">
+                        Hoạt động đã đóng đăng ký, không thể thêm hoặc hủy đơn đặt áo.
+                    </div>
+                )}
+
             </div>
 
             {(canModify || pendingPaymentRegs.length > 0) && (

@@ -315,6 +315,8 @@ export default function EventRegistrationsPage({
     }
     if (!activity || !regData) return null;
 
+    const isCancelled = activity.status === "cancelled";
+
     const registrations = regData.registrations ?? [];
 
     const totalCollected =
@@ -346,63 +348,70 @@ export default function EventRegistrationsPage({
                             : `${registrations.length} đăng ký`}
                     </p>
                 </div>
-                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:flex-wrap w-full sm:w-auto mt-3 md:mt-0 md:flex-shrink-0">
-                    <button
-                        onClick={handleRefresh}
-                        disabled={refreshing}
-                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap disabled:opacity-60"
-                    >
-                        <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-                        Làm mới
-                    </button>
-                    {activity.type === "shirt_order" && activity.status !== "closed" && (
-                        <>
-                            <button
-                                onClick={() => handleCopyPublicLink(activity.id)}
-                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap"
-                            >
-                                <Link2 className="w-4 h-4" /> Tạo link công khai
-                            </button>
-                            {onAddRegistration && (
+                {isCancelled ? (<div className="mt-3 md:mt-0 md:flex-shrink-0">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-500 text-sm font-medium whitespace-nowrap">
+                        <XCircle className="w-4 h-4" />
+                        Đã huỷ
+                    </span>
+                </div>)
+                    : (<div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:flex-wrap w-full sm:w-auto mt-3 md:mt-0 md:flex-shrink-0">
+                        <button
+                            onClick={handleRefresh}
+                            disabled={refreshing}
+                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap disabled:opacity-60"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+                            Làm mới
+                        </button>
+                        {activity.type === "shirt_order" && activity.status !== "closed" && (
+                            <>
                                 <button
-                                    onClick={onAddRegistration}
-                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium whitespace-nowrap"
+                                    onClick={() => handleCopyPublicLink(activity.id)}
+                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap"
                                 >
-                                    <UserPlus className="w-4 h-4" /> Thêm đăng ký
+                                    <Link2 className="w-4 h-4" /> Tạo link công khai
                                 </button>
-                            )}
+                                {onAddRegistration && (
+                                    <button
+                                        onClick={onAddRegistration}
+                                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium whitespace-nowrap"
+                                    >
+                                        <UserPlus className="w-4 h-4" /> Thêm đăng ký
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setShowFinalizeModal(true)}
+                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium whitespace-nowrap"
+                                >
+                                    <Lock className="w-4 h-4" /> Chốt danh sách
+                                </button>
+                            </>
+                        )}
+                        {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason !== "deadline" && (
                             <button
-                                onClick={() => setShowFinalizeModal(true)}
-                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium whitespace-nowrap"
+                                onClick={handleReopen}
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
                             >
-                                <Lock className="w-4 h-4" /> Chốt danh sách
+                                <RotateCcw className="w-4 h-4" /> Mở đăng ký
                             </button>
-                        </>
-                    )}
-                    {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason !== "deadline" && (
+                        )}
+                        {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason === "deadline" && (
+                            <button
+                                onClick={() => setShowReopenDeadlineModal(true)}
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
+                            >
+                                <RotateCcw className="w-4 h-4" /> Mở lại hoạt động
+                            </button>
+                        )}
                         <button
-                            onClick={handleReopen}
-                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
+                            onClick={() => exportToExcel(activity, regData)}
+                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap col-span-2 sm:col-span-1"
                         >
-                            <RotateCcw className="w-4 h-4" /> Mở đăng ký
+                            <FileSpreadsheet className="w-4 h-4" /> Xuất Excel
                         </button>
-                    )}
-                    {activity.type === "shirt_order" && activity.status === "closed" && activity.closed_reason === "deadline" && (
-                        <button
-                            onClick={() => setShowReopenDeadlineModal(true)}
-                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap"
-                        >
-                            <RotateCcw className="w-4 h-4" /> Mở lại hoạt động
-                        </button>
-                    )}
-                    <button
-                        onClick={() => exportToExcel(activity, regData)}
-                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium whitespace-nowrap col-span-2 sm:col-span-1"
-                    >
-                        <FileSpreadsheet className="w-4 h-4" /> Xuất Excel
-                    </button>
-                </div>
-            </div>
+                    </div>)
+                }
+            </div >
 
             <div className="px-4 py-6 space-y-4">
                 {activity.type === "shirt_order" && registrations.length > 0 && (
@@ -652,7 +661,7 @@ export default function EventRegistrationsPage({
                 )}
 
             </div>
-        </div>
+        </div >
     );
 }
 

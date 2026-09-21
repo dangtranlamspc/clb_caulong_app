@@ -1181,6 +1181,19 @@ function TopupRequestsModal({
   );
 }
 
+type PageItem = number | "ellipsis-left" | "ellipsis-right";
+
+
+function getPageItems(current: number, total: number): PageItem[] {
+  const range = (a: number, b: number) =>
+    Array.from({ length: b - a + 1 }, (_, i) => a + i);
+
+  if (total <= 7) return range(1, total);
+  if (current <= 4) return [1, 2, 3, 4, 5, "ellipsis-right", total];
+  if (current >= total - 3) return [1, "ellipsis-left", ...range(total - 4, total)];
+  return [1, "ellipsis-left", current - 1, current, current + 1, "ellipsis-right", total];
+}
+
 export default function WalletAdminSummaryPage() {
   const [stats, setStats] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
@@ -1724,18 +1737,29 @@ export default function WalletAdminSummaryPage() {
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
-                {Array.from(
-                  { length: Math.min(totalPages, 5) },
-                  (_, i) => i + 1,
-                ).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`w-7 h-7 rounded-md text-xs font-medium transition-transform duration-150 active:scale-90 ${page === p ? "bg-blue-600 text-white" : "border border-gray-200 hover:bg-gray-50 text-gray-600"}`}
-                  >
-                    {p}
-                  </button>
-                ))}
+                {getPageItems(page, totalPages).map((item) =>
+                  typeof item === "string" ? (
+                    <span
+                      key={item}
+                      className="w-7 h-7 flex items-center justify-center text-xs text-gray-400 select-none"
+                      aria-hidden="true"
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={item}
+                      onClick={() => setPage(item)}
+                      aria-current={page === item ? "page" : undefined}
+                      className={`w-7 h-7 rounded-md text-xs font-medium transition-transform duration-150 active:scale-90 ${page === item
+                          ? "bg-blue-600 text-white"
+                          : "border border-gray-200 hover:bg-gray-50 text-gray-600"
+                        }`}
+                    >
+                      {item}
+                    </button>
+                  ),
+                )}
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages || totalPages === 0}
