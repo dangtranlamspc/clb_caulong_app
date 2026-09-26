@@ -1076,7 +1076,7 @@ export default function TournamentRegistrationsPage() {
   const [publicLinkAnchor, setPublicLinkAnchor] = useState<{ top: number; left: number; right: number } | null>(null);
 
   const [confirmMethodModal, setConfirmMethodModal] = useState<{ id: string } | null>(null)
-  type WizardStep = "round_robin_setup" | "team_list" | "schedule";
+  type WizardStep = "round_robin_setup" | "team_list" | "schedule" | "playoff";
   const [wizardStack, setWizardStack] = useState<WizardStep[]>([]);
   const [restoringStep, setRestoringStep] = useState(true);
   const tournamentWizardStep: WizardStep | null =
@@ -1106,7 +1106,8 @@ export default function TournamentRegistrationsPage() {
     if (!activity) return;
 
     if (wizardStack.length === 0 && activity.started_at && !skipAutoSchedule) {
-      setWizardStack(["schedule"]);
+      const hasPendingPlayoff = !!activity.detail?.rules?.playoff_round_number;
+      setWizardStack(hasPendingPlayoff ? ["schedule", "playoff"] : ["schedule"]);
       if (searchParams.get("step") === "schedule") {
         router.replace(`/admin/events/${id}/registrations/tournament`);
       }
@@ -2425,7 +2426,8 @@ export default function TournamentRegistrationsPage() {
                       if (tournamentEnded) {
                         setOpenStandingsOnEnter(true);
                       }
-                      setWizardStack(["schedule"]);
+                      const hasPendingPlayoff = !!activity?.detail?.rules?.playoff_round_number;
+                      setWizardStack(hasPendingPlayoff ? ["schedule", "playoff"] : ["schedule"]);
                     } else {
                       setShowStartTournamentModal(true);
                     }
@@ -2618,6 +2620,7 @@ export default function TournamentRegistrationsPage() {
           activityId={id!}
           teams={teams}
           matchContents={activity?.detail?.rules?.match_contents ?? []}
+          playoffRoundNumber={activity?.detail?.rules?.playoff_round_number ?? null}
           onBack={popWizardStep}
           onEditInfo={() => pushWizardStep("round_robin_setup")}
           onEditTeamList={() => pushWizardStep("team_list")}
@@ -2627,6 +2630,20 @@ export default function TournamentRegistrationsPage() {
           onConfirmSchedule={() => handleConfirmSchedule(false)}
           onEnded={handleTournamentEnded}
           autoOpenStandings={initialShowStandings || openStandingsOnEnter}
+          onOpenPlayoff={() => pushWizardStep("playoff")}
+        />,
+        document.body,
+      )}
+
+
+      {tournamentWizardStep === "playoff" && createPortal(
+        <PlayoffWizardScreen
+          activityId={id!}
+          teams={teams}
+          matchContents={activity?.detail?.rules?.match_contents ?? []}
+          playoffRoundNumber={activity?.detail?.rules?.playoff_round_number ?? null}
+          onBack={popWizardStep}
+          onEnded={handleTournamentEnded}
         />,
         document.body,
       )}
@@ -4243,6 +4260,7 @@ function ScheduleScreen({
   activityId,
   teams,
   matchContents,
+  playoffRoundNumber,
   onBack,
   onEditInfo,
   onEditTeamList,
@@ -4252,10 +4270,12 @@ function ScheduleScreen({
   onConfirmSchedule,
   onEnded,
   autoOpenStandings,
+  onOpenPlayoff
 }: {
   activityId: string;
   teams: any[];
   matchContents: { id: string; label: string }[];
+  playoffRoundNumber: number | null;
   onBack: () => void;
   onEditInfo: () => void;
   onEditTeamList: () => void;
@@ -4265,9 +4285,19 @@ function ScheduleScreen({
   onConfirmSchedule: () => void;
   onEnded: () => Promise<void>;
   autoOpenStandings?: boolean;
+  onOpenPlayoff: () => void
 }) {
   const [tab, setTab] = useState<"all" | "pending">("all");
   const [rounds, setRounds] = useState<any[]>([]);
+
+  const mainRounds = useMemo(
+    () =>
+      playoffRoundNumber
+        ? rounds.filter((r) => r.round_number !== playoffRoundNumber)
+        : rounds,
+    [rounds, playoffRoundNumber],
+  );
+
   const [loading, setLoading] = useState(true);
   const [scheduleModal, setScheduleModal] = useState<
     | { type: "round"; roundNumber: number; currentValue?: string | null }
@@ -4300,6 +4330,7 @@ function ScheduleScreen({
 
   const [membersModalMatch, setMembersModalMatch] = useState<{ matchId: string; team1: any; team2: any } | null>(null);
 
+  const [continuingRound, setContinuingRound] = useState(false);
 
   useEffect(() => {
     if (autoOpenStandings) {
@@ -4367,24 +4398,24 @@ function ScheduleScreen({
   }, [activityId]);
 
   const hasAnySchedule = useMemo(
-    () => rounds.some((r) => (r.matches ?? []).some((m: any) => m.scheduled_at)),
-    [rounds],
+    () => mainRounds.some((r) => (r.matches ?? []).some((m: any) => m.scheduled_at)),
+    [mainRounds],
   );
 
   const hasAnyCompletedMatch = useMemo(
-    () => rounds.some((r) => (r.matches ?? []).some((m: any) => m.status === "completed")),
-    [rounds],
+    () => mainRounds.some((r) => (r.matches ?? []).some((m: any) => m.status === "completed")),
+    [mainRounds],
   );
 
   const allMatchesCompleted = useMemo(() => {
-    const allMatches = rounds.flatMap((r: any) => r.matches ?? []);
+    const allMatches = mainRounds.flatMap((r: any) => r.matches ?? []);
     return allMatches.length > 0 && allMatches.every((m: any) => m.status === "completed");
-  }, [rounds]);
+  }, [mainRounds]);
 
   const displayRounds =
     tab === "all"
-      ? rounds
-      : rounds
+      ? mainRounds
+      : mainRounds
         .map((r) => ({ ...r, matches: r.matches.filter((m: any) => m.status !== "completed") }))
         .filter((r) => r.matches.length > 0);
 
@@ -4469,18 +4500,14 @@ function ScheduleScreen({
     });
   };
 
+
   const handleEndTournament = async () => {
-    if (
-      !confirm(
-        "Kết thúc giải đấu? Sau khi kết thúc, bạn sẽ không thể chỉnh sửa lịch thi đấu hay danh sách đội nữa.",
-      )
-    )
-      return;
     setEndingTournament(true);
     try {
       await eventsAdminApi.endTournament(activityId);
       toast.success("Đã kết thúc giải đấu");
       await onEnded();
+      await load(true);
       setShowStandings(true);
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Kết thúc giải đấu thất bại");
@@ -4488,6 +4515,24 @@ function ScheduleScreen({
       setEndingTournament(false);
     }
   };
+
+
+  const handleContinueTournament = async () => {
+    setContinuingRound(true);
+    try {
+      const { data } = await eventsAdminApi.generateNextRoundMatches(activityId);
+      toast.success(data.message ?? "Đã tạo trận đấu tiếp theo");
+
+      await onEnded(); // refresh activity ở cha để playoff_round_number cập nhật
+      setShowStandings(false);
+      onOpenPlayoff(); // chuyển hẳn sang step "playoff", không giữ state cục bộ nữa
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Tạo trận đấu tiếp theo thất bại");
+    } finally {
+      setContinuingRound(false);
+    }
+  };
+
 
   const statusBlock = ended ? (
     <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
@@ -4497,15 +4542,19 @@ function ScheduleScreen({
     <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">
       <Trophy className="w-3.5 h-3.5" /> Đã bắt đầu thi đấu
     </span>
-  ) : (
+  ) : hasAnySchedule ? (
     <button
-      onClick={handleConfirmClick}
+      onClick={onConfirmSchedule}
       disabled={confirming}
       className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold shadow-sm shadow-emerald-200 disabled:opacity-50 transition-colors whitespace-nowrap"
     >
       {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
       Xác nhận lịch thi đấu
     </button>
+  ) : (
+    <span className="text-xs text-gray-400 italic whitespace-nowrap px-1">
+      Đặt giờ ít nhất 1 lượt để xác nhận lịch
+    </span>
   );
 
 
@@ -4641,11 +4690,10 @@ function ScheduleScreen({
         ) : allMatchesCompleted ? (
           <div className="flex items-center justify-end gap-2 flex-wrap">
             <button
-              onClick={handleEndTournament}
-              disabled={endingTournament}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
+              onClick={() => setShowStandings(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 transition-colors"
             >
-              {endingTournament ? <Loader2 className="w-4 h-4 animate-spin" /> : <Flag className="w-4 h-4" />}
+              <Flag className="w-4 h-4" />
               Kết thúc
             </button>
             {statusBlock}
@@ -4707,166 +4755,170 @@ function ScheduleScreen({
         </div>
       </div>
 
-      <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 max-w-6xl mx-auto w-full ${HIDE_SCROLLBAR_CLASS}`}>
-        {loading ? (
-          <div className="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
-          </div>
-        ) : displayRounds.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-14">
-            {tab === "pending" ? "Không còn lượt nào chưa đấu" : "Chưa có lịch thi đấu"}
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-            {displayRounds.map((r) => {
-              const roundHasSchedule = r.matches.some((m: any) => m.scheduled_at);
-              const roundFullyCompleted =
-                r.matches.length > 0 && r.matches.every((m: any) => m.status === "completed");
-              const roundLocked = tournamentStarted && roundHasSchedule && roundFullyCompleted;
-              const roundStarted = r.matches.some((m: any) => getMatchStatus(m) !== "pending");
-              return (
-                <div
-                  key={r.round_number}
-                  className="bg-gray-50/60 border border-gray-100 rounded-2xl p-3 sm:p-4 h-fit"
-                >
-                  <div className="flex items-center justify-between mb-3 gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <h3 className="font-bold text-gray-900 text-sm flex-shrink-0">
-                        Lượt {r.round_number}
-                      </h3>
-                      {r.bye_team_name && (
-                        <span className="text-xs text-gray-400 truncate">
-                          Nghỉ: <span className="font-medium text-gray-600">{r.bye_team_name}</span>
-                        </span>
+      <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 ${HIDE_SCROLLBAR_CLASS}`}>
+        <div className="max-w-6xl mx-auto w-full">
+          {loading ? (
+            <div className="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+            </div>
+          ) : displayRounds.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-14">
+              {tab === "pending" ? "Không còn lượt nào chưa đấu" : "Chưa có lịch thi đấu"}
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+              {displayRounds.map((r) => {
+                const roundHasSchedule = r.matches.some((m: any) => m.scheduled_at);
+                const roundFullyCompleted =
+                  r.matches.length > 0 && r.matches.every((m: any) => m.status === "completed");
+                const roundLocked = tournamentStarted && roundHasSchedule && roundFullyCompleted;
+                const roundStarted = r.matches.some((m: any) => getMatchStatus(m) !== "pending");
+                return (
+                  <div
+                    key={r.round_number}
+                    className="bg-gray-50/60 border border-gray-100 rounded-2xl p-3 sm:p-4 h-fit"
+                  >
+                    <div className="flex items-center justify-between mb-3 gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-sm flex-shrink-0">
+                          Lượt {r.round_number}
+                        </h3>
+                        {r.bye_team_name && (
+                          <span className="text-xs text-gray-400 truncate">
+                            Nghỉ: <span className="font-medium text-gray-600">{r.bye_team_name}</span>
+                          </span>
+                        )}
+                      </div>
+                      {!ended && !roundStarted && (
+                        <button
+                          onClick={() =>
+                            setScheduleModal({
+                              type: "round",
+                              roundNumber: r.round_number,
+                              currentValue: r.matches.find((m: any) => m.scheduled_at)?.scheduled_at ?? null,
+                            })
+                          }
+                          className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors"
+                        >
+                          🕒 {roundHasSchedule ? "Đặt lại cả lượt" : "Đặt giờ cả lượt"}
+                        </button>
                       )}
                     </div>
-                    {!ended && !roundStarted && (
+                    <div className="space-y-2">
+                      {r.matches.map((m: any) => {
+                        const st = getMatchStatus(m);
+                        const isCompleted = st === "completed";
+                        const team1Won = isCompleted && m.team1_score > m.team2_score;
+                        const team2Won = isCompleted && m.team2_score > m.team1_score;
+                        const winnerName = team1Won ? m.team1?.name : team2Won ? m.team2?.name : null;
+
+                        return (
+                          <div key={m.id} className="px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm space-y-2">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-2 min-w-0 flex-1 pt-1">
+                                <TeamBadge index={teamIndexMap.get(m.team1?.id)} />
+                                <span
+                                  className={`font-medium truncate ${team1Won ? "text-emerald-600" : team2Won ? "text-red-500" : "text-gray-900"
+                                    }`}
+                                >
+                                  {m.team1?.name}
+                                </span>
+                                <span className="text-gray-300 flex-shrink-0">vs</span>
+                                <TeamBadge index={teamIndexMap.get(m.team2?.id)} />
+                                <span
+                                  className={`font-medium truncate ${team2Won ? "text-emerald-600" : team1Won ? "text-red-500" : "text-gray-900"
+                                    }`}
+                                >
+                                  {m.team2?.name}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {m.court_number && (
+                                  <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                                    Sân {m.court_number}
+                                  </span>
+                                )}
+                                {isCompleted ? (
+                                  <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-gray-50">
+                                    <span className={team1Won ? "text-emerald-600" : "text-red-500"}>
+                                      {m.team1_score}
+                                    </span>
+                                    <span className="text-gray-300 mx-0.5">-</span>
+                                    <span className={team2Won ? "text-emerald-600" : "text-red-500"}>
+                                      {m.team2_score}
+                                    </span>
+                                  </span>
+                                ) : (
+                                  <span
+                                    className={`text-[10px] font-semibold px-2 py-1 rounded-full ${st === "ongoing" ? "bg-blue-50 text-blue-600 animate-pulse" : "bg-amber-50 text-amber-600"
+                                      }`}
+                                  >
+                                    {st === "ongoing" ? "Đang thi đấu" : "Chưa đấu"}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {winnerName && (
+                              <p className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                                <Trophy className="w-3.5 h-3.5" /> {winnerName} thắng
+                              </p>
+                            )}
+
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                🕒{" "}
+                                {m.scheduled_at ? (
+                                  <span className="font-medium text-gray-700">
+                                    {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
+                                  </span>
+                                ) : (
+                                  <span className="italic text-gray-400">Chưa đặt giờ</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                {!ended && !roundLocked && (
+                                  <button
+                                    onClick={() =>
+                                      setScheduleModal({
+                                        type: "match",
+                                        matchId: m.id,
+                                        currentValue: m.scheduled_at,
+                                        currentCourt: m.court_number,
+                                        currentStatus: st,
+                                      })
+                                    }
+                                    className="flex items-center gap-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition-colors"
+                                  >
+                                    <Pencil className="w-3 h-3" /> Sửa
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {(tournamentStarted || ended) && roundHasSchedule && (
                       <button
-                        onClick={() =>
-                          setScheduleModal({
-                            type: "round",
-                            roundNumber: r.round_number,
-                            currentValue: r.matches.find((m: any) => m.scheduled_at)?.scheduled_at ?? null,
-                          })
-                        }
-                        className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors"
+                        onClick={() => setRoundDetail(r)}
+                        className="w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-blue-200 bg-white text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
                       >
-                        🕒 {roundHasSchedule ? "Đặt lại cả lượt" : "Đặt giờ cả lượt"}
+                        Chi tiết lượt {r.round_number}
+                        {roundStats(r.matches).ongoing > 0 && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 animate-pulse ml-1">
+                            Đang thi đấu
+                          </span>
+                        )}
                       </button>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    {r.matches.map((m: any) => {
-                      const st = getMatchStatus(m);
-                      const isCompleted = st === "completed";
-                      const team1Won = isCompleted && m.team1_score > m.team2_score;
-                      const team2Won = isCompleted && m.team2_score > m.team1_score;
-                      const winnerName = team1Won ? m.team1?.name : team2Won ? m.team2?.name : null;
-
-                      return (
-                        <div key={m.id} className="px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm space-y-2">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2 min-w-0 flex-1 pt-1">
-                              <TeamBadge index={teamIndexMap.get(m.team1?.id)} />
-                              <span
-                                className={`font-medium truncate ${team1Won ? "text-emerald-600" : team2Won ? "text-red-500" : "text-gray-900"
-                                  }`}
-                              >
-                                {m.team1?.name}
-                              </span>
-                              <span className="text-gray-300 flex-shrink-0">vs</span>
-                              <TeamBadge index={teamIndexMap.get(m.team2?.id)} />
-                              <span
-                                className={`font-medium truncate ${team2Won ? "text-emerald-600" : team1Won ? "text-red-500" : "text-gray-900"
-                                  }`}
-                              >
-                                {m.team2?.name}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              {m.court_number && (
-                                <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">
-                                  Sân {m.court_number}
-                                </span>
-                              )}
-                              {isCompleted ? (
-                                <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-gray-50">
-                                  <span className={team1Won ? "text-emerald-600" : "text-red-500"}>
-                                    {m.team1_score}
-                                  </span>
-                                  <span className="text-gray-300 mx-0.5">-</span>
-                                  <span className={team2Won ? "text-emerald-600" : "text-red-500"}>
-                                    {m.team2_score}
-                                  </span>
-                                </span>
-                              ) : (
-                                <span
-                                  className={`text-[10px] font-semibold px-2 py-1 rounded-full ${st === "ongoing" ? "bg-blue-50 text-blue-600 animate-pulse" : "bg-amber-50 text-amber-600"
-                                    }`}
-                                >
-                                  {st === "ongoing" ? "Đang thi đấu" : "Chưa đấu"}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {winnerName && (
-                            <p className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
-                              <Trophy className="w-3.5 h-3.5" /> {winnerName} thắng
-                            </p>
-                          )}
-
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                              🕒{" "}
-                              {m.scheduled_at ? (
-                                <span className="font-medium text-gray-700">
-                                  {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
-                                </span>
-                              ) : (
-                                <span className="italic text-gray-400">Chưa đặt giờ</span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              {!ended && !roundLocked && (
-                                <button
-                                  onClick={() =>
-                                    setScheduleModal({
-                                      type: "match",
-                                      matchId: m.id,
-                                      currentValue: m.scheduled_at,
-                                      currentCourt: m.court_number,
-                                      currentStatus: st,
-                                    })
-                                  }
-                                  className="flex items-center gap-1 text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition-colors"
-                                >
-                                  <Pencil className="w-3 h-3" /> Sửa
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    onClick={() => setRoundDetail(r)}
-                    className="w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-blue-200 bg-white text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
-                  >
-                    Chi tiết lượt {r.round_number}
-                    {roundStats(r.matches).ongoing > 0 && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 animate-pulse ml-1">
-                        Đang thi đấu
-                      </span>
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {scheduleModal?.type === "round" &&
@@ -4955,8 +5007,13 @@ function ScheduleScreen({
             teams={teams}
             rounds={rounds}
             ended={ended}
+            choiceMode={!ended && allMatchesCompleted}
             onClose={() => setShowStandings(false)}
             onBackToActivity={onBack}
+            onEndTournament={handleEndTournament}
+            endingTournament={endingTournament}
+            onContinueTournament={handleContinueTournament}
+            continuingTournament={continuingRound}
           />,
           document.body,
         )}
@@ -4975,6 +5032,306 @@ function ScheduleScreen({
         document.body,
       )}
     </div>
+  );
+}
+
+function PlayoffScreen({
+  matches,
+  matchContents,
+  onBack,
+  onEndTournament,
+  endingTournament
+}: {
+  matches: any[];
+  matchContents: { id: string; label: string }[];
+  onBack: () => void;
+  onEndTournament: () => void;
+  endingTournament: boolean;
+}) {
+  const [localMatches, setLocalMatches] = useState<any[]>(matches);
+  const [scheduleModal, setScheduleModal] = useState<{
+    matchId: string;
+    currentValue?: string | null;
+    currentCourt?: number | null;
+    currentStatus?: "completed" | "ongoing" | "pending";
+  } | null>(null);
+  const [startingMatchId, setStartingMatchId] = useState<string | null>(null);
+  const [scoreEntryMatch, setScoreEntryMatch] = useState<any | null>(null);
+  const [membersModalMatch, setMembersModalMatch] = useState<{
+    matchId: string;
+    team1: any;
+    team2: any;
+  } | null>(null);
+
+  const isMatchReady = (m: any) => {
+    if (!matchContents.length) return true;
+    const matched: string[] = m.lineup_content_ids ?? [];
+    return matchContents.every((c) => matched.includes(c.id));
+  };
+
+  const updateMatch = (matchId: string, patch: Partial<any>) => {
+    setLocalMatches((prev) =>
+      prev.map((m) => (m.id === matchId ? { ...m, ...patch } : m)),
+    );
+  };
+
+  const handleSaveSchedule = async (
+    matchId: string,
+    value: string,
+    courtNumber: number | null,
+  ) => {
+    try {
+      await eventsAdminApi.setMatchSchedule(matchId, value, courtNumber);
+      updateMatch(matchId, { scheduled_at: value, court_number: courtNumber });
+      toast.success("Đã cập nhật thông tin trận đấu");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Cập nhật thất bại");
+    }
+  };
+
+  const handleStartMatch = async (matchId: string) => {
+    setStartingMatchId(matchId);
+    try {
+      await eventsAdminApi.startMatch(matchId);
+      updateMatch(matchId, { status: "ongoing" });
+      toast.success("Đã bắt đầu trận đấu");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Bắt đầu trận đấu thất bại");
+    } finally {
+      setStartingMatchId(null);
+    }
+  };
+
+  const handleSaveMatchResult = async (
+    matchId: string,
+    contentScores: { content_id: string; label: string; score1: number; score2: number }[],
+    team1Score: number,
+    team2Score: number,
+  ) => {
+    await eventsAdminApi.markMatchResult(matchId, {
+      team1_score: team1Score,
+      team2_score: team2Score,
+      content_scores: contentScores,
+    });
+    updateMatch(matchId, {
+      status: "completed",
+      team1_score: team1Score,
+      team2_score: team2Score,
+      content_scores: contentScores,
+    });
+  };
+
+  const handleLineupsChange = (matchId: string, lineups: any[]) => {
+    updateMatch(matchId, { lineup_content_ids: lineups.map((l: any) => l.content_id) });
+  };
+
+  const handleMatchStatusChanged = (
+    matchId: string,
+    status: "pending" | "ongoing" | "completed",
+  ) => {
+    updateMatch(matchId, { status });
+  };
+
+  const allCompleted = localMatches.length > 0 && localMatches.every((m) => m.status === "completed");
+
+  return (
+    <div className="fixed inset-0 z-[230] bg-gray-50 flex flex-col">
+      <div
+        className="flex-shrink-0 bg-white flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-gray-100"
+        style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
+      >
+        <button
+          onClick={onBack}
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 leading-tight flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-amber-500" /> Trận tranh hạng
+          </h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {allCompleted
+              ? "Cả 2 trận đã hoàn thành"
+              : "Đặt giờ, bắt đầu và nhập kết quả cho từng trận"}
+          </p>
+        </div>
+      </div>
+
+      <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-5 max-w-2xl mx-auto w-full space-y-5 ${HIDE_SCROLLBAR_CLASS}`}>
+        {localMatches.map((m) => (
+          <div key={m.id}>
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className="text-xs font-bold px-2.5 py-1 rounded-full text-white"
+                style={{ background: MATCH_CONTENT_COLOR["3vs3"] }}
+              >
+                {m.label}
+              </span>
+            </div>
+            <MatchCard
+              m={m}
+              onStart={handleStartMatch}
+              onEnterScore={(match) => setScoreEntryMatch(match)}
+              onViewMembers={(match) =>
+                setMembersModalMatch({ matchId: match.id, team1: match.team1, team2: match.team2 })
+              }
+              starting={startingMatchId === m.id}
+              readyToStart={isMatchReady(m)}
+            />
+            {m.status !== "completed" && (
+              <button
+                onClick={() =>
+                  setScheduleModal({
+                    matchId: m.id,
+                    currentValue: m.scheduled_at,
+                    currentCourt: m.court_number,
+                    currentStatus: m.status,
+                  })
+                }
+                className="w-full mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-blue-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors"
+              >
+                🕒 {m.scheduled_at ? "Sửa giờ / sân" : "Đặt giờ / sân"}
+              </button>
+            )}
+            {m.scheduled_at && (
+              <p className="text-xs text-gray-500 mt-1.5 text-center">
+                {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
+                {m.court_number ? ` · Sân ${m.court_number}` : ""}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div
+        className="flex-shrink-0 px-4 sm:px-6 pt-4 border-t border-gray-100 bg-white max-w-2xl mx-auto w-full flex items-center gap-2"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+      >
+        <button
+          onClick={onBack}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
+        >
+          Trở về
+        </button>
+        {allCompleted && (
+          <button
+            onClick={onEndTournament}
+            disabled={endingTournament}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
+          >
+            {endingTournament ? <Loader2 className="w-4 h-4 animate-spin" /> : <Flag className="w-4 h-4" />}
+            Kết thúc giải đấu
+          </button>
+        )}
+      </div>
+
+      {scheduleModal &&
+        createPortal(
+          <EditMatchModal
+            key={`playoff-match-${scheduleModal.matchId}`}
+            initialValue={scheduleModal.currentValue}
+            initialCourt={scheduleModal.currentCourt}
+            dateLocked={scheduleModal.currentStatus != null && scheduleModal.currentStatus !== "pending"}
+            onClose={() => setScheduleModal(null)}
+            onSave={(value, court) => handleSaveSchedule(scheduleModal.matchId, value, court)}
+          />,
+          document.body,
+        )}
+
+      {scoreEntryMatch &&
+        createPortal(
+          <MatchScoreEntryScreen
+            match={scoreEntryMatch}
+            matchContents={matchContents}
+            onClose={() => setScoreEntryMatch(null)}
+            onSaved={handleSaveMatchResult}
+          />,
+          document.body,
+        )}
+
+      {membersModalMatch &&
+        createPortal(
+          <MatchMembersModal
+            matchId={membersModalMatch.matchId}
+            team1={membersModalMatch.team1}
+            team2={membersModalMatch.team2}
+            matchContents={matchContents}
+            matchStatus={
+              localMatches.find((m) => m.id === membersModalMatch.matchId)?.status ?? "pending"
+            }
+            onLineupsChange={handleLineupsChange}
+            onMatchStatusChanged={handleMatchStatusChanged}
+            onClose={() => setMembersModalMatch(null)}
+          />,
+          document.body,
+        )}
+    </div>
+  );
+}
+
+
+function PlayoffWizardScreen({
+  activityId,
+  teams,
+  matchContents,
+  playoffRoundNumber,
+  onBack,
+  onEnded,
+}: {
+  activityId: string;
+  teams: any[];
+  matchContents: { id: string; label: string }[];
+  playoffRoundNumber: number | null;
+  onBack: () => void;
+  onEnded: () => Promise<void>;
+}) {
+  const [matches, setMatches] = useState<any[] | null>(null);
+  const [endingTournament, setEndingTournament] = useState(false);
+
+  useEffect(() => {
+    if (!playoffRoundNumber) {
+      onBack();
+      return;
+    }
+    (async () => {
+      const { data } = await eventsAdminApi.getTournamentSchedule(activityId);
+      const rounds = data.rounds ?? [];
+      const found = getPlayoffMatches(rounds, playoffRoundNumber, teams);
+      setMatches(found);
+    })();
+  }, [activityId, playoffRoundNumber, teams]);
+
+  const handleEndTournament = async () => {
+    setEndingTournament(true);
+    try {
+      await eventsAdminApi.endTournament(activityId);
+      toast.success("Đã kết thúc giải đấu");
+      await onEnded();
+      onBack();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Kết thúc giải đấu thất bại");
+    } finally {
+      setEndingTournament(false);
+    }
+  };
+
+  if (matches === null) {
+    return (
+      <div className="fixed inset-0 z-[230] bg-white flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <PlayoffScreen
+      matches={matches}
+      matchContents={matchContents}
+      onBack={onBack}
+      onEndTournament={handleEndTournament}
+      endingTournament={endingTournament}
+    />
   );
 }
 
@@ -7020,6 +7377,35 @@ function computeStandings(teams: any[], rounds: any[]) {
     });
 }
 
+function getPlayoffMatches(rounds: any[], playoffRoundNumber: number, teams: any[]) {
+  const playoffRoundData = rounds.find((r) => r.round_number === playoffRoundNumber);
+  if (!playoffRoundData) return [];
+
+  const priorRounds = rounds.filter((r) => r.round_number < playoffRoundNumber);
+  const standings = computeStandings(teams, priorRounds);
+  const rank1 = standings[0]?.id;
+  const rank2 = standings[1]?.id;
+  const rank3 = standings[2]?.id;
+  const rank4 = standings[3]?.id;
+
+  const teamById = new Map((teams ?? []).map((t: any) => [t.id, t]));
+
+  return (playoffRoundData.matches ?? []).map((m: any) => {
+    const t1Id = m.team1?.id;
+    const t2Id = m.team2?.id;
+    const pairIds = [t1Id, t2Id];
+    let label = "Trận tranh hạng";
+    if (pairIds.includes(rank1) && pairIds.includes(rank2)) label = "Tranh hạng Nhất - Nhì";
+    else if (pairIds.includes(rank3) && pairIds.includes(rank4)) label = "Tranh hạng Ba - Tư";
+    return {
+      ...m,
+      label,
+      team1: teamById.get(t1Id) ?? m.team1,
+      team2: teamById.get(t2Id) ?? m.team2,
+    };
+  });
+}
+
 function RankBadge({ rank }: { rank: number }) {
   const topStyles: Record<number, string> = {
     1: "bg-amber-400 text-white",
@@ -7118,14 +7504,24 @@ function TournamentStandingsScreen({
   teams,
   rounds,
   ended,
+  choiceMode,
   onClose,
   onBackToActivity,
+  onEndTournament,
+  endingTournament,
+  onContinueTournament,
+  continuingTournament,
 }: {
   teams: any[];
   rounds: any[];
   ended?: boolean;
+  choiceMode?: boolean;
   onClose: () => void;
   onBackToActivity?: () => void;
+  onEndTournament?: () => void;
+  endingTournament?: boolean;
+  onContinueTournament?: () => void;
+  continuingTournament?: boolean;
 }) {
   const standings = useMemo(() => computeStandings(teams, rounds), [teams, rounds]);
   const totalPlayed = standings.reduce((s, t) => s + t.played, 0);
@@ -7150,6 +7546,45 @@ function TournamentStandingsScreen({
           </p>
         </div>
       </div>
+
+
+      {choiceMode && (
+        <div
+          className="flex-shrink-0 flex flex-col gap-2 px-4 sm:px-6 pt-4 border-t border-gray-100 max-w-2xl mx-auto w-full"
+          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+        >
+          <p className="text-xs text-gray-400 text-center mb-1">
+            Tất cả các trận vòng tròn đã hoàn thành. Bạn muốn kết thúc giải đấu hay tiếp tục thi đấu tranh hạng?
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onContinueTournament}
+              disabled={continuingTournament || endingTournament}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 text-sm font-semibold hover:bg-blue-100 disabled:opacity-50 transition-colors"
+            >
+              {continuingTournament ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Swords className="w-4 h-4" />
+              )}
+              Tiếp tục giải đấu
+            </button>
+            <button
+              onClick={onEndTournament}
+              disabled={continuingTournament || endingTournament}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-900 to-blue-900 hover:from-slate-800 hover:to-blue-800 text-white text-sm font-semibold shadow-sm shadow-blue-200 disabled:opacity-50 transition-colors"
+            >
+              {endingTournament ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Flag className="w-4 h-4" />
+              )}
+              Kết thúc giải đấu
+            </button>
+          </div>
+        </div>
+      )}
+
 
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 max-w-2xl mx-auto w-full">
         {standings.length === 0 ? (
@@ -7184,7 +7619,7 @@ function TournamentStandingsScreen({
         )}
       </div>
 
-      {ended && (
+      {ended && !choiceMode && (
         <div
           className="flex-shrink-0 flex items-center gap-2 px-4 sm:px-6 pt-4 border-t border-gray-100 max-w-2xl mx-auto w-full"
           style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}

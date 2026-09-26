@@ -667,7 +667,11 @@ export const eventsAdminApi = {
 
   removeMatchLineup: (matchId: string, contentId: string) =>
     api.delete(`/admin/activities/tournament-matches/${matchId}/lineups/${contentId}`),
+
+  generateNextRoundMatches: (id: string) =>
+    api.post(`/admin/activities/${id}/tournament/next-round`),
 };
+
 
 export const uploadsAdminApi = {
   upload: (file: File, folder: string = "uploads") => {
