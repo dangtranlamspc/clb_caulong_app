@@ -51,7 +51,6 @@ export default function TournamentResultsPage() {
         };
     }, [activityId]);
 
-    // Gán số thứ tự + màu cố định cho từng đội theo thứ tự tạo đội
     const teamMeta = useMemo(() => {
         const map = new Map<string, { number: number; color: string }>();
         teams.forEach((t, idx) => {
@@ -136,7 +135,6 @@ export default function TournamentResultsPage() {
                 </div>
             </div>
 
-            {/* Chọn đội (chỉ hiện ở tab Theo đội) */}
             {tab === "byTeam" && (
                 <div className="mt-3 px-4">
                     <div className="flex items-center gap-2">
@@ -161,7 +159,6 @@ export default function TournamentResultsPage() {
                 </div>
             )}
 
-            {/* Danh sách lượt đấu */}
             <div className="mt-4 space-y-6 px-4">
                 {filteredRounds.map((round) => {
                     const date = roundDate(round);

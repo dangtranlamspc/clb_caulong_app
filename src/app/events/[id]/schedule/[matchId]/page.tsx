@@ -51,6 +51,14 @@ function MemberBadge() {
     );
 }
 
+function MyTeamBadge() {
+    return (
+        <span className="text-[10px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded-full flex-shrink-0">
+            Đội bạn
+        </span>
+    );
+}
+
 function ViewTeamMembersColumn({
     team,
     myUserId,
@@ -773,6 +781,15 @@ export default function TournamentMatchDetailPage() {
         return map;
     }, [teams]);
 
+    const myTeamId = useMemo(() => {
+        if (!myUserId) return null;
+        const mine = teams.find((t) => (t.members ?? []).some((m: any) => m.user_id === myUserId));
+        return mine?.id ?? null;
+    }, [teams, myUserId]);
+
+    const isTeam1Mine = !!myTeamId && match?.team1?.id === myTeamId;
+    const isTeam2Mine = !!myTeamId && match?.team2?.id === myTeamId;
+
     const matchContents: { id: string; label: string }[] = activity?.detail?.rules?.match_contents ?? [];
 
     const dateLabel = match?.scheduled_at
@@ -832,9 +849,15 @@ export default function TournamentMatchDetailPage() {
                 ) : (
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-5">
                         <div className="flex items-center justify-center gap-2 flex-wrap">
-                            <span className="text-base font-bold text-gray-900">{match.team1?.name ?? "—"}</span>
+                            <span className="inline-flex items-center gap-1.5">
+                                <span className="text-base font-bold text-gray-900">{match.team1?.name ?? "—"}</span>
+                                {isTeam1Mine && <MyTeamBadge />}
+                            </span>
                             <span className="text-xs text-gray-300 font-medium">vs</span>
-                            <span className="text-base font-bold text-gray-900">{match.team2?.name ?? "—"}</span>
+                            <span className="inline-flex items-center gap-1.5">
+                                <span className="text-base font-bold text-gray-900">{match.team2?.name ?? "—"}</span>
+                                {isTeam2Mine && <MyTeamBadge />}
+                            </span>
                         </div>
                         {metaParts.length > 0 && (
                             <p className="text-center text-xs text-gray-400 mt-1 mb-5">{metaParts.join(" · ")}</p>
@@ -889,7 +912,9 @@ export default function TournamentMatchDetailPage() {
                                         style={{ background: "#f0fdf4", color: "#16a34a" }}
                                     >
                                         <span>✓</span>
-                                        {team1Won ? match.team1?.name : match.team2?.name} thắng
+                                        {(team1Won ? isTeam1Mine : isTeam2Mine)
+                                            ? "Đội bạn đã thắng"
+                                            : `${team1Won ? match.team1?.name : match.team2?.name} thắng`}
                                     </span>
                                 )
                             ) : (

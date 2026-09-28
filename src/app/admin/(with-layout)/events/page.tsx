@@ -28,6 +28,7 @@ import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import AdminAddShirtOrderModal from "@/components/admin/events/form/AdminAddShirtOrderModal";
 import ActivitiesOverview from "@/components/admin/events/ActivitiesOverview";
 import { createPortal } from "react-dom";
+import { supabase } from "@/lib/supabase";
 
 const TYPE_LABEL: Record<string, string> = {
     shirt_order: "👕 Đặt áo",
@@ -70,7 +71,11 @@ function ActivityThumbnail({ src, emoji }: { src?: string | null; emoji: string 
 }
 
 function getStatusDisplay(a: any) {
-    if (a.type === "tournament" && a.is_full && a.status !== "cancelled" && a.status !== "completed") {
+    if (
+        a.type === "tournament" &&
+        a.is_full &&
+        !["cancelled", "completed", "ongoing"].includes(a.status)
+    ) {
         return {
             label: "Đã đóng đăng ký",
             className: "bg-green-50 text-green-700",
@@ -381,8 +386,8 @@ export default function ActivitiesListPage() {
         }
     }, [typeFilter, items.length]);
 
-    const fetchList = async () => {
-        setLoading(true);
+    const fetchList = async (silent = false) => {
+        if (!silent) setLoading(true);
         try {
             const { data } = await eventsAdminApi.list({
                 type: typeFilter || undefined,
@@ -390,12 +395,29 @@ export default function ActivitiesListPage() {
             });
             setItems(data.data ?? []);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
     useEffect(() => {
         fetchList();
+    }, [typeFilter]);
+
+    useEffect(() => {
+        let timer: ReturnType<typeof setTimeout> | null = null;
+
+        const channel = supabase
+            .channel("activities-list-changes")
+            .on("broadcast", { event: "activities_changed" }, () => {
+                if (timer) clearTimeout(timer);
+                timer = setTimeout(() => fetchList(true), 300);
+            })
+            .subscribe();
+
+        return () => {
+            if (timer) clearTimeout(timer);
+            supabase.removeChannel(channel);
+        };
     }, [typeFilter]);
 
     const handleDelete = async (id: string, title: string) => {

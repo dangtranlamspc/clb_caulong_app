@@ -348,6 +348,9 @@ export const activitiesApi = {
 
   getMatchLineups: (matchId: string) =>
     api.get(`/activities/tournament-matches/${matchId}/lineups`),
+
+  getPointAdjustments: (activityId: string) =>
+    api.get(`/activities/${activityId}/tournament/point-adjustments`),
 };
 
 //admin
@@ -645,6 +648,7 @@ export const eventsAdminApi = {
       team1_score: number;
       team2_score: number;
       content_scores?: { content_id: string; label: string; score1: number; score2: number }[];
+      reset_playoff?: boolean
     }
   ) => api.patch(`/admin/activities/tournament-matches/${matchId}/result`, dto),
 
@@ -670,6 +674,15 @@ export const eventsAdminApi = {
 
   generateNextRoundMatches: (id: string) =>
     api.post(`/admin/activities/${id}/tournament/next-round`),
+
+  getPointAdjustments: (id: string) =>
+    api.get(`/admin/activities/${id}/tournament/point-adjustments`),
+
+  addPointAdjustment: (id: string, data: { team_id: string; delta: number; reason: string }) =>
+    api.post(`/admin/activities/${id}/tournament/point-adjustments`, data),
+
+  removePointAdjustment: (adjId: string) =>
+    api.delete(`/admin/activities/tournament-point-adjustments/${adjId}`),
 };
 
 
@@ -1003,6 +1016,15 @@ export const clubDrinksAdminApi = {
 
   consume: (payload: { drink_id: string; quantity: number; note?: string }) =>
     api.post("/admin/club-drinks/consume", payload),
+};
+
+export const locationsAdminApi = {
+  list: (includeInactive?: boolean) =>
+    api.get("/locations", { params: { includeInactive } }),
+  create: (data: { name: string; address?: string }) => api.post("/locations", data),
+  update: (id: string, data: { name?: string; address?: string; is_active?: boolean }) =>
+    api.put(`/locations/${id}`, data),
+  delete: (id: string) => api.delete(`/locations/${id}`),
 };
 
 

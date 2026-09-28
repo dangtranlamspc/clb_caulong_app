@@ -1,11 +1,13 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { X, Save, Loader2, CalendarDays, Calculator } from "lucide-react";
+import { X, Save, Loader2, CalendarDays, Calculator, MapPin } from "lucide-react";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
-import { sessionsAdminApi } from "@/lib/api";
+import { locationsAdminApi, sessionsAdminApi } from "@/lib/api";
 import { DateTimePicker } from "./DateTimePicker";
+import LocationManagerModal, { LocationItem } from "./LocationManagerModal";
+import { CustomSelect } from "./CustomSelect";
 
 function fmt(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
@@ -15,6 +17,17 @@ interface SessionFormModalProps {
   target: { id?: string } | null;
   onClose: () => void;
   onSuccess: () => void;
+}
+
+const DEFAULT_DURATION = 120;
+const WEEKDAYS = ["chủ nhật", "thứ 2", "thứ 3", "thứ 4", "thứ 5", "thứ 6", "thứ 7"];
+
+function buildAutoTitle(value: string) {
+  const d = new Date(value);
+  if (!value || isNaN(d.getTime())) return "";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `Buổi đánh ${WEEKDAYS[d.getDay()]} (${dd}/${mm}/${d.getFullYear()})`;
 }
 
 export default function SessionFormModal({
@@ -27,6 +40,10 @@ export default function SessionFormModal({
   const [fetching, setFetching] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
 
+  const [locations, setLocations] = useState<LocationItem[]>([]);
+  const [showLocManager, setShowLocManager] = useState(false);
+  const lastAutoTitleRef = useRef("");
+
   const continueAfterSaveRef = useRef(false);
 
   const id = target?.id;
@@ -38,6 +55,8 @@ export default function SessionFormModal({
     reset,
     control,
     watch,
+    getValues,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -52,6 +71,38 @@ export default function SessionFormModal({
       shuttle_price: 0,
     },
   });
+
+  const loadLocations = useCallback(async () => {
+    try {
+      const { data } = await locationsAdminApi.list();
+      setLocations(data);
+    } catch { }
+  }, []);
+  useEffect(() => {
+    if (target) loadLocations();
+  }, [target, loadLocations]);
+
+  const handleScheduledChange = (value: string, onChange: (v: string) => void) => {
+    onChange(value);
+    if (isEdit) return;
+    const current = getValues("title");
+    if (!current || current === lastAutoTitleRef.current) {
+      const t = buildAutoTitle(value);
+      lastAutoTitleRef.current = t;
+      setValue("title", t, { shouldValidate: true });
+    }
+  };
+
+  const locationOptions = () => {
+    const opts = locations.map((l) => ({
+      value: l.name, label: l.name, subLabel: l.address ?? undefined,
+    }));
+    const cur = getValues("location");
+    if (cur && !opts.some((o) => o.value === cur)) {
+      opts.unshift({ value: cur, label: cur, subLabel: undefined });
+    }
+    return opts;
+  };
 
   useEffect(() => {
     if (!target) return;
@@ -87,15 +138,16 @@ export default function SessionFormModal({
         title: "",
         description: "",
         scheduled_at: "",
-        duration_minutes: 90,
+        duration_minutes: DEFAULT_DURATION,
         location: "",
         max_slots: 20,
         court_fee: 0,
         shuttle_count: 0,
         shuttle_price: 0,
       });
+      lastAutoTitleRef.current = "";
     }
-  }, [target?.id]);
+  }, [Boolean(target), target?.id]);
 
   const courtFee = Number(watch("court_fee")) || 0;
   const shuttleCount = Number(watch("shuttle_count")) || 0;
@@ -266,7 +318,7 @@ export default function SessionFormModal({
                       label="Thời gian"
                       required
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(v: string) => handleScheduledChange(v, field.onChange)}
                       error={errors.scheduled_at?.message as string | undefined}
                     />
                   )}
@@ -296,13 +348,28 @@ export default function SessionFormModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Địa điểm
-                  </label>
-                  <input
-                    {...register("location")}
-                    className="input-field"
-                    placeholder="Sân ABC - 123 Nguyễn Huệ"
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">Địa điểm</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowLocManager(true)}
+                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-green-600 border border-green-700 rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      Quản lý địa điểm
+                    </button>
+                  </div>
+                  <Controller
+                    name="location"
+                    control={control}
+                    render={({ field }) => (
+                      <CustomSelect
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={locationOptions()}
+                        placeholder="-- Chọn địa điểm --"
+                      />
+                    )}
                   />
                 </div>
 
@@ -391,7 +458,6 @@ export default function SessionFormModal({
         </div>
 
         {/* Footer */}
-        {/* Footer */}
         <div className="flex justify-end items-center gap-3 px-5 py-4 border-t border-gray-100 flex-shrink-0">
           <button
             type="button"
@@ -438,6 +504,11 @@ export default function SessionFormModal({
           </button>
         </div>
       </div>
+      <LocationManagerModal
+        open={showLocManager}
+        onClose={() => setShowLocManager(false)}
+        onChanged={loadLocations}
+      />
     </div>,
     document.body,
   );

@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
 const HIDE_SCROLLBAR_CLASS =
     "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
-function computeStandings(teams: any[], rounds: any[]) {
+function computeStandings(teams: any[], rounds: any[], adjustments: any[] = []) {
     const statsMap = new Map<
         string,
         {
@@ -21,6 +21,7 @@ function computeStandings(teams: any[], rounds: any[]) {
             losses: number;
             pointsFor: number;
             pointsAgainst: number;
+            adjustment: number;
         }
     >();
 
@@ -33,6 +34,7 @@ function computeStandings(teams: any[], rounds: any[]) {
             losses: 0,
             pointsFor: 0,
             pointsAgainst: 0,
+            adjustment: 0,
         });
     }
 
@@ -60,10 +62,19 @@ function computeStandings(teams: any[], rounds: any[]) {
         }
     }
 
+    for (const a of adjustments ?? []) {
+        const s = statsMap.get(a.team_id);
+        if (s) s.adjustment += a.delta;
+    }
+
     return Array.from(statsMap.values())
-        .map((t) => ({ ...t, diff: t.pointsFor - t.pointsAgainst }))
+        .map((t) => ({
+            ...t,
+            total: t.pointsFor + t.adjustment,
+            diff: t.pointsFor - t.pointsAgainst,
+        }))
         .sort((a, b) => {
-            if (b.pointsFor !== a.pointsFor) return b.pointsFor - a.pointsFor;
+            if (b.total !== a.total) return b.total - a.total;
             if (b.diff !== a.diff) return b.diff - a.diff;
             return b.wins - a.wins;
         });
@@ -90,11 +101,15 @@ function TeamStatsModal({
     team,
     rank,
     isMyTeam,
+    rounds,
+    playoffRoundNumber,
     onClose,
 }: {
     team: any;
     rank: number;
     isMyTeam: boolean;
+    rounds: any[];
+    playoffRoundNumber: number | null;
     onClose: () => void;
 }) {
     const [visible, setVisible] = useState(false);
@@ -117,17 +132,55 @@ function TeamStatsModal({
         return () => document.removeEventListener("keydown", onKey);
     }, []);
 
+    const sideColor = (a: number, b: number) =>
+        a > b ? "text-emerald-600" : a < b ? "text-red-500" : "text-gray-500";
+
+    const teamMatches = useMemo(() => {
+        const list: any[] = [];
+        for (const r of rounds ?? []) {
+            for (const m of r.matches ?? []) {
+                if (m.status !== "completed") continue;
+                const isT1 = m.team1?.id === team.id;
+                const isT2 = m.team2?.id === team.id;
+                if (!isT1 && !isT2) continue;
+
+                const own = (isT1 ? m.team1_score : m.team2_score) ?? 0;
+                const opp = (isT1 ? m.team2_score : m.team1_score) ?? 0;
+
+                list.push({
+                    id: m.id,
+                    roundNumber: r.round_number,
+                    isPlayoff: playoffRoundNumber != null && r.round_number === playoffRoundNumber,
+                    opponentName: (isT1 ? m.team2?.name : m.team1?.name) ?? "—",
+                    own,
+                    opp,
+                    result: own > opp ? "win" : own < opp ? "lose" : "draw",
+                    contentScores: (m.content_scores ?? []).map((c: any) => ({
+                        label: c.label,
+                        own: (isT1 ? c.score1 : c.score2) ?? 0,
+                        opp: (isT1 ? c.score2 : c.score1) ?? 0,
+                    })),
+                });
+            }
+        }
+        return list.sort((a, b) => a.roundNumber - b.roundNumber);
+    }, [rounds, team.id, playoffRoundNumber]);
+
     const rows = [
         { label: "Trận đã đấu", value: team.played, color: "text-gray-900" },
         { label: "Thắng", value: team.wins, color: "text-emerald-600" },
         { label: "Thua", value: team.losses, color: "text-red-500" },
         { label: "Điểm ghi được", value: team.pointsFor, color: "text-blue-600" },
-        { label: "Điểm thua", value: team.pointsAgainst, color: "text-gray-700" },
-        {
-            label: "Hiệu số",
-            value: team.diff > 0 ? `+${team.diff}` : team.diff,
-            color: team.diff > 0 ? "text-emerald-600" : team.diff < 0 ? "text-red-500" : "text-gray-500",
-        },
+        ...(team.adjustment !== 0
+            ? [
+                {
+                    label: "Điều chỉnh",
+                    value: team.adjustment > 0 ? `+${team.adjustment}` : team.adjustment,
+                    color: team.adjustment > 0 ? "text-emerald-600" : "text-red-500",
+                },
+            ]
+            : []),
+        { label: "Tổng điểm", value: team.total, color: "text-gray-900" },
     ];
 
     return typeof document === "undefined"
@@ -140,10 +193,10 @@ function TeamStatsModal({
                 }}
             >
                 <div
-                    className={`bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+                    className={`bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
                         }`}
                 >
-                    <div className="px-5 pt-5 pb-4 text-center border-b border-gray-100 relative">
+                    <div className="px-5 pt-5 pb-4 text-center border-b border-gray-100 relative flex-shrink-0">
                         <button
                             onClick={handleClose}
                             className="absolute right-3 top-3 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
@@ -161,19 +214,87 @@ function TeamStatsModal({
                         )}
                     </div>
 
-                    <div className="p-4 space-y-2">
-                        {rows.map((r) => (
-                            <div
-                                key={r.label}
-                                className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50"
-                            >
-                                <span className="text-sm text-gray-500">{r.label}</span>
-                                <span className={`text-base font-bold tabular-nums ${r.color}`}>{r.value}</span>
-                            </div>
-                        ))}
+                    <div className={`flex-1 min-h-0 overflow-y-auto p-4 space-y-4 ${HIDE_SCROLLBAR_CLASS}`}>
+                        <div className="space-y-2">
+                            {rows.map((r) => (
+                                <div
+                                    key={r.label}
+                                    className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50"
+                                >
+                                    <span className="text-sm text-gray-500">{r.label}</span>
+                                    <span className={`text-base font-bold tabular-nums ${r.color}`}>{r.value}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 px-1">
+                                Các trận đã đấu ({teamMatches.length})
+                            </p>
+
+                            {teamMatches.length === 0 ? (
+                                <p className="text-xs text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-xl">
+                                    Chưa có trận nào hoàn thành
+                                </p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {teamMatches.map((m) => (
+                                        <div key={m.id} className="rounded-xl border border-gray-100 bg-white px-3.5 py-3 shadow-sm">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-[10px] font-semibold text-gray-400 uppercase">
+                                                    {m.isPlayoff ? "Tranh hạng" : `Lượt ${m.roundNumber}`}
+                                                </span>
+                                                <span
+                                                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${m.result === "win"
+                                                        ? "bg-emerald-50 text-emerald-600"
+                                                        : m.result === "lose"
+                                                            ? "bg-red-50 text-red-500"
+                                                            : "bg-gray-100 text-gray-500"
+                                                        }`}
+                                                >
+                                                    {m.result === "win" ? "Thắng" : m.result === "lose" ? "Thua" : "Hoà"}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between gap-3 mt-1.5">
+                                                <p className="text-sm truncate min-w-0">
+                                                    <span className="text-gray-400">vs </span>
+                                                    <span className={`font-semibold ${sideColor(m.opp, m.own)}`}>
+                                                        {m.opponentName}
+                                                    </span>
+                                                </p>
+                                                <p className="text-lg font-bold tabular-nums flex-shrink-0">
+                                                    <span className={sideColor(m.own, m.opp)}>{m.own}</span>
+                                                    <span className="text-gray-300 mx-1">-</span>
+                                                    <span className={sideColor(m.opp, m.own)}>{m.opp}</span>
+                                                </p>
+                                            </div>
+
+                                            {m.contentScores.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-2">
+                                                    {m.contentScores.map((c: any, i: number) => (
+                                                        <span
+                                                            key={i}
+                                                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-50 border border-gray-100 text-gray-600"
+                                                        >
+                                                            {c.label}
+                                                            <span className="tabular-nums">
+                                                                <span className={sideColor(c.own, c.opp)}>{c.own}</span>
+                                                                <span className="text-gray-300">-</span>
+                                                                <span className={sideColor(c.opp, c.own)}>{c.opp}</span>
+                                                            </span>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="px-5 pb-5">
+                    <div className="px-5 pb-5 pt-3 border-t border-gray-100 flex-shrink-0">
                         <button
                             onClick={handleClose}
                             className="w-full py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
@@ -198,6 +319,8 @@ export default function TournamentStandingsPage() {
     const [loading, setLoading] = useState(true);
     const [ended, setEnded] = useState(false);
     const [selectedTeam, setSelectedTeam] = useState<any>(null);
+    const [playoffRoundNumber, setPlayoffRoundNumber] = useState<number | null>(null);
+    const [adjustments, setAdjustments] = useState<any[]>([]);
 
     const load = useCallback(
         async (opts?: { silent?: boolean }) => {
@@ -205,17 +328,20 @@ export default function TournamentStandingsPage() {
             const silent = opts?.silent ?? false;
             if (!silent) setLoading(true);
             try {
-                const [{ data: act }, { data: teamsData }, { data: scheduleData }, { data: myStatus }] =
+                const [{ data: act }, { data: teamsData }, { data: scheduleData }, { data: myStatus }, { data: adjData }] =
                     await Promise.all([
                         activitiesApi.get(id),
                         activitiesApi.getTournamentTeams(id),
                         activitiesApi.getTournamentSchedule(id),
                         activitiesApi.getMyStatus(id),
+                        activitiesApi.getPointAdjustments(id),
                     ]);
                 setTeams(teamsData.teams ?? []);
                 setRounds(scheduleData.rounds ?? []);
                 setMyTeamId(myStatus?.my_registration?.team?.id ?? null);
                 setEnded(Boolean(act?.ended_at));
+                setPlayoffRoundNumber(act?.detail?.rules?.playoff_round_number ?? null);
+                setAdjustments(adjData.adjustments ?? []);
             } finally {
                 if (!silent) setLoading(false);
             }
@@ -247,8 +373,16 @@ export default function TournamentStandingsPage() {
         };
     }, [id]);
 
-    const standings = useMemo(() => computeStandings(teams, rounds), [teams, rounds]);
-    const totalPlayed = standings.reduce((s, t) => s + t.played, 0);
+    const standings = useMemo(
+        () => computeStandings(teams, rounds, adjustments),
+        [teams, rounds, adjustments],
+    );
+
+    // Mỗi trận có 2 đội cùng tính "played" nên chia 2
+    const totalPlayed = useMemo(
+        () => standings.reduce((s, t) => s + t.played, 0) / 2,
+        [standings],
+    );
 
     return (
         <div className={`min-h-screen bg-[#F4F6FA] overflow-y-auto ${HIDE_SCROLLBAR_CLASS}`}>
@@ -317,16 +451,33 @@ export default function TournamentStandingsPage() {
                                                     }`}
                                             >
                                                 <RankBadge rank={idx + 1} />
-                                                <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                                                    <p className="font-semibold text-gray-900 truncate">{t.name}</p>
-                                                    {isMine && (
-                                                        <span className="text-[10px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                                                            Đội bạn
-                                                        </span>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="font-semibold text-gray-900 truncate">{t.name}</p>
+                                                        {isMine && (
+                                                            <span className="text-[10px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                                                Đội bạn
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {t.adjustment !== 0 && (
+                                                        <p className="text-[10px] text-gray-400">
+                                                            {t.pointsFor}{" "}
+                                                            <span
+                                                                className={
+                                                                    t.adjustment > 0
+                                                                        ? "text-emerald-600 font-semibold"
+                                                                        : "text-red-500 font-semibold"
+                                                                }
+                                                            >
+                                                                {t.adjustment > 0 ? "+" : ""}
+                                                                {t.adjustment}
+                                                            </span>
+                                                        </p>
                                                     )}
                                                 </div>
-                                                <span className="text-base font-bold text-blue-600 tabular-nums flex-shrink-0">
-                                                    {t.pointsFor}
+                                                <span className="text-base font-bold text-blue-600 tabular-nums flex-shrink-0 w-14 text-center">
+                                                    {t.total}
                                                 </span>
                                             </button>
                                         );
@@ -342,6 +493,8 @@ export default function TournamentStandingsPage() {
                     team={selectedTeam.team}
                     rank={selectedTeam.rank}
                     isMyTeam={!!myTeamId && selectedTeam.team.id === myTeamId}
+                    rounds={rounds}
+                    playoffRoundNumber={playoffRoundNumber}
                     onClose={() => setSelectedTeam(null)}
                 />
             )}

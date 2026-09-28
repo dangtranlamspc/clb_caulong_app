@@ -5,7 +5,50 @@ import { useRouter } from "next/navigation";
 import { CalendarDays, CheckCircle2, BarChart3, Users2, ChevronRight, Trophy, Swords } from "lucide-react";
 import { activitiesApi } from "@/lib/api";
 
-function useTournamentProgress(activityId: string) {
+function computeRanking(rounds: any[]) {
+    const map = new Map<string, { id: string; pf: number; pa: number; wins: number }>();
+    const ensure = (id: string) => {
+        if (!map.has(id)) map.set(id, { id, pf: 0, pa: 0, wins: 0 });
+        return map.get(id)!;
+    };
+
+    for (const r of rounds) {
+        for (const m of r.matches ?? []) {
+            if (m.status !== "completed") continue;
+            const t1 = m.team1?.id && ensure(m.team1.id);
+            const t2 = m.team2?.id && ensure(m.team2.id);
+            if (!t1 || !t2) continue;
+            t1.pf += m.team1_score ?? 0;
+            t1.pa += m.team2_score ?? 0;
+            t2.pf += m.team2_score ?? 0;
+            t2.pa += m.team1_score ?? 0;
+            if ((m.team1_score ?? 0) > (m.team2_score ?? 0)) t1.wins += 1;
+            else if ((m.team2_score ?? 0) > (m.team1_score ?? 0)) t2.wins += 1;
+        }
+    }
+
+    return [...map.values()].sort((a, b) => {
+        if (b.pf !== a.pf) return b.pf - a.pf;
+        const da = a.pf - a.pa;
+        const db = b.pf - b.pa;
+        if (db !== da) return db - da;
+        return b.wins - a.wins;
+    });
+}
+
+function getPlayoffLabel(match: any, ranking: { id: string }[]) {
+    const ids = [match.team1?.id, match.team2?.id];
+    const [r1, r2, r3, r4] = ranking.map((t) => t.id);
+    if (ids.includes(r1) && ids.includes(r2)) return "Tranh hạng Nhất - Nhì";
+    if (ids.includes(r3) && ids.includes(r4)) return "Tranh hạng Ba - Tư";
+    return "Tranh hạng";
+}
+
+function useTournamentProgress(
+    activityId: string,
+    playoffRoundNumber: number | null,
+    myTeamId: string | null,
+) {
     const [rounds, setRounds] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -28,32 +71,56 @@ function useTournamentProgress(activityId: string) {
             rounds.find((r) => (r.matches ?? []).some((m: any) => m.status !== "completed")) ??
             rounds[rounds.length - 1];
 
-        const total = currentRound.matches?.length ?? 0;
-        const done = (currentRound.matches ?? []).filter((m: any) => m.status === "completed").length;
+        const matches = currentRound.matches ?? [];
+        const total = matches.length;
+        const done = matches.filter((m: any) => m.status === "completed").length;
 
         const allDone = rounds.every((r) =>
             (r.matches ?? []).every((m: any) => m.status === "completed"),
         );
 
+        const isPlayoff =
+            playoffRoundNumber != null && currentRound.round_number === playoffRoundNumber;
+
+        let title = `Lượt ${currentRound.round_number}`;
+        let labelByMatchId = new Map<string, string>();
+
+        if (isPlayoff) {
+            const ranking = computeRanking(
+                rounds.filter((r) => r.round_number < playoffRoundNumber!),
+            );
+            matches.forEach((m: any) => labelByMatchId.set(m.id, getPlayoffLabel(m, ranking)));
+
+            const myMatch = myTeamId
+                ? matches.find((m: any) => m.team1?.id === myTeamId || m.team2?.id === myTeamId)
+                : null;
+            title = myMatch ? labelByMatchId.get(myMatch.id)! : "Tranh hạng";
+        }
+
         return {
             roundNumber: currentRound.round_number,
+            title,
+            isPlayoff,
+            labelByMatchId,
             done,
             total,
             allDone,
-            matches: currentRound.matches ?? [],
+            matches,
         };
-    }, [rounds]);
+    }, [rounds, playoffRoundNumber, myTeamId]);
 
     return { summary, loading };
 }
 
 export function TournamentLiveHub({ activity, myStatus }: { activity: any; myStatus: any }) {
     const router = useRouter();
-    const { summary, loading } = useTournamentProgress(activity.id);
     const ended = Boolean(activity.ended_at);
 
     const myTeamId = myStatus?.my_registration?.team?.id ?? null;
     const hasTeamAssigned = Boolean(myTeamId);
+    const playoffRoundNumber = activity.detail?.rules?.playoff_round_number ?? null;
+
+    const { summary, loading } = useTournamentProgress(activity.id, playoffRoundNumber, myTeamId);
 
     const myOngoingMatch = useMemo(() => {
         if (!myTeamId || !summary) return null;
@@ -132,7 +199,7 @@ export function TournamentLiveHub({ activity, myStatus }: { activity: any; mySta
                             {loading
                                 ? "Đang tải..."
                                 : summary
-                                    ? `Lượt ${summary.roundNumber} - ${summary.done}/${summary.total} trận đã xong`
+                                    ? `${summary.title} - ${summary.done}/${summary.total} trận đã xong`
                                     : "Chưa có lịch thi đấu"}
                         </p>
                     </div>
@@ -161,6 +228,9 @@ export function TournamentLiveHub({ activity, myStatus }: { activity: any; mySta
                                 Đội bạn đang thi đấu!
                             </p>
                             <p className="mt-0.5 truncate text-[11px] text-amber-600">
+                                {summary?.isPlayoff && summary.labelByMatchId.get(myOngoingMatch.id)
+                                    ? `${summary.labelByMatchId.get(myOngoingMatch.id)} · `
+                                    : ""}
                                 {myOngoingMatch.team1?.name} vs {myOngoingMatch.team2?.name}
                                 {myOngoingMatch.court_number ? ` · Sân ${myOngoingMatch.court_number}` : ""}
                             </p>
