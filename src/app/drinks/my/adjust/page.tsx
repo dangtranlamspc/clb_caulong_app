@@ -22,6 +22,7 @@ type MyRequest = {
     quantity: number;
     note?: string;
     status: "pending" | "approved" | "rejected";
+    type: "add" | "deduct";
     created_at: string;
     reject_reason?: string;
     drinks?: { name: string; image_url?: string | null };
@@ -116,10 +117,10 @@ export default function AdjustMyDrinksPage() {
                 quantity: qty,
                 note: notes[drinkId]?.trim() || undefined,
             });
-            toast.success(`Đã trừ ${qty} nước khỏi kho của bạn`);
+            toast.success(`Đã gửi yêu cầu trừ ${qty}, chờ admin duyệt`);
             setAmounts((prev) => ({ ...prev, [drinkId]: "" }));
             setNotes((prev) => ({ ...prev, [drinkId]: "" }));
-            loadInventory();
+            loadMyRequests();
         } catch {
         } finally {
             setSubmittingId(null);
@@ -151,6 +152,11 @@ export default function AdjustMyDrinksPage() {
     const ownedIds = new Set(inventory.map((i) => i.drink_id));
     const addableCatalog = catalog.filter((d) => !ownedIds.has(d.id));
 
+    const currentType = tab === "add" ? "add" : "deduct";
+    const visibleRequests = myRequests.filter(
+        (r) => (r.type ?? "add") === currentType,
+    );
+
     return (
         <div className="mx-auto max-w-md space-y-5 p-4 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
             <div className="flex items-center gap-2">
@@ -179,10 +185,12 @@ export default function AdjustMyDrinksPage() {
                 ))}
             </div>
 
-            {tab === "add" && (
+            {(tab === "add" || tab === "deduct") && (
                 <div className="flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-xs text-sky-700">
                     <Clock className="h-4 w-4 flex-shrink-0" />
-                    Yêu cầu thêm nước sẽ được gửi tới admin duyệt trước khi cộng vào kho của bạn.
+                    {tab === "add"
+                        ? "Yêu cầu thêm nước sẽ được gửi tới admin duyệt trước khi cộng vào kho của bạn."
+                        : "Yêu cầu trừ nước sẽ được gửi tới admin duyệt trước khi trừ khỏi kho của bạn."}
                 </div>
             )}
 
@@ -236,7 +244,7 @@ export default function AdjustMyDrinksPage() {
                                         disabled={submittingId === item.drink_id}
                                         className="flex-shrink-0 rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
                                     >
-                                        Trừ
+                                        Gửi yêu cầu
                                     </button>
                                 ) : (
                                     <button
@@ -270,51 +278,52 @@ export default function AdjustMyDrinksPage() {
                 </button>
             )}
 
-            {tab === "add" && (
-                <div className="space-y-2.5">
-                    <h2 className="text-sm font-bold text-gray-900">Yêu cầu gần đây</h2>
-                    {loadingRequests && (
-                        <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center text-xs text-gray-400">
-                            Đang tải...
-                        </div>
-                    )}
-                    {!loadingRequests && myRequests.length === 0 && (
-                        <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-4 text-center text-xs text-gray-400">
-                            Bạn chưa gửi yêu cầu thêm nước nào.
-                        </div>
-                    )}
-                    {!loadingRequests && myRequests.map((r) => (
-                        <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3">
-                            <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
-                                {r.drinks?.image_url ? (
-                                    <img src={r.drinks.image_url} alt={r.drinks?.name} className="h-full w-full object-cover" />
-                                ) : (
-                                    <div className="flex h-full w-full items-center justify-center">
-                                        <GlassWater className="h-4 w-4 text-gray-300" />
-                                    </div>
-                                )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                    <p className="truncate text-sm font-semibold text-gray-900">{r.drinks?.name}</p>
-                                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-0.5 ${REQ_STATUS_BADGE[r.status]}`}>
-                                        {r.status === "pending" && <Clock className="w-2.5 h-2.5" />}
-                                        {r.status === "approved" && <Check className="w-2.5 h-2.5" />}
-                                        {r.status === "rejected" && <XCircle className="w-2.5 h-2.5" />}
-                                        {REQ_STATUS_LABEL[r.status]}
-                                    </span>
+
+            <div className="space-y-2.5">
+                <h2 className="text-sm font-bold text-gray-900">Yêu cầu gần đây</h2>
+                {loadingRequests && (
+                    <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center text-xs text-gray-400">
+                        Đang tải...
+                    </div>
+                )}
+                {!loadingRequests && visibleRequests.length === 0 && (
+                    <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-4 text-center text-xs text-gray-400">
+                        {tab === "add"
+                            ? "Bạn chưa gửi yêu cầu thêm nước nào."
+                            : "Bạn chưa gửi yêu cầu trừ nước nào."}
+                    </div>
+                )}
+                {!loadingRequests && visibleRequests.map((r) => (
+                    <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3">
+                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                            {r.drinks?.image_url ? (
+                                <img src={r.drinks.image_url} alt={r.drinks?.name} className="h-full w-full object-cover" />
+                            ) : (
+                                <div className="flex h-full w-full items-center justify-center">
+                                    <GlassWater className="h-4 w-4 text-gray-300" />
                                 </div>
-                                <p className="text-xs text-gray-400">
-                                    Số lượng: {r.quantity} · {new Date(r.created_at).toLocaleDateString("vi-VN")}
-                                </p>
-                                {r.status === "rejected" && r.reject_reason && (
-                                    <p className="text-xs text-red-500 mt-0.5">Lý do: {r.reject_reason}</p>
-                                )}
-                            </div>
+                            )}
                         </div>
-                    ))}
-                </div>
-            )}
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="truncate text-sm font-semibold text-gray-900">{r.drinks?.name}</p>
+                                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-0.5 ${REQ_STATUS_BADGE[r.status]}`}>
+                                    {r.status === "pending" && <Clock className="w-2.5 h-2.5" />}
+                                    {r.status === "approved" && <Check className="w-2.5 h-2.5" />}
+                                    {r.status === "rejected" && <XCircle className="w-2.5 h-2.5" />}
+                                    {REQ_STATUS_LABEL[r.status]}
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-400">
+                                Số lượng: {r.quantity} · {new Date(r.created_at).toLocaleDateString("vi-VN")}
+                            </p>
+                            {r.status === "rejected" && r.reject_reason && (
+                                <p className="text-xs text-red-500 mt-0.5">Lý do: {r.reject_reason}</p>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
 
             {mounted && createPortal(
                 <AnimatePresence>
