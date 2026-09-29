@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, CalendarDays, ChevronRight, Trophy } from "lucide-react";
+import { ArrowLeft, Loader2, CalendarDays, ChevronRight, Trophy, Home } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { activitiesApi } from "@/lib/api";
@@ -549,6 +549,13 @@ export default function TournamentSchedulePage() {
         router.push(`/events/${id}/schedule/${matchId}`);
     };
 
+    const goToActivityEventsTab = () => {
+        try {
+            sessionStorage.setItem("activity:return-tab", "events");
+        } catch { }
+        router.push("/activity");
+    };
+
     return (
         <div className={`min-h-screen bg-[#F4F6FA] overflow-y-auto ${HIDE_SCROLLBAR_CLASS}`}>
             <div
@@ -569,6 +576,14 @@ export default function TournamentSchedulePage() {
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <h1 className="text-base font-bold text-gray-900 truncate flex-1">Lịch thi đấu</h1>
+                    <button
+                        onClick={goToActivityEventsTab}
+                        title="Về trang hoạt động"
+                        aria-label="Về trang hoạt động"
+                        className="p-2 -mr-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                    >
+                        <Home className="w-5 h-5 text-gray-600" />
+                    </button>
                 </div>
             </div>
 

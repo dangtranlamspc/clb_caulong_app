@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Users } from "lucide-react";
+import { ArrowLeft, Home, Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { activitiesApi } from "@/lib/api";
@@ -712,6 +712,13 @@ export default function TournamentMatchDetailPage() {
     const matchId = params?.matchId;
     const router = useRouter();
 
+    const goToActivityEventsTab = () => {
+        try {
+            sessionStorage.setItem("activity:return-tab", "events");
+        } catch { }
+        router.push("/activity");
+    };
+
     const myUserId = useAuthStore((s) => s.user?.id);
 
     const [activity, setActivity] = useState<any>(null);
@@ -834,6 +841,14 @@ export default function TournamentMatchDetailPage() {
                             <Users className="w-3.5 h-3.5" /> Xem trận
                         </button>
                     )}
+                    <button
+                        onClick={goToActivityEventsTab}
+                        title="Về trang hoạt động"
+                        aria-label="Về trang hoạt động"
+                        className="p-2 -mr-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                    >
+                        <Home className="w-5 h-5 text-gray-600" />
+                    </button>
                 </div>
             </div>
 

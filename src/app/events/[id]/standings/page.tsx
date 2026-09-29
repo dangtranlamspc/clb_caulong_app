@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Trophy } from "lucide-react";
+import { ArrowLeft, Home, Loader2, Trophy } from "lucide-react";
 import { activitiesApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { createPortal } from "react-dom";
@@ -79,6 +79,12 @@ function computeStandings(teams: any[], rounds: any[], adjustments: any[] = []) 
             return b.wins - a.wins;
         });
 }
+
+const RANK_ROW_STYLE: Record<number, string> = {
+    1: "border-amber-200 bg-gradient-to-r from-amber-50 to-white",
+    2: "border-gray-200 bg-gradient-to-r from-gray-50 to-white",
+    3: "border-orange-200 bg-gradient-to-r from-orange-50 to-white",
+};
 
 function RankBadge({ rank }: { rank: number }) {
     const topStyles: Record<number, string> = {
@@ -313,6 +319,13 @@ export default function TournamentStandingsPage() {
     const id = params?.id;
     const router = useRouter();
 
+    const goToActivityEventsTab = () => {
+        try {
+            sessionStorage.setItem("activity:return-tab", "events");
+        } catch { }
+        router.push("/activity");
+    };
+
     const [teams, setTeams] = useState<any[]>([]);
     const [rounds, setRounds] = useState<any[]>([]);
     const [myTeamId, setMyTeamId] = useState<string | null>(null);
@@ -378,7 +391,6 @@ export default function TournamentStandingsPage() {
         [teams, rounds, adjustments],
     );
 
-    // Mỗi trận có 2 đội cùng tính "played" nên chia 2
     const totalPlayed = useMemo(
         () => standings.reduce((s, t) => s + t.played, 0) / 2,
         [standings],
@@ -404,6 +416,14 @@ export default function TournamentStandingsPage() {
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <h1 className="text-base font-bold text-gray-900 truncate flex-1">Bảng xếp hạng</h1>
+                    <button
+                        onClick={goToActivityEventsTab}
+                        title="Về trang hoạt động"
+                        aria-label="Về trang hoạt động"
+                        className="p-2 -mr-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                    >
+                        <Home className="w-5 h-5 text-gray-600" />
+                    </button>
                 </div>
             </div>
 
@@ -433,52 +453,56 @@ export default function TournamentStandingsPage() {
                             </div>
                         ) : (
                             <>
-                                <div className="grid grid-cols-[2.5rem_1fr_5rem] gap-2 px-3 py-2 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
-                                    <span></span>
-                                    <span>Đội</span>
-                                    <span className="text-center">Tổng điểm</span>
-                                </div>
-
-                                <div className="space-y-2">
+                                <div className="space-y-2.5">
                                     {standings.map((t, idx) => {
+                                        const rank = idx + 1;
                                         const isMine = !!myTeamId && t.id === myTeamId;
+
                                         return (
                                             <button
                                                 type="button"
                                                 key={t.id}
-                                                onClick={() => setSelectedTeam({ team: t, rank: idx + 1 })}
-                                                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border shadow-sm text-left transition-colors active:bg-gray-50 ${isMine ? "border-blue-300 bg-blue-50/50" : "border-gray-100 bg-white"
+                                                onClick={() => setSelectedTeam({ team: t, rank })}
+                                                className={`w-full flex items-center gap-3 px-3.5 py-3.5 rounded-2xl border shadow-sm text-left cursor-pointer hover:shadow-md active:scale-[0.99] transition-all ${isMine
+                                                    ? "border-blue-300 bg-gradient-to-r from-blue-50 to-white ring-1 ring-blue-200"
+                                                    : RANK_ROW_STYLE[rank] ?? "border-gray-100 bg-white hover:border-blue-200"
                                                     }`}
                                             >
-                                                <RankBadge rank={idx + 1} />
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <p className="font-semibold text-gray-900 truncate">{t.name}</p>
-                                                        {isMine && (
-                                                            <span className="text-[10px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                                                                Đội bạn
+                                                <RankBadge rank={rank} />
+
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <p className="font-semibold text-gray-900 truncate">{t.name}</p>
+                                                            {isMine && (
+                                                                <span className="text-[10px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                                                    Đội bạn
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-baseline gap-1.5 flex-shrink-0">
+                                                            {t.adjustment !== 0 && (
+                                                                <span
+                                                                    className={`text-[11px] font-semibold ${t.adjustment > 0 ? "text-emerald-600" : "text-red-500"
+                                                                        }`}
+                                                                >
+                                                                    {t.adjustment > 0 ? "+" : ""}
+                                                                    {t.adjustment}
+                                                                </span>
+                                                            )}
+                                                            <span className="text-lg font-black text-blue-600 tabular-nums">
+                                                                {t.total}
                                                             </span>
-                                                        )}
+                                                            <span className="text-[10px] text-gray-400">điểm</span>
+                                                        </div>
                                                     </div>
-                                                    {t.adjustment !== 0 && (
-                                                        <p className="text-[10px] text-gray-400">
-                                                            {t.pointsFor}{" "}
-                                                            <span
-                                                                className={
-                                                                    t.adjustment > 0
-                                                                        ? "text-emerald-600 font-semibold"
-                                                                        : "text-red-500 font-semibold"
-                                                                }
-                                                            >
-                                                                {t.adjustment > 0 ? "+" : ""}
-                                                                {t.adjustment}
-                                                            </span>
-                                                        </p>
-                                                    )}
+
+                                                    <p className="text-[11px] text-gray-400 mt-1">
+                                                        {t.played} trận ·{" "}
+                                                        <span className="text-emerald-600 font-medium">{t.wins} thắng</span> ·{" "}
+                                                        <span className="text-red-500 font-medium">{t.losses} thua</span>
+                                                    </p>
                                                 </div>
-                                                <span className="text-base font-bold text-blue-600 tabular-nums flex-shrink-0 w-14 text-center">
-                                                    {t.total}
-                                                </span>
                                             </button>
                                         );
                                     })}

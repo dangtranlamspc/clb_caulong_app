@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Loader2, Users } from "lucide-react";
+import { ChevronLeft, Home, Loader2, Trophy, Users } from "lucide-react";
 import { activitiesApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import { createPortal } from "react-dom";
@@ -733,12 +733,11 @@ const CONTENT_EMOJI: Record<string, string> = {
 };
 
 function MatchScoreDetailModal({
-    match,
-    myTeamId,
-    onClose,
+    match, myTeamId, playoffRoundNumber, onClose,
 }: {
     match: any;
     myTeamId?: string | null;
+    playoffRoundNumber?: number | null;
     onClose: () => void;
 }) {
     const [visible, setVisible] = useState(false);
@@ -791,11 +790,11 @@ function MatchScoreDetailModal({
                         </h3>
                         <p className="mt-1 text-xs text-gray-400">
                             {[
-                                `Lượt ${match?.round_number}`,
+                                playoffRoundNumber != null && match?.round_number === playoffRoundNumber
+                                    ? "Tranh hạng"
+                                    : `Lượt ${match?.round_number}`,
                                 match?.court_number ? `Sân ${match.court_number}` : null,
-                            ]
-                                .filter(Boolean)
-                                .join(" · ")}
+                            ].filter(Boolean).join(" · ")}
                         </p>
                     </div>
 
@@ -886,11 +885,59 @@ function MatchScoreDetailModal({
         );
 }
 
+function computeRanking(teams: any[], rounds: any[], adjustments: any[]) {
+    const map = new Map<
+        string,
+        { id: string; points: number; against: number; wins: number; played: number; adj: number }
+    >();
+    teams.forEach((t) =>
+        map.set(t.id, { id: t.id, points: 0, against: 0, wins: 0, played: 0, adj: 0 }),
+    );
+
+    for (const r of rounds) {
+        for (const m of r.matches ?? []) {
+            if (m.status !== "completed") continue;
+            const a = map.get(m.team1?.id);
+            const b = map.get(m.team2?.id);
+            if (!a || !b) continue;
+            const s1 = m.team1_score ?? 0;
+            const s2 = m.team2_score ?? 0;
+            a.played += 1;
+            b.played += 1;
+            a.points += s1;
+            a.against += s2;
+            b.points += s2;
+            b.against += s1;
+            if (s1 > s2) a.wins += 1;
+            else if (s2 > s1) b.wins += 1;
+        }
+    }
+    for (const adj of adjustments) {
+        const s = map.get(adj.team_id);
+        if (s) s.adj += adj.delta;
+    }
+
+    return [...map.values()]
+        .map((s) => ({ ...s, total: s.points + s.adj, diff: s.points - s.against }))
+        .sort((x, y) => {
+            if (y.total !== x.total) return y.total - x.total;
+            if (y.diff !== x.diff) return y.diff - x.diff;
+            return y.wins - x.wins;
+        });
+}
+
 export default function MyTeamPage() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
     const activityId = params.id;
     const myUserId = useAuthStore((s) => s.user?.id);
+
+    const goToActivityEventsTab = () => {
+        try {
+            sessionStorage.setItem("activity:return-tab", "events");
+        } catch { }
+        router.push("/activity");
+    };
 
     const [activity, setActivity] = useState<any>(null);
     const [rounds, setRounds] = useState<Round[]>([]);
@@ -901,6 +948,9 @@ export default function MyTeamPage() {
 
     const [selectedScoreMatch, setSelectedScoreMatch] = useState<any>(null);
 
+    const [playoffRoundNumber, setPlayoffRoundNumber] = useState<number | null>(null);
+    const [adjustments, setAdjustments] = useState<any[]>([]);
+
     useEffect(() => {
         let mounted = true;
         Promise.all([
@@ -908,13 +958,17 @@ export default function MyTeamPage() {
             activitiesApi.getTournamentSchedule(activityId),
             activitiesApi.getTournamentTeams(activityId),
             activitiesApi.getMyStatus(activityId),
+            activitiesApi.getPointAdjustments(activityId),
         ])
-            .then(([act, sch, tms, mine]) => {
+            .then(([act, sch, tms, mine, adj]) => {
                 if (!mounted) return;
                 setActivity(act.data);
                 setRounds(sch.data.rounds ?? []);
                 setTeams(tms.data.teams ?? []);
                 setMyTeamId(mine.data?.my_registration?.team?.id ?? null);
+                const pr = act.data?.detail?.rules?.playoff_round_number;
+                setPlayoffRoundNumber(pr != null ? Number(pr) : null);
+                setAdjustments(adj.data.adjustments ?? []);
             })
             .finally(() => mounted && setLoading(false));
         return () => {
@@ -928,61 +982,75 @@ export default function MyTeamPage() {
     );
 
     const standings = useMemo(() => {
-        const stats = new Map<string, { points: number; wins: number; played: number; total: number }>();
-        const ensure = (id: string) => {
-            if (!stats.has(id)) stats.set(id, { points: 0, wins: 0, played: 0, total: 0 });
-            return stats.get(id)!;
-        };
-
-        for (const t of teams) ensure(t.id);
-
-        for (const m of allMatches) {
-            if (!m.team1?.id || !m.team2?.id) continue;
-            const s1 = ensure(m.team1.id);
-            const s2 = ensure(m.team2.id);
-            s1.total += 1;
-            s2.total += 1;
-            if (m.status !== "completed") continue;
-            s1.played += 1;
-            s2.played += 1;
-            s1.points += m.team1_score ?? 0;
-            s2.points += m.team2_score ?? 0;
-            if (m.winner_team_id === m.team1.id) s1.wins += 1;
-            if (m.winner_team_id === m.team2.id) s2.wins += 1;
-        }
-
-        const sorted = [...stats.entries()].sort((a, b) => {
-            if (b[1].points !== a[1].points) return b[1].points - a[1].points;
-            return b[1].wins - a[1].wins;
-        });
-
+        const ranking = computeRanking(teams, rounds, adjustments);
         const rankMap = new Map<string, number>();
-        sorted.forEach(([id], idx) => rankMap.set(id, idx + 1));
-
+        ranking.forEach((s, idx) => rankMap.set(s.id, idx + 1));
+        const stats = new Map(ranking.map((s) => [s.id, s]));
         return { stats, rankMap };
-    }, [allMatches, teams]);
+    }, [teams, rounds, adjustments]);
 
     const myTeam = teams.find((t) => t.id === myTeamId) ?? null;
     const myStats = myTeamId ? standings.stats.get(myTeamId) : undefined;
     const myRank = myTeamId ? standings.rankMap.get(myTeamId) : undefined;
 
+    const totalMyMatches = useMemo(
+        () =>
+            allMatches.filter((m) => m.team1?.id === myTeamId || m.team2?.id === myTeamId).length,
+        [allMatches, myTeamId],
+    );
+
     const roundScores = useMemo(() => {
         if (!myTeamId) return [];
+
+        // Xếp hạng vòng tròn (trước lượt tranh hạng) để gắn nhãn Nhất - Nhì / Ba - Tư
+        let ids: string[] = [];
+        if (playoffRoundNumber != null) {
+            const prior = rounds.filter((r) => r.round_number < playoffRoundNumber);
+            ids = computeRanking(teams, prior, adjustments).map((s) => s.id);
+        }
+        const [r1, r2, r3, r4] = ids;
+
         return rounds.map((r) => {
+            const isPlayoff = playoffRoundNumber != null && r.round_number === playoffRoundNumber;
             const m = (r.matches ?? []).find(
                 (x: any) => x.team1?.id === myTeamId || x.team2?.id === myTeamId,
             );
-            if (!m) return { round: r.round_number, score: null, bye: true, result: null as null | "win" | "loss" | "draw", match: null };
-            if (m.status !== "completed") return { round: r.round_number, score: null, bye: false, result: null, match: m };
 
-            const score = m.team1?.id === myTeamId ? m.team1_score : m.team2_score;
+            if (!m) {
+                return {
+                    round: r.round_number, isPlayoff, label: null as string | null, bye: true, match: null as any,
+                    opponent: null as any, score: null as number | null, oppScore: null as number | null,
+                    result: null as null | "win" | "loss" | "draw"
+                };
+            }
+
+            const isT1 = m.team1?.id === myTeamId;
+            const opponent = isT1 ? m.team2 : m.team1;
+
+            let label: string | null = null;
+            if (isPlayoff) {
+                const pair = [m.team1?.id, m.team2?.id];
+                if (pair.includes(r1) && pair.includes(r2)) label = "Tranh hạng Nhất - Nhì";
+                else if (pair.includes(r3) && pair.includes(r4)) label = "Tranh hạng Ba - Tư";
+                else label = "Trận tranh hạng";
+            }
+
+            if (m.status !== "completed") {
+                return {
+                    round: r.round_number, isPlayoff, label, bye: false, match: m, opponent,
+                    score: null, oppScore: null, result: null
+                };
+            }
+
+            const score = (isT1 ? m.team1_score : m.team2_score) ?? 0;
+            const oppScore = (isT1 ? m.team2_score : m.team1_score) ?? 0;
             const result: "win" | "loss" | "draw" = m.winner_team_id
                 ? m.winner_team_id === myTeamId ? "win" : "loss"
                 : "draw";
 
-            return { round: r.round_number, score: score ?? 0, bye: false, result, match: m };
+            return { round: r.round_number, isPlayoff, label, bye: false, match: m, opponent, score, oppScore, result };
         });
-    }, [rounds, myTeamId]);
+    }, [rounds, teams, adjustments, myTeamId, playoffRoundNumber]);
 
     const nextMatch = useMemo(() => {
         if (!myTeamId) return null;
@@ -1028,7 +1096,7 @@ export default function MyTeamPage() {
     if (!myTeam) {
         return (
             <div className="mx-auto min-h-screen w-full max-w-md bg-white">
-                <Header onBack={() => router.back()} />
+                <Header onBack={() => router.back()} onHome={goToActivityEventsTab} />
                 <div className="px-4 py-10 text-center text-sm text-gray-500">
                     Bạn chưa được xếp vào đội thi đấu nào.
                 </div>
@@ -1038,53 +1106,79 @@ export default function MyTeamPage() {
 
     return (
         <div className="mx-auto min-h-screen w-full max-w-md bg-white pb-10">
-            <Header onBack={() => router.back()} />
+            <Header onBack={() => router.back()} onHome={goToActivityEventsTab} />
 
+            {/* Hero */}
             <div className="px-4">
-                <div className="rounded-[20px] bg-rose-50 px-4 pb-4 pt-4 text-center">
-                    <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-rose-500 text-sm font-black text-white">
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-500 via-rose-500 to-orange-400 px-5 pb-5 pt-5 text-center text-white shadow-lg shadow-rose-200">
+                    <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10" />
+                    <div className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-white/10" />
+
+                    <div className="relative mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg font-black text-rose-500 shadow-md">
                         {myRank ?? "-"}
                     </div>
-                    <p className="mt-2 text-xl font-black text-gray-900">{myTeam.name}</p>
+                    <p className="relative mt-2 text-2xl font-black">{myTeam.name}</p>
+                    <p className="relative mt-0.5 text-xs font-medium text-white/80">
+                        {myStats?.wins ?? 0} thắng · {(myStats?.played ?? 0) - (myStats?.wins ?? 0)} thua
+                    </p>
                 </div>
             </div>
 
-            <div className="mt-3 px-4">
-                <div className="grid grid-cols-2 overflow-hidden rounded-[16px] border border-gray-200">
-                    <div className="border-r border-gray-200 px-4 py-3">
-                        <p className="text-xs text-gray-500">Hạng hiện tại</p>
-                        <p className="mt-1 text-2xl font-black text-rose-600">
-                            #{myRank ?? "-"}
-                        </p>
-                    </div>
-                    <div className="px-4 py-3">
-                        <p className="text-xs text-gray-500">Tổng điểm</p>
-                        <p className="mt-1 text-2xl font-black text-rose-600">
-                            {myStats?.points ?? 0}
-                        </p>
-                    </div>
+            {/* Số liệu */}
+            <div className="mt-3 grid grid-cols-3 gap-2 px-4">
+                <div className="rounded-2xl border border-gray-100 bg-white px-3 py-3 text-center shadow-sm">
+                    <p className="text-[11px] font-medium text-gray-400">Hạng</p>
+                    <p className="mt-0.5 text-xl font-black text-rose-600">#{myRank ?? "-"}</p>
                 </div>
-
-                <div className="mt-2 flex items-center justify-between rounded-[16px] border border-gray-200 px-4 py-3">
-                    <span className="text-sm text-gray-500">Đã thi đấu</span>
-                    <span className="text-sm font-black text-gray-900">
-                        {myStats?.played ?? 0} / {myStats?.total ?? 0}
-                    </span>
+                <div className="rounded-2xl border border-gray-100 bg-white px-3 py-3 text-center shadow-sm">
+                    <p className="text-[11px] font-medium text-gray-400">Tổng điểm</p>
+                    <p className="mt-0.5 text-xl font-black text-gray-900">{myStats?.total ?? 0}</p>
+                    {(myStats?.adj ?? 0) !== 0 && (
+                        <p className={`text-[10px] font-semibold ${(myStats?.adj ?? 0) > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                            {(myStats?.adj ?? 0) > 0 ? "+" : ""}{myStats?.adj} điều chỉnh
+                        </p>
+                    )}
+                </div>
+                <div className="rounded-2xl border border-gray-100 bg-white px-3 py-3 text-center shadow-sm">
+                    <p className="text-[11px] font-medium text-gray-400">Đã đấu</p>
+                    <p className="mt-0.5 text-xl font-black text-gray-900">
+                        {myStats?.played ?? 0}
+                        <span className="text-sm font-bold text-gray-300">/{totalMyMatches}</span>
+                    </p>
                 </div>
             </div>
+
+            {totalMyMatches > 0 && (
+                <div className="mt-3 px-4">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">
+                        <div
+                            className="h-full rounded-full bg-gradient-to-r from-rose-400 to-orange-400 transition-all duration-500"
+                            style={{ width: `${((myStats?.played ?? 0) / totalMyMatches) * 100}%` }}
+                        />
+                    </div>
+                </div>
+            )}
 
             <div className="mt-5 px-4">
                 <h2 className="text-base font-black text-gray-900">Điểm theo lượt</h2>
-                <div className="mt-2 overflow-hidden rounded-[16px] border border-gray-200">
-                    {roundScores.map((r, idx) => {
+
+                <div className="mt-2 space-y-2">
+                    {roundScores.map((r) => {
+                        const clickable = !!r.match && r.match.status === "completed";
                         const hasScore = r.score !== null;
-                        const clickable = !!r.match;
+
                         const resultCfg = {
                             win: { label: "Thắng", color: "#16a34a", bg: "#f0fdf4" },
                             loss: { label: "Thua", color: "#dc2626", bg: "#fef2f2" },
-                            draw: { label: "Hòa", color: "#6b7280", bg: "#f9fafb" },
+                            draw: { label: "Hòa", color: "#6b7280", bg: "#f3f4f6" },
                         } as const;
                         const cfg = r.result ? resultCfg[r.result] : null;
+
+                        const accent =
+                            r.result === "win" ? "bg-emerald-500"
+                                : r.result === "loss" ? "bg-red-400"
+                                    : r.result === "draw" ? "bg-gray-300"
+                                        : "bg-gray-200";
 
                         return (
                             <button
@@ -1092,37 +1186,85 @@ export default function MyTeamPage() {
                                 key={r.round}
                                 disabled={!clickable}
                                 onClick={() => clickable && setSelectedScoreMatch(r.match)}
-                                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left ${idx % 2 === 1 ? "bg-slate-50" : "bg-white"
-                                    } ${idx !== 0 ? "border-t border-gray-100" : ""} ${clickable ? "active:bg-gray-100 transition-colors" : ""
-                                    }`}
+                                className={`relative w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-all ${r.isPlayoff ? "border-amber-200 bg-amber-50/50" : "border-gray-100 bg-white"
+                                    } ${clickable ? "active:scale-[0.99]" : ""}`}
                             >
-                                <span className="w-4 text-xs font-bold text-gray-400">{r.round}</span>
-                                <span className={`flex-1 text-sm ${hasScore ? "font-bold text-gray-800" : "text-gray-400"}`}>
-                                    Lượt {r.round}
-                                </span>
-                                {cfg && (
+                                <span className={`absolute bottom-0 left-0 top-0 w-1 ${r.isPlayoff ? "bg-amber-400" : accent}`} />
+
+                                <div className="flex items-center gap-3 py-3 pl-4 pr-4">
                                     <span
-                                        className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                                        style={{ background: cfg.bg, color: cfg.color }}
+                                        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-black ${r.isPlayoff ? "bg-amber-400 text-white" : "bg-gray-100 text-gray-500"
+                                            }`}
                                     >
-                                        {cfg.label}
+                                        {r.isPlayoff ? <Trophy className="h-4 w-4" /> : r.round}
                                     </span>
-                                )}
-                                <span className={`text-sm font-black w-6 text-right ${hasScore ? "text-gray-900" : "text-gray-300"}`}>
-                                    {hasScore ? r.score : "-"}
-                                </span>
+
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-bold text-gray-900">
+                                            {r.isPlayoff ? r.label : `Lượt ${r.round}`}
+                                        </p>
+                                        <p className="mt-0.5 truncate text-xs text-gray-400">
+                                            {r.bye
+                                                ? "Đội nghỉ lượt này"
+                                                : (
+                                                    <>
+                                                        vs <span className="font-semibold text-gray-600">{r.opponent?.name ?? "—"}</span>
+                                                    </>
+                                                )}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex flex-shrink-0 flex-col items-end gap-1">
+                                        {hasScore ? (
+                                            <>
+                                                <p className="text-base font-black tabular-nums">
+                                                    <span className="text-gray-900">{r.score}</span>
+                                                    <span className="mx-1 text-gray-300">-</span>
+                                                    <span className="text-gray-400">{r.oppScore}</span>
+                                                </p>
+                                                {cfg && (
+                                                    <span
+                                                        className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                                        style={{ background: cfg.bg, color: cfg.color }}
+                                                    >
+                                                        {cfg.label}
+                                                    </span>
+                                                )}
+                                            </>
+                                        ) : r.bye ? (
+                                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-400">
+                                                Nghỉ
+                                            </span>
+                                        ) : r.match?.status === "ongoing" ? (
+                                            <span className="animate-pulse rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-600">
+                                                Đang đấu
+                                            </span>
+                                        ) : (
+                                            <span className="rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-bold text-gray-400">
+                                                Chưa đấu
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             </button>
                         );
                     })}
+
                     {roundScores.length === 0 && (
-                        <div className="px-4 py-6 text-center text-xs text-gray-400">Chưa có lịch thi đấu</div>
+                        <div className="rounded-2xl border border-dashed border-gray-200 px-4 py-6 text-center text-xs text-gray-400">
+                            Chưa có lịch thi đấu
+                        </div>
                     )}
                 </div>
             </div>
 
             {nextMatch && (
                 <div className="mt-5 px-4">
-                    <h2 className="text-base font-black text-gray-900">Trận tiếp theo</h2>
+                    <h2 className="text-base font-black text-gray-900">
+                        {playoffRoundNumber != null && nextMatch.round_number === playoffRoundNumber
+                            ? "Trận tranh hạng tiếp theo"
+                            : "Trận tiếp theo"}
+                    </h2>
                     <button
                         type="button"
                         onClick={() => setShowLineupModal(true)}
@@ -1139,7 +1281,9 @@ export default function MyTeamPage() {
                         </div>
                         <p className="mt-1 text-xs text-gray-500">
                             {[
-                                `Lượt ${nextMatch.round_number}`,
+                                playoffRoundNumber != null && nextMatch.round_number === playoffRoundNumber
+                                    ? "Tranh hạng"
+                                    : `Lượt ${nextMatch.round_number}`,
                                 formatDate(nextMatch.scheduled_at),
                                 nextMatch.court_number ? `Sân ${nextMatch.court_number}` : null,
                             ]
@@ -1169,6 +1313,7 @@ export default function MyTeamPage() {
                 <MatchScoreDetailModal
                     match={selectedScoreMatch}
                     myTeamId={myTeamId}
+                    playoffRoundNumber={playoffRoundNumber}
                     onClose={() => setSelectedScoreMatch(null)}
                 />
             )}
@@ -1176,7 +1321,7 @@ export default function MyTeamPage() {
     );
 }
 
-function Header({ onBack }: { onBack: () => void }) {
+function Header({ onBack, onHome }: { onBack: () => void; onHome: () => void }) {
     return (
         <div className="sticky top-0 z-10 flex items-center gap-2 bg-white px-3 py-3">
             <button
@@ -1186,7 +1331,15 @@ function Header({ onBack }: { onBack: () => void }) {
             >
                 <ChevronLeft className="h-5 w-5" />
             </button>
-            <h1 className="text-lg font-black text-gray-900">Đội của tôi</h1>
+            <h1 className="flex-1 truncate text-lg font-black text-gray-900">Đội của tôi</h1>
+            <button
+                onClick={onHome}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-gray-700 transition hover:bg-gray-100"
+                title="Về trang hoạt động"
+                aria-label="Về trang hoạt động"
+            >
+                <Home className="h-5 w-5" />
+            </button>
         </div>
     );
 }
