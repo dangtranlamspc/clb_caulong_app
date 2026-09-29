@@ -364,6 +364,9 @@ export const dashboardAdminApi = {
   getFinanceHistory: (params?: { months?: number; year?: number }) =>
     api.get("/wallet/admin/finance-history", { params }),
   getFinanceYears: () => api.get("/wallet/admin/finance-years"),
+
+  getTopTopups: (params?: { month?: number; year?: number; limit?: number }) =>
+    api.get("/wallet/admin/top-topups", { params }),
 };
 
 export const membersAdminApi = {
@@ -937,6 +940,9 @@ export const fundApi = {
     id: string,
     data: { method: "wallet" | "bank_transfer" | "cash"; payment_reference?: string; payment_proof_url?: string },
   ) => api.post(`/fund/penalties/${id}/submit-payment`, data),
+
+  getTopPenalizedMembers: (params?: { month?: number; year?: number; limit?: number }) =>
+    api.get("/fund/penalties/top-members", { params }),
 };
 
 
