@@ -136,76 +136,85 @@ export default function SessionCostCard({ sessionId }: Props) {
             </div>
 
             {otherFeeItems.length > 0 && (
-              <div className="p-3 space-y-2">
+              <div className="p-3 space-y-2.5">
                 {otherFeeItems.map((item, i) => {
-                  const noteLines = (item.note ?? "")
-                    .split("\n")
-                    .map((l) => l.trim())
-                    .filter(Boolean);
+                  const toLines = (n?: string | null) =>
+                    (n ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+                  const hasGuests = (item.guests?.length ?? 0) > 0;
+
+                  // Một dòng: tên ..... giá
+                  const Row = ({
+                    name,
+                    amount,
+                    sub,
+                    note,
+                    nested,
+                  }: {
+                    name: string;
+                    amount: number;
+                    sub?: string;
+                    note?: string | null;
+                    nested?: boolean;
+                  }) => (
+                    <div className={nested ? "pl-3 border-l-2 border-amber-200" : ""}>
+                      <div className="flex items-baseline gap-2">
+                        <span
+                          className={`truncate ${nested
+                              ? "text-sm text-gray-700"
+                              : "text-sm font-semibold text-gray-800"
+                            }`}
+                        >
+                          {name}
+                          {sub && (
+                            <span className="ml-1.5 text-[11px] font-normal text-gray-400">
+                              {sub}
+                            </span>
+                          )}
+                        </span>
+                        {/* đường chấm dẫn mắt từ tên sang giá */}
+                        <span className="flex-1 min-w-4 border-b border-dotted border-amber-300 translate-y-[-3px]" />
+                        <span
+                          className={`flex-shrink-0 tabular-nums ${nested
+                              ? "text-sm font-medium text-amber-700"
+                              : "text-sm font-semibold text-amber-700"
+                            }`}
+                        >
+                          {fmt(amount)}
+                        </span>
+                      </div>
+                      {toLines(note).map((line, li) => (
+                        <p key={li} className="text-xs text-gray-500 mt-0.5">
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  );
 
                   return (
                     <div
                       key={i}
-                      className="rounded-lg border border-amber-200/70 bg-white/70 px-2.5 py-2 space-y-1"
+                      className="rounded-xl border border-amber-200/80 bg-white overflow-hidden"
                     >
-                      <p className="text-xs font-semibold text-gray-600">
-                        {item.name}
-                      </p>
-
-                      {noteLines.length > 0 && (
-                        <div className="pl-2 space-y-0.5">
-                          {noteLines.map((line, li) => (
-                            <p key={li} className="text-[11px] text-gray-400 italic">
-                              — {line}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Dòng tổng của riêng người này, nằm giữa các khoản thu */}
-                      <div className="flex justify-between text-xs pt-1 border-t border-dashed border-amber-200/70">
-                        <span className="text-gray-500">Tổng ({item.name})</span>
-                        <span className="font-semibold text-amber-600">
-                          {fmt(item.amount)}
-                        </span>
+                      <div className="px-3 py-2.5 space-y-2">
+                        <Row name={item.name} amount={item.amount} note={item.note} />
+                        {item.guests?.map((g, gi) => (
+                          <Row
+                            key={gi}
+                            name={g.name}
+                            amount={g.amount}
+                            sub="đi cùng"
+                            note={g.note}
+                            nested
+                          />
+                        ))}
                       </div>
 
-                      {item.guests?.map((g, gi) => {
-                        const gNoteLines = (g.note ?? "")
-                          .split("\n")
-                          .map((l) => l.trim())
-                          .filter(Boolean);
-                        return (
-                          <div key={gi} className="pl-3">
-                            <div className="flex justify-between text-xs text-gray-400">
-                              <span>
-                                + {g.name}{" "}
-                                <span className="text-gray-300">(đi cùng)</span>
-                              </span>
-                              <span className="font-medium text-amber-500">
-                                {fmt(g.amount)}
-                              </span>
-                            </div>
-                            {gNoteLines.length > 0 && (
-                              <div className="pl-3 space-y-0.5">
-                                {gNoteLines.map((line, li) => (
-                                  <p
-                                    key={li}
-                                    className="text-[11px] text-gray-300 italic"
-                                  >
-                                    — {line}
-                                  </p>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-
-                      {item.guests && item.guests.length > 0 && (
-                        <div className="flex justify-between text-[11px] text-gray-400 pl-3 pt-0.5 border-t border-dashed border-gray-200">
-                          <span>= Tổng cộng</span>
-                          <span className="font-semibold text-amber-700">
+                      {hasGuests && (
+                        <div className="flex items-center justify-between px-3 py-2 bg-amber-50 border-t border-dashed border-amber-200">
+                          <span className="text-xs font-medium text-amber-800">
+                            Tổng nhóm
+                          </span>
+                          <span className="text-sm font-bold text-amber-800 tabular-nums">
                             {fmt(item.total ?? item.amount)}
                           </span>
                         </div>
