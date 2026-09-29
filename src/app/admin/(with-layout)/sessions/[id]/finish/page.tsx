@@ -11,6 +11,7 @@ import {
   Plus,
   AlertTriangle,
   Mail,
+  Check,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { sessionsAdminApi, drinksAdminApi } from "@/lib/api";
@@ -93,6 +94,8 @@ function parseNumberInput(raw: string): number {
   return digits ? parseInt(digits, 10) : 0;
 }
 
+type WalletMode = "member_choice" | "grouped" | "separate" | "custom";
+
 export default function SessionFinishPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
@@ -156,9 +159,13 @@ export default function SessionFinishPage() {
 
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set());
 
-  const [walletModes, setWalletModes] = useState<
-    Record<string, "member_choice" | "grouped" | "separate">
-  >({});
+  // const [walletModes, setWalletModes] = useState<
+  //   Record<string, "member_choice" | "grouped" | "separate">
+  // >({});
+
+  const [walletModes, setWalletModes] = useState<Record<string, WalletMode>>({});
+
+  const [groupedGuestIds, setGroupedGuestIds] = useState<Record<string, Set<string>>>({});
 
   const [penaltyTarget, setPenaltyTarget] = useState<{
     id: string;
@@ -166,11 +173,54 @@ export default function SessionFinishPage() {
   } | null>(null);
   const penaltiesCardRef = useRef<SessionPenaltiesCardHandle>(null);
 
-  const setWalletMode = (
-    registrationId: string,
-    mode: "member_choice" | "grouped" | "separate",
-  ) => {
+  // const setWalletMode = (
+  //   registrationId: string,
+  //   mode: "member_choice" | "grouped" | "separate",
+  // ) => {
+  //   setWalletModes((prev) => ({ ...prev, [registrationId]: mode }));
+  // };
+
+  const setWalletMode = (registrationId: string, mode: WalletMode) => {
     setWalletModes((prev) => ({ ...prev, [registrationId]: mode }));
+    if (mode === "custom") {
+      // mặc định tick tất cả, admin bỏ tick người muốn tách
+      setGroupedGuestIds((prev) =>
+        prev[registrationId]
+          ? prev
+          : {
+            ...prev,
+            [registrationId]: new Set(
+              registrations
+                .filter((r) => r.host_registration_id === registrationId)
+                .map((r) => r.id),
+            ),
+          },
+      );
+    }
+  };
+
+  const toggleGroupedGuest = (hostId: string, guestId: string) => {
+    setGroupedGuestIds((prev) => {
+      const next = new Set(prev[hostId] ?? []);
+      if (next.has(guestId)) next.delete(guestId);
+      else next.add(guestId);
+      return { ...prev, [hostId]: next };
+    });
+  };
+
+  const isGuestGrouped = (hostId: string, guestId: string) => {
+    const mode = walletModes[hostId] ?? "grouped";
+    if (mode === "grouped") return true;
+    if (mode === "custom") return groupedGuestIds[hostId]?.has(guestId) ?? false;
+    return false;
+  };
+
+  const paysSeparately = (hostId: string, guestId: string) => {
+    const mode = walletModes[hostId] ?? "grouped";
+    return (
+      mode === "separate" ||
+      (mode === "custom" && !isGuestGrouped(hostId, guestId))
+    );
   };
 
   const effectiveQuantity = (item: OtherFeeItem) =>
@@ -241,12 +291,16 @@ export default function SessionFinishPage() {
     if (!r.host_registration_id) {
       return r.is_guest;
     }
+    // const host = registrations.find((h) => h.id === r.host_registration_id);
+    // if (host?.is_guest) return false;
+    // return (
+    //   walletDeductIds.has(host?.id) &&
+    //   (walletModes[host?.id] ?? "grouped") === "separate"
+    // );
+
     const host = registrations.find((h) => h.id === r.host_registration_id);
     if (host?.is_guest) return false;
-    return (
-      walletDeductIds.has(host?.id) &&
-      (walletModes[host?.id] ?? "grouped") === "separate"
-    );
+    return !!host && walletDeductIds.has(host.id) && paysSeparately(host.id, r.id);
   };
 
   const eligibleRegs = registrations.filter(isMailEligible);
@@ -582,6 +636,11 @@ export default function SessionFinishPage() {
             .filter((regId) => guestsOf(regId).length > 0)
             .map((regId) => [regId, walletModes[regId] ?? "grouped"]),
         ),
+        wallet_grouped_guest_ids: Object.fromEntries(
+          Array.from(walletDeductIds)
+            .filter((regId) => walletModes[regId] === "custom")
+            .map((regId) => [regId, Array.from(groupedGuestIds[regId] ?? [])]),
+        ),
       });
 
       const deductions = new Map<string, number>();
@@ -767,314 +826,328 @@ export default function SessionFinishPage() {
   if (!session) return null;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => {
-            startNavLoading();
-            router.push(`/admin/sessions/${id}`);
-          }}
-          className="p-2 hover:bg-gray-100 rounded-lg"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="flex items-center gap-2">
-          <Calculator className="w-5 h-5 text-blue-600" />
-          <h1 className="text-xl font-bold text-gray-900">
-            Kết thúc buổi: {session.title}
-          </h1>
-        </div>
-      </div>
-
-      <div className="card space-y-4">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-          Chi phí thực tế
-        </p>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            🏟 Tiền sân
-          </label>
-          <div className="space-y-3">
-            {courts.map((c, idx) => (
-              <div
-                key={c.id}
-                className="rounded-xl border border-gray-200 bg-gray-50/60 p-3 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-400">
-                    Sân {idx + 1}
-                  </span>
-                  {courts.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeCourt(c.id)}
-                      className="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      title="Xóa sân này"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-1">
-                    <label className="block text-[11px] text-gray-400 mb-1">
-                      Tên sân
-                    </label>
-                    <input
-                      type="text"
-                      value={c.name}
-                      onChange={(e) => updateCourt(c.id, "name", e.target.value)}
-                      className="input-field text-sm w-full"
-                      placeholder="Sân 1"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <label className="block text-[11px] text-gray-400 mb-1">
-                      Số phút
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={c.minutes || ""}
-                      onChange={(e) =>
-                        updateCourt(c.id, "minutes", parseNumberInput(e.target.value))
-                      }
-                      className="input-field text-sm text-right w-full"
-                      placeholder="60"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <label className="block text-[11px] text-gray-400 mb-1">
-                      Giá / tiếng
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={formatNumberInput(c.pricePerHour)}
-                      onChange={(e) =>
-                        updateCourt(c.id, "pricePerHour", parseNumberInput(e.target.value))
-                      }
-                      className="input-field text-sm text-right w-full"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-between text-xs font-semibold text-gray-600 pt-1 border-t border-gray-200">
-                  <span>
-                    Tổng ({c.minutes || 0} phút × {fmt(c.pricePerHour || 0)}/tiếng)
-                  </span>
-                  <span>{fmt(courtTotal(c))}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
+    <>
+      <style>{`
+        @keyframes tickPop {
+          0%   { transform: scale(0.4) rotate(-12deg); opacity: 0; }
+          60%  { transform: scale(1.25) rotate(4deg); opacity: 1; }
+          100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+        .tick-pop { animation: tickPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes rowFlash {
+          0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.35); }
+          100% { box-shadow: 0 0 0 10px rgba(59,130,246,0); }
+        }
+        .tick-flash { animation: rowFlash 0.45s ease-out; }
+    `}</style>
+      <div className="max-w-2xl mx-auto space-y-4">
+        <div className="flex items-center gap-3">
           <button
-            type="button"
-            onClick={addCourt}
-            className="mt-2 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+            onClick={() => {
+              startNavLoading();
+              router.push(`/admin/sessions/${id}`);
+            }}
+            className="p-2 hover:bg-gray-100 rounded-lg"
           >
-            <Plus className="w-4 h-4" /> Thêm sân
+            <ArrowLeft className="w-5 h-5" />
           </button>
-
-          <div className="flex justify-between text-sm font-medium text-gray-700 mt-2 pt-2 border-t border-gray-100">
-            <span>Tổng tiền sân</span>
-            <span>{fmt(courtFee)}</span>
+          <div className="flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-blue-600" />
+            <h1 className="text-xl font-bold text-gray-900">
+              Kết thúc buổi: {session.title}
+            </h1>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">
-              Số bông cầu
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={formatNumberInput(shuttleCount)}
-              onChange={(e) =>
-                setShuttleCount(parseNumberInput(e.target.value))
-              }
-              className="input-field"
-              placeholder="0"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">
-              Giá 1 bông
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={formatNumberInput(shuttlePrice)}
-              onChange={(e) =>
-                setShuttlePrice(parseNumberInput(e.target.value))
-              }
-              className="input-field"
-              placeholder="0"
-            />
-          </div>
-        </div>
-        <div className="flex justify-between text-sm font-bold border-t border-gray-100 pt-2">
-          <span>Tổng chi phí (chưa khoản khác)</span>
-          <span>{fmt(splittableCost)}</span>
-        </div>
-      </div>
 
-      {id && <SessionPenaltiesCard ref={penaltiesCardRef} sessionId={id} />}
-
-      <div className="card !p-0 overflow-hidden">
-        <div className="flex flex-col gap-2 px-4 pt-4 pb-3">
+        <div className="card space-y-4">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-            Số tiền từng người phải trả
+            Chi phí thực tế
           </p>
-          <div className="flex items-center justify-end gap-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              🏟 Tiền sân
+            </label>
+            <div className="space-y-3">
+              {courts.map((c, idx) => (
+                <div
+                  key={c.id}
+                  className="rounded-xl border border-gray-200 bg-gray-50/60 p-3 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-400">
+                      Sân {idx + 1}
+                    </span>
+                    {courts.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeCourt(c.id)}
+                        className="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Xóa sân này"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-1">
+                      <label className="block text-[11px] text-gray-400 mb-1">
+                        Tên sân
+                      </label>
+                      <input
+                        type="text"
+                        value={c.name}
+                        onChange={(e) => updateCourt(c.id, "name", e.target.value)}
+                        className="input-field text-sm w-full"
+                        placeholder="Sân 1"
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <label className="block text-[11px] text-gray-400 mb-1">
+                        Số phút
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={c.minutes || ""}
+                        onChange={(e) =>
+                          updateCourt(c.id, "minutes", parseNumberInput(e.target.value))
+                        }
+                        className="input-field text-sm text-right w-full"
+                        placeholder="60"
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <label className="block text-[11px] text-gray-400 mb-1">
+                        Giá / tiếng
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formatNumberInput(c.pricePerHour)}
+                        onChange={(e) =>
+                          updateCourt(c.id, "pricePerHour", parseNumberInput(e.target.value))
+                        }
+                        className="input-field text-sm text-right w-full"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between text-xs font-semibold text-gray-600 pt-1 border-t border-gray-200">
+                    <span>
+                      Tổng ({c.minutes || 0} phút × {fmt(c.pricePerHour || 0)}/tiếng)
+                    </span>
+                    <span>{fmt(courtTotal(c))}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <button
-              onClick={toggleMailAll}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${mailAll
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                : "bg-gray-100 hover:bg-gray-200 text-gray-600"
-                }`}
+              type="button"
+              onClick={addCourt}
+              className="mt-2 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
             >
-              <Mail className="w-4 h-4" /> {mailAll ? "Mail all: Bật" : "Mail all"}
+              <Plus className="w-4 h-4" /> Thêm sân
             </button>
-            <button
-              onClick={handleSplitEqually}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold whitespace-nowrap transition-colors"
-            >
-              <Divide className="w-4 h-4" /> Chia đều
-            </button>
+
+            <div className="flex justify-between text-sm font-medium text-gray-700 mt-2 pt-2 border-t border-gray-100">
+              <span>Tổng tiền sân</span>
+              <span>{fmt(courtFee)}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Số bông cầu
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={formatNumberInput(shuttleCount)}
+                onChange={(e) =>
+                  setShuttleCount(parseNumberInput(e.target.value))
+                }
+                className="input-field"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Giá 1 bông
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={formatNumberInput(shuttlePrice)}
+                onChange={(e) =>
+                  setShuttlePrice(parseNumberInput(e.target.value))
+                }
+                className="input-field"
+                placeholder="0"
+              />
+            </div>
+          </div>
+          <div className="flex justify-between text-sm font-bold border-t border-gray-100 pt-2">
+            <span>Tổng chi phí (chưa khoản khác)</span>
+            <span>{fmt(splittableCost)}</span>
           </div>
         </div>
 
+        {id && <SessionPenaltiesCard ref={penaltiesCardRef} sessionId={id} />}
 
-
-        <div className="p-4 space-y-4">
-          {hostRows.map((h) => {
-            const guests = guestsOf(h.id);
-            const name = h.is_guest ? h.guest_full_name : h.users?.full_name;
-            const isRealUser = !!h.user_id && !h.is_guest;
-            const isWalletDeduct = walletDeductIds.has(h.id);
-
-            return (
-              <div
-                key={h.id}
-                className={`rounded-2xl border-2 p-3 space-y-3 transition-colors duration-300 ${isWalletDeduct
-                  ? "border-blue-200 bg-blue-50/30"
-                  : "border-gray-200 bg-white"
+        <div className="card !p-0 overflow-hidden">
+          <div className="flex flex-col gap-2 px-4 pt-4 pb-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              Số tiền từng người phải trả
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={toggleMailAll}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${mailAll
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-600"
                   }`}
               >
+                <Mail className="w-4 h-4" /> {mailAll ? "Mail all: Bật" : "Mail all"}
+              </button>
+              <button
+                onClick={handleSplitEqually}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold whitespace-nowrap transition-colors"
+              >
+                <Divide className="w-4 h-4" /> Chia đều
+              </button>
+            </div>
+          </div>
+
+
+
+          <div className="p-4 space-y-4">
+            {hostRows.map((h) => {
+              const guests = guestsOf(h.id);
+              const name = h.is_guest ? h.guest_full_name : h.users?.full_name;
+              const isRealUser = !!h.user_id && !h.is_guest;
+              const isWalletDeduct = walletDeductIds.has(h.id);
+
+              return (
                 <div
-                  className={`rounded-xl border p-3 space-y-2 transition-colors ${isWalletDeduct
-                    ? "border-blue-200 bg-blue-50/70"
-                    : "border-gray-200 bg-gray-50/60"
+                  key={h.id}
+                  className={`rounded-2xl border-2 p-3 space-y-3 transition-colors duration-300 ${isWalletDeduct
+                    ? "border-blue-200 bg-blue-50/30"
+                    : "border-gray-200 bg-white"
                     }`}
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {name}
-                          {h.is_guest && (
-                            <span className="text-xs text-gray-400 ml-1">(khách)</span>
-                          )}
-                        </p>
-                        {isWalletDeduct && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 flex-shrink-0">
-                            <Wallet className="w-2.5 h-2.5" /> Ví BNB
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
-                        {h.is_guest && (
-                          <button
-                            type="button"
-                            onClick={() => toggleEmailFor(h.id)}
-                            title={emailIds.has(h.id) ? "Sẽ gửi mail" : "Không gửi mail"}
-                            className={`flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${emailIds.has(h.id)
-                              ? "bg-emerald-600 border-emerald-600 text-white"
-                              : "border-gray-200 text-gray-300 hover:border-emerald-300 hover:text-emerald-400"
-                              }`}
-                          >
-                            <Mail className="w-4 h-4 flex-shrink-0" />
-                            <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">Mail</span>
-                          </button>
-                        )}
-                        {isRealUser && (
-                          <button
-                            type="button"
-                            onClick={() => toggleWalletDeduct(h.id)}
-                            title={isWalletDeduct ? "Bỏ trừ ví" : "Trừ thẳng ví BNB"}
-                            className={`flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${isWalletDeduct
-                              ? "bg-blue-600 border-blue-600 text-white"
-                              : "border-gray-200 text-gray-300 hover:border-blue-300 hover:text-blue-400"
-                              }`}
-                          >
-                            <Wallet className="w-4 h-4 flex-shrink-0" />
-                            <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
-                              Ví
-                            </span>
-                          </button>
-                        )}
-                        {isRealUser && (
-                          <button
-                            type="button"
-                            onClick={() => setPenaltyTarget({ id: h.user_id, name })}
-                            title="Phạt thành viên này"
-                            className="flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
-                          >
-                            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                            <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
-                              Phạt
-                            </span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={formatNumberInput(amounts[h.id] ?? 0)}
-                      onChange={(e) =>
-                        handleAmountChange(h.id, parseNumberInput(e.target.value))
-                      }
-                      className="input-field w-full text-right text-sm"
-                      placeholder="0"
-                    />
-                  </div>
-
-                  {renderOtherFeeEditor(
-                    h.id,
-                    "💰 Khoản khác của host...",
-                    "space-y-1.5 pl-2",
-                  )}
-
-                  <div className="flex justify-end">
-                    <div className="w-fit text-right text-xs font-bold text-gray-800 bg-white border border-gray-200 rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">
-                      <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">
-                        Tổng thu
-                      </span>
-                      <span className="whitespace-nowrap">
-                        {fmt(
-                          (Number(amounts[h.id]) || 0) + otherFeeSum(h.id),
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {guests.length > 0 && (
                   <div
-                    className={`grid transition-all duration-300 ease-in-out ${isWalletDeduct
-                      ? "grid-rows-[1fr] opacity-100"
-                      : "grid-rows-[0fr] opacity-0"
+                    className={`rounded-xl border p-3 space-y-2 transition-colors ${isWalletDeduct
+                      ? "border-blue-200 bg-blue-50/70"
+                      : "border-gray-200 bg-gray-50/60"
                       }`}
                   >
-                    <div className="overflow-hidden">
-                      <div className="pt-1 pb-1">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {name}
+                            {h.is_guest && (
+                              <span className="text-xs text-gray-400 ml-1">(khách)</span>
+                            )}
+                          </p>
+                          {isWalletDeduct && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 flex-shrink-0">
+                              <Wallet className="w-2.5 h-2.5" /> Ví BNB
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+                          {h.is_guest && (
+                            <button
+                              type="button"
+                              onClick={() => toggleEmailFor(h.id)}
+                              title={emailIds.has(h.id) ? "Sẽ gửi mail" : "Không gửi mail"}
+                              className={`flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${emailIds.has(h.id)
+                                ? "bg-emerald-600 border-emerald-600 text-white"
+                                : "border-gray-200 text-gray-300 hover:border-emerald-300 hover:text-emerald-400"
+                                }`}
+                            >
+                              <Mail className="w-4 h-4 flex-shrink-0" />
+                              <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">Mail</span>
+                            </button>
+                          )}
+                          {isRealUser && (
+                            <button
+                              type="button"
+                              onClick={() => toggleWalletDeduct(h.id)}
+                              title={isWalletDeduct ? "Bỏ trừ ví" : "Trừ thẳng ví BNB"}
+                              className={`flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${isWalletDeduct
+                                ? "bg-blue-600 border-blue-600 text-white"
+                                : "border-gray-200 text-gray-300 hover:border-blue-300 hover:text-blue-400"
+                                }`}
+                            >
+                              <Wallet className="w-4 h-4 flex-shrink-0" />
+                              <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
+                                Ví
+                              </span>
+                            </button>
+                          )}
+                          {isRealUser && (
+                            <button
+                              type="button"
+                              onClick={() => setPenaltyTarget({ id: h.user_id, name })}
+                              title="Phạt thành viên này"
+                              className="flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
+                            >
+                              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                              <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
+                                Phạt
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formatNumberInput(amounts[h.id] ?? 0)}
+                        onChange={(e) =>
+                          handleAmountChange(h.id, parseNumberInput(e.target.value))
+                        }
+                        className="input-field w-full text-right text-sm"
+                        placeholder="0"
+                      />
+                    </div>
+
+                    {renderOtherFeeEditor(
+                      h.id,
+                      "💰 Khoản khác của host...",
+                      "space-y-1.5 pl-2",
+                    )}
+
+                    <div className="flex justify-end">
+                      <div className="w-fit text-right text-xs font-bold text-gray-800 bg-white border border-gray-200 rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">
+                        <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">
+                          Tổng thu
+                        </span>
+                        <span className="whitespace-nowrap">
+                          {fmt(
+                            (Number(amounts[h.id]) || 0) + otherFeeSum(h.id),
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {guests.length > 0 && (
+                    <div
+                      className={`grid transition-all duration-300 ease-in-out ${isWalletDeduct
+                        ? "grid-rows-[1fr] opacity-100"
+                        : "grid-rows-[0fr] opacity-0"
+                        }`}
+                    >
+                      <div className="overflow-hidden">
+                        {/* <div className="pt-1 pb-1">
                         <p className="text-[11px] font-medium text-gray-400 mb-1.5">
                           Cách xử lý thanh toán cho khách đi cùng
                         </p>
@@ -1101,52 +1174,146 @@ export default function SessionFinishPage() {
                             );
                           })}
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {guests.length > 0 && (
-                  <div className="relative pl-6">
-                    <div
-                      className={`absolute left-2 top-0 bottom-4 w-px ${isWalletDeduct ? "bg-blue-300" : "bg-gray-300"
-                        }`}
-                    />
-
-                    <div className="space-y-3">
-                      {guests.map((g: any) => (
-                        <div key={g.id} className="relative">
+                      </div> */}
+                        <div className="pt-1 pb-1">
+                          <p className="text-[11px] font-medium text-gray-400 mb-1.5">
+                            Cách xử lý thanh toán cho khách đi cùng
+                          </p>
                           <div
-                            className={`absolute -left-4 top-5 w-4 h-px ${isWalletDeduct ? "bg-blue-300" : "bg-gray-300"
-                              }`}
-                          />
-
-                          <div
-                            className={`rounded-xl border p-3 space-y-2 transition-colors ${isWalletDeduct
-                              ? "border-blue-200 bg-blue-50/70"
-                              : "border-purple-100 bg-purple-50/40"
+                            className={`grid gap-1 p-1 bg-gray-100 rounded-xl ${guests.length >= 2 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"
                               }`}
                           >
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <p className="flex-1 text-xs text-purple-600 truncate">
-                                  +{" "}
-                                  {g.is_guest
-                                    ? g.guest_full_name
-                                    : g.users?.full_name}
-                                  <span className="text-gray-400 ml-1">
-                                    (đi cùng)
-                                  </span>
-                                  {isWalletDeduct && (
-                                    <span className="text-blue-400 ml-1">
-                                      · chờ xác nhận
-                                    </span>
-                                  )}
-                                </p>
+                            {[
+                              { val: "member_choice", label: "Member tự chọn" },
+                              { val: "grouped", label: "Gộp trừ ví" },
+                              { val: "separate", label: "Tách riêng" },
+                              ...(guests.length >= 2 ? [{ val: "custom", label: "Chọn người gộp" }] : []),
+                            ].map(({ val, label }) => {
+                              const active = (walletModes[h.id] ?? "grouped") === val;
+                              return (
+                                <button
+                                  key={val}
+                                  type="button"
+                                  onClick={() => setWalletMode(h.id, val as WalletMode)}
+                                  className={`px-2 py-3 min-h-[38px] rounded-lg text-[11px] sm:text-xs font-medium text-center leading-tight transition-all ${active ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 hover:bg-gray-200/70"
+                                    }`}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
 
-                                {!h.is_guest &&
+                          {walletModes[h.id] === "custom" && (
+                            <div className="mt-2 rounded-xl border border-blue-100 bg-white p-2 space-y-1.5">
+                              <p className="text-[11px] text-gray-400 px-1">
+                                Chạm để chọn người thanh toán chung ví với {name}. Người không chọn sẽ
+                                tự thanh toán riêng.
+                              </p>
+                              {guests.map((g: any) => {
+                                const gName = g.is_guest ? g.guest_full_name : g.users?.full_name;
+                                const grouped = isGuestGrouped(h.id, g.id);
+                                const fallback = g.user_id ? "Trừ ví riêng" : "Tiền mặt";
+                                return (
+                                  <button
+                                    key={g.id}
+                                    type="button"
+                                    onClick={() => toggleGroupedGuest(h.id, g.id)}
+                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border-2 text-left transition-all duration-200 active:scale-[0.98] ${grouped
+                                      ? "border-blue-500 bg-blue-50"
+                                      : "border-gray-200 bg-white hover:border-gray-300"
+                                      }`}
+                                  >
+                                    <span
+                                      className={`relative flex-shrink-0 w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${grouped
+                                        ? "bg-blue-600 border-blue-600"
+                                        : "bg-white border-gray-300"
+                                        }`}
+                                    >
+                                      {grouped && (
+                                        <>
+                                          <Check
+                                            key={`tick-${grouped}`}
+                                            className="w-4.5 h-4.5 text-white tick-pop"
+                                            strokeWidth={3.5}
+                                          />
+                                          <span
+                                            key={`flash-${grouped}`}
+                                            className="absolute inset-0 rounded-lg tick-flash pointer-events-none"
+                                          />
+                                        </>
+                                      )}
+                                    </span>
+
+                                    <span
+                                      className={`flex-1 min-w-0 text-sm truncate transition-colors ${grouped ? "font-semibold text-blue-900" : "text-gray-700"
+                                        }`}
+                                    >
+                                      {gName}
+                                    </span>
+
+                                    <span
+                                      className={`text-[11px] font-semibold px-2 py-1 rounded-full flex-shrink-0 transition-colors duration-200 ${grouped
+                                        ? "bg-blue-100 text-blue-700"
+                                        : g.user_id
+                                          ? "bg-sky-100 text-sky-700"
+                                          : "bg-emerald-100 text-emerald-700"
+                                        }`}
+                                    >
+                                      {grouped ? "Gộp ví host" : fallback}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {guests.length > 0 && (
+                    <div className="relative pl-6">
+                      <div
+                        className={`absolute left-2 top-0 bottom-4 w-px ${isWalletDeduct ? "bg-blue-300" : "bg-gray-300"
+                          }`}
+                      />
+
+                      <div className="space-y-3">
+                        {guests.map((g: any) => (
+                          <div key={g.id} className="relative">
+                            <div
+                              className={`absolute -left-4 top-5 w-4 h-px ${isWalletDeduct ? "bg-blue-300" : "bg-gray-300"
+                                }`}
+                            />
+
+                            <div
+                              className={`rounded-xl border p-3 space-y-2 transition-colors ${isWalletDeduct
+                                ? "border-blue-200 bg-blue-50/70"
+                                : "border-purple-100 bg-purple-50/40"
+                                }`}
+                            >
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <p className="flex-1 text-xs text-purple-600 truncate">
+                                    +{" "}
+                                    {g.is_guest
+                                      ? g.guest_full_name
+                                      : g.users?.full_name}
+                                    <span className="text-gray-400 ml-1">
+                                      (đi cùng)
+                                    </span>
+                                    {isWalletDeduct && (
+                                      <span className="text-blue-400 ml-1">
+                                        · chờ xác nhận
+                                      </span>
+                                    )}
+                                  </p>
+
+                                  {/* {!h.is_guest &&
                                   isWalletDeduct &&
-                                  (walletModes[h.id] ?? "grouped") === "separate" && (
+                                  (walletModes[h.id] ?? "grouped") === "separate" && ( */}
+                                  {!h.is_guest && isWalletDeduct && paysSeparately(h.id, g.id) && (
                                     <button
                                       type="button"
                                       onClick={() => toggleEmailFor(g.id)}
@@ -1161,129 +1328,130 @@ export default function SessionFinishPage() {
                                     </button>
                                   )}
 
-                                {!!g.user_id && !g.is_guest && (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setPenaltyTarget({
-                                        id: g.user_id,
-                                        name: g.users?.full_name,
-                                      })
-                                    }
-                                    title="Phạt thành viên này"
-                                    className="flex-shrink-0 h-7 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
-                                  >
-                                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                                    <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
-                                      Phạt
-                                    </span>
-                                  </button>
-                                )}
+                                  {!!g.user_id && !g.is_guest && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setPenaltyTarget({
+                                          id: g.user_id,
+                                          name: g.users?.full_name,
+                                        })
+                                      }
+                                      title="Phạt thành viên này"
+                                      className="flex-shrink-0 h-7 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
+                                    >
+                                      <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                                      <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
+                                        Phạt
+                                      </span>
+                                    </button>
+                                  )}
+                                </div>
+
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={formatNumberInput(
+                                    guestAmounts[g.id] ?? 0,
+                                  )}
+                                  onChange={(e) =>
+                                    handleAmountChange(
+                                      g.id,
+                                      parseNumberInput(e.target.value),
+                                    )
+                                  }
+                                  className="input-field w-full text-right text-sm"
+                                  placeholder="0"
+                                />
                               </div>
 
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                value={formatNumberInput(
-                                  guestAmounts[g.id] ?? 0,
-                                )}
-                                onChange={(e) =>
-                                  handleAmountChange(
-                                    g.id,
-                                    parseNumberInput(e.target.value),
-                                  )
-                                }
-                                className="input-field w-full text-right text-sm"
-                                placeholder="0"
-                              />
-                            </div>
+                              {renderOtherFeeEditor(
+                                g.id,
+                                "💰 Khoản khác của khách...",
+                                "space-y-1.5",
+                              )}
 
-                            {renderOtherFeeEditor(
-                              g.id,
-                              "💰 Khoản khác của khách...",
-                              "space-y-1.5",
-                            )}
-
-                            <div className="flex justify-end">
-                              <div className="w-fit text-right text-xs font-bold text-gray-800 bg-white border border-purple-200 rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">
-                                <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">
-                                  Tổng thu
-                                </span>
-                                <span className="whitespace-nowrap">
-                                  {fmt(
-                                    (Number(guestAmounts[g.id]) || 0) + otherFeeSum(g.id),
-                                  )}
-                                </span>
+                              <div className="flex justify-end">
+                                <div className="w-fit text-right text-xs font-bold text-gray-800 bg-white border border-purple-200 rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">
+                                  <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">
+                                    Tổng thu
+                                  </span>
+                                  <span className="whitespace-nowrap">
+                                    {fmt(
+                                      (Number(guestAmounts[g.id]) || 0) + otherFeeSum(g.id),
+                                    )}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex justify-between text-sm font-bold px-4 py-3 bg-gray-50 border-t border-gray-100">
-          <span>Tổng cộng</span>
-          <span className="text-blue-600">{fmt(totalCollected)}</span>
-        </div>
-
-        {walletDeductIds.size > 0 && (
-          <div className="px-4 py-3 bg-blue-50 border-t border-blue-100 flex items-center gap-2 text-xs text-blue-700">
-            <Wallet className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>
-              {walletDeductIds.size} thành viên sẽ được trừ thẳng ví BNB — tổng{" "}
-              {fmt(
-                Array.from(walletDeductIds).reduce((sum, regId) => {
-                  return (
-                    sum + (Number(amounts[regId]) || 0) + otherFeeSum(regId)
-                  );
-                }, 0),
-              )}
-            </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
 
-        {penaltyTarget && (
-          <PenaltyModal
-            open={!!penaltyTarget}
-            onClose={() => {
-              setPenaltyTarget(null);
-              penaltiesCardRef.current?.refresh();
+          <div className="flex justify-between text-sm font-bold px-4 py-3 bg-gray-50 border-t border-gray-100">
+            <span>Tổng cộng</span>
+            <span className="text-blue-600">{fmt(totalCollected)}</span>
+          </div>
+
+          {walletDeductIds.size > 0 && (
+            <div className="px-4 py-3 bg-blue-50 border-t border-blue-100 flex items-center gap-2 text-xs text-blue-700">
+              <Wallet className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>
+                {walletDeductIds.size} thành viên sẽ được trừ thẳng ví BNB — tổng{" "}
+                {fmt(
+                  Array.from(walletDeductIds).reduce((sum, regId) => {
+                    return (
+                      sum + (Number(amounts[regId]) || 0) + otherFeeSum(regId)
+                    );
+                  }, 0),
+                )}
+              </span>
+            </div>
+          )}
+
+          {penaltyTarget && (
+            <PenaltyModal
+              open={!!penaltyTarget}
+              onClose={() => {
+                setPenaltyTarget(null);
+                penaltiesCardRef.current?.refresh();
+              }}
+              sessionId={id}
+              memberId={penaltyTarget.id}
+              memberName={penaltyTarget.name}
+            />
+          )}
+        </div>
+
+        <div className="flex items-center justify-end gap-3">
+          <button
+            onClick={() => {
+              startNavLoading();
+              router.push(`/admin/sessions/${id}`);
             }}
-            sessionId={id}
-            memberId={penaltyTarget.id}
-            memberName={penaltyTarget.name}
+            className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0"
+            disabled={submitPhase !== "idle"}
+          >
+            Hủy
+          </button>
+          <MorphButton
+            phase={submitPhase}
+            idleIcon={<Send className="w-4 h-4" />}
+            label="Gửi hóa đơn thanh toán"
+            idleClassName="bg-green-500 hover:bg-green-600 text-white"
+            successClassName="bg-green-500 text-white"
+            idleWidthClass="min-w-[11rem]"
+            onClick={handleSubmit}
+            disabled={submitPhase !== "idle"}
           />
-        )}
+        </div>
       </div>
-
-      <div className="flex items-center justify-end gap-3">
-        <button
-          onClick={() => {
-            startNavLoading();
-            router.push(`/admin/sessions/${id}`);
-          }}
-          className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0"
-          disabled={submitPhase !== "idle"}
-        >
-          Hủy
-        </button>
-        <MorphButton
-          phase={submitPhase}
-          idleIcon={<Send className="w-4 h-4" />}
-          label="Gửi hóa đơn thanh toán"
-          idleClassName="bg-green-500 hover:bg-green-600 text-white"
-          successClassName="bg-green-500 text-white"
-          idleWidthClass="min-w-[11rem]"
-          onClick={handleSubmit}
-          disabled={submitPhase !== "idle"}
-        />
-      </div>
-    </div>
+    </>
   );
 }

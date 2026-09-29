@@ -1706,17 +1706,20 @@ export default function SessionDetailPage() {
                   </span>
                 )}
 
-              {(reg.payment_method === "wallet" ||
-                (reg.payment_method === "wallet_grouped" &&
-                  !reg.host_registration_id) ||
-                (reg.payment_method === "wallet_pending_confirm" &&
-                  !reg.host_registration_id)) && (
+              {reg.payment_method === "wallet" && reg.host_registration_id && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200 flex items-center gap-1 font-medium">
+                  <Wallet className="w-3 h-3" />
+                  Ví BNB của {displayName}
+                </span>
+              )}
+
+              {((reg.payment_method === "wallet" && !reg.host_registration_id) ||
+                (reg.payment_method === "wallet_grouped" && !reg.host_registration_id) ||
+                (reg.payment_method === "wallet_pending_confirm" && !reg.host_registration_id)) && (
                   <span className="text-[11px] px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200 flex items-center gap-1 font-medium">
                     <Wallet className="w-3 h-3" />
                     Ví BNB
-                    {reg.payment_method === "wallet_pending_confirm"
-                      ? " (chờ xác nhận)"
-                      : ""}
+                    {reg.payment_method === "wallet_pending_confirm" ? " (chờ xác nhận)" : ""}
                   </span>
                 )}
 
@@ -2353,11 +2356,29 @@ export default function SessionDetailPage() {
                 <div className="space-y-4">
                   {hostRegs.map((host) => {
                     const guests = guestsOf(host.id);
-                    const groupTotal =
-                      guests.length > 0
-                        ? (host.amount_override ?? 0) +
-                        guests.reduce((s, g) => s + (g.amount_override ?? 0), 0)
-                        : null;
+                    const GROUPED_METHODS = ["grouped_with_host", "wallet_grouped", "wallet_pending_confirm"];
+
+                    const groupedGuestsAll = guests.filter((g) =>
+                      GROUPED_METHODS.includes(g.payment_method),
+                    );
+                    const soloGuestsAll = guests.filter(
+                      (g) => !GROUPED_METHODS.includes(g.payment_method),
+                    );
+
+                    const groupedTotal =
+                      (host.amount_override ?? 0) +
+                      groupedGuestsAll.reduce((s, g) => s + (g.amount_override ?? 0), 0);
+
+                    const soloTotal = soloGuestsAll.reduce(
+                      (s, g) => s + (g.amount_override ?? 0),
+                      0,
+                    );
+
+                    const hasGrouped = groupedGuestsAll.length > 0;
+                    const hasSolo = soloGuestsAll.length > 0;
+                    const billIssued =
+                      host.amount_override != null &&
+                      (session.status === "waiting_payment" || session.status === "completed");
                     const groupedGuestsForHost = guests.filter(
                       (g) => g.payment_method === "grouped_with_host",
                     );
@@ -2417,14 +2438,44 @@ export default function SessionDetailPage() {
                           </>
                         )}
 
-                        {groupTotal !== null && (
-                          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/40">
-                            <span className="text-xs font-semibold text-gray-500">
-                              Tổng cộng
-                            </span>
-                            <span className="text-sm font-bold text-gray-900">
-                              {formatVnd(groupTotal)}
-                            </span>
+                        {guests.length > 0 && billIssued && (
+                          <div className="border-t border-gray-100 bg-gray-50/40 divide-y divide-gray-100">
+                            <div className="flex items-center justify-between px-4 py-2.5">
+                              <span className="text-xs font-semibold text-gray-500">
+                                {hasGrouped ? `Gộp ví ${hostDisplayName}` : hostDisplayName}
+                                {hasGrouped && (
+                                  <span className="font-normal text-gray-400">
+                                    {" "}({1 + groupedGuestsAll.length} người)
+                                  </span>
+                                )}
+                              </span>
+                              <span className="text-sm font-bold text-gray-900">
+                                {formatVnd(groupedTotal)}
+                              </span>
+                            </div>
+
+                            {soloGuestsAll.map((g) => (
+                              <div
+                                key={g.id}
+                                className="flex items-center justify-between px-4 py-2.5"
+                              >
+                                <span className="text-xs font-semibold text-gray-500">
+                                  Trả riêng: {g.users?.full_name ?? g.guest_full_name ?? "?"}
+                                </span>
+                                <span className="text-sm font-bold text-gray-900">
+                                  {formatVnd(g.amount_override ?? 0)}
+                                </span>
+                              </div>
+                            ))}
+
+                            {hasSolo && (
+                              <div className="flex items-center justify-between px-4 py-3 bg-gray-100/70">
+                                <span className="text-xs font-bold text-gray-700">Tổng cả nhóm</span>
+                                <span className="text-sm font-bold text-gray-900">
+                                  {formatVnd(groupedTotal + soloTotal)}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         )}
                       </>
