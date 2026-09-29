@@ -297,13 +297,20 @@ export default function MemberLayout({
     }, []);
 
     useEffect(() => {
-        if (mounted && !isAuthenticated) router.replace("/auth/login");
-    }, [mounted, isAuthenticated, router]);
+        if (!mounted || !isAuthenticated || !isAdmin) return;
+        if (sessionStorage.getItem("admin_landed")) return;
+
+        sessionStorage.setItem("admin_landed", "1");
+        if (pathname === "/home") {
+            router.replace("/admin/dashboard");
+        }
+    }, [mounted, isAuthenticated, isAdmin, pathname, router]);
 
     const handleLogout = async () => {
         try {
             await authApi.logout();
         } finally {
+            sessionStorage.removeItem("admin_landed");
             useAuthStore.getState().logout();
             window.location.href = "/auth/login";
         }

@@ -44,15 +44,22 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
     const url: string = original?.url ?? "";
-    const status: number = error.response?.status;
+    const status: number | undefined = error.response?.status;
 
     const isAuthEndpoint = [
       "/auth/login",
       "/auth/register",
       "/auth/refresh",
+      "/auth/verify-email",
+      "/auth/resend-code",
+      "/auth/forgot-password",
+      "/auth/verify-reset-code",
+      "/auth/reset-password",
     ].some((path) => url.includes(path));
 
-    if (status === 401 && !isAuthEndpoint && !original._retry) {
+    const hadToken = !!original?.headers?.Authorization;
+
+    if (status === 401 && hadToken && !isAuthEndpoint && !original._retry) {
       original._retry = true;
 
       if (!refreshPromise) {

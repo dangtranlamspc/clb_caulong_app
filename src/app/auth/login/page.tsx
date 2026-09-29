@@ -69,7 +69,7 @@ export default function LoginPage() {
       const { data } = await authApi.login(values);
       setAuth(data.user, data.access_token, data.refresh_token);
       toast.success(`Chào mừng, ${data.user.full_name}! 👋`);
-      router.replace('/home');
+      router.replace(data.user.role === 'admin' ? '/admin/dashboard' : '/home');
     } catch (err: any) {
       const msg = err?.response?.data?.message;
       toast.error(Array.isArray(msg) ? msg[0] : msg || 'Đăng nhập thất bại');

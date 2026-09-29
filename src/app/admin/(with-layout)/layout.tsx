@@ -90,8 +90,9 @@ export default function AdminLayout({
 
     const handleLogout = async () => {
         try {
-            await authApi.logout()
+            await authApi.logout();
         } finally {
+            sessionStorage.removeItem("admin_landed");
             useAuthStore.getState().logout();
             window.location.href = "/auth/login";
         }
