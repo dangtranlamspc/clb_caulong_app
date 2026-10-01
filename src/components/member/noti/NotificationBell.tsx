@@ -48,6 +48,9 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     birthday_wish_received: { icon: Cake, cls: 'text-pink-600', bg: 'bg-pink-50' },
 };
 
+const BADGE = "inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full border text-xs font-semibold text-white shadow-sm";
+
+
 function ConfirmDeleteAllModal({
     onConfirm,
     onCancel,
@@ -281,21 +284,27 @@ function NotificationItem({
                         </button>
                     </div>
                 )}
+
                 {isAddedConfirm && addedResolved && (
-                    <p
-                        className={`text-[11px] font-medium mt-1.5 ${addedOutcome === 'declined'
-                            ? 'text-red-500'
+                    <span
+                        className={`${BADGE} ${addedOutcome === 'declined'
+                            ? 'bg-red-500 border-red-700'
                             : addedOutcome === 'session_cancelled'
-                                ? 'text-gray-400'
-                                : 'text-emerald-600'
+                                ? 'bg-gray-500 border-gray-700'
+                                : 'bg-emerald-600 border-emerald-800'
                             }`}
                     >
                         {addedOutcome === 'declined'
-                            ? '🚫 Bạn đã báo bận'
+                            ? <XCircle className="w-3.5 h-3.5 text-white" />
                             : addedOutcome === 'session_cancelled'
-                                ? '🚫 Buổi đã huỷ'
-                                : '✓ Đã xác nhận tham gia'}
-                    </p>
+                                ? <XCircle className="w-3.5 h-3.5 text-white" />
+                                : <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                        {addedOutcome === 'declined'
+                            ? 'Bạn đã báo bận'
+                            : addedOutcome === 'session_cancelled'
+                                ? 'Buổi đã huỷ'
+                                : 'Đã xác nhận tham gia'}
+                    </span>
                 )}
 
                 {isSessionCreated && !alreadyJoined && (
@@ -303,18 +312,21 @@ function NotificationItem({
                         <button
                             onClick={() => onJoinSession(n)}
                             disabled={joinActionId === n.id}
-                            className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                            className="inline-flex items-center justify-center gap-1.5 min-h-[40px] px-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 border border-indigo-800 text-white text-sm font-semibold whitespace-nowrap shadow-sm active:scale-95 transition disabled:opacity-50"
                         >
                             {joinActionId === n.id
-                                ? <Loader2 className="w-4 h-4 animate-spin" />
-                                : <CalendarDays className="w-4 h-4" />}
+                                ? <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                : <CalendarDays className="w-4 h-4 text-white" />}
                             Tham gia ngay
                         </button>
                     </div>
                 )}
 
                 {isSessionCreated && alreadyJoined && (
-                    <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã đăng ký</p>
+                    <span className={`${BADGE} bg-emerald-600 border-emerald-800`}>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                        Đã đăng ký
+                    </span>
                 )}
 
                 {isPenaltyChoice && !penaltyResolved && (
@@ -341,7 +353,7 @@ function NotificationItem({
                 onClick={(e) => { e.stopPropagation(); onDelete(n.id); }}
                 title="Xoá thông báo"
                 aria-label="Xoá thông báo"
-                className="flex-shrink-0 w-8 h-8 rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-sm active:scale-95 transition self-center"
+                className="flex-shrink-0 w-8 h-8 rounded-xl bg-red-500 hover:bg-red-600 border border-red-700 text-white flex items-center justify-center shadow-sm active:scale-95 transition self-center"
             >
                 <Trash2 className="w-5 h-5 text-white" />
             </button>
@@ -767,25 +779,33 @@ export function NotificationBell() {
                             style={{ height: 'env(safe-area-inset-top, 0px)', background: '#102744' }}
                         />
 
-                        <div className="flex items-center justify-between gap-2 px-3 h-14 border-b border-gray-100 flex-shrink-0">
-                            <div className="flex items-center gap-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 px-3 h-16 border-b border-gray-100 flex-shrink-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
                                 <button
                                     onClick={() => setOpen(false)}
                                     aria-label="Đóng"
-                                    className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100 active:scale-95 transition"
+                                    className="w-9 h-9 flex-shrink-0 rounded-full border border-gray-200 bg-white flex items-center justify-center shadow-[0_3px_8px_-1px_rgba(15,23,42,0.22),0_1px_3px_rgba(15,23,42,0.10)] active:scale-95 active:shadow-sm transition"
                                 >
                                     <ChevronLeft className="w-5 h-5 text-gray-700" />
                                 </button>
-                                <p className="text-base font-bold text-gray-900">Thông báo</p>
+                                <p className="text-xl font-bold text-gray-900 truncate">Thông báo</p>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                                 {unread > 0 && (
-                                    <button onClick={markAllRead} className="text-xs text-blue-600 font-medium">
+                                    <button
+                                        onClick={markAllRead}
+                                        className="px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 border border-blue-800 text-white text-sm font-semibold whitespace-nowrap shadow-sm active:scale-95 transition"
+                                    >
                                         Đọc tất cả
                                     </button>
                                 )}
                                 {items.length > 0 && (
-                                    <button onClick={() => setConfirmDeleteAllOpen(true)} className="text-xs text-red-500 font-medium">
+                                    <button
+                                        onClick={() => setConfirmDeleteAllOpen(true)}
+                                        title="Xoá tất cả"
+                                        className="px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 border border-red-700 text-white text-sm font-semibold whitespace-nowrap flex items-center gap-1 shadow-sm active:scale-95 transition"
+                                    >
+                                        <Trash2 className="w-4 h-4 text-white" />
                                         Xoá tất cả
                                     </button>
                                 )}

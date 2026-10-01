@@ -11,19 +11,24 @@ import { usePathname, useRouter } from "next/navigation";
 import { fmt } from "@/lib/fund-constants";
 
 const BTN = "flex-1 min-h-[44px] rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition active:scale-[0.98] disabled:opacity-50";
-const BTN_APPROVE = `${BTN} bg-emerald-500 hover:bg-emerald-600 text-white`;
-const BTN_REJECT = `${BTN} border border-red-200 text-red-500 hover:bg-red-50`;
-const BTN_INFO = `${BTN} border border-blue-200 text-blue-600 hover:bg-blue-50`;
+const BTN_APPROVE = `${BTN} bg-emerald-500 hover:bg-emerald-600 border border-emerald-700 text-white`;
+const BTN_REJECT = `${BTN} bg-white hover:bg-red-50 border border-red-400 text-red-500`;
+const BTN_INFO = `${BTN} bg-white hover:bg-blue-50 border border-blue-400 text-blue-600`;
+
+const BTN_SM = "flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition active:scale-[0.98] disabled:opacity-50";
+const BTN_SM_APPROVE = `${BTN_SM} bg-emerald-500 hover:bg-emerald-600 border border-emerald-700 text-white`;
+const BTN_SM_REJECT = `${BTN_SM} bg-white hover:bg-red-50 border border-red-400 text-red-500`;
+const BTN_SM_INFO = `${BTN_SM} bg-white hover:bg-blue-50 border border-blue-400 text-blue-600`;
 
 function ResolvedBadge({ action }: { action?: "approved" | "rejected" | "cancelled" | "session_cancelled" }) {
     const cfg =
-        action === "session_cancelled" ? { t: "Buổi đã huỷ", cls: "bg-gray-100 text-gray-500", Icon: XCircle }
-            : action === "cancelled" ? { t: "Đã huỷ đăng ký", cls: "bg-gray-100 text-gray-500", Icon: XCircle }
-                : action === "rejected" ? { t: "Đã từ chối", cls: "bg-red-50 text-red-600", Icon: XCircle }
-                    : { t: "Đã duyệt", cls: "bg-emerald-50 text-emerald-700", Icon: CheckCircle2 };
+        action === "session_cancelled" ? { t: "Buổi đã huỷ", cls: "bg-gray-500 border-gray-700", Icon: XCircle }
+            : action === "cancelled" ? { t: "Đã huỷ đăng ký", cls: "bg-gray-500 border-gray-700", Icon: XCircle }
+                : action === "rejected" ? { t: "Đã từ chối", cls: "bg-red-500 border-red-700", Icon: XCircle }
+                    : { t: "Đã duyệt", cls: "bg-emerald-600 border-emerald-800", Icon: CheckCircle2 };
     return (
-        <div className={`inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-full text-xs font-semibold ${cfg.cls}`}>
-            <cfg.Icon className="w-3.5 h-3.5" />
+        <div className={`inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-full border text-xs font-semibold text-white shadow-sm ${cfg.cls}`}>
+            <cfg.Icon className="w-3.5 h-3.5 text-white" />
             {cfg.t}
         </div>
     );
@@ -822,32 +827,35 @@ export function AdminNotificationBell() {
                     >
                         <div
                             className="flex items-center justify-between gap-2 px-3 border-b border-gray-100 flex-shrink-0"
-                            style={{ paddingTop: "env(safe-area-inset-top, 0px)", minHeight: 56 }}
+                            style={{ paddingTop: "env(safe-area-inset-top, 0px)", minHeight: 64 }}
                         >
-                            <div className="flex items-center gap-1 min-w-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
                                 <button
                                     onClick={() => setOpen(false)}
                                     aria-label="Đóng"
-                                    className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100 active:scale-95 transition"
+                                    className="w-9 h-9 flex-shrink-0 rounded-full border border-gray-200 bg-white flex items-center justify-center shadow-[0_3px_8px_-1px_rgba(15,23,42,0.22),0_1px_3px_rgba(15,23,42,0.10)] active:scale-95 active:shadow-sm transition"
                                 >
                                     <ChevronLeft className="w-5 h-5 text-gray-700" />
                                 </button>
-                                <p className="text-base font-bold text-gray-900">Thông báo</p>
+                                <p className="text-xl font-bold text-gray-900 truncate">Thông báo</p>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                                 {unreadCount > 0 && (
-                                    <button onClick={markAllRead} className="text-xs font-semibold text-blue-600">
-                                        Đã đọc tất cả
+                                    <button
+                                        onClick={markAllRead}
+                                        className="px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 border border-blue-800 text-white text-sm font-semibold whitespace-nowrap shadow-sm active:scale-95 transition"
+                                    >
+                                        Đọc tất cả
                                     </button>
                                 )}
                                 {notifications.length > 0 && (
                                     <button
                                         onClick={handleDeleteAll}
                                         title="Xoá tất cả"
-                                        className="text-xs font-semibold text-red-500 flex items-center gap-1"
+                                        className="px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 border border-red-700 text-white text-sm font-semibold whitespace-nowrap flex items-center gap-1 shadow-sm active:scale-95 transition"
                                     >
-                                        <Trash2 className="w-3.5 h-3.5" />
+                                        <Trash2 className="w-4 h-4 text-white" />
                                         Xoá tất cả
                                     </button>
                                 )}
@@ -987,7 +995,7 @@ export function AdminNotificationBell() {
                                                             <button
                                                                 onClick={() => handleApproveMatch(n.id, matchId)}
                                                                 disabled={isProcessing}
-                                                                className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                                className={BTN_SM_APPROVE}
                                                             >
                                                                 {isApproving && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Duyệt
@@ -995,7 +1003,7 @@ export function AdminNotificationBell() {
                                                             <button
                                                                 onClick={() => handleRejectMatch(n.id, matchId)}
                                                                 disabled={isProcessing}
-                                                                className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                                className={BTN_SM_REJECT}
                                                             >
                                                                 {isRejecting && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Từ chối
@@ -1034,21 +1042,21 @@ export function AdminNotificationBell() {
                                                                     setNavigatingToEvents(true);
                                                                     router.push(`/admin/events?openRegistrations=${shirtOrderCancelActivityId}`);
                                                                 }}
-                                                                className="flex-1 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 text-xs font-semibold"
+                                                                className={BTN_SM_INFO}
                                                             >
                                                                 Chi tiết
                                                             </button>
                                                             <button
                                                                 onClick={() => handleRejectShirtOrderCancelDirect(n.id, shirtOrderCancelRegistrationIds)}
                                                                 disabled={isProcessing}
-                                                                className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                                className={BTN_SM_REJECT}
                                                             >
                                                                 {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
                                                                 Từ chối
                                                             </button>
                                                             <button
                                                                 onClick={() => handleOpenShirtOrderCancel(n.id, shirtOrderCancelRegistrationIds)}
-                                                                className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold"
+                                                                className={BTN_SM_APPROVE}
                                                             >
                                                                 Xác nhận
                                                             </button>
@@ -1113,7 +1121,7 @@ export function AdminNotificationBell() {
                                                             <button
                                                                 onClick={() => handleApproveDrinkRequest(n.id, drinkRequestId)}
                                                                 disabled={isProcessing}
-                                                                className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                                className={BTN_SM_APPROVE}
                                                             >
                                                                 {isApproving && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Duyệt
@@ -1121,7 +1129,7 @@ export function AdminNotificationBell() {
                                                             <button
                                                                 onClick={() => handleRejectDrinkRequest(n.id, drinkRequestId)}
                                                                 disabled={isProcessing}
-                                                                className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                                className={BTN_SM_REJECT}
                                                             >
                                                                 {isRejecting && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Từ chối
