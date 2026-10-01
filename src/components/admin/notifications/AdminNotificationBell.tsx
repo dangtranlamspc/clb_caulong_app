@@ -10,35 +10,21 @@ import bellAnimation from "../../../../public/lottie/noti.json";
 import { usePathname, useRouter } from "next/navigation";
 import { fmt } from "@/lib/fund-constants";
 
+const BTN = "flex-1 min-h-[44px] rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition active:scale-[0.98] disabled:opacity-50";
+const BTN_APPROVE = `${BTN} bg-emerald-500 hover:bg-emerald-600 text-white`;
+const BTN_REJECT = `${BTN} border border-red-200 text-red-500 hover:bg-red-50`;
+const BTN_INFO = `${BTN} border border-blue-200 text-blue-600 hover:bg-blue-50`;
+
 function ResolvedBadge({ action }: { action?: "approved" | "rejected" | "cancelled" | "session_cancelled" }) {
-    if (action === "session_cancelled") {
-        return (
-            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-gray-400">
-                <XCircle className="w-3.5 h-3.5" />
-                Buổi đã huỷ
-            </div>
-        );
-    }
-    if (action === "cancelled") {
-        return (
-            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-gray-400">
-                <XCircle className="w-3.5 h-3.5" />
-                Đã huỷ đăng ký
-            </div>
-        );
-    }
-    if (action === "rejected") {
-        return (
-            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-red-500">
-                <XCircle className="w-3.5 h-3.5" />
-                Đã từ chối
-            </div>
-        );
-    }
+    const cfg =
+        action === "session_cancelled" ? { t: "Buổi đã huỷ", cls: "bg-gray-100 text-gray-500", Icon: XCircle }
+            : action === "cancelled" ? { t: "Đã huỷ đăng ký", cls: "bg-gray-100 text-gray-500", Icon: XCircle }
+                : action === "rejected" ? { t: "Đã từ chối", cls: "bg-red-50 text-red-600", Icon: XCircle }
+                    : { t: "Đã duyệt", cls: "bg-emerald-50 text-emerald-700", Icon: CheckCircle2 };
     return (
-        <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Đã duyệt
+        <div className={`inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-full text-xs font-semibold ${cfg.cls}`}>
+            <cfg.Icon className="w-3.5 h-3.5" />
+            {cfg.t}
         </div>
     );
 }
@@ -501,7 +487,6 @@ export function AdminNotificationBell() {
     const pathname = usePathname();
     const { notifications, unreadCount, markRead, markResolved, markAllRead, remove, deleteAll, reload } = useAdminNotifications();
     const [open, setOpen] = useState(false);
-    // const [coords, setCoords] = useState({ top: 0, right: 0 });
     const buttonRef = useRef<HTMLButtonElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const lottieRef = useRef<LottieRefCurrentProps>(null);
@@ -551,36 +536,22 @@ export function AdminNotificationBell() {
     useEffect(() => {
         if (open) {
             setRendered(true);
-            // 2 frame để trình duyệt vẽ trạng thái ban đầu (translate-x-full) rồi mới chạy transition
             const id = requestAnimationFrame(() =>
                 requestAnimationFrame(() => setShown(true)),
             );
             return () => cancelAnimationFrame(id);
         }
         setShown(false);
-        const t = setTimeout(() => setRendered(false), 300); // khớp duration-300
+        const t = setTimeout(() => setRendered(false), 400);
         return () => clearTimeout(t);
     }, [open]);
 
-    // khoá cuộn trang phía sau khi panel đang mở
     useEffect(() => {
         if (!rendered) return;
         const prev = document.body.style.overflow;
         document.body.style.overflow = "hidden";
         return () => { document.body.style.overflow = prev; };
     }, [rendered]);
-
-    // const toggleOpen = () => {
-    //     if (!open && buttonRef.current) {
-    //         const rect = buttonRef.current.getBoundingClientRect();
-    //         setCoords({
-    //             top: rect.bottom + 8,
-    //             right: window.innerWidth - rect.right,
-    //         });
-    //     }
-    //     setOpen((v) => !v);
-    // };
-
 
     const toggleOpen = () => setOpen((v) => !v);
 
@@ -840,18 +811,15 @@ export function AdminNotificationBell() {
 
             {rendered && typeof document !== "undefined" && createPortal(
                 <div className="fixed inset-0 z-[9999]">
-                    {/* Nền mờ: chỉ hiện từ sm, bấm vào để đóng */}
                     <div
                         onClick={() => setOpen(false)}
                         className={`hidden sm:block absolute inset-0 bg-black/30 transition-opacity duration-300 ${shown ? "opacity-100" : "opacity-0"}`}
                     />
 
-                    {/* Panel: mobile full, desktop 420px bên phải */}
                     <div
                         ref={dropdownRef}
                         className={`absolute inset-y-0 right-0 w-full sm:w-[420px] flex flex-col bg-white sm:border-l sm:border-gray-100 sm:shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${shown ? "translate-x-0" : "translate-x-full"}`}
                     >
-                        {/* Header */}
                         <div
                             className="flex items-center justify-between gap-2 px-3 border-b border-gray-100 flex-shrink-0"
                             style={{ paddingTop: "env(safe-area-inset-top, 0px)", minHeight: 56 }}
@@ -886,10 +854,9 @@ export function AdminNotificationBell() {
                             </div>
                         </div>
 
-                        {/* Danh sách */}
                         <div
-                            className="flex-1 min-h-0 overflow-y-auto divide-y divide-gray-50"
-                            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+                            className="flex-1 min-h-0 overflow-y-auto bg-gray-50 p-3 pb-4 space-y-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
                         >
                             {notifications.length === 0 ? (
                                 <p className="px-4 py-10 text-sm text-gray-400 text-center">Chưa có thông báo nào</p>
@@ -941,7 +908,9 @@ export function AdminNotificationBell() {
                                     return (
                                         <div
                                             key={n.id}
-                                            className={`group relative flex items-center gap-2 px-4 py-3 hover:bg-gray-50 transition-colors ${!n.is_read ? "bg-blue-50/50" : ""
+                                            className={`relative flex items-center gap-3 pl-5 pr-3 py-4 rounded-2xl border overflow-hidden transition-colors ${!n.is_read
+                                                ? "bg-blue-50/60 border-blue-100 shadow-[0_6px_16px_-4px_rgba(15,23,42,0.14),0_2px_4px_rgba(15,23,42,0.06)]"
+                                                : "bg-gray-100/70 border-gray-200 shadow-[0_2px_6px_-2px_rgba(15,23,42,0.06)]"
                                                 }`}
                                         >
                                             <div className="flex-1 min-w-0">
@@ -949,9 +918,13 @@ export function AdminNotificationBell() {
                                                     onClick={() => !n.is_read && markRead(n.id)}
                                                     className="text-left w-full"
                                                 >
-                                                    <p className="text-sm font-semibold text-gray-900">{n.title}</p>
-                                                    <p className="text-xs text-gray-500 mt-0.5 whitespace-pre-line break-words">{n.message}</p>
-                                                    <p className="text-[10px] text-gray-400 mt-1">
+                                                    <p className={`text-[15px] font-bold ${n.is_read ? "text-gray-500" : "text-gray-900"}`}>
+                                                        {n.title}
+                                                    </p>
+                                                    <p className={`text-sm mt-1 whitespace-pre-line break-words ${n.is_read ? "text-gray-400" : "text-gray-600"}`}>
+                                                        {n.message}
+                                                    </p>
+                                                    <p className={`text-xs mt-1.5 ${n.is_read ? "text-gray-400" : "text-gray-500"}`}>
                                                         {new Date(n.created_at).toLocaleString("vi-VN")}
                                                     </p>
                                                 </button>
@@ -964,17 +937,17 @@ export function AdminNotificationBell() {
                                                             <button
                                                                 onClick={() => handleApproveTopup(n.id, topupRequestId)}
                                                                 disabled={isProcessing}
-                                                                className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                                className={BTN_APPROVE}
                                                             >
-                                                                {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                {isApproving && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Duyệt
                                                             </button>
                                                             <button
                                                                 onClick={() => handleRejectTopup(n.id, topupRequestId)}
                                                                 disabled={isProcessing}
-                                                                className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                                className={BTN_REJECT}
                                                             >
-                                                                {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                {isRejecting && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Từ chối
                                                             </button>
                                                         </div>
@@ -985,21 +958,21 @@ export function AdminNotificationBell() {
                                                     isResolved ? (
                                                         <ResolvedBadge action={resolvedAction} />
                                                     ) : (
-                                                        <div className="flex items-center gap-2 mt-2">
+                                                        <div className="flex items-center gap-3 mt-3">
                                                             <button
                                                                 onClick={() => handleApproveRegistration(n.id, registrationId)}
                                                                 disabled={isProcessing}
-                                                                className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                                className={BTN_APPROVE}
                                                             >
-                                                                {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                {isApproving && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Duyệt
                                                             </button>
                                                             <button
                                                                 onClick={() => handleRejectRegistration(n.id, registrationId)}
                                                                 disabled={isProcessing}
-                                                                className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                                className={BTN_REJECT}
                                                             >
-                                                                {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                {isRejecting && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Từ chối
                                                             </button>
                                                         </div>
@@ -1016,7 +989,7 @@ export function AdminNotificationBell() {
                                                                 disabled={isProcessing}
                                                                 className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
                                                             >
-                                                                {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                {isApproving && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Duyệt
                                                             </button>
                                                             <button
@@ -1024,7 +997,7 @@ export function AdminNotificationBell() {
                                                                 disabled={isProcessing}
                                                                 className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
                                                             >
-                                                                {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                {isRejecting && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Từ chối
                                                             </button>
                                                         </div>
@@ -1040,7 +1013,7 @@ export function AdminNotificationBell() {
                                                                 onClick={() =>
                                                                     handleOpenShirtOrderPayment(n.id, shirtOrderRegistrationIds)
                                                                 }
-                                                                className="flex items-center gap-1 py-1.5 px-3 rounded-lg text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white"
+                                                                className={BTN_INFO}
                                                             >
                                                                 <Wallet className="w-3.5 h-3.5" />
                                                                 Chi tiết{shirtOrderRegistrationIds.length > 1 ? ` (${shirtOrderRegistrationIds.length})` : ""}
@@ -1142,7 +1115,7 @@ export function AdminNotificationBell() {
                                                                 disabled={isProcessing}
                                                                 className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
                                                             >
-                                                                {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                {isApproving && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Duyệt
                                                             </button>
                                                             <button
@@ -1150,7 +1123,7 @@ export function AdminNotificationBell() {
                                                                 disabled={isProcessing}
                                                                 className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
                                                             >
-                                                                {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                {isRejecting && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Từ chối
                                                             </button>
                                                         </div>
@@ -1158,16 +1131,16 @@ export function AdminNotificationBell() {
                                                 )}
 
                                             </div>
-
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     remove(n.id);
                                                 }}
                                                 title="Xoá thông báo"
-                                                className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors self-start mt-0.5"
+                                                aria-label="Xoá thông báo"
+                                                className="flex-shrink-0 w-8 h-8 rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-sm active:scale-95 transition self-center"
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <Trash2 className="w-5 h-5 text-white" />
                                             </button>
                                         </div>
                                     );

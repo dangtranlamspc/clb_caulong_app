@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2, AlertTriangle, Swords, Trophy, XCircle, RotateCcw, GlassWater, Cake } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2, AlertTriangle, Swords, Trophy, XCircle, RotateCcw, GlassWater, Cake, ChevronLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -47,9 +47,6 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
 
     birthday_wish_received: { icon: Cake, cls: 'text-pink-600', bg: 'bg-pink-50' },
 };
-
-const SWIPE_THRESHOLD = -70;
-const MAX_DRAG = -110;
 
 function ConfirmDeleteAllModal({
     onConfirm,
@@ -157,76 +154,6 @@ function NotificationItem({
     respondAction: { id: string; action: 'accept' | 'decline' } | null;
     onRespondAdded: (n: any, action: 'accept' | 'decline') => void;
 }) {
-    const [dragX, setDragX] = useState(0);
-    const [dragging, setDragging] = useState(false);
-    const rowRef = useRef<HTMLDivElement>(null);
-
-    const startXRef = useRef(0);
-    const startYRef = useRef(0);
-    const movedRef = useRef(false);
-    const draggingRef = useRef(false);
-    const directionRef = useRef<'none' | 'horizontal' | 'vertical'>('none');
-
-    useEffect(() => {
-        const el = rowRef.current;
-        if (!el) return;
-
-        const onTouchStart = (e: TouchEvent) => {
-            const t = e.touches[0];
-            startXRef.current = t.clientX;
-            startYRef.current = t.clientY;
-            movedRef.current = false;
-            draggingRef.current = true;
-            directionRef.current = 'none';
-            setDragging(true);
-        };
-
-        const onTouchMove = (e: TouchEvent) => {
-            if (!draggingRef.current) return;
-            const t = e.touches[0];
-            const dx = t.clientX - startXRef.current;
-            const dy = t.clientY - startYRef.current;
-
-            if (directionRef.current === 'none' && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
-                directionRef.current = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
-            }
-
-            if (directionRef.current === 'horizontal') {
-                e.preventDefault();
-                if (Math.abs(dx) > 5) movedRef.current = true;
-                setDragX(Math.min(0, Math.max(MAX_DRAG, dx)));
-            }
-        };
-
-        const onTouchEnd = () => {
-            if (!draggingRef.current) return;
-            draggingRef.current = false;
-            setDragging(false);
-            if (directionRef.current === 'horizontal') {
-                setDragX(prev => {
-                    if (prev <= SWIPE_THRESHOLD) {
-                        onDelete(n.id);
-                        return prev;
-                    }
-                    return 0;
-                });
-            }
-            directionRef.current = 'none';
-        };
-
-        el.addEventListener('touchstart', onTouchStart, { passive: true });
-        el.addEventListener('touchmove', onTouchMove, { passive: false });
-        el.addEventListener('touchend', onTouchEnd, { passive: true });
-        el.addEventListener('touchcancel', onTouchEnd, { passive: true });
-
-        return () => {
-            el.removeEventListener('touchstart', onTouchStart);
-            el.removeEventListener('touchmove', onTouchMove);
-            el.removeEventListener('touchend', onTouchEnd);
-            el.removeEventListener('touchcancel', onTouchEnd);
-        };
-    }, [n.id, onDelete]);
-
     const cfgKey =
         n.type === 'match_result_approved'
             ? (n.data?.won ? 'match_result_approved_win' : 'match_result_approved_lose')
@@ -260,170 +187,164 @@ function NotificationItem({
         n.type === 'drink_gift_received';
 
     return (
-        <li className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-5">
-                <Trash2 className="w-4 h-4 text-white" />
+        <li
+            onClick={() => {
+                if (isShirtOrderNavigable) {
+                    onNavigateShirtOrderHistory(n);
+                    return;
+                }
+                if (isDrinkRequestNavigable) {
+                    onNavigateDrinkRequest(n);
+                    return;
+                }
+                if (hasWalletTx) {
+                    onNavigateWalletTx(n);
+                    return;
+                }
+                if (!n.is_read) onRead(n.id);
+            }}
+            className={`relative flex items-center gap-3 pl-4 pr-3 py-4 rounded-2xl border overflow-hidden cursor-pointer transition-colors ${!n.is_read
+                ? 'bg-blue-50/60 border-blue-100 shadow-[0_6px_16px_-4px_rgba(15,23,42,0.14),0_2px_4px_rgba(15,23,42,0.06)]'
+                : 'bg-gray-100/70 border-gray-200 shadow-[0_2px_6px_-2px_rgba(15,23,42,0.06)]'
+                }`}
+        >
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 self-start mt-0.5 ${cfg.bg}`}>
+                <Icon className={`w-[18px] h-[18px] ${cfg.cls}`} />
             </div>
 
-            <div
-                ref={rowRef}
-                onClick={() => {
-                    if (movedRef.current) return;
-                    if (isShirtOrderNavigable) {
-                        onNavigateShirtOrderHistory(n);
-                        return;
-                    }
-                    if (isDrinkRequestNavigable) {
-                        onNavigateDrinkRequest(n);
-                        return;
-                    }
-                    if (hasWalletTx) {
-                        onNavigateWalletTx(n);
-                        return;
-                    }
-                    if (!n.is_read) onRead(n.id);
-                }}
-                style={{
-                    transform: `translateX(${dragX}px)`,
-                    transition: dragging ? 'none' : 'transform .2s ease',
-                    touchAction: 'pan-y',
-                }}
-                className={`relative flex items-start gap-3 px-4 py-3 cursor-pointer bg-white ${n.is_read ? '' : 'bg-blue-50/40 hover:bg-blue-50'}`}
-            >
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${cfg.bg}`}>
-                    <Icon className={`w-4 h-4 ${cfg.cls}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                    <p className={`text-sm leading-snug ${n.is_read ? 'text-gray-600' : 'text-gray-900 font-semibold'}`}>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                    <p className={`text-[15px] leading-snug ${n.is_read ? 'text-gray-500 font-semibold' : 'text-gray-900 font-bold'}`}>
                         {n.title}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5 leading-snug">{n.message}</p>
+                    {!n.is_read && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />}
+                </div>
+                <p className={`text-sm mt-1 leading-snug break-words ${n.is_read ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {n.message}
+                </p>
+                <p className="text-xs text-gray-400 mt-1.5">
+                    {format(new Date(n.created_at), 'dd/MM HH:mm', { locale: vi })}
+                </p>
 
-                    <div className="flex items-center justify-between mt-1">
-                        <p className="text-[10px] text-gray-300">
-                            {format(new Date(n.created_at), 'dd/MM HH:mm', { locale: vi })}
-                        </p>
+                {isGuestConfirm && !alreadyHandled && (
+                    <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
                         <button
-                            onClick={(e) => { e.stopPropagation(); onDelete(n.id); }}
-                            className="text-gray-300 hover:text-red-500 transition-colors p-1 -m-1"
-                            aria-label="Xoá thông báo"
+                            onClick={() => onGuestConfirm(n, 'grouped')}
+                            disabled={guestActionId === n.id}
+                            className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                         >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            {guestActionId === n.id
+                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                : <Wallet className="w-3 h-3" />}
+                            Gộp vào ví
+                        </button>
+                        <button
+                            onClick={() => onGuestConfirm(n, 'separate')}
+                            disabled={guestActionId === n.id}
+                            className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50"
+                        >
+                            💵 Khách tự trả
                         </button>
                     </div>
+                )}
+                {isGuestConfirm && alreadyHandled && (
+                    <p className="text-[11px] text-emerald-600 font-medium mt-1.5">
+                        {n.data?.resolved_mode === 'separate'
+                            ? '💵 Đã chọn: Khách tự trả'
+                            : n.data?.resolved_mode === 'grouped' || n.data?.resolved_mode === 'auto'
+                                ? '💳 Đã gộp vào ví'
+                                : '✓ Đã xử lý'}
+                    </p>
+                )}
 
-                    {isGuestConfirm && !alreadyHandled && (
-                        <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
-                            <button
-                                onClick={() => onGuestConfirm(n, 'grouped')}
-                                disabled={guestActionId === n.id}
-                                className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                            >
-                                {guestActionId === n.id
-                                    ? <Loader2 className="w-3 h-3 animate-spin" />
-                                    : <Wallet className="w-3 h-3" />}
-                                Gộp vào ví
-                            </button>
-                            <button
-                                onClick={() => onGuestConfirm(n, 'separate')}
-                                disabled={guestActionId === n.id}
-                                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50"
-                            >
-                                💵 Khách tự trả
-                            </button>
-                        </div>
-                    )}
-                    {isGuestConfirm && alreadyHandled && (
-                        <p className="text-[11px] text-emerald-600 font-medium mt-1.5">
-                            {n.data?.resolved_mode === 'separate'
-                                ? '💵 Đã chọn: Khách tự trả'
-                                : n.data?.resolved_mode === 'grouped' || n.data?.resolved_mode === 'auto'
-                                    ? '💳 Đã gộp vào ví'
-                                    : '✓ Đã xử lý'}
-                        </p>
-                    )}
-
-                    {isAddedConfirm && !addedResolved && (
-                        <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
-                            <button
-                                onClick={() => onRespondAdded(n, 'accept')}
-                                disabled={respondAction?.id === n.id}
-                                className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
-                            >
-                                {respondAction && respondAction.id === n.id && respondAction.action === 'accept'
-                                    ? <Loader2 className="w-3 h-3 animate-spin" />
-                                    : <CheckCircle2 className="w-3 h-3" />}
-                                Tham gia
-                            </button>
-                            <button
-                                onClick={() => onRespondAdded(n, 'decline')}
-                                disabled={respondAction?.id === n.id}
-                                className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
-                            >
-                                {respondAction && respondAction.id === n.id && respondAction.action === 'decline' && (
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                )}
-                                Bận rùi
-                            </button>
-                        </div>
-                    )}
-                    {isAddedConfirm && addedResolved && (
-                        <p
-                            className={`text-[11px] font-medium mt-1.5 ${addedOutcome === 'declined'
-                                ? 'text-red-500'
-                                : addedOutcome === 'session_cancelled'
-                                    ? 'text-gray-400'
-                                    : 'text-emerald-600'
-                                }`}
+                {isAddedConfirm && !addedResolved && (
+                    <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => onRespondAdded(n, 'accept')}
+                            disabled={respondAction?.id === n.id}
+                            className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                         >
-                            {addedOutcome === 'declined'
-                                ? '🚫 Bạn đã báo bận'
-                                : addedOutcome === 'session_cancelled'
-                                    ? '🚫 Buổi đã huỷ'
-                                    : '✓ Đã xác nhận tham gia'}
-                        </p>
-                    )}
+                            {respondAction && respondAction.id === n.id && respondAction.action === 'accept'
+                                ? <Loader2 className="w-4 h-4 animate-spin" />
+                                : <CheckCircle2 className="w-4 h-4" />}
+                            Tham gia
+                        </button>
+                        <button
+                            onClick={() => onRespondAdded(n, 'decline')}
+                            disabled={respondAction?.id === n.id}
+                            className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
+                        >
+                            {respondAction && respondAction.id === n.id && respondAction.action === 'decline' && (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            )}
+                            Bận rùi
+                        </button>
+                    </div>
+                )}
+                {isAddedConfirm && addedResolved && (
+                    <p
+                        className={`text-[11px] font-medium mt-1.5 ${addedOutcome === 'declined'
+                            ? 'text-red-500'
+                            : addedOutcome === 'session_cancelled'
+                                ? 'text-gray-400'
+                                : 'text-emerald-600'
+                            }`}
+                    >
+                        {addedOutcome === 'declined'
+                            ? '🚫 Bạn đã báo bận'
+                            : addedOutcome === 'session_cancelled'
+                                ? '🚫 Buổi đã huỷ'
+                                : '✓ Đã xác nhận tham gia'}
+                    </p>
+                )}
 
-                    {isSessionCreated && !alreadyJoined && (
-                        <div className="mt-2" onClick={e => e.stopPropagation()}>
-                            <button
-                                onClick={() => onJoinSession(n)}
-                                disabled={joinActionId === n.id}
-                                className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                            >
-                                {joinActionId === n.id
-                                    ? <Loader2 className="w-3 h-3 animate-spin" />
-                                    : <CalendarDays className="w-3 h-3" />}
-                                Tham gia ngay
-                            </button>
-                        </div>
-                    )}
+                {isSessionCreated && !alreadyJoined && (
+                    <div className="mt-2" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => onJoinSession(n)}
+                            disabled={joinActionId === n.id}
+                            className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                            {joinActionId === n.id
+                                ? <Loader2 className="w-4 h-4 animate-spin" />
+                                : <CalendarDays className="w-4 h-4" />}
+                            Tham gia ngay
+                        </button>
+                    </div>
+                )}
 
-                    {isSessionCreated && alreadyJoined && (
-                        <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã đăng ký</p>
-                    )}
+                {isSessionCreated && alreadyJoined && (
+                    <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã đăng ký</p>
+                )}
 
-                    {isPenaltyChoice && !penaltyResolved && (
-                        <div className="mt-2" onClick={e => e.stopPropagation()}>
-                            <button
-                                onClick={() => onPenaltyClick(n)}
-                                className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600"
-                            >
-                                💳 Thanh toán ngay
-                            </button>
-                        </div>
-                    )}
+                {isPenaltyChoice && !penaltyResolved && (
+                    <div className="mt-2" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => onPenaltyClick(n)}
+                            className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                        >
+                            💳 Thanh toán ngay
+                        </button>
+                    </div>
+                )}
 
-                    {isPenaltyChoice && penaltyResolved && penaltyCancelled && (
-                        <p className="text-[11px] text-gray-400 font-medium mt-1.5">🚫 Admin đã huỷ</p>
-                    )}
+                {isPenaltyChoice && penaltyResolved && penaltyCancelled && (
+                    <p className="text-[11px] text-gray-400 font-medium mt-1.5">🚫 Admin đã huỷ</p>
+                )}
 
-                    {isPenaltyChoice && penaltyResolved && !penaltyCancelled && (
-                        <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
-                    )}
-                </div>
-                {!n.is_read && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />}
+                {isPenaltyChoice && penaltyResolved && !penaltyCancelled && (
+                    <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
+                )}
             </div>
+
+            <button
+                onClick={(e) => { e.stopPropagation(); onDelete(n.id); }}
+                title="Xoá thông báo"
+                aria-label="Xoá thông báo"
+                className="flex-shrink-0 w-8 h-8 rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-sm active:scale-95 transition self-center"
+            >
+                <Trash2 className="w-5 h-5 text-white" />
+            </button>
         </li>
     );
 }
@@ -435,7 +356,6 @@ export function NotificationBell() {
     const [items, setItems] = useState<any[]>([]);
     const [unread, setUnread] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [panelPos, setPanelPos] = useState({ top: 0, right: 0 });
     const [guestActionId, setGuestActionId] = useState<string | null>(null);
     const [guestHandled, setGuestHandled] = useState<Set<string>>(new Set());
     const [confirmDeleteAllOpen, setConfirmDeleteAllOpen] = useState(false);
@@ -444,6 +364,9 @@ export function NotificationBell() {
     const [joinedSessions, setJoinedSessions] = useState<Set<string>>(new Set());
 
     const [respondAction, setRespondAction] = useState<{ id: string; action: 'accept' | 'decline' } | null>(null);
+
+    const [rendered, setRendered] = useState(false);
+    const [shown, setShown] = useState(false);
 
     const btnRef = useRef<HTMLButtonElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
@@ -739,40 +662,27 @@ export function NotificationBell() {
         toast(lastNotification.title, { icon: '🔔' });
     }, [lastNotification]);
 
-    const updatePanelPos = () => {
-        if (!btnRef.current) return;
-        const rect = btnRef.current.getBoundingClientRect();
-        setPanelPos({
-            top: rect.bottom + 8,
-            right: Math.max(8, window.innerWidth - rect.right),
-        });
-    };
-
-    const toggleOpen = () => {
-        if (!open) updatePanelPos();
-        setOpen(o => !o);
-    };
+    useEffect(() => {
+        if (open) {
+            setRendered(true);
+            const id = requestAnimationFrame(() =>
+                requestAnimationFrame(() => setShown(true)),
+            );
+            return () => cancelAnimationFrame(id);
+        }
+        setShown(false);
+        const t = setTimeout(() => setRendered(false), 300); // khớp duration-300
+        return () => clearTimeout(t);
+    }, [open]);
 
     useEffect(() => {
-        if (!open) return;
-        const onClickOutside = (e: MouseEvent) => {
-            const target = e.target as Node;
-            if (
-                panelRef.current && !panelRef.current.contains(target) &&
-                btnRef.current && !btnRef.current.contains(target)
-            ) {
-                setOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', onClickOutside);
-        window.addEventListener('resize', updatePanelPos);
-        window.addEventListener('scroll', updatePanelPos, true);
-        return () => {
-            document.removeEventListener('mousedown', onClickOutside);
-            window.removeEventListener('resize', updatePanelPos);
-            window.removeEventListener('scroll', updatePanelPos, true);
-        };
-    }, [open]);
+        if (!rendered) return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = prev; };
+    }, [rendered]);
+
+    const toggleOpen = () => setOpen((o) => !o);
 
     const markRead = async (id: string) => {
         setItems(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
@@ -841,79 +751,93 @@ export function NotificationBell() {
                     </span>
                 )}
             </button>
-            {open && typeof document !== 'undefined' && createPortal(
-                <div
-                    ref={panelRef}
-                    className="fixed w-80 max-w-[90vw] bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-[9999]"
-                    style={{ top: panelPos.top, right: panelPos.right, animation: 'fadeSlideUp .2s ease both' }}
-                >
-                    <style>{`
-                        @keyframes fadeSlideUp {
-                            from { opacity: 0; transform: translateY(-6px); }
-                            to   { opacity: 1; transform: translateY(0); }
-                        }
-                    `}</style>
+            {rendered && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[9999]">
+                    <div
+                        onClick={() => setOpen(false)}
+                        className={`hidden sm:block absolute inset-0 bg-black/30 transition-opacity duration-300 ${shown ? 'opacity-100' : 'opacity-0'}`}
+                    />
 
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
-                        <p className="text-sm font-semibold text-gray-900">Thông báo</p>
-                        <div className="flex items-center gap-3">
-                            {unread > 0 && (
-                                <button onClick={markAllRead} className="text-xs text-blue-600 font-medium">
-                                    Đọc tất cả
-                                </button>
-                            )}
-                            {items.length > 0 && (
-                                <button onClick={() => setConfirmDeleteAllOpen(true)} className="text-xs text-red-500 font-medium">
-                                    Xoá tất cả
-                                </button>
-                            )}
-                            <button onClick={() => setOpen(false)} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
-                                <X className="w-3.5 h-3.5 text-gray-500" />
-                            </button>
-                        </div>
-                    </div>
+                    <div
+                        ref={panelRef}
+                        className={`absolute inset-y-0 right-0 w-full sm:w-[420px] flex flex-col bg-white sm:border-l sm:border-gray-100 sm:shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${shown ? 'translate-x-0' : 'translate-x-full'}`}
+                    >
+                        <div
+                            className="flex-shrink-0"
+                            style={{ height: 'env(safe-area-inset-top, 0px)', background: '#102744' }}
+                        />
 
-                    <div className="max-h-96 overflow-y-auto">
-                        {loading ? (
-                            <div className="p-4 space-y-3">
-                                {[...Array(3)].map((_, i) => (
-                                    <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />
-                                ))}
+                        <div className="flex items-center justify-between gap-2 px-3 h-14 border-b border-gray-100 flex-shrink-0">
+                            <div className="flex items-center gap-1 min-w-0">
+                                <button
+                                    onClick={() => setOpen(false)}
+                                    aria-label="Đóng"
+                                    className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100 active:scale-95 transition"
+                                >
+                                    <ChevronLeft className="w-5 h-5 text-gray-700" />
+                                </button>
+                                <p className="text-base font-bold text-gray-900">Thông báo</p>
                             </div>
-                        ) : items.length === 0 ? (
-                            <div className="py-10 text-center text-gray-400 text-sm">Chưa có thông báo nào</div>
-                        ) : (
-                            <ul className="divide-y divide-gray-50">
-                                {items.map(n => (
-                                    <NotificationItem
-                                        key={n.id}
-                                        n={n}
-                                        onRead={markRead}
-                                        onDelete={handleDelete}
-                                        onNavigateWalletTx={handleNavigateWalletTx}
-                                        onNavigateShirtOrderHistory={handleNavigateShirtOrderHistory}
-                                        onNavigateDrinkRequest={handleNavigateDrinkRequest}
-                                        guestActionId={guestActionId}
-                                        guestHandled={guestHandled}
-                                        onGuestConfirm={handleGuestConfirm}
-                                        onPenaltyClick={(notif) => {
-                                            setPenaltyModalData({
-                                                id: notif.data.fund_transaction_id,
-                                                amount: notif.data.amount,
-                                                reason: notif.data.reason,
-                                            });
-                                            setOpen(false);
-                                            if (!notif.is_read) markRead(notif.id);
-                                        }}
-                                        joinActionId={joinActionId}
-                                        joinedSessions={joinedSessions}
-                                        onJoinSession={handleJoinSession}
-                                        respondAction={respondAction}
-                                        onRespondAdded={handleRespondAdded}
-                                    />
-                                ))}
-                            </ul>
-                        )}
+                            <div className="flex items-center gap-3">
+                                {unread > 0 && (
+                                    <button onClick={markAllRead} className="text-xs text-blue-600 font-medium">
+                                        Đọc tất cả
+                                    </button>
+                                )}
+                                {items.length > 0 && (
+                                    <button onClick={() => setConfirmDeleteAllOpen(true)} className="text-xs text-red-500 font-medium">
+                                        Xoá tất cả
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Danh sách */}
+                        <div
+                            className="flex-1 min-h-0 overflow-y-auto bg-gray-50 p-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+                        >
+                            {loading ? (
+                                <div className="space-y-3">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="h-20 bg-gray-200 rounded-2xl animate-pulse" />
+                                    ))}
+                                </div>
+                            ) : items.length === 0 ? (
+                                <div className="py-10 text-center text-gray-400 text-sm">Chưa có thông báo nào</div>
+                            ) : (
+                                <ul className="space-y-3">
+                                    {items.map(n => (
+                                        <NotificationItem
+                                            key={n.id}
+                                            n={n}
+                                            onRead={markRead}
+                                            onDelete={handleDelete}
+                                            onNavigateWalletTx={handleNavigateWalletTx}
+                                            onNavigateShirtOrderHistory={handleNavigateShirtOrderHistory}
+                                            onNavigateDrinkRequest={handleNavigateDrinkRequest}
+                                            guestActionId={guestActionId}
+                                            guestHandled={guestHandled}
+                                            onGuestConfirm={handleGuestConfirm}
+                                            onPenaltyClick={(notif) => {
+                                                setPenaltyModalData({
+                                                    id: notif.data.fund_transaction_id,
+                                                    amount: notif.data.amount,
+                                                    reason: notif.data.reason,
+                                                });
+                                                setOpen(false);
+                                                if (!notif.is_read) markRead(notif.id);
+                                            }}
+                                            joinActionId={joinActionId}
+                                            joinedSessions={joinedSessions}
+                                            onJoinSession={handleJoinSession}
+                                            respondAction={respondAction}
+                                            onRespondAdded={handleRespondAdded}
+                                        />
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                     </div>
                 </div>,
                 document.body
