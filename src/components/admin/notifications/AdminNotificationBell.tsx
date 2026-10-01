@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Lottie, { LottieRefCurrentProps } from "lottie-react";
-import { Trash2, Loader2, CheckCircle2, XCircle, Phone, X, Wallet } from "lucide-react";
+import { Trash2, Loader2, CheckCircle2, XCircle, Phone, X, Wallet, ChevronLeft } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { walletAdminApi, registrationsAdminApi, matchesAdminApi, eventsAdminApi, userDrinksAdminApi } from "@/lib/api";
 import toast from "react-hot-toast";
@@ -501,12 +501,14 @@ export function AdminNotificationBell() {
     const pathname = usePathname();
     const { notifications, unreadCount, markRead, markResolved, markAllRead, remove, deleteAll, reload } = useAdminNotifications();
     const [open, setOpen] = useState(false);
-    const [coords, setCoords] = useState({ top: 0, right: 0 });
+    // const [coords, setCoords] = useState({ top: 0, right: 0 });
     const buttonRef = useRef<HTMLButtonElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const lottieRef = useRef<LottieRefCurrentProps>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [processingAction, setProcessingAction] = useState<"approve" | "reject" | null>(null);
+    const [rendered, setRendered] = useState(false);
+    const [shown, setShown] = useState(false);
 
     const [shirtOrderModal, setShirtOrderModal] = useState<{
         notifId: string;
@@ -546,16 +548,41 @@ export function AdminNotificationBell() {
         }
     }, [hasUnread, open]);
 
-    const toggleOpen = () => {
-        if (!open && buttonRef.current) {
-            const rect = buttonRef.current.getBoundingClientRect();
-            setCoords({
-                top: rect.bottom + 8,
-                right: window.innerWidth - rect.right,
-            });
+    useEffect(() => {
+        if (open) {
+            setRendered(true);
+            // 2 frame để trình duyệt vẽ trạng thái ban đầu (translate-x-full) rồi mới chạy transition
+            const id = requestAnimationFrame(() =>
+                requestAnimationFrame(() => setShown(true)),
+            );
+            return () => cancelAnimationFrame(id);
         }
-        setOpen((v) => !v);
-    };
+        setShown(false);
+        const t = setTimeout(() => setRendered(false), 300); // khớp duration-300
+        return () => clearTimeout(t);
+    }, [open]);
+
+    // khoá cuộn trang phía sau khi panel đang mở
+    useEffect(() => {
+        if (!rendered) return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => { document.body.style.overflow = prev; };
+    }, [rendered]);
+
+    // const toggleOpen = () => {
+    //     if (!open && buttonRef.current) {
+    //         const rect = buttonRef.current.getBoundingClientRect();
+    //         setCoords({
+    //             top: rect.bottom + 8,
+    //             right: window.innerWidth - rect.right,
+    //         });
+    //     }
+    //     setOpen((v) => !v);
+    // };
+
+
+    const toggleOpen = () => setOpen((v) => !v);
 
     useEffect(() => {
         if (!open) return;
@@ -811,315 +838,342 @@ export function AdminNotificationBell() {
                 )}
             </button>
 
-            {open && typeof document !== "undefined" && createPortal(
-                <div
-                    ref={dropdownRef}
-                    className="fixed w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[9999]"
-                    style={{ top: coords.top, right: coords.right }}
-                >
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-bold text-gray-900">Thông báo</p>
-                        <div className="flex items-center gap-3">
-                            {unreadCount > 0 && (
-                                <button onClick={markAllRead} className="text-xs font-semibold text-blue-600">
-                                    Đã đọc tất cả
-                                </button>
-                            )}
-                            {notifications.length > 0 && (
+            {rendered && typeof document !== "undefined" && createPortal(
+                <div className="fixed inset-0 z-[9999]">
+                    {/* Nền mờ: chỉ hiện từ sm, bấm vào để đóng */}
+                    <div
+                        onClick={() => setOpen(false)}
+                        className={`hidden sm:block absolute inset-0 bg-black/30 transition-opacity duration-300 ${shown ? "opacity-100" : "opacity-0"}`}
+                    />
+
+                    {/* Panel: mobile full, desktop 420px bên phải */}
+                    <div
+                        ref={dropdownRef}
+                        className={`absolute inset-y-0 right-0 w-full sm:w-[420px] flex flex-col bg-white sm:border-l sm:border-gray-100 sm:shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${shown ? "translate-x-0" : "translate-x-full"}`}
+                    >
+                        {/* Header */}
+                        <div
+                            className="flex items-center justify-between gap-2 px-3 border-b border-gray-100 flex-shrink-0"
+                            style={{ paddingTop: "env(safe-area-inset-top, 0px)", minHeight: 56 }}
+                        >
+                            <div className="flex items-center gap-1 min-w-0">
                                 <button
-                                    onClick={handleDeleteAll}
-                                    title="Xoá tất cả"
-                                    className="text-xs font-semibold text-red-500 flex items-center gap-1"
+                                    onClick={() => setOpen(false)}
+                                    aria-label="Đóng"
+                                    className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100 active:scale-95 transition"
                                 >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    Xoá tất cả
+                                    <ChevronLeft className="w-5 h-5 text-gray-700" />
                                 </button>
-                            )}
-                        </div>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto divide-y divide-gray-50">
-                        {notifications.length === 0 ? (
-                            <p className="px-4 py-6 text-xs text-gray-400 text-center">Chưa có thông báo nào</p>
-                        ) : (
-                            notifications.map((n) => {
-                                const isTopupRequest = n.type === "wallet_topup_request";
-                                const topupRequestId = n.data?.topup_request_id;
+                                <p className="text-base font-bold text-gray-900">Thông báo</p>
+                            </div>
 
-                                const isRegistrationPending = n.type === "registration_pending";
-                                const registrationId = n.data?.registration_id;
-
-                                const isMatchResultPending = n.type === "match_result_pending";
-                                const matchId = n.data?.match_id;
-
-                                const isShirtOrderInfo =
-                                    n.type === "shirt_order_new_registration" ||
-                                    n.type === "shirt_order_new_guest" ||
-                                    n.type === "shirt_order_payment_wallet";
-
-                                const isTournamentNewRegistration = n.type === "tournament_new_registration";
-                                const tournamentNavPath = n.data?.path;
-
-                                const isShirtOrderPendingCancelled =
-                                    n.type === "shirt_order_pending_payment_cancelled";
-                                const isShirtOrderCancelRequest = n.type === "shirt_order_cancel_request";
-                                const shirtOrderCancelRegistrationIds: string[] =
-                                    n.data?.registration_ids ??
-                                    (n.data?.registration_id ? [n.data.registration_id] : []);
-                                const shirtOrderCancelActivityId = n.data?.activity_id;
-
-                                const isShirtOrderPaymentPending = n.type === "shirt_order_payment_pending";
-                                const shirtOrderRegistrationIds: string[] =
-                                    n.data?.registration_ids ??
-                                    (n.data?.registration_id ? [n.data.registration_id] : []);
-                                const shirtOrderActivityId = n.data?.activity_id;
-
-                                const isFeedbackReceived = n.type === "feedback_received";
-                                const feedbackUserId = n.data?.user_id;
-
-                                const isDrinkRequestPending = n.type === "drink_request_pending";
-                                const drinkRequestId = n.data?.request_id;
-
-                                const isResolved = n.data?.resolved === true;
-                                const resolvedAction = n.data?.resolved_action as "approved" | "rejected" | undefined;
-                                const isProcessing = processingId === n.id;
-                                const isApproving = isProcessing && processingAction === "approve";
-                                const isRejecting = isProcessing && processingAction === "reject";
-
-                                return (
-                                    <div
-                                        key={n.id}
-                                        className={`group relative flex items-center gap-2 px-4 py-3 hover:bg-gray-50 transition-colors ${!n.is_read ? "bg-blue-50/50" : ""
-                                            }`}
+                            <div className="flex items-center gap-3">
+                                {unreadCount > 0 && (
+                                    <button onClick={markAllRead} className="text-xs font-semibold text-blue-600">
+                                        Đã đọc tất cả
+                                    </button>
+                                )}
+                                {notifications.length > 0 && (
+                                    <button
+                                        onClick={handleDeleteAll}
+                                        title="Xoá tất cả"
+                                        className="text-xs font-semibold text-red-500 flex items-center gap-1"
                                     >
-                                        <div className="flex-1 min-w-0">
-                                            <button
-                                                onClick={() => !n.is_read && markRead(n.id)}
-                                                className="text-left w-full"
-                                            >
-                                                <p className="text-sm font-semibold text-gray-900">{n.title}</p>
-                                                <p className="text-xs text-gray-500 mt-0.5 whitespace-pre-line break-words">{n.message}</p>
-                                                <p className="text-[10px] text-gray-400 mt-1">
-                                                    {new Date(n.created_at).toLocaleString("vi-VN")}
-                                                </p>
-                                            </button>
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                        Xoá tất cả
+                                    </button>
+                                )}
+                            </div>
+                        </div>
 
-                                            {isTopupRequest && topupRequestId && (
-                                                isResolved ? (
-                                                    <ResolvedBadge action={resolvedAction} />
-                                                ) : (
-                                                    <div className="flex items-center gap-2 mt-2">
-                                                        <button
-                                                            onClick={() => handleApproveTopup(n.id, topupRequestId)}
-                                                            disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
-                                                        >
-                                                            {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                            Duyệt
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRejectTopup(n.id, topupRequestId)}
-                                                            disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
-                                                        >
-                                                            {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                            Từ chối
-                                                        </button>
-                                                    </div>
-                                                )
-                                            )}
+                        {/* Danh sách */}
+                        <div
+                            className="flex-1 min-h-0 overflow-y-auto divide-y divide-gray-50"
+                            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+                        >
+                            {notifications.length === 0 ? (
+                                <p className="px-4 py-10 text-sm text-gray-400 text-center">Chưa có thông báo nào</p>
+                            ) : (
+                                notifications.map((n) => {
+                                    const isTopupRequest = n.type === "wallet_topup_request";
+                                    const topupRequestId = n.data?.topup_request_id;
 
-                                            {isRegistrationPending && registrationId && (
-                                                isResolved ? (
-                                                    <ResolvedBadge action={resolvedAction} />
-                                                ) : (
-                                                    <div className="flex items-center gap-2 mt-2">
-                                                        <button
-                                                            onClick={() => handleApproveRegistration(n.id, registrationId)}
-                                                            disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
-                                                        >
-                                                            {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                            Duyệt
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRejectRegistration(n.id, registrationId)}
-                                                            disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
-                                                        >
-                                                            {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                            Từ chối
-                                                        </button>
-                                                    </div>
-                                                )
-                                            )}
+                                    const isRegistrationPending = n.type === "registration_pending";
+                                    const registrationId = n.data?.registration_id;
 
-                                            {isMatchResultPending && matchId && (
-                                                isResolved ? (
-                                                    <ResolvedBadge action={resolvedAction} />
-                                                ) : (
-                                                    <div className="flex items-center gap-2 mt-2">
-                                                        <button
-                                                            onClick={() => handleApproveMatch(n.id, matchId)}
-                                                            disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
-                                                        >
-                                                            {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                            Duyệt
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRejectMatch(n.id, matchId)}
-                                                            disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
-                                                        >
-                                                            {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                            Từ chối
-                                                        </button>
-                                                    </div>
-                                                )
-                                            )}
+                                    const isMatchResultPending = n.type === "match_result_pending";
+                                    const matchId = n.data?.match_id;
 
-                                            {isShirtOrderPaymentPending && shirtOrderRegistrationIds.length > 0 && (
-                                                isResolved ? (
-                                                    <ResolvedBadge action={resolvedAction} />
-                                                ) : (
+                                    const isShirtOrderInfo =
+                                        n.type === "shirt_order_new_registration" ||
+                                        n.type === "shirt_order_new_guest" ||
+                                        n.type === "shirt_order_payment_wallet";
+
+                                    const isTournamentNewRegistration = n.type === "tournament_new_registration";
+                                    const tournamentNavPath = n.data?.path;
+
+                                    const isShirtOrderPendingCancelled =
+                                        n.type === "shirt_order_pending_payment_cancelled";
+                                    const isShirtOrderCancelRequest = n.type === "shirt_order_cancel_request";
+                                    const shirtOrderCancelRegistrationIds: string[] =
+                                        n.data?.registration_ids ??
+                                        (n.data?.registration_id ? [n.data.registration_id] : []);
+                                    const shirtOrderCancelActivityId = n.data?.activity_id;
+
+                                    const isShirtOrderPaymentPending = n.type === "shirt_order_payment_pending";
+                                    const shirtOrderRegistrationIds: string[] =
+                                        n.data?.registration_ids ??
+                                        (n.data?.registration_id ? [n.data.registration_id] : []);
+                                    const shirtOrderActivityId = n.data?.activity_id;
+
+                                    const isFeedbackReceived = n.type === "feedback_received";
+                                    const feedbackUserId = n.data?.user_id;
+
+                                    const isDrinkRequestPending = n.type === "drink_request_pending";
+                                    const drinkRequestId = n.data?.request_id;
+
+                                    const isResolved = n.data?.resolved === true;
+                                    const resolvedAction = n.data?.resolved_action as "approved" | "rejected" | undefined;
+                                    const isProcessing = processingId === n.id;
+                                    const isApproving = isProcessing && processingAction === "approve";
+                                    const isRejecting = isProcessing && processingAction === "reject";
+
+                                    return (
+                                        <div
+                                            key={n.id}
+                                            className={`group relative flex items-center gap-2 px-4 py-3 hover:bg-gray-50 transition-colors ${!n.is_read ? "bg-blue-50/50" : ""
+                                                }`}
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <button
+                                                    onClick={() => !n.is_read && markRead(n.id)}
+                                                    className="text-left w-full"
+                                                >
+                                                    <p className="text-sm font-semibold text-gray-900">{n.title}</p>
+                                                    <p className="text-xs text-gray-500 mt-0.5 whitespace-pre-line break-words">{n.message}</p>
+                                                    <p className="text-[10px] text-gray-400 mt-1">
+                                                        {new Date(n.created_at).toLocaleString("vi-VN")}
+                                                    </p>
+                                                </button>
+
+                                                {isTopupRequest && topupRequestId && (
+                                                    isResolved ? (
+                                                        <ResolvedBadge action={resolvedAction} />
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <button
+                                                                onClick={() => handleApproveTopup(n.id, topupRequestId)}
+                                                                disabled={isProcessing}
+                                                                className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            >
+                                                                {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Duyệt
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRejectTopup(n.id, topupRequestId)}
+                                                                disabled={isProcessing}
+                                                                className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            >
+                                                                {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Từ chối
+                                                            </button>
+                                                        </div>
+                                                    )
+                                                )}
+
+                                                {isRegistrationPending && registrationId && (
+                                                    isResolved ? (
+                                                        <ResolvedBadge action={resolvedAction} />
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <button
+                                                                onClick={() => handleApproveRegistration(n.id, registrationId)}
+                                                                disabled={isProcessing}
+                                                                className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            >
+                                                                {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Duyệt
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRejectRegistration(n.id, registrationId)}
+                                                                disabled={isProcessing}
+                                                                className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            >
+                                                                {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Từ chối
+                                                            </button>
+                                                        </div>
+                                                    )
+                                                )}
+
+                                                {isMatchResultPending && matchId && (
+                                                    isResolved ? (
+                                                        <ResolvedBadge action={resolvedAction} />
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <button
+                                                                onClick={() => handleApproveMatch(n.id, matchId)}
+                                                                disabled={isProcessing}
+                                                                className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            >
+                                                                {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Duyệt
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRejectMatch(n.id, matchId)}
+                                                                disabled={isProcessing}
+                                                                className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            >
+                                                                {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Từ chối
+                                                            </button>
+                                                        </div>
+                                                    )
+                                                )}
+
+                                                {isShirtOrderPaymentPending && shirtOrderRegistrationIds.length > 0 && (
+                                                    isResolved ? (
+                                                        <ResolvedBadge action={resolvedAction} />
+                                                    ) : (
+                                                        <div className="flex justify-end mt-2">
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleOpenShirtOrderPayment(n.id, shirtOrderRegistrationIds)
+                                                                }
+                                                                className="flex items-center gap-1 py-1.5 px-3 rounded-lg text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white"
+                                                            >
+                                                                <Wallet className="w-3.5 h-3.5" />
+                                                                Chi tiết{shirtOrderRegistrationIds.length > 1 ? ` (${shirtOrderRegistrationIds.length})` : ""}
+                                                            </button>
+                                                        </div>
+                                                    )
+                                                )}
+
+                                                {isShirtOrderCancelRequest && shirtOrderCancelRegistrationIds.length > 0 && (
+                                                    isResolved ? (
+                                                        <ResolvedBadge action={resolvedAction} />
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    markRead(n.id);
+                                                                    setOpen(false);
+                                                                    setNavigatingToEvents(true);
+                                                                    router.push(`/admin/events?openRegistrations=${shirtOrderCancelActivityId}`);
+                                                                }}
+                                                                className="flex-1 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 text-xs font-semibold"
+                                                            >
+                                                                Chi tiết
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRejectShirtOrderCancelDirect(n.id, shirtOrderCancelRegistrationIds)}
+                                                                disabled={isProcessing}
+                                                                className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            >
+                                                                {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Từ chối
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleOpenShirtOrderCancel(n.id, shirtOrderCancelRegistrationIds)}
+                                                                className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold"
+                                                            >
+                                                                Xác nhận
+                                                            </button>
+                                                        </div>
+                                                    )
+                                                )}
+
+
+                                                {isShirtOrderInfo && shirtOrderActivityId && (
                                                     <div className="flex justify-end mt-2">
-                                                        <button
-                                                            onClick={() =>
-                                                                handleOpenShirtOrderPayment(n.id, shirtOrderRegistrationIds)
-                                                            }
-                                                            className="flex items-center gap-1 py-1.5 px-3 rounded-lg text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white"
-                                                        >
-                                                            <Wallet className="w-3.5 h-3.5" />
-                                                            Chi tiết{shirtOrderRegistrationIds.length > 1 ? ` (${shirtOrderRegistrationIds.length})` : ""}
-                                                        </button>
-                                                    </div>
-                                                )
-                                            )}
-
-                                            {isShirtOrderCancelRequest && shirtOrderCancelRegistrationIds.length > 0 && (
-                                                isResolved ? (
-                                                    <ResolvedBadge action={resolvedAction} />
-                                                ) : (
-                                                    <div className="flex items-center gap-2 mt-2">
                                                         <button
                                                             onClick={() => {
                                                                 markRead(n.id);
                                                                 setOpen(false);
-                                                                setNavigatingToEvents(true);
-                                                                router.push(`/admin/events?openRegistrations=${shirtOrderCancelActivityId}`);
+                                                                window.location.href = `/admin/events?openRegistrations=${shirtOrderActivityId}`;
                                                             }}
-                                                            className="flex-1 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 text-xs font-semibold"
+                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
                                                         >
                                                             Chi tiết
                                                         </button>
+                                                    </div>
+                                                )}
+
+                                                {isTournamentNewRegistration && tournamentNavPath && (
+                                                    <div className="flex justify-end mt-2">
                                                         <button
-                                                            onClick={() => handleRejectShirtOrderCancelDirect(n.id, shirtOrderCancelRegistrationIds)}
-                                                            disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            onClick={() => {
+                                                                markRead(n.id);
+                                                                setOpen(false);
+                                                                router.push(tournamentNavPath);
+                                                            }}
+                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
                                                         >
-                                                            {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                            Từ chối
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleOpenShirtOrderCancel(n.id, shirtOrderCancelRegistrationIds)}
-                                                            className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold"
-                                                        >
-                                                            Xác nhận
+                                                            Chi tiết
                                                         </button>
                                                     </div>
-                                                )
-                                            )}
+                                                )}
 
-
-                                            {isShirtOrderInfo && shirtOrderActivityId && (
-                                                <div className="flex justify-end mt-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            markRead(n.id);
-                                                            setOpen(false);
-                                                            window.location.href = `/admin/events?openRegistrations=${shirtOrderActivityId}`;
-                                                        }}
-                                                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
-                                                    >
-                                                        Chi tiết
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {isTournamentNewRegistration && tournamentNavPath && (
-                                                <div className="flex justify-end mt-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            markRead(n.id);
-                                                            setOpen(false);
-                                                            router.push(tournamentNavPath);
-                                                        }}
-                                                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
-                                                    >
-                                                        Chi tiết
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {isFeedbackReceived && feedbackUserId && (
-                                                <div className="flex justify-end mt-2">
-                                                    <button
-                                                        onClick={() =>
-                                                            handleOpenFeedbackDetail(
-                                                                n.id,
-                                                                feedbackUserId,
-                                                                n.data?.phone,
-                                                                n.data?.full_name,
-                                                            )
-                                                        }
-                                                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
-                                                    >
-                                                        Chi tiết
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {isDrinkRequestPending && drinkRequestId && (
-                                                isResolved ? (
-                                                    <ResolvedBadge action={resolvedAction} />
-                                                ) : (
-                                                    <div className="flex items-center gap-2 mt-2">
+                                                {isFeedbackReceived && feedbackUserId && (
+                                                    <div className="flex justify-end mt-2">
                                                         <button
-                                                            onClick={() => handleApproveDrinkRequest(n.id, drinkRequestId)}
-                                                            disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            onClick={() =>
+                                                                handleOpenFeedbackDetail(
+                                                                    n.id,
+                                                                    feedbackUserId,
+                                                                    n.data?.phone,
+                                                                    n.data?.full_name,
+                                                                )
+                                                            }
+                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
                                                         >
-                                                            {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                            Duyệt
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRejectDrinkRequest(n.id, drinkRequestId)}
-                                                            disabled={isProcessing}
-                                                            className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
-                                                        >
-                                                            {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                            Từ chối
+                                                            Chi tiết
                                                         </button>
                                                     </div>
-                                                )
-                                            )}
+                                                )}
 
+                                                {isDrinkRequestPending && drinkRequestId && (
+                                                    isResolved ? (
+                                                        <ResolvedBadge action={resolvedAction} />
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <button
+                                                                onClick={() => handleApproveDrinkRequest(n.id, drinkRequestId)}
+                                                                disabled={isProcessing}
+                                                                className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            >
+                                                                {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Duyệt
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRejectDrinkRequest(n.id, drinkRequestId)}
+                                                                disabled={isProcessing}
+                                                                className="flex-1 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1"
+                                                            >
+                                                                {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Từ chối
+                                                            </button>
+                                                        </div>
+                                                    )
+                                                )}
+
+                                            </div>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    remove(n.id);
+                                                }}
+                                                title="Xoá thông báo"
+                                                className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors self-start mt-0.5"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
-
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                remove(n.id);
-                                            }}
-                                            title="Xoá thông báo"
-                                            className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors self-start mt-0.5"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                );
-                            })
-                        )}
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
                 </div>,
                 document.body,

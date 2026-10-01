@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -21,6 +21,10 @@ const FINANCE_PERIOD_OPTIONS = [
 ];
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: `Tháng ${i + 1}` }));
+
+const TOP_ROW = 'h-[340px] flex-none xl:h-[320px]';
+
+const BOTTOM_ROW = 'flex-1 min-h-[300px] xl:min-h-0';
 
 const ATTENDANCE_TIERS = [
     { min: 0, max: 1, icon: '🥚', label: 'Người Mới Tham Gia' },
@@ -115,6 +119,75 @@ function CardSkeleton({ className = 'h-20' }: { className?: string }) {
 function Reveal({ show, delayMs = 0, children }: { show: boolean; delayMs?: number; children: React.ReactNode }) {
     if (!show) return null;
     return <div className="animate-reveal" style={{ animationDelay: `${delayMs}ms` }}>{children}</div>;
+}
+
+function sessionTime(i: any) {
+    const s = i?.session ?? {};
+    const raw = s.session_date ?? s.date ?? s.start_time ?? s.created_at;
+    const t = raw ? new Date(raw).getTime() : 0;
+    return isNaN(t) ? 0 : t;
+}
+
+function SessionCostCarousel({ items, onSelect }: { items: any[]; onSelect: (id: string) => void }) {
+    const ref = useRef<HTMLDivElement>(null);
+    const [active, setActive] = useState(0);
+
+    useEffect(() => {
+        ref.current?.scrollTo({ top: 0 });
+        setActive(0);
+    }, [items]);
+
+    const onScroll = () => {
+        const el = ref.current;
+        if (!el || !el.clientHeight) return;
+        setActive(Math.round(el.scrollTop / el.clientHeight));
+    };
+
+    const goTo = (i: number) => {
+        const el = ref.current;
+        if (!el) return;
+        el.scrollTo({ top: i * el.clientHeight, behavior: 'smooth' });
+    };
+
+    return (
+        <div className="absolute inset-0">
+            <div
+                ref={ref}
+                onScroll={onScroll}
+                className="h-full overflow-y-auto snap-y snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+                {items.map((item, idx) => (
+                    <div
+                        key={item.session.id}
+                        className="h-full snap-start snap-always overflow-y-auto pr-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    >
+                        {idx === 0 && (
+                            <span className="inline-block mb-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                                Mới nhất
+                            </span>
+                        )}
+                        <SessionCostCard item={item} onClick={() => onSelect(item.session.id)} />
+                        {idx < items.length - 1 && (
+                            <p className="mt-2 text-center text-[10px] text-gray-300">↓ Cuộn để xem buổi trước</p>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {items.length > 1 && (
+                <div className="absolute right-0.5 top-1/2 -translate-y-1/2 flex flex-col gap-1.5">
+                    {items.map((_, i) => (
+                        <button
+                            key={i}
+                            onClick={() => goTo(i)}
+                            aria-label={`Buổi ${i + 1}`}
+                            className={`w-1.5 rounded-full transition-all ${i === active ? 'h-4 bg-emerald-500' : 'h-1.5 bg-gray-200 hover:bg-gray-300'}`}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 }
 
 function Panel({
@@ -222,6 +295,23 @@ export default function AdminDashboardPage() {
     const [topupLoading, setTopupLoading] = useState(true);
     const [topTopups, setTopTopups] = useState<any[]>([]);
     const [topupSummary, setTopupSummary] = useState(EMPTY_SUMMARY);
+
+    const rootRef = useRef<HTMLDivElement>(null);
+    const [rootH, setRootH] = useState<number | null>(null);
+
+
+    useEffect(() => {
+        const calc = () => {
+            const el = rootRef.current;
+            if (!el) return;
+            if (window.innerWidth < 1280) { setRootH(null); return; } // dưới xl: để tự cao
+            const top = el.getBoundingClientRect().top;
+            setRootH(window.innerHeight - top - 16); // 16 = khoảng đệm dưới
+        };
+        calc();
+        window.addEventListener('resize', calc);
+        return () => window.removeEventListener('resize', calc);
+    }, []);
 
     useEffect(() => {
         setStatsLoading(true);
@@ -396,6 +486,12 @@ export default function AdminDashboardPage() {
         [costSessions],
     );
 
+    const sortedCompleted = useMemo(
+        () => [...completed].sort((a, b) => sessionTime(b) - sessionTime(a)),
+        [completed],
+    );
+    const [activeCostIdx] = [0];
+
     const agg = useMemo(() => {
         let courtShuttle = 0, otherFee = 0, paid = 0, cost = 0, male = 0, female = 0;
         for (const i of completed) {
@@ -423,9 +519,11 @@ export default function AdminDashboardPage() {
     ];
 
     return (
-        // Từ xl trở lên: khóa chiều cao theo màn hình (88px = header/padding của layout admin, chỉnh nếu cần)
-        <div className="w-full flex flex-col gap-3 xl:h-[calc(100vh-88px)] xl:overflow-hidden">
-            {/* Header + thành viên + bộ lọc kỳ */}
+        <div
+            ref={rootRef}
+            style={rootH ? { height: rootH } : undefined}
+            className="w-full flex flex-col gap-3 xl:overflow-hidden"
+        >
             <div className="flex items-center justify-between gap-3 flex-wrap flex-shrink-0">
                 <div className="min-w-0">
                     <h1 className="text-xl font-bold text-gray-900">Tổng quan</h1>
@@ -436,7 +534,7 @@ export default function AdminDashboardPage() {
 
                 <div className="flex items-center gap-2 flex-wrap">
                     {!statsLoading && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                             <button
                                 onClick={() => router.push('/admin/members')}
                                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
@@ -450,7 +548,7 @@ export default function AdminDashboardPage() {
                                     key={label}
                                     onClick={() => router.push(href)}
                                     title={label}
-                                    className="hidden 2xl:flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+                                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
                                 >
                                     <span className={`w-5 h-5 rounded-md flex items-center justify-center ${bg}`}>
                                         <I className="w-3 h-3 text-white" />
@@ -461,20 +559,22 @@ export default function AdminDashboardPage() {
                             ))}
                         </div>
                     )}
-                    <div className="w-32">
-                        <CustomSelect
-                            value={periodMonth ? String(periodMonth) : ''}
-                            onChange={(v) => setPeriodMonth(v ? Number(v) : null)}
-                            placeholder="Cả năm"
-                            options={[{ value: '', label: 'Cả năm' }, ...MONTH_OPTIONS]}
-                        />
-                    </div>
-                    <div className="w-32">
-                        <CustomSelect
-                            value={String(periodYear)}
-                            onChange={(v) => setPeriodYear(Number(v))}
-                            options={financeYears.map((y) => ({ value: String(y), label: `Năm ${y}` }))}
-                        />
+                    <div className="flex items-center gap-2 w-full justify-end xl:w-auto">
+                        <div className="w-32">
+                            <CustomSelect
+                                value={periodMonth ? String(periodMonth) : ''}
+                                onChange={(v) => setPeriodMonth(v ? Number(v) : null)}
+                                placeholder="Cả năm"
+                                options={[{ value: '', label: 'Cả năm' }, ...MONTH_OPTIONS]}
+                            />
+                        </div>
+                        <div className="w-32">
+                            <CustomSelect
+                                value={String(periodYear)}
+                                onChange={(v) => setPeriodYear(Number(v))}
+                                options={financeYears.map((y) => ({ value: String(y), label: `Năm ${y}` }))}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -525,34 +625,22 @@ export default function AdminDashboardPage() {
                 )}
             </div>
 
-            {/* Nội dung chính: 4 cột, vừa 1 màn hình từ xl */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-[minmax(0,1fr)] gap-3 xl:flex-1 xl:min-h-0">
-                {/* Cột 1: chi phí các buổi + hoạt động */}
                 <div className="flex flex-col gap-3 xl:min-h-0">
                     <Panel
                         title={`Chi phí các buổi · ${periodLabel}`}
                         icon={Receipt}
                         iconCls="text-emerald-500"
-                        className="xl:flex-1"
-                        bodyClassName="xl:overflow-y-auto scroll-hover"
-                        action={<span className="text-[11px] text-gray-400">{completed.length} buổi</span>}
+                        className={TOP_ROW}
+                        bodyClassName="relative overflow-hidden"
+                        action={<span className="text-[11px] text-gray-400">{sortedCompleted.length} buổi</span>}
                     >
                         {costLoading ? (
-                            <div className="grid gap-3">
-                                {[...Array(2)].map((_, i) => <CardSkeleton key={i} className="h-40" />)}
-                            </div>
-                        ) : completed.length === 0 ? (
+                            <CardSkeleton className="h-full min-h-[200px]" />
+                        ) : sortedCompleted.length === 0 ? (
                             <p className="text-sm text-gray-400 text-center py-10">Chưa có buổi đánh nào hoàn thành trong kỳ này</p>
                         ) : (
-                            <div className="grid gap-3">
-                                {completed.map((item: any) => (
-                                    <SessionCostCard
-                                        key={item.session.id}
-                                        item={item}
-                                        onClick={() => setSelectedSessionId(item.session.id)}
-                                    />
-                                ))}
-                            </div>
+                            <SessionCostCarousel items={sortedCompleted} onSelect={setSelectedSessionId} />
                         )}
                     </Panel>
 
@@ -560,7 +648,7 @@ export default function AdminDashboardPage() {
                         title="Hoạt động mới nhất"
                         icon={Megaphone}
                         iconCls="text-purple-500"
-                        className="xl:h-[230px] xl:flex-none"
+                        className={BOTTOM_ROW}
                         bodyClassName="xl:overflow-y-auto scroll-hover"
                         action={
                             <button onClick={() => router.push('/admin/events')} className="text-xs font-medium text-blue-600 hover:text-blue-700">
@@ -610,18 +698,18 @@ export default function AdminDashboardPage() {
                 <div className="flex flex-col gap-3 xl:min-h-0">
                     <Panel
                         title="Biểu đồ thu chi"
-                        className="xl:flex-1"
+                        className={TOP_ROW}
                         bodyClassName="flex flex-col"
                         action={
                             <div className="flex items-center gap-1.5">
-                                <div className="w-32">
+                                <div className="w-30 sm:w-32">
                                     <CustomSelect
                                         value={String(financePeriod)}
                                         onChange={(v) => setFinancePeriod(Number(v))}
                                         options={FINANCE_PERIOD_OPTIONS}
                                     />
                                 </div>
-                                <div className="w-30">
+                                <div className="w-24 sm:w-28">
                                     <CustomSelect
                                         value={String(financeYear)}
                                         onChange={(v) => setFinanceYear(Number(v))}
@@ -632,11 +720,11 @@ export default function AdminDashboardPage() {
                         }
                     >
                         {financeChartLoading ? (
-                            <CardSkeleton className="flex-1 min-h-[180px] xl:min-h-[120px]" />
+                            <CardSkeleton className="flex-1 min-h-[120px]" />
                         ) : financeChartData.length === 0 ? (
-                            <div className="flex-1 min-h-[180px] xl:min-h-[120px] flex items-center justify-center text-gray-400 text-sm">Chưa có dữ liệu</div>
+                            <div className="flex-1 min-h-[120px] flex items-center justify-center text-gray-400 text-sm">Chưa có dữ liệu</div>
                         ) : (
-                            <div className="relative flex-1 min-h-[220px] xl:min-h-[120px]">
+                            <div className="relative flex-1 min-h-[120px]">
                                 <div className="absolute inset-0 animate-reveal">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={financeChartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
@@ -653,7 +741,7 @@ export default function AdminDashboardPage() {
                         )}
                     </Panel>
 
-                    <Panel title="Bảng xếp hạng" className="xl:flex-1" bodyClassName="xl:overflow-y-auto">
+                    <Panel title="Bảng xếp hạng" className={BOTTOM_ROW} bodyClassName="xl:overflow-y-auto">
                         <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                             <div className="flex items-center gap-2">
                                 {(['points', 'attendance'] as const).map((t) => (
@@ -756,13 +844,8 @@ export default function AdminDashboardPage() {
                         title={`Nạp tiền nhiều nhất · ${periodLabel}`}
                         icon={PiggyBank}
                         iconCls="text-emerald-500"
-                        className="xl:flex-1"
-                        bodyClassName="xl:overflow-y-auto scroll-hover"
-                    // action={
-                    //     <button onClick={() => router.push('/admin/wallet')} className="text-xs font-medium text-blue-600 hover:text-blue-700">
-                    //         Chi tiết →
-                    //     </button>
-                    // }
+                        className={TOP_ROW}
+                        bodyClassName="overflow-y-auto scroll-hover"
                     >
                         {topupLoading ? (
                             <CardSkeleton className="h-40" />
@@ -807,7 +890,7 @@ export default function AdminDashboardPage() {
                         title={`Phạt nhiều nhất · ${periodLabel}`}
                         icon={AlertTriangle}
                         iconCls="text-red-500"
-                        className="xl:flex-1"
+                        className={BOTTOM_ROW}
                         bodyClassName="xl:overflow-y-auto scroll-hover"
                         action={
                             <button onClick={() => router.push('/admin/fund')} className="text-xs font-medium text-blue-600 hover:text-blue-700">
@@ -862,61 +945,69 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div className="flex flex-col gap-3 xl:min-h-0">
-                    <Panel title="Buổi đánh" icon={CalendarDays}>
-                        {sessionLoading ? (
-                            <CardSkeleton className="h-14" />
-                        ) : (
-                            <Reveal show>
-                                <div className="grid grid-cols-3 gap-2 text-center">
-                                    <div className="rounded-xl bg-blue-50 py-2">
-                                        <p className="text-[10px] text-gray-400 uppercase">Hôm nay</p>
-                                        <p className="text-lg font-bold text-blue-500 leading-6">{sessionCounts.today}</p>
+                    <div className={`flex flex-col gap-3 ${TOP_ROW}`}>
+                        <Panel title="Buổi đánh" icon={CalendarDays} className="flex-none">
+                            {sessionLoading ? (
+                                <CardSkeleton className="h-14" />
+                            ) : (
+                                <Reveal show>
+                                    <div className="grid grid-cols-3 gap-2 text-center">
+                                        <div className="rounded-xl bg-blue-50 py-2">
+                                            <p className="text-[10px] text-gray-400 uppercase">Hôm nay</p>
+                                            <p className="text-lg font-bold text-blue-500 leading-6">{sessionCounts.today}</p>
+                                        </div>
+                                        <div className="rounded-xl bg-gray-50 py-2">
+                                            <p className="text-[10px] text-gray-400 uppercase">Tuần này</p>
+                                            <p className="text-lg font-bold text-gray-900 leading-6">{sessionCounts.this_week}</p>
+                                        </div>
+                                        <div className="rounded-xl bg-gray-50 py-2">
+                                            <p className="text-[10px] text-gray-400 uppercase">Tháng này</p>
+                                            <p className="text-lg font-bold text-gray-900 leading-6">{sessionCounts.this_month}</p>
+                                        </div>
                                     </div>
-                                    <div className="rounded-xl bg-gray-50 py-2">
-                                        <p className="text-[10px] text-gray-400 uppercase">Tuần này</p>
-                                        <p className="text-lg font-bold text-gray-900 leading-6">{sessionCounts.this_week}</p>
-                                    </div>
-                                    <div className="rounded-xl bg-gray-50 py-2">
-                                        <p className="text-[10px] text-gray-400 uppercase">Tháng này</p>
-                                        <p className="text-lg font-bold text-gray-900 leading-6">{sessionCounts.this_month}</p>
-                                    </div>
-                                </div>
-                            </Reveal>
-                        )}
-                    </Panel>
+                                </Reveal>
+                            )}
+                        </Panel>
 
-                    <Panel title="Quỹ CLB" icon={Wallet} iconCls="text-slate-600">
-                        {walletLoading ? (
-                            <CardSkeleton className="h-28" />
-                        ) : (
-                            <Reveal show>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="rounded-xl bg-emerald-50/60 p-2.5">
-                                        <p className="text-[10px] text-gray-400 uppercase">Thu tháng này</p>
-                                        <p className="text-sm font-bold text-emerald-600 tabular-nums">{monthlyFinance.income.toLocaleString('vi-VN')}đ</p>
+                        <Panel
+                            title="Quỹ CLB"
+                            icon={Wallet}
+                            iconCls="text-slate-600"
+                            className="flex-1"
+                            bodyClassName="overflow-y-auto scroll-hover"
+                        >
+                            {walletLoading ? (
+                                <CardSkeleton className="h-28" />
+                            ) : (
+                                <Reveal show>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="rounded-xl bg-emerald-50/60 p-2.5">
+                                            <p className="text-[10px] text-gray-400 uppercase">Thu tháng này</p>
+                                            <p className="text-sm font-bold text-emerald-600 tabular-nums">{monthlyFinance.income.toLocaleString('vi-VN')}đ</p>
+                                        </div>
+                                        <div className="rounded-xl bg-red-50/60 p-2.5">
+                                            <p className="text-[10px] text-gray-400 uppercase">Chi tháng này</p>
+                                            <p className="text-sm font-bold text-red-500 tabular-nums">{monthlyFinance.expense.toLocaleString('vi-VN')}đ</p>
+                                        </div>
                                     </div>
-                                    <div className="rounded-xl bg-red-50/60 p-2.5">
-                                        <p className="text-[10px] text-gray-400 uppercase">Chi tháng này</p>
-                                        <p className="text-sm font-bold text-red-500 tabular-nums">{monthlyFinance.expense.toLocaleString('vi-VN')}đ</p>
+                                    <div className="mt-2 pt-2 border-t border-dashed border-gray-200 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 uppercase">Quỹ còn lại</p>
+                                            <p className="text-lg font-bold text-blue-500 tabular-nums">{(walletSummary?.club_balance ?? 0).toLocaleString('vi-VN')}đ</p>
+                                        </div>
+                                        <span className="text-2xl">💰</span>
                                     </div>
-                                </div>
-                                <div className="mt-2 pt-2 border-t border-dashed border-gray-200 flex items-center justify-between">
-                                    <div>
-                                        <p className="text-[10px] text-gray-400 uppercase">Quỹ còn lại</p>
-                                        <p className="text-lg font-bold text-blue-500 tabular-nums">{(walletSummary?.club_balance ?? 0).toLocaleString('vi-VN')}đ</p>
-                                    </div>
-                                    <span className="text-2xl">💰</span>
-                                </div>
-                            </Reveal>
-                        )}
-                    </Panel>
+                                </Reveal>
+                            )}
+                        </Panel>
+                    </div>
 
                     <Panel
                         title="Nước trong kho thành viên"
                         icon={CupSoda}
                         iconCls="text-sky-500"
-                        className="xl:flex-1"
-                        bodyClassName="xl:overflow-y-auto"
+                        className={BOTTOM_ROW}
+                        bodyClassName="xl:overflow-y-auto scroll-hover"
                         action={
                             <button onClick={() => setShowDrinkHolders(true)} className="text-xs font-medium text-blue-600 hover:text-blue-700">
                                 Chi tiết →
@@ -976,9 +1067,11 @@ export default function AdminDashboardPage() {
                 </div>
             </div>
 
-            {selectedSessionId && (
-                <SessionCostDetailModal sessionId={selectedSessionId} onClose={() => setSelectedSessionId(null)} />
-            )}
+            {
+                selectedSessionId && (
+                    <SessionCostDetailModal sessionId={selectedSessionId} onClose={() => setSelectedSessionId(null)} />
+                )
+            }
 
             {showDrinkHolders && <DrinkHoldersModal onClose={() => setShowDrinkHolders(false)} />}
 
@@ -1007,6 +1100,6 @@ export default function AdminDashboardPage() {
           .scroll-hover::-webkit-scrollbar-thumb:hover { background-color: rgba(100, 116, 139, 0.8); }
         }
       `}</style>
-        </div>
+        </div >
     );
 }
