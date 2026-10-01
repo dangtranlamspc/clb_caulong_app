@@ -826,8 +826,11 @@ export function AdminNotificationBell() {
                         className={`absolute inset-y-0 right-0 w-full sm:w-[420px] flex flex-col bg-white sm:border-l sm:border-gray-100 sm:shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${shown ? "translate-x-0" : "translate-x-full"}`}
                     >
                         <div
-                            className="flex items-center justify-between gap-2 px-3 border-b border-gray-100 flex-shrink-0"
-                            style={{ paddingTop: "env(safe-area-inset-top, 0px)", minHeight: 64 }}
+                            className="flex items-center justify-between gap-2 px-3 pb-2 border-b border-gray-100 flex-shrink-0"
+                            style={{
+                                paddingTop: "env(safe-area-inset-top, 0px)",
+                                minHeight: "calc(env(safe-area-inset-top, 0px) + 72px)",
+                            }}
                         >
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <button
