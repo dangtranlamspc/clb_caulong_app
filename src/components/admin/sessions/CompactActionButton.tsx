@@ -22,7 +22,7 @@ export function CompactActionButton({
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`relative flex flex-col items-center justify-center gap-1 rounded-xl py-2.5 px-2 text-white shadow-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:active:scale-100 ${colorClass}`}
+            className={`relative flex flex-col items-center justify-center gap-1 rounded-xl py-2.5 px-2 text-white transition-all duration-200 active:shadow-none active:translate-y-[5px] disabled:opacity-50 disabled:pointer-events-none ${colorClass}`}
         >
             {badge != null && badge > 0 && !loading && (
                 <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-white/25 text-[10px] font-bold text-white flex items-center justify-center">

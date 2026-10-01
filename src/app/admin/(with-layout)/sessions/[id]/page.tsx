@@ -102,6 +102,22 @@ const LEVEL_LABELS: Record<string, string> = {
   chuyen_nghiep: "Chuyên nghiệp",
 };
 
+const B3D_MOTION = "active:shadow-none active:translate-y-[5px]";
+const B3D_BTN = `${B3D_MOTION} transition-all duration-200`;
+const B3D = {
+  green: "bg-green-700 text-white shadow-[0_5px_0_0_#14532d] hover:shadow-[0_3px_0_0_#14532d]",
+  red: "bg-red-500 text-white shadow-[0_5px_0_0_#b91c1c] hover:shadow-[0_3px_0_0_#b91c1c]",
+  emerald: "bg-emerald-500 text-white shadow-[0_5px_0_0_#047857] hover:shadow-[0_3px_0_0_#047857]",
+  blue: "bg-blue-600 text-white shadow-[0_5px_0_0_#1e40af] hover:shadow-[0_3px_0_0_#1e40af]",
+  blueLight: "bg-blue-500 text-white shadow-[0_5px_0_0_#1d4ed8] hover:shadow-[0_3px_0_0_#1d4ed8]",
+  teal: "bg-teal-500 text-white shadow-[0_5px_0_0_#0f766e] hover:shadow-[0_3px_0_0_#0f766e]",
+  rose: "bg-rose-500 text-white shadow-[0_5px_0_0_#be123c] hover:shadow-[0_3px_0_0_#be123c]",
+  orange: "bg-orange-500 text-white shadow-[0_5px_0_0_#c2410c] hover:shadow-[0_3px_0_0_#c2410c]",
+  sky: "bg-sky-500 text-white shadow-[0_5px_0_0_#0369a1] hover:shadow-[0_3px_0_0_#0369a1]",
+  amber: "bg-amber-500 text-white shadow-[0_5px_0_0_#b45309] hover:shadow-[0_3px_0_0_#b45309]",
+};
+
+
 type ActionPhase = "idle" | "loading" | "success";
 
 function useIsDesktop(breakpoint = 768) {
@@ -1349,8 +1365,8 @@ export default function SessionDetailPage() {
             idleIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
             label="Duyệt"
             idleWidthClass="w-28"
-            colorClass="bg-blue-500 hover:bg-blue-600 text-white"
-            successClassName="bg-blue-500 text-white"
+            colorClass={`${B3D.blueLight} ${B3D_MOTION}`}
+            successClassName={B3D.blueLight}
             onClick={() => handleApproveRegistration(reg.id)}
             disabled={busy}
           />
@@ -1359,8 +1375,8 @@ export default function SessionDetailPage() {
             idleIcon={<XCircle className="w-3.5 h-3.5" />}
             label="Từ chối"
             idleWidthClass="w-28"
-            colorClass="bg-red-500 hover:bg-red-600 text-white"
-            successClassName="bg-red-500 text-white"
+            colorClass={`${B3D.red} ${B3D_MOTION}`}
+            successClassName={B3D.red}
             onClick={() => handleRejectRegistration(reg.id, displayName)}
             disabled={busy}
           />
@@ -1376,8 +1392,8 @@ export default function SessionDetailPage() {
             idleIcon={<UserCheck className="w-3.5 h-3.5" />}
             label="Có mặt"
             idleWidthClass="w-28"
-            colorClass="bg-green-500 hover:bg-green-600 text-white"
-            successClassName="bg-green-500 text-white"
+            colorClass={`${B3D.green} ${B3D_MOTION}`}
+            successClassName={B3D.green}
             onClick={() => handleCheckinPresent(reg.id)}
             disabled={busy}
           />
@@ -1386,8 +1402,8 @@ export default function SessionDetailPage() {
             idleIcon={<UserX className="w-3.5 h-3.5" />}
             label="Vắng mặt"
             idleWidthClass="w-28"
-            colorClass="bg-red-500 hover:bg-red-600 text-white"
-            successClassName="bg-red-500 text-white"
+            colorClass={`${B3D.red} ${B3D_MOTION}`}
+            successClassName={B3D.red}
             onClick={() => handleCheckinAbsent(reg.id, displayName)}
             disabled={busy}
           />
@@ -1402,8 +1418,8 @@ export default function SessionDetailPage() {
           idleIcon={<UserX className="w-3.5 h-3.5" />}
           label="Vắng mặt"
           idleWidthClass="w-28"
-          colorClass="bg-red-500 hover:bg-red-600 text-white"
-          successClassName="bg-red-500 text-white"
+          colorClass={`${B3D.red} ${B3D_MOTION}`}
+          successClassName={B3D.red}
           onClick={() => handleCheckinAbsent(reg.id, displayName)}
           disabled={busy}
         />
@@ -1417,15 +1433,15 @@ export default function SessionDetailPage() {
           idleIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
           label="Xác nhận"
           idleWidthClass="w-28"
-          colorClass="bg-green-500 hover:bg-green-600 text-white"
-          successClassName="bg-green-500 text-white"
+          colorClass={`${B3D.green} ${B3D_MOTION}`}
+          successClassName={B3D.green}
           onClick={() => handleConfirm(reg.id)}
           disabled={busy}
         />
         <button
           onClick={() => setShowReject(reg.id)}
           disabled={busy}
-          className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
+          className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-semibold ${B3D.red} ${B3D_BTN} disabled:opacity-50`}
         >
           <XCircle className="w-3.5 h-3.5" /> Từ chối
         </button>
@@ -1936,52 +1952,56 @@ export default function SessionDetailPage() {
         }
       `}</style>
       <div className="max-w-3xl mx-auto space-y-4">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => router.push("/admin/sessions")}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push("/admin/sessions")}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
 
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate flex-1 min-w-0">
-            {session.title}
-          </h1>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate flex-1 min-w-0">
+              {session.title}
+            </h1>
+          </div>
 
-          <button
-            onClick={handleManualRefresh}
-            disabled={manualRefreshing}
-            title="Tải lại dữ liệu"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50"
-          >
-            <RotateCcw
-              className={`w-5 h-5 text-gray-500 ${manualRefreshing ? "animate-spin" : ""}`}
-            />
-          </button>
+          <div className="flex items-center justify-end gap-2 flex-wrap">
+            <button
+              onClick={handleManualRefresh}
+              disabled={manualRefreshing}
+              title="Tải lại dữ liệu"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50"
+            >
+              <RotateCcw
+                className={`w-5 h-5 text-gray-500 ${manualRefreshing ? "animate-spin" : ""}`}
+              />
+            </button>
 
-          {canAddMember &&
-            (awaitingCheckin.length > 0 || pendingApproval.length > 0) && (
-              <span className="flex-shrink-0 whitespace-nowrap text-xs text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
-                {pendingApproval.length > 0 &&
-                  `Còn ${pendingApproval.length} đăng ký chờ duyệt`}
-                {pendingApproval.length > 0 &&
-                  awaitingCheckin.length > 0 &&
-                  ", "}
-                {awaitingCheckin.length > 0 &&
-                  `${awaitingCheckin.length} người chưa điểm danh`}
-              </span>
-            )}
+            {canAddMember &&
+              (awaitingCheckin.length > 0 || pendingApproval.length > 0) && (
+                <span className="flex-shrink-0 whitespace-nowrap text-xs text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                  {pendingApproval.length > 0 &&
+                    `Còn ${pendingApproval.length} đăng ký chờ duyệt`}
+                  {pendingApproval.length > 0 &&
+                    awaitingCheckin.length > 0 &&
+                    ", "}
+                  {awaitingCheckin.length > 0 &&
+                    `${awaitingCheckin.length} người chưa điểm danh`}
+                </span>
+              )}
+          </div>
         </div>
         {isDesktop ? (
-          <div className="flex items-center justify-end gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex items-center justify-end gap-3 overflow-x-auto pt-1 pb-2 scrollbar-hide">
             {awaitingCheckin.length > 0 && (
               <MorphButton
                 phase={getPhase("checkinAll")}
                 idleIcon={<UserCheck className="w-4 h-4" />}
                 label={`All (${awaitingCheckin.length})`}
                 idleWidthClass="w-22"
-                colorClass="bg-green-500 hover:bg-green-600 text-white"
-                successClassName="bg-green-500 text-white"
+                colorClass={`${B3D.green} ${B3D_MOTION}`}
+                successClassName={B3D.green}
                 onClick={handleCheckinAllPresent}
                 disabled={closingList}
               />
@@ -1993,8 +2013,8 @@ export default function SessionDetailPage() {
                 idleIcon={<UserX className="w-4 h-4" />}
                 label={`Chốt (${awaitingCheckin.length} vắng)`}
                 idleWidthClass="w-36"
-                colorClass="bg-red-500 hover:bg-red-600 text-white"
-                successClassName="bg-red-500 text-white"
+                colorClass={`${B3D.red} ${B3D_MOTION}`}
+                successClassName={B3D.red}
                 onClick={handleCloseList}
                 disabled={checkingInAll}
               />
@@ -2048,7 +2068,7 @@ export default function SessionDetailPage() {
               <button
                 onClick={() => setShowCancelModal(true)}
                 disabled={cancelling}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold flex-shrink-0 disabled:opacity-50"
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold flex-shrink-0 disabled:opacity-50 ${B3D.red} ${B3D_BTN}`}
               >
                 {cancelling ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -2063,7 +2083,7 @@ export default function SessionDetailPage() {
               <button
                 onClick={handleReopenSession}
                 disabled={reopening}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-sm font-semibold flex-shrink-0 disabled:opacity-50"
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold flex-shrink-0 disabled:opacity-50 ${B3D.sky} ${B3D_BTN}`}
               >
                 {reopening ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -2079,7 +2099,7 @@ export default function SessionDetailPage() {
                 <button
                   onClick={() => setShowRollbackModal(true)}
                   disabled={rollingBack}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600 text-sm font-semibold disabled:opacity-50 flex-shrink-0"
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold flex-shrink-0 disabled:opacity-50 ${B3D.amber} ${B3D_BTN}`}
                 >
                   {rollingBack ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -2096,8 +2116,8 @@ export default function SessionDetailPage() {
                 idleIcon={<CheckCircle2 className="w-4 h-4" />}
                 label="Hoàn thành"
                 idleWidthClass="w-32"
-                colorClass="bg-emerald-500 hover:bg-emerald-600 text-white"
-                successClassName="bg-emerald-500 text-white"
+                colorClass={`${B3D.emerald} ${B3D_MOTION}`}
+                successClassName={B3D.emerald}
                 onClick={handleCompleteSession}
                 disabled={completingSession}
               />
@@ -2106,7 +2126,7 @@ export default function SessionDetailPage() {
             {canAddMember && (
               <button
                 onClick={() => setShowAddModal(true)}
-                className="flex-shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
+                className={`flex-shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold ${B3D.blue} ${B3D_BTN}`}
               >
                 <UserPlus className="w-4 h-4" />
                 Thêm thành viên
@@ -2114,13 +2134,13 @@ export default function SessionDetailPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2 px-6">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-4 px-6 pb-2">
             {awaitingCheckin.length > 0 && (
               <CompactActionButton
                 icon={<UserCheck className="w-4 h-4" />}
                 label="Điểm danh tất cả"
                 badge={awaitingCheckin.length}
-                colorClass="bg-emerald-500"
+                colorClass={B3D.emerald}
                 onClick={handleCheckinAllPresent}
                 disabled={closingList || getPhase("checkinAll") === "loading"}
                 loading={getPhase("checkinAll") === "loading"}
@@ -2132,7 +2152,7 @@ export default function SessionDetailPage() {
                 icon={<UserX className="w-4 h-4" />}
                 label="Chốt danh sách"
                 badge={awaitingCheckin.length}
-                colorClass="bg-rose-500"
+                colorClass={B3D.rose}
                 onClick={handleCloseList}
                 disabled={checkingInAll || getPhase("closeList") === "loading"}
                 loading={getPhase("closeList") === "loading"}
@@ -2146,7 +2166,7 @@ export default function SessionDetailPage() {
                 <CompactActionButton
                   icon={<Calculator className="w-4 h-4" />}
                   label="Kết thúc"
-                  colorClass="bg-teal-500"
+                  colorClass={B3D.teal}
                   onClick={() => {
                     if (finishing) return;
                     setFinishing(true);
@@ -2164,7 +2184,7 @@ export default function SessionDetailPage() {
               <CompactActionButton
                 icon={<XCircle className="w-4 h-4" />}
                 label="Huỷ buổi"
-                colorClass="bg-orange-500"
+                colorClass={B3D.orange}
                 onClick={() => setShowCancelModal(true)}
                 disabled={cancelling}
                 loading={cancelling}
@@ -2175,7 +2195,7 @@ export default function SessionDetailPage() {
               <CompactActionButton
                 icon={<RotateCcw className="w-4 h-4" />}
                 label="Mở lại"
-                colorClass="bg-sky-500"
+                colorClass={B3D.sky}
                 onClick={handleReopenSession}
                 disabled={reopening}
                 loading={reopening}
@@ -2187,7 +2207,7 @@ export default function SessionDetailPage() {
                 <CompactActionButton
                   icon={<RotateCcw className="w-4 h-4" />}
                   label="Hoàn tác"
-                  colorClass="bg-amber-500"
+                  colorClass={B3D.amber}
                   onClick={() => setShowRollbackModal(true)}
                   disabled={rollingBack}
                   loading={rollingBack}
@@ -2198,7 +2218,7 @@ export default function SessionDetailPage() {
               <CompactActionButton
                 icon={<CheckCircle2 className="w-4 h-4" />}
                 label="Hoàn thành"
-                colorClass="bg-green-500"
+                colorClass={B3D.green}
                 onClick={handleCompleteSession}
                 disabled={completingSession}
                 loading={completingSession}
@@ -2209,7 +2229,7 @@ export default function SessionDetailPage() {
               <CompactActionButton
                 icon={<UserPlus className="w-4 h-4" />}
                 label="Thêm thành viên"
-                colorClass="bg-blue-500"
+                colorClass={B3D.blue}
                 onClick={() => setShowAddModal(true)}
               />
             )}

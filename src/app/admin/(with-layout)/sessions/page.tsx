@@ -26,6 +26,18 @@ import SessionFormModal from "@/components/admin/sessions/SessionFormModal";
 import { useRouter } from "next/navigation";
 import { useNavLoadingStore } from "@/store/nav-loading.store";
 
+const BTN_3D =
+  "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold tracking-wide text-white whitespace-nowrap transition-all duration-200 active:shadow-none active:translate-y-[5px] disabled:opacity-60 disabled:pointer-events-none";
+
+const BTN3D = {
+  gray: "bg-gray-600 shadow-[0_5px_0_0_#374151] hover:shadow-[0_3px_0_0_#374151]",
+  blue: "bg-blue-600 shadow-[0_5px_0_0_#1e40af] hover:shadow-[0_3px_0_0_#1e40af]",
+  blueLight: "bg-blue-500 shadow-[0_5px_0_0_#1d4ed8] hover:shadow-[0_3px_0_0_#1d4ed8]",
+  red: "bg-red-500 shadow-[0_5px_0_0_#b91c1c] hover:shadow-[0_3px_0_0_#b91c1c]",
+  green: "bg-green-500 shadow-[0_5px_0_0_#15803d] hover:shadow-[0_3px_0_0_#15803d]",
+  emerald: "bg-emerald-500 shadow-[0_5px_0_0_#047857] hover:shadow-[0_3px_0_0_#047857]",
+};
+
 const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
   open: { label: "Mở đăng ký", cls: "bg-green-100 text-green-700" },
   full: { label: "Đã đầy", cls: "bg-amber-100 text-amber-700" },
@@ -48,37 +60,17 @@ const STATUS_NEXT: Record<
   }[]
 > = {
   open: [
-    {
-      label: "Hủy buổi",
-      next: "cancelled",
-      cls: "bg-red-500 hover:bg-red-600 text-white",
-    },
+    { label: "Hủy buổi", next: "cancelled", cls: BTN3D.red },
   ],
   full: [
-    {
-      label: "Hủy buổi",
-      next: "cancelled",
-      cls: "bg-red-500 hover:bg-red-600 text-white",
-    },
-    {
-      label: "Kết thúc",
-      to: "finish",
-      cls: "bg-green-500 hover:bg-green-600 text-white",
-    },
+    { label: "Hủy buổi", next: "cancelled", cls: BTN3D.red },
+    { label: "Kết thúc", to: "finish", cls: BTN3D.green },
   ],
   waiting_payment: [
-    {
-      label: "Hoàn thành",
-      action: "complete",
-      cls: "bg-emerald-500 hover:bg-emerald-600 text-white",
-    },
+    { label: "Hoàn thành", action: "complete", cls: BTN3D.emerald },
   ],
   cancelled: [
-    {
-      label: "Mở lại",
-      next: "open",
-      cls: "bg-blue-500 hover:bg-blue-600 text-white",
-    },
+    { label: "Mở lại", next: "open", cls: BTN3D.blueLight },
   ],
   completed: [],
 };
@@ -166,7 +158,6 @@ export default function SessionsPage() {
     [query],
   );
 
-  // Refetch lại đúng số lượng buổi đang hiển thị (dùng sau khi xóa/đổi trạng thái)
   const refreshLoaded = useCallback(async () => {
     const loadedCount = page * query.limit;
     const params = Object.fromEntries(
@@ -196,7 +187,6 @@ export default function SessionsPage() {
     fetchSessions(1);
   }, [fetchSessions]);
 
-  // Tự động tải thêm buổi khi cuộn tới gần cuối danh sách
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -629,10 +619,10 @@ export default function SessionsPage() {
 
           <button
             onClick={() => setFormTarget({})}
-            className="flex items-center justify-center gap-1.5 w-12 md:w-auto h-[58px] px-0 md:px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0 whitespace-nowrap"
+            className="flex items-center justify-center gap-1.5 w-11 h-11 md:w-auto md:h-[58px] px-0 md:px-4 rounded-xl bg-blue-600 shadow-[0_5px_0_0_#1e40af] hover:shadow-[0_3px_0_0_#1e40af] active:shadow-none active:translate-y-[5px] transition-all duration-200 text-white flex-shrink-0 whitespace-nowrap mb-1.5"
           >
-            <Plus className="w-5 h-5 shrink-0" />
-            <span className="hidden md:inline text-sm font-medium">Thêm buổi đánh</span>
+            <Plus className="w-4 h-4 shrink-0" />
+            <span className="hidden md:inline text-sm font-semibold tracking-wide">Thêm buổi đánh</span>
           </button>
         </div>
       </div>
@@ -733,8 +723,8 @@ export default function SessionsPage() {
                     </span>
                   </div>
 
-                  <div className="flex flex-col gap-3 pt-1">
-                    <div className="flex gap-1.5">
+                  <div className="flex flex-col gap-3.5 pt-1 pb-1.5">
+                    <div className="flex gap-2.5">
                       <button
                         onClick={() => {
                           setNavigatingId(s.id);
@@ -744,7 +734,7 @@ export default function SessionsPage() {
                           });
                         }}
                         disabled={navigatingId === s.id}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-60"
+                        className={`${BTN_3D} ${BTN3D.gray}`}
                       >
                         {navigatingId === s.id ? (
                           <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
@@ -753,21 +743,21 @@ export default function SessionsPage() {
                         )}
                         Xem
                       </button>
+
                       {s.status !== "completed" && (
-                        <>
-                          <button
-                            onClick={() => setFormTarget({ id: s.id })}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium transition-colors"
-                          >
-                            <Pencil className="w-4 h-4" /> Sửa
-                          </button>
-                        </>
+                        <button
+                          onClick={() => setFormTarget({ id: s.id })}
+                          className={`${BTN_3D} ${BTN3D.blue}`}
+                        >
+                          <Pencil className="w-4 h-4" /> Sửa
+                        </button>
                       )}
+
                       {s.status === "cancelled" && (
                         <button
                           onClick={() => handleDelete(s.id, s.title)}
                           disabled={busy}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-500 text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap"
+                          className={`${BTN_3D} ${BTN3D.red}`}
                         >
                           <Trash2 className="w-4 h-4 shrink-0" /> Xóa
                         </button>
@@ -775,13 +765,13 @@ export default function SessionsPage() {
                     </div>
 
                     {nextActions.length > 0 && (
-                      <div className="flex gap-1.5">
+                      <div className="flex gap-2.5">
                         {nextActions.map(({ label, next, to, action, cls }) =>
                           to ? (
                             <Link
                               key={to}
                               href={`/admin/sessions/${s.id}/${to}`}
-                              className={`flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition-colors ${cls}`}
+                              className={`${BTN_3D} ${cls}`}
                             >
                               {label}
                             </Link>
@@ -790,7 +780,7 @@ export default function SessionsPage() {
                               key="complete"
                               onClick={() => openCompleteModal(s.id, s.title)}
                               disabled={busy}
-                              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap ${cls}`}
+                              className={`${BTN_3D} ${cls}`}
                             >
                               {label}
                             </button>
@@ -803,7 +793,7 @@ export default function SessionsPage() {
                                   : handleStatusChange(s.id, next!)
                               }
                               disabled={busy}
-                              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 whitespace-nowrap ${cls}`}
+                              className={`${BTN_3D} ${cls}`}
                             >
                               {label}
                             </button>
