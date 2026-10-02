@@ -152,28 +152,28 @@ export function DateTimePicker({
       aria-label="Chọn ngày và giờ"
     >
       <div
-        className="w-full bg-white rounded-2xl overflow-hidden"
+        className="w-full bg-[var(--surface)] rounded-2xl overflow-hidden"
         style={{ maxWidth: 320, boxShadow: "0 24px 56px rgba(0,0,0,0.18)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border)]">
           <button
             type="button"
             onClick={prevMonth}
-            className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-lg hover:bg-[var(--surface-hover)] flex items-center justify-center transition-colors"
           >
-            <ChevronLeft className="w-4 h-4 text-gray-500" />
+            <ChevronLeft className="w-4 h-4 text-[var(--text-muted)]" />
           </button>
-          <span className="text-sm font-semibold text-gray-900">
+          <span className="text-sm font-semibold text-[var(--text)]">
             {VI_MONTHS[viewMonth]} {viewYear}
           </span>
           <button
             type="button"
             onClick={nextMonth}
-            className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-lg hover:bg-[var(--surface-hover)] flex items-center justify-center transition-colors"
           >
-            <ChevronRight className="w-4 h-4 text-gray-500" />
+            <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
           </button>
         </div>
 
@@ -182,7 +182,7 @@ export function DateTimePicker({
           {VI_DAYS.map((d) => (
             <div
               key={d}
-              className="text-center text-[11px] font-semibold text-gray-400 py-1"
+              className="text-center text-[11px] font-semibold text-[var(--text-faint)] py-1"
             >
               {d}
             </div>
@@ -191,7 +191,7 @@ export function DateTimePicker({
           {Array.from({ length: firstDow }, (_, i) => (
             <div
               key={`p${i}`}
-              className="h-9 flex items-center justify-center text-xs text-gray-200"
+              className="h-9 flex items-center justify-center text-xs text-[var(--text-faint)]"
             >
               {prevMonthDays - firstDow + 1 + i}
             </div>
@@ -219,10 +219,10 @@ export function DateTimePicker({
                                     ${isSel
                     ? "bg-blue-600 text-white"
                     : isToday
-                      ? "bg-blue-50 text-blue-700 font-semibold"
+                      ? "bg-[var(--primary-soft)] text-[var(--primary)] font-semibold"
                       : isDisabled
-                        ? "text-gray-200 cursor-not-allowed"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "text-[var(--text-faint)] cursor-not-allowed"
+                        : "text-[var(--text)] hover:bg-[var(--surface-hover)]"
                   }`}
               >
                 {day}
@@ -233,7 +233,7 @@ export function DateTimePicker({
           {Array.from({ length: trailingCells }, (_, i) => (
             <div
               key={`n${i}`}
-              className="h-9 flex items-center justify-center text-xs text-gray-200"
+              className="h-9 flex items-center justify-center text-xs text-[var(--text-faint)]"
             >
               {i + 1}
             </div>
@@ -241,8 +241,8 @@ export function DateTimePicker({
         </div>
 
         {/* Time picker */}
-        <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 border-t border-gray-100">
-          <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 flex-shrink-0">
+        <div className="flex items-center gap-3 px-4 py-3 bg-[var(--surface-muted)] border-t border-[var(--border)]">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] flex-shrink-0">
             <Clock className="w-3.5 h-3.5" /> Giờ
           </span>
           <div className="flex items-center gap-2 flex-1">
@@ -251,42 +251,42 @@ export function DateTimePicker({
               <button
                 type="button"
                 onClick={() => setHours((h) => (h + 1) % 24)}
-                className="w-9 h-6 rounded hover:bg-gray-200 flex items-center justify-center transition-colors"
+                className="w-9 h-6 rounded hover:bg-[var(--border-strong)] flex items-center justify-center transition-colors"
               >
-                <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
+                <ChevronUp className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               </button>
-              <div className="w-11 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-base font-bold text-gray-900 select-none">
+              <div className="w-11 h-9 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-base font-bold text-[var(--text)] select-none">
                 {pad(hours)}
               </div>
               <button
                 type="button"
                 onClick={() => setHours((h) => (h + 23) % 24)}
-                className="w-9 h-6 rounded hover:bg-gray-200 flex items-center justify-center transition-colors"
+                className="w-9 h-6 rounded hover:bg-[var(--border-strong)] flex items-center justify-center transition-colors"
               >
-                <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+                <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               </button>
             </div>
 
-            <span className="text-xl font-bold text-gray-400 mb-1">:</span>
+            <span className="text-xl font-bold text-[var(--text-faint)] mb-1">:</span>
 
             {/* Minute */}
             <div className="flex flex-col items-center gap-0.5">
               <button
                 type="button"
                 onClick={() => setMins((m) => (m + 15) % 60)}
-                className="w-9 h-6 rounded hover:bg-gray-200 flex items-center justify-center transition-colors"
+                className="w-9 h-6 rounded hover:bg-[var(--border-strong)] flex items-center justify-center transition-colors"
               >
-                <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
+                <ChevronUp className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               </button>
-              <div className="w-11 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-base font-bold text-gray-900 select-none">
+              <div className="w-11 h-9 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-base font-bold text-[var(--text)] select-none">
                 {pad(mins)}
               </div>
               <button
                 type="button"
                 onClick={() => setMins((m) => (m + 45) % 60)}
-                className="w-9 h-6 rounded hover:bg-gray-200 flex items-center justify-center transition-colors"
+                className="w-9 h-6 rounded hover:bg-[var(--border-strong)] flex items-center justify-center transition-colors"
               >
-                <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+                <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               </button>
             </div>
 
@@ -303,7 +303,7 @@ export function DateTimePicker({
                   className={`text-[11px] px-2 py-1 rounded-md transition-colors font-medium
                                         ${hours === ph && mins === pm
                       ? "bg-blue-600 text-white"
-                      : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600"
+                      : "bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:text-[var(--primary)]"
                     }`}
                 >
                   {pad(ph)}:{pad(pm)}
@@ -314,11 +314,11 @@ export function DateTimePicker({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
           <button
             type="button"
             onClick={clear}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-xs text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
           >
             Xóa
           </button>
@@ -326,7 +326,7 @@ export function DateTimePicker({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="px-3 py-1.5 text-sm rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-1"
+              className="px-3 py-1.5 text-sm rounded-xl border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors flex items-center gap-1"
             >
               <X className="w-3.5 h-3.5" /> Hủy
             </button>
@@ -335,7 +335,7 @@ export function DateTimePicker({
               onClick={confirm}
               disabled={!selDate}
               className={`px-4 py-1.5 text-sm font-semibold rounded-xl transition-colors flex items-center gap-1.5
-                                ${selDate ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}
+                                ${selDate ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-[var(--surface-muted)] text-[var(--text-faint)] cursor-not-allowed"}`}
             >
               <Check className="w-3.5 h-3.5" /> Xác nhận
             </button>
@@ -348,8 +348,8 @@ export function DateTimePicker({
   return (
     <div>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label className="block text-sm font-medium text-[var(--text)] mb-1">
+          {label} {required && <span className="text-[var(--danger)]">*</span>}
         </label>
       )}
 
@@ -359,28 +359,28 @@ export function DateTimePicker({
         onClick={() => setOpen(true)}
         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm transition-all
                     ${displayLabel
-            ? "border-blue-400 bg-white ring-1 ring-blue-100"
+            ? "border-blue-400 bg-[var(--surface)] ring-1 ring-blue-100"
             : error
-              ? "border-red-300 bg-white"
-              : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-white"
+              ? "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--surface)]"
+              : "border-[var(--border)] bg-[var(--surface-muted)] hover:border-[var(--border-strong)] hover:bg-[var(--surface)]"
           }`}
       >
         <span
-          className={`flex items-center gap-2 ${displayLabel ? "text-gray-900 font-medium" : "text-gray-400"}`}
+          className={`flex items-center gap-2 ${displayLabel ? "text-[var(--text)] font-medium" : "text-[var(--text-faint)]"}`}
         >
           <CalendarDays
-            className={`w-4 h-4 flex-shrink-0 ${displayLabel ? "text-blue-500" : "text-gray-400"}`}
+            className={`w-4 h-4 flex-shrink-0 ${displayLabel ? "text-[var(--primary)]" : "text-[var(--text-faint)]"}`}
           />
           {displayLabel ?? "Chọn ngày & giờ"}
         </span>
         {displayLabel ? (
-          <Check className="w-4 h-4 text-emerald-500" />
+          <Check className="w-4 h-4 text-[var(--success)]" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-gray-400" />
+          <ChevronDown className="w-4 h-4 text-[var(--text-faint)]" />
         )}
       </button>
 
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {error && <p className="text-[var(--danger)] text-xs mt-1">{error}</p>}
 
       {/* Portal modal — renders at document.body, always centered */}
       {open &&

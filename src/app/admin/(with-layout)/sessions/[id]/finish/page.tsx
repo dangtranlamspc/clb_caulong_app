@@ -707,7 +707,7 @@ export default function SessionFinishPage() {
           return (
             <div
               key={item.id}
-              className="rounded-lg border border-gray-100 bg-white/70 p-2 space-y-1.5"
+              className="rounded-lg border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] p-2 space-y-1.5"
             >
               <div className="flex items-center gap-2">
                 <div className="flex-1 min-w-0">
@@ -718,7 +718,7 @@ export default function SessionFinishPage() {
                     }
                     options={drinkSelectOptions}
                     placeholder="✏️ Khoản khác (nhập tay)"
-                    triggerClassName="input-field w-full flex items-center justify-between text-left text-xs text-gray-500"
+                    triggerClassName="input-field w-full flex items-center justify-between text-left text-xs text-[var(--text-muted)]"
                   />
                 </div>
                 <input
@@ -733,14 +733,14 @@ export default function SessionFinishPage() {
                       parseNumberInput(e.target.value),
                     )
                   }
-                  className="input-field w-20 text-right text-xs text-gray-500 flex-shrink-0"
+                  className="input-field w-20 text-right text-xs text-[var(--text-muted)] flex-shrink-0"
                   placeholder="0"
                 />
                 {items.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeOtherFeeItem(regId, item.id)}
-                    className="flex-shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    className="flex-shrink-0 p-1.5 rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] transition-colors"
                     title="Xóa dòng này"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -750,7 +750,7 @@ export default function SessionFinishPage() {
 
               {selectedDrink ? (
                 <div className="flex items-center gap-2 pl-1">
-                  <span className="text-[11px] text-gray-400">SL</span>
+                  <span className="text-[11px] text-[var(--text-faint)]">SL</span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -764,9 +764,9 @@ export default function SessionFinishPage() {
                       )
                     }
                     onBlur={() => handleQuantityBlur(regId, item.id)}
-                    className="input-field w-14 text-right text-xs text-gray-500"
+                    className="input-field w-14 text-right text-xs text-[var(--text-muted)]"
                   />
-                  <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                  <span className="text-[11px] text-[var(--text-faint)] whitespace-nowrap">
                     × {fmt(selectedDrink.price)}
                   </span>
                   <button
@@ -781,7 +781,7 @@ export default function SessionFinishPage() {
                     }
                     className={`ml-auto flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold border-2 transition-all ${item.deductStock
                       ? "bg-amber-500 border-amber-500 text-white"
-                      : "border-gray-200 text-gray-400 hover:border-amber-300 hover:text-amber-500"
+                      : "border-[var(--border)] text-[var(--text-faint)] hover:border-[color-mix(in_srgb,var(--warning)_30%,transparent)] hover:text-[var(--warning)]"
                       }`}
                     title={
                       item.deductStock
@@ -799,7 +799,7 @@ export default function SessionFinishPage() {
                   onChange={(e) =>
                     updateOtherFeeItem(regId, item.id, "note", e.target.value)
                   }
-                  className="input-field w-full text-xs text-gray-500"
+                  className="input-field w-full text-xs text-[var(--text-muted)]"
                   placeholder={placeholder}
                 />
               )}
@@ -809,7 +809,7 @@ export default function SessionFinishPage() {
         <button
           type="button"
           onClick={() => addOtherFeeItem(regId)}
-          className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          className="flex items-center gap-1 text-xs font-medium text-[var(--primary)] hover:text-[var(--primary)] transition-colors"
         >
           <Plus className="w-3.5 h-3.5" /> Thêm khoản khác
         </button>
@@ -820,7 +820,7 @@ export default function SessionFinishPage() {
   if (loading)
     return (
       <div className="max-w-2xl mx-auto">
-        <div className="h-48 bg-gray-100 animate-pulse rounded-2xl" />
+        <div className="h-48 bg-[var(--surface-muted)] animate-pulse rounded-2xl" />
       </div>
     );
   if (!session) return null;
@@ -847,41 +847,41 @@ export default function SessionFinishPage() {
               startNavLoading();
               router.push(`/admin/sessions/${id}`);
             }}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 hover:bg-[var(--surface-hover)] rounded-lg"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-900">
+            <Calculator className="w-5 h-5 text-[var(--primary)]" />
+            <h1 className="text-xl font-bold text-[var(--text)]">
               Kết thúc buổi: {session.title}
             </h1>
           </div>
         </div>
 
         <div className="card space-y-4">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+          <p className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide">
             Chi phí thực tế
           </p>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--text)] mb-2">
               🏟 Tiền sân
             </label>
             <div className="space-y-3">
               {courts.map((c, idx) => (
                 <div
                   key={c.id}
-                  className="rounded-xl border border-gray-200 bg-gray-50/60 p-3 space-y-2"
+                  className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3 space-y-2"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-400">
+                    <span className="text-xs font-medium text-[var(--text-faint)]">
                       Sân {idx + 1}
                     </span>
                     {courts.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeCourt(c.id)}
-                        className="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        className="p-1 rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] transition-colors"
                         title="Xóa sân này"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -891,7 +891,7 @@ export default function SessionFinishPage() {
 
                   <div className="grid grid-cols-3 gap-2">
                     <div className="col-span-1">
-                      <label className="block text-[11px] text-gray-400 mb-1">
+                      <label className="block text-[11px] text-[var(--text-faint)] mb-1">
                         Tên sân
                       </label>
                       <input
@@ -903,7 +903,7 @@ export default function SessionFinishPage() {
                       />
                     </div>
                     <div className="col-span-1">
-                      <label className="block text-[11px] text-gray-400 mb-1">
+                      <label className="block text-[11px] text-[var(--text-faint)] mb-1">
                         Số phút
                       </label>
                       <input
@@ -918,7 +918,7 @@ export default function SessionFinishPage() {
                       />
                     </div>
                     <div className="col-span-1">
-                      <label className="block text-[11px] text-gray-400 mb-1">
+                      <label className="block text-[11px] text-[var(--text-faint)] mb-1">
                         Giá / tiếng
                       </label>
                       <input
@@ -934,7 +934,7 @@ export default function SessionFinishPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-between text-xs font-semibold text-gray-600 pt-1 border-t border-gray-200">
+                  <div className="flex justify-between text-xs font-semibold text-[var(--text-muted)] pt-1 border-t border-[var(--border)]">
                     <span>
                       Tổng ({c.minutes || 0} phút × {fmt(c.pricePerHour || 0)}/tiếng)
                     </span>
@@ -952,14 +952,14 @@ export default function SessionFinishPage() {
               <Plus className="w-4 h-4" /> Thêm sân
             </button>
 
-            <div className="flex justify-between text-sm font-medium text-gray-700 mt-2 pt-2 border-t border-gray-100">
+            <div className="flex justify-between text-sm font-medium text-[var(--text)] mt-2 pt-2 border-t border-[var(--border)]">
               <span>Tổng tiền sân</span>
               <span>{fmt(courtFee)}</span>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label className="block text-xs text-[var(--text-muted)] mb-1">
                 Số bông cầu
               </label>
               <input
@@ -974,7 +974,7 @@ export default function SessionFinishPage() {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label className="block text-xs text-[var(--text-muted)] mb-1">
                 Giá 1 bông
               </label>
               <input
@@ -989,7 +989,7 @@ export default function SessionFinishPage() {
               />
             </div>
           </div>
-          <div className="flex justify-between text-sm font-bold border-t border-gray-100 pt-2">
+          <div className="flex justify-between text-sm font-bold border-t border-[var(--border)] pt-2">
             <span>Tổng chi phí (chưa khoản khác)</span>
             <span>{fmt(splittableCost)}</span>
           </div>
@@ -999,7 +999,7 @@ export default function SessionFinishPage() {
 
         <div className="card !p-0 overflow-hidden">
           <div className="flex flex-col gap-2 px-4 pt-4 pb-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+            <p className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide">
               Số tiền từng người phải trả
             </p>
             <div className="flex items-center justify-end gap-2">
@@ -1007,7 +1007,7 @@ export default function SessionFinishPage() {
                 onClick={toggleMailAll}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${mailAll
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-600"
+                  : "bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] text-[var(--text-muted)]"
                   }`}
               >
                 <Mail className="w-4 h-4" /> {mailAll ? "Mail all: Bật" : "Mail all"}
@@ -1034,27 +1034,27 @@ export default function SessionFinishPage() {
                 <div
                   key={h.id}
                   className={`rounded-2xl border-2 p-3 space-y-3 transition-colors duration-300 ${isWalletDeduct
-                    ? "border-blue-200 bg-blue-50/30"
-                    : "border-gray-200 bg-white"
+                    ? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)]"
+                    : "border-[var(--border)] bg-[var(--surface)]"
                     }`}
                 >
                   <div
                     className={`rounded-xl border p-3 space-y-2 transition-colors ${isWalletDeduct
-                      ? "border-blue-200 bg-blue-50/70"
-                      : "border-gray-200 bg-gray-50/60"
+                      ? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)]"
+                      : "border-[var(--border)] bg-[var(--surface-muted)]"
                       }`}
                   >
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
+                          <p className="text-sm font-semibold text-[var(--text)] truncate">
                             {name}
                             {h.is_guest && (
-                              <span className="text-xs text-gray-400 ml-1">(khách)</span>
+                              <span className="text-xs text-[var(--text-faint)] ml-1">(khách)</span>
                             )}
                           </p>
                           {isWalletDeduct && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 flex-shrink-0">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex-shrink-0">
                               <Wallet className="w-2.5 h-2.5" /> Ví BNB
                             </span>
                           )}
@@ -1068,7 +1068,7 @@ export default function SessionFinishPage() {
                               title={emailIds.has(h.id) ? "Sẽ gửi mail" : "Không gửi mail"}
                               className={`flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${emailIds.has(h.id)
                                 ? "bg-emerald-600 border-emerald-600 text-white"
-                                : "border-gray-200 text-gray-300 hover:border-emerald-300 hover:text-emerald-400"
+                                : "border-[var(--border)] text-[var(--text-faint)] hover:border-[color-mix(in_srgb,var(--success)_30%,transparent)] hover:text-[var(--success)]"
                                 }`}
                             >
                               <Mail className="w-4 h-4 flex-shrink-0" />
@@ -1082,7 +1082,7 @@ export default function SessionFinishPage() {
                               title={isWalletDeduct ? "Bỏ trừ ví" : "Trừ thẳng ví BNB"}
                               className={`flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${isWalletDeduct
                                 ? "bg-blue-600 border-blue-600 text-white"
-                                : "border-gray-200 text-gray-300 hover:border-blue-300 hover:text-blue-400"
+                                : "border-[var(--border)] text-[var(--text-faint)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:text-[var(--primary)]"
                                 }`}
                             >
                               <Wallet className="w-4 h-4 flex-shrink-0" />
@@ -1096,7 +1096,7 @@ export default function SessionFinishPage() {
                               type="button"
                               onClick={() => setPenaltyTarget({ id: h.user_id, name })}
                               title="Phạt thành viên này"
-                              className="flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
+                              className="flex-shrink-0 h-10 w-12 sm:h-8 sm:w-auto sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-[var(--border)] sm:text-[var(--text-faint)] sm:hover:border-[color-mix(in_srgb,var(--danger)_30%,transparent)] sm:hover:text-[var(--danger)] transition-all"
                             >
                               <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                               <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
@@ -1126,8 +1126,8 @@ export default function SessionFinishPage() {
                     )}
 
                     <div className="flex justify-end">
-                      <div className="w-fit text-right text-xs font-bold text-gray-800 bg-white border border-gray-200 rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">
-                        <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">
+                      <div className="w-fit text-right text-xs font-bold text-[var(--text)] bg-[var(--surface)] border border-[var(--border)] rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">
+                        <span className="text-[10px] font-medium text-[var(--text-faint)] whitespace-nowrap">
                           Tổng thu
                         </span>
                         <span className="whitespace-nowrap">
@@ -1148,10 +1148,10 @@ export default function SessionFinishPage() {
                     >
                       <div className="overflow-hidden">
                         {/* <div className="pt-1 pb-1">
-                        <p className="text-[11px] font-medium text-gray-400 mb-1.5">
+                        <p className="text-[11px] font-medium text-[var(--text-faint)] mb-1.5">
                           Cách xử lý thanh toán cho khách đi cùng
                         </p>
-                        <div className="grid grid-cols-3 gap-1 p-1 bg-gray-100 rounded-xl">
+                        <div className="grid grid-cols-3 gap-1 p-1 bg-[var(--surface-muted)] rounded-xl">
                           {[
                             { val: "member_choice", label: "Member tự chọn" },
                             { val: "grouped", label: "Gộp trừ ví" },
@@ -1166,7 +1166,7 @@ export default function SessionFinishPage() {
                                 onClick={() => setWalletMode(h.id, val as any)}
                                 className={`px-2 py-3 min-h-[38px] rounded-lg text-[11px] sm:text-xs font-medium text-center leading-tight transition-all ${active
                                   ? "bg-blue-600 text-white shadow-sm"
-                                  : "text-gray-500 hover:bg-gray-200/70"
+                                  : "text-[var(--text-muted)] hover:bg-[var(--border-strong)]/70"
                                   }`}
                               >
                                 {label}
@@ -1176,11 +1176,11 @@ export default function SessionFinishPage() {
                         </div>
                       </div> */}
                         <div className="pt-1 pb-1">
-                          <p className="text-[11px] font-medium text-gray-400 mb-1.5">
+                          <p className="text-[11px] font-medium text-[var(--text-faint)] mb-1.5">
                             Cách xử lý thanh toán cho khách đi cùng
                           </p>
                           <div
-                            className={`grid gap-1 p-1 bg-gray-100 rounded-xl ${guests.length >= 2 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"
+                            className={`grid gap-1 p-1 bg-[var(--surface-muted)] rounded-xl ${guests.length >= 2 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"
                               }`}
                           >
                             {[
@@ -1195,7 +1195,7 @@ export default function SessionFinishPage() {
                                   key={val}
                                   type="button"
                                   onClick={() => setWalletMode(h.id, val as WalletMode)}
-                                  className={`px-2 py-3 min-h-[38px] rounded-lg text-[11px] sm:text-xs font-medium text-center leading-tight transition-all ${active ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 hover:bg-gray-200/70"
+                                  className={`px-2 py-3 min-h-[38px] rounded-lg text-[11px] sm:text-xs font-medium text-center leading-tight transition-all ${active ? "bg-blue-600 text-white shadow-sm" : "text-[var(--text-muted)] hover:bg-[var(--border-strong)]/70"
                                     }`}
                                 >
                                   {label}
@@ -1205,8 +1205,8 @@ export default function SessionFinishPage() {
                           </div>
 
                           {walletModes[h.id] === "custom" && (
-                            <div className="mt-2 rounded-xl border border-blue-100 bg-white p-2 space-y-1.5">
-                              <p className="text-[11px] text-gray-400 px-1">
+                            <div className="mt-2 rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--surface)] p-2 space-y-1.5">
+                              <p className="text-[11px] text-[var(--text-faint)] px-1">
                                 Chạm để chọn người thanh toán chung ví với {name}. Người không chọn sẽ
                                 tự thanh toán riêng.
                               </p>
@@ -1220,14 +1220,14 @@ export default function SessionFinishPage() {
                                     type="button"
                                     onClick={() => toggleGroupedGuest(h.id, g.id)}
                                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border-2 text-left transition-all duration-200 active:scale-[0.98] ${grouped
-                                      ? "border-blue-500 bg-blue-50"
-                                      : "border-gray-200 bg-white hover:border-gray-300"
+                                      ? "border-blue-500 bg-[var(--primary-soft)]"
+                                      : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--border-strong)]"
                                       }`}
                                   >
                                     <span
                                       className={`relative flex-shrink-0 w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${grouped
                                         ? "bg-blue-600 border-blue-600"
-                                        : "bg-white border-gray-300"
+                                        : "bg-[var(--surface)] border-[var(--border-strong)]"
                                         }`}
                                     >
                                       {grouped && (
@@ -1246,7 +1246,7 @@ export default function SessionFinishPage() {
                                     </span>
 
                                     <span
-                                      className={`flex-1 min-w-0 text-sm truncate transition-colors ${grouped ? "font-semibold text-blue-900" : "text-gray-700"
+                                      className={`flex-1 min-w-0 text-sm truncate transition-colors ${grouped ? "font-semibold text-[var(--primary)]" : "text-[var(--text)]"
                                         }`}
                                     >
                                       {gName}
@@ -1254,10 +1254,10 @@ export default function SessionFinishPage() {
 
                                     <span
                                       className={`text-[11px] font-semibold px-2 py-1 rounded-full flex-shrink-0 transition-colors duration-200 ${grouped
-                                        ? "bg-blue-100 text-blue-700"
+                                        ? "bg-[var(--primary-soft)] text-[var(--primary)]"
                                         : g.user_id
-                                          ? "bg-sky-100 text-sky-700"
-                                          : "bg-emerald-100 text-emerald-700"
+                                          ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                          : "bg-[var(--success-soft)] text-[var(--success)]"
                                         }`}
                                     >
                                       {grouped ? "Gộp ví host" : fallback}
@@ -1289,22 +1289,22 @@ export default function SessionFinishPage() {
 
                             <div
                               className={`rounded-xl border p-3 space-y-2 transition-colors ${isWalletDeduct
-                                ? "border-blue-200 bg-blue-50/70"
-                                : "border-purple-100 bg-purple-50/40"
+                                ? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)]"
+                                : "border-[color-mix(in_srgb,var(--purple)_30%,transparent)] bg-[var(--purple-soft)]"
                                 }`}
                             >
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
-                                  <p className="flex-1 text-xs text-purple-600 truncate">
+                                  <p className="flex-1 text-xs text-[var(--purple)] truncate">
                                     +{" "}
                                     {g.is_guest
                                       ? g.guest_full_name
                                       : g.users?.full_name}
-                                    <span className="text-gray-400 ml-1">
+                                    <span className="text-[var(--text-faint)] ml-1">
                                       (đi cùng)
                                     </span>
                                     {isWalletDeduct && (
-                                      <span className="text-blue-400 ml-1">
+                                      <span className="text-[var(--primary)] ml-1">
                                         · chờ xác nhận
                                       </span>
                                     )}
@@ -1320,7 +1320,7 @@ export default function SessionFinishPage() {
                                       title={emailIds.has(g.id) ? "Sẽ gửi mail" : "Không gửi mail"}
                                       className={`flex-shrink-0 h-7 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 transition-all ${emailIds.has(g.id)
                                         ? "bg-emerald-600 border-emerald-600 text-white"
-                                        : "border-gray-200 text-gray-300 hover:border-emerald-300 hover:text-emerald-400"
+                                        : "border-[var(--border)] text-[var(--text-faint)] hover:border-[color-mix(in_srgb,var(--success)_30%,transparent)] hover:text-[var(--success)]"
                                         }`}
                                     >
                                       <Mail className="w-3.5 h-3.5 flex-shrink-0" />
@@ -1338,7 +1338,7 @@ export default function SessionFinishPage() {
                                         })
                                       }
                                       title="Phạt thành viên này"
-                                      className="flex-shrink-0 h-7 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-gray-200 sm:text-gray-300 sm:hover:border-red-300 sm:hover:text-red-500 transition-all"
+                                      className="flex-shrink-0 h-7 px-2 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 border-2 bg-red-500 border-red-500 text-white sm:bg-transparent sm:border-[var(--border)] sm:text-[var(--text-faint)] sm:hover:border-[color-mix(in_srgb,var(--danger)_30%,transparent)] sm:hover:text-[var(--danger)] transition-all"
                                     >
                                       <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
                                       <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
@@ -1372,8 +1372,8 @@ export default function SessionFinishPage() {
                               )}
 
                               <div className="flex justify-end">
-                                <div className="w-fit text-right text-xs font-bold text-gray-800 bg-white border border-purple-200 rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">
-                                  <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">
+                                <div className="w-fit text-right text-xs font-bold text-[var(--text)] bg-[var(--surface)] border border-[color-mix(in_srgb,var(--purple)_30%,transparent)] rounded-lg flex items-center gap-1.5 px-2.5 py-1.5">
+                                  <span className="text-[10px] font-medium text-[var(--text-faint)] whitespace-nowrap">
                                     Tổng thu
                                   </span>
                                   <span className="whitespace-nowrap">
@@ -1394,13 +1394,13 @@ export default function SessionFinishPage() {
             })}
           </div>
 
-          <div className="flex justify-between text-sm font-bold px-4 py-3 bg-gray-50 border-t border-gray-100">
+          <div className="flex justify-between text-sm font-bold px-4 py-3 bg-[var(--surface-muted)] border-t border-[var(--border)]">
             <span>Tổng cộng</span>
-            <span className="text-blue-600">{fmt(totalCollected)}</span>
+            <span className="text-[var(--primary)]">{fmt(totalCollected)}</span>
           </div>
 
           {walletDeductIds.size > 0 && (
-            <div className="px-4 py-3 bg-blue-50 border-t border-blue-100 flex items-center gap-2 text-xs text-blue-700">
+            <div className="px-4 py-3 bg-[var(--primary-soft)] border-t border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center gap-2 text-xs text-[var(--primary)]">
               <Wallet className="w-3.5 h-3.5 flex-shrink-0" />
               <span>
                 {walletDeductIds.size} thành viên sẽ được trừ thẳng ví BNB — tổng{" "}
@@ -1435,7 +1435,7 @@ export default function SessionFinishPage() {
               startNavLoading();
               router.push(`/admin/sessions/${id}`);
             }}
-            className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors flex-shrink-0"
             disabled={submitPhase !== "idle"}
           >
             Hủy

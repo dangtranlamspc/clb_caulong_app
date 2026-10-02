@@ -19,7 +19,7 @@ function Avatar({ src, name }: { src?: string | null; name: string }) {
             {src && !err ? (
                 <img src={src} alt={name} className="w-full h-full object-cover" onError={() => setErr(true)} />
             ) : (
-                <User className="w-5 h-5 text-slate-500" />
+                <User className="w-5 h-5 text-[var(--text-muted)]" />
             )}
         </div>
     );
@@ -80,7 +80,7 @@ export function DrinkHoldersModal({ onClose }: { onClose: () => void }) {
         <div
             className="fixed inset-0 z-[9999] flex flex-col justify-end sm:items-center sm:justify-center"
             style={{
-                background: 'rgba(0,0,0,0.5)',
+                background: 'var(--overlay)',
                 backdropFilter: 'blur(2px)',
                 opacity: visible ? 1 : 0,
                 transition: 'opacity 200ms ease-out',
@@ -88,7 +88,7 @@ export function DrinkHoldersModal({ onClose }: { onClose: () => void }) {
             onClick={(e) => e.target === e.currentTarget && handleClose()}
         >
             <div
-                className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col"
+                className="w-full sm:max-w-lg bg-[var(--surface)] rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col"
                 style={{
                     maxHeight: '85vh',
                     transform: visible ? 'translateY(0)' : 'translateY(24px)',
@@ -97,48 +97,48 @@ export function DrinkHoldersModal({ onClose }: { onClose: () => void }) {
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
                     <div>
-                        <p className="text-sm font-bold text-gray-900">Thành viên đang giữ nước</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{total} thành viên</p>
+                        <p className="text-sm font-bold text-[var(--text)]">Thành viên đang giữ nước</p>
+                        <p className="text-xs text-[var(--text-faint)] mt-0.5">{total} thành viên</p>
                     </div>
-                    <button onClick={handleClose} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
-                        <X className="w-4 h-4 text-gray-500" />
+                    <button onClick={handleClose} className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)]">
+                        <X className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                 </div>
 
                 <div className="px-5 pt-3 pb-2 flex-shrink-0">
                     <div className="relative">
-                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Search className="w-4 h-4 text-[var(--text-faint)] absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
                             placeholder="Tìm theo tên hoặc số điện thoại..."
-                            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-gray-50 border border-gray-100 outline-none focus:border-blue-300 focus:bg-white transition-colors"
+                            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-[var(--surface-muted)] border border-[var(--border)] outline-none focus:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus:bg-[var(--surface)] transition-colors"
                         />
                     </div>
                 </div>
 
                 <div className="px-5 pb-3 overflow-y-auto flex-1 min-h-[200px]">
                     {loading ? (
-                        <div className="flex items-center justify-center py-14 text-gray-400 gap-2 text-sm">
+                        <div className="flex items-center justify-center py-14 text-[var(--text-faint)] gap-2 text-sm">
                             <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                         </div>
                     ) : rows.length === 0 ? (
-                        <p className="text-sm text-gray-400 text-center py-14">Không có thành viên nào đang giữ nước</p>
+                        <p className="text-sm text-[var(--text-faint)] text-center py-14">Không có thành viên nào đang giữ nước</p>
                     ) : (
-                        <div className="divide-y divide-gray-100">
+                        <div className="divide-y divide-[var(--border)]">
                             {rows.map((m) => (
                                 <div key={m.user_id} className="py-3">
                                     <div className="flex items-center gap-3">
                                         <Avatar src={m.avatar_url} name={m.full_name} />
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-semibold text-gray-800 truncate">{m.full_name}</p>
-                                            {m.phone && <p className="text-[11px] text-gray-400">{m.phone}</p>}
+                                            <p className="text-sm font-semibold text-[var(--text)] truncate">{m.full_name}</p>
+                                            {m.phone && <p className="text-[11px] text-[var(--text-faint)]">{m.phone}</p>}
                                         </div>
                                         <div className="text-right flex-shrink-0">
-                                            <p className="text-base font-bold text-sky-600 tabular-nums">{m.total_quantity}</p>
-                                            <p className="text-[10px] text-gray-400">chai</p>
+                                            <p className="text-base font-bold text-[var(--primary)] tabular-nums">{m.total_quantity}</p>
+                                            <p className="text-[10px] text-[var(--text-faint)]">chai</p>
                                         </div>
                                     </div>
                                     {m.drinks?.length > 0 && (
@@ -146,7 +146,7 @@ export function DrinkHoldersModal({ onClose }: { onClose: () => void }) {
                                             {m.drinks.map((d) => (
                                                 <span
                                                     key={d.drink_id}
-                                                    className="text-[11px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-medium"
+                                                    className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] font-medium"
                                                 >
                                                     {d.name ?? 'Nước'} × {d.quantity}
                                                 </span>
@@ -160,21 +160,21 @@ export function DrinkHoldersModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 flex-shrink-0">
+                    <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border)] flex-shrink-0">
                         <button
                             onClick={() => setPage((p) => Math.max(1, p - 1))}
                             disabled={page <= 1 || loading}
-                            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 disabled:opacity-40 disabled:hover:bg-gray-100"
+                            className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)] disabled:opacity-40 disabled:hover:bg-[var(--surface-hover)]"
                         >
-                            <ChevronLeft className="w-4 h-4 text-gray-600" />
+                            <ChevronLeft className="w-4 h-4 text-[var(--text-muted)]" />
                         </button>
-                        <span className="text-xs text-gray-500">Trang {page} / {totalPages}</span>
+                        <span className="text-xs text-[var(--text-muted)]">Trang {page} / {totalPages}</span>
                         <button
                             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                             disabled={page >= totalPages || loading}
-                            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 disabled:opacity-40 disabled:hover:bg-gray-100"
+                            className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)] disabled:opacity-40 disabled:hover:bg-[var(--surface-hover)]"
                         >
-                            <ChevronRight className="w-4 h-4 text-gray-600" />
+                            <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
                         </button>
                     </div>
                 )}

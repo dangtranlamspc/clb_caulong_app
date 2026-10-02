@@ -103,8 +103,8 @@ function OtpInput({ value, onChange, onComplete, hasError = false, shakeSignal =
             disabled={disabled}
             className={`w-11 h-12 sm:w-12 sm:h-14 text-center text-2xl font-bold rounded-xl border-2 outline-none transition-all
               ${hasError
-                ? 'border-red-400 ring-2 ring-red-100 text-red-600'
-                : 'border-gray-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100'}`}
+                ? 'border-red-400 ring-2 ring-red-100 text-[var(--danger)]'
+                : 'border-[var(--border)] focus:border-brand-500 focus:ring-2 focus:ring-brand-100'}`}
           />
         ))}
       </div>
@@ -325,13 +325,13 @@ export default function RegisterPage() {
 
   if (step === 'verify') {
     return (
-      <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 text-center">
+      <div className="bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 text-center">
         <div className="w-14 h-14 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-4">
           <MailCheck className="w-6 h-6 text-brand-600" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Xác thực email</h2>
-        <p className="text-gray-500 text-sm mb-6">
-          Nhập mã 6 số vừa được gửi đến <span className="font-medium text-gray-700">{registeredEmail}</span>
+        <h2 className="text-xl font-bold text-[var(--text)] mb-1">Xác thực email</h2>
+        <p className="text-[var(--text-muted)] text-sm mb-6">
+          Nhập mã 6 số vừa được gửi đến <span className="font-medium text-[var(--text)]">{registeredEmail}</span>
         </p>
         <OtpInput
           value={code}
@@ -353,7 +353,7 @@ export default function RegisterPage() {
         <button
           onClick={onResend}
           disabled={resendCooldown > 0}
-          className="text-sm text-brand-600 font-medium mt-4 disabled:text-gray-300"
+          className="text-sm text-brand-600 font-medium mt-4 disabled:text-[var(--text-faint)]"
         >
           {resendCooldown > 0 ? `Gửi lại mã sau ${resendCooldown}s` : 'Gửi lại mã'}
         </button>
@@ -363,12 +363,12 @@ export default function RegisterPage() {
 
   if (step === 'done') {
     return (
-      <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 text-center">
-        <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-          <MailCheck className="w-6 h-6 text-emerald-600" />
+      <div className="bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 text-center">
+        <div className="w-14 h-14 rounded-full bg-[var(--success-soft)] flex items-center justify-center mx-auto mb-4">
+          <MailCheck className="w-6 h-6 text-[var(--success)]" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Xác thực thành công!</h2>
-        <p className="text-gray-500 text-sm mb-6">
+        <h2 className="text-xl font-bold text-[var(--text)] mb-2">Xác thực thành công!</h2>
+        <p className="text-[var(--text-muted)] text-sm mb-6">
           Tài khoản của bạn đang chờ quản trị viên duyệt. Bạn sẽ có thể đăng nhập ngay
           sau khi được duyệt.
         </p>
@@ -384,18 +384,18 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
-      <h2 className="text-xl font-bold text-gray-900 mb-1">Tạo tài khoản</h2>
-      <p className="text-gray-500 text-sm mb-6">Điền thông tin để đăng ký</p>
+    <div className="bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
+      <h2 className="text-xl font-bold text-[var(--text)] mb-1">Tạo tài khoản</h2>
+      <p className="text-[var(--text-muted)] text-sm mb-6">Điền thông tin để đăng ký</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="flex flex-col items-center gap-2 pb-2">
           <div className="relative">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-[var(--surface-muted)] border-2 border-[var(--border)] flex items-center justify-center">
               {avatarPreview ? (
                 <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-xl font-bold text-gray-400">
+                <span className="text-xl font-bold text-[var(--text-faint)]">
                   {watch('full_name')?.[0]?.toUpperCase() ?? '?'}
                 </span>
               )}
@@ -409,23 +409,23 @@ export default function RegisterPage() {
               <Camera className="w-3.5 h-3.5" />
             </button>
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[var(--text-faint)]">
             {avatarFile ? 'Bạn có thể cập nhật lại ảnh sau khi đăng nhập' : 'Ảnh đại diện (không bắt buộc)'}
           </p>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Họ và tên *</label>
+          <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Họ và tên *</label>
           <input
             {...register('full_name', { required: 'Vui lòng nhập họ tên' })}
             className="input-field"
             autoComplete="name"
           />
-          {errors.full_name && <p className="text-red-500 text-xs mt-1">{errors.full_name.message as string}</p>}
+          {errors.full_name && <p className="text-[var(--danger)] text-xs mt-1">{errors.full_name.message as string}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email *</label>
+          <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Email *</label>
           <input
             {...register('email', {
               required: 'Vui lòng nhập email',
@@ -436,11 +436,11 @@ export default function RegisterPage() {
             autoComplete="email"
             inputMode="email"
           />
-          {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message as string}</p>}
+          {errors.email && <p className="text-[var(--danger)] text-xs mt-1">{errors.email.message as string}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Số điện thoại *</label>
+          <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Số điện thoại *</label>
           <input
             {...register('phone', {
               required: 'Vui lòng nhập số điện thoại',
@@ -451,16 +451,16 @@ export default function RegisterPage() {
             inputMode="tel"
             type="tel"
           />
-          {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message as string}</p>}
+          {errors.phone && <p className="text-[var(--danger)] text-xs mt-1">{errors.phone.message as string}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Ngày sinh</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Ngày sinh</label>
             <input {...register('date_of_birth')} type="date" className="input-field" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Giới tính</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Giới tính</label>
             <select {...register('gender')} className="input-field">
               <option value="">Chọn</option>
               <option value="male">Nam</option>
@@ -471,12 +471,12 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Size áo</label>
+          <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Size áo</label>
           <div className="flex flex-wrap gap-2">
             {SIZES.map(size => (
               <label key={size} className="cursor-pointer">
                 <input {...register('shirt_size')} type="radio" value={size} className="sr-only peer" />
-                <span className="block px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium
+                <span className="block px-3 py-1.5 rounded-lg border border-[var(--border)] text-sm font-medium
                   peer-checked:bg-brand-600 peer-checked:text-white peer-checked:border-brand-600
                   hover:border-brand-400 transition-colors">
                   {size}
@@ -487,7 +487,7 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mật khẩu *</label>
+          <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Mật khẩu *</label>
           <div className="relative">
             <input
               {...register('password', {
@@ -502,16 +502,16 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPw(!showPw)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 p-1"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-faint)] p-1"
             >
               {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message as string}</p>}
+          {errors.password && <p className="text-[var(--danger)] text-xs mt-1">{errors.password.message as string}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Xác nhận mật khẩu *</label>
+          <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Xác nhận mật khẩu *</label>
           <input
             {...register('confirm_password', {
               required: 'Vui lòng xác nhận mật khẩu',
@@ -521,11 +521,11 @@ export default function RegisterPage() {
             className="input-field"
             autoComplete="new-password"
           />
-          {errors.confirm_password && <p className="text-red-500 text-xs mt-1">{errors.confirm_password.message as string}</p>}
+          {errors.confirm_password && <p className="text-[var(--danger)] text-xs mt-1">{errors.confirm_password.message as string}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Loại thành viên</label>
+          <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Loại thành viên</label>
           <div className="grid grid-cols-2 gap-3">
             {[
               { value: 'vang_lai', label: '⚪ Vãng lai', desc: 'Tham gia không thường xuyên' },
@@ -533,9 +533,9 @@ export default function RegisterPage() {
             ].map(opt => (
               <label key={opt.value} className="cursor-pointer">
                 <input {...register('member_type')} type="radio" value={opt.value} className="sr-only peer" defaultChecked={opt.value === 'vang_lai'} />
-                <div className="p-3 rounded-xl border-2 border-gray-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all text-center">
-                  <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5 whitespace-pre-line">{opt.desc}</p>
+                <div className="p-3 rounded-xl border-2 border-[var(--border)] peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all text-center">
+                  <p className="text-sm font-semibold text-[var(--text)]">{opt.label}</p>
+                  <p className="text-xs text-[var(--text-faint)] mt-0.5 whitespace-pre-line">{opt.desc}</p>
                 </div>
               </label>
             ))}
@@ -543,7 +543,7 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Trình độ</label>
+          <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Trình độ</label>
           <select {...register('level')} className="input-field">
             <option value="">-- Chọn trình độ --</option>
             <option value="yeu">Yếu</option>

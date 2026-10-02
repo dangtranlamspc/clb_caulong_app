@@ -364,7 +364,7 @@ export function TransactionDetailModal({
     <div
       className="fixed inset-0 z-[9999] flex flex-col justify-end transition-opacity duration-250"
       style={{
-        background: "rgba(0,0,0,0.5)",
+        background: "var(--overlay)",
         backdropFilter: "blur(2px)",
         opacity: visible ? 1 : 0,
         transitionDuration: "250ms",
@@ -372,7 +372,7 @@ export function TransactionDetailModal({
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className="w-full bg-white rounded-t-2xl transition-transform ease-out hide-scrollbar"
+        className="w-full bg-[var(--surface)] rounded-t-2xl transition-transform ease-out hide-scrollbar"
         style={{
           maxHeight: "90vh",
           overflowY: "auto",
@@ -392,12 +392,12 @@ export function TransactionDetailModal({
           }
         `}</style>
 
-        <div className="sticky top-0 z-20 bg-white rounded-t-2xl">
+        <div className="sticky top-0 z-20 bg-[var(--surface)] rounded-t-2xl">
           <div className="flex justify-center pt-3 pb-1">
-            <div className="w-9 h-1 rounded-full bg-gray-200" />
+            <div className="w-9 h-1 rounded-full bg-[var(--border-strong)]" />
           </div>
-          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-            <p className="text-sm font-bold text-gray-900">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
+            <p className="text-sm font-bold text-[var(--text)]">
               Chi tiết giao dịch
             </p>
             <div className="flex items-center gap-2">
@@ -418,9 +418,9 @@ export function TransactionDetailModal({
               )}
               <button
                 onClick={handleClose}
-                className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0"
+                className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center flex-shrink-0"
               >
-                <XIcon className="w-4 h-4 text-gray-500" />
+                <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
               </button>
             </div>
           </div>
@@ -435,40 +435,40 @@ export function TransactionDetailModal({
                 <Icon className="w-6 h-6" />
               </div>
               <p
-                className={`text-2xl font-black ${isPositive ? "text-emerald-600" : "text-red-500"}`}
+                className={`text-2xl font-black ${isPositive ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
               >
                 {isPositive ? "+" : ""}
                 {smt(tx.amount)}
               </p>
-              <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
+              <span className="text-xs font-medium text-[var(--text-faint)] bg-[var(--surface-muted)] px-2.5 py-1 rounded-full">
                 {shirtOrderLabel ?? tournamentLabel ?? TX_TYPE_LABEL[tx.type] ?? tx.type}
               </span>
             </div>
 
-            <div className="bg-white rounded-xl divide-y divide-gray-100 overflow-hidden border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)]">
+            <div className="bg-[var(--surface)] rounded-xl divide-y divide-[var(--border)] overflow-hidden border border-[var(--border)] shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)]">
               <div className="flex justify-between px-4 py-3 text-sm">
-                <span className="text-gray-400">Tiêu đề</span>
-                <span className="font-semibold text-gray-900 text-right">
+                <span className="text-[var(--text-faint)]">Tiêu đề</span>
+                <span className="font-semibold text-[var(--text)] text-right">
                   {tx.title}
                 </span>
               </div>
               {tx.description && (
                 <div className="px-4 py-3 text-sm">
-                  <p className="text-gray-400 mb-1">Diễn giải</p>
-                  <p className="text-gray-700">{tx.description}</p>
+                  <p className="text-[var(--text-faint)] mb-1">Diễn giải</p>
+                  <p className="text-[var(--text)]">{tx.description}</p>
                 </div>
               )}
               <div className="flex justify-between px-4 py-3 text-sm">
-                <span className="text-gray-400">Thời gian</span>
-                <span className="font-medium text-gray-700">
+                <span className="text-[var(--text-faint)]">Thời gian</span>
+                <span className="font-medium text-[var(--text)]">
                   {format(new Date(tx.created_at), "HH:mm, dd/MM/yyyy", {
                     locale: vi,
                   })}
                 </span>
               </div>
               <div className="flex justify-between px-4 py-3 text-sm">
-                <span className="text-gray-400">Số dư sau giao dịch</span>
-                <span className="font-bold text-gray-900">
+                <span className="text-[var(--text-faint)]">Số dư sau giao dịch</span>
+                <span className="font-bold text-[var(--text)]">
                   {smt(tx.balance_after)}
                 </span>
               </div>
@@ -476,29 +476,29 @@ export function TransactionDetailModal({
 
             {isPenaltyPayment && (
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                <p className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide mb-2">
                   Chi tiết khoản phạt
                 </p>
 
                 {isLoadingPenaltyDetail ? (
-                  <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
+                  <div className="flex items-center justify-center py-6 text-[var(--text-faint)] text-sm gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                   </div>
                 ) : penaltyDetailFailed ? (
-                  <p className="text-sm text-gray-400 text-center py-4">
+                  <p className="text-sm text-[var(--text-faint)] text-center py-4">
                     Không tải được chi tiết
                   </p>
                 ) : (
-                  <div className="rounded-xl bg-white border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] divide-y divide-gray-50 overflow-hidden">
+                  <div className="rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] divide-y divide-[var(--border)] overflow-hidden">
                     {penalty?.session?.title ? (
-                      <div className="flex justify-between px-4 py-2.5 text-sm bg-blue-50/50">
-                        <span className="text-gray-500">Buổi đánh</span>
+                      <div className="flex justify-between px-4 py-2.5 text-sm bg-[var(--primary-soft)]">
+                        <span className="text-[var(--text-muted)]">Buổi đánh</span>
                         <div className="text-right">
-                          <p className="font-semibold text-blue-700">
+                          <p className="font-semibold text-[var(--primary)]">
                             {penalty.session.title}
                           </p>
                           {penalty.session.scheduled_at && (
-                            <p className="text-[11px] text-gray-400">
+                            <p className="text-[11px] text-[var(--text-faint)]">
                               {format(new Date(penalty.session.scheduled_at), "dd/MM/yyyy", { locale: vi })}
                             </p>
                           )}
@@ -506,28 +506,28 @@ export function TransactionDetailModal({
                       </div>
                     ) : (
                       <div className="flex justify-between px-4 py-2.5 text-sm">
-                        <span className="text-gray-400">Buổi đánh</span>
-                        <span className="text-gray-400">Không gắn buổi nào</span>
+                        <span className="text-[var(--text-faint)]">Buổi đánh</span>
+                        <span className="text-[var(--text-faint)]">Không gắn buổi nào</span>
                       </div>
                     )}
 
                     <div className="flex justify-between px-4 py-2.5 text-sm">
-                      <span className="text-gray-500 flex items-center gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> Loại phạt
+                      <span className="text-[var(--text-muted)] flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 text-[var(--warning)]" /> Loại phạt
                       </span>
-                      <span className="font-medium text-gray-800">
+                      <span className="font-medium text-[var(--text)]">
                         {PENALTY_TYPE_LABEL[penalty?.penalty_type] ?? penalty?.penalty_type ?? "—"}
                       </span>
                     </div>
 
                     <div className="px-4 py-2.5 text-sm">
-                      <p className="text-gray-500 mb-1">Lý do</p>
-                      <p className="text-gray-700">{penalty?.description ?? penalty?.title}</p>
+                      <p className="text-[var(--text-muted)] mb-1">Lý do</p>
+                      <p className="text-[var(--text)]">{penalty?.description ?? penalty?.title}</p>
                     </div>
 
-                    <div className="flex justify-between px-4 py-3 text-sm bg-gray-50">
-                      <span className="font-semibold text-gray-700">Số tiền phạt</span>
-                      <span className="font-bold text-red-500">
+                    <div className="flex justify-between px-4 py-3 text-sm bg-[var(--surface-muted)]">
+                      <span className="font-semibold text-[var(--text)]">Số tiền phạt</span>
+                      <span className="font-bold text-[var(--danger)]">
                         {smt(Number(penalty?.amount ?? 0))}
                       </span>
                     </div>
@@ -538,35 +538,35 @@ export function TransactionDetailModal({
 
             {isSessionPayment && (
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                <p className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide mb-2">
                   Chi tiết khoản thanh toán
                 </p>
 
                 {isLoadingSessionDetail ? (
-                  <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
+                  <div className="flex items-center justify-center py-6 text-[var(--text-faint)] text-sm gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                   </div>
                 ) : sessionDetailFailed ? (
-                  <p className="text-sm text-gray-400 text-center py-4">
+                  <p className="text-sm text-[var(--text-faint)] text-center py-4">
                     Không tải được chi tiết
                   </p>
                 ) : (
                   <div className="space-y-3">
                     {displaySessionTitle && (
-                      <div className="flex justify-between px-4 py-2.5 text-sm bg-blue-50/50 rounded-xl">
-                        <span className="text-gray-500">Buổi đánh</span>
-                        <span className="font-semibold text-blue-700 text-right">
+                      <div className="flex justify-between px-4 py-2.5 text-sm bg-[var(--primary-soft)] rounded-xl">
+                        <span className="text-[var(--text-muted)]">Buổi đánh</span>
+                        <span className="font-semibold text-[var(--primary)] text-right">
                           {displaySessionTitle}
                         </span>
                       </div>
                     )}
 
-                    <div className="rounded-xl bg-white border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] divide-y divide-gray-50 overflow-hidden">
+                    <div className="rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] divide-y divide-[var(--border)] overflow-hidden">
                       <div className="flex justify-between px-4 py-2.5 text-sm">
-                        <span className="text-gray-500">
+                        <span className="text-[var(--text-muted)]">
                           Tiền sân + cầu của bạn
                         </span>
-                        <span className="font-medium text-gray-800">
+                        <span className="font-medium text-[var(--text)]">
                           {smt(displayBase)}
                         </span>
                       </div>
@@ -575,28 +575,28 @@ export function TransactionDetailModal({
                         <div className="px-4 py-2.5 text-sm">
                           {displayOtherFeeNote ? (
                             <div className="space-y-1.5">
-                              <span className="text-gray-500">Khoản khác của bạn</span>
-                              <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/40 px-2.5 py-1.5">
+                              <span className="text-[var(--text-muted)]">Khoản khác của bạn</span>
+                              <div className="flex items-center justify-between gap-3 rounded-lg border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] px-2.5 py-1.5">
                                 <div className="flex-1 min-w-0 space-y-0.5">
                                   {displayOtherFeeNote
                                     .split("\n")
                                     .map((l: string) => l.trim())
                                     .filter(Boolean)
                                     .map((line: string, i: number) => (
-                                      <p key={i} className="text-xs text-gray-400 italic">
+                                      <p key={i} className="text-xs text-[var(--text-faint)] italic">
                                         — {line}
                                       </p>
                                     ))}
                                 </div>
-                                <span className="font-medium text-amber-600 flex-shrink-0">
+                                <span className="font-medium text-[var(--warning)] flex-shrink-0">
                                   {smt(displayOtherFee)}
                                 </span>
                               </div>
                             </div>
                           ) : (
                             <div className="flex items-center justify-between">
-                              <span className="text-gray-500">Khoản khác của bạn</span>
-                              <span className="font-medium text-amber-600">
+                              <span className="text-[var(--text-muted)]">Khoản khác của bạn</span>
+                              <span className="font-medium text-[var(--warning)]">
                                 {smt(displayOtherFee)}
                               </span>
                             </div>
@@ -604,14 +604,14 @@ export function TransactionDetailModal({
                         </div>
                       ) : (
                         <div className="flex justify-between px-4 py-2.5 text-sm">
-                          <span className="text-gray-400">Khoản khác</span>
-                          <span className="text-gray-400">Không có</span>
+                          <span className="text-[var(--text-faint)]">Khoản khác</span>
+                          <span className="text-[var(--text-faint)]">Không có</span>
                         </div>
                       )}
 
                       <div className="flex justify-between px-4 py-2.5 text-sm">
-                        <span className="font-medium text-gray-600">Tổng của bạn</span>
-                        <span className="font-bold text-red-500">
+                        <span className="font-medium text-[var(--text-muted)]">Tổng của bạn</span>
+                        <span className="font-bold text-[var(--danger)]">
                           {smt(displayBase + displayOtherFee)}
                         </span>
                       </div>
@@ -619,7 +619,7 @@ export function TransactionDetailModal({
 
                     {displayGuests.length > 0 ? (
                       <div className="space-y-2">
-                        <p className="text-xs text-purple-600 font-medium flex items-center gap-1 px-1">
+                        <p className="text-xs text-[var(--purple)] font-medium flex items-center gap-1 px-1">
                           <Users className="w-3 h-3" /> Gộp thanh toán cùng{" "}
                           {displayGuests.length} khách
                         </p>
@@ -636,12 +636,12 @@ export function TransactionDetailModal({
                           return (
                             <div
                               key={g.id ?? idx}
-                              className="rounded-xl bg-white border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] px-4 py-2.5"
+                              className="rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] px-4 py-2.5"
                             >
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">+ {gName}</span>
+                                <span className="text-[var(--text-muted)]">+ {gName}</span>
                               </div>
-                              <div className="flex justify-between text-xs text-gray-400 mt-0.5 pl-3">
+                              <div className="flex justify-between text-xs text-[var(--text-faint)] mt-0.5 pl-3">
                                 <span>Tiền sân + cầu</span>
                                 <span>{smt(gBase)}</span>
                               </div>
@@ -649,37 +649,37 @@ export function TransactionDetailModal({
                                 <div className="mt-0.5 pl-3 text-xs">
                                   {g.other_fee_note ? (
                                     <div className="space-y-1">
-                                      <span className="text-amber-500">Khoản khác</span>
-                                      <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/40 px-2.5 py-1.5">
+                                      <span className="text-[var(--warning)]">Khoản khác</span>
+                                      <div className="flex items-center justify-between gap-3 rounded-lg border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] px-2.5 py-1.5">
                                         <div className="flex-1 min-w-0 space-y-0.5">
                                           {g.other_fee_note
                                             .split("\n")
                                             .map((l: string) => l.trim())
                                             .filter(Boolean)
                                             .map((line: string, i: number) => (
-                                              <p key={i} className="text-gray-400 italic">
+                                              <p key={i} className="text-[var(--text-faint)] italic">
                                                 {line}
                                               </p>
                                             ))}
                                         </div>
-                                        <span className="text-amber-600 font-medium flex-shrink-0">
+                                        <span className="text-[var(--warning)] font-medium flex-shrink-0">
                                           {smt(gOtherFee)}
                                         </span>
                                       </div>
                                     </div>
                                   ) : (
                                     <div className="flex items-center justify-between">
-                                      <span className="text-amber-500">Khoản khác</span>
-                                      <span className="text-amber-600 font-medium">{smt(gOtherFee)}</span>
+                                      <span className="text-[var(--warning)]">Khoản khác</span>
+                                      <span className="text-[var(--warning)] font-medium">{smt(gOtherFee)}</span>
                                     </div>
                                   )}
                                 </div>
                               )}
-                              <div className="flex justify-between text-sm mt-1.5 pt-1.5 border-t border-gray-50">
-                                <span className="font-medium text-gray-600">
+                              <div className="flex justify-between text-sm mt-1.5 pt-1.5 border-t border-[var(--border)]">
+                                <span className="font-medium text-[var(--text-muted)]">
                                   Tổng của {gName}
                                 </span>
-                                <span className="font-bold text-red-500">
+                                <span className="font-bold text-[var(--danger)]">
                                   {smt(gTotal)}
                                 </span>
                               </div>
@@ -689,18 +689,18 @@ export function TransactionDetailModal({
                       </div>
                     ) : (
                       <div className="flex justify-between px-4 py-2.5 text-sm">
-                        <span className="text-gray-400">Gộp với khách</span>
-                        <span className="text-gray-400">
+                        <span className="text-[var(--text-faint)]">Gộp với khách</span>
+                        <span className="text-[var(--text-faint)]">
                           Không, thanh toán riêng
                         </span>
                       </div>
                     )}
 
-                    <div className="flex justify-between px-4 py-3 text-sm bg-white rounded-xl border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)]">
-                      <span className="font-semibold text-gray-700">
+                    <div className="flex justify-between px-4 py-3 text-sm bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)]">
+                      <span className="font-semibold text-[var(--text)]">
                         Tổng bạn đã trả
                       </span>
-                      <span className="font-bold text-red-500">
+                      <span className="font-bold text-[var(--danger)]">
                         {smt(displayTotal)}
                       </span>
                     </div>
@@ -712,16 +712,16 @@ export function TransactionDetailModal({
 
             {isShirtOrder && (
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                <p className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide mb-2">
                   Chi tiết đơn đặt áo {isShirtOrderBatch && `(${shirtRegs.length} sản phẩm)`}
                 </p>
 
                 {loadingDetail ? (
-                  <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
+                  <div className="flex items-center justify-center py-6 text-[var(--text-faint)] text-sm gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                   </div>
                 ) : shirtRegs.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-4">
+                  <p className="text-sm text-[var(--text-faint)] text-center py-4">
                     Không tải được chi tiết
                   </p>
                 ) : (
@@ -729,26 +729,26 @@ export function TransactionDetailModal({
                     {shirtRegs.map((shirtReg: any) => (
                       <div
                         key={shirtReg.id}
-                        className="rounded-xl bg-white border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] divide-y divide-gray-50 overflow-hidden"
+                        className="rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)] divide-y divide-[var(--border)] overflow-hidden"
                       >
                         <div className="flex justify-between px-4 py-2.5 text-sm">
-                          <span className="text-gray-500">Loại áo</span>
-                          <span className="font-medium text-gray-800">{shirtReg.shirt_type_name}</span>
+                          <span className="text-[var(--text-muted)]">Loại áo</span>
+                          <span className="font-medium text-[var(--text)]">{shirtReg.shirt_type_name}</span>
                         </div>
                         {shirtReg.color_name && (
                           <div className="flex justify-between px-4 py-2.5 text-sm">
-                            <span className="text-gray-500">Màu sắc</span>
-                            <span className="font-medium text-gray-800">{shirtReg.color_name}</span>
+                            <span className="text-[var(--text-muted)]">Màu sắc</span>
+                            <span className="font-medium text-[var(--text)]">{shirtReg.color_name}</span>
                           </div>
                         )}
                         <div className="flex justify-between px-4 py-2.5 text-sm">
-                          <span className="text-gray-500">Size</span>
-                          <span className="font-medium text-gray-800">{shirtReg.size}</span>
+                          <span className="text-[var(--text-muted)]">Size</span>
+                          <span className="font-medium text-[var(--text)]">{shirtReg.size}</span>
                         </div>
                         {(shirtReg.jersey_number || shirtReg.print_name) && (
                           <div className="flex justify-between px-4 py-2.5 text-sm">
-                            <span className="text-gray-500">Số áo / Tên in</span>
-                            <span className="font-medium text-gray-800 text-right">
+                            <span className="text-[var(--text-muted)]">Số áo / Tên in</span>
+                            <span className="font-medium text-[var(--text)] text-right">
                               {shirtReg.jersey_number && `Số ${shirtReg.jersey_number}`}
                               {shirtReg.jersey_number && shirtReg.print_name && " · "}
                               {shirtReg.print_name && `"${shirtReg.print_name}"`}
@@ -756,24 +756,24 @@ export function TransactionDetailModal({
                           </div>
                         )}
                         <div className="flex justify-between px-4 py-2.5 text-sm">
-                          <span className="text-gray-500">Số lượng</span>
-                          <span className="font-medium text-gray-800">{shirtReg.quantity}</span>
+                          <span className="text-[var(--text-muted)]">Số lượng</span>
+                          <span className="font-medium text-[var(--text)]">{shirtReg.quantity}</span>
                         </div>
                         <div className="flex justify-between px-4 py-2.5 text-sm">
-                          <span className="text-gray-500">Đơn giá</span>
-                          <span className="font-medium text-gray-800">{smt(shirtReg.unit_price)}</span>
+                          <span className="text-[var(--text-muted)]">Đơn giá</span>
+                          <span className="font-medium text-[var(--text)]">{smt(shirtReg.unit_price)}</span>
                         </div>
-                        <div className="flex justify-between px-4 py-3 text-sm bg-gray-50">
-                          <span className="font-semibold text-gray-700">Thành tiền</span>
-                          <span className="font-bold text-gray-900">{smt(shirtReg.total_amount)}</span>
+                        <div className="flex justify-between px-4 py-3 text-sm bg-[var(--surface-muted)]">
+                          <span className="font-semibold text-[var(--text)]">Thành tiền</span>
+                          <span className="font-bold text-[var(--text)]">{smt(shirtReg.total_amount)}</span>
                         </div>
                       </div>
                     ))}
 
                     {isShirtOrderBatch && (
-                      <div className="flex justify-between px-4 py-3 text-sm bg-white rounded-xl border border-gray-50 shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)]">
-                        <span className="font-semibold text-gray-700">Tổng cả đơn</span>
-                        <span className="font-bold text-red-500">{smt(shirtOrderTotal)}</span>
+                      <div className="flex justify-between px-4 py-3 text-sm bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-[0_2px_10px_rgba(0,0,0,0.06),0_8px_24px_-8px_rgba(0,0,0,0.1)]">
+                        <span className="font-semibold text-[var(--text)]">Tổng cả đơn</span>
+                        <span className="font-bold text-[var(--danger)]">{smt(shirtOrderTotal)}</span>
                       </div>
                     )}
                   </div>
@@ -783,14 +783,14 @@ export function TransactionDetailModal({
           </div>
 
           {isReversed && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-white/70">
-              <Ban className="w-6 h-6 text-gray-400" />
-              <p className="text-base font-bold text-gray-600 text-center px-6">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-[color-mix(in_srgb,var(--surface)_70%,transparent)]">
+              <Ban className="w-6 h-6 text-[var(--text-faint)]" />
+              <p className="text-base font-bold text-[var(--text-muted)] text-center px-6">
                 {isSessionCancelled
                   ? "Buổi đánh đã bị hủy"
                   : "Hóa đơn đã được hoàn tác"}
               </p>
-              <p className="text-sm font-semibold text-emerald-600">
+              <p className="text-sm font-semibold text-[var(--success)]">
                 Đã hoàn tiền
               </p>
             </div>

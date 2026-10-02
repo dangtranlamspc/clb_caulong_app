@@ -99,7 +99,7 @@ export default function AdminLayout({
     };
 
     return (
-        <div className="fixed inset-0 flex flex-col bg-[#F4F6FA] overflow-hidden">
+        <div className="fixed inset-0 flex flex-col bg-[var(--bg)] overflow-hidden">
             <header className="relative z-30 overflow-hidden bg-transparent flex-shrink-0">
                 <div
                     className="absolute inset-0 -z-10"

@@ -6,35 +6,35 @@ const TYPES = [
         emoji: "👕",
         label: "Đặt áo nhóm",
         desc: "Mở đăng ký chọn size, đặt áo đồng phục cho thành viên",
-        cls: "bg-blue-50 group-hover:bg-blue-100",
+        cls: "bg-[var(--primary-soft)] group-hover:bg-[var(--primary-soft)]",
     },
     {
         type: "tournament",
         emoji: "🏆",
         label: "Giải nội bộ",
         desc: "Tạo giải đấu, mở đăng ký đội/đôi tham gia",
-        cls: "bg-amber-50 group-hover:bg-amber-100",
+        cls: "bg-[var(--warning-soft)] group-hover:bg-[var(--warning-soft)]",
     },
     {
         type: "birthday",
         emoji: "🎂",
         label: "Sinh nhật thành viên",
         desc: "Hiển thị danh sách thành viên sinh nhật trong tháng",
-        cls: "bg-pink-50 group-hover:bg-pink-100",
+        cls: "bg-[var(--pink-soft)] group-hover:bg-[var(--pink-soft)]",
     },
     {
         type: "offline_event",
         emoji: "🔥",
         label: "Offline / BBQ",
         desc: "Tổ chức giao lưu, mở đăng ký tham gia sự kiện",
-        cls: "bg-orange-50 group-hover:bg-orange-100",
+        cls: "bg-[var(--warning-soft)] group-hover:bg-[var(--warning-soft)]",
     },
     {
         type: "poll",
         emoji: "📊",
         label: "Bình chọn",
         desc: "Tạo khảo sát, thu thập ý kiến thành viên",
-        cls: "bg-purple-50 group-hover:bg-purple-100",
+        cls: "bg-[var(--purple-soft)] group-hover:bg-[var(--purple-soft)]",
     },
 ];
 
@@ -46,8 +46,8 @@ export default function EventTypePicker({
     return (
         <div className="p-6 space-y-5">
             <div>
-                <h1 className="text-xl font-bold text-gray-900">Chọn loại hoạt động</h1>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <h1 className="text-xl font-bold text-[var(--text)]">Chọn loại hoạt động</h1>
+                <p className="text-sm text-[var(--text-muted)] mt-0.5">
                     Mỗi loại có cách đăng ký và quản lý khác nhau
                 </p>
             </div>
@@ -64,10 +64,10 @@ export default function EventTypePicker({
                             {t.emoji}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900">{t.label}</p>
-                            <p className="text-xs text-gray-400 mt-0.5 leading-snug">{t.desc}</p>
+                            <p className="font-semibold text-[var(--text)]">{t.label}</p>
+                            <p className="text-xs text-[var(--text-faint)] mt-0.5 leading-snug">{t.desc}</p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-400 flex-shrink-0 transition-colors" />
+                        <ChevronRight className="w-4 h-4 text-[var(--text-faint)] group-hover:text-[var(--text-faint)] flex-shrink-0 transition-colors" />
                     </button>
                 ))}
             </div>

@@ -228,13 +228,13 @@ function levelPillStyle(level?: string | null) {
 
 function SkeletonStatCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 animate-pulse">
+    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-3 sm:p-4 animate-pulse">
       <div className="flex items-start justify-between mb-3">
-        <div className="h-3 bg-gray-100 rounded w-16" />
-        <div className="w-9 h-9 rounded-xl bg-gray-100" />
+        <div className="h-3 bg-[var(--surface-muted)] rounded w-16" />
+        <div className="w-9 h-9 rounded-xl bg-[var(--surface-muted)]" />
       </div>
-      <div className="h-7 bg-gray-100 rounded w-10 mb-2" />
-      <div className="h-3 bg-gray-100 rounded w-12" />
+      <div className="h-7 bg-[var(--surface-muted)] rounded w-10 mb-2" />
+      <div className="h-3 bg-[var(--surface-muted)] rounded w-12" />
     </div>
   );
 }
@@ -243,37 +243,37 @@ function SkeletonTableRow() {
   return (
     <tr className="animate-pulse">
       <td className="px-4 py-3.5">
-        <div className="h-4 bg-gray-100 rounded w-4" />
+        <div className="h-4 bg-[var(--surface-muted)] rounded w-4" />
       </td>
       <td className="px-4 py-3.5">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full bg-gray-100 flex-shrink-0" />
+          <div className="w-9 h-9 rounded-full bg-[var(--surface-muted)] flex-shrink-0" />
           <div className="space-y-1.5">
-            <div className="h-3.5 bg-gray-100 rounded w-28" />
-            <div className="h-3 bg-gray-100 rounded w-20" />
+            <div className="h-3.5 bg-[var(--surface-muted)] rounded w-28" />
+            <div className="h-3 bg-[var(--surface-muted)] rounded w-20" />
           </div>
         </div>
       </td>
       <td className="px-4 py-3.5">
-        <div className="h-3.5 bg-gray-100 rounded w-10" />
+        <div className="h-3.5 bg-[var(--surface-muted)] rounded w-10" />
       </td>
       <td className="px-4 py-3.5">
-        <div className="h-6 bg-gray-100 rounded-lg w-10" />
+        <div className="h-6 bg-[var(--surface-muted)] rounded-lg w-10" />
       </td>
       <td className="px-4 py-3.5">
-        <div className="h-5 bg-gray-100 rounded-full w-16" />
+        <div className="h-5 bg-[var(--surface-muted)] rounded-full w-16" />
       </td>
       <td className="px-4 py-3.5">
-        <div className="h-3.5 bg-gray-100 rounded w-20" />
+        <div className="h-3.5 bg-[var(--surface-muted)] rounded w-20" />
       </td>
       <td className="px-4 py-3.5">
-        <div className="h-3.5 bg-gray-100 rounded w-24" />
+        <div className="h-3.5 bg-[var(--surface-muted)] rounded w-24" />
       </td>
       <td className="px-4 py-3.5">
-        <div className="h-6 bg-gray-100 rounded-full w-24" />
+        <div className="h-6 bg-[var(--surface-muted)] rounded-full w-24" />
       </td>
       <td className="px-4 py-3.5 text-right">
-        <div className="h-4 bg-gray-100 rounded w-16 ml-auto" />
+        <div className="h-4 bg-[var(--surface-muted)] rounded w-16 ml-auto" />
       </td>
     </tr>
   );
@@ -281,13 +281,13 @@ function SkeletonTableRow() {
 
 function SkeletonFilterBar() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 animate-pulse">
+    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-3 sm:p-4 animate-pulse">
       <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
-        <div className="md:col-span-2 h-10 bg-gray-100 rounded-lg" />
-        <div className="h-10 bg-gray-100 rounded-lg" />
-        <div className="h-10 bg-gray-100 rounded-lg" />
-        <div className="h-10 bg-gray-100 rounded-lg" />
-        <div className="h-10 bg-gray-100 rounded-lg" />
+        <div className="md:col-span-2 h-10 bg-[var(--surface-muted)] rounded-lg" />
+        <div className="h-10 bg-[var(--surface-muted)] rounded-lg" />
+        <div className="h-10 bg-[var(--surface-muted)] rounded-lg" />
+        <div className="h-10 bg-[var(--surface-muted)] rounded-lg" />
+        <div className="h-10 bg-[var(--surface-muted)] rounded-lg" />
       </div>
     </div>
   );
@@ -296,26 +296,26 @@ function SkeletonFilterBar() {
 function SkeletonRightPanel() {
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 animate-pulse space-y-3">
-        <div className="h-4 bg-gray-100 rounded w-40" />
-        <div className="h-3 bg-gray-100 rounded w-full" />
-        <div className="h-3 bg-gray-100 rounded w-3/4" />
+      <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-4 sm:p-5 animate-pulse space-y-3">
+        <div className="h-4 bg-[var(--surface-muted)] rounded w-40" />
+        <div className="h-3 bg-[var(--surface-muted)] rounded w-full" />
+        <div className="h-3 bg-[var(--surface-muted)] rounded w-3/4" />
         <div className="space-y-2 pt-2">
-          <div className="h-3 bg-gray-100 rounded w-32" />
-          <div className="h-3 bg-gray-100 rounded w-28" />
-          <div className="h-3 bg-gray-100 rounded w-36" />
+          <div className="h-3 bg-[var(--surface-muted)] rounded w-32" />
+          <div className="h-3 bg-[var(--surface-muted)] rounded w-28" />
+          <div className="h-3 bg-[var(--surface-muted)] rounded w-36" />
         </div>
-        <div className="h-10 bg-gray-100 rounded-lg mt-3" />
+        <div className="h-10 bg-[var(--surface-muted)] rounded-lg mt-3" />
       </div>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 animate-pulse">
-        <div className="h-4 bg-gray-100 rounded w-44 mb-4" />
+      <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-4 sm:p-5 animate-pulse">
+        <div className="h-4 bg-[var(--surface-muted)] rounded w-44 mb-4" />
         <div className="flex items-center gap-5">
-          <div className="w-24 h-24 rounded-full bg-gray-100 flex-shrink-0" />
+          <div className="w-24 h-24 rounded-full bg-[var(--surface-muted)] flex-shrink-0" />
           <div className="space-y-2">
-            <div className="h-3 bg-gray-100 rounded w-16" />
-            <div className="h-3 bg-gray-100 rounded w-16" />
-            <div className="h-3 bg-gray-100 rounded w-16" />
-            <div className="h-3 bg-gray-100 rounded w-16" />
+            <div className="h-3 bg-[var(--surface-muted)] rounded w-16" />
+            <div className="h-3 bg-[var(--surface-muted)] rounded w-16" />
+            <div className="h-3 bg-[var(--surface-muted)] rounded w-16" />
+            <div className="h-3 bg-[var(--surface-muted)] rounded w-16" />
           </div>
         </div>
       </div>
@@ -505,18 +505,18 @@ function RegistrationDetailModal({
       }}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto transition-all duration-200 ease-out ${visible
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto transition-all duration-200 ease-out ${visible
           ? "opacity-100 scale-100 translate-y-0"
           : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[var(--border)]">
+          <h3 className="font-bold text-[var(--text)]">
             {mode === "edit" ? "Chỉnh sửa đăng ký" : "Chi tiết đăng ký"}
           </h3>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)] transition-colors"
           >
             ✕
           </button>
@@ -533,10 +533,10 @@ function RegistrationDetailModal({
               alt=""
             />
             <div>
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-[var(--text)]">
                 {reg.users?.full_name ?? reg.guest_full_name ?? "—"}
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[var(--text-faint)]">
                 {reg.users?.email ?? reg.guest_email ?? ""}
               </p>
             </div>
@@ -544,7 +544,7 @@ function RegistrationDetailModal({
 
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <p className="text-xs text-gray-400 mb-1">Vai trò</p>
+              <p className="text-xs text-[var(--text-faint)] mb-1">Vai trò</p>
               {mode === "edit" ? (
                 <CustomSelect
                   value={editRole}
@@ -554,8 +554,8 @@ function RegistrationDetailModal({
               ) : (
                 <span
                   className={`inline-block text-xs font-semibold px-2 py-1 rounded-full ${reg.role === "nam"
-                    ? "bg-blue-50 text-blue-600"
-                    : "bg-pink-50 text-pink-600"
+                    ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                    : "bg-[var(--pink-soft)] text-[var(--pink)]"
                     }`}
                 >
                   {reg.role === "nam" ? "VĐV Nam" : "VĐV Nữ"}
@@ -563,7 +563,7 @@ function RegistrationDetailModal({
               )}
             </div>
             <div>
-              <p className="text-xs text-gray-400 mb-1">Trình độ</p>
+              <p className="text-xs text-[var(--text-faint)] mb-1">Trình độ</p>
               {mode === "edit" ? (
                 <CustomSelect
                   value={editLevel}
@@ -580,29 +580,29 @@ function RegistrationDetailModal({
               )}
             </div>
             <div>
-              <p className="text-xs text-gray-400 mb-1">SĐT</p>
-              <p className="text-gray-800">
+              <p className="text-xs text-[var(--text-faint)] mb-1">SĐT</p>
+              <p className="text-[var(--text)]">
                 {reg.users?.phone ?? reg.guest_phone ?? "—"}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 mb-1">Ngày đăng ký</p>
-              <p className="text-gray-800">
+              <p className="text-xs text-[var(--text-faint)] mb-1">Ngày đăng ký</p>
+              <p className="text-[var(--text)]">
                 {reg.created_at
                   ? format(new Date(reg.created_at), "dd/MM/yyyy HH:mm", { locale: vi })
                   : "—"}
               </p>
             </div>
             <div className="col-span-2">
-              <p className="text-xs text-gray-400 mb-1">Thanh toán</p>
+              <p className="text-xs text-[var(--text-faint)] mb-1">Thanh toán</p>
               <button
                 disabled={mode === "view"}
                 onClick={() =>
                   reg.payment_status !== "confirmed" && onConfirmPayment(reg.id)
                 }
                 className={`text-xs font-semibold px-2.5 py-1.5 rounded-full transition-colors ${reg.payment_status === "confirmed"
-                  ? "bg-green-50 text-green-700"
-                  : "bg-amber-50 text-amber-600 hover:bg-amber-100"
+                  ? "bg-[var(--success-soft)] text-[var(--success)]"
+                  : "bg-[var(--warning-soft)] text-[var(--warning)] hover:bg-[var(--warning-soft)]"
                   } ${mode === "view" ? "cursor-default" : ""}`}
               >
                 {reg.payment_status === "confirmed" ? "Đã thanh toán" : "Chưa thanh toán"}
@@ -611,7 +611,7 @@ function RegistrationDetailModal({
           </div>
 
           <div>
-            <p className="text-xs text-gray-400 mb-1">Ghi chú</p>
+            <p className="text-xs text-[var(--text-faint)] mb-1">Ghi chú</p>
             {mode === "edit" ? (
               <textarea
                 value={editNotes}
@@ -621,17 +621,17 @@ function RegistrationDetailModal({
                 placeholder="Ghi chú thêm..."
               />
             ) : (
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+              <p className="text-sm text-[var(--text)] whitespace-pre-wrap">
                 {reg.notes || "Không có ghi chú"}
               </p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-t border-[var(--border)]">
           <button
             onClick={handleClose}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
           >
             {mode === "edit" ? "Huỷ" : "Đóng"}
           </button>
@@ -659,7 +659,7 @@ function HomeButton() {
       onClick={() => router.push("/admin/events")}
       title="Về trang danh sách sự kiện"
       aria-label="Về trang danh sách sự kiện"
-      className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
+      className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] transition-colors"
     >
       <Home className="w-4 h-4" />
     </button>
@@ -678,8 +678,8 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label className="block text-sm font-medium text-[var(--text)] mb-1">
+        {label} {required && <span className="text-[var(--danger)]">*</span>}
       </label>
       {children}
     </div>
@@ -803,23 +803,23 @@ function AdminAddTournamentRegistrationModal({
         }`}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transition-all duration-200 ease-out ${visible
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-md overflow-hidden transition-all duration-200 ease-out ${visible
           ? "opacity-100 scale-100 translate-y-0"
           : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Thêm đăng ký thi đấu</h3>
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[var(--border)]">
+          <h3 className="font-bold text-[var(--text)]">Thêm đăng ký thi đấu</h3>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)]"
           >
             ✕
           </button>
         </div>
 
         <div className="p-4 sm:p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-          <div className="relative flex rounded-lg border border-gray-200 overflow-hidden text-sm bg-gray-50 p-0.5">
+          <div className="relative flex rounded-lg border border-[var(--border)] overflow-hidden text-sm bg-[var(--surface-muted)] p-0.5">
             <div
               className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md bg-blue-600 shadow-sm transition-transform duration-300 ease-out"
               style={{
@@ -829,7 +829,7 @@ function AdminAddTournamentRegistrationModal({
             <button
               type="button"
               onClick={() => setMode("member")}
-              className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors duration-300 text-xs sm:text-sm ${mode === "member" ? "text-white" : "text-gray-600 hover:text-gray-900"
+              className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors duration-300 text-xs sm:text-sm ${mode === "member" ? "text-white" : "text-[var(--text-muted)] hover:text-[var(--text)]"
                 }`}
             >
               Thành viên (có tài khoản)
@@ -837,7 +837,7 @@ function AdminAddTournamentRegistrationModal({
             <button
               type="button"
               onClick={() => setMode("guest")}
-              className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors duration-300 text-xs sm:text-sm ${mode === "guest" ? "text-white" : "text-gray-600 hover:text-gray-900"
+              className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors duration-300 text-xs sm:text-sm ${mode === "guest" ? "text-white" : "text-[var(--text-muted)] hover:text-[var(--text)]"
                 }`}
             >
               Khách (không tài khoản)
@@ -847,20 +847,20 @@ function AdminAddTournamentRegistrationModal({
           <FadeSwitch transitionKey={mode}>
             {mode === "member" ? (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">
                   Tìm thành viên
                 </label>
                 {selectedMember ? (
-                  <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50">
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)]">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">
+                      <p className="text-sm font-semibold text-[var(--text)] truncate">
                         {selectedMember.full_name}
                       </p>
-                      <p className="text-xs text-gray-400">{selectedMember.phone}</p>
+                      <p className="text-xs text-[var(--text-faint)]">{selectedMember.phone}</p>
                     </div>
                     <button
                       onClick={() => setSelectedMember(null)}
-                      className="text-xs text-blue-600 hover:underline flex-shrink-0"
+                      className="text-xs text-[var(--primary)] hover:underline flex-shrink-0"
                     >
                       Đổi
                     </button>
@@ -868,24 +868,24 @@ function AdminAddTournamentRegistrationModal({
                 ) : (
                   <>
                     <input
-                      className="input-field transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                      className="input-field transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-[var(--primary)]"
                       placeholder="Nhập tên hoặc SĐT..."
                       value={memberSearch}
                       onChange={(e) => setMemberSearch(e.target.value)}
                     />
                     {searchingMembers && (
-                      <p className="text-xs text-gray-400 mt-1">Đang tìm...</p>
+                      <p className="text-xs text-[var(--text-faint)] mt-1">Đang tìm...</p>
                     )}
                     {memberResults.length > 0 && (
-                      <div className="mt-2 border border-gray-100 rounded-lg divide-y divide-gray-50 max-h-48 overflow-y-auto">
+                      <div className="mt-2 border border-[var(--border)] rounded-lg divide-y divide-[var(--border)] max-h-48 overflow-y-auto">
                         {memberResults.map((m: any) => (
                           <button
                             key={m.id}
                             onClick={() => handleSelectMember(m)}
-                            className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-gray-50"
+                            className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-[var(--surface-hover)]"
                           >
-                            <span className="text-sm text-gray-900 truncate">{m.full_name}</span>
-                            <span className="text-xs text-gray-400 flex-shrink-0">{m.phone}</span>
+                            <span className="text-sm text-[var(--text)] truncate">{m.full_name}</span>
+                            <span className="text-xs text-[var(--text-faint)] flex-shrink-0">{m.phone}</span>
                           </button>
                         ))}
                       </div>
@@ -897,7 +897,7 @@ function AdminAddTournamentRegistrationModal({
               <div className="space-y-3">
                 <Field label="Họ tên khách" required>
                   <input
-                    className="input-field transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                    className="input-field transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-[var(--primary)]"
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
                   />
@@ -905,7 +905,7 @@ function AdminAddTournamentRegistrationModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Field label="SĐT">
                     <input
-                      className="input-field transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                      className="input-field transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-[var(--primary)]"
                       value={guestPhone}
                       onChange={(e) => setGuestPhone(e.target.value)}
                     />
@@ -924,7 +924,7 @@ function AdminAddTournamentRegistrationModal({
                 <Field label="Email (để gửi hóa đơn  thanh toán)" required>
                   <input
                     type="email"
-                    className="input-field transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                    className="input-field transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-[var(--primary)]"
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
                   />
@@ -936,7 +936,7 @@ function AdminAddTournamentRegistrationModal({
 
           {mode === "member" && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
                 Phương thức thanh toán
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -944,12 +944,12 @@ function AdminAddTournamentRegistrationModal({
                   type="button"
                   onClick={() => setPaymentMethod("wallet")}
                   className={`px-3 py-2.5 rounded-lg border text-sm font-medium text-left transition-colors ${paymentMethod === "wallet"
-                    ? "border-blue-400 bg-blue-50 text-blue-700"
-                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    ? "border-blue-400 bg-[var(--primary-soft)] text-[var(--primary)]"
+                    : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                     }`}
                 >
                   Ví BNB
-                  <p className="text-[11px] font-normal text-gray-400 mt-0.5">
+                  <p className="text-[11px] font-normal text-[var(--text-faint)] mt-0.5">
                     Trừ ví ngay, xác nhận luôn
                   </p>
                 </button>
@@ -957,12 +957,12 @@ function AdminAddTournamentRegistrationModal({
                   type="button"
                   onClick={() => setPaymentMethod("member_choice")}
                   className={`px-3 py-2.5 rounded-lg border text-sm font-medium text-left transition-colors ${paymentMethod === "member_choice"
-                    ? "border-blue-400 bg-blue-50 text-blue-700"
-                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    ? "border-blue-400 bg-[var(--primary-soft)] text-[var(--primary)]"
+                    : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                     }`}
                 >
                   Thành viên tự chọn
-                  <p className="text-[11px] font-normal text-gray-400 mt-0.5">
+                  <p className="text-[11px] font-normal text-[var(--text-faint)] mt-0.5">
                     Gửi yêu cầu xác nhận
                   </p>
                 </button>
@@ -997,7 +997,7 @@ function AdminAddTournamentRegistrationModal({
 
           <Field label="Ghi chú">
             <textarea
-              className="input-field resize-none transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+              className="input-field resize-none transition-all duration-200 focus:ring-2 focus:ring-blue-500/30 focus:border-[var(--primary)]"
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -1005,10 +1005,10 @@ function AdminAddTournamentRegistrationModal({
           </Field>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-t border-[var(--border)]">
           <button
             onClick={handleClose}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
           >
             Huỷ
           </button>
@@ -1660,24 +1660,24 @@ export default function TournamentRegistrationsPage() {
 
   if (loading || restoringStep) {
     return (
-      <div className="w-full p-4 sm:p-6 space-y-4 sm:space-y-5 bg-gray-50 min-h-screen">
+      <div className="w-full p-4 sm:p-6 space-y-4 sm:space-y-5 bg-[var(--surface-muted)] min-h-screen">
         <div className="flex items-center gap-1.5 animate-pulse">
-          <div className="h-3.5 bg-gray-100 rounded w-16" />
-          <ChevronRight className="w-3.5 h-3.5 text-gray-200" />
-          <div className="h-3.5 bg-gray-100 rounded w-32" />
-          <ChevronRight className="w-3.5 h-3.5 text-gray-200" />
-          <div className="h-3.5 bg-gray-100 rounded w-24" />
+          <div className="h-3.5 bg-[var(--surface-muted)] rounded w-16" />
+          <ChevronRight className="w-3.5 h-3.5 text-[var(--text-faint)]" />
+          <div className="h-3.5 bg-[var(--surface-muted)] rounded w-32" />
+          <ChevronRight className="w-3.5 h-3.5 text-[var(--text-faint)]" />
+          <div className="h-3.5 bg-[var(--surface-muted)] rounded w-24" />
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 animate-pulse">
           <div className="flex items-center gap-3">
-            <div className="h-7 bg-gray-100 rounded w-56" />
-            <div className="h-5 bg-gray-100 rounded-full w-24" />
+            <div className="h-7 bg-[var(--surface-muted)] rounded w-56" />
+            <div className="h-5 bg-[var(--surface-muted)] rounded-full w-24" />
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-9 bg-gray-100 rounded-lg w-32" />
-            <div className="h-9 bg-gray-100 rounded-lg w-24" />
-            <div className="h-9 bg-gray-100 rounded-lg w-40" />
+            <div className="h-9 bg-[var(--surface-muted)] rounded-lg w-32" />
+            <div className="h-9 bg-[var(--surface-muted)] rounded-lg w-24" />
+            <div className="h-9 bg-[var(--surface-muted)] rounded-lg w-40" />
           </div>
         </div>
 
@@ -1690,10 +1690,10 @@ export default function TournamentRegistrationsPage() {
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 sm:gap-6">
           <div className="space-y-4 min-w-0">
             <SkeletonFilterBar />
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                  <thead className="bg-[var(--surface-muted)] text-[var(--text-muted)] text-xs uppercase">
                     <tr>
                       <th className="text-left px-4 py-3">STT</th>
                       <th className="text-left px-4 py-3">Vận động viên</th>
@@ -1706,7 +1706,7 @@ export default function TournamentRegistrationsPage() {
                       <th className="text-right px-4 py-3">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-[var(--border)]">
                     {Array.from({ length: 6 }).map((_, i) => (
                       <SkeletonTableRow key={i} />
                     ))}
@@ -1749,9 +1749,9 @@ export default function TournamentRegistrationsPage() {
   };
 
   return (
-    <div className="w-full h-screen flex flex-col bg-gray-50">
+    <div className="w-full h-screen flex flex-col bg-[var(--surface-muted)]">
       <div
-        className="flex-shrink-0 bg-gray-50 px-4 sm:px-6 pb-3 sm:pb-4 space-y-2 border-b border-gray-100"
+        className="flex-shrink-0 bg-[var(--surface-muted)] px-4 sm:px-6 pb-3 sm:pb-4 space-y-2 border-b border-[var(--border)]"
         style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -1759,11 +1759,11 @@ export default function TournamentRegistrationsPage() {
             <button
               onClick={() => router.back()}
               aria-label="Quay lại"
-              className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] truncate">
               Vận động viên đăng ký
             </h1>
           </div>
@@ -1791,7 +1791,7 @@ export default function TournamentRegistrationsPage() {
             {!isClosed && (
               <button
                 title="Xuất danh sách"
-                className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm flex-shrink-0"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:border-[var(--border-strong)] transition-colors shadow-sm flex-shrink-0"
               >
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">Xuất danh sách</span>
@@ -1823,7 +1823,7 @@ export default function TournamentRegistrationsPage() {
                       }
                       setPublicLinkOpen((v) => !v);
                     }}
-                    className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors shadow-sm"
                   >
                     <Link2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Tạo link công khai</span>
@@ -1836,7 +1836,7 @@ export default function TournamentRegistrationsPage() {
               onClick={handleReload}
               disabled={reloading}
               title="Tải lại dữ liệu"
-              className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50 flex-shrink-0"
+              className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:border-[var(--border-strong)] transition-colors disabled:opacity-50 flex-shrink-0"
             >
               <RotateCcw className={`w-4 h-4 ${reloading ? "animate-spin" : ""}`} />
             </button>
@@ -1846,9 +1846,9 @@ export default function TournamentRegistrationsPage() {
         </div>
 
         <div className="flex justify-end">
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 border border-green-100 text-sm">
-            <span className="text-green-600 font-medium">Doanh thu:</span>
-            <span className="text-green-700 font-bold tabular-nums">
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--success-soft)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] text-sm">
+            <span className="text-[var(--success)] font-medium">Doanh thu:</span>
+            <span className="text-[var(--success)] font-bold tabular-nums">
               {stats.revenue.toLocaleString("vi-VN")}đ
             </span>
           </div>
@@ -1881,10 +1881,10 @@ export default function TournamentRegistrationsPage() {
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4 sm:gap-6">
           <div className="space-y-4 min-w-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4">
+            <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-3 sm:p-4">
               <div className="flex flex-col md:flex-row gap-3 md:items-end">
                 <div className="w-full md:flex-1 md:min-w-0 transition-all duration-300 ease-out">
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                     Tìm kiếm
                   </label>
                   <input
@@ -1896,17 +1896,17 @@ export default function TournamentRegistrationsPage() {
                 </div>
 
                 <div className="w-full md:w-[170px] md:flex-shrink-0">
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Trình độ</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">Trình độ</label>
                   <CustomSelect value={levelFilter} onChange={setLevelFilter} options={LEVEL_OPTIONS} />
                 </div>
 
                 <div className="w-full md:w-[170px] md:flex-shrink-0">
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Vai trò</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">Vai trò</label>
                   <CustomSelect value={roleFilter} onChange={setRoleFilter} options={ROLES_OPTIONS} />
                 </div>
 
                 <div className="w-full md:w-[170px] md:flex-shrink-0">
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Thanh toán</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">Thanh toán</label>
                   <CustomSelect value={paymentFilter} onChange={setPaymentFilter} options={PAYMENT_OPTIONS} />
                 </div>
 
@@ -1916,7 +1916,7 @@ export default function TournamentRegistrationsPage() {
                 >
                   <button
                     onClick={clearFilters}
-                    className="w-full h-[42px] flex items-center justify-center gap-1.5 px-3 rounded-lg border border-gray-200 text-sm font-medium text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors whitespace-nowrap"
+                    className="w-full h-[42px] flex items-center justify-center gap-1.5 px-3 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--primary)] hover:bg-[var(--primary-soft)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] transition-colors whitespace-nowrap"
                   >
                     <FilterX className="w-4 h-4" /> Xoá bộ lọc
                   </button>
@@ -1924,10 +1924,10 @@ export default function TournamentRegistrationsPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm overflow-hidden">
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50/80 text-gray-500 text-[11px] uppercase tracking-wide">
+                  <thead className="bg-[var(--surface-muted)] text-[var(--text-muted)] text-[11px] uppercase tracking-wide">
                     <tr>
                       <th className="text-left px-4 py-3.5 font-semibold">STT</th>
                       <th className="text-left px-4 py-3.5 font-semibold">Vận động viên</th>
@@ -1941,15 +1941,15 @@ export default function TournamentRegistrationsPage() {
                       <th className="text-right px-4 py-3.5 font-semibold">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-[var(--border)]">
                     {pageItems.map((r, i) => (
                       <AnimatedTableRow
                         key={r.id}
                         removing={removingRegId === r.id}
                         onCollapsed={() => handleRowCollapsed(r.id)}
-                        className="hover:bg-gray-50/60 transition-colors"
+                        className="hover:bg-[var(--surface-hover)] transition-colors"
                       >
-                        <td className="px-4 py-3.5 text-gray-400 align-middle">
+                        <td className="px-4 py-3.5 text-[var(--text-faint)] align-middle">
                           {(page - 1) * PAGE_SIZE + i + 1}
                         </td>
                         <td className="px-4 py-3.5 align-middle">
@@ -1963,10 +1963,10 @@ export default function TournamentRegistrationsPage() {
                               alt=""
                             />
                             <div className="min-w-0 max-w-[180px] lg:max-w-[220px]">
-                              <p className="font-medium text-gray-900 break-words leading-snug">
+                              <p className="font-medium text-[var(--text)] break-words leading-snug">
                                 {r.users?.full_name ?? r.guest_full_name ?? "—"}
                               </p>
-                              <p className="text-xs text-gray-400 break-words leading-snug">
+                              <p className="text-xs text-[var(--text-faint)] break-words leading-snug">
                                 {r.users?.email ?? r.guest_email ?? (r.user_id ? "" : "Khách")}
                               </p>
                             </div>
@@ -1975,14 +1975,14 @@ export default function TournamentRegistrationsPage() {
                         <td className="px-4 py-3.5 align-middle">
                           <span
                             className={`text-xs font-semibold px-2.5 py-1 rounded-full ${r.user_id
-                              ? "bg-indigo-50 text-indigo-600"
-                              : "bg-gray-100 text-gray-500"
+                              ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                              : "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                               }`}
                           >
                             {r.user_id ? "Thành viên" : "Khách"}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 text-gray-600 align-middle">
+                        <td className="px-4 py-3.5 text-[var(--text-muted)] align-middle">
                           {r.role === "nam" ? "Nam" : "Nữ"}
                         </td>
                         <td className="px-4 py-3.5 align-middle">
@@ -1997,17 +1997,17 @@ export default function TournamentRegistrationsPage() {
                         <td className="px-4 py-3.5 align-middle">
                           <span
                             className={`text-xs font-semibold px-2.5 py-1 rounded-full ${r.role === "nam"
-                              ? "bg-blue-50 text-blue-600"
-                              : "bg-pink-50 text-pink-600"
+                              ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                              : "bg-[var(--pink-soft)] text-[var(--pink)]"
                               }`}
                           >
                             {r.role === "nam" ? "VĐV Nam" : "VĐV Nữ"}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 text-gray-600 align-middle">
+                        <td className="px-4 py-3.5 text-[var(--text-muted)] align-middle">
                           {r.users?.phone ?? r.guest_phone ?? "—"}
                         </td>
-                        <td className="px-4 py-3.5 text-gray-500 align-middle">
+                        <td className="px-4 py-3.5 text-[var(--text-muted)] align-middle">
                           {r.created_at
                             ? format(new Date(r.created_at), "dd/MM/yyyy HH:mm", { locale: vi })
                             : "—"}
@@ -2015,15 +2015,15 @@ export default function TournamentRegistrationsPage() {
                         <td className="px-4 py-3.5 align-middle">
                           {r.payment_status === "confirmed" ? (
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-green-50 text-green-700">
+                              <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-[var(--success-soft)] text-[var(--success)]">
                                 Đã thanh toán
                               </span>
-                              <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                              <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
                                 {PAYMENT_METHOD_LABEL[r.payment_method] ?? r.payment_method}
                               </span>
                             </div>
                           ) : r.payment_status === "rejected" ? (
-                            <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-red-50 text-red-600">
+                            <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-[var(--danger-soft)] text-[var(--danger)]">
                               Đã từ chối
                             </span>
                           ) : (r.payment_method || !r.user_id) ? (
@@ -2053,7 +2053,7 @@ export default function TournamentRegistrationsPage() {
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-amber-50 text-amber-600">
+                              <span className="text-xs font-semibold px-2.5 py-1.5 rounded-full bg-[var(--warning-soft)] text-[var(--warning)]">
                                 Chờ thanh toán
                               </span>
                               <button
@@ -2074,19 +2074,19 @@ export default function TournamentRegistrationsPage() {
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => openModal(r, "view")}
-                              className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                              className="p-1.5 hover:bg-[var(--surface-hover)] rounded-lg text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => openModal(r, "edit")}
-                              className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                              className="p-1.5 hover:bg-[var(--surface-hover)] rounded-lg text-[var(--text-faint)] hover:text-[var(--primary)] transition-colors"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteReg(r.id)}
-                              className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+                              className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -2096,7 +2096,7 @@ export default function TournamentRegistrationsPage() {
                     ))}
                     {pageItems.length === 0 && (
                       <tr>
-                        <td colSpan={10} className="text-center py-14 text-gray-400">
+                        <td colSpan={10} className="text-center py-14 text-[var(--text-faint)]">
                           <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
                           Không có vận động viên nào phù hợp bộ lọc
                         </td>
@@ -2115,7 +2115,7 @@ export default function TournamentRegistrationsPage() {
                   >
                     <div
                       key={r.id}
-                      className="p-4 space-y-3 rounded-2xl border border-gray-100 shadow-md bg-white"
+                      className="p-4 space-y-3 rounded-2xl border border-[var(--border)] shadow-md bg-[var(--surface)]"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2.5 min-w-0">
@@ -2128,50 +2128,50 @@ export default function TournamentRegistrationsPage() {
                             alt=""
                           />
                           <div className="min-w-0">
-                            <p className="font-medium text-gray-900 break-words leading-snug">
+                            <p className="font-medium text-[var(--text)] break-words leading-snug">
                               {r.users?.full_name ?? r.guest_full_name ?? "—"}
                             </p>
-                            <p className="text-xs text-gray-400 break-words leading-snug">
+                            <p className="text-xs text-[var(--text-faint)] break-words leading-snug">
                               {r.users?.email ?? r.guest_email ?? (r.user_id ? "" : "Khách")}
                             </p>
                           </div>
                         </div>
-                        <span className="text-xs text-gray-300 flex-shrink-0">
+                        <span className="text-xs text-[var(--text-faint)] flex-shrink-0">
                           #{(page - 1) * PAGE_SIZE + i + 1}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-y-2 gap-x-3 text-xs">
                         <div>
-                          <p className="text-gray-400 mb-0.5">Loại</p>
+                          <p className="text-[var(--text-faint)] mb-0.5">Loại</p>
                           <span
                             className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${r.user_id
-                              ? "bg-indigo-50 text-indigo-600"
-                              : "bg-gray-100 text-gray-500"
+                              ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                              : "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                               }`}
                           >
                             {r.user_id ? "Thành viên" : "Khách"}
                           </span>
                         </div>
                         <div>
-                          <p className="text-gray-400 mb-0.5">Giới tính</p>
-                          <p className="text-gray-700 font-medium">
+                          <p className="text-[var(--text-faint)] mb-0.5">Giới tính</p>
+                          <p className="text-[var(--text)] font-medium">
                             {r.role === "nam" ? "Nam" : "Nữ"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-400 mb-0.5">Vai trò</p>
+                          <p className="text-[var(--text-faint)] mb-0.5">Vai trò</p>
                           <span
                             className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${r.role === "nam"
-                              ? "bg-blue-50 text-blue-600"
-                              : "bg-pink-50 text-pink-600"
+                              ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                              : "bg-[var(--pink-soft)] text-[var(--pink)]"
                               }`}
                           >
                             {r.role === "nam" ? "VĐV Nam" : "VĐV Nữ"}
                           </span>
                         </div>
                         <div>
-                          <p className="text-gray-400 mb-0.5">Trình độ</p>
+                          <p className="text-[var(--text-faint)] mb-0.5">Trình độ</p>
                           <CustomSelect
                             value={r.level ?? ""}
                             onChange={(val) => handleLevelChange(r.id, val)}
@@ -2179,41 +2179,41 @@ export default function TournamentRegistrationsPage() {
                           />
                         </div>
                         <div>
-                          <p className="text-gray-400 mb-0.5">SĐT</p>
-                          <p className="text-gray-700">{r.users?.phone ?? r.guest_phone ?? "—"}</p>
+                          <p className="text-[var(--text-faint)] mb-0.5">SĐT</p>
+                          <p className="text-[var(--text)]">{r.users?.phone ?? r.guest_phone ?? "—"}</p>
                         </div>
                         <div>
-                          <p className="text-gray-400 mb-0.5">Ngày ĐK</p>
-                          <p className="text-gray-700">
+                          <p className="text-[var(--text-faint)] mb-0.5">Ngày ĐK</p>
+                          <p className="text-[var(--text)]">
                             {r.created_at
                               ? format(new Date(r.created_at), "dd/MM/yyyy HH:mm", { locale: vi })
                               : "—"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-400 mb-0.5">Thanh toán</p>
+                          <p className="text-[var(--text-faint)] mb-0.5">Thanh toán</p>
                           {r.payment_status === "confirmed" ? (
                             <div className="flex items-center gap-1 flex-wrap">
-                              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-50 text-green-700">
+                              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[var(--success-soft)] text-[var(--success)]">
                                 Đã thanh toán
                               </span>
-                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
                                 {PAYMENT_METHOD_LABEL[r.payment_method] ?? r.payment_method}
                               </span>
                             </div>
                           ) : r.payment_method ? (
-                            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-600">
+                            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[var(--warning-soft)] text-[var(--warning)]">
                               Chờ admin xác nhận
                             </span>
                           ) : (
-                            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-600">
+                            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[var(--warning-soft)] text-[var(--warning)]">
                               Chờ thanh toán
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-50">
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-[var(--border)]">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {r.payment_status !== "confirmed" &&
                             r.payment_status !== "rejected" &&
@@ -2247,19 +2247,19 @@ export default function TournamentRegistrationsPage() {
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <button
                             onClick={() => openModal(r, "view")}
-                            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                            className="p-1.5 hover:bg-[var(--surface-hover)] rounded-lg text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => openModal(r, "edit")}
-                            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                            className="p-1.5 hover:bg-[var(--surface-hover)] rounded-lg text-[var(--text-faint)] hover:text-[var(--primary)] transition-colors"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteReg(r.id)}
-                            className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+                            className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -2269,14 +2269,14 @@ export default function TournamentRegistrationsPage() {
                   </CollapsibleItem>
                 ))}
                 {pageItems.length === 0 && (
-                  <div className="text-center py-14 text-gray-400">
+                  <div className="text-center py-14 text-[var(--text-faint)]">
                     <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     Không có vận động viên nào phù hợp bộ lọc
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-3 sm:py-3.5 border-t border-gray-100 text-xs sm:text-sm text-gray-500">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-3 sm:py-3.5 border-t border-[var(--border)] text-xs sm:text-sm text-[var(--text-muted)]">
                 <span>
                   Hiển thị {(page - 1) * PAGE_SIZE + 1} -{" "}
                   {Math.min(page * PAGE_SIZE, filtered.length)} trong tổng số{" "}
@@ -2286,7 +2286,7 @@ export default function TournamentRegistrationsPage() {
                   <button
                     disabled={page === 1}
                     onClick={() => setPage((p) => p - 1)}
-                    className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                    className="p-1.5 rounded-lg border border-[var(--border)] disabled:opacity-40 hover:bg-[var(--surface-hover)] transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -2298,7 +2298,7 @@ export default function TournamentRegistrationsPage() {
                         onClick={() => setPage(p)}
                         className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${page === p
                           ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
-                          : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                          : "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                           }`}
                       >
                         {p}
@@ -2306,12 +2306,12 @@ export default function TournamentRegistrationsPage() {
                     );
                   })}
                   {totalPages > 4 && (
-                    <span className="px-1 text-gray-400">…</span>
+                    <span className="px-1 text-[var(--text-faint)]">…</span>
                   )}
                   {totalPages > 4 && (
                     <button
                       onClick={() => setPage(totalPages)}
-                      className="w-8 h-8 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                      className="w-8 h-8 rounded-lg text-sm font-medium border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
                     >
                       {totalPages}
                     </button>
@@ -2319,7 +2319,7 @@ export default function TournamentRegistrationsPage() {
                   <button
                     disabled={page === totalPages}
                     onClick={() => setPage((p) => p + 1)}
-                    className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                    className="p-1.5 rounded-lg border border-[var(--border)] disabled:opacity-40 hover:bg-[var(--surface-hover)] transition-colors"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -2329,24 +2329,24 @@ export default function TournamentRegistrationsPage() {
           </div>
 
           <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+            <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-4 sm:p-5">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                  <Users className="w-4 h-4 text-emerald-600" />
+                <div className="w-8 h-8 rounded-lg bg-[var(--success-soft)] flex items-center justify-center flex-shrink-0">
+                  <Users className="w-4 h-4 text-[var(--success)]" />
                 </div>
-                <h3 className="font-bold text-gray-900">Chia đội theo trình độ</h3>
+                <h3 className="font-bold text-[var(--text)]">Chia đội theo trình độ</h3>
               </div>
 
               {teams.length > 0 && !showDrawForm ? (
                 <FadeSwitch transitionKey="summary">
-                  <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                  <p className="text-xs text-[var(--text-muted)] mb-4 leading-relaxed">
                     Đã chia xong{" "}
-                    <span className="font-semibold text-gray-800">{teams.length} đội</span>
+                    <span className="font-semibold text-[var(--text)]">{teams.length} đội</span>
                     {unassigned.length > 0 && (
                       <>
                         {" "}
                         — còn{" "}
-                        <span className="font-semibold text-amber-600">
+                        <span className="font-semibold text-[var(--warning)]">
                           {unassigned.length}
                         </span>{" "}
                         người chưa xếp đội
@@ -2365,12 +2365,12 @@ export default function TournamentRegistrationsPage() {
                 </FadeSwitch>
               ) : (
                 <FadeSwitch transitionKey="form">
-                  <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                  <p className="text-xs text-[var(--text-faint)] mb-4 leading-relaxed">
                     Hệ thống sẽ tự động chia các vận động viên thành các đội cân bằng
                     theo trình độ đã chọn.
                   </p>
 
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  <label className="text-sm font-semibold text-[var(--text)] mb-2 block">
                     Thành phần chia đội
                   </label>
                   {compositionSlots.length > 0 ? (
@@ -2386,15 +2386,15 @@ export default function TournamentRegistrationsPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-amber-600 mb-1.5">
+                    <p className="text-xs text-[var(--warning)] mb-1.5">
                       ⚠️ Giải đấu chưa cấu hình thành phần đội. Vui lòng chỉnh sửa giải đấu để thêm thành phần trước khi chia đội.
                     </p>
                   )}
-                  <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                  <p className="text-xs text-[var(--text-faint)] mb-4 leading-relaxed">
                     Nội dung chia đội (Nam / Nữ / Mix) được hệ thống tự động xác định dựa trên thành phần đội đã cấu hình ở trên.
                   </p>
 
-                  <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  <label className="text-sm font-semibold text-[var(--text)] mb-1.5 block">
                     Số lượng đội
                   </label>
                   <div className="flex items-center gap-2 mb-4">
@@ -2408,10 +2408,10 @@ export default function TournamentRegistrationsPage() {
                         setTeamCountTouched(true);
                       }}
                     />
-                    <span className="text-sm text-gray-500 flex-shrink-0">đội</span>
+                    <span className="text-sm text-[var(--text-muted)] flex-shrink-0">đội</span>
                   </div>
                   {activity?.detail?.max_teams != null && (
-                    <p className="text-xs text-gray-400 -mt-3 mb-4">
+                    <p className="text-xs text-[var(--text-faint)] -mt-3 mb-4">
                       Mặc định lấy theo "Số lượng đội tham gia" đã cấu hình ở giải đấu ({activity.detail.max_teams} đội). Bạn có thể sửa lại nếu cần.
                     </p>
                   )}
@@ -2431,7 +2431,7 @@ export default function TournamentRegistrationsPage() {
                   {teams.length > 0 && (
                     <button
                       onClick={() => setShowDrawForm(false)}
-                      className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+                      className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm font-medium hover:bg-[var(--surface-hover)] transition-colors"
                     >
                       Huỷ, quay lại
                     </button>
@@ -2441,11 +2441,11 @@ export default function TournamentRegistrationsPage() {
 
               <button
                 onClick={() => setShowTeamsModal(true)}
-                className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text)] text-sm font-semibold hover:bg-[var(--surface-hover)] transition-colors"
               >
                 <Users className="w-4 h-4" /> Xem team
                 {teams.length > 0 && (
-                  <span className="text-xs text-gray-400 font-normal">({teams.length} đội)</span>
+                  <span className="text-xs text-[var(--text-faint)] font-normal">({teams.length} đội)</span>
                 )}
               </button>
 
@@ -2477,7 +2477,7 @@ export default function TournamentRegistrationsPage() {
               {tournamentEnded && (
                 <button
                   onClick={() => setShowResetResultsModal(true)}
-                  className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors"
+                  className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-[var(--danger)] text-sm font-semibold hover:bg-[var(--danger-soft)] transition-colors"
                 >
                   <Trash2 className="w-4 h-4" /> Xoá tất cả kết quả
                 </button>
@@ -2486,7 +2486,7 @@ export default function TournamentRegistrationsPage() {
 
             <LevelDonutCard stats={stats} />
 
-            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-xs text-blue-700 leading-relaxed">
+            <div className="bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-2xl p-4 text-xs text-[var(--primary)] leading-relaxed">
               💡 Lưu ý: Hệ thống sẽ ưu tiên cân bằng số lượng và trình độ giữa các
               đội.
             </div>
@@ -2769,7 +2769,7 @@ function CustomDatePicker({
         <button
           type="button"
           onClick={goPrev}
-          className={`w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors ${mode === "months" ? "invisible" : ""
+          className={`w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] transition-colors ${mode === "months" ? "invisible" : ""
             }`}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -2779,7 +2779,7 @@ function CustomDatePicker({
           <button
             type="button"
             onClick={openMonths}
-            className="text-sm font-semibold text-gray-900 capitalize px-2 py-1 rounded-lg hover:bg-gray-100 active:scale-95 transition-all"
+            className="text-sm font-semibold text-[var(--text)] capitalize px-2 py-1 rounded-lg hover:bg-[var(--surface-hover)] active:scale-95 transition-all"
           >
             {format(viewMonth, "MMMM yyyy", { locale: vi })}
           </button>
@@ -2788,13 +2788,13 @@ function CustomDatePicker({
           <button
             type="button"
             onClick={openYears}
-            className="text-sm font-semibold text-gray-900 px-2 py-1 rounded-lg hover:bg-gray-100 active:scale-95 transition-all"
+            className="text-sm font-semibold text-[var(--text)] px-2 py-1 rounded-lg hover:bg-[var(--surface-hover)] active:scale-95 transition-all"
           >
             {viewYear}
           </button>
         )}
         {mode === "years" && (
-          <p className="text-sm font-semibold text-gray-900">
+          <p className="text-sm font-semibold text-[var(--text)]">
             {years[0]} - {years[years.length - 1]}
           </p>
         )}
@@ -2802,7 +2802,7 @@ function CustomDatePicker({
         <button
           type="button"
           onClick={goNext}
-          className={`w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors ${mode === "months" ? "invisible" : ""
+          className={`w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] transition-colors ${mode === "months" ? "invisible" : ""
             }`}
         >
           <ChevronRight className="w-4 h-4" />
@@ -2813,7 +2813,7 @@ function CustomDatePicker({
         <PickerFade pickerKey={`days-${format(viewMonth, "yyyy-MM")}`}>
           <div className="grid grid-cols-7 gap-1 mb-1">
             {WEEKDAYS_VI.map((w) => (
-              <div key={w} className="text-center text-[11px] font-semibold text-gray-400 py-1">
+              <div key={w} className="text-center text-[11px] font-semibold text-[var(--text-faint)] py-1">
                 {w}
               </div>
             ))}
@@ -2830,9 +2830,9 @@ function CustomDatePicker({
                   key={d.toISOString()}
                   onClick={() => onSelect(d)}
                   className={`h-9 rounded-lg text-sm font-medium transition-colors flex items-center justify-center
-                      ${!inMonth || isPast ? "text-gray-300" : "text-gray-700"}
-                      ${isSelected ? "bg-blue-600 text-white hover:bg-blue-600" : "hover:bg-gray-100"}
-                      ${isTodayDay && !isSelected ? "border border-blue-300 text-blue-600 font-semibold" : ""}
+                      ${!inMonth || isPast ? "text-[var(--text-faint)]" : "text-[var(--text)]"}
+                      ${isSelected ? "bg-blue-600 text-white hover:bg-blue-600" : "hover:bg-[var(--surface-hover)]"}
+                      ${isTodayDay && !isSelected ? "border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] font-semibold" : ""}
                     `}
                 >
                   {d.getDate()}
@@ -2858,8 +2858,8 @@ function CustomDatePicker({
                     setMode("days");
                   }}
                   className={`py-2.5 rounded-lg text-sm font-medium transition-colors
-                      ${isSelectedMonth ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}
-                      ${isTodayMonth && !isSelectedMonth ? "border border-blue-300 text-blue-600 font-semibold" : ""}
+                      ${isSelectedMonth ? "bg-blue-600 text-white" : "text-[var(--text)] hover:bg-[var(--surface-hover)]"}
+                      ${isTodayMonth && !isSelectedMonth ? "border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] font-semibold" : ""}
                     `}
                 >
                   {label}
@@ -2885,8 +2885,8 @@ function CustomDatePicker({
                     setMode("months");
                   }}
                   className={`py-2.5 rounded-lg text-sm font-medium transition-colors
-                      ${isSelectedYear ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}
-                      ${isTodayYear && !isSelectedYear ? "border border-blue-300 text-blue-600 font-semibold" : ""}
+                      ${isSelectedYear ? "bg-blue-600 text-white" : "text-[var(--text)] hover:bg-[var(--surface-hover)]"}
+                      ${isTodayYear && !isSelectedYear ? "border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] font-semibold" : ""}
                     `}
                 >
                   {y}
@@ -2965,13 +2965,13 @@ function EditMatchModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Sửa trận đấu</h3>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+          <h3 className="font-bold text-[var(--text)]">Sửa trận đấu</h3>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)]"
           >
             ✕
           </button>
@@ -2979,7 +2979,7 @@ function EditMatchModal({
 
         <div className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
               Số sân thi đấu
             </label>
             <input
@@ -2993,7 +2993,7 @@ function EditMatchModal({
           </div>
 
           {dateLocked && (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed">
+            <p className="text-xs text-[var(--warning)] bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-xl px-3 py-2.5 leading-relaxed">
               ⚠️ Trận đấu đã bắt đầu thi đấu nên không thể đổi ngày/giờ. Chỉ có thể cập nhật số sân.
             </p>
           )}
@@ -3006,14 +3006,14 @@ function EditMatchModal({
               <button
                 type="button"
                 onClick={() => handleQuickPick(0)}
-                className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                className="flex-1 py-2 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
               >
                 Hôm nay
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickPick(1)}
-                className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                className="flex-1 py-2 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
               >
                 Ngày mai
               </button>
@@ -3022,14 +3022,14 @@ function EditMatchModal({
             <CustomDatePicker selected={selectedDay} onSelect={setSelectedDay} />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
                 Giờ thi đấu
               </label>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <CustomSelect value={hour} onChange={setHour} options={HOUR_OPTIONS} />
                 </div>
-                <span className="text-gray-400 font-semibold">:</span>
+                <span className="text-[var(--text-faint)] font-semibold">:</span>
                 <div className="flex-1">
                   <CustomSelect value={minute} onChange={setMinute} options={MINUTE_OPTIONS} />
                 </div>
@@ -3037,9 +3037,9 @@ function EditMatchModal({
             </div>
 
             {selectedDay && (
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-xs text-[var(--text-faint)] text-center">
                 Đã chọn:{" "}
-                <span className="font-semibold text-gray-700">
+                <span className="font-semibold text-[var(--text)]">
                   {format(selectedDay, "EEEE, dd/MM/yyyy", { locale: vi })} lúc{" "}
                   {hour.padStart(2, "0")}:{minute.padStart(2, "0")}
                 </span>
@@ -3048,10 +3048,10 @@ function EditMatchModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-[var(--border)]">
           <button
             onClick={handleClose}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
           >
             Huỷ
           </button>
@@ -3119,13 +3119,13 @@ function SetScheduleModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+          <h3 className="font-bold text-[var(--text)]">{title}</h3>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)]"
           >
             ✕
           </button>
@@ -3133,7 +3133,7 @@ function SetScheduleModal({
 
         <div className="p-5 space-y-4">
           {description && (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed">
+            <p className="text-xs text-[var(--warning)] bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-xl px-3 py-2.5 leading-relaxed">
               ⚠️ {description}
             </p>
           )}
@@ -3142,14 +3142,14 @@ function SetScheduleModal({
             <button
               type="button"
               onClick={() => handleQuickPick(0)}
-              className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              className="flex-1 py-2 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
             >
               Hôm nay
             </button>
             <button
               type="button"
               onClick={() => handleQuickPick(1)}
-              className="flex-1 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              className="flex-1 py-2 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
             >
               Ngày mai
             </button>
@@ -3158,14 +3158,14 @@ function SetScheduleModal({
           <CustomDatePicker selected={selectedDay} onSelect={setSelectedDay} />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
               Giờ thi đấu
             </label>
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <CustomSelect value={hour} onChange={setHour} options={HOUR_OPTIONS} />
               </div>
-              <span className="text-gray-400 font-semibold">:</span>
+              <span className="text-[var(--text-faint)] font-semibold">:</span>
               <div className="flex-1">
                 <CustomSelect value={minute} onChange={setMinute} options={MINUTE_OPTIONS} />
               </div>
@@ -3173,9 +3173,9 @@ function SetScheduleModal({
           </div>
 
           {selectedDay && (
-            <p className="text-xs text-gray-400 text-center">
+            <p className="text-xs text-[var(--text-faint)] text-center">
               Đã chọn:{" "}
-              <span className="font-semibold text-gray-700">
+              <span className="font-semibold text-[var(--text)]">
                 {format(selectedDay, "EEEE, dd/MM/yyyy", { locale: vi })} lúc{" "}
                 {hour.padStart(2, "0")}:{minute.padStart(2, "0")}
               </span>
@@ -3183,10 +3183,10 @@ function SetScheduleModal({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-[var(--border)]">
           <button
             onClick={handleClose}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
           >
             Huỷ
           </button>
@@ -3221,33 +3221,33 @@ function ConfirmGuestPaymentMethodModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Chọn phương thức thanh toán</h3>
-          <p className="text-xs text-gray-400 mt-1">Khách đã thanh toán bằng hình thức nào?</p>
+        <div className="px-5 py-4 border-b border-[var(--border)]">
+          <h3 className="font-bold text-[var(--text)]">Chọn phương thức thanh toán</h3>
+          <p className="text-xs text-[var(--text-faint)] mt-1">Khách đã thanh toán bằng hình thức nào?</p>
         </div>
         <div className="p-5 grid grid-cols-2 gap-3">
           <button
             disabled={submitting}
             onClick={() => onSelect("transfer")}
-            className="px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-sm font-semibold text-gray-700 disabled:opacity-50 transition-colors"
+            className="px-4 py-3 rounded-xl border border-[var(--border)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:bg-[var(--primary-soft)] text-sm font-semibold text-[var(--text)] disabled:opacity-50 transition-colors"
           >
             Chuyển khoản
           </button>
           <button
             disabled={submitting}
             onClick={() => onSelect("cash")}
-            className="px-4 py-3 rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50 text-sm font-semibold text-gray-700 disabled:opacity-50 transition-colors"
+            className="px-4 py-3 rounded-xl border border-[var(--border)] hover:border-[color-mix(in_srgb,var(--success)_30%,transparent)] hover:bg-[var(--success-soft)] text-sm font-semibold text-[var(--text)] disabled:opacity-50 transition-colors"
           >
             Tiền mặt
           </button>
         </div>
-        <div className="flex justify-end px-5 py-3 border-t border-gray-100">
+        <div className="flex justify-end px-5 py-3 border-t border-[var(--border)]">
           <button
             onClick={handleClose}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+            className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
           >
             Huỷ
           </button>
@@ -3297,14 +3297,14 @@ function ConfirmDeleteRegistrationModal({
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center px-4 transition-opacity"
       style={{
-        background: "rgba(0,0,0,0.5)",
+        background: "var(--overlay)",
         opacity: visible ? 1 : 0,
         transitionDuration: "200ms",
       }}
       onClick={(e) => e.target === e.currentTarget && handleCancel()}
     >
       <div
-        className="w-full max-w-xs bg-white rounded-2xl overflow-hidden transition-transform"
+        className="w-full max-w-xs bg-[var(--surface)] rounded-2xl overflow-hidden transition-transform"
         style={{
           transform: visible ? "scale(1)" : "scale(0.92)",
           transitionDuration: "200ms",
@@ -3313,34 +3313,34 @@ function ConfirmDeleteRegistrationModal({
       >
         <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
           <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${isInTeam ? "bg-amber-50" : "bg-red-50"
+            className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${isInTeam ? "bg-[var(--warning-soft)]" : "bg-[var(--danger-soft)]"
               }`}
           >
             <AlertTriangle
-              className={`w-5 h-5 ${isInTeam ? "text-amber-500" : "text-red-500"}`}
+              className={`w-5 h-5 ${isInTeam ? "text-[var(--warning)]" : "text-[var(--danger)]"}`}
             />
           </div>
-          <p className="text-sm font-bold text-gray-900">
+          <p className="text-sm font-bold text-[var(--text)]">
             {isInTeam ? "VĐV đã được xếp vào đội" : "Xoá đăng ký này?"}
           </p>
-          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+          <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-relaxed">
             {isInTeam
               ? "Xoá đăng ký sẽ xoá TOÀN BỘ kết quả chia đội hiện tại của giải đấu. Bạn sẽ cần chia lại đội từ đầu."
               : "Hành động này không thể hoàn tác."}
           </p>
         </div>
-        <div className="flex border-t border-gray-100">
+        <div className="flex border-t border-[var(--border)]">
           <button
             onClick={handleCancel}
-            className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100"
+            className="flex-1 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors border-r border-[var(--border)]"
           >
             Huỷ
           </button>
           <button
             onClick={handleConfirm}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${isInTeam
-              ? "text-amber-600 hover:bg-amber-50"
-              : "text-red-500 hover:bg-red-50"
+              ? "text-[var(--warning)] hover:bg-[var(--warning-soft)]"
+              : "text-[var(--danger)] hover:bg-[var(--danger-soft)]"
               }`}
           >
             {isInTeam ? "Xoá & chia lại" : "Xoá đăng ký"}
@@ -3381,30 +3381,30 @@ function ConfirmScheduleWarningModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
       >
         <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
-          <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mb-3">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
+          <div className="w-12 h-12 rounded-full bg-[var(--warning-soft)] flex items-center justify-center mb-3">
+            <AlertTriangle className="w-5 h-5 text-[var(--warning)]" />
           </div>
-          <p className="text-sm font-bold text-gray-900">Còn lượt chưa đặt giờ</p>
-          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
-            Có <span className="font-semibold text-amber-600">{unscheduledCount}/{totalCount}</span> trận
+          <p className="text-sm font-bold text-[var(--text)]">Còn lượt chưa đặt giờ</p>
+          <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-relaxed">
+            Có <span className="font-semibold text-[var(--warning)]">{unscheduledCount}/{totalCount}</span> trận
             đấu chưa được đặt giờ thi đấu. Bạn vẫn có thể đặt giờ cho các trận này sau khi giải đấu đã bắt đầu.
           </p>
         </div>
-        <div className="flex border-t border-gray-100">
+        <div className="flex border-t border-[var(--border)]">
           <button
             onClick={handleClose}
             disabled={confirming}
-            className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 disabled:opacity-50"
+            className="flex-1 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors border-r border-[var(--border)] disabled:opacity-50"
           >
             Đặt tiếp
           </button>
           <button
             onClick={onStillSave}
             disabled={confirming}
-            className="flex-1 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+            className="flex-1 py-3 text-sm font-semibold text-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors disabled:opacity-50"
           >
             {confirming ? "Đang lưu..." : "Vẫn bắt đầu"}
           </button>
@@ -3443,22 +3443,22 @@ function ConfirmDrawTeamsModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[85vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm max-h-[85vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
           }`}
       >
         <div className="flex flex-col items-center text-center px-5 pt-6 pb-4 flex-shrink-0">
-          <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mb-3">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
+          <div className="w-12 h-12 rounded-full bg-[var(--warning-soft)] flex items-center justify-center mb-3">
+            <AlertTriangle className="w-5 h-5 text-[var(--warning)]" />
           </div>
-          <p className="text-sm font-bold text-gray-900">Xác nhận chia đội</p>
-          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
-            Có <span className="font-semibold text-amber-600">{unpaidMembers.length}</span> vận
+          <p className="text-sm font-bold text-[var(--text)]">Xác nhận chia đội</p>
+          <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-relaxed">
+            Có <span className="font-semibold text-[var(--warning)]">{unpaidMembers.length}</span> vận
             động viên <span className="font-semibold">chưa thanh toán</span> — những người
             này sẽ <span className="font-semibold">không được đưa vào chia đội</span> lần này.
           </p>
         </div>
 
-        <div className="flex-1 overflow-y-auto min-h-0 border-t border-gray-100 divide-y divide-gray-50">
+        <div className="flex-1 overflow-y-auto min-h-0 border-t border-[var(--border)] divide-y divide-[var(--border)]">
           {unpaidMembers.map((r: any) => (
             <div key={r.id} className="flex items-center gap-2.5 px-5 py-2.5">
               <img
@@ -3469,11 +3469,11 @@ function ConfirmDrawTeamsModal({
                 className="w-7 h-7 rounded-full object-cover flex-shrink-0"
                 alt=""
               />
-              <span className="text-sm text-gray-700 truncate flex-1">
+              <span className="text-sm text-[var(--text)] truncate flex-1">
                 {r.users?.full_name ?? r.guest_full_name ?? "—"}
               </span>
               <span
-                className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${r.role === "nam" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"
+                className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${r.role === "nam" ? "bg-[var(--primary-soft)] text-[var(--primary)]" : "bg-[var(--pink-soft)] text-[var(--pink)]"
                   }`}
               >
                 {r.role === "nam" ? "Nam" : "Nữ"} {r.level ?? ""}
@@ -3482,18 +3482,18 @@ function ConfirmDrawTeamsModal({
           ))}
         </div>
 
-        <div className="flex border-t border-gray-100 flex-shrink-0">
+        <div className="flex border-t border-[var(--border)] flex-shrink-0">
           <button
             onClick={handleClose}
             disabled={drawing}
-            className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 disabled:opacity-50"
+            className="flex-1 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors border-r border-[var(--border)] disabled:opacity-50"
           >
             Huỷ
           </button>
           <button
             onClick={onConfirm}
             disabled={drawing}
-            className="flex-1 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+            className="flex-1 py-3 text-sm font-semibold text-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors disabled:opacity-50"
           >
             Tiếp tục chia đội
           </button>
@@ -3531,33 +3531,33 @@ function ConfirmResetLineupModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
       >
         <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${isOngoing ? "bg-amber-50" : "bg-red-50"}`}>
-            <AlertTriangle className={`w-5 h-5 ${isOngoing ? "text-amber-500" : "text-red-500"}`} />
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${isOngoing ? "bg-[var(--warning-soft)]" : "bg-[var(--danger-soft)]"}`}>
+            <AlertTriangle className={`w-5 h-5 ${isOngoing ? "text-[var(--warning)]" : "text-[var(--danger)]"}`} />
           </div>
-          <p className="text-sm font-bold text-gray-900">
+          <p className="text-sm font-bold text-[var(--text)]">
             {isOngoing ? "Trận đấu đang diễn ra" : "Đặt lại đội hình?"}
           </p>
-          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+          <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-relaxed">
             {isOngoing
               ? "Xoá đội hình đã ghép có thể ảnh hưởng đến trận đang thi đấu, trận sẽ được đưa về trạng thái Chưa thi đấu. Bạn có chắc muốn tiếp tục?"
               : "Xoá toàn bộ đội hình đã ghép của trận này? Bạn sẽ cần ghép lại từ đầu."}
           </p>
         </div>
-        <div className="flex border-t border-gray-100">
+        <div className="flex border-t border-[var(--border)]">
           <button
             onClick={handleClose}
             disabled={resetting}
-            className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 disabled:opacity-50"
+            className="flex-1 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors border-r border-[var(--border)] disabled:opacity-50"
           >
             Huỷ
           </button>
           <button
             onClick={onConfirm}
             disabled={resetting}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors disabled:opacity-50 ${isOngoing ? "text-amber-600 hover:bg-amber-50" : "text-red-500 hover:bg-red-50"}`}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors disabled:opacity-50 ${isOngoing ? "text-[var(--warning)] hover:bg-[var(--warning-soft)]" : "text-[var(--danger)] hover:bg-[var(--danger-soft)]"}`}
           >
             {resetting ? "Đang đặt lại..." : "Đặt lại đội hình"}
           </button>
@@ -3592,29 +3592,29 @@ function ConfirmResetResultsModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
       >
         <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
-          <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
-            <AlertTriangle className="w-5 h-5 text-red-500" />
+          <div className="w-12 h-12 rounded-full bg-[var(--danger-soft)] flex items-center justify-center mb-3">
+            <AlertTriangle className="w-5 h-5 text-[var(--danger)]" />
           </div>
-          <p className="text-sm font-bold text-gray-900">Xoá toàn bộ kết quả thi đấu?</p>
-          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+          <p className="text-sm font-bold text-[var(--text)]">Xoá toàn bộ kết quả thi đấu?</p>
+          <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-relaxed">
             Toàn bộ tỉ số, lượt đấu, giờ và sân thi đấu sẽ bị xoá vĩnh viễn. Giải đấu sẽ quay lại trạng thái chưa bắt đầu — danh sách đội hiện tại vẫn được giữ nguyên. Hành động này không thể hoàn tác.
           </p>
         </div>
-        <div className="flex border-t border-gray-100">
+        <div className="flex border-t border-[var(--border)]">
           <button
             onClick={handleClose}
             disabled={resetting}
-            className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 disabled:opacity-50"
+            className="flex-1 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors border-r border-[var(--border)] disabled:opacity-50"
           >
             Huỷ
           </button>
           <button
             onClick={onConfirm}
             disabled={resetting}
-            className="flex-1 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+            className="flex-1 py-3 text-sm font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)] transition-colors disabled:opacity-50"
           >
             {resetting ? "Đang xoá..." : "Xoá kết quả"}
           </button>
@@ -3641,23 +3641,23 @@ function ConfirmResetPlayoffModal({
       className={`fixed inset-0 z-[270] flex items-center justify-center p-4 bg-black/40 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
-      <div className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}>
+      <div className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}>
         <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
-          <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mb-3">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
+          <div className="w-12 h-12 rounded-full bg-[var(--warning-soft)] flex items-center justify-center mb-3">
+            <AlertTriangle className="w-5 h-5 text-[var(--warning)]" />
           </div>
-          <p className="text-sm font-bold text-gray-900">Kết quả này làm thay đổi BXH</p>
-          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+          <p className="text-sm font-bold text-[var(--text)]">Kết quả này làm thay đổi BXH</p>
+          <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-relaxed">
             Thay đổi này ảnh hưởng đến các đội tranh hạng Nhất - Nhì / Ba - Tư. Nếu tiếp tục,
             toàn bộ kết quả các trận tranh hạng sẽ bị xoá và giải đấu được mở lại. Bạn cần bấm
             kết thúc ở vòng tròn để chọn lại: tiếp tục tranh hạng với các đội mới hoặc kết thúc luôn.
           </p>
         </div>
-        <div className="flex border-t border-gray-100">
-          <button onClick={handleClose} disabled={resetting} className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 border-r border-gray-100 disabled:opacity-50">
+        <div className="flex border-t border-[var(--border)]">
+          <button onClick={handleClose} disabled={resetting} className="flex-1 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] border-r border-[var(--border)] disabled:opacity-50">
             Huỷ
           </button>
-          <button onClick={onConfirm} disabled={resetting} className="flex-1 py-3 text-sm font-semibold text-amber-600 hover:bg-amber-50 disabled:opacity-50">
+          <button onClick={onConfirm} disabled={resetting} className="flex-1 py-3 text-sm font-semibold text-[var(--warning)] hover:bg-[var(--warning-soft)] disabled:opacity-50">
             {resetting ? "Đang xử lý..." : "Lưu & xoá tranh hạng"}
           </button>
         </div>
@@ -3682,14 +3682,14 @@ function StartTournamentModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-md transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-md transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Chọn thể thức thi đấu</h3>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+          <h3 className="font-bold text-[var(--text)]">Chọn thể thức thi đấu</h3>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)]"
           >
             ✕
           </button>
@@ -3697,19 +3697,19 @@ function StartTournamentModal({
         <div className="p-5 space-y-3">
           <button
             onClick={() => onSelectRoundRobin()}
-            className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors"
+            className="w-full text-left p-4 rounded-xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors"
           >
-            <p className="font-semibold text-gray-900">Vòng tròn</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="font-semibold text-[var(--text)]">Vòng tròn</p>
+            <p className="text-xs text-[var(--text-faint)] mt-1">
               Các đội lần lượt gặp nhau, mỗi đội thi đấu với tất cả các đội còn lại.
             </p>
           </button>
-          <div className="w-full text-left p-4 rounded-xl border-2 border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed relative">
-            <span className="absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+          <div className="w-full text-left p-4 rounded-xl border-2 border-[var(--border)] bg-[var(--surface-muted)] opacity-60 cursor-not-allowed relative">
+            <span className="absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--warning-soft)] text-[var(--warning)]">
               Sắp ra mắt
             </span>
-            <p className="font-semibold text-gray-500">Chia bảng</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="font-semibold text-[var(--text-muted)]">Chia bảng</p>
+            <p className="text-xs text-[var(--text-faint)] mt-1">
               Chia các đội thành nhiều bảng đấu vòng tròn nhỏ.
             </p>
           </div>
@@ -3736,7 +3736,7 @@ function AnimatedCheckbox({
           transition-all duration-200 ease-out active:scale-75
           ${checked
           ? "bg-blue-600 border-blue-600 scale-100"
-          : "bg-white border-gray-300 hover:border-blue-400 scale-100"
+          : "bg-[var(--surface)] border-[var(--border-strong)] hover:border-[var(--primary)] scale-100"
         }`}
     >
       <svg
@@ -3776,7 +3776,7 @@ function AnimatedCourtsCount({ value }: { value: number }) {
 
   return (
     <div
-      className={`w-12 h-12 rounded-xl bg-white flex items-center justify-center text-xl font-bold text-emerald-700 shadow-sm flex-shrink-0 transition-transform duration-200 ease-out ${pulsing ? "scale-125" : "scale-100"
+      className={`w-12 h-12 rounded-xl bg-[var(--surface)] flex items-center justify-center text-xl font-bold text-[var(--success)] shadow-sm flex-shrink-0 transition-transform duration-200 ease-out ${pulsing ? "scale-125" : "scale-100"
         }`}
     >
       {displayValue}
@@ -3836,41 +3836,41 @@ function RoundRobinSetupScreen({
   };
 
   return (
-    <div className="fixed inset-0 z-[220] bg-white flex flex-col">
+    <div className="fixed inset-0 z-[220] bg-[var(--surface)] flex flex-col">
       <div
-        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-gray-100"
+        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-[var(--border)]"
         style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
       >
         <button
           onClick={onBack}
-          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h2 className="text-lg font-bold text-gray-900 leading-tight">Thiết lập vòng tròn</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Cấu hình lịch thi đấu trước khi tạo</p>
+          <h2 className="text-lg font-bold text-[var(--text)] leading-tight">Thiết lập vòng tròn</h2>
+          <p className="text-xs text-[var(--text-faint)] mt-0.5">Cấu hình lịch thi đấu trước khi tạo</p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4 max-w-xl mx-auto w-full">
-        <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
+        <div className="bg-[var(--surface-muted)] rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">Tên giải đấu</span>
-            <span className="font-semibold text-gray-900 text-right truncate max-w-[60%]">
+            <span className="text-[var(--text-muted)]">Tên giải đấu</span>
+            <span className="font-semibold text-[var(--text)] text-right truncate max-w-[60%]">
               {activity?.title}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">Số đội tham dự</span>
-            <span className="font-semibold text-gray-900">{teamsCount} đội</span>
+            <span className="text-[var(--text-muted)]">Số đội tham dự</span>
+            <span className="font-semibold text-[var(--text)]">{teamsCount} đội</span>
           </div>
         </div>
 
-        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-[var(--success-soft)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-emerald-800">Số sân thi đấu</p>
-            <p className="text-xs text-emerald-600 mt-0.5 leading-relaxed">
+            <p className="text-sm font-semibold text-[var(--success)]">Số sân thi đấu</p>
+            <p className="text-xs text-[var(--success)] mt-0.5 leading-relaxed">
               Tự động tính theo số nội dung thi đấu đang được chọn bên dưới
             </p>
           </div>
@@ -3878,15 +3878,15 @@ function RoundRobinSetupScreen({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
             Nội dung thi đấu
           </label>
-          <p className="text-xs text-gray-400 mb-2 leading-relaxed">
+          <p className="text-xs text-[var(--text-faint)] mb-2 leading-relaxed">
             Nội dung đang tick là đang áp dụng. Bỏ tick để đánh dấu xoá — thay đổi chỉ có hiệu lực khi bạn bấm {mode === "edit" ? "Lưu" : "Tạo lịch thi đấu"}.
           </p>
 
           {items.length === 0 && (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed mb-2">
+            <p className="text-xs text-[var(--warning)] bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-xl px-3 py-2.5 leading-relaxed mb-2">
               ⚠️ Chưa có nội dung thi đấu nào. Vui lòng thêm ít nhất 1 nội dung trước khi tiếp tục.
             </p>
           )}
@@ -3898,8 +3898,8 @@ function RoundRobinSetupScreen({
                 <div
                   key={item.id}
                   className={`flex items-center gap-3 rounded-xl border p-3 transition-all duration-300 ease-out ${item.checked
-                    ? "border-gray-200 bg-white"
-                    : "border-gray-100 bg-gray-50/70"
+                    ? "border-[var(--border)] bg-[var(--surface)]"
+                    : "border-[var(--border)] bg-[var(--surface-muted)]"
                     }`}
                 >
                   <AnimatedCheckbox
@@ -3930,7 +3930,7 @@ function RoundRobinSetupScreen({
                   <button
                     type="button"
                     onClick={() => removeItem(item.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0 transition-colors"
+                    className="p-1.5 text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-lg flex-shrink-0 transition-colors"
                     title="Xoá hẳn khỏi danh sách"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -3943,7 +3943,7 @@ function RoundRobinSetupScreen({
           <button
             type="button"
             onClick={addItem}
-            className="mt-3 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-400"
+            className="mt-3 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-[var(--border-strong)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:border-gray-400"
           >
             <Plus className="w-4 h-4" /> Thêm nội dung
           </button>
@@ -3951,7 +3951,7 @@ function RoundRobinSetupScreen({
       </div>
 
       <div
-        className="flex-shrink-0 px-4 sm:px-6 pt-4 border-t border-gray-100 max-w-xl mx-auto w-full"
+        className="flex-shrink-0 px-4 sm:px-6 pt-4 border-t border-[var(--border)] max-w-xl mx-auto w-full"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
       >
         <button
@@ -3984,7 +3984,7 @@ const TEAM_BADGE_COLORS = [
 function TeamBadge({ index }: { index: number | undefined }) {
   if (index === undefined) {
     return (
-      <span className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-gray-500 bg-gray-200 flex-shrink-0">
+      <span className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-[var(--text-muted)] bg-[var(--border-strong)] flex-shrink-0">
         ?
       </span>
     );
@@ -4231,28 +4231,28 @@ function TeamListRenameScreen({
   };
 
   return (
-    <div className="fixed inset-0 z-[220] bg-white flex flex-col">
+    <div className="fixed inset-0 z-[220] bg-[var(--surface)] flex flex-col">
       <div
-        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-gray-100"
+        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-[var(--border)]"
         style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
       >
         <button
           onClick={onBack}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)]"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h2 className="text-lg font-bold text-gray-900">Danh sách đội</h2>
+        <h2 className="text-lg font-bold text-[var(--text)]">Danh sách đội</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 max-w-xl mx-auto w-full space-y-2.5">
-        <p className="text-xs text-gray-400 mb-2">
+        <p className="text-xs text-[var(--text-faint)] mb-2">
           Bạn có thể đổi tên các đội trước khi tạo lịch thi đấu chính thức.
         </p>
         {teams.map((t, idx) => (
           <div
             key={t.id}
-            className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm"
+            className="flex items-center gap-2 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm"
           >
             <TeamBadge index={idx} />
             {editingId === t.id ? (
@@ -4277,18 +4277,18 @@ function TeamListRenameScreen({
                 </button>
                 <button
                   onClick={() => setEditingId(null)}
-                  className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+                  className="p-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                 >
                   ✕
                 </button>
               </>
             ) : (
               <>
-                <span className="flex-1 font-semibold text-gray-900">{t.name}</span>
-                <span className="text-xs text-gray-400">{t.members?.length ?? 0} người</span>
+                <span className="flex-1 font-semibold text-[var(--text)]">{t.name}</span>
+                <span className="text-xs text-[var(--text-faint)]">{t.members?.length ?? 0} người</span>
                 <button
                   onClick={() => startEdit(t)}
-                  className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-blue-600"
+                  className="p-2 rounded-lg text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--primary)]"
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
@@ -4299,7 +4299,7 @@ function TeamListRenameScreen({
       </div>
 
       <div
-        className="flex-shrink-0 px-4 sm:px-6 pt-4 border-t border-gray-100 max-w-xl mx-auto w-full"
+        className="flex-shrink-0 px-4 sm:px-6 pt-4 border-t border-[var(--border)] max-w-xl mx-auto w-full"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
       >
         <button
@@ -4736,11 +4736,11 @@ function ScheduleScreen({
 
 
   const statusBlock = ended ? (
-    <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+    <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)] whitespace-nowrap">
       <Check className="w-3.5 h-3.5" /> Đã kết thúc
     </span>
   ) : tournamentStarted ? (
-    <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">
+    <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-[var(--success-soft)] text-[var(--success)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] whitespace-nowrap">
       <Trophy className="w-3.5 h-3.5" /> Đã bắt đầu thi đấu
     </span>
   ) : hasAnySchedule ? (
@@ -4753,7 +4753,7 @@ function ScheduleScreen({
       Xác nhận lịch thi đấu
     </button>
   ) : (
-    <span className="text-xs text-gray-400 italic whitespace-nowrap px-1">
+    <span className="text-xs text-[var(--text-faint)] italic whitespace-nowrap px-1">
       Đặt giờ ít nhất 1 lượt để xác nhận lịch
     </span>
   );
@@ -4855,21 +4855,21 @@ function ScheduleScreen({
 
 
   return (
-    <div className="fixed inset-0 z-[220] bg-white flex flex-col">
+    <div className="fixed inset-0 z-[220] bg-[var(--surface)] flex flex-col">
       <div
-        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-3 border-b border-gray-100"
+        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-3 border-b border-[var(--border)]"
         style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
       >
         <button
           onClick={onBack}
-          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h2 className="text-lg font-bold text-gray-900 flex-1">Lịch thi đấu</h2>
+        <h2 className="text-lg font-bold text-[var(--text)] flex-1">Lịch thi đấu</h2>
         <button
           onClick={() => setShowStandings(true)}
-          className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex-shrink-0"
+          className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl border border-[var(--border)] text-xs sm:text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors flex-shrink-0"
         >
           <Trophy className="w-4 h-4" />
           <span className="hidden sm:inline">Bảng xếp hạng</span>
@@ -4879,7 +4879,7 @@ function ScheduleScreen({
         <HomeButton />
       </div>
 
-      <div className="flex-shrink-0 flex flex-col items-end sm:flex-row sm:items-center sm:justify-end gap-2 px-4 sm:px-6 py-3 border-t border-gray-100">
+      <div className="flex-shrink-0 flex flex-col items-end sm:flex-row sm:items-center sm:justify-end gap-2 px-4 sm:px-6 py-3 border-t border-[var(--border)]">
         {ended ? (
           <div className="flex items-center justify-end gap-2 flex-wrap">
             <button
@@ -4905,7 +4905,7 @@ function ScheduleScreen({
           <div className="flex items-center justify-end gap-2 flex-wrap">
             <button
               onClick={onEditTeamList}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
             >
               <Users className="w-4 h-4" /> Sửa danh sách đội
             </button>
@@ -4916,13 +4916,13 @@ function ScheduleScreen({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={onEditInfo}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
               >
                 <Pencil className="w-4 h-4" /> Sửa thông tin giải đấu
               </button>
               <button
                 onClick={onEditTeamList}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
               >
                 <Users className="w-4 h-4" /> Sửa danh sách đội
               </button>
@@ -4951,7 +4951,7 @@ function ScheduleScreen({
             );
 
             return (
-              <div className="relative flex rounded-lg border border-gray-200 overflow-hidden text-sm bg-gray-50 p-0.5 max-w-md sm:mx-auto">
+              <div className="relative flex rounded-lg border border-[var(--border)] overflow-hidden text-sm bg-[var(--surface-muted)] p-0.5 max-w-md sm:mx-auto">
                 <div
                   className="absolute top-0.5 bottom-0.5 left-0.5 rounded-md bg-blue-600 shadow-sm transition-transform duration-300 ease-out"
                   style={{
@@ -4963,7 +4963,7 @@ function ScheduleScreen({
                   <button
                     key={t.key}
                     onClick={() => setTab(t.key)}
-                    className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors whitespace-nowrap ${tab === t.key ? "text-white" : "text-gray-600"
+                    className={`relative z-10 flex-1 py-2 font-medium rounded-md transition-colors whitespace-nowrap ${tab === t.key ? "text-white" : "text-[var(--text-muted)]"
                       }`}
                   >
                     {t.label}
@@ -4978,12 +4978,12 @@ function ScheduleScreen({
       <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 ${HIDE_SCROLLBAR_CLASS}`}>
         <div className="max-w-6xl mx-auto w-full">
           {loading ? (
-            <div className="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
+            <div className="flex items-center justify-center py-10 text-[var(--text-faint)] text-sm gap-2">
               <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
             </div>
           ) : tab === "playoff" ? (
             playoffMatches.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-14">
+              <p className="text-sm text-[var(--text-faint)] text-center py-14">
                 Chưa có trận tranh hạng
               </p>
             ) : (
@@ -5020,14 +5020,14 @@ function ScheduleScreen({
                             currentStatus: getMatchStatus(m),
                           })
                         }
-                        className="w-full mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-blue-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors"
+                        className="w-full mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--surface)] text-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors"
                       >
                         🕒 {m.scheduled_at ? "Sửa giờ / sân" : "Đặt giờ / sân"}
                       </button>
                     )}
 
                     {m.scheduled_at && (
-                      <p className="text-xs text-gray-500 mt-1.5 text-center">
+                      <p className="text-xs text-[var(--text-muted)] mt-1.5 text-center">
                         {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
                         {m.court_number ? ` · Sân ${m.court_number}` : ""}
                       </p>
@@ -5037,7 +5037,7 @@ function ScheduleScreen({
               </div>
             )
           ) : displayRounds.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-14">
+            <p className="text-sm text-[var(--text-faint)] text-center py-14">
               {tab === "pending"
                 ? "Không còn lượt nào chưa đấu"
                 : tab === "round_robin"
@@ -5055,16 +5055,16 @@ function ScheduleScreen({
                 return (
                   <div
                     key={r.round_number}
-                    className="bg-gray-50/60 border border-gray-100 rounded-2xl p-3 sm:p-4 h-fit"
+                    className="bg-[var(--surface-muted)] border border-[var(--border)] rounded-2xl p-3 sm:p-4 h-fit"
                   >
                     <div className="flex items-center justify-between mb-3 gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <h3 className="font-bold text-gray-900 text-sm flex-shrink-0">
+                        <h3 className="font-bold text-[var(--text)] text-sm flex-shrink-0">
                           Lượt {r.round_number}
                         </h3>
                         {r.bye_team_name && (
-                          <span className="text-xs text-gray-400 truncate">
-                            Nghỉ: <span className="font-medium text-gray-600">{r.bye_team_name}</span>
+                          <span className="text-xs text-[var(--text-faint)] truncate">
+                            Nghỉ: <span className="font-medium text-[var(--text-muted)]">{r.bye_team_name}</span>
                           </span>
                         )}
                       </div>
@@ -5077,7 +5077,7 @@ function ScheduleScreen({
                               currentValue: r.matches.find((m: any) => m.scheduled_at)?.scheduled_at ?? null,
                             })
                           }
-                          className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors"
+                          className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--surface)] text-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors"
                         >
                           🕒 {roundHasSchedule ? "Đặt lại cả lượt" : "Đặt giờ cả lượt"}
                         </button>
@@ -5092,20 +5092,20 @@ function ScheduleScreen({
                         const winnerName = team1Won ? m.team1?.name : team2Won ? m.team2?.name : null;
 
                         return (
-                          <div key={m.id} className="px-4 py-3 rounded-xl border border-gray-100 bg-white shadow-sm space-y-2">
+                          <div key={m.id} className="px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm space-y-2">
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-center gap-2 min-w-0 flex-1 pt-1">
                                 <TeamBadge index={teamIndexMap.get(m.team1?.id)} />
                                 <span
-                                  className={`font-medium truncate ${team1Won ? "text-emerald-600" : team2Won ? "text-red-500" : "text-gray-900"
+                                  className={`font-medium truncate ${team1Won ? "text-[var(--success)]" : team2Won ? "text-[var(--danger)]" : "text-[var(--text)]"
                                     }`}
                                 >
                                   {m.team1?.name}
                                 </span>
-                                <span className="text-gray-300 flex-shrink-0">vs</span>
+                                <span className="text-[var(--text-faint)] flex-shrink-0">vs</span>
                                 <TeamBadge index={teamIndexMap.get(m.team2?.id)} />
                                 <span
-                                  className={`font-medium truncate ${team2Won ? "text-emerald-600" : team1Won ? "text-red-500" : "text-gray-900"
+                                  className={`font-medium truncate ${team2Won ? "text-[var(--success)]" : team1Won ? "text-[var(--danger)]" : "text-[var(--text)]"
                                     }`}
                                 >
                                   {m.team2?.name}
@@ -5113,23 +5113,23 @@ function ScheduleScreen({
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 {m.court_number && (
-                                  <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                                  <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
                                     Sân {m.court_number}
                                   </span>
                                 )}
                                 {isCompleted ? (
-                                  <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-gray-50">
-                                    <span className={team1Won ? "text-emerald-600" : "text-red-500"}>
+                                  <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-[var(--surface-muted)]">
+                                    <span className={team1Won ? "text-[var(--success)]" : "text-[var(--danger)]"}>
                                       {m.team1_score}
                                     </span>
-                                    <span className="text-gray-300 mx-0.5">-</span>
-                                    <span className={team2Won ? "text-emerald-600" : "text-red-500"}>
+                                    <span className="text-[var(--text-faint)] mx-0.5">-</span>
+                                    <span className={team2Won ? "text-[var(--success)]" : "text-[var(--danger)]"}>
                                       {m.team2_score}
                                     </span>
                                   </span>
                                 ) : (
                                   <span
-                                    className={`text-[10px] font-semibold px-2 py-1 rounded-full ${st === "ongoing" ? "bg-blue-50 text-blue-600 animate-pulse" : "bg-amber-50 text-amber-600"
+                                    className={`text-[10px] font-semibold px-2 py-1 rounded-full ${st === "ongoing" ? "bg-[var(--primary-soft)] text-[var(--primary)] animate-pulse" : "bg-[var(--warning-soft)] text-[var(--warning)]"
                                       }`}
                                   >
                                     {st === "ongoing" ? "Đang thi đấu" : "Chưa đấu"}
@@ -5139,20 +5139,20 @@ function ScheduleScreen({
                             </div>
 
                             {winnerName && (
-                              <p className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                              <p className="flex items-center gap-1 text-xs font-semibold text-[var(--success)]">
                                 <Trophy className="w-3.5 h-3.5" /> {winnerName} thắng
                               </p>
                             )}
 
                             <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                              <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
                                 🕒{" "}
                                 {m.scheduled_at ? (
-                                  <span className="font-medium text-gray-700">
+                                  <span className="font-medium text-[var(--text)]">
                                     {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
                                   </span>
                                 ) : (
-                                  <span className="italic text-gray-400">Chưa đặt giờ</span>
+                                  <span className="italic text-[var(--text-faint)]">Chưa đặt giờ</span>
                                 )}
                               </div>
                               <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -5182,11 +5182,11 @@ function ScheduleScreen({
                     {(tournamentStarted || ended) && roundHasSchedule && (
                       <button
                         onClick={() => setRoundDetail(r)}
-                        className="w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-blue-200 bg-white text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
+                        className="w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--surface)] text-[var(--primary)] text-sm font-semibold hover:bg-[var(--primary-soft)] transition-colors"
                       >
                         Chi tiết lượt {r.round_number}
                         {roundStats(r.matches).ongoing > 0 && (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 animate-pulse ml-1">
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] animate-pulse ml-1">
                             Đang thi đấu
                           </span>
                         )}
@@ -5432,22 +5432,22 @@ function PlayoffScreen({
   const allCompleted = localMatches.length > 0 && localMatches.every((m) => m.status === "completed");
 
   return (
-    <div className="fixed inset-0 z-[230] bg-gray-50 flex flex-col">
+    <div className="fixed inset-0 z-[230] bg-[var(--surface-muted)] flex flex-col">
       <div
-        className="flex-shrink-0 bg-white flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-gray-100"
+        className="flex-shrink-0 bg-[var(--surface)] flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-[var(--border)]"
         style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
       >
         <button
           onClick={onBack}
-          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h2 className="text-lg font-bold text-gray-900 leading-tight flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-500" /> Trận tranh hạng
+          <h2 className="text-lg font-bold text-[var(--text)] leading-tight flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-[var(--warning)]" /> Trận tranh hạng
           </h2>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-xs text-[var(--text-faint)] mt-0.5">
             {allCompleted
               ? "Cả 2 trận đã hoàn thành"
               : "Đặt giờ, bắt đầu và nhập kết quả cho từng trận"}
@@ -5486,13 +5486,13 @@ function PlayoffScreen({
                     currentStatus: m.status,
                   })
                 }
-                className="w-full mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-blue-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors"
+                className="w-full mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--surface)] text-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors"
               >
                 🕒 {m.scheduled_at ? "Sửa giờ / sân" : "Đặt giờ / sân"}
               </button>
             )}
             {m.scheduled_at && (
-              <p className="text-xs text-gray-500 mt-1.5 text-center">
+              <p className="text-xs text-[var(--text-muted)] mt-1.5 text-center">
                 {format(new Date(m.scheduled_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
                 {m.court_number ? ` · Sân ${m.court_number}` : ""}
               </p>
@@ -5502,12 +5502,12 @@ function PlayoffScreen({
       </div>
 
       <div
-        className="flex-shrink-0 px-4 sm:px-6 pt-4 border-t border-gray-100 bg-white max-w-2xl mx-auto w-full flex items-center gap-2"
+        className="flex-shrink-0 px-4 sm:px-6 pt-4 border-t border-[var(--border)] bg-[var(--surface)] max-w-2xl mx-auto w-full flex items-center gap-2"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
       >
         <button
           onClick={onBack}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-[var(--border)] text-[var(--text)] text-sm font-semibold hover:bg-[var(--surface-hover)] transition-colors"
         >
           Trở về
         </button>
@@ -5618,8 +5618,8 @@ function PlayoffWizardScreen({
 
   if (matches === null) {
     return (
-      <div className="fixed inset-0 z-[230] bg-white flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      <div className="fixed inset-0 z-[230] bg-[var(--surface)] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--text-faint)]" />
       </div>
     );
   }
@@ -5683,24 +5683,24 @@ function AdjustPointsModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
           <div className="min-w-0">
-            <h3 className="font-bold text-gray-900 truncate">Điều chỉnh điểm · {team.name}</h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <h3 className="font-bold text-[var(--text)] truncate">Điều chỉnh điểm · {team.name}</h3>
+            <p className="text-xs text-[var(--text-faint)] mt-0.5">
               Điểm ghi được {team.pointsFor}
               {team.adjustment !== 0 && (
-                <span className={team.adjustment > 0 ? "text-emerald-600" : "text-red-500"}>
+                <span className={team.adjustment > 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}>
                   {" "}{team.adjustment > 0 ? "+" : ""}{team.adjustment}
                 </span>
               )}
-              {" "}= <span className="font-semibold text-gray-700">{team.total}</span>
+              {" "}= <span className="font-semibold text-[var(--text)]">{team.total}</span>
             </p>
           </div>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)]"
           >
             ✕
           </button>
@@ -5708,7 +5708,7 @@ function AdjustPointsModal({
 
         <div className={`flex-1 min-h-0 overflow-y-auto p-5 space-y-4 ${HIDE_SCROLLBAR_CLASS}`}>
           {locked ? (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed">
+            <p className="text-xs text-[var(--warning)] bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-xl px-3 py-2.5 leading-relaxed">
               ⚠️ Đã có trận tranh hạng nên không thể điều chỉnh điểm. Muốn điều chỉnh, hãy xoá kết quả tranh hạng trước.
             </p>
           ) : (
@@ -5717,21 +5717,21 @@ function AdjustPointsModal({
                 <button
                   type="button"
                   onClick={() => setSign(1)}
-                  className={`py-2.5 rounded-xl border text-sm font-semibold transition-colors ${sign === 1 ? "border-emerald-400 bg-emerald-50 text-emerald-700" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                  className={`py-2.5 rounded-xl border text-sm font-semibold transition-colors ${sign === 1 ? "border-emerald-400 bg-[var(--success-soft)] text-[var(--success)]" : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"}`}
                 >
                   + Cộng điểm
                 </button>
                 <button
                   type="button"
                   onClick={() => setSign(-1)}
-                  className={`py-2.5 rounded-xl border text-sm font-semibold transition-colors ${sign === -1 ? "border-red-400 bg-red-50 text-red-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                  className={`py-2.5 rounded-xl border text-sm font-semibold transition-colors ${sign === -1 ? "border-red-400 bg-[var(--danger-soft)] text-[var(--danger)]" : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"}`}
                 >
                   − Trừ điểm
                 </button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Số điểm</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Số điểm</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -5743,8 +5743,8 @@ function AdjustPointsModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Lý do <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
+                  Lý do <span className="text-[var(--danger)]">*</span>
                 </label>
                 <textarea
                   rows={2}
@@ -5767,23 +5767,23 @@ function AdjustPointsModal({
           )}
 
           <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+            <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wide mb-2">
               Lịch sử điều chỉnh ({history.length})
             </p>
             {history.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-5 border border-dashed border-gray-200 rounded-xl">
+              <p className="text-xs text-[var(--text-faint)] text-center py-5 border border-dashed border-[var(--border)] rounded-xl">
                 Chưa có điều chỉnh nào
               </p>
             ) : (
               <div className="space-y-2">
                 {history.map((h) => (
-                  <div key={h.id} className="flex items-start gap-3 rounded-xl border border-gray-100 px-3.5 py-2.5">
-                    <span className={`text-base font-bold tabular-nums flex-shrink-0 ${h.delta > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                  <div key={h.id} className="flex items-start gap-3 rounded-xl border border-[var(--border)] px-3.5 py-2.5">
+                    <span className={`text-base font-bold tabular-nums flex-shrink-0 ${h.delta > 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
                       {h.delta > 0 ? "+" : ""}{h.delta}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-gray-800 break-words">{h.reason}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">
+                      <p className="text-sm text-[var(--text)] break-words">{h.reason}</p>
+                      <p className="text-[10px] text-[var(--text-faint)] mt-0.5">
                         {format(new Date(h.created_at), "HH:mm, dd/MM/yyyy", { locale: vi })}
                       </p>
                     </div>
@@ -5799,7 +5799,7 @@ function AdjustPointsModal({
                             ? `Xoá và hoàn lại ${Math.abs(h.delta)} điểm cho đội`
                             : `Xoá và thu hồi ${h.delta} điểm đã cộng`
                         }
-                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-50 flex-shrink-0"
+                        className="p-1.5 rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] disabled:opacity-50 flex-shrink-0"
                       >
                         {removingId === h.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                       </button>
@@ -5869,7 +5869,7 @@ function MatchCard({
   return (
     <div
       onClick={editing ? () => onEnterScore(m) : undefined}
-      className={`bg-white rounded-xl shadow-[0_8px_24px_-6px_rgba(0,0,0,0.15)] border border-gray-100 px-3.5 pt-3.5 pb-3.5 transition-all ${editing ? "cursor-pointer ring-2 ring-blue-300 hover:ring-blue-500 active:scale-[0.99]" : ""
+      className={`bg-[var(--surface)] rounded-xl shadow-[0_8px_24px_-6px_rgba(0,0,0,0.15)] border border-[var(--border)] px-3.5 pt-3.5 pb-3.5 transition-all ${editing ? "cursor-pointer ring-2 ring-blue-300 hover:ring-blue-500 active:scale-[0.99]" : ""
         }`}
     >
       <div className="flex justify-end mb-1.5">
@@ -5878,11 +5878,11 @@ function MatchCard({
 
       <div className="text-center">
         <p className="text-base font-semibold leading-snug">
-          <span className={team1Won ? "text-emerald-600" : team2Won ? "text-red-500" : "text-gray-900"}>
+          <span className={team1Won ? "text-[var(--success)]" : team2Won ? "text-[var(--danger)]" : "text-[var(--text)]"}>
             {m.team1?.name}
           </span>
-          <span className="text-gray-300 font-normal mx-1.5">vs</span>
-          <span className={team2Won ? "text-emerald-600" : team1Won ? "text-red-500" : "text-gray-900"}>
+          <span className="text-[var(--text-faint)] font-normal mx-1.5">vs</span>
+          <span className={team2Won ? "text-[var(--success)]" : team1Won ? "text-[var(--danger)]" : "text-[var(--text)]"}>
             {m.team2?.name}
           </span>
         </p>
@@ -5890,12 +5890,12 @@ function MatchCard({
         {isCompleted && (
           <>
             <p className="text-2xl font-bold tabular-nums mt-2">
-              <span className={team1Won ? "text-emerald-600" : "text-red-500"}>{m.team1_score}</span>
-              <span className="text-gray-300 mx-1.5">-</span>
-              <span className={team2Won ? "text-emerald-600" : "text-red-500"}>{m.team2_score}</span>
+              <span className={team1Won ? "text-[var(--success)]" : "text-[var(--danger)]"}>{m.team1_score}</span>
+              <span className="text-[var(--text-faint)] mx-1.5">-</span>
+              <span className={team2Won ? "text-[var(--success)]" : "text-[var(--danger)]"}>{m.team2_score}</span>
             </p>
             {winnerName && (
-              <p className="flex items-center justify-center gap-1 text-xs font-semibold text-emerald-600 mt-1.5">
+              <p className="flex items-center justify-center gap-1 text-xs font-semibold text-[var(--success)] mt-1.5">
                 <Trophy className="w-3.5 h-3.5" /> {winnerName} thắng
               </p>
             )}
@@ -5904,13 +5904,13 @@ function MatchCard({
       </div>
 
       {st === "pending" && !readyToStart && (
-        <p className="mt-2.5 text-[11px] text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5 leading-relaxed text-center">
+        <p className="mt-2.5 text-[11px] text-[var(--warning)] bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-lg px-2.5 py-1.5 leading-relaxed text-center">
           ⚠️ Cần ghép đủ đội hình cho tất cả nội dung thi đấu trước khi bắt đầu
         </p>
       )}
 
       {editing ? (
-        <p className="mt-3 text-center text-xs font-semibold text-blue-600">
+        <p className="mt-3 text-center text-xs font-semibold text-[var(--primary)]">
           Bấm để sửa tỉ số trận này
         </p>
       ) : (
@@ -5920,7 +5920,7 @@ function MatchCard({
               onClick={() => hasLineup && onReset(m.id)}
               disabled={resetting || !hasLineup}
               title={hasLineup ? "Xoá đội hình đã ghép để ghép lại" : "Chưa ghép đội hình nào"}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold whitespace-nowrap"
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)] hover:border-[color-mix(in_srgb,var(--danger)_30%,transparent)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold whitespace-nowrap"
             >
               {resetting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
               Đặt lại
@@ -5928,7 +5928,7 @@ function MatchCard({
           )}
           <button
             onClick={() => onViewMembers(m)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] text-xs font-semibold transition-colors"
           >
             <Users className="w-3.5 h-3.5" /> Xem danh sách
           </button>
@@ -5956,7 +5956,7 @@ function MatchCard({
               {st === "completed" && (
                 <button
                   onClick={() => onEnterScore(m)}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold transition-colors"
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] text-xs font-semibold transition-colors"
                 >
                   <Pencil className="w-3.5 h-3.5" /> Sửa kết quả
                 </button>
@@ -6017,23 +6017,23 @@ function RoundDetailScreen({
     : null;
 
   return (
-    <div className="fixed inset-0 z-[240] bg-gray-50 flex flex-col">
+    <div className="fixed inset-0 z-[240] bg-[var(--surface-muted)] flex flex-col">
       <div
-        className="flex-shrink-0 bg-white flex items-center gap-3 px-4 pb-4 border-b border-gray-100"
+        className="flex-shrink-0 bg-[var(--surface)] flex items-center gap-3 px-4 pb-4 border-b border-[var(--border)]"
         style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
       >
         <button
           onClick={onClose}
-          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-bold text-gray-900 leading-tight truncate">
+          <h2 className="text-base font-bold text-[var(--text)] leading-tight truncate">
             Chi tiết lượt {round.round_number}
           </h2>
           {roundDateLabel && (
-            <p className="text-xs text-gray-400 mt-0.5 capitalize">{roundDateLabel}</p>
+            <p className="text-xs text-[var(--text-faint)] mt-0.5 capitalize">{roundDateLabel}</p>
           )}
         </div>
 
@@ -6042,7 +6042,7 @@ function RoundDetailScreen({
             onClick={() => setEditMode((v) => !v)}
             className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${editMode
               ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "border border-gray-200 text-gray-700 hover:bg-gray-50"
+              : "border border-[var(--border)] text-[var(--text)] hover:bg-[var(--surface-hover)]"
               }`}
           >
             {editMode ? <Check className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
@@ -6053,27 +6053,27 @@ function RoundDetailScreen({
 
       <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full space-y-4 ${HIDE_SCROLLBAR_CLASS}`}>
         {stats.ongoing > 0 ? (
-          <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-center">
-            <p className="inline-flex items-center gap-1.5 text-amber-700 font-bold text-sm">
+          <div className="rounded-2xl bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] p-4 text-center">
+            <p className="inline-flex items-center gap-1.5 text-[var(--warning)] font-bold text-sm">
               <Swords className="w-4 h-4" /> Đang thi đấu
             </p>
-            <p className="text-xs text-amber-600 mt-1">
+            <p className="text-xs text-[var(--warning)] mt-1">
               {stats.completed}/{stats.total} trận hoàn thành
             </p>
           </div>
         ) : stats.completed === stats.total ? (
-          <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-center">
-            <p className="inline-flex items-center gap-1.5 text-emerald-700 font-bold text-sm">
+          <div className="rounded-2xl bg-[var(--success-soft)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] p-4 text-center">
+            <p className="inline-flex items-center gap-1.5 text-[var(--success)] font-bold text-sm">
               <Check className="w-4 h-4" /> Đã hoàn thành
             </p>
-            <p className="text-xs text-emerald-600 mt-1">
+            <p className="text-xs text-[var(--success)] mt-1">
               {stats.completed}/{stats.total} trận hoàn thành
             </p>
           </div>
         ) : (
-          <div className="rounded-2xl bg-gray-100 border border-gray-200 p-4 text-center">
-            <p className="text-gray-500 font-semibold text-sm">Chưa bắt đầu</p>
-            <p className="text-xs text-gray-400 mt-1">
+          <div className="rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)] p-4 text-center">
+            <p className="text-[var(--text-muted)] font-semibold text-sm">Chưa bắt đầu</p>
+            <p className="text-xs text-[var(--text-faint)] mt-1">
               {stats.completed}/{stats.total} trận hoàn thành
             </p>
           </div>
@@ -6081,7 +6081,7 @@ function RoundDetailScreen({
 
         {courtGroups.map(([courtNumber, matches], idx) => (
           <div key={courtNumber}>
-            <p className="text-xs font-semibold text-gray-500 mb-2 px-1">Sân {courtNumber}</p>
+            <p className="text-xs font-semibold text-[var(--text-muted)] mb-2 px-1">Sân {courtNumber}</p>
             <div className="space-y-2">
               {matches.map((m: any) => (
                 <MatchCard
@@ -6104,7 +6104,7 @@ function RoundDetailScreen({
 
         {noCourt.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-gray-500 mb-2 px-1">Chưa xếp sân</p>
+            <p className="text-xs font-semibold text-[var(--text-muted)] mb-2 px-1">Chưa xếp sân</p>
             <div className="space-y-2">
               {noCourt.map((m: any) => (
                 <MatchCard
@@ -6144,7 +6144,7 @@ function ScoreStepper({
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90 transition-all"
+        className="w-12 h-12 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-hover)] active:scale-90 transition-all"
       >
         <Plus className="w-5 h-5" />
       </button>
@@ -6158,7 +6158,7 @@ function ScoreStepper({
         type="button"
         onClick={() => onChange(Math.max(0, value - 1))}
         disabled={value <= 0}
-        className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90 transition-all disabled:opacity-30"
+        className="w-12 h-12 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-hover)] active:scale-90 transition-all disabled:opacity-30"
       >
         <span className="text-xl font-bold leading-none">−</span>
       </button>
@@ -6200,10 +6200,10 @@ function ScoreInput({
 
   const colorClass =
     status === "win"
-      ? "text-emerald-600"
+      ? "text-[var(--success)]"
       : status === "lose"
-        ? "text-red-500"
-        : "text-gray-900";
+        ? "text-[var(--danger)]"
+        : "text-[var(--text)]";
 
   return (
     <input
@@ -6213,7 +6213,7 @@ function ScoreInput({
       onChange={handleChange}
       onBlur={handleBlur}
       onFocus={(e) => e.target.select()}
-      className={`w-16 h-14 rounded-xl bg-white border border-gray-200 text-center text-2xl font-bold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all ${colorClass}`}
+      className={`w-16 h-14 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-center text-2xl font-bold outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)] transition-all ${colorClass}`}
     />
   );
 }
@@ -6250,7 +6250,7 @@ function ContentScoreCard({
       </div>
       <div className="flex items-center justify-center gap-4">
         <ScoreInput value={score1} onChange={onChange1} status={status1} />
-        <span className="text-gray-300 font-bold text-lg">-</span>
+        <span className="text-[var(--text-faint)] font-bold text-lg">-</span>
         <ScoreInput value={score2} onChange={onChange2} status={status2} />
       </div>
     </div>
@@ -6326,31 +6326,31 @@ function MatchScoreEntryScreen({
 
   return (
     <div
-      className={`fixed inset-0 z-[250] bg-white flex flex-col transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"
+      className={`fixed inset-0 z-[250] bg-[var(--surface)] flex flex-col transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"
         }`}
     >
       <div
-        className="flex-shrink-0 flex items-center gap-3 px-4 pb-4 border-b border-gray-100"
+        className="flex-shrink-0 flex items-center gap-3 px-4 pb-4 border-b border-[var(--border)]"
         style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
       >
         <button
           onClick={handleClose}
-          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h2 className="text-base font-bold text-gray-900">
+        <h2 className="text-base font-bold text-[var(--text)]">
           {isEditingResult ? "Sửa điểm trận đấu" : "Nhập điểm trận đấu"}
         </h2>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-5 max-w-md mx-auto w-full space-y-4">
         <div className="text-center">
-          <p className="text-base font-bold text-gray-900">
-            {match.team1?.name} <span className="text-gray-300 font-normal mx-1">vs</span>{" "}
+          <p className="text-base font-bold text-[var(--text)]">
+            {match.team1?.name} <span className="text-[var(--text-faint)] font-normal mx-1">vs</span>{" "}
             {match.team2?.name}
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-[var(--text-faint)] mt-1">
             {round ? `Lượt ${round.round_number}` : ""}
             {match.court_number ? ` · Sân ${match.court_number}` : ""}
           </p>
@@ -6371,20 +6371,20 @@ function MatchScoreEntryScreen({
           const total1Status = total1 > total2 ? "win" : total1 < total2 ? "lose" : "neutral";
           const total2Status = total2 > total1 ? "win" : total2 < total1 ? "lose" : "neutral";
           const totalColorClass = (s: "win" | "lose" | "neutral") =>
-            s === "win" ? "text-emerald-600" : s === "lose" ? "text-red-500" : "text-gray-900";
+            s === "win" ? "text-[var(--success)]" : s === "lose" ? "text-[var(--danger)]" : "text-[var(--text)]";
 
           return (
-            <div className="rounded-2xl p-4 bg-gray-50 border border-gray-100">
-              <p className="text-sm font-bold text-gray-700 mb-3">Tổng điểm</p>
+            <div className="rounded-2xl p-4 bg-[var(--surface-muted)] border border-[var(--border)]">
+              <p className="text-sm font-bold text-[var(--text)] mb-3">Tổng điểm</p>
               <div className="flex items-center justify-center gap-4">
                 <div
-                  className={`w-16 h-14 rounded-xl bg-white flex items-center justify-center text-2xl font-bold shadow-sm ${totalColorClass(total1Status)}`}
+                  className={`w-16 h-14 rounded-xl bg-[var(--surface)] flex items-center justify-center text-2xl font-bold shadow-sm ${totalColorClass(total1Status)}`}
                 >
                   {total1}
                 </div>
-                <span className="text-gray-300 font-bold text-lg">-</span>
+                <span className="text-[var(--text-faint)] font-bold text-lg">-</span>
                 <div
-                  className={`w-16 h-14 rounded-xl bg-white flex items-center justify-center text-2xl font-bold shadow-sm ${totalColorClass(total2Status)}`}
+                  className={`w-16 h-14 rounded-xl bg-[var(--surface)] flex items-center justify-center text-2xl font-bold shadow-sm ${totalColorClass(total2Status)}`}
                 >
                   {total2}
                 </div>
@@ -6395,7 +6395,7 @@ function MatchScoreEntryScreen({
       </div>
 
       <div
-        className="flex-shrink-0 px-4 pt-4 border-t border-gray-100 max-w-md mx-auto w-full"
+        className="flex-shrink-0 px-4 pt-4 border-t border-[var(--border)] max-w-md mx-auto w-full"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
       >
         <button
@@ -6437,26 +6437,26 @@ function StatMembersModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible
           ? "opacity-100 scale-100 translate-y-0"
           : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0">
-          <h3 className="font-bold text-gray-900">
-            {title} <span className="text-gray-400 font-normal">({items.length})</span>
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[var(--border)] flex-shrink-0">
+          <h3 className="font-bold text-[var(--text)]">
+            {title} <span className="text-[var(--text-faint)] font-normal">({items.length})</span>
           </h3>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)]"
           >
             ✕
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 min-h-0 divide-y divide-gray-50">
+        <div className="overflow-y-auto flex-1 min-h-0 divide-y divide-[var(--border)]">
           {items.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-10">
+            <p className="text-sm text-[var(--text-faint)] text-center py-10">
               Không có vận động viên nào
             </p>
           ) : (
@@ -6473,18 +6473,18 @@ function StatMembersModal({
                   alt=""
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900 truncate text-sm">
+                  <p className="font-medium text-[var(--text)] truncate text-sm">
                     {r.users?.full_name ?? r.guest_full_name ?? "—"}
                   </p>
-                  <p className="text-xs text-gray-400 truncate">
+                  <p className="text-xs text-[var(--text-faint)] truncate">
                     {r.users?.phone ?? r.guest_phone ?? "—"}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <span
                     className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${r.role === "nam"
-                      ? "bg-blue-50 text-blue-600"
-                      : "bg-pink-50 text-pink-600"
+                      ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                      : "bg-[var(--pink-soft)] text-[var(--pink)]"
                       }`}
                   >
                     {r.role === "nam" ? "Nam" : "Nữ"}
@@ -6497,8 +6497,8 @@ function StatMembersModal({
                   </span>
                   <span
                     className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${r.payment_status === "confirmed"
-                      ? "bg-green-50 text-green-700"
-                      : "bg-amber-50 text-amber-600"
+                      ? "bg-[var(--success-soft)] text-[var(--success)]"
+                      : "bg-[var(--warning-soft)] text-[var(--warning)]"
                       }`}
                   >
                     {r.payment_status === "confirmed" ? "Đã TT" : "Chưa TT"}
@@ -6509,10 +6509,10 @@ function StatMembersModal({
           )}
         </div>
 
-        <div className="flex items-center justify-end px-4 sm:px-5 py-3 sm:py-3.5 border-t border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-end px-4 sm:px-5 py-3 sm:py-3.5 border-t border-[var(--border)] flex-shrink-0">
           <button
             onClick={handleClose}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
           >
             Đóng
           </button>
@@ -6565,7 +6565,7 @@ function PublicLinkPopover({
         onMouseDown={handleClose}
       />
       <div
-        className={`fixed z-[201] w-[calc(100vw-2rem)] max-w-80 bg-white rounded-2xl border border-gray-100 shadow-xl p-4 transition-all duration-200 ease-out ${visible
+        className={`fixed z-[201] w-[calc(100vw-2rem)] max-w-80 bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-xl p-4 transition-all duration-200 ease-out ${visible
           ? "opacity-100 scale-100 translate-y-0"
           : "opacity-0 scale-95 -translate-y-1"
           }`}
@@ -6577,20 +6577,20 @@ function PublicLinkPopover({
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-bold text-gray-900">Link đăng ký công khai</p>
+          <p className="text-sm font-bold text-[var(--text)]">Link đăng ký công khai</p>
           <button
             onClick={handleClose}
-            className="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)]"
           >
             ✕
           </button>
         </div>
-        <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+        <p className="text-xs text-[var(--text-faint)] mb-3 leading-relaxed">
           Chia sẻ link này để người chưa có tài khoản CLB cũng tự đăng ký thi đấu được.
         </p>
-        <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 mb-3">
-          <span className="text-xs text-gray-700 truncate flex-1">{publicLink}</span>
-          <button onClick={onCopy} title="Sao chép link" className="flex-shrink-0 text-blue-600 hover:text-blue-700">
+        <div className="flex items-center gap-2 bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl px-3 py-2 mb-3">
+          <span className="text-xs text-[var(--text)] truncate flex-1">{publicLink}</span>
+          <button onClick={onCopy} title="Sao chép link" className="flex-shrink-0 text-[var(--primary)] hover:text-[var(--primary)]">
             {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
@@ -6606,7 +6606,7 @@ function PublicLinkPopover({
             href={publicLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] text-xs font-semibold transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             Mở trang
@@ -6678,13 +6678,13 @@ function TeamsModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible
           ? "opacity-100 scale-100 translate-y-0"
           : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0">
-          <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
+        <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[var(--border)] flex-shrink-0">
+          <h3 className="font-bold text-[var(--text)] text-sm sm:text-base truncate">
             Kết quả chia đội {teams.length > 0 && `(${teams.length} đội)`}
           </h3>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -6692,7 +6692,7 @@ function TeamsModal({
               onClick={onDrawTeams}
               disabled={drawing}
               title="Chia lại theo trình độ"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {drawing ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -6705,7 +6705,7 @@ function TeamsModal({
               onClick={onExport}
               disabled={!hasData || exporting}
               title="Xuất Excel"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {exporting ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -6716,7 +6716,7 @@ function TeamsModal({
             </button>
             <button
               onClick={handleClose}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)]"
             >
               ✕
             </button>
@@ -6725,22 +6725,22 @@ function TeamsModal({
 
         <div className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0">
           {loading ? (
-            <div className="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
+            <div className="flex items-center justify-center py-10 text-[var(--text-faint)] text-sm gap-2">
               <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
             </div>
           ) : teams.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-10">
+            <p className="text-sm text-[var(--text-faint)] text-center py-10">
               Chưa có đội nào được chia
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
               {teams.map((t: any) => (
-                <div key={t.id} className="border border-gray-100 rounded-xl overflow-hidden">
-                  <div className="flex items-center justify-between px-3.5 py-2.5 bg-gray-50">
-                    <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
-                    <span className="text-xs text-gray-400">{t.members?.length ?? 0} người</span>
+                <div key={t.id} className="border border-[var(--border)] rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between px-3.5 py-2.5 bg-[var(--surface-muted)]">
+                    <p className="font-semibold text-[var(--text)] text-sm">{t.name}</p>
+                    <span className="text-xs text-[var(--text-faint)]">{t.members?.length ?? 0} người</span>
                   </div>
-                  <div className="divide-y divide-gray-50">
+                  <div className="divide-y divide-[var(--border)]">
                     {sortByComposition(t.members).map((m: any) => (
                       <div key={m.id} className="px-3.5 py-2.5 text-sm">
                         <div className="flex items-center gap-2 min-w-0 mb-1.5">
@@ -6752,21 +6752,21 @@ function TeamsModal({
                             className="w-7 h-7 rounded-full object-cover flex-shrink-0"
                             alt=""
                           />
-                          <span className="text-gray-800 font-medium truncate">
+                          <span className="text-[var(--text)] font-medium truncate">
                             {m.users?.full_name ?? m.guest_full_name ?? "—"}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 flex-wrap pl-9">
                           <span
                             className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.user_id
-                              ? "bg-indigo-50 text-indigo-600"
-                              : "bg-gray-100 text-gray-500"
+                              ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                              : "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                               }`}
                           >
                             {m.user_id ? "Thành viên" : "Khách"}
                           </span>
                           <span
-                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.role === "nam" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.role === "nam" ? "bg-[var(--primary-soft)] text-[var(--primary)]" : "bg-[var(--pink-soft)] text-[var(--pink)]"
                               }`}
                           >
                             {m.role === "nam" ? "Nam" : "Nữ"}
@@ -6781,16 +6781,16 @@ function TeamsModal({
                       </div>
                     ))}
                     {(t.members ?? []).length === 0 && (
-                      <p className="text-xs text-gray-300 text-center py-3">Chưa có thành viên</p>
+                      <p className="text-xs text-[var(--text-faint)] text-center py-3">Chưa có thành viên</p>
                     )}
                   </div>
                 </div>
               ))}
 
               {unassigned.length > 0 && (
-                <div className="border border-amber-100 bg-amber-50/50 rounded-xl overflow-hidden sm:col-span-2">
-                  <div className="px-3.5 py-2.5 bg-amber-50">
-                    <p className="font-semibold text-amber-700 text-sm">
+                <div className="border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] rounded-xl overflow-hidden sm:col-span-2">
+                  <div className="px-3.5 py-2.5 bg-[var(--warning-soft)]">
+                    <p className="font-semibold text-[var(--warning)] text-sm">
                       Chưa xếp đội ({unassigned.length})
                     </p>
                   </div>
@@ -6798,20 +6798,20 @@ function TeamsModal({
                     {sortByComposition(unassigned).map((m: any) => (
                       <div key={m.id} className="px-3.5 py-2.5 text-sm">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-gray-700 truncate">
+                          <span className="text-[var(--text)] truncate">
                             {m.users?.full_name ?? m.guest_full_name ?? "—"}
                           </span>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <span
                               className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.user_id
-                                ? "bg-indigo-50 text-indigo-600"
-                                : "bg-gray-100 text-gray-500"
+                                ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                : "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                                 }`}
                             >
                               {m.user_id ? "Thành viên" : "Khách"}
                             </span>
                             <span
-                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.role === "nam" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"
+                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.role === "nam" ? "bg-[var(--primary-soft)] text-[var(--primary)]" : "bg-[var(--pink-soft)] text-[var(--pink)]"
                                 }`}
                             >
                               {m.role === "nam" ? "Nam" : "Nữ"}
@@ -6833,11 +6833,11 @@ function TeamsModal({
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 sm:py-3.5 border-t border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 sm:py-3.5 border-t border-[var(--border)] flex-shrink-0">
           <button
             onClick={onClear}
             disabled={clearing || !hasData}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-sm font-medium text-[var(--danger)] hover:bg-[var(--danger-soft)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {clearing ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -6848,7 +6848,7 @@ function TeamsModal({
           </button>
           <button
             onClick={handleClose}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
           >
             Đóng
           </button>
@@ -6878,9 +6878,9 @@ function TeamMembersColumn({
 }) {
   return (
     <div className="bg-transparent">
-      <div className="px-3.5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl mb-2.5">
-        <p className="font-semibold text-gray-900 text-sm truncate">{team?.name ?? "—"}</p>
-        <p className="text-xs text-gray-400">{team?.members?.length ?? 0} người</p>
+      <div className="px-3.5 py-2.5 bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl mb-2.5">
+        <p className="font-semibold text-[var(--text)] text-sm truncate">{team?.name ?? "—"}</p>
+        <p className="text-xs text-[var(--text-faint)]">{team?.members?.length ?? 0} người</p>
       </div>
 
       <div className="space-y-2.5">
@@ -6907,20 +6907,20 @@ function TeamMembersColumn({
                   : undefined
               }
               className={`relative z-10 w-[78%] sm:w-full text-left px-3.5 py-3 rounded-xl border-2 text-sm transition-all duration-200 ease-out
-                bg-white flex items-center gap-2.5
+                bg-[var(--surface)] flex items-center gap-2.5
                 ${!primaryColor && !isSelected && !isDisabled ? "shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]" : ""}
                 ${selectable && !isDisabled ? "cursor-pointer hover:shadow-[0_6px_16px_-4px_rgba(0,0,0,0.12)] hover:-translate-y-0.5" : ""}
                 ${isDisabled ? "opacity-40 grayscale cursor-not-allowed" : ""}
                 ${isSelected
-                  ? "border-blue-400 bg-blue-50 shadow-[0_4px_14px_-2px_rgba(37,99,235,0.3)] -translate-y-0.5"
+                  ? "border-blue-400 bg-[var(--primary-soft)] shadow-[0_4px_14px_-2px_rgba(37,99,235,0.3)] -translate-y-0.5"
                   : primaryColor && !isDisabled
                     ? ""
-                    : "border-gray-100"
+                    : "border-[var(--border)]"
                 }`}
             >
               {selectable && (
                 <span
-                  className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? "bg-blue-600 border-blue-600" : "border-gray-300"
+                  className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? "bg-blue-600 border-blue-600" : "border-[var(--border-strong)]"
                     }`}
                 >
                   {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
@@ -6937,20 +6937,20 @@ function TeamMembersColumn({
                     className="w-7 h-7 rounded-full object-cover flex-shrink-0"
                     alt=""
                   />
-                  <span className="text-gray-800 font-medium break-words leading-snug min-w-0">
+                  <span className="text-[var(--text)] font-medium break-words leading-snug min-w-0">
                     {m.users?.full_name ?? m.guest_full_name ?? "—"}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-wrap pl-9">
                   <span
-                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.user_id ? "bg-indigo-50 text-indigo-600" : "bg-gray-100 text-gray-500"
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.user_id ? "bg-[var(--primary-soft)] text-[var(--primary)]" : "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                       }`}
                   >
                     {m.user_id ? "Thành viên" : "Khách"}
                   </span>
                   <span
-                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.role === "nam" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.role === "nam" ? "bg-[var(--primary-soft)] text-[var(--primary)]" : "bg-[var(--pink-soft)] text-[var(--pink)]"
                       }`}
                   >
                     {m.role === "nam" ? "Nam" : "Nữ"}
@@ -6978,7 +6978,7 @@ function TeamMembersColumn({
           );
         })}
         {(team?.members ?? []).length === 0 && (
-          <p className="text-xs text-gray-300 text-center py-3">Chưa có thành viên</p>
+          <p className="text-xs text-[var(--text-faint)] text-center py-3">Chưa có thành viên</p>
         )}
       </div>
     </div>
@@ -7327,24 +7327,24 @@ function MatchMembersModal({
         onMouseDown={(e) => e.target === e.currentTarget}
       >
         <div
-          className={`bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+          className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
             }`}
         >
-          <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0">
-            <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
-              {team1?.name} <span className="text-gray-300 font-normal mx-1.5">vs</span> {team2?.name}
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[var(--border)] flex-shrink-0">
+            <h3 className="font-bold text-[var(--text)] text-sm sm:text-base truncate">
+              {team1?.name} <span className="text-[var(--text-faint)] font-normal mx-1.5">vs</span> {team2?.name}
             </h3>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               {(selectedTeam1.length > 0 || selectedTeam2.length > 0) && (
                 <button
                   onClick={clearSelection}
                   title="Đặt lại lựa chọn"
-                  className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] px-2.5 py-1.5 rounded-lg transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" /> Đặt lại
                 </button>
               )}
-              <button onClick={handleClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+              <button onClick={handleClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)]">
                 ✕
               </button>
             </div>
@@ -7353,22 +7353,22 @@ function MatchMembersModal({
           <div ref={scrollRef} className={`p-4 sm:p-5 overflow-y-auto flex-1 min-h-0 space-y-5 ${HIDE_SCROLLBAR_CLASS}`}>
             {matchContents.length > 0 && (
               !canEditLineup ? (
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 leading-relaxed flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                <div className="bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl p-3">
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-[var(--text-faint)]" />
                     Trận đấu đã bắt đầu / đã có kết quả nên không thể chỉnh sửa đội hình. Chỉ có thể xem lại.
                   </p>
                 </div>
               ) : allContentsMatched ? (
-                <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3">
-                  <p className="text-xs text-emerald-700 leading-relaxed flex items-center gap-1.5">
+                <div className="bg-[var(--success-soft)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] rounded-xl p-3">
+                  <p className="text-xs text-[var(--success)] leading-relaxed flex items-center gap-1.5">
                     <Check className="w-3.5 h-3.5 flex-shrink-0" />
                     Đã ghép đội hình đủ cho tất cả nội dung thi đấu. Xoá một đội hình bên dưới nếu muốn ghép lại.
                   </p>
                 </div>
               ) : (
-                <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-3">
-                  <p className="text-xs text-blue-700 leading-relaxed">
+                <div className="bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-xl p-3">
+                  <p className="text-xs text-[var(--primary)] leading-relaxed">
                     💡 Chọn vận động viên ở mỗi đội — người cùng đội sẽ tự nối cụm với nhau, rồi nối sang cụm đội kia. Đường{" "}
                     <span className="font-semibold">nét đứt xanh</span> là đang chọn tạm, đường{" "}
                     <span className="font-semibold">nét liền</span> là đội hình đã lưu.
@@ -7416,12 +7416,12 @@ function MatchMembersModal({
 
             <div>
               <div className="flex items-center justify-between mb-2 gap-2">
-                <h4 className="text-sm font-bold text-gray-900">Đội hình đã ghép</h4>
+                <h4 className="text-sm font-bold text-[var(--text)]">Đội hình đã ghép</h4>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <MatchStatusBadge status={matchStatus} />
                   {matchContents.length > 0 && (
                     <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${allContentsMatched ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"
+                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${allContentsMatched ? "bg-[var(--success-soft)] text-[var(--success)]" : "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                         }`}
                     >
                       {lineups.length}/{matchContents.length} nội dung
@@ -7431,13 +7431,13 @@ function MatchMembersModal({
               </div>
 
               {loadingLineups ? (
-                <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
+                <div className="flex items-center gap-2 text-sm text-[var(--text-faint)] py-4">
                   <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                 </div>
               ) : lineups.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-1.5 py-8 border border-dashed border-gray-200 rounded-xl">
-                  <Users className="w-6 h-6 text-gray-300" />
-                  <p className="text-xs text-gray-400">Chưa ghép đội hình cho nội dung nào</p>
+                <div className="flex flex-col items-center justify-center gap-1.5 py-8 border border-dashed border-[var(--border)] rounded-xl">
+                  <Users className="w-6 h-6 text-[var(--text-faint)]" />
+                  <p className="text-xs text-[var(--text-faint)]">Chưa ghép đội hình cho nội dung nào</p>
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -7447,7 +7447,7 @@ function MatchMembersModal({
                     return (
                       <div
                         key={l.content_id}
-                        className="relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]"
+                        className="relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]"
                       >
                         <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: color }} />
                         <div className="pl-4 pr-3.5 py-3">
@@ -7463,7 +7463,7 @@ function MatchMembersModal({
                               <button
                                 onClick={() => handleRemoveLineup(l.content_id)}
                                 disabled={removingContentId === l.content_id}
-                                className="p-1.5 hover:bg-red-50 rounded-lg text-gray-300 hover:text-red-500 transition-colors flex-shrink-0 disabled:opacity-50"
+                                className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors flex-shrink-0 disabled:opacity-50"
                               >
                                 {removingContentId === l.content_id ? (
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -7476,14 +7476,14 @@ function MatchMembersModal({
 
                           <div className="space-y-1.5">
                             <div className="flex items-start gap-2">
-                              <span className="text-[10px] font-semibold text-gray-400 mt-1 w-14 flex-shrink-0 truncate">
+                              <span className="text-[10px] font-semibold text-[var(--text-faint)] mt-1 w-14 flex-shrink-0 truncate">
                                 {team1?.name}
                               </span>
                               <div className="flex flex-wrap gap-1 flex-1 min-w-0">
                                 {l.team1_player_ids.map((id: string) => (
                                   <span
                                     key={id}
-                                    className="text-[11px] font-medium text-gray-700 bg-gray-50 border border-gray-100 rounded-md px-1.5 py-0.5"
+                                    className="text-[11px] font-medium text-[var(--text)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-md px-1.5 py-0.5"
                                   >
                                     {memberName(team1, id)}
                                   </span>
@@ -7491,14 +7491,14 @@ function MatchMembersModal({
                               </div>
                             </div>
                             <div className="flex items-start gap-2">
-                              <span className="text-[10px] font-semibold text-gray-400 mt-1 w-14 flex-shrink-0 truncate">
+                              <span className="text-[10px] font-semibold text-[var(--text-faint)] mt-1 w-14 flex-shrink-0 truncate">
                                 {team2?.name}
                               </span>
                               <div className="flex flex-wrap gap-1 flex-1 min-w-0">
                                 {l.team2_player_ids.map((id: string) => (
                                   <span
                                     key={id}
-                                    className="text-[11px] font-medium text-gray-700 bg-gray-50 border border-gray-100 rounded-md px-1.5 py-0.5"
+                                    className="text-[11px] font-medium text-[var(--text)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-md px-1.5 py-0.5"
                                   >
                                     {memberName(team2, id)}
                                   </span>
@@ -7515,10 +7515,10 @@ function MatchMembersModal({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 sm:py-3.5 border-t border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 sm:py-3.5 border-t border-[var(--border)] flex-shrink-0">
             {canEditLineup && hasSelection ? (
               <>
-                <button onClick={clearSelection} className="px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50">
+                <button onClick={clearSelection} className="px-3 py-2 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]">
                   Bỏ chọn ({selectedTeam1.length + selectedTeam2.length})
                 </button>
                 <button
@@ -7531,7 +7531,7 @@ function MatchMembersModal({
             ) : (
               <>
                 <span />
-                <button onClick={handleClose} className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">
+                <button onClick={handleClose} className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]">
                   Đóng
                 </button>
               </>
@@ -7604,19 +7604,19 @@ function SelectMatchContentModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
       >
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Chọn nội dung thi đấu</h3>
-          <p className="text-xs text-gray-400 mt-1">
+        <div className="px-5 py-4 border-b border-[var(--border)]">
+          <h3 className="font-bold text-[var(--text)]">Chọn nội dung thi đấu</h3>
+          <p className="text-xs text-[var(--text-faint)] mt-1">
             {team1Name}: {namCount1} Nam · {nuCount1} Nữ &nbsp;·&nbsp; {team2Name}: {namCount2} Nam · {nuCount2} Nữ
           </p>
         </div>
 
         {shapeMismatch && !anyMatched && (
-          <div className="mx-5 mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3">
-            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-700 leading-relaxed">
+          <div className="mx-5 mt-4 flex items-start gap-2 rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] px-3.5 py-3">
+            <AlertTriangle className="w-4 h-4 text-[var(--warning)] flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-[var(--warning)] leading-relaxed">
               Thành phần 2 đội đang lệch nhau: <span className="font-semibold">{team1Name}</span> chọn{" "}
               <span className="font-semibold">{describeComposition(namCount1, nuCount1)}</span>,{" "}
               <span className="font-semibold">{team2Name}</span> chọn{" "}
@@ -7648,8 +7648,8 @@ function SelectMatchContentModal({
                 disabled={!matched}
                 onClick={() => matched && onSelect(c)}
                 className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border text-left transition-colors ${matched
-                  ? "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                  : "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed"
+                  ? "border-[var(--border)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:bg-[var(--primary-soft)]"
+                  : "border-[var(--border)] bg-[var(--surface-muted)] opacity-50 cursor-not-allowed"
                   }`}
               >
                 <span
@@ -7659,20 +7659,20 @@ function SelectMatchContentModal({
                   {c.label.slice(0, 1)}
                 </span>
                 <span className="flex-1 min-w-0">
-                  <span className="block text-sm font-semibold text-gray-900">{c.label}</span>
-                  <span className="block text-xs text-gray-400">{requirementText}</span>
+                  <span className="block text-sm font-semibold text-[var(--text)]">{c.label}</span>
+                  <span className="block text-xs text-[var(--text-faint)]">{requirementText}</span>
                 </span>
               </button>
             );
           })}
           {matchContents.length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-8">
+            <p className="text-sm text-[var(--text-faint)] text-center py-8">
               Giải đấu chưa cấu hình nội dung thi đấu
             </p>
           )}
         </div>
-        <div className="flex justify-end px-5 py-3 border-t border-gray-100">
-          <button onClick={handleClose} className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+        <div className="flex justify-end px-5 py-3 border-t border-[var(--border)]">
+          <button onClick={handleClose} className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--text-muted)] hover:bg-[var(--surface-hover)]">
             Huỷ
           </button>
         </div>
@@ -7708,10 +7708,10 @@ function StatCard({
     <button
       type="button"
       onClick={onClick}
-      className="text-left w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
+      className="text-left w-full bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-3 sm:p-4 hover:shadow-md hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] transition-all cursor-pointer"
     >
       <div className="flex items-start justify-between mb-2 sm:mb-2.5">
-        <p className="text-[11px] sm:text-xs text-gray-400 font-medium truncate pr-1">
+        <p className="text-[11px] sm:text-xs text-[var(--text-faint)] font-medium truncate pr-1">
           {label}
         </p>
         {pill ? (
@@ -7730,10 +7730,10 @@ function StatCard({
           </span>
         )}
       </div>
-      <p className="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">
+      <p className="text-xl sm:text-2xl font-bold text-[var(--text)] tabular-nums">
         {Math.round(animatedValue)}
       </p>
-      <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 tabular-nums">
+      <p className="text-[11px] sm:text-xs text-[var(--text-faint)] mt-0.5 tabular-nums">
         {subPercent !== undefined ? `(${animatedPercent.toFixed(2)}%)` : sub}
       </p>
     </button>
@@ -7753,8 +7753,8 @@ function LevelDonutCard({ stats }: { stats: any }) {
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
-      <h3 className="font-bold text-gray-900 mb-4 text-sm">
+    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-4 sm:p-5">
+      <h3 className="font-bold text-[var(--text)] mb-4 text-sm">
         Thống kê phân bố trình độ
       </h3>
       <div className="flex items-center gap-5">
@@ -7810,7 +7810,7 @@ function LevelDonutCard({ stats }: { stats: any }) {
                 className="w-2 h-2 rounded-full"
                 style={{ background: s.color }}
               />
-              <span className="text-gray-600">
+              <span className="text-[var(--text-muted)]">
                 {s.key} ({total ? ((s.value / total) * 100).toFixed(2) : "0.00"}
                 %)
               </span>
@@ -7921,7 +7921,7 @@ function RankBadge({ rank }: { rank: number }) {
   };
   return (
     <span
-      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${topStyles[rank] ?? "bg-gray-100 text-gray-500"
+      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${topStyles[rank] ?? "bg-[var(--surface-muted)] text-[var(--text-muted)]"
         }`}
     >
       {rank}
@@ -7987,22 +7987,22 @@ function TeamStatsModal({
   }, [rounds, team.id, playoffRoundNumber]);
 
   const rows = [
-    { label: "Trận đã đấu", value: team.played, color: "text-gray-900" },
-    { label: "Thắng", value: team.wins, color: "text-emerald-600" },
-    { label: "Thua", value: team.losses, color: "text-red-500" },
-    { label: "Điểm ghi được", value: team.pointsFor, color: "text-blue-600" },
+    { label: "Trận đã đấu", value: team.played, color: "text-[var(--text)]" },
+    { label: "Thắng", value: team.wins, color: "text-[var(--success)]" },
+    { label: "Thua", value: team.losses, color: "text-[var(--danger)]" },
+    { label: "Điểm ghi được", value: team.pointsFor, color: "text-[var(--primary)]" },
     ...(team.adjustment !== 0
       ? [{
         label: "Điều chỉnh",
         value: team.adjustment > 0 ? `+${team.adjustment}` : team.adjustment,
-        color: team.adjustment > 0 ? "text-emerald-600" : "text-red-500",
+        color: team.adjustment > 0 ? "text-[var(--success)]" : "text-[var(--danger)]",
       }]
       : []),
-    { label: "Tổng điểm", value: team.total, color: "text-gray-900" },
+    { label: "Tổng điểm", value: team.total, color: "text-[var(--text)]" },
   ];
 
   const sideColor = (a: number, b: number) =>
-    a > b ? "text-emerald-600" : a < b ? "text-red-500" : "text-gray-500";
+    a > b ? "text-[var(--success)]" : a < b ? "text-[var(--danger)]" : "text-[var(--text-muted)]";
 
   return (
     <div
@@ -8010,55 +8010,55 @@ function TeamStatsModal({
       onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+        className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
           }`}
       >
-        <div className="px-5 pt-5 pb-4 text-center border-b border-gray-100 relative flex-shrink-0">
+        <div className="px-5 pt-5 pb-4 text-center border-b border-[var(--border)] relative flex-shrink-0">
           <button
             onClick={handleClose}
-            className="absolute right-3 top-3 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="absolute right-3 top-3 w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)]"
           >
             ✕
           </button>
           <div className="flex items-center justify-center gap-2">
             <RankBadge rank={rank} />
-            <h3 className="font-black text-gray-900 text-lg truncate">{team.name}</h3>
+            <h3 className="font-black text-[var(--text)] text-lg truncate">{team.name}</h3>
           </div>
         </div>
 
         <div className={`flex-1 min-h-0 overflow-y-auto p-4 space-y-4 ${HIDE_SCROLLBAR_CLASS}`}>
           <div className="space-y-2">
             {rows.map((r) => (
-              <div key={r.label} className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50">
-                <span className="text-sm text-gray-500">{r.label}</span>
+              <div key={r.label} className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[var(--surface-muted)]">
+                <span className="text-sm text-[var(--text-muted)]">{r.label}</span>
                 <span className={`text-base font-bold tabular-nums ${r.color}`}>{r.value}</span>
               </div>
             ))}
           </div>
 
           <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 px-1">
+            <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wide mb-2 px-1">
               Các trận đã đấu ({teamMatches.length})
             </p>
 
             {teamMatches.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-xl">
+              <p className="text-xs text-[var(--text-faint)] text-center py-6 border border-dashed border-[var(--border)] rounded-xl">
                 Chưa có trận nào hoàn thành
               </p>
             ) : (
               <div className="space-y-2">
                 {teamMatches.map((m) => (
-                  <div key={m.id} className="rounded-xl border border-gray-100 bg-white px-3.5 py-3 shadow-sm">
+                  <div key={m.id} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-3 shadow-sm">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-semibold text-gray-400 uppercase">
+                      <span className="text-[10px] font-semibold text-[var(--text-faint)] uppercase">
                         {m.isPlayoff ? "Tranh hạng" : `Lượt ${m.roundNumber}`}
                       </span>
                       <span
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${m.result === "win"
-                          ? "bg-emerald-50 text-emerald-600"
+                          ? "bg-[var(--success-soft)] text-[var(--success)]"
                           : m.result === "lose"
-                            ? "bg-red-50 text-red-500"
-                            : "bg-gray-100 text-gray-500"
+                            ? "bg-[var(--danger-soft)] text-[var(--danger)]"
+                            : "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                           }`}
                       >
                         {m.result === "win" ? "Thắng" : m.result === "lose" ? "Thua" : "Hoà"}
@@ -8067,12 +8067,12 @@ function TeamStatsModal({
 
                     <div className="flex items-center justify-between gap-3 mt-1.5">
                       <p className="text-sm truncate min-w-0">
-                        <span className="text-gray-400">vs </span>
+                        <span className="text-[var(--text-faint)]">vs </span>
                         <span className={`font-semibold ${sideColor(m.opp, m.own)}`}>{m.opponentName}</span>
                       </p>
                       <p className="text-lg font-bold tabular-nums flex-shrink-0">
                         <span className={sideColor(m.own, m.opp)}>{m.own}</span>
-                        <span className="text-gray-300 mx-1">-</span>
+                        <span className="text-[var(--text-faint)] mx-1">-</span>
                         <span className={sideColor(m.opp, m.own)}>{m.opp}</span>
                       </p>
                     </div>
@@ -8082,12 +8082,12 @@ function TeamStatsModal({
                         {m.contentScores.map((c: any, i: number) => (
                           <span
                             key={i}
-                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-50 border border-gray-100 text-gray-600"
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[var(--surface-muted)] border border-[var(--border)] text-[var(--text-muted)]"
                           >
                             {c.label}
                             <span className="tabular-nums">
                               <span className={sideColor(c.own, c.opp)}>{c.own}</span>
-                              <span className="text-gray-300">-</span>
+                              <span className="text-[var(--text-faint)]">-</span>
                               <span className={sideColor(c.opp, c.own)}>{c.opp}</span>
                             </span>
                           </span>
@@ -8101,10 +8101,10 @@ function TeamStatsModal({
           </div>
         </div>
 
-        <div className="px-5 pb-5 pt-3 border-t border-gray-100 flex-shrink-0">
+        <div className="px-5 pb-5 pt-3 border-t border-[var(--border)] flex-shrink-0">
           <button
             onClick={handleClose}
-            className="w-full py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="w-full py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
           >
             Đóng
           </button>
@@ -8116,13 +8116,13 @@ function TeamStatsModal({
 
 const RANK_ROW_STYLE: Record<number, { card: string }> = {
   1: {
-    card: "border-amber-200 bg-gradient-to-r from-amber-50 to-white",
+    card: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-gradient-to-r from-amber-50 to-white",
   },
   2: {
-    card: "border-gray-200 bg-gradient-to-r from-gray-50 to-white",
+    card: "border-[var(--border)] bg-gradient-to-r from-gray-50 to-white",
   },
   3: {
-    card: "border-orange-200 bg-gradient-to-r from-orange-50 to-white",
+    card: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-gradient-to-r from-orange-50 to-white",
   },
 };
 
@@ -8160,20 +8160,20 @@ function TournamentStandingsScreen({
   const adjustTeam = standings.find((t) => t.id === adjustTeamId) ?? null;
 
   return (
-    <div className="fixed inset-0 z-[225] bg-white flex flex-col">
+    <div className="fixed inset-0 z-[225] bg-[var(--surface)] flex flex-col">
       <div
-        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-gray-100"
+        className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 pb-4 border-b border-[var(--border)]"
         style={{ paddingTop: "max(calc(env(safe-area-inset-top) + 1rem), 1.5rem)" }}
       >
         <button
           onClick={onClose}
-          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-bold text-gray-900 leading-tight">Bảng xếp hạng</h2>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h2 className="text-lg font-bold text-[var(--text)] leading-tight">Bảng xếp hạng</h2>
+          <p className="text-xs text-[var(--text-faint)] mt-0.5">
             {totalPlayed > 0 ? `Đã tính ${totalPlayed} trận đấu` : "Chưa có trận nào hoàn thành"}
           </p>
         </div>
@@ -8183,17 +8183,17 @@ function TournamentStandingsScreen({
 
       {choiceMode && (
         <div
-          className="flex-shrink-0 flex flex-col gap-2 px-4 sm:px-6 pt-4 border-t border-gray-100 max-w-2xl mx-auto w-full"
+          className="flex-shrink-0 flex flex-col gap-2 px-4 sm:px-6 pt-4 border-t border-[var(--border)] max-w-2xl mx-auto w-full"
           style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
         >
-          <p className="text-xs text-gray-400 text-center mb-1">
+          <p className="text-xs text-[var(--text-faint)] text-center mb-1">
             Tất cả các trận vòng tròn đã hoàn thành. Bạn muốn kết thúc giải đấu hay tiếp tục thi đấu tranh hạng?
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={onContinueTournament}
               disabled={continuingTournament || endingTournament}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 text-sm font-semibold hover:bg-blue-100 disabled:opacity-50 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] text-[var(--primary)] text-sm font-semibold hover:bg-[var(--primary-soft)] disabled:opacity-50 transition-colors"
             >
               {continuingTournament ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -8221,7 +8221,7 @@ function TournamentStandingsScreen({
 
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 max-w-2xl mx-auto w-full">
         {standings.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-14">Chưa có đội nào</p>
+          <p className="text-sm text-[var(--text-faint)] text-center py-14">Chưa có đội nào</p>
         ) : (
           <div className="space-y-2.5">
             {standings.map((t, idx) => {
@@ -8236,35 +8236,35 @@ function TournamentStandingsScreen({
                   onKeyDown={(e) =>
                     e.key === "Enter" && setSelectedTeam({ team: t, rank })
                   }
-                  className={`flex items-center gap-3 px-3.5 py-3.5 rounded-2xl border shadow-sm cursor-pointer hover:shadow-md active:scale-[0.99] transition-all ${RANK_ROW_STYLE[rank] ?? "border-gray-100 bg-white hover:border-blue-200"
+                  className={`flex items-center gap-3 px-3.5 py-3.5 rounded-2xl border shadow-sm cursor-pointer hover:shadow-md active:scale-[0.99] transition-all ${RANK_ROW_STYLE[rank] ?? "border-[var(--border)] bg-[var(--surface)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)]"
                     }`}
                 >
                   <RankBadge rank={rank} />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-gray-900 truncate">{t.name}</p>
+                      <p className="font-semibold text-[var(--text)] truncate">{t.name}</p>
                       <div className="flex items-baseline gap-1.5 flex-shrink-0">
                         {t.adjustment !== 0 && (
                           <span
-                            className={`text-[11px] font-semibold ${t.adjustment > 0 ? "text-emerald-600" : "text-red-500"
+                            className={`text-[11px] font-semibold ${t.adjustment > 0 ? "text-[var(--success)]" : "text-[var(--danger)]"
                               }`}
                           >
                             {t.adjustment > 0 ? "+" : ""}
                             {t.adjustment}
                           </span>
                         )}
-                        <span className="text-lg font-black text-blue-600 tabular-nums">
+                        <span className="text-lg font-black text-[var(--primary)] tabular-nums">
                           {t.total}
                         </span>
-                        <span className="text-[10px] text-gray-400">điểm</span>
+                        <span className="text-[10px] text-[var(--text-faint)]">điểm</span>
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-gray-400 mt-1">
+                    <p className="text-[11px] text-[var(--text-faint)] mt-1">
                       {t.played} trận ·{" "}
-                      <span className="text-emerald-600 font-medium">{t.wins} thắng</span> ·{" "}
-                      <span className="text-red-500 font-medium">{t.losses} thua</span>
+                      <span className="text-[var(--success)] font-medium">{t.wins} thắng</span> ·{" "}
+                      <span className="text-[var(--danger)] font-medium">{t.losses} thua</span>
                     </p>
                   </div>
 
@@ -8276,7 +8276,7 @@ function TournamentStandingsScreen({
                         e.stopPropagation();
                         setAdjustTeamId(t.id);
                       }}
-                      className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
+                      className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-faint)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] transition-colors"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
@@ -8290,12 +8290,12 @@ function TournamentStandingsScreen({
 
       {ended && !choiceMode && (
         <div
-          className="flex-shrink-0 flex items-center gap-2 px-4 sm:px-6 pt-4 border-t border-gray-100 max-w-2xl mx-auto w-full"
+          className="flex-shrink-0 flex items-center gap-2 px-4 sm:px-6 pt-4 border-t border-[var(--border)] max-w-2xl mx-auto w-full"
           style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
         >
           <button
             onClick={onClose}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-[var(--border)] text-[var(--text)] text-sm font-semibold hover:bg-[var(--surface-hover)] transition-colors"
           >
             <RotateCcw className="w-4 h-4" /> Xem lịch sử
           </button>

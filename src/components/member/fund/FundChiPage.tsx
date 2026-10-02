@@ -71,37 +71,37 @@ export default function FundChiPage() {
     const totalChi = txs.reduce((s, t) => s + Number(t.amount), 0);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[var(--surface-muted)]">
             {/* Header */}
             <div
-                className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-100"
+                className="sticky top-0 z-10 bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] backdrop-blur-sm border-b border-[var(--border)]"
                 style={{ paddingTop: "env(safe-area-inset-top)" }}
             >
                 <div className="max-w-md mx-auto flex items-center justify-between px-4 py-3.5">
-                    <Link href="/fund" className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0">
-                        <ArrowLeft className="w-4.5 h-4.5 text-gray-600" />
+                    <Link href="/fund" className="w-9 h-9 rounded-full bg-[var(--surface-muted)] flex items-center justify-center flex-shrink-0">
+                        <ArrowLeft className="w-4.5 h-4.5 text-[var(--text-muted)]" />
                     </Link>
-                    <h1 className="text-base font-bold text-gray-900">Khoản chi</h1>
+                    <h1 className="text-base font-bold text-[var(--text)]">Khoản chi</h1>
                     <div className="w-9 h-9 flex-shrink-0" />
                 </div>
             </div>
 
             <div className="max-w-md mx-auto px-4 py-4 space-y-4">
                 <div className="flex items-center justify-center gap-3">
-                    <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100">
+                    <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-lg text-[var(--text-faint)] hover:bg-[var(--surface-hover)]">
                         <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <span className="text-sm font-semibold text-gray-700 w-24 text-center">
+                    <span className="text-sm font-semibold text-[var(--text)] w-24 text-center">
                         {MONTH_NAMES_VI[month - 1]}/{year}
                     </span>
-                    <button onClick={() => changeMonth(1)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100">
+                    <button onClick={() => changeMonth(1)} className="p-1.5 rounded-lg text-[var(--text-faint)] hover:bg-[var(--surface-hover)]">
                         <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
 
-                <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
-                    <p className="text-xs text-red-500/70 mb-1">Tổng chi (trang này)</p>
-                    <p className="text-xl font-black text-red-500">-{fmt(totalChi)}</p>
+                <div className="bg-[var(--danger-soft)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] rounded-2xl p-4 text-center">
+                    <p className="text-xs text-[var(--danger)]/70 mb-1">Tổng chi (trang này)</p>
+                    <p className="text-xl font-black text-[var(--danger)]">-{fmt(totalChi)}</p>
                 </div>
 
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4">
@@ -109,20 +109,20 @@ export default function FundChiPage() {
                         <button
                             key={o.val || "all"}
                             onClick={() => { setCategory(o.val); setPage(1); }}
-                            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${category === o.val ? "bg-red-500 text-white" : "bg-white border border-gray-200 text-gray-500"}`}
+                            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${category === o.val ? "bg-red-500 text-white" : "bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)]"}`}
                         >
                             {o.label}
                         </button>
                     ))}
                 </div>
 
-                <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-50 shadow-sm overflow-hidden">
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl divide-y divide-[var(--border)] shadow-sm overflow-hidden">
                     {loading ? (
                         <div className="p-4 space-y-2">
-                            {[...Array(6)].map((_, i) => <div key={i} className="h-12 bg-gray-50 rounded-xl animate-pulse" />)}
+                            {[...Array(6)].map((_, i) => <div key={i} className="h-12 bg-[var(--surface-muted)] rounded-xl animate-pulse" />)}
                         </div>
                     ) : txs.length === 0 ? (
-                        <p className="px-4 py-14 text-xs text-gray-400 text-center">Không có giao dịch nào</p>
+                        <p className="px-4 py-14 text-xs text-[var(--text-faint)] text-center">Không có giao dịch nào</p>
                     ) : (
                         txs.map((tx) => {
                             const Icon = CATEGORY_ICONS[tx.category] ?? MoreHorizontal;
@@ -133,14 +133,14 @@ export default function FundChiPage() {
                                         <Icon className={`w-4 h-4 ${color.ic}`} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{tx.title}</p>
-                                        <p className="text-[11px] text-gray-400">
+                                        <p className="text-sm font-semibold text-[var(--text)] truncate">{tx.title}</p>
+                                        <p className="text-[11px] text-[var(--text-faint)]">
                                             {CATEGORY_LABELS[tx.category]} · {new Date(tx.created_at).toLocaleString("vi-VN", {
                                                 day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
                                             })}
                                         </p>
                                     </div>
-                                    <span className="text-sm font-bold text-red-500 whitespace-nowrap">-{fmt(tx.amount)}</span>
+                                    <span className="text-sm font-bold text-[var(--danger)] whitespace-nowrap">-{fmt(tx.amount)}</span>
                                 </div>
                             );
                         })
@@ -152,15 +152,15 @@ export default function FundChiPage() {
                         <button
                             disabled={page <= 1}
                             onClick={() => setPage((p) => p - 1)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-gray-200 disabled:opacity-40"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--surface)] border border-[var(--border)] disabled:opacity-40"
                         >
                             Trước
                         </button>
-                        <span className="text-xs text-gray-400">{meta.page}/{meta.total_pages}</span>
+                        <span className="text-xs text-[var(--text-faint)]">{meta.page}/{meta.total_pages}</span>
                         <button
                             disabled={page >= meta.total_pages}
                             onClick={() => setPage((p) => p + 1)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-gray-200 disabled:opacity-40"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--surface)] border border-[var(--border)] disabled:opacity-40"
                         >
                             Sau
                         </button>

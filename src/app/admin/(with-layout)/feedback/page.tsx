@@ -204,44 +204,44 @@ export default function AdminFeedbackPage() {
 
     const DetailContent = ({ conv }: { conv: Conversation }) => (
         <>
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 flex-shrink-0">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
                 <Avatar name={conv.users?.full_name} url={conv.users?.avatar_url} size={44} />
                 <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-bold text-gray-900 truncate">
+                    <p className="text-[14px] font-bold text-[var(--text)] truncate">
                         {conv.users?.full_name ?? "Ẩn danh"}
                     </p>
                     {conv.users?.phone && (
-                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                        <p className="text-xs text-[var(--text-faint)] flex items-center gap-1 mt-0.5">
                             <Phone className="w-3 h-3" /> {conv.users.phone}
                         </p>
                     )}
                 </div>
-                {marking && <Loader2 className="w-4 h-4 animate-spin text-gray-300 flex-shrink-0" />}
+                {marking && <Loader2 className="w-4 h-4 animate-spin text-[var(--text-faint)] flex-shrink-0" />}
             </div>
 
             <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-3">
                 {threadLoading ? (
                     <div className="py-10 flex justify-center">
-                        <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
+                        <Loader2 className="w-5 h-5 animate-spin text-[var(--text-faint)]" />
                     </div>
                 ) : threadMessages.length === 0 ? (
-                    <p className="text-sm text-gray-400 text-center py-10">Không còn góp ý nào</p>
+                    <p className="text-sm text-[var(--text-faint)] text-center py-10">Không còn góp ý nào</p>
                 ) : (
                     threadMessages.map((m) => (
                         <div
                             key={m.id}
-                            className={`group relative rounded-2xl p-4 text-[13.5px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words border-l-[3px] bg-gray-50/80 ${m.is_read ? "border-gray-200" : "border-[#e0533d]"
+                            className={`group relative rounded-2xl p-4 text-[13.5px] text-[var(--text)] leading-relaxed whitespace-pre-wrap break-words border-l-[3px] bg-[var(--surface-muted)] ${m.is_read ? "border-[var(--border)]" : "border-[#e0533d]"
                                 }`}
                         >
                             <div className="flex items-center justify-between gap-2 mb-1.5">
-                                <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                                <span className="flex items-center gap-1 text-[11px] text-[var(--text-faint)]">
                                     <Clock className="w-3 h-3" />
                                     {format(new Date(m.created_at), "HH:mm · dd MMMM yyyy", { locale: vi })}
                                 </span>
                                 <button
                                     onClick={() => handleDeleteMessage(m.id)}
                                     disabled={deletingId === m.id}
-                                    className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-50 text-gray-300 hover:text-red-500 transition-all disabled:opacity-50"
+                                    className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full flex items-center justify-center hover:bg-[var(--danger-soft)] text-[var(--text-faint)] hover:text-[var(--danger)] transition-all disabled:opacity-50"
                                     title="Xoá góp ý này"
                                 >
                                     {deletingId === m.id ? (
@@ -256,7 +256,7 @@ export default function AdminFeedbackPage() {
                                     src={m.image_url}
                                     alt="Ảnh minh hoạ"
                                     onClick={() => setLightboxUrl(m.image_url!)}
-                                    className="rounded-xl mb-2 max-h-56 w-auto max-w-full object-cover border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity"
+                                    className="rounded-xl mb-2 max-h-56 w-auto max-w-full object-cover border border-[var(--border)] cursor-zoom-in hover:opacity-90 transition-opacity"
                                 />
                             )}
                             {m.message}
@@ -268,13 +268,13 @@ export default function AdminFeedbackPage() {
     );
 
     return (
-        <div className="flex h-full min-h-0 bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+        <div className="flex h-full min-h-0 bg-[var(--surface)] rounded-2xl overflow-hidden border border-[var(--border)] shadow-sm">
             <div className="flex-1 flex flex-col min-h-0">
-                <div className="px-5 pt-5 pb-4 flex-shrink-0 border-b border-gray-100">
+                <div className="px-5 pt-5 pb-4 flex-shrink-0 border-b border-[var(--border)]">
                     <div className="flex items-baseline justify-between mb-4">
                         <div>
-                            <h2 className="text-[16px] font-bold text-gray-900 tracking-tight">Góp ý thành viên</h2>
-                            <p className="text-[12px] text-gray-400 mt-0.5">
+                            <h2 className="text-[16px] font-bold text-[var(--text)] tracking-tight">Góp ý thành viên</h2>
+                            <p className="text-[12px] text-[var(--text-faint)] mt-0.5">
                                 {loading ? "Đang tải…" : `${total} thành viên${unreadCount > 0 ? ` · ${unreadCount} tin chưa xem` : ""}`}
                             </p>
                         </div>
@@ -282,12 +282,12 @@ export default function AdminFeedbackPage() {
 
                     <div className="flex flex-col sm:flex-row gap-3">
                         <div className="relative flex-1">
-                            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                            <Search className="w-4 h-4 text-[var(--text-faint)] absolute left-3.5 top-1/2 -translate-y-1/2" />
                             <input
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Tìm theo tên, số điện thoại..."
-                                className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-10 pr-9 py-2.5 text-sm outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[#183153]/10 focus:border-[#183153]/25"
+                                className="w-full bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl pl-10 pr-9 py-2.5 text-sm outline-none transition-all focus:bg-[var(--surface)] focus:ring-2 focus:ring-[#183153]/10 focus:border-[#183153]/25"
                             />
                             {search && (
                                 <button
@@ -299,12 +299,12 @@ export default function AdminFeedbackPage() {
                             )}
                         </div>
 
-                        <div className="flex items-center gap-4 border-b border-gray-100 sm:border-0">
+                        <div className="flex items-center gap-4 border-b border-[var(--border)] sm:border-0">
                             {STATUS_TABS.map((tab) => (
                                 <button
                                     key={tab.value}
                                     onClick={() => setStatus(tab.value)}
-                                    className={`relative pb-2 sm:pb-0 text-[13px] font-semibold whitespace-nowrap transition-colors ${status === tab.value ? "text-[#183153]" : "text-gray-400 hover:text-gray-600"
+                                    className={`relative pb-2 sm:pb-0 text-[13px] font-semibold whitespace-nowrap transition-colors ${status === tab.value ? "text-[#183153]" : "text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                                         }`}
                                 >
                                     {tab.label}
@@ -320,15 +320,15 @@ export default function AdminFeedbackPage() {
                 <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
                     {loading ? (
                         <div className="py-16 flex justify-center">
-                            <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
+                            <Loader2 className="w-5 h-5 animate-spin text-[var(--text-faint)]" />
                         </div>
                     ) : items.length === 0 ? (
                         <div className="py-20 text-center">
-                            <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-3">
-                                <Mail className="w-6 h-6 text-gray-300" />
+                            <div className="w-14 h-14 rounded-2xl bg-[var(--surface-muted)] flex items-center justify-center mx-auto mb-3">
+                                <Mail className="w-6 h-6 text-[var(--text-faint)]" />
                             </div>
-                            <p className="text-sm font-medium text-gray-500">Không có góp ý nào</p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-sm font-medium text-[var(--text-muted)]">Không có góp ý nào</p>
+                            <p className="text-xs text-[var(--text-faint)] mt-1">
                                 {search ? "Thử tìm với từ khóa khác" : "Góp ý mới từ thành viên sẽ hiện ở đây"}
                             </p>
                         </div>
@@ -342,7 +342,7 @@ export default function AdminFeedbackPage() {
                                         onClick={() => openDetail(conv)}
                                         className={`group relative w-full flex items-start gap-3 px-3.5 py-3.5 text-left rounded-xl transition-all ${isActive
                                             ? "bg-[#183153]/[0.055]"
-                                            : "hover:bg-gray-50"
+                                            : "hover:bg-[var(--surface-hover)]"
                                             }`}
                                     >
                                         <span
@@ -357,12 +357,12 @@ export default function AdminFeedbackPage() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between gap-2">
                                                 <p
-                                                    className={`text-[13.5px] truncate ${conv.unread_count > 0 ? "font-bold text-gray-900" : "font-semibold text-gray-700"
+                                                    className={`text-[13.5px] truncate ${conv.unread_count > 0 ? "font-bold text-[var(--text)]" : "font-semibold text-[var(--text)]"
                                                         }`}
                                                 >
                                                     {conv.users?.full_name ?? "Ẩn danh"}
                                                 </p>
-                                                <span className="text-[10.5px] text-gray-400 flex-shrink-0">
+                                                <span className="text-[10.5px] text-[var(--text-faint)] flex-shrink-0">
                                                     {formatDistanceToNow(new Date(conv.latest_created_at), {
                                                         locale: vi,
                                                         addSuffix: true,
@@ -370,10 +370,10 @@ export default function AdminFeedbackPage() {
                                                 </span>
                                             </div>
                                             {conv.users?.phone && (
-                                                <p className="text-[11px] text-gray-400 mt-0.5">{conv.users.phone}</p>
+                                                <p className="text-[11px] text-[var(--text-faint)] mt-0.5">{conv.users.phone}</p>
                                             )}
                                             <p
-                                                className={`text-xs mt-1.5 line-clamp-2 leading-relaxed ${conv.unread_count > 0 ? "text-gray-600" : "text-gray-400"
+                                                className={`text-xs mt-1.5 line-clamp-2 leading-relaxed ${conv.unread_count > 0 ? "text-[var(--text-muted)]" : "text-[var(--text-faint)]"
                                                     }`}
                                             >
                                                 {conv.latest_message}
@@ -381,14 +381,14 @@ export default function AdminFeedbackPage() {
                                         </div>
                                         <div className="flex-shrink-0 mt-1 flex flex-col items-end gap-1.5">
                                             {conv.total_count > 1 && (
-                                                <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">
+                                                <span className="text-[10px] font-semibold text-[var(--text-faint)] bg-[var(--surface-muted)] rounded-full px-1.5 py-0.5">
                                                     {conv.total_count}
                                                 </span>
                                             )}
                                             {conv.unread_count > 0 ? (
                                                 <span className="block w-2 h-2 rounded-full bg-[#e0533d]" />
                                             ) : (
-                                                <MailOpen className="w-3.5 h-3.5 text-gray-300" />
+                                                <MailOpen className="w-3.5 h-3.5 text-[var(--text-faint)]" />
                                             )}
                                         </div>
                                     </button>
@@ -399,38 +399,38 @@ export default function AdminFeedbackPage() {
                 </div>
 
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-4 px-4 py-3.5 border-t border-gray-100 flex-shrink-0">
+                    <div className="flex items-center justify-center gap-4 px-4 py-3.5 border-t border-[var(--border)] flex-shrink-0">
                         <button
                             onClick={() => setPage((p) => Math.max(1, p - 1))}
                             disabled={page <= 1}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 disabled:opacity-25 disabled:hover:bg-transparent transition-colors"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--surface-hover)] disabled:opacity-25 disabled:hover:bg-transparent transition-colors"
                         >
-                            <ChevronLeft className="w-4 h-4 text-gray-500" />
+                            <ChevronLeft className="w-4 h-4 text-[var(--text-muted)]" />
                         </button>
-                        <span className="text-xs font-medium text-gray-500">
+                        <span className="text-xs font-medium text-[var(--text-muted)]">
                             Trang {page}/{totalPages}
                         </span>
                         <button
                             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                             disabled={page >= totalPages}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 disabled:opacity-25 disabled:hover:bg-transparent transition-colors"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--surface-hover)] disabled:opacity-25 disabled:hover:bg-transparent transition-colors"
                         >
-                            <ChevronRight className="w-4 h-4 text-gray-500" />
+                            <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
                         </button>
                     </div>
                 )}
             </div>
 
-            <div className="hidden lg:flex w-[380px] border-l border-gray-100 flex-col min-h-0 bg-gray-50/40">
+            <div className="hidden lg:flex w-[380px] border-l border-[var(--border)] flex-col min-h-0 bg-[var(--surface-muted)]">
                 {!selectedConv ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-gray-300">
-                        <div className="w-16 h-16 rounded-2xl bg-white border border-gray-100 flex items-center justify-center mb-4 shadow-sm">
-                            <Mail className="w-7 h-7 text-gray-300" />
+                    <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-faint)]">
+                        <div className="w-16 h-16 rounded-2xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4 shadow-sm">
+                            <Mail className="w-7 h-7 text-[var(--text-faint)]" />
                         </div>
-                        <p className="text-sm text-gray-400">Chọn một thành viên để xem góp ý</p>
+                        <p className="text-sm text-[var(--text-faint)]">Chọn một thành viên để xem góp ý</p>
                     </div>
                 ) : (
-                    <div className="flex-1 flex flex-col min-h-0 bg-white">
+                    <div className="flex-1 flex flex-col min-h-0 bg-[var(--surface)]">
                         <DetailContent conv={selectedConv} />
                     </div>
                 )}
@@ -438,17 +438,17 @@ export default function AdminFeedbackPage() {
 
             {selectedConv && (
                 <div
-                    className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white animate-in slide-in-from-right duration-200"
+                    className="lg:hidden fixed inset-0 z-50 flex flex-col bg-[var(--surface)] animate-in slide-in-from-right duration-200"
                     style={{ paddingTop: "max(env(safe-area-inset-top), 44px)" }}
                 >
-                    <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-100 flex-shrink-0">
+                    <div className="flex items-center gap-2 px-3 py-3 border-b border-[var(--border)] flex-shrink-0">
                         <button
                             onClick={() => setSelectedConv(null)}
-                            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--surface-hover)] transition-colors"
                         >
-                            <ArrowLeft className="w-4.5 h-4.5 text-gray-600" />
+                            <ArrowLeft className="w-4.5 h-4.5 text-[var(--text-muted)]" />
                         </button>
-                        <span className="text-sm font-semibold text-gray-800">Chi tiết góp ý</span>
+                        <span className="text-sm font-semibold text-[var(--text)]">Chi tiết góp ý</span>
                     </div>
                     <div className="flex-1 flex flex-col min-h-0">
                         <DetailContent conv={selectedConv} />
@@ -463,7 +463,7 @@ export default function AdminFeedbackPage() {
                 >
                     <button
                         onClick={() => setLightboxUrl(null)}
-                        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] flex items-center justify-center transition-colors"
                     >
                         <X className="w-4.5 h-4.5 text-white" />
                     </button>

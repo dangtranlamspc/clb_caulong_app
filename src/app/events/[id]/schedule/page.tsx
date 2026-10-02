@@ -68,7 +68,7 @@ function TeamBadge({ index, size = "sm" }: { index: number | undefined; size?: "
     if (index === undefined) {
         return (
             <span
-                className={`${sizeCls} rounded-full flex items-center justify-center font-bold text-gray-500 bg-gray-200 flex-shrink-0`}
+                className={`${sizeCls} rounded-full flex items-center justify-center font-bold text-[var(--text-muted)] bg-[var(--border-strong)] flex-shrink-0`}
             >
                 ?
             </span>
@@ -95,7 +95,7 @@ function MineTag() {
 function TeamNameLabel({ name, isMine }: { name?: string; isMine: boolean }) {
     return (
         <span className="inline-flex items-center gap-1.5">
-            <span className="text-sm font-semibold text-gray-900">{name}</span>
+            <span className="text-sm font-semibold text-[var(--text)]">{name}</span>
             {isMine && <MineTag />}
         </span>
     );
@@ -111,14 +111,14 @@ function MatchScoreRow({ m }: { m: any }) {
     return (
         <div className="flex items-center justify-center gap-3 mt-1.5">
             <span
-                className={`text-xl font-black tabular-nums ${team1Won ? "text-emerald-600" : team2Won ? "text-red-400" : "text-gray-400"
+                className={`text-xl font-black tabular-nums ${team1Won ? "text-[var(--success)]" : team2Won ? "text-[var(--danger)]" : "text-[var(--text-faint)]"
                     }`}
             >
                 {m.team1_score}
             </span>
-            <span className="text-gray-300 font-semibold">-</span>
+            <span className="text-[var(--text-faint)] font-semibold">-</span>
             <span
-                className={`text-xl font-black tabular-nums ${team2Won ? "text-emerald-600" : team1Won ? "text-red-400" : "text-gray-400"
+                className={`text-xl font-black tabular-nums ${team2Won ? "text-[var(--success)]" : team1Won ? "text-[var(--danger)]" : "text-[var(--text-faint)]"
                     }`}
             >
                 {m.team2_score}
@@ -165,14 +165,14 @@ function MatchWinnerLine({ m, myTeamId }: { m: any; myTeamId?: string | null }) 
     const team2Won = m.team2_score > m.team1_score;
 
     if (!team1Won && !team2Won) {
-        return <p className="text-center text-[11px] font-bold text-gray-400 mt-1">Hoà</p>;
+        return <p className="text-center text-[11px] font-bold text-[var(--text-faint)] mt-1">Hoà</p>;
     }
 
     const winner = team1Won ? m.team1 : m.team2;
     const isMyTeamWinner = !!myTeamId && winner?.id === myTeamId;
 
     return (
-        <p className="text-center text-[15px] font-bold text-emerald-600 mt-1">
+        <p className="text-center text-[15px] font-bold text-[var(--success)] mt-1">
             {isMyTeamWinner ? "Đội bạn đã thắng" : `${winner?.name} thắng`}
         </p>
     );
@@ -192,11 +192,11 @@ function MatchCard({
 }) {
     const st = getMatchStatus(m);
     return (
-        <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm px-4 pt-3.5 pb-9">
+        <div className="relative bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm px-4 pt-3.5 pb-9">
             <div className="flex items-center justify-center gap-2.5 flex-wrap">
                 <TeamBadge index={teamIndexMap.get(m.team1?.id)} />
                 <TeamNameLabel name={m.team1?.name} isMine={!!myTeamId && m.team1?.id === myTeamId} />
-                <span className="text-xs text-gray-300 font-medium">vs</span>
+                <span className="text-xs text-[var(--text-faint)] font-medium">vs</span>
                 <TeamBadge index={teamIndexMap.get(m.team2?.id)} />
                 <TeamNameLabel name={m.team2?.name} isMine={!!myTeamId && m.team2?.id === myTeamId} />
             </div>
@@ -225,12 +225,12 @@ function PlayoffTeam({
 }) {
     return (
         <div
-            className={`flex-1 min-w-0 flex flex-col items-center text-center gap-1.5 rounded-xl py-3 px-1.5 transition-colors ${highlight ? "bg-emerald-50 ring-1 ring-emerald-200" : ""
+            className={`flex-1 min-w-0 flex flex-col items-center text-center gap-1.5 rounded-xl py-3 px-1.5 transition-colors ${highlight ? "bg-[var(--success-soft)] ring-1 ring-emerald-200" : ""
                 }`}
         >
             <TeamBadge index={index} size="lg" />
-            <p className="text-sm font-bold text-gray-900 leading-tight break-words w-full">{team?.name ?? "—"}</p>
-            {rank && <p className="text-[10px] font-semibold text-gray-400">Hạng {rank} vòng tròn</p>}
+            <p className="text-sm font-bold text-[var(--text)] leading-tight break-words w-full">{team?.name ?? "—"}</p>
+            {rank && <p className="text-[10px] font-semibold text-[var(--text-faint)]">Hạng {rank} vòng tròn</p>}
             {isMine && <MineTag />}
         </div>
     );
@@ -280,7 +280,7 @@ function PlayoffMatchCard({
     if (m.scheduled_at) metaParts.push(format(new Date(m.scheduled_at), "HH:mm, dd/MM", { locale: vi }));
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm overflow-hidden">
             <div className="px-4 py-2.5 flex items-center justify-between gap-2" style={{ background: cfg.bg }}>
                 <p className="text-sm font-extrabold text-white flex items-center gap-1.5">
                     <span className="text-base">{cfg.icon}</span>
@@ -305,21 +305,21 @@ function PlayoffMatchCard({
                         {completed ? (
                             <div className="flex items-center gap-1.5">
                                 <span
-                                    className={`text-2xl font-black tabular-nums ${team1Won ? "text-emerald-600" : team2Won ? "text-red-400" : "text-gray-400"
+                                    className={`text-2xl font-black tabular-nums ${team1Won ? "text-[var(--success)]" : team2Won ? "text-[var(--danger)]" : "text-[var(--text-faint)]"
                                         }`}
                                 >
                                     {m.team1_score}
                                 </span>
-                                <span className="text-gray-300 font-semibold">-</span>
+                                <span className="text-[var(--text-faint)] font-semibold">-</span>
                                 <span
-                                    className={`text-2xl font-black tabular-nums ${team2Won ? "text-emerald-600" : team1Won ? "text-red-400" : "text-gray-400"
+                                    className={`text-2xl font-black tabular-nums ${team2Won ? "text-[var(--success)]" : team1Won ? "text-[var(--danger)]" : "text-[var(--text-faint)]"
                                         }`}
                                 >
                                     {m.team2_score}
                                 </span>
                             </div>
                         ) : (
-                            <span className="text-xs font-black text-gray-300 tracking-widest">VS</span>
+                            <span className="text-xs font-black text-[var(--text-faint)] tracking-widest">VS</span>
                         )}
                     </div>
 
@@ -333,18 +333,18 @@ function PlayoffMatchCard({
                 </div>
 
                 {completed && (
-                    <div className="mt-3 rounded-xl bg-gray-50 border border-gray-100 px-3 py-2 text-center space-y-0.5">
+                    <div className="mt-3 rounded-xl bg-[var(--surface-muted)] border border-[var(--border)] px-3 py-2 text-center space-y-0.5">
                         {winner ? (
                             <>
-                                <p className="text-[13px] font-bold text-gray-900">
-                                    {cfg.topLabel}: <span className="text-emerald-600">{winner.name}</span>
+                                <p className="text-[13px] font-bold text-[var(--text)]">
+                                    {cfg.topLabel}: <span className="text-[var(--success)]">{winner.name}</span>
                                 </p>
-                                <p className="text-xs font-semibold text-gray-500">
+                                <p className="text-xs font-semibold text-[var(--text-muted)]">
                                     {cfg.botLabel}: {loser?.name}
                                 </p>
                             </>
                         ) : (
-                            <p className="text-xs font-bold text-gray-400">Hoà</p>
+                            <p className="text-xs font-bold text-[var(--text-faint)]">Hoà</p>
                         )}
                     </div>
                 )}
@@ -557,7 +557,7 @@ export default function TournamentSchedulePage() {
     };
 
     return (
-        <div className={`min-h-screen bg-[#F4F6FA] overflow-y-auto ${HIDE_SCROLLBAR_CLASS}`}>
+        <div className={`min-h-screen bg-[var(--bg)] overflow-y-auto ${HIDE_SCROLLBAR_CLASS}`}>
             <div
                 className="sticky top-0 z-30"
                 style={{
@@ -571,41 +571,41 @@ export default function TournamentSchedulePage() {
                 <div className="max-w-lg lg:max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 -ml-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                        className="p-2 -ml-2 hover:bg-[var(--surface-hover)] active:bg-[var(--border-strong)] rounded-lg transition-colors flex-shrink-0"
                     >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
                     </button>
-                    <h1 className="text-base font-bold text-gray-900 truncate flex-1">Lịch thi đấu</h1>
+                    <h1 className="text-base font-bold text-[var(--text)] truncate flex-1">Lịch thi đấu</h1>
                     <button
                         onClick={goToActivityEventsTab}
                         title="Về trang hoạt động"
                         aria-label="Về trang hoạt động"
-                        className="p-2 -mr-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                        className="p-2 -mr-2 hover:bg-[var(--surface-hover)] active:bg-[var(--border-strong)] rounded-lg transition-colors flex-shrink-0"
                     >
-                        <Home className="w-5 h-5 text-gray-600" />
+                        <Home className="w-5 h-5 text-[var(--text-muted)]" />
                     </button>
                 </div>
             </div>
 
             <div className="max-w-lg lg:max-w-3xl mx-auto px-4 pt-4 pb-8">
                 {loading ? (
-                    <div className="flex items-center justify-center py-20 text-gray-400 text-sm gap-2">
+                    <div className="flex items-center justify-center py-20 text-[var(--text-faint)] text-sm gap-2">
                         <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                     </div>
                 ) : rounds.length === 0 ? (
-                    <div className="bg-white rounded-2xl py-16 text-center border border-dashed border-gray-200">
-                        <CalendarDays className="w-9 h-9 mx-auto text-gray-200 mb-3" />
-                        <p className="text-gray-400 text-sm">Chưa có lịch thi đấu</p>
+                    <div className="bg-[var(--surface)] rounded-2xl py-16 text-center border border-dashed border-[var(--border)]">
+                        <CalendarDays className="w-9 h-9 mx-auto text-[var(--text-faint)] mb-3" />
+                        <p className="text-[var(--text-faint)] text-sm">Chưa có lịch thi đấu</p>
                     </div>
                 ) : (
                     <>
                         {hasPlayoff && (
-                            <div className="flex p-1 mb-4 bg-gray-200/70 rounded-full">
+                            <div className="flex p-1 mb-4 bg-[var(--border-strong)]/70 rounded-full">
                                 <button
                                     onClick={() => setTab("round")}
                                     className={`flex-1 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === "round"
-                                        ? "bg-white text-gray-900 shadow-sm"
-                                        : "text-gray-500"
+                                        ? "bg-[var(--surface)] text-[var(--text)] shadow-sm"
+                                        : "text-[var(--text-muted)]"
                                         }`}
                                 >
                                     Vòng tròn
@@ -613,8 +613,8 @@ export default function TournamentSchedulePage() {
                                 <button
                                     onClick={() => setTab("playoff")}
                                     className={`relative flex-1 py-2 rounded-full text-sm font-semibold transition-all inline-flex items-center justify-center gap-1.5 ${activeTab === "playoff"
-                                        ? "bg-white text-gray-900 shadow-sm"
-                                        : "text-gray-500"
+                                        ? "bg-[var(--surface)] text-[var(--text)] shadow-sm"
+                                        : "text-[var(--text-muted)]"
                                         }`}
                                 >
                                     <Trophy className="w-3.5 h-3.5" />
@@ -640,7 +640,7 @@ export default function TournamentSchedulePage() {
                                                     onClick={() => setActiveRound(r.round_number)}
                                                     className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${isActive
                                                         ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
-                                                        : "bg-white text-gray-500 border border-gray-200"
+                                                        : "bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--border)]"
                                                         }`}
                                                 >
                                                     Lượt {r.round_number}
@@ -657,12 +657,12 @@ export default function TournamentSchedulePage() {
                                 </div>
 
                                 {roundDateLabel && (
-                                    <p className="text-sm font-bold text-gray-900 mb-3 capitalize">{roundDateLabel}</p>
+                                    <p className="text-sm font-bold text-[var(--text)] mb-3 capitalize">{roundDateLabel}</p>
                                 )}
 
                                 {currentRound?.bye_team_name && (
-                                    <div className="mb-3 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
-                                        Nghỉ: <span className="font-semibold text-gray-600">{currentRound.bye_team_name}</span>
+                                    <div className="mb-3 text-xs text-[var(--text-faint)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl px-3 py-2">
+                                        Nghỉ: <span className="font-semibold text-[var(--text-muted)]">{currentRound.bye_team_name}</span>
                                     </div>
                                 )}
 
@@ -674,7 +674,7 @@ export default function TournamentSchedulePage() {
                                                     className="w-1 h-4 rounded-full flex-shrink-0"
                                                     style={{ background: COURT_BAR_COLORS[idx % COURT_BAR_COLORS.length] }}
                                                 />
-                                                <p className="text-sm font-bold text-gray-900">Sân {courtNumber}</p>
+                                                <p className="text-sm font-bold text-[var(--text)]">Sân {courtNumber}</p>
                                             </div>
                                             <div className="space-y-2">
                                                 {matches.map((m: any) => (
@@ -694,7 +694,7 @@ export default function TournamentSchedulePage() {
                                         <div>
                                             <div className="flex items-center gap-2 mb-2">
                                                 <span className="w-1 h-4 rounded-full flex-shrink-0 bg-gray-300" />
-                                                <p className="text-sm font-bold text-gray-900">Chưa xếp sân</p>
+                                                <p className="text-sm font-bold text-[var(--text)]">Chưa xếp sân</p>
                                             </div>
                                             <div className="space-y-2">
                                                 {noCourt.map((m: any) => (

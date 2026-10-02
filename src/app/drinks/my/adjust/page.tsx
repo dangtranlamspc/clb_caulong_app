@@ -31,9 +31,9 @@ type MyRequest = {
 const formatVND = (n: number) => n.toLocaleString("vi-VN") + " đ";
 
 const REQ_STATUS_BADGE: Record<string, string> = {
-    pending: "bg-amber-100 text-amber-700",
-    approved: "bg-emerald-100 text-emerald-700",
-    rejected: "bg-red-100 text-red-700",
+    pending: "bg-[var(--warning-soft)] text-[var(--warning)]",
+    approved: "bg-[var(--success-soft)] text-[var(--success)]",
+    rejected: "bg-[var(--danger-soft)] text-[var(--danger)]",
 };
 const REQ_STATUS_LABEL: Record<string, string> = {
     pending: "Chờ duyệt",
@@ -160,16 +160,16 @@ export default function AdjustMyDrinksPage() {
     return (
         <div className="mx-auto max-w-md space-y-5 p-4 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
             <div className="flex items-center gap-2">
-                <Link href="/drinks/my" className="rounded-lg p-2 hover:bg-gray-100">
+                <Link href="/drinks/my" className="rounded-lg p-2 hover:bg-[var(--surface-hover)]">
                     <ArrowLeft className="h-5 w-5" />
                 </Link>
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900">Điều chỉnh kho nước</h1>
-                    <p className="text-sm text-gray-500">Tự cập nhật số lượng nước bạn đang sở hữu.</p>
+                    <h1 className="text-xl font-bold text-[var(--text)]">Điều chỉnh kho nước</h1>
+                    <p className="text-sm text-[var(--text-muted)]">Tự cập nhật số lượng nước bạn đang sở hữu.</p>
                 </div>
             </div>
 
-            <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
+            <div className="flex gap-1 rounded-xl bg-[var(--surface-muted)] p-1">
                 {[
                     { v: "deduct", label: "Tự trừ nước" },
                     { v: "add", label: "Tự cộng nước" },
@@ -177,7 +177,7 @@ export default function AdjustMyDrinksPage() {
                     <button
                         key={t.v}
                         onClick={() => setTab(t.v as any)}
-                        className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${tab === t.v ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
+                        className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${tab === t.v ? "bg-[var(--surface)] shadow-sm text-[var(--text)]" : "text-[var(--text-muted)]"
                             }`}
                     >
                         {t.label}
@@ -186,7 +186,7 @@ export default function AdjustMyDrinksPage() {
             </div>
 
             {(tab === "add" || tab === "deduct") && (
-                <div className="flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-xs text-sky-700">
+                <div className="flex items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] px-3 py-2.5 text-xs text-[var(--primary)]">
                     <Clock className="h-4 w-4 flex-shrink-0" />
                     {tab === "add"
                         ? "Yêu cầu thêm nước sẽ được gửi tới admin duyệt trước khi cộng vào kho của bạn."
@@ -195,13 +195,13 @@ export default function AdjustMyDrinksPage() {
             )}
 
             {loading && (
-                <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center text-sm text-gray-400">
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--text-faint)]">
                     Đang tải...
                 </div>
             )}
 
             {!loading && inventory.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-400">
+                <div className="rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--surface)] p-8 text-center text-sm text-[var(--text-faint)]">
                     Bạn chưa sở hữu loại nước nào.
                     {tab === "add" && ' Bấm "Thêm nước" bên dưới để bắt đầu.'}
                 </div>
@@ -212,22 +212,22 @@ export default function AdjustMyDrinksPage() {
                     {inventory.map((item) => (
                         <div
                             key={item.drink_id}
-                            className="space-y-2.5 rounded-2xl border border-gray-100 bg-white p-3"
+                            className="space-y-2.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                                <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--surface-muted)]">
                                     {item.drinks.image_url ? (
                                         <img src={item.drinks.image_url} alt={item.drinks.name} className="h-full w-full object-cover" />
                                     ) : (
                                         <div className="flex h-full w-full items-center justify-center">
-                                            <GlassWater className="h-5 w-5 text-gray-300" />
+                                            <GlassWater className="h-5 w-5 text-[var(--text-faint)]" />
                                         </div>
                                     )}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-semibold text-gray-900">{item.drinks.name}</p>
-                                    <p className="text-xs text-gray-400">
-                                        Đang sở hữu: <span className="font-medium text-gray-600">{item.quantity}</span>
+                                    <p className="truncate text-sm font-semibold text-[var(--text)]">{item.drinks.name}</p>
+                                    <p className="text-xs text-[var(--text-faint)]">
+                                        Đang sở hữu: <span className="font-medium text-[var(--text-muted)]">{item.quantity}</span>
                                     </p>
                                 </div>
                                 <input
@@ -236,7 +236,7 @@ export default function AdjustMyDrinksPage() {
                                     placeholder="SL"
                                     value={amounts[item.drink_id] ?? ""}
                                     onChange={(e) => setAmounts((prev) => ({ ...prev, [item.drink_id]: e.target.value }))}
-                                    className="w-16 rounded-lg border border-gray-200 px-2 py-2 text-center text-sm focus:border-cyan-500 focus:outline-none"
+                                    className="w-16 rounded-lg border border-[var(--border)] px-2 py-2 text-center text-sm focus:border-cyan-500 focus:outline-none"
                                 />
                                 {tab === "deduct" ? (
                                     <button
@@ -262,7 +262,7 @@ export default function AdjustMyDrinksPage() {
                                 placeholder="Ghi chú (tuỳ chọn)..."
                                 value={notes[item.drink_id] ?? ""}
                                 onChange={(e) => setNotes((prev) => ({ ...prev, [item.drink_id]: e.target.value }))}
-                                className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs focus:border-cyan-500 focus:outline-none"
+                                className="w-full rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-xs focus:border-cyan-500 focus:outline-none"
                             />
                         </div>
                     ))}
@@ -280,33 +280,33 @@ export default function AdjustMyDrinksPage() {
 
 
             <div className="space-y-2.5">
-                <h2 className="text-sm font-bold text-gray-900">Yêu cầu gần đây</h2>
+                <h2 className="text-sm font-bold text-[var(--text)]">Yêu cầu gần đây</h2>
                 {loadingRequests && (
-                    <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center text-xs text-gray-400">
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-center text-xs text-[var(--text-faint)]">
                         Đang tải...
                     </div>
                 )}
                 {!loadingRequests && visibleRequests.length === 0 && (
-                    <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-4 text-center text-xs text-gray-400">
+                    <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-4 text-center text-xs text-[var(--text-faint)]">
                         {tab === "add"
                             ? "Bạn chưa gửi yêu cầu thêm nước nào."
                             : "Bạn chưa gửi yêu cầu trừ nước nào."}
                     </div>
                 )}
                 {!loadingRequests && visibleRequests.map((r) => (
-                    <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3">
-                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                    <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3">
+                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--surface-muted)]">
                             {r.drinks?.image_url ? (
                                 <img src={r.drinks.image_url} alt={r.drinks?.name} className="h-full w-full object-cover" />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center">
-                                    <GlassWater className="h-4 w-4 text-gray-300" />
+                                    <GlassWater className="h-4 w-4 text-[var(--text-faint)]" />
                                 </div>
                             )}
                         </div>
                         <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                                <p className="truncate text-sm font-semibold text-gray-900">{r.drinks?.name}</p>
+                                <p className="truncate text-sm font-semibold text-[var(--text)]">{r.drinks?.name}</p>
                                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-0.5 ${REQ_STATUS_BADGE[r.status]}`}>
                                     {r.status === "pending" && <Clock className="w-2.5 h-2.5" />}
                                     {r.status === "approved" && <Check className="w-2.5 h-2.5" />}
@@ -314,11 +314,11 @@ export default function AdjustMyDrinksPage() {
                                     {REQ_STATUS_LABEL[r.status]}
                                 </span>
                             </div>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-[var(--text-faint)]">
                                 Số lượng: {r.quantity} · {new Date(r.created_at).toLocaleDateString("vi-VN")}
                             </p>
                             {r.status === "rejected" && r.reject_reason && (
-                                <p className="text-xs text-red-500 mt-0.5">Lý do: {r.reject_reason}</p>
+                                <p className="text-xs text-[var(--danger)] mt-0.5">Lý do: {r.reject_reason}</p>
                             )}
                         </div>
                     </div>
@@ -389,75 +389,75 @@ function AddNewDrinkModal({
                 transition={{ duration: 0.2 }}
             />
             <motion.div
-                className="relative w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl"
+                className="relative w-full max-w-md rounded-2xl bg-[var(--surface)] p-5 shadow-2xl"
                 initial={{ opacity: 0, scale: 0.92, y: 16 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.92, y: 16 }}
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
                 <div className="mb-4 flex items-center justify-between">
-                    <h3 className="font-bold text-gray-900">Thêm loại nước mới</h3>
-                    <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400">
+                    <h3 className="font-bold text-[var(--text)]">Thêm loại nước mới</h3>
+                    <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--text-faint)]">
                         <X className="h-4 w-4" />
                     </button>
                 </div>
 
-                <div className="mb-3.5 flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-xs text-sky-700">
+                <div className="mb-3.5 flex items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] px-3 py-2.5 text-xs text-[var(--primary)]">
                     <Clock className="h-4 w-4 flex-shrink-0" />
                     Yêu cầu sẽ được gửi tới admin duyệt trước khi cộng vào kho.
                 </div>
 
                 {options.length === 0 ? (
-                    <p className="py-6 text-center text-sm text-gray-400">
+                    <p className="py-6 text-center text-sm text-[var(--text-faint)]">
                         Bạn đã sở hữu tất cả các loại nước trong danh mục.
                     </p>
                 ) : (
                     <div className="space-y-3.5">
                         <div>
-                            <label className="text-xs font-semibold text-gray-500">Chọn loại nước</label>
+                            <label className="text-xs font-semibold text-[var(--text-muted)]">Chọn loại nước</label>
                             <div className="mt-1.5 grid max-h-56 grid-cols-3 gap-2 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 {options.map((d) => (
                                     <button
                                         key={d.id}
                                         onClick={() => setDrinkId(d.id)}
-                                        className={`flex flex-col items-center gap-1 rounded-xl border p-2 text-center transition-colors ${drinkId === d.id ? "border-cyan-500 bg-cyan-50" : "border-gray-200"
+                                        className={`flex flex-col items-center gap-1 rounded-xl border p-2 text-center transition-colors ${drinkId === d.id ? "border-cyan-500 bg-cyan-50" : "border-[var(--border)]"
                                             }`}
                                     >
-                                        <div className="h-12 w-12 overflow-hidden rounded-lg bg-gray-100">
+                                        <div className="h-12 w-12 overflow-hidden rounded-lg bg-[var(--surface-muted)]">
                                             {d.image_url ? (
                                                 <img src={d.image_url} alt={d.name} className="h-full w-full object-cover" />
                                             ) : (
                                                 <div className="flex h-full w-full items-center justify-center">
-                                                    <GlassWater className="h-5 w-5 text-gray-300" />
+                                                    <GlassWater className="h-5 w-5 text-[var(--text-faint)]" />
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="line-clamp-2 text-[11px] font-medium text-gray-700">{d.name}</p>
-                                        <p className="text-[10px] text-gray-400">{formatVND(d.price)}</p>
+                                        <p className="line-clamp-2 text-[11px] font-medium text-[var(--text)]">{d.name}</p>
+                                        <p className="text-[10px] text-[var(--text-faint)]">{formatVND(d.price)}</p>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold text-gray-500">Số lượng</label>
+                            <label className="text-xs font-semibold text-[var(--text-muted)]">Số lượng</label>
                             <input
                                 type="number"
                                 min={1}
                                 value={quantity}
                                 onChange={(e) => setQuantity(e.target.value)}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+                                className="mt-1 w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm"
                                 placeholder="Nhập số lượng"
                             />
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold text-gray-500">Ghi chú (tuỳ chọn)</label>
+                            <label className="text-xs font-semibold text-[var(--text-muted)]">Ghi chú (tuỳ chọn)</label>
                             <input
                                 type="text"
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+                                className="mt-1 w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm"
                                 placeholder="VD: Mua thêm để dự trữ"
                             />
                         </div>

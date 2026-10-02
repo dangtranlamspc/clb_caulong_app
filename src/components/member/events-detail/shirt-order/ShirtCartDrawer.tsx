@@ -62,11 +62,11 @@ export function ShirtCartDrawer({
     <div
       className={`fixed inset-0 z-[99998] flex flex-col justify-end transition-opacity duration-300 ease-out ${visible ? "opacity-100" : "opacity-0"
         }`}
-      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
+      style={{ background: "var(--overlay)", backdropFilter: "blur(2px)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className={`w-full bg-white rounded-t-2xl transition-transform duration-300 ease-out ${visible ? "translate-y-0" : "translate-y-full"
+        className={`w-full bg-[var(--surface)] rounded-t-2xl transition-transform duration-300 ease-out ${visible ? "translate-y-0" : "translate-y-full"
           }`}
         style={{
           maxHeight: "88vh",
@@ -75,62 +75,62 @@ export function ShirtCartDrawer({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-white">
-          <div className="w-9 h-1 rounded-full bg-gray-200" />
+        <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-[var(--surface)]">
+          <div className="w-9 h-1 rounded-full bg-[var(--border-strong)]" />
         </div>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 sticky top-3 bg-white z-10">
-          <p className="text-base font-bold text-gray-900">Giỏ hàng của bạn</p>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)] sticky top-3 bg-[var(--surface)] z-10">
+          <p className="text-base font-bold text-[var(--text)]">Giỏ hàng của bạn</p>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
           >
-            <XIcon className="w-4 h-4 text-gray-500" />
+            <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
           </button>
         </div>
 
         <div className="px-5 py-4 space-y-4">
           {totalCartCount === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-10">Chưa có sản phẩm nào</p>
+            <p className="text-sm text-[var(--text-faint)] text-center py-10">Chưa có sản phẩm nào</p>
           ) : (
             <>
               {cart.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
                     Trong giỏ ({cart.length})
                   </p>
                   {cart.map((item) => (
                     <div
                       key={item.cart_id}
-                      className="flex gap-3 rounded-xl border border-amber-100 bg-amber-50/40 p-3"
+                      className="flex gap-3 rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] p-3"
                     >
-                      <div className="w-14 h-14 rounded-lg bg-white overflow-hidden flex-shrink-0 flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-lg bg-[var(--surface)] overflow-hidden flex-shrink-0 flex items-center justify-center">
                         {item.image ? (
                           <img src={item.image} className="w-full h-full object-cover" />
                         ) : (
-                          <Shirt className="w-5 h-5 text-gray-300" />
+                          <Shirt className="w-5 h-5 text-[var(--text-faint)]" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
+                          <p className="text-sm font-semibold text-[var(--text)] truncate">
                             {item.shirt_type_name}
                           </p>
                           <button
                             onClick={() => removeCartItem(item.cart_id)}
-                            className="text-gray-300 hover:text-red-500 flex-shrink-0"
+                            className="text-[var(--text-faint)] hover:text-[var(--danger)] flex-shrink-0"
                           >
                             <XIcon className="w-4 h-4" />
                           </button>
                         </div>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-[var(--text-faint)] mt-0.5">
                           {item.gender === "nu" ? "Nữ" : "Nam"} · Size {item.size}
                           {item.color_name ? ` · ${item.color_name}` : ""}
                         </p>
                         <div className="flex items-center justify-between mt-1.5">
-                          <div className="inline-flex items-center rounded-lg border border-gray-200 overflow-hidden">
+                          <div className="inline-flex items-center rounded-lg border border-[var(--border)] overflow-hidden">
                             <button
                               onClick={() => changeCartQty(item.cart_id, -1)}
-                              className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-xs"
+                              className="w-6 h-6 flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-hover)] text-xs"
                             >
                               −
                             </button>
@@ -139,12 +139,12 @@ export function ShirtCartDrawer({
                             </span>
                             <button
                               onClick={() => changeCartQty(item.cart_id, 1)}
-                              className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-xs"
+                              className="w-6 h-6 flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-hover)] text-xs"
                             >
                               +
                             </button>
                           </div>
-                          <span className="text-sm font-bold text-gray-900">
+                          <span className="text-sm font-bold text-[var(--text)]">
                             {fmt(item.unit_price * item.quantity)}
                           </span>
                         </div>
@@ -152,15 +152,15 @@ export function ShirtCartDrawer({
                     </div>
                   ))}
                   <div className="flex items-center justify-between px-1 pt-1">
-                    <span className="text-sm text-gray-500">Tạm tính</span>
-                    <span className="font-bold text-gray-900">{fmt(cartTotal)}</span>
+                    <span className="text-sm text-[var(--text-muted)]">Tạm tính</span>
+                    <span className="font-bold text-[var(--text)]">{fmt(cartTotal)}</span>
                   </div>
                 </div>
               )}
 
               {typeGroups.length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <div className="space-y-2 pt-2 border-t border-[var(--border)]">
+                  <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
                     Đã đặt ({myRegistrations.length})
                   </p>
                   {typeGroups.map((group) => {
@@ -189,20 +189,20 @@ export function ShirtCartDrawer({
                     return (
                       <div
                         key={group.shirt_type_id}
-                        className="flex gap-3 rounded-xl border border-gray-100 p-3"
+                        className="flex gap-3 rounded-xl border border-[var(--border)] p-3"
                       >
-                        <div className="w-14 h-14 rounded-lg bg-gray-50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-lg bg-[var(--surface-muted)] overflow-hidden flex-shrink-0 flex items-center justify-center">
                           {images[0] ? (
                             <img src={images[0]} className="w-full h-full object-cover" />
                           ) : (
-                            <Shirt className="w-5 h-5 text-gray-300" />
+                            <Shirt className="w-5 h-5 text-[var(--text-faint)]" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-semibold text-gray-900 truncate">
+                            <p className="text-sm font-semibold text-[var(--text)] truncate">
                               {type?.name ?? "—"}{" "}
-                              <span className="text-gray-400 font-normal">× {groupQuantity}</span>
+                              <span className="text-[var(--text-faint)] font-normal">× {groupQuantity}</span>
                             </p>
                           </div>
 
@@ -218,17 +218,17 @@ export function ShirtCartDrawer({
                                   key={r.id}
                                   className="flex items-center justify-between gap-2 text-xs"
                                 >
-                                  <span className="text-gray-400">
+                                  <span className="text-[var(--text-faint)]">
                                     {r.gender === "nu" ? "Nữ" : "Nam"} · Size {r.size}
                                     {r.color_name ? ` · ${r.color_name}` : ""}
                                   </span>
                                   <div className="flex items-center gap-1.5 flex-shrink-0">
                                     {canEditQty ? (
-                                      <div className="inline-flex items-center rounded-lg border border-gray-200 overflow-hidden">
+                                      <div className="inline-flex items-center rounded-lg border border-[var(--border)] overflow-hidden">
                                         <button
                                           onClick={() => changeRegistrationQty(r.id, -1)}
                                           disabled={isUpdating || r.quantity <= 1}
-                                          className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-xs disabled:opacity-30"
+                                          className="w-6 h-6 flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-hover)] text-xs disabled:opacity-30"
                                         >
                                           −
                                         </button>
@@ -242,21 +242,21 @@ export function ShirtCartDrawer({
                                         <button
                                           onClick={() => changeRegistrationQty(r.id, 1)}
                                           disabled={isUpdating}
-                                          className="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-xs disabled:opacity-30"
+                                          className="w-6 h-6 flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-hover)] text-xs disabled:opacity-30"
                                         >
                                           +
                                         </button>
                                       </div>
                                     ) : (
-                                      <span className="text-gray-400">× {r.quantity}</span>
+                                      <span className="text-[var(--text-faint)]">× {r.quantity}</span>
                                     )}
-                                    <span className="text-gray-500 font-medium">
+                                    <span className="text-[var(--text-muted)] font-medium">
                                       {fmt(priceOf(r))}
                                     </span>
                                     {canEditQty && (
                                       <button
                                         onClick={() => handleCancel(r)}
-                                        className="text-gray-300 hover:text-red-500"
+                                        className="text-[var(--text-faint)] hover:text-[var(--danger)]"
                                       >
                                         <XIcon className="w-3.5 h-3.5" />
                                       </button>
@@ -267,20 +267,20 @@ export function ShirtCartDrawer({
                             })}
                           </div>
 
-                          <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-gray-50">
-                            <span className="text-sm font-bold text-gray-900">
+                          <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-[var(--border)]">
+                            <span className="text-sm font-bold text-[var(--text)]">
                               {fmt(groupTotal)}
                             </span>
                             {allPaid ? (
-                              <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                              <span className="text-[11px] font-semibold text-[var(--success)] bg-[var(--success-soft)] px-2 py-0.5 rounded-full">
                                 Đã thanh toán
                               </span>
                             ) : anyPending ? (
-                              <span className="text-[11px] font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
+                              <span className="text-[11px] font-semibold text-[var(--warning)] bg-[var(--warning-soft)] px-2 py-0.5 rounded-full">
                                 Chờ xác nhận
                               </span>
                             ) : anyUnpaid ? (
-                              <span className="text-[11px] font-semibold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+                              <span className="text-[11px] font-semibold text-[var(--text-faint)] bg-[var(--surface-muted)] px-2 py-0.5 rounded-full">
                                 Chưa thanh toán
                               </span>
                             ) : null}
@@ -290,8 +290,8 @@ export function ShirtCartDrawer({
                     );
                   })}
                   <div className="flex items-center justify-between px-1 pt-1">
-                    <span className="text-sm text-gray-500">Tổng đã đặt</span>
-                    <span className="font-bold text-gray-900">{fmt(subtotal)}</span>
+                    <span className="text-sm text-[var(--text-muted)]">Tổng đã đặt</span>
+                    <span className="font-bold text-[var(--text)]">{fmt(subtotal)}</span>
                   </div>
                 </div>
               )}
@@ -307,9 +307,9 @@ export function ShirtCartDrawer({
               )}
 
               {cart.length > 0 && myRegistrations.length > 0 && (
-                <div className="flex items-center justify-between px-1 pt-2 border-t border-gray-100">
-                  <span className="text-sm text-gray-600 font-medium">Tổng cộng</span>
-                  <span className="text-lg font-black text-gray-900">{fmt(grandTotal)}</span>
+                <div className="flex items-center justify-between px-1 pt-2 border-t border-[var(--border)]">
+                  <span className="text-sm text-[var(--text-muted)] font-medium">Tổng cộng</span>
+                  <span className="text-lg font-black text-[var(--text)]">{fmt(grandTotal)}</span>
                 </div>
               )}
             </>

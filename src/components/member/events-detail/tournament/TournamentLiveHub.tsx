@@ -146,16 +146,16 @@ export function TournamentLiveHub({ activity, myStatus }: { activity: any; mySta
             key: "results",
             label: "Kết quả",
             icon: CheckCircle2,
-            iconBg: "bg-emerald-50",
-            iconColor: "text-emerald-600",
+            iconBg: "bg-[var(--success-soft)]",
+            iconColor: "text-[var(--success)]",
             path: `/events/${activity.id}/results`,
         },
         {
             key: "standings",
             label: "Bảng xếp hạng",
             icon: BarChart3,
-            iconBg: "bg-violet-50",
-            iconColor: "text-violet-600",
+            iconBg: "bg-[var(--purple-soft)]",
+            iconColor: "text-[var(--purple)]",
             path: `/events/${activity.id}/standings`,
         },
         ...(hasTeamAssigned
@@ -164,8 +164,8 @@ export function TournamentLiveHub({ activity, myStatus }: { activity: any; mySta
                     key: "my-team",
                     label: "Đội của tôi",
                     icon: Users2,
-                    iconBg: "bg-amber-50",
-                    iconColor: "text-amber-600",
+                    iconBg: "bg-[var(--warning-soft)]",
+                    iconColor: "text-[var(--warning)]",
                     path: `/events/${activity.id}/my-team`,
                 },
             ]
@@ -175,14 +175,14 @@ export function TournamentLiveHub({ activity, myStatus }: { activity: any; mySta
     return (
         <div className="space-y-4">
 
-            <section className="overflow-hidden rounded-[24px] border border-gray-100 bg-white p-4 shadow-sm">
+            <section className="overflow-hidden rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
                 <div className="flex items-center gap-3">
                     <div
-                        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${ended ? "bg-slate-100" : "bg-emerald-100"
+                        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${ended ? "bg-[var(--surface-muted)]" : "bg-[var(--success-soft)]"
                             }`}
                     >
                         {ended ? (
-                            <Trophy className="h-5 w-5 text-slate-500" />
+                            <Trophy className="h-5 w-5 text-[var(--text-muted)]" />
                         ) : (
                             <span className="relative flex h-3 w-3">
                                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -192,10 +192,10 @@ export function TournamentLiveHub({ activity, myStatus }: { activity: any; mySta
                     </div>
 
                     <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-black ${ended ? "text-slate-700" : "text-emerald-700"}`}>
+                        <p className={`text-sm font-black ${ended ? "text-[var(--text-muted)]" : "text-[var(--success)]"}`}>
                             {ended ? "Đã kết thúc" : "Đang thi đấu"}
                         </p>
-                        <p className="mt-0.5 text-xs text-gray-400">
+                        <p className="mt-0.5 text-xs text-[var(--text-faint)]">
                             {loading
                                 ? "Đang tải..."
                                 : summary
@@ -206,7 +206,7 @@ export function TournamentLiveHub({ activity, myStatus }: { activity: any; mySta
                 </div>
 
                 {!loading && summary && summary.total > 0 && (
-                    <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[var(--surface-muted)]">
                         <div
                             className={`h-full rounded-full transition-all ${ended ? "bg-slate-400" : "bg-emerald-500"
                                 }`}
@@ -218,16 +218,16 @@ export function TournamentLiveHub({ activity, myStatus }: { activity: any; mySta
                 {!loading && myOngoingMatch && (
                     <button
                         onClick={() => router.push(`/events/${activity.id}/schedule`)}
-                        className="mt-3 w-full flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-left transition hover:bg-amber-100"
+                        className="mt-3 w-full flex items-center gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] px-3.5 py-3 text-left transition hover:bg-[var(--warning-soft)]"
                     >
                         <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white">
                             <Swords className="h-4 w-4" />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="text-sm font-black text-amber-800">
+                            <p className="text-sm font-black text-[var(--warning)]">
                                 Đội bạn đang thi đấu!
                             </p>
-                            <p className="mt-0.5 truncate text-[11px] text-amber-600">
+                            <p className="mt-0.5 truncate text-[11px] text-[var(--warning)]">
                                 {summary?.isPlayoff && summary.labelByMatchId.get(myOngoingMatch.id)
                                     ? `${summary.labelByMatchId.get(myOngoingMatch.id)} · `
                                     : ""}
@@ -235,36 +235,36 @@ export function TournamentLiveHub({ activity, myStatus }: { activity: any; mySta
                                 {myOngoingMatch.court_number ? ` · Sân ${myOngoingMatch.court_number}` : ""}
                             </p>
                         </div>
-                        <ChevronRight className="h-4 w-4 flex-shrink-0 text-amber-400" />
+                        <ChevronRight className="h-4 w-4 flex-shrink-0 text-[var(--warning)]" />
                     </button>
                 )}
             </section>
 
             {!hasTeamAssigned && (
-                <div className="flex items-start gap-2.5 rounded-2xl bg-gray-50 border border-gray-100 px-3.5 py-3">
-                    <Users2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
-                    <p className="text-[11px] leading-relaxed text-gray-500">
+                <div className="flex items-start gap-2.5 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)] px-3.5 py-3">
+                    <Users2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--text-faint)]" />
+                    <p className="text-[11px] leading-relaxed text-[var(--text-muted)]">
                         Bạn chưa được xếp vào đội thi đấu nào. BTC sẽ sớm cập nhật danh sách đội.
                     </p>
                 </div>
             )}
 
-            <section className="overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-sm divide-y divide-gray-50">
+            <section className="overflow-hidden rounded-[24px] border border-[var(--border)] bg-[var(--surface)] shadow-sm divide-y divide-[var(--border)]">
                 {menuItems.map((item) => {
                     const Icon = item.icon;
                     return (
                         <button
                             key={item.key}
                             onClick={() => router.push(item.path)}
-                            className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-gray-50 active:bg-gray-100"
+                            className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-[var(--surface-hover)] active:bg-[var(--surface-hover)]"
                         >
                             <div
                                 className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${item.iconBg}`}
                             >
                                 <Icon className={`h-5 w-5 ${item.iconColor}`} />
                             </div>
-                            <span className="flex-1 text-sm font-bold text-gray-800">{item.label}</span>
-                            <ChevronRight className="h-4 w-4 text-gray-300" />
+                            <span className="flex-1 text-sm font-bold text-[var(--text)]">{item.label}</span>
+                            <ChevronRight className="h-4 w-4 text-[var(--text-faint)]" />
                         </button>
                     );
                 })}

@@ -82,15 +82,15 @@ export default function OfflineEventFormPage({
 
     if (loading)
         return (
-            <div className="max-w-lg mx-auto p-8 text-center text-gray-400">Đang tải...</div>
+            <div className="max-w-lg mx-auto p-8 text-center text-[var(--text-faint)]">Đang tải...</div>
         );
 
     return (
         <div className="max-w-lg mx-auto space-y-4 p-6">
-            <h1 className="text-xl font-bold text-gray-900">🔥 Offline / BBQ & Giao lưu</h1>
+            <h1 className="text-xl font-bold text-[var(--text)]">🔥 Offline / BBQ & Giao lưu</h1>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tiêu đề</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">Tiêu đề</label>
                 <input
                     className="input-field"
                     value={form.title}
@@ -99,7 +99,7 @@ export default function OfflineEventFormPage({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Địa điểm</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">Địa điểm</label>
                 <input
                     className="input-field"
                     value={form.location}
@@ -109,7 +109,7 @@ export default function OfflineEventFormPage({
 
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1">
                         Ngày diễn ra
                     </label>
                     <input
@@ -120,7 +120,7 @@ export default function OfflineEventFormPage({
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1">
                         Số người tối đa
                     </label>
                     <input
@@ -134,7 +134,7 @@ export default function OfflineEventFormPage({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phí / người</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">Phí / người</label>
                 <input
                     type="number"
                     className="input-field"
@@ -145,7 +145,7 @@ export default function OfflineEventFormPage({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">
                     Mô tả (tuỳ chọn)
                 </label>
                 <textarea
@@ -157,7 +157,7 @@ export default function OfflineEventFormPage({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">Trạng thái</label>
                 <select
                     className="input-field"
                     value={form.status}

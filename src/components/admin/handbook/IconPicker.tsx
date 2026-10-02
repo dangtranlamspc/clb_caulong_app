@@ -52,12 +52,12 @@ export function IconPicker({ value, onChange }: { value?: string; onChange: (nam
     return (
         <div>
             <div className="relative mb-2">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
                 <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Tìm icon... (vd: check-circle)"
-                    className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-sm outline-none focus:border-blue-400"
+                    className="w-full pl-8 pr-3 py-2 rounded-xl border border-[var(--border)] text-sm outline-none focus:border-[var(--primary)]"
                 />
             </div>
             <div className="grid grid-cols-6 gap-2 max-h-48 overflow-y-auto p-1">
@@ -69,7 +69,7 @@ export function IconPicker({ value, onChange }: { value?: string; onChange: (nam
                             type="button"
                             onClick={() => onChange(name)}
                             title={name}
-                            className={`relative aspect-square rounded-xl flex items-center justify-center border transition-colors ${active ? "bg-blue-500 border-blue-500 text-white" : "bg-white border-gray-100 text-gray-500 hover:border-blue-300"
+                            className={`relative aspect-square rounded-xl flex items-center justify-center border transition-colors ${active ? "bg-blue-500 border-blue-500 text-white" : "bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)]"
                                 }`}
                         >
                             <LucideIconByName name={name} className="w-4 h-4" />
@@ -78,12 +78,12 @@ export function IconPicker({ value, onChange }: { value?: string; onChange: (nam
                     );
                 })}
                 {filtered.length === 0 && (
-                    <p className="col-span-6 text-xs text-gray-400 text-center py-3">Không tìm thấy icon</p>
+                    <p className="col-span-6 text-xs text-[var(--text-faint)] text-center py-3">Không tìm thấy icon</p>
                 )}
             </div>
             {value && (
-                <p className="mt-1.5 text-xs text-gray-400">
-                    Đã chọn: <span className="font-mono text-gray-600">{value}</span>
+                <p className="mt-1.5 text-xs text-[var(--text-faint)]">
+                    Đã chọn: <span className="font-mono text-[var(--text-muted)]">{value}</span>
                 </p>
             )}
         </div>

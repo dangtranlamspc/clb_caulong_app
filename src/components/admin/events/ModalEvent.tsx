@@ -37,13 +37,13 @@ export default function ModalEvent({
         <div
             className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
             style={{
-                background: visible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+                background: visible ? "var(--overlay)" : "rgba(0,0,0,0)",
                 backdropFilter: visible ? "blur(2px)" : "none",
                 transition: "background .2s ease, backdrop-filter .2s ease",
             }}
         >
             <div
-                className={`w-full ${maxWidth} bg-white rounded-2xl shadow-xl h-[87vh] sm:h-[100vh] overflow-hidden relative flex flex-col`}
+                className={`w-full ${maxWidth} bg-[var(--surface)] rounded-2xl shadow-xl h-[87vh] sm:h-[100vh] overflow-hidden relative flex flex-col`}
                 style={{
                     transform: visible ? "scale(1) translateY(0)" : "scale(0.95) translateY(12px)",
                     opacity: visible ? 1 : 0,
@@ -53,7 +53,7 @@ export default function ModalEvent({
             >
                 <button
                     onClick={onClose}
-                    className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 shadow-sm"
+                    className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] flex items-center justify-center text-[var(--text-muted)] shadow-sm"
                 >
                     <X className="w-4 h-4" />
                 </button>

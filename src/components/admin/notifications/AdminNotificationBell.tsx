@@ -12,13 +12,13 @@ import { fmt } from "@/lib/fund-constants";
 
 const BTN = "flex-1 min-h-[44px] rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition active:scale-[0.98] disabled:opacity-50";
 const BTN_APPROVE = `${BTN} bg-emerald-500 hover:bg-emerald-600 border border-emerald-700 text-white`;
-const BTN_REJECT = `${BTN} bg-white hover:bg-red-50 border border-red-400 text-red-500`;
-const BTN_INFO = `${BTN} bg-white hover:bg-blue-50 border border-blue-400 text-blue-600`;
+const BTN_REJECT = `${BTN} bg-[var(--surface)] hover:bg-[var(--danger-soft)] border border-red-400 text-[var(--danger)]`;
+const BTN_INFO = `${BTN} bg-[var(--surface)] hover:bg-[var(--primary-soft)] border border-blue-400 text-[var(--primary)]`;
 
 const BTN_SM = "flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition active:scale-[0.98] disabled:opacity-50";
 const BTN_SM_APPROVE = `${BTN_SM} bg-emerald-500 hover:bg-emerald-600 border border-emerald-700 text-white`;
-const BTN_SM_REJECT = `${BTN_SM} bg-white hover:bg-red-50 border border-red-400 text-red-500`;
-const BTN_SM_INFO = `${BTN_SM} bg-white hover:bg-blue-50 border border-blue-400 text-blue-600`;
+const BTN_SM_REJECT = `${BTN_SM} bg-[var(--surface)] hover:bg-[var(--danger-soft)] border border-red-400 text-[var(--danger)]`;
+const BTN_SM_INFO = `${BTN_SM} bg-[var(--surface)] hover:bg-[var(--primary-soft)] border border-blue-400 text-[var(--primary)]`;
 
 function ResolvedBadge({ action }: { action?: "approved" | "rejected" | "cancelled" | "session_cancelled" }) {
     const cfg =
@@ -116,38 +116,38 @@ function ShirtOrderPaymentModal({
             className="fixed inset-0 z-[999999] bg-black/40 flex items-center justify-center p-4"
             onClick={(e) => e.target === e.currentTarget}
         >
-            <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl overflow-hidden max-h-[85vh] flex flex-col">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-                    <p className="font-bold text-gray-900">
+            <div className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl overflow-hidden max-h-[85vh] flex flex-col">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
+                    <p className="font-bold text-[var(--text)]">
                         Chi tiết đơn đặt áo {items.length > 1 ? `(${items.length} sản phẩm)` : ""}
                     </p>
                     <button
                         onClick={onClose}
-                        className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+                        className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)]"
                     >
-                        <X className="w-4 h-4 text-gray-500" />
+                        <X className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                 </div>
 
                 <div className="px-5 py-4 space-y-3 overflow-y-auto flex-1">
                     {loading ? (
-                        <div className="flex items-center justify-center py-8 text-gray-400 gap-2 text-sm">
+                        <div className="flex items-center justify-center py-8 text-[var(--text-faint)] gap-2 text-sm">
                             <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                         </div>
                     ) : items.length === 0 ? (
-                        <p className="text-sm text-gray-400 text-center py-6">
+                        <p className="text-sm text-[var(--text-faint)] text-center py-6">
                             Không tìm thấy đơn hàng
                         </p>
                     ) : (
                         <>
                             <div>
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-[var(--text-faint)]">
                                     {detail.activity?.emoji} {detail.activity?.title}
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center font-semibold text-blue-600 overflow-hidden flex-shrink-0">
+                            <div className="flex items-center gap-3 bg-[var(--surface-muted)] rounded-xl p-3">
+                                <div className="w-10 h-10 rounded-full bg-[var(--primary-soft)] flex items-center justify-center font-semibold text-[var(--primary)] overflow-hidden flex-shrink-0">
                                     {first.users?.avatar_url ? (
                                         <img src={first.users.avatar_url} className="w-full h-full object-cover" />
                                     ) : (
@@ -155,11 +155,11 @@ function ShirtOrderPaymentModal({
                                     )}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="font-semibold text-gray-900 truncate">
+                                    <p className="font-semibold text-[var(--text)] truncate">
                                         {first.users?.full_name ?? first.guest_full_name ?? "—"}
                                     </p>
                                     {(first.users?.phone ?? first.guest_phone) && (
-                                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                                        <p className="text-xs text-[var(--text-faint)] flex items-center gap-1">
                                             <Phone className="w-3 h-3" /> {first.users?.phone ?? first.guest_phone}
                                         </p>
                                     )}
@@ -170,51 +170,51 @@ function ShirtOrderPaymentModal({
                                 {items.map((r) => (
                                     <div
                                         key={r.id}
-                                        className="rounded-xl border border-gray-100 divide-y divide-gray-50 text-sm"
+                                        className="rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] text-sm"
                                     >
                                         <div className="flex justify-between px-3 py-2">
-                                            <span className="text-gray-500">Loại áo</span>
-                                            <span className="font-medium text-gray-800">{r.shirt_type_name}</span>
+                                            <span className="text-[var(--text-muted)]">Loại áo</span>
+                                            <span className="font-medium text-[var(--text)]">{r.shirt_type_name}</span>
                                         </div>
                                         <div className="flex justify-between px-3 py-2">
-                                            <span className="text-gray-500">Form / Size</span>
-                                            <span className="font-medium text-gray-800">
+                                            <span className="text-[var(--text-muted)]">Form / Size</span>
+                                            <span className="font-medium text-[var(--text)]">
                                                 {r.gender === "nu" ? "Nữ" : "Nam"} · {r.size}
                                             </span>
                                         </div>
                                         {r.color_name && (
                                             <div className="flex justify-between px-3 py-2">
-                                                <span className="text-gray-500">Màu</span>
-                                                <span className="font-medium text-gray-800">{r.color_name}</span>
+                                                <span className="text-[var(--text-muted)]">Màu</span>
+                                                <span className="font-medium text-[var(--text)]">{r.color_name}</span>
                                             </div>
                                         )}
                                         {r.jersey_number && (
                                             <div className="flex justify-between px-3 py-2">
-                                                <span className="text-gray-500">Số áo</span>
-                                                <span className="font-medium text-gray-800">{r.jersey_number}</span>
+                                                <span className="text-[var(--text-muted)]">Số áo</span>
+                                                <span className="font-medium text-[var(--text)]">{r.jersey_number}</span>
                                             </div>
                                         )}
                                         {r.print_name && (
                                             <div className="flex justify-between px-3 py-2">
-                                                <span className="text-gray-500">Tên in</span>
-                                                <span className="font-medium text-gray-800">{r.print_name}</span>
+                                                <span className="text-[var(--text-muted)]">Tên in</span>
+                                                <span className="font-medium text-[var(--text)]">{r.print_name}</span>
                                             </div>
                                         )}
                                         <div className="flex justify-between px-3 py-2">
-                                            <span className="text-gray-500">Số lượng</span>
-                                            <span className="font-medium text-gray-800">{r.quantity}</span>
+                                            <span className="text-[var(--text-muted)]">Số lượng</span>
+                                            <span className="font-medium text-[var(--text)]">{r.quantity}</span>
                                         </div>
                                         <div className="flex justify-between px-3 py-2">
-                                            <span className="font-semibold text-gray-700">Thành tiền</span>
-                                            <span className="font-bold text-gray-900">{fmt(r.total_amount)}</span>
+                                            <span className="font-semibold text-[var(--text)]">Thành tiền</span>
+                                            <span className="font-bold text-[var(--text)]">{fmt(r.total_amount)}</span>
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="flex justify-between px-3 py-2 bg-gray-50 rounded-xl text-sm">
-                                <span className="text-gray-500">Phương thức</span>
-                                <span className="font-medium text-gray-800">
+                            <div className="flex justify-between px-3 py-2 bg-[var(--surface-muted)] rounded-xl text-sm">
+                                <span className="text-[var(--text-muted)]">Phương thức</span>
+                                <span className="font-medium text-[var(--text)]">
                                     {first.payment_method === "wallet"
                                         ? "Ví BNB"
                                         : first.payment_method === "transfer"
@@ -225,19 +225,19 @@ function ShirtOrderPaymentModal({
                                 </span>
                             </div>
 
-                            <div className="flex justify-between px-3 py-2.5 bg-red-50 rounded-xl">
-                                <span className="font-semibold text-gray-700">Tổng cộng ({items.length} sản phẩm)</span>
-                                <span className="font-bold text-red-600">{fmt(detail.total_amount)}</span>
+                            <div className="flex justify-between px-3 py-2.5 bg-[var(--danger-soft)] rounded-xl">
+                                <span className="font-semibold text-[var(--text)]">Tổng cộng ({items.length} sản phẩm)</span>
+                                <span className="font-bold text-[var(--danger)]">{fmt(detail.total_amount)}</span>
                             </div>
                         </>
                     )}
                 </div>
 
                 {!notFound && items.length > 0 && (
-                    <div className="flex items-center gap-2 px-5 py-4 border-t border-gray-100 flex-shrink-0">
+                    <div className="flex items-center gap-2 px-5 py-4 border-t border-[var(--border)] flex-shrink-0">
                         <button
                             onClick={() => onNavigate(detail.activity?.id)}
-                            className="flex-1 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 text-sm font-semibold flex items-center justify-center"
+                            className="flex-1 py-2 rounded-lg border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] hover:bg-[var(--primary-soft)] text-sm font-semibold flex items-center justify-center"
                         >
                             Chi tiết
                         </button>
@@ -247,7 +247,7 @@ function ShirtOrderPaymentModal({
                                 <button
                                     onClick={handleReject}
                                     disabled={processing}
-                                    className="flex-1 py-2 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                                    className="flex-1 py-2 rounded-lg border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-[var(--danger)] hover:bg-[var(--danger-soft)] text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                                 >
                                     {processing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                                     Từ chối
@@ -350,34 +350,34 @@ function ShirtOrderCancelModal({
             className="fixed inset-0 z-[999999] bg-black/40 flex items-center justify-center p-4"
             onClick={(e) => e.target === e.currentTarget}
         >
-            <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl overflow-hidden max-h-[85vh] flex flex-col">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-                    <p className="font-bold text-gray-900">
+            <div className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl overflow-hidden max-h-[85vh] flex flex-col">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
+                    <p className="font-bold text-[var(--text)]">
                         Yêu cầu huỷ đăng ký {items.length > 1 ? `(${items.length} sản phẩm)` : ""}
                     </p>
                     <button
                         onClick={onClose}
-                        className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+                        className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)]"
                     >
-                        <X className="w-4 h-4 text-gray-500" />
+                        <X className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                 </div>
 
                 <div className="px-5 py-4 space-y-3 overflow-y-auto flex-1">
                     {loading ? (
-                        <div className="flex items-center justify-center py-8 text-gray-400 gap-2 text-sm">
+                        <div className="flex items-center justify-center py-8 text-[var(--text-faint)] gap-2 text-sm">
                             <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                         </div>
                     ) : items.length === 0 ? (
-                        <p className="text-sm text-gray-400 text-center py-6">Không tìm thấy đơn hàng</p>
+                        <p className="text-sm text-[var(--text-faint)] text-center py-6">Không tìm thấy đơn hàng</p>
                     ) : (
                         <>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-[var(--text-faint)]">
                                 {detail.activity?.emoji} {detail.activity?.title}
                             </p>
 
-                            <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center font-semibold text-blue-600 overflow-hidden flex-shrink-0">
+                            <div className="flex items-center gap-3 bg-[var(--surface-muted)] rounded-xl p-3">
+                                <div className="w-10 h-10 rounded-full bg-[var(--primary-soft)] flex items-center justify-center font-semibold text-[var(--primary)] overflow-hidden flex-shrink-0">
                                     {first.users?.avatar_url ? (
                                         <img src={first.users.avatar_url} className="w-full h-full object-cover" />
                                     ) : (
@@ -385,11 +385,11 @@ function ShirtOrderCancelModal({
                                     )}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="font-semibold text-gray-900 truncate">
+                                    <p className="font-semibold text-[var(--text)] truncate">
                                         {first.users?.full_name ?? first.guest_full_name ?? "—"}
                                     </p>
                                     {(first.users?.phone ?? first.guest_phone) && (
-                                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                                        <p className="text-xs text-[var(--text-faint)] flex items-center gap-1">
                                             <Phone className="w-3 h-3" /> {first.users?.phone ?? first.guest_phone}
                                         </p>
                                     )}
@@ -398,38 +398,38 @@ function ShirtOrderCancelModal({
 
                             <div className="space-y-2">
                                 {items.map((r) => (
-                                    <div key={r.id} className="rounded-xl border border-gray-100 divide-y divide-gray-50 text-sm">
+                                    <div key={r.id} className="rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] text-sm">
                                         <div className="flex justify-between px-3 py-2">
-                                            <span className="text-gray-500">Loại áo</span>
-                                            <span className="font-medium text-gray-800">{r.shirt_type_name}</span>
+                                            <span className="text-[var(--text-muted)]">Loại áo</span>
+                                            <span className="font-medium text-[var(--text)]">{r.shirt_type_name}</span>
                                         </div>
                                         <div className="flex justify-between px-3 py-2">
-                                            <span className="text-gray-500">Form / Size</span>
-                                            <span className="font-medium text-gray-800">
+                                            <span className="text-[var(--text-muted)]">Form / Size</span>
+                                            <span className="font-medium text-[var(--text)]">
                                                 {r.gender === "nu" ? "Nữ" : "Nam"} · {r.size}
                                             </span>
                                         </div>
                                         {r.color_name && (
                                             <div className="flex justify-between px-3 py-2">
-                                                <span className="text-gray-500">Màu</span>
-                                                <span className="font-medium text-gray-800">{r.color_name}</span>
+                                                <span className="text-[var(--text-muted)]">Màu</span>
+                                                <span className="font-medium text-[var(--text)]">{r.color_name}</span>
                                             </div>
                                         )}
                                         <div className="flex justify-between px-3 py-2">
-                                            <span className="text-gray-500">Số lượng</span>
-                                            <span className="font-medium text-gray-800">{r.quantity}</span>
+                                            <span className="text-[var(--text-muted)]">Số lượng</span>
+                                            <span className="font-medium text-[var(--text)]">{r.quantity}</span>
                                         </div>
                                         <div className="flex justify-between px-3 py-2">
-                                            <span className="font-semibold text-gray-700">Thành tiền</span>
-                                            <span className="font-bold text-gray-900">{fmt(r.total_amount)}</span>
+                                            <span className="font-semibold text-[var(--text)]">Thành tiền</span>
+                                            <span className="font-bold text-[var(--text)]">{fmt(r.total_amount)}</span>
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="flex justify-between px-3 py-2 bg-gray-50 rounded-xl text-sm">
-                                <span className="text-gray-500">Phương thức đã dùng</span>
-                                <span className="font-medium text-gray-800">
+                            <div className="flex justify-between px-3 py-2 bg-[var(--surface-muted)] rounded-xl text-sm">
+                                <span className="text-[var(--text-muted)]">Phương thức đã dùng</span>
+                                <span className="font-medium text-[var(--text)]">
                                     {first.payment_method === "wallet"
                                         ? "Ví BNB"
                                         : first.payment_method === "transfer"
@@ -441,12 +441,12 @@ function ShirtOrderCancelModal({
                             </div>
 
                             <div
-                                className={`flex justify-between px-3 py-2.5 rounded-xl ${willRefundWallet ? "bg-blue-50" : "bg-gray-50"}`}
+                                className={`flex justify-between px-3 py-2.5 rounded-xl ${willRefundWallet ? "bg-[var(--primary-soft)]" : "bg-[var(--surface-muted)]"}`}
                             >
-                                <span className="font-semibold text-gray-700">
+                                <span className="font-semibold text-[var(--text)]">
                                     {willRefundWallet ? "Sẽ hoàn về Ví BNB" : "Tổng cộng"}
                                 </span>
-                                <span className={`font-bold ${willRefundWallet ? "text-blue-600" : "text-gray-700"}`}>
+                                <span className={`font-bold ${willRefundWallet ? "text-[var(--primary)]" : "text-[var(--text)]"}`}>
                                     {fmt(detail.total_amount)}
                                 </span>
                             </div>
@@ -455,17 +455,17 @@ function ShirtOrderCancelModal({
                 </div>
 
                 {!notFound && items.length > 0 && anyPending && (
-                    <div className="flex items-center gap-2 px-5 py-4 border-t border-gray-100 flex-shrink-0">
+                    <div className="flex items-center gap-2 px-5 py-4 border-t border-[var(--border)] flex-shrink-0">
                         <button
                             onClick={() => onNavigate(detail.activity?.id)}
-                            className="flex-1 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 text-sm font-semibold flex items-center justify-center"
+                            className="flex-1 py-2 rounded-lg border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] hover:bg-[var(--primary-soft)] text-sm font-semibold flex items-center justify-center"
                         >
                             Chi tiết
                         </button>
                         <button
                             onClick={handleReject}
                             disabled={processing}
-                            className="flex-1 py-2 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                            className="flex-1 py-2 rounded-lg border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-[var(--danger)] hover:bg-[var(--danger-soft)] text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                         >
                             {processing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                             Từ chối
@@ -823,10 +823,10 @@ export function AdminNotificationBell() {
 
                     <div
                         ref={dropdownRef}
-                        className={`absolute inset-y-0 right-0 w-full sm:w-[420px] flex flex-col bg-white sm:border-l sm:border-gray-100 sm:shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${shown ? "translate-x-0" : "translate-x-full"}`}
+                        className={`absolute inset-y-0 right-0 w-full sm:w-[420px] flex flex-col bg-[var(--surface)] sm:border-l sm:border-[var(--border)] sm:shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${shown ? "translate-x-0" : "translate-x-full"}`}
                     >
                         <div
-                            className="flex items-center justify-between gap-2 px-3 pb-2 border-b border-gray-100 flex-shrink-0"
+                            className="flex items-center justify-between gap-2 px-3 pb-2 border-b border-[var(--border)] flex-shrink-0"
                             style={{
                                 paddingTop: "env(safe-area-inset-top, 0px)",
                                 minHeight: "calc(env(safe-area-inset-top, 0px) + 72px)",
@@ -836,11 +836,11 @@ export function AdminNotificationBell() {
                                 <button
                                     onClick={() => setOpen(false)}
                                     aria-label="Đóng"
-                                    className="w-9 h-9 flex-shrink-0 rounded-full border border-gray-200 bg-white flex items-center justify-center shadow-[0_3px_8px_-1px_rgba(15,23,42,0.22),0_1px_3px_rgba(15,23,42,0.10)] active:scale-95 active:shadow-sm transition"
+                                    className="w-9 h-9 flex-shrink-0 rounded-full border border-[var(--border)] bg-[var(--surface)] flex items-center justify-center shadow-[0_3px_8px_-1px_rgba(15,23,42,0.22),0_1px_3px_rgba(15,23,42,0.10)] active:scale-95 active:shadow-sm transition"
                                 >
-                                    <ChevronLeft className="w-5 h-5 text-gray-700" />
+                                    <ChevronLeft className="w-5 h-5 text-[var(--text)]" />
                                 </button>
-                                <p className="text-xl font-bold text-gray-900 truncate">Thông báo</p>
+                                <p className="text-xl font-bold text-[var(--text)] truncate">Thông báo</p>
                             </div>
 
                             <div className="flex items-center gap-2 flex-shrink-0">
@@ -866,11 +866,11 @@ export function AdminNotificationBell() {
                         </div>
 
                         <div
-                            className="flex-1 min-h-0 overflow-y-auto bg-gray-50 p-3 pb-4 space-y-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                            className="flex-1 min-h-0 overflow-y-auto bg-[var(--surface-muted)] p-3 pb-4 space-y-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                             style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
                         >
                             {notifications.length === 0 ? (
-                                <p className="px-4 py-10 text-sm text-gray-400 text-center">Chưa có thông báo nào</p>
+                                <p className="px-4 py-10 text-sm text-[var(--text-faint)] text-center">Chưa có thông báo nào</p>
                             ) : (
                                 notifications.map((n) => {
                                     const isTopupRequest = n.type === "wallet_topup_request";
@@ -920,8 +920,8 @@ export function AdminNotificationBell() {
                                         <div
                                             key={n.id}
                                             className={`relative flex items-center gap-3 pl-5 pr-3 py-4 rounded-2xl border overflow-hidden transition-colors ${!n.is_read
-                                                ? "bg-blue-50/60 border-blue-100 shadow-[0_6px_16px_-4px_rgba(15,23,42,0.14),0_2px_4px_rgba(15,23,42,0.06)]"
-                                                : "bg-gray-100/70 border-gray-200 shadow-[0_2px_6px_-2px_rgba(15,23,42,0.06)]"
+                                                ? "bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] shadow-[0_6px_16px_-4px_rgba(15,23,42,0.14),0_2px_4px_rgba(15,23,42,0.06)]"
+                                                : "bg-[var(--surface-muted)] border-[var(--border)] shadow-[0_2px_6px_-2px_rgba(15,23,42,0.06)]"
                                                 }`}
                                         >
                                             <div className="flex-1 min-w-0">
@@ -929,13 +929,13 @@ export function AdminNotificationBell() {
                                                     onClick={() => !n.is_read && markRead(n.id)}
                                                     className="text-left w-full"
                                                 >
-                                                    <p className={`text-[15px] font-bold ${n.is_read ? "text-gray-500" : "text-gray-900"}`}>
+                                                    <p className={`text-[15px] font-bold ${n.is_read ? "text-[var(--text-muted)]" : "text-[var(--text)]"}`}>
                                                         {n.title}
                                                     </p>
-                                                    <p className={`text-sm mt-1 whitespace-pre-line break-words ${n.is_read ? "text-gray-400" : "text-gray-600"}`}>
+                                                    <p className={`text-sm mt-1 whitespace-pre-line break-words ${n.is_read ? "text-[var(--text-faint)]" : "text-[var(--text-muted)]"}`}>
                                                         {n.message}
                                                     </p>
-                                                    <p className={`text-xs mt-1.5 ${n.is_read ? "text-gray-400" : "text-gray-500"}`}>
+                                                    <p className={`text-xs mt-1.5 ${n.is_read ? "text-[var(--text-faint)]" : "text-[var(--text-muted)]"}`}>
                                                         {new Date(n.created_at).toLocaleString("vi-VN")}
                                                     </p>
                                                 </button>
@@ -1076,7 +1076,7 @@ export function AdminNotificationBell() {
                                                                 setOpen(false);
                                                                 window.location.href = `/admin/events?openRegistrations=${shirtOrderActivityId}`;
                                                             }}
-                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                                                            className="text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary)] hover:underline"
                                                         >
                                                             Chi tiết
                                                         </button>
@@ -1091,7 +1091,7 @@ export function AdminNotificationBell() {
                                                                 setOpen(false);
                                                                 router.push(tournamentNavPath);
                                                             }}
-                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                                                            className="text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary)] hover:underline"
                                                         >
                                                             Chi tiết
                                                         </button>
@@ -1109,7 +1109,7 @@ export function AdminNotificationBell() {
                                                                     n.data?.full_name,
                                                                 )
                                                             }
-                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                                                            className="text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary)] hover:underline"
                                                         >
                                                             Chi tiết
                                                         </button>
@@ -1191,8 +1191,8 @@ export function AdminNotificationBell() {
             )}
 
             {navigatingToEvents && typeof document !== "undefined" && createPortal(
-                <div className="fixed inset-0 z-[9999999] bg-white flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+                <div className="fixed inset-0 z-[9999999] bg-[var(--surface)] flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-[var(--success)] animate-spin" />
                 </div>,
                 document.body,
             )}

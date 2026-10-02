@@ -351,7 +351,7 @@ export function ShirtOrderSection({ activity, myStatus, onChanged }: any) {
 
   if (shirtTypes.length === 0) {
     return (
-      <div className="bg-white rounded-2xl p-5 shadow-sm text-center text-gray-400 text-sm">
+      <div className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm text-center text-[var(--text-faint)] text-sm">
         Chưa có loại áo nào được cấu hình
       </div>
     );

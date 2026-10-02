@@ -40,7 +40,7 @@ export default function SessionCostCard({ sessionId }: Props) {
     };
   }, [sessionId, fetchCost]);
 
-  if (loading) return <div className="card animate-pulse h-48 bg-gray-100" />;
+  if (loading) return <div className="card animate-pulse h-48 bg-[var(--surface-muted)]" />;
   if (!cost) return null;
 
   const { chi_phi, paid_list, summary } = cost;
@@ -63,75 +63,75 @@ export default function SessionCostCard({ sessionId }: Props) {
   return (
     <div className="space-y-3">
       <div className="card space-y-2">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
           🔑 Chi phí thực tế
         </p>
 
-        <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 overflow-hidden">
+        <div className="rounded-xl border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[var(--success-soft)] overflow-hidden">
           <div className="flex items-center justify-between px-3 py-2.5">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-700">🏸 Tiền cầu</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm font-medium text-[var(--text)]">🏸 Tiền cầu</p>
+              <p className="text-xs text-[var(--text-faint)]">
                 {chi_phi.shuttle_count} quả × {fmt(chi_phi.shuttle_price)}
               </p>
             </div>
-            <span className="text-base font-bold text-emerald-600 flex-shrink-0 ml-3">
+            <span className="text-base font-bold text-[var(--success)] flex-shrink-0 ml-3">
               {fmt(chi_phi.shuttle_cost)}
             </span>
           </div>
         </div>
 
         {courtBreakdown.length > 0 ? (
-          <div className="rounded-xl border border-blue-100 bg-blue-50/40 overflow-hidden">
-            <div className="px-3 py-2 text-sm font-medium text-gray-600 border-b border-blue-100/70">
+          <div className="rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] overflow-hidden">
+            <div className="px-3 py-2 text-sm font-medium text-[var(--text-muted)] border-b border-[color-mix(in_srgb,var(--primary)_30%,transparent)]">
               🏟 Sân
             </div>
 
-            <div className="divide-y divide-blue-100/70">
+            <div className="divide-y divide-[color-mix(in_srgb,var(--primary)_30%,transparent)]">
               {courtBreakdown.map((c, i) => (
                 <div
                   key={i}
                   className="flex items-center justify-between px-3 py-2"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-700 truncate">
+                    <p className="text-sm font-medium text-[var(--text)] truncate">
                       {c.name}
                     </p>
                     {c.minutes ? (
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-[var(--text-faint)]">
                         {c.minutes} phút × {fmt(c.price_per_hour)}/tiếng
                       </p>
                     ) : null}
                   </div>
-                  <span className="text-sm font-semibold text-blue-600 flex-shrink-0 ml-3">
+                  <span className="text-sm font-semibold text-[var(--primary)] flex-shrink-0 ml-3">
                     {fmt(c.total)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="flex justify-between items-center px-3 py-2 bg-blue-100/50">
-              <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+            <div className="flex justify-between items-center px-3 py-2 bg-[var(--primary-soft)]">
+              <span className="text-xs font-semibold text-[var(--primary)] uppercase tracking-wide">
                 Tổng tiền sân
               </span>
-              <span className="text-base font-bold text-blue-700">
+              <span className="text-base font-bold text-[var(--primary)]">
                 {fmt(chi_phi.court_fee)}
               </span>
             </div>
           </div>
         ) : (
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">🏟 Sân</span>
+            <span className="text-[var(--text-muted)]">🏟 Sân</span>
             <span className="font-medium">{fmt(chi_phi.court_fee)}</span>
           </div>
         )}
 
         {chi_phi.other_fee > 0 && (
-          <div className="rounded-xl border border-amber-100 bg-amber-50/40 overflow-hidden">
-            <div className="px-3 py-2 text-sm font-medium text-gray-600 border-b border-amber-100/70">
+          <div className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] overflow-hidden">
+            <div className="px-3 py-2 text-sm font-medium text-[var(--text-muted)] border-b border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
               💰 Khoản thu khác
               {chi_phi.other_fee_note && (
-                <span className="text-gray-400 italic"> ({chi_phi.other_fee_note})</span>
+                <span className="text-[var(--text-faint)] italic"> ({chi_phi.other_fee_note})</span>
               )}
             </div>
 
@@ -156,34 +156,34 @@ export default function SessionCostCard({ sessionId }: Props) {
                     note?: string | null;
                     nested?: boolean;
                   }) => (
-                    <div className={nested ? "pl-3 border-l-2 border-amber-200" : ""}>
+                    <div className={nested ? "pl-3 border-l-2 border-[color-mix(in_srgb,var(--warning)_30%,transparent)]" : ""}>
                       <div className="flex items-baseline gap-2">
                         <span
                           className={`truncate ${nested
-                              ? "text-sm text-gray-700"
-                              : "text-sm font-semibold text-gray-800"
+                              ? "text-sm text-[var(--text)]"
+                              : "text-sm font-semibold text-[var(--text)]"
                             }`}
                         >
                           {name}
                           {sub && (
-                            <span className="ml-1.5 text-[11px] font-normal text-gray-400">
+                            <span className="ml-1.5 text-[11px] font-normal text-[var(--text-faint)]">
                               {sub}
                             </span>
                           )}
                         </span>
                         {/* đường chấm dẫn mắt từ tên sang giá */}
-                        <span className="flex-1 min-w-4 border-b border-dotted border-amber-300 translate-y-[-3px]" />
+                        <span className="flex-1 min-w-4 border-b border-dotted border-[color-mix(in_srgb,var(--warning)_30%,transparent)] translate-y-[-3px]" />
                         <span
                           className={`flex-shrink-0 tabular-nums ${nested
-                              ? "text-sm font-medium text-amber-700"
-                              : "text-sm font-semibold text-amber-700"
+                              ? "text-sm font-medium text-[var(--warning)]"
+                              : "text-sm font-semibold text-[var(--warning)]"
                             }`}
                         >
                           {fmt(amount)}
                         </span>
                       </div>
                       {toLines(note).map((line, li) => (
-                        <p key={li} className="text-xs text-gray-500 mt-0.5">
+                        <p key={li} className="text-xs text-[var(--text-muted)] mt-0.5">
                           {line}
                         </p>
                       ))}
@@ -193,7 +193,7 @@ export default function SessionCostCard({ sessionId }: Props) {
                   return (
                     <div
                       key={i}
-                      className="rounded-xl border border-amber-200/80 bg-white overflow-hidden"
+                      className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--surface)] overflow-hidden"
                     >
                       <div className="px-3 py-2.5 space-y-2">
                         <Row name={item.name} amount={item.amount} note={item.note} />
@@ -210,11 +210,11 @@ export default function SessionCostCard({ sessionId }: Props) {
                       </div>
 
                       {hasGuests && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-amber-50 border-t border-dashed border-amber-200">
-                          <span className="text-xs font-medium text-amber-800">
+                        <div className="flex items-center justify-between px-3 py-2 bg-[var(--warning-soft)] border-t border-dashed border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
+                          <span className="text-xs font-medium text-[var(--warning)]">
                             Tổng nhóm
                           </span>
-                          <span className="text-sm font-bold text-amber-800 tabular-nums">
+                          <span className="text-sm font-bold text-[var(--warning)] tabular-nums">
                             {fmt(item.total ?? item.amount)}
                           </span>
                         </div>
@@ -225,11 +225,11 @@ export default function SessionCostCard({ sessionId }: Props) {
               </div>
             )}
 
-            <div className="flex justify-between items-center px-3 py-2 bg-amber-100/50">
-              <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">
+            <div className="flex justify-between items-center px-3 py-2 bg-[var(--warning-soft)]">
+              <span className="text-xs font-semibold text-[var(--warning)] uppercase tracking-wide">
                 Tổng khoản thu khác
               </span>
-              <span className="text-base font-bold text-amber-700">
+              <span className="text-base font-bold text-[var(--warning)]">
                 {fmt(chi_phi.other_fee)}
               </span>
             </div>
@@ -237,7 +237,7 @@ export default function SessionCostCard({ sessionId }: Props) {
         )}
 
         <div className="flex items-center justify-between rounded-xl bg-gray-900 px-3.5 py-3 mt-1 -mx-4 sm:-mx-5">
-          <span className="text-sm font-semibold text-gray-200 pl-1">
+          <span className="text-sm font-semibold text-[var(--text-faint)] pl-1">
             Tổng tất cả các chi phí
           </span>
           <span className="text-lg font-bold text-white pr-1">
@@ -248,7 +248,7 @@ export default function SessionCostCard({ sessionId }: Props) {
 
       {hasConfirmed ? (
         <div className="card space-y-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
             💰 Đã thu được
           </p>
 
@@ -257,24 +257,24 @@ export default function SessionCostCard({ sessionId }: Props) {
               <div key={p.registration_id} className="text-sm">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-gray-700">{p.full_name}</span>
+                    <span className="text-[var(--text)]">{p.full_name}</span>
                     {p.member_type === "co_dinh" && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--purple-soft)] text-[var(--purple)] border border-[color-mix(in_srgb,var(--purple)_30%,transparent)]">
                         Thành viên
                       </span>
                     )}
                     {p.member_type === "vang_lai" && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-50 text-gray-500 border border-gray-200">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)]">
                         Vãng lai
                       </span>
                     )}
                     {p.is_guest && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-50 text-gray-500 border border-gray-200">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)]">
                         Khách
                       </span>
                     )}
                   </div>
-                  <span className="font-medium text-blue-600 flex-shrink-0">
+                  <span className="font-medium text-[var(--primary)] flex-shrink-0">
                     {fmt(p.total_amount)}
                   </span>
                 </div>
@@ -282,17 +282,17 @@ export default function SessionCostCard({ sessionId }: Props) {
             ))}
           </div>
 
-          <div className="flex justify-between text-sm font-bold border-t border-gray-100 pt-2">
+          <div className="flex justify-between text-sm font-bold border-t border-[var(--border)] pt-2">
             <span>Tổng đã thu</span>
-            <span className="text-blue-600">{fmt(summary.total_paid)}</span>
+            <span className="text-[var(--primary)]">{fmt(summary.total_paid)}</span>
           </div>
         </div>
       ) : (
         <div className="card">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-1">
             💰 Đã thu được
           </p>
-          <p className="text-sm text-gray-400 italic">
+          <p className="text-sm text-[var(--text-faint)] italic">
             Chưa có ai được xác nhận thanh toán
           </p>
         </div>
@@ -300,13 +300,13 @@ export default function SessionCostCard({ sessionId }: Props) {
 
       {hasConfirmed && (
         <div
-          className={`card space-y-1 border ${summary.remaining > 0 ? "border-purple-200 bg-purple-50" : "border-green-200 bg-green-50"}`}
+          className={`card space-y-1 border ${summary.remaining > 0 ? "border-[color-mix(in_srgb,var(--purple)_30%,transparent)] bg-[var(--purple-soft)]" : "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[var(--success-soft)]"}`}
         >
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
             ℹ️ Kết quả
           </p>
           <p
-            className={`text-sm ${summary.remaining > 0 ? "text-purple-800" : "text-green-700"}`}
+            className={`text-sm ${summary.remaining > 0 ? "text-[var(--purple)]" : "text-[var(--success)]"}`}
           >
             {fmt(summary.total_cost)} − {fmt(summary.total_paid)} ={" "}
             <strong>{fmt(Math.abs(summary.remaining))}</strong>

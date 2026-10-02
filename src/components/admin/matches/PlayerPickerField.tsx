@@ -15,14 +15,14 @@ const LEVEL_LABEL: Record<string, string> = {
 const DEFAULT_TIER = "Tân thủ";
 
 const TIER_STYLE: Record<string, string> = {
-    "Tân thủ": "bg-gray-100 text-gray-500",
-    "Phong trào": "bg-slate-100 text-slate-600",
-    "Cứng cựa": "bg-sky-50 text-sky-700",
-    "Chủ lực": "bg-blue-50 text-blue-700",
-    "Cao thủ": "bg-indigo-50 text-indigo-700",
-    "Kiện tướng": "bg-purple-50 text-purple-700",
+    "Tân thủ": "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+    "Phong trào": "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+    "Cứng cựa": "bg-[var(--primary-soft)] text-[var(--primary)]",
+    "Chủ lực": "bg-[var(--primary-soft)] text-[var(--primary)]",
+    "Cao thủ": "bg-[var(--primary-soft)] text-[var(--primary)]",
+    "Kiện tướng": "bg-[var(--purple-soft)] text-[var(--purple)]",
     "Đại Kiện Tướng": "bg-fuchsia-50 text-fuchsia-700",
-    "Huyền Thoại": "bg-amber-100 text-amber-700",
+    "Huyền Thoại": "bg-[var(--warning-soft)] text-[var(--warning)]",
 };
 
 function getTier(m: any): string {
@@ -34,12 +34,12 @@ function getTier(m: any): string {
 function PlayerMeta({ m }: { m: any }) {
     const level = LEVEL_LABEL[m.level] ?? m.level;
     const tier = getTier(m);
-    const tierCls = TIER_STYLE[tier] ?? "bg-gray-100 text-gray-500";
+    const tierCls = TIER_STYLE[tier] ?? "bg-[var(--surface-muted)] text-[var(--text-muted)]";
 
     return (
         <div className="flex items-center gap-1 mt-0.5">
             {level && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 leading-none">
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--purple-soft)] text-[var(--purple)] leading-none">
                     {level}
                 </span>
             )}
@@ -87,10 +87,10 @@ export function PlayerPickerField({
     if (value) {
         return (
             <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                     {label}
                 </label>
-                <div className="flex items-center gap-2 bg-blue-50 rounded-xl px-3 py-2">
+                <div className="flex items-center gap-2 bg-[var(--primary-soft)] rounded-xl px-3 py-2">
                     {value.avatar_url ? (
                         <img
                             src={value.avatar_url}
@@ -98,19 +98,19 @@ export function PlayerPickerField({
                             className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                         />
                     ) : (
-                        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 flex-shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-xs font-semibold text-[var(--primary)] flex-shrink-0">
                             {value.full_name?.[0]?.toUpperCase()}
                         </div>
                     )}
                     <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium text-gray-900 truncate block">
+                        <span className="text-sm font-medium text-[var(--text)] truncate block">
                             {value.full_name}
                         </span>
                         <PlayerMeta m={value} />
                     </div>
                     <button
                         onClick={() => onSelect(null)}
-                        className="text-xs text-blue-600 font-medium flex-shrink-0"
+                        className="text-xs text-[var(--primary)] font-medium flex-shrink-0"
                     >
                         Đổi
                     </button>
@@ -121,11 +121,11 @@ export function PlayerPickerField({
 
     return (
         <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
+            <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                 {label}
             </label>
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-faint)]" />
                 <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -134,13 +134,13 @@ export function PlayerPickerField({
                 />
             </div>
             {search.trim().length >= 2 && (
-                <div className="mt-1 max-h-40 overflow-y-auto border border-gray-100 rounded-xl">
+                <div className="mt-1 max-h-40 overflow-y-auto border border-[var(--border)] rounded-xl">
                     {searching ? (
-                        <p className="text-xs text-gray-400 text-center py-3">
+                        <p className="text-xs text-[var(--text-faint)] text-center py-3">
                             Đang tìm...
                         </p>
                     ) : results.length === 0 ? (
-                        <p className="text-xs text-gray-400 text-center py-3">
+                        <p className="text-xs text-[var(--text-faint)] text-center py-3">
                             Không tìm thấy
                         </p>
                     ) : (
@@ -151,7 +151,7 @@ export function PlayerPickerField({
                                     onSelect(m);
                                     setSearch("");
                                 }}
-                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left"
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[var(--surface-hover)] text-left"
                             >
                                 {m.avatar_url ? (
                                     <img
@@ -160,12 +160,12 @@ export function PlayerPickerField({
                                         className="w-7 h-7 rounded-full object-cover flex-shrink-0"
                                     />
                                 ) : (
-                                    <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 flex-shrink-0">
+                                    <div className="w-7 h-7 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-xs font-semibold text-[var(--primary)] flex-shrink-0">
                                         {m.full_name?.[0]?.toUpperCase()}
                                     </div>
                                 )}
                                 <div className="min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                    <p className="text-sm font-medium text-[var(--text)] truncate">
                                         {m.full_name}
                                     </p>
                                     <PlayerMeta m={m} />

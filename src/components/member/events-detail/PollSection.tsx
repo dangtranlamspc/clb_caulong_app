@@ -39,8 +39,8 @@ export function PollSection({ activity, myStatus, onChanged }: any) {
     };
 
     return (
-        <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
-            <h3 className="font-bold text-gray-900">
+        <div className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm space-y-3">
+            <h3 className="font-bold text-[var(--text)]">
                 {allowMultiple ? "Chọn nhiều lựa chọn" : "Chọn 1 lựa chọn"}
             </h3>
 
@@ -54,16 +54,16 @@ export function PollSection({ activity, myStatus, onChanged }: any) {
                             key={opt.id}
                             onClick={() => canVote && toggleOption(opt.id)}
                             disabled={!canVote}
-                            className={`w-full text-left rounded-xl border p-3 relative overflow-hidden transition-colors ${isSelected ? "border-blue-400 bg-blue-50" : "border-gray-200"
+                            className={`w-full text-left rounded-xl border p-3 relative overflow-hidden transition-colors ${isSelected ? "border-blue-400 bg-[var(--primary-soft)]" : "border-[var(--border)]"
                                 }`}
                         >
                             {(hasVoted || !canVote) && (
-                                <div className="absolute inset-0 bg-blue-50/60" style={{ width: `${pct}%` }} />
+                                <div className="absolute inset-0 bg-[var(--primary-soft)]" style={{ width: `${pct}%` }} />
                             )}
                             <div className="relative flex items-center justify-between gap-2">
-                                <span className="text-sm font-medium text-gray-800">{opt.label}</span>
+                                <span className="text-sm font-medium text-[var(--text)]">{opt.label}</span>
                                 {(hasVoted || !canVote) && (
-                                    <span className="text-xs font-semibold text-gray-500">
+                                    <span className="text-xs font-semibold text-[var(--text-muted)]">
                                         {pct}% ({count})
                                     </span>
                                 )}
@@ -83,7 +83,7 @@ export function PollSection({ activity, myStatus, onChanged }: any) {
                     {hasVoted ? "Cập nhật bình chọn" : "Gửi bình chọn"}
                 </button>
             ) : (
-                <p className="text-sm text-gray-400 text-center py-1">
+                <p className="text-sm text-[var(--text-faint)] text-center py-1">
                     Đã đóng bình chọn · {totalVotes} lượt
                 </p>
             )}

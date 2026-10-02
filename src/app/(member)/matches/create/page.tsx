@@ -43,16 +43,16 @@ function PlayerPicker({
 
     if (value) {
         return (
-            <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-3 bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-xl px-4 py-3">
                 <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0">
                     {value.full_name?.[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900">{value.full_name}</p>
-                    <p className="text-xs text-gray-500">{value.phone}</p>
+                    <p className="text-sm font-semibold text-[var(--text)]">{value.full_name}</p>
+                    <p className="text-xs text-[var(--text-muted)]">{value.phone}</p>
                 </div>
-                <button onClick={onClear} className="p-1 hover:bg-blue-100 rounded-lg">
-                    <X className="w-4 h-4 text-gray-400" />
+                <button onClick={onClear} className="p-1 hover:bg-[var(--primary-soft)] rounded-lg">
+                    <X className="w-4 h-4 text-[var(--text-faint)]" />
                 </button>
             </div>
         );
@@ -61,19 +61,19 @@ function PlayerPicker({
     return (
         <div className="relative">
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-faint)]" />
                 <input
                     value={query}
                     onChange={e => { setQuery(e.target.value); }}
                     onFocus={() => { }}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 bg-gray-50"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)] bg-[var(--surface-muted)]"
                     placeholder={`${label} — tìm tên, SĐT...`}
                 />
-                {loading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />}
+                {loading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-faint)] animate-spin" />}
             </div>
 
             {results.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-gray-200 shadow-lg z-20 overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-lg z-20 overflow-hidden">
                     {results.map((u) => (
                         <button
                             key={u.id}
@@ -83,16 +83,16 @@ function PlayerPicker({
                                 setQuery('');
                                 setResults([]);
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left"
+                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--surface-hover)] transition-colors text-left"
                         >
-                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold text-sm flex-shrink-0">
                                 {u.full_name?.[0]?.toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{u.full_name}</p>
-                                <p className="text-xs text-gray-400">{u.phone}</p>
+                                <p className="text-sm font-semibold text-[var(--text)] truncate">{u.full_name}</p>
+                                <p className="text-xs text-[var(--text-faint)]">{u.phone}</p>
                             </div>
-                            <UserPlus className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                            <UserPlus className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
                         </button>
                     ))}
                 </div>
@@ -190,8 +190,8 @@ export default function CreateMatchPage() {
                 <button onClick={() => {
                     sessionStorage.setItem('activity:return-tab', 'matches');
                     router.push('/activity');
-                }} className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-colors">
-                    <ArrowLeft className="w-5 h-5 text-gray-600" />
+                }} className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-[var(--surface-hover)] transition-colors">
+                    <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
                 </button>
                 <div>
                     <h1 className="text-xl font-bold text-dark"
@@ -201,9 +201,9 @@ export default function CreateMatchPage() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-                <p className="text-sm font-bold text-gray-700">Hình thức thi đấu</p>
-                <div className="relative grid grid-cols-3 gap-2 bg-gray-50 rounded-xl p-1">
+            <div className="bg-[var(--surface)] rounded-2xl p-4 shadow-sm space-y-3">
+                <p className="text-sm font-bold text-[var(--text)]">Hình thức thi đấu</p>
+                <div className="relative grid grid-cols-3 gap-2 bg-[var(--surface-muted)] rounded-xl p-1">
                     <div
                         className="absolute top-1 bottom-1 bg-blue-600 rounded-lg shadow-sm shadow-blue-200"
                         style={{
@@ -226,7 +226,7 @@ export default function CreateMatchPage() {
                                     setPartnerA3(null); setOpponentB3(null);
                                 }
                             }}
-                            className={`relative z-10 py-3 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200 ${matchType === t ? 'text-white' : 'text-gray-500 hover:text-gray-700'
+                            className={`relative z-10 py-3 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200 ${matchType === t ? 'text-white' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
                                 }`}
                         >
                             {t === 'singles' ? '👤 Đơn' : t === 'doubles' ? '👥 Đôi' : '👥 3v3'}
@@ -235,18 +235,18 @@ export default function CreateMatchPage() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-                <p className="text-sm font-bold text-gray-700">Người chơi</p>
+            <div className="bg-[var(--surface)] rounded-2xl p-4 shadow-sm space-y-4">
+                <p className="text-sm font-bold text-[var(--text)]">Người chơi</p>
 
                 <div className="space-y-2">
-                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Đội A (của bạn)</p>
-                    <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                    <p className="text-xs font-semibold text-[var(--primary)] uppercase tracking-wide">Đội A (của bạn)</p>
+                    <div className="flex items-center gap-3 bg-[var(--surface-muted)] rounded-xl px-4 py-3 border border-[var(--border)]">
                         <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0">
                             {user?.full_name?.[0]?.toUpperCase()}
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-gray-900">{user?.full_name}</p>
-                            <p className="text-xs text-blue-500 font-medium">Bạn</p>
+                            <p className="text-sm font-semibold text-[var(--text)]">{user?.full_name}</p>
+                            <p className="text-xs text-[var(--primary)] font-medium">Bạn</p>
                         </div>
                     </div>
 
@@ -288,13 +288,13 @@ export default function CreateMatchPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-gray-100" />
-                    <span className="text-xs font-bold text-gray-400 px-2">VS</span>
-                    <div className="flex-1 h-px bg-gray-100" />
+                    <div className="flex-1 h-px bg-[var(--surface-muted)]" />
+                    <span className="text-xs font-bold text-[var(--text-faint)] px-2">VS</span>
+                    <div className="flex-1 h-px bg-[var(--surface-muted)]" />
                 </div>
 
                 <div className="space-y-2">
-                    <p className="text-xs font-semibold text-red-500 uppercase tracking-wide">Đội B (đối thủ)</p>
+                    <p className="text-xs font-semibold text-[var(--danger)] uppercase tracking-wide">Đội B (đối thủ)</p>
                     <PlayerPicker
                         label="Đối thủ chính *"
                         value={opponentB1}
@@ -344,12 +344,12 @@ export default function CreateMatchPage() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-2">
-                <p className="text-sm font-bold text-gray-700">Ghi chú <span className="font-normal text-gray-400">(tuỳ chọn)</span></p>
+            <div className="bg-[var(--surface)] rounded-2xl p-4 shadow-sm space-y-2">
+                <p className="text-sm font-bold text-[var(--text)]">Ghi chú <span className="font-normal text-[var(--text-faint)]">(tuỳ chọn)</span></p>
                 <textarea
                     value={note}
                     onChange={e => setNote(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm resize-none focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm resize-none focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
                     rows={2}
                     placeholder="VD: Hẹn đánh cuối tuần này tại sân A..."
                 />

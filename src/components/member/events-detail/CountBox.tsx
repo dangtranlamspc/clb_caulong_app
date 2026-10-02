@@ -16,17 +16,17 @@ export function CountBox({
     const display = pad2(value);
     const numberClass = accent
         ? tone === "warm"
-            ? "text-rose-600"
-            : "text-indigo-600"
+            ? "text-[var(--pink)]"
+            : "text-[var(--primary)]"
         : "text-white";
     const labelClass = accent
         ? tone === "warm"
-            ? "text-rose-600/70"
-            : "text-indigo-600/70"
+            ? "text-[var(--pink)]/70"
+            : "text-[var(--primary)]/70"
         : "text-white/80";
     return (
         <div
-            className={`rounded-2xl py-2.5 text-center border transition-colors ${accent ? "bg-white border-white shadow-sm" : "bg-white/15 border-white/25"
+            className={`rounded-2xl py-2.5 text-center border transition-colors ${accent ? "bg-[var(--surface)] border-white shadow-sm" : "bg-[color-mix(in_srgb,var(--surface)_15%,transparent)] border-white/25"
                 }`}
         >
             <div className="count-rotate-wrap h-8 flex items-center justify-center">

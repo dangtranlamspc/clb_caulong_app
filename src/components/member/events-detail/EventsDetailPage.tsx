@@ -80,7 +80,7 @@ export default function EventsDetailPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#F4F6FA]">
+            <div className="min-h-screen bg-[var(--bg)]">
                 <div
                     className="sticky top-0 z-30"
                     style={{
@@ -94,17 +94,17 @@ export default function EventsDetailPage() {
                     <div className="max-w-lg lg:max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
                         <button
                             onClick={handleBack}
-                            className="p-2 -ml-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                            className="p-2 -ml-2 hover:bg-[var(--surface-hover)] active:bg-[var(--border-strong)] rounded-lg transition-colors flex-shrink-0"
                         >
-                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                            <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
                         </button>
-                        <div className="h-5 bg-gray-200 rounded w-40 animate-pulse" />
+                        <div className="h-5 bg-[var(--border-strong)] rounded w-40 animate-pulse" />
                     </div>
                 </div>
 
                 <div className="max-w-lg lg:max-w-3xl mx-auto px-4 pt-4 pb-8 space-y-4">
-                    <div className="bg-white rounded-2xl h-40 animate-pulse" />
-                    <div className="bg-white rounded-2xl h-56 animate-pulse" />
+                    <div className="bg-[var(--surface)] rounded-2xl h-40 animate-pulse" />
+                    <div className="bg-[var(--surface)] rounded-2xl h-56 animate-pulse" />
                 </div>
             </div>
         );
@@ -115,7 +115,7 @@ export default function EventsDetailPage() {
     const Icon = meta?.icon ?? CalendarDays;
 
     return (
-        <div className="min-h-screen bg-[#F4F6FA] pb-[calc(env(safe-area-inset-bottom)+32px)]">
+        <div className="min-h-screen bg-[var(--bg)] pb-[calc(env(safe-area-inset-bottom)+32px)]">
             <div
                 className="sticky top-0 z-30"
                 style={{
@@ -129,11 +129,11 @@ export default function EventsDetailPage() {
                 <div className="max-w-lg lg:max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
                     <button
                         onClick={handleBack}
-                        className="p-2 -ml-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                        className="p-2 -ml-2 hover:bg-[var(--surface-hover)] active:bg-[var(--border-strong)] rounded-lg transition-colors flex-shrink-0"
                     >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
                     </button>
-                    <h1 className="text-base font-bold text-gray-900 truncate flex-1">{activity.title}</h1>
+                    <h1 className="text-base font-bold text-[var(--text)] truncate flex-1">{activity.title}</h1>
                     {activity.type === "shirt_order" && (
                         <div
                             id="shirt-cart-slot-desktop"
@@ -147,9 +147,9 @@ export default function EventsDetailPage() {
                 {activity.type === "tournament" ? (
                     <TournamentHeroCard activity={activity} />
                 ) : (
-                    <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3">
+                    <div className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm space-y-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-3xl flex-shrink-0 overflow-hidden">
+                            <div className="w-14 h-14 rounded-2xl bg-[var(--primary-soft)] flex items-center justify-center text-3xl flex-shrink-0 overflow-hidden">
                                 {activity.cover_image_url ? (
                                     <img src={activity.cover_image_url} className="w-full h-full object-cover" />
                                 ) : (
@@ -157,17 +157,17 @@ export default function EventsDetailPage() {
                                 )}
                             </div>
                             <div className="min-w-0">
-                                <p className="text-xs text-gray-400 flex items-center gap-1">
+                                <p className="text-xs text-[var(--text-faint)] flex items-center gap-1">
                                     <Icon className="w-3 h-3" /> {meta?.label}
                                 </p>
-                                <p className="font-bold text-gray-900 truncate">{activity.title}</p>
+                                <p className="font-bold text-[var(--text)] truncate">{activity.title}</p>
                             </div>
                         </div>
 
-                        <div className="space-y-1.5 text-sm text-gray-600 border-t border-gray-50 pt-3">
+                        <div className="space-y-1.5 text-sm text-[var(--text-muted)] border-t border-[var(--border)] pt-3">
                             {(activity.event_date || activity.deadline) && (
                                 <div className="flex items-center gap-2">
-                                    <CalendarDays className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                    <CalendarDays className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0" />
                                     <span>
                                         {activity.deadline ? "Deadline: " : "Ngày diễn ra: "}
                                         {format(
@@ -180,14 +180,14 @@ export default function EventsDetailPage() {
                             )}
                             {activity.location && (
                                 <div className="flex items-center gap-2">
-                                    <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                    <MapPin className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0" />
                                     <span>{activity.location}</span>
                                 </div>
                             )}
                         </div>
 
                         {activity.description && (
-                            <p className="text-sm text-gray-500 border-t border-gray-50 pt-3 whitespace-pre-line">
+                            <p className="text-sm text-[var(--text-muted)] border-t border-[var(--border)] pt-3 whitespace-pre-line">
                                 {activity.description}
                             </p>
                         )}

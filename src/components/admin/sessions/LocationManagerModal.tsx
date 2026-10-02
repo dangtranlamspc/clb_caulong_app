@@ -49,15 +49,15 @@ export default function LocationManagerModal({
 
     return createPortal(
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-xl max-h-[85vh] flex flex-col">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                    <h3 className="font-bold text-gray-900">Quản lý địa điểm</h3>
-                    <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+            <div className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl max-h-[85vh] flex flex-col">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                    <h3 className="font-bold text-[var(--text)]">Quản lý địa điểm</h3>
+                    <button onClick={onClose} className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="px-5 py-4 space-y-2 border-b border-gray-100">
+                <div className="px-5 py-4 space-y-2 border-b border-[var(--border)]">
                     <input className="input-field" placeholder="Tên sân *" value={name}
                         onChange={(e) => setName(e.target.value)} />
                     <input className="input-field" placeholder="Địa chỉ" value={address}
@@ -76,7 +76,7 @@ export default function LocationManagerModal({
                         <button
                             type="button"
                             onClick={() => submit(true)}
-                            className="flex items-center justify-center gap-1 text-sm flex-none w-auto px-4 py-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium"
+                            className="flex items-center justify-center gap-1 text-sm flex-none w-auto px-4 py-2 rounded-lg border border-blue-600 text-[var(--primary)] hover:bg-[var(--primary-soft)] font-medium"
                         >
                             <Save className="w-4 h-4" />
                             Lưu và tiếp tục
@@ -94,18 +94,18 @@ export default function LocationManagerModal({
                 </div>
 
                 <div className="overflow-y-auto px-5 py-3 space-y-2">
-                    {items.length === 0 && <p className="text-sm text-gray-400">Chưa có địa điểm nào</p>}
+                    {items.length === 0 && <p className="text-sm text-[var(--text-faint)]">Chưa có địa điểm nào</p>}
                     {items.map((l) => (
-                        <div key={l.id} className="flex items-center gap-2 border border-gray-100 rounded-lg px-3 py-2">
+                        <div key={l.id} className="flex items-center gap-2 border border-[var(--border)] rounded-lg px-3 py-2">
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">{l.name}</p>
-                                {l.address && <p className="text-xs text-gray-400 truncate">{l.address}</p>}
+                                <p className="text-sm font-medium text-[var(--text)] truncate">{l.name}</p>
+                                {l.address && <p className="text-xs text-[var(--text-faint)] truncate">{l.address}</p>}
                             </div>
-                            <button type="button" className="p-1 text-gray-400 hover:text-blue-600"
+                            <button type="button" className="p-1 text-[var(--text-faint)] hover:text-[var(--primary)]"
                                 onClick={() => { setEditId(l.id); setName(l.name); setAddress(l.address ?? ""); }}>
                                 <Pencil className="w-4 h-4" />
                             </button>
-                            <button type="button" className="p-1 text-gray-400 hover:text-red-600"
+                            <button type="button" className="p-1 text-[var(--text-faint)] hover:text-[var(--danger)]"
                                 onClick={() => remove(l.id)}>
                                 <Trash2 className="w-4 h-4" />
                             </button>

@@ -171,7 +171,7 @@ export function AvatarCropModal({
             onClick={(e) => { if (e.target === e.currentTarget && !processing) animateClose(onCancel); }}
         >
             <div
-                className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl bg-white"
+                className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl bg-[var(--surface)]"
                 style={{
                     transform: visible ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.96)',
                     opacity: visible ? 1 : 0,
@@ -180,12 +180,12 @@ export function AvatarCropModal({
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                    <p className="font-bold text-gray-900 text-sm">Chỉnh ảnh đại diện</p>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+                    <p className="font-bold text-[var(--text)] text-sm">Chỉnh ảnh đại diện</p>
                     {!processing && (
                         <button
                             onClick={() => animateClose(onCancel)}
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)]"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -248,7 +248,7 @@ export function AvatarCropModal({
 
                 {/* Zoom slider */}
                 <div className="flex items-center gap-3 px-5 pb-2">
-                    <ZoomIn className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <ZoomIn className="w-4 h-4 text-[var(--text-faint)] flex-shrink-0" />
                     <input
                         type="range"
                         min={1}
@@ -260,7 +260,7 @@ export function AvatarCropModal({
                         disabled={!imgState}
                     />
                 </div>
-                <p className="text-center text-[11px] text-gray-400 px-5 pb-3">
+                <p className="text-center text-[11px] text-[var(--text-faint)] px-5 pb-3">
                     Kéo để di chuyển · Cuộn hoặc kéo thanh trượt để zoom
                 </p>
 
@@ -270,7 +270,7 @@ export function AvatarCropModal({
                         type="button"
                         onClick={() => animateClose(onCancel)}
                         disabled={processing}
-                        className="py-2.5 rounded-xl font-semibold text-sm border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        className="py-2.5 rounded-xl font-semibold text-sm border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors disabled:opacity-50"
                     >
                         Hủy
                     </button>

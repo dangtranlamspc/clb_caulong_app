@@ -78,11 +78,11 @@ function StatCard({
         accent === "gold"
             ? "text-[#F7C65B] bg-[#F7C65B]/10 border-[#F7C65B]/20"
             : accent === "dark"
-                ? "text-white bg-white/10 border-white/10"
+                ? "text-white bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] border-white/10"
                 : "text-[#FF5969] bg-[#FF5969]/10 border-[#FF5969]/20";
 
     return (
-        <div className="group rounded-2xl border border-black/[0.07] bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+        <div className="group rounded-2xl border border-black/[0.07] bg-[var(--surface)] p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
             <div className={`mb-5 flex h-9 w-9 items-center justify-center rounded-xl border ${accentClass}`}>
                 {icon}
             </div>
@@ -117,7 +117,7 @@ function SectionCard({
                 : "border-[#D91C2E]/20 bg-[#D91C2E]/[0.07] text-[#D91C2E]";
 
     return (
-        <section className="rounded-[28px] border border-black/[0.07] bg-white p-5 shadow-[0_12px_40px_rgba(28,20,16,0.045)] sm:p-7">
+        <section className="rounded-[28px] border border-black/[0.07] bg-[var(--surface)] p-5 shadow-[0_12px_40px_rgba(28,20,16,0.045)] sm:p-7">
             <div className="mb-6 flex items-start gap-3">
                 <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${iconClass}`}>
                     {icon}
@@ -378,7 +378,7 @@ export default function TournamentLandingPage() {
     if (loadError || !activity) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-[#F5F2EF] px-4">
-                <div className="w-full max-w-md rounded-[28px] border border-black/[0.07] bg-white p-8 text-center shadow-xl">
+                <div className="w-full max-w-md rounded-[28px] border border-black/[0.07] bg-[var(--surface)] p-8 text-center shadow-xl">
                     <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#D91C2E]/10 text-[#D91C2E]">
                         <Trophy className="h-6 w-6" />
                     </div>
@@ -537,7 +537,7 @@ export default function TournamentLandingPage() {
                         </div>
                     </div>
 
-                    <div className="relative border-y border-white/10 bg-white/[.025]">
+                    <div className="relative border-y border-white/10 bg-[var(--surface)]/[.025]">
                         <div className="mx-auto flex max-w-7xl overflow-x-auto px-5 sm:px-8 lg:px-10">
                             {[
                                 ["01", "Thể thức", "sec-the-thuc"],
@@ -556,7 +556,7 @@ export default function TournamentLandingPage() {
                                             .getElementById(targetId)
                                             ?.scrollIntoView({ behavior: "smooth", block: "start" })
                                     }
-                                    className="flex min-w-max items-center gap-3 border-r border-white/10 px-5 py-4 text-left transition-colors hover:bg-white/[.06] first:pl-0"
+                                    className="flex min-w-max items-center gap-3 border-r border-white/10 px-5 py-4 text-left transition-colors hover:bg-[var(--surface)]/[.06] first:pl-0"
                                 >
                                     <span className="condensed text-sm font-bold text-[#D91C2E]">{n}</span>
                                     <span className="text-[9px] font-bold uppercase tracking-[.16em] text-white/45">{label}</span>
@@ -596,8 +596,8 @@ export default function TournamentLandingPage() {
                                             <div className="mt-6 flex flex-wrap gap-2">
                                                 {scoring.set_type && <span className="bg-[#171515] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white">{scoring.set_type}</span>}
                                                 {scoring.points_per_set && <span className="bg-[#E7B84B] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#171515]">{scoring.points_per_set} điểm/set</span>}
-                                                {scoring.win_margin != null && <span className="bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#4A433E]">Thắng cách {scoring.win_margin}</span>}
-                                                {scoring.max_score && <span className="bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#4A433E]">Tối đa {scoring.max_score} điểm</span>}
+                                                {scoring.win_margin != null && <span className="bg-[var(--surface)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#4A433E]">Thắng cách {scoring.win_margin}</span>}
+                                                {scoring.max_score && <span className="bg-[var(--surface)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#4A433E]">Tối đa {scoring.max_score} điểm</span>}
                                             </div>
                                         )}
                                     </div>
@@ -716,7 +716,7 @@ export default function TournamentLandingPage() {
                                                 {prizes.map((prize, idx) => (
                                                     <div
                                                         key={prize.id ?? idx}
-                                                        className="relative overflow-hidden rounded-2xl border border-black/[0.07] bg-white p-5"
+                                                        className="relative overflow-hidden rounded-2xl border border-black/[0.07] bg-[var(--surface)] p-5"
                                                     >
                                                         <div className="mb-4 flex items-center gap-3">
                                                             <span className="text-3xl leading-none">{prize.emoji || "🏅"}</span>
@@ -883,14 +883,14 @@ export default function TournamentLandingPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-4 border border-black/10 bg-white p-5">
+                                <div className="mt-4 border border-black/10 bg-[var(--surface)] p-5">
                                     <p className="text-[9px] font-extrabold uppercase tracking-[.18em] text-[#A49D95]">Quick facts</p>
                                     <div className="mt-5 grid grid-cols-2 gap-px bg-black/10">
-                                        <div className="bg-white p-4">
+                                        <div className="bg-[var(--surface)] p-4">
                                             <p className="condensed text-3xl font-black">{matchContents.length || "—"}</p>
                                             <p className="mt-1 text-[8px] font-bold uppercase tracking-[.12em] text-[#9A9189]">Nội dung</p>
                                         </div>
-                                        <div className="bg-white p-4">
+                                        <div className="bg-[var(--surface)] p-4">
                                             <p className="condensed text-3xl font-black">{teamSize || "—"}</p>
                                             <p className="mt-1 text-[8px] font-bold uppercase tracking-[.12em] text-[#9A9189]">Người / đội</p>
                                         </div>

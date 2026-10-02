@@ -46,15 +46,15 @@ const ACTIVITY_TYPE_DEFAULT_IMAGE: Record<string, string> = {
 };
 
 const ACTIVITY_TYPE_ICON_BG: Record<string, string> = {
-    shirt_order: 'bg-blue-50', tournament: 'bg-amber-50', birthday: 'bg-pink-50',
-    offline_event: 'bg-orange-50', poll: 'bg-purple-50',
+    shirt_order: 'bg-[var(--primary-soft)]', tournament: 'bg-[var(--warning-soft)]', birthday: 'bg-[var(--pink-soft)]',
+    offline_event: 'bg-[var(--warning-soft)]', poll: 'bg-[var(--purple-soft)]',
 };
 
 const ACTIVITY_STATUS_CFG: Record<string, string> = {
-    draft: 'bg-gray-50 text-gray-500', open: 'bg-green-50 text-green-700',
-    upcoming: 'bg-purple-50 text-purple-600', ongoing: 'bg-blue-50 text-blue-600',
-    closed: 'bg-orange-50 text-orange-600', completed: 'bg-slate-50 text-slate-500',
-    cancelled: 'bg-red-50 text-red-500',
+    draft: 'bg-[var(--surface-muted)] text-[var(--text-muted)]', open: 'bg-[var(--success-soft)] text-[var(--success)]',
+    upcoming: 'bg-[var(--purple-soft)] text-[var(--purple)]', ongoing: 'bg-[var(--primary-soft)] text-[var(--primary)]',
+    closed: 'bg-[var(--warning-soft)] text-[var(--warning)]', completed: 'bg-[var(--surface-muted)] text-[var(--text-muted)]',
+    cancelled: 'bg-[var(--danger-soft)] text-[var(--danger)]',
 };
 
 const ACTIVITY_STATUS_LABEL: Record<string, string> = {
@@ -86,13 +86,13 @@ function rankBadgeClass(idx: number) {
     if (idx === 0) return 'bg-amber-400 text-white';
     if (idx === 1) return 'bg-slate-300 text-white';
     if (idx === 2) return 'bg-orange-300 text-white';
-    return 'text-gray-400';
+    return 'text-[var(--text-faint)]';
 }
 
 function MiniDelta({ delta }: { delta: number }) {
-    if (delta > 0) return <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">▲ {delta}</span>;
-    if (delta < 0) return <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-red-500">▼ {Math.abs(delta)}</span>;
-    return <span className="text-[10px] font-medium text-gray-300">—</span>;
+    if (delta > 0) return <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[var(--success)]">▲ {delta}</span>;
+    if (delta < 0) return <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[var(--danger)]">▼ {Math.abs(delta)}</span>;
+    return <span className="text-[10px] font-medium text-[var(--text-faint)]">—</span>;
 }
 
 function LeaderAvatar({ src, name }: { src?: string | null; name: string }) {
@@ -102,7 +102,7 @@ function LeaderAvatar({ src, name }: { src?: string | null; name: string }) {
             {src && !err ? (
                 <img src={src} alt={name} className="w-full h-full object-cover" onError={() => setErr(true)} />
             ) : (
-                <User className="w-4 h-4 text-slate-500" />
+                <User className="w-4 h-4 text-[var(--text-muted)]" />
             )}
         </div>
     );
@@ -110,7 +110,7 @@ function LeaderAvatar({ src, name }: { src?: string | null; name: string }) {
 
 function CardSkeleton({ className = 'h-20' }: { className?: string }) {
     return (
-        <div className={`relative overflow-hidden bg-gray-100 rounded-2xl ${className}`}>
+        <div className={`relative overflow-hidden bg-[var(--surface-muted)] rounded-2xl ${className}`}>
             <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/60 to-transparent" />
         </div>
     );
@@ -162,13 +162,13 @@ function SessionCostCarousel({ items, onSelect }: { items: any[]; onSelect: (id:
                         className="h-full snap-start snap-always overflow-y-auto pr-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                     >
                         {idx === 0 && (
-                            <span className="inline-block mb-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                            <span className="inline-block mb-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--success-soft)] text-[var(--success)]">
                                 Mới nhất
                             </span>
                         )}
                         <SessionCostCard item={item} onClick={() => onSelect(item.session.id)} />
                         {idx < items.length - 1 && (
-                            <p className="mt-2 text-center text-[10px] text-gray-300">↓ Cuộn để xem buổi trước</p>
+                            <p className="mt-2 text-center text-[10px] text-[var(--text-faint)]">↓ Cuộn để xem buổi trước</p>
                         )}
                     </div>
                 ))}
@@ -181,7 +181,7 @@ function SessionCostCarousel({ items, onSelect }: { items: any[]; onSelect: (id:
                             key={i}
                             onClick={() => goTo(i)}
                             aria-label={`Buổi ${i + 1}`}
-                            className={`w-1.5 rounded-full transition-all ${i === active ? 'h-4 bg-emerald-500' : 'h-1.5 bg-gray-200 hover:bg-gray-300'}`}
+                            className={`w-1.5 rounded-full transition-all ${i === active ? 'h-4 bg-emerald-500' : 'h-1.5 bg-[var(--border-strong)] hover:bg-gray-300'}`}
                         />
                     ))}
                 </div>
@@ -191,17 +191,17 @@ function SessionCostCarousel({ items, onSelect }: { items: any[]; onSelect: (id:
 }
 
 function Panel({
-    title, icon: Icon, iconCls = 'text-blue-500', action, children, className = '', bodyClassName = '',
+    title, icon: Icon, iconCls = 'text-[var(--primary)]', action, children, className = '', bodyClassName = '',
 }: {
     title: string; icon?: any; iconCls?: string; action?: React.ReactNode;
     children: React.ReactNode; className?: string; bodyClassName?: string;
 }) {
     return (
-        <section className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-3 flex flex-col min-h-0 ${className}`}>
+        <section className={`bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-3 flex flex-col min-h-0 ${className}`}>
             <div className="flex items-center justify-between gap-2 mb-2 flex-shrink-0">
                 <div className="flex items-center gap-2 min-w-0">
                     {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${iconCls}`} />}
-                    <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide truncate">{title}</h3>
+                    <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wide truncate">{title}</h3>
                 </div>
                 {action}
             </div>
@@ -211,21 +211,21 @@ function Panel({
 }
 
 function KpiCard({
-    icon: Icon, iconBg, label, value, sub, valueCls = 'text-gray-900', children,
+    icon: Icon, iconBg, label, value, sub, valueCls = 'text-[var(--text)]', children,
 }: {
     icon: any; iconBg: string; label: string; value: React.ReactNode;
     sub?: React.ReactNode; valueCls?: string; children?: React.ReactNode;
 }) {
     return (
-        <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
+        <div className="bg-[var(--surface)] rounded-2xl p-3 border border-[var(--border)] shadow-sm">
             <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
                     <Icon className="w-4 h-4 text-white" />
                 </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
+                <p className="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wide leading-tight">{label}</p>
             </div>
             <p className={`mt-2 text-xl font-bold leading-tight tabular-nums ${valueCls}`}>{value}</p>
-            {sub && <p className="mt-0.5 text-xs text-gray-400">{sub}</p>}
+            {sub && <p className="mt-0.5 text-xs text-[var(--text-faint)]">{sub}</p>}
             {children}
         </div>
     );
@@ -526,9 +526,9 @@ export default function AdminDashboardPage() {
         >
             <div className="flex items-center justify-between gap-3 flex-wrap flex-shrink-0">
                 <div className="min-w-0">
-                    <h1 className="text-xl font-bold text-gray-900">Tổng quan</h1>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                        Số liệu tính theo <span className="font-semibold text-gray-500">{periodLabel}</span> (các buổi đã hoàn thành)
+                    <h1 className="text-xl font-bold text-[var(--text)]">Tổng quan</h1>
+                    <p className="text-xs text-[var(--text-faint)] mt-0.5">
+                        Số liệu tính theo <span className="font-semibold text-[var(--text-muted)]">{periodLabel}</span> (các buổi đã hoàn thành)
                     </p>
                 </div>
 
@@ -537,24 +537,24 @@ export default function AdminDashboardPage() {
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <button
                                 onClick={() => router.push('/admin/members')}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-sm hover:bg-[var(--surface-hover)] transition-colors"
                             >
-                                <Users className="w-3.5 h-3.5 text-blue-500" />
-                                <span className="text-[11px] text-gray-400">Thành viên</span>
-                                <span className="text-sm font-bold text-gray-900 tabular-nums">{totalMembers}</span>
+                                <Users className="w-3.5 h-3.5 text-[var(--primary)]" />
+                                <span className="text-[11px] text-[var(--text-faint)]">Thành viên</span>
+                                <span className="text-sm font-bold text-[var(--text)] tabular-nums">{totalMembers}</span>
                             </button>
                             {memberChips.map(({ icon: I, bg, label, v, href }) => (
                                 <button
                                     key={label}
                                     onClick={() => router.push(href)}
                                     title={label}
-                                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+                                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-sm hover:bg-[var(--surface-hover)] transition-colors"
                                 >
                                     <span className={`w-5 h-5 rounded-md flex items-center justify-center ${bg}`}>
                                         <I className="w-3 h-3 text-white" />
                                     </span>
-                                    <span className="text-[11px] text-gray-500">{label}</span>
-                                    <span className="text-xs font-bold text-gray-900 tabular-nums">{v}</span>
+                                    <span className="text-[11px] text-[var(--text-muted)]">{label}</span>
+                                    <span className="text-xs font-bold text-[var(--text)] tabular-nums">{v}</span>
                                 </button>
                             ))}
                         </div>
@@ -598,7 +598,7 @@ export default function AdminDashboardPage() {
                             />
                             <KpiCard
                                 icon={HandCoins} iconBg="bg-amber-500" label="Thu khoản khác"
-                                value={fmtFull(agg.otherFee)} valueCls="text-amber-600" sub="Nước uống, phát sinh..."
+                                value={fmtFull(agg.otherFee)} valueCls="text-[var(--warning)]" sub="Nước uống, phát sinh..."
                             />
                             <KpiCard
                                 icon={Wallet} iconBg="bg-violet-500" label="Tổng thu / chi"
@@ -609,14 +609,14 @@ export default function AdminDashboardPage() {
                                 iconBg={isBreakEven ? 'bg-blue-500' : isProfit ? 'bg-emerald-500' : 'bg-red-500'}
                                 label={isBreakEven ? 'Hòa vốn' : isProfit ? 'Lãi' : 'Lỗ'}
                                 value={`${isProfit ? '+' : ''}${fmtFull(agg.profit)}`}
-                                valueCls={isBreakEven ? 'text-blue-600' : isProfit ? 'text-emerald-600' : 'text-red-500'}
+                                valueCls={isBreakEven ? 'text-[var(--primary)]' : isProfit ? 'text-[var(--success)]' : 'text-[var(--danger)]'}
                                 sub="Thu − chi"
                             />
                             <KpiCard
                                 icon={Users} iconBg="bg-pink-500" label="Lượt tham gia"
                                 value={totalPeople} sub={`♂ ${agg.male} · ♀ ${agg.female}`}
                             >
-                                <div className="mt-1.5 h-1.5 rounded-full bg-pink-100 overflow-hidden">
+                                <div className="mt-1.5 h-1.5 rounded-full bg-[var(--pink-soft)] overflow-hidden">
                                     <div className="h-full bg-sky-400 transition-all duration-500" style={{ width: `${malePct}%` }} />
                                 </div>
                             </KpiCard>
@@ -630,15 +630,15 @@ export default function AdminDashboardPage() {
                     <Panel
                         title={`Chi phí các buổi · ${periodLabel}`}
                         icon={Receipt}
-                        iconCls="text-emerald-500"
+                        iconCls="text-[var(--success)]"
                         className={TOP_ROW}
                         bodyClassName="relative overflow-hidden"
-                        action={<span className="text-[11px] text-gray-400">{sortedCompleted.length} buổi</span>}
+                        action={<span className="text-[11px] text-[var(--text-faint)]">{sortedCompleted.length} buổi</span>}
                     >
                         {costLoading ? (
                             <CardSkeleton className="h-full min-h-[200px]" />
                         ) : sortedCompleted.length === 0 ? (
-                            <p className="text-sm text-gray-400 text-center py-10">Chưa có buổi đánh nào hoàn thành trong kỳ này</p>
+                            <p className="text-sm text-[var(--text-faint)] text-center py-10">Chưa có buổi đánh nào hoàn thành trong kỳ này</p>
                         ) : (
                             <SessionCostCarousel items={sortedCompleted} onSelect={setSelectedSessionId} />
                         )}
@@ -647,11 +647,11 @@ export default function AdminDashboardPage() {
                     <Panel
                         title="Hoạt động mới nhất"
                         icon={Megaphone}
-                        iconCls="text-purple-500"
+                        iconCls="text-[var(--purple)]"
                         className={BOTTOM_ROW}
                         bodyClassName="xl:overflow-y-auto scroll-hover"
                         action={
-                            <button onClick={() => router.push('/admin/events')} className="text-xs font-medium text-blue-600 hover:text-blue-700">
+                            <button onClick={() => router.push('/admin/events')} className="text-xs font-medium text-[var(--primary)] hover:text-[var(--primary)]">
                                 Xem tất cả →
                             </button>
                         }
@@ -659,7 +659,7 @@ export default function AdminDashboardPage() {
                         {activitiesLoading ? (
                             <CardSkeleton className="h-32" />
                         ) : recentActivities.length === 0 ? (
-                            <p className="text-sm text-gray-400 text-center py-6">Chưa có hoạt động nào</p>
+                            <p className="text-sm text-[var(--text-faint)] text-center py-6">Chưa có hoạt động nào</p>
                         ) : (
                             <Reveal show>
                                 <div className="space-y-1.5">
@@ -669,23 +669,23 @@ export default function AdminDashboardPage() {
                                             <button
                                                 key={a.id}
                                                 onClick={() => router.push('/admin/events')}
-                                                className="w-full flex items-center gap-2.5 p-2 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors text-left animate-reveal"
+                                                className="w-full flex items-center gap-2.5 p-2 rounded-xl border border-[var(--border)] hover:bg-[var(--surface-hover)] transition-colors text-left animate-reveal"
                                                 style={{ animationDelay: `${idx * 40}ms` }}
                                             >
-                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden ${ACTIVITY_TYPE_ICON_BG[a.type] ?? 'bg-gray-50'}`}>
+                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden ${ACTIVITY_TYPE_ICON_BG[a.type] ?? 'bg-[var(--surface-muted)]'}`}>
                                                     <ActivityThumbnail src={a.cover_image_url ?? ACTIVITY_TYPE_DEFAULT_IMAGE[a.type]} emoji={a.emoji ?? '📌'} />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-semibold text-gray-900 truncate">{a.title}</p>
-                                                    <p className="text-[10px] text-gray-400 flex items-center gap-1 mt-0.5 truncate">
+                                                    <p className="text-xs font-semibold text-[var(--text)] truncate">{a.title}</p>
+                                                    <p className="text-[10px] text-[var(--text-faint)] flex items-center gap-1 mt-0.5 truncate">
                                                         <Calendar className="w-3 h-3 flex-shrink-0" />
                                                         <span className="truncate">{dateLabel}{countLabel ? ` · ${countLabel}` : ''}</span>
                                                     </p>
                                                 </div>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 whitespace-nowrap ${ACTIVITY_STATUS_CFG[a.status] ?? 'bg-gray-50 text-gray-500'}`}>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 whitespace-nowrap ${ACTIVITY_STATUS_CFG[a.status] ?? 'bg-[var(--surface-muted)] text-[var(--text-muted)]'}`}>
                                                     {ACTIVITY_STATUS_LABEL[a.status] ?? a.status}
                                                 </span>
-                                                <ChevronRight className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
+                                                <ChevronRight className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0" />
                                             </button>
                                         );
                                     })}
@@ -722,7 +722,7 @@ export default function AdminDashboardPage() {
                         {financeChartLoading ? (
                             <CardSkeleton className="flex-1 min-h-[120px]" />
                         ) : financeChartData.length === 0 ? (
-                            <div className="flex-1 min-h-[120px] flex items-center justify-center text-gray-400 text-sm">Chưa có dữ liệu</div>
+                            <div className="flex-1 min-h-[120px] flex items-center justify-center text-[var(--text-faint)] text-sm">Chưa có dữ liệu</div>
                         ) : (
                             <div className="relative flex-1 min-h-[120px]">
                                 <div className="absolute inset-0 animate-reveal">
@@ -748,7 +748,7 @@ export default function AdminDashboardPage() {
                                     <button
                                         key={t}
                                         onClick={() => setLeaderTab(t)}
-                                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${leaderTab === t ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${leaderTab === t ? 'bg-blue-600 text-white shadow-sm' : 'bg-[var(--surface-muted)] text-[var(--text-muted)] hover:bg-[var(--border-strong)]'}`}
                                     >
                                         {t === 'points' ? 'Top điểm' : 'Top chuyên cần'}
                                     </button>
@@ -777,7 +777,7 @@ export default function AdminDashboardPage() {
                                 <div className="space-y-0.5">
                                     {leaderTab === 'points' ? (
                                         leaderboard.length === 0 ? (
-                                            <p className="text-sm text-gray-400 text-center py-6">Chưa có dữ liệu</p>
+                                            <p className="text-sm text-[var(--text-faint)] text-center py-6">Chưa có dữ liệu</p>
                                         ) : leaderboard.map((p, idx) => (
                                             <div key={p.id} className="flex items-center gap-3 py-1 animate-reveal" style={{ animationDelay: `${idx * 40}ms` }}>
                                                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${rankBadgeClass(idx)}`}>
@@ -785,23 +785,23 @@ export default function AdminDashboardPage() {
                                                 </span>
                                                 <LeaderAvatar src={p.avatar_url} name={p.full_name} />
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-sm font-semibold text-gray-800 truncate flex items-center gap-1">
+                                                    <p className="text-sm font-semibold text-[var(--text)] truncate flex items-center gap-1">
                                                         {p.full_name}
-                                                        {p.badge === 'verified' && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />}
+                                                        {p.badge === 'verified' && <BadgeCheck className="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0" />}
                                                     </p>
-                                                    <p className="text-[11px] text-gray-400 truncate">Rank: {p.rank_label}</p>
+                                                    <p className="text-[11px] text-[var(--text-faint)] truncate">Rank: {p.rank_label}</p>
                                                 </div>
                                                 <div className="flex items-center gap-2 flex-shrink-0">
                                                     <div className="text-right">
-                                                        <p className="text-sm font-bold text-gray-800">{p.points.toLocaleString('vi-VN')}</p>
-                                                        <p className="text-[10px] text-gray-400">điểm</p>
+                                                        <p className="text-sm font-bold text-[var(--text)]">{p.points.toLocaleString('vi-VN')}</p>
+                                                        <p className="text-[10px] text-[var(--text-faint)]">điểm</p>
                                                     </div>
                                                     <MiniDelta delta={p.points_delta} />
                                                 </div>
                                             </div>
                                         ))
                                     ) : leaderboardAttendance.length === 0 ? (
-                                        <p className="text-sm text-gray-400 text-center py-6">Chưa có dữ liệu</p>
+                                        <p className="text-sm text-[var(--text-faint)] text-center py-6">Chưa có dữ liệu</p>
                                     ) : leaderboardAttendance.map((p, idx) => {
                                         const tier = getAttendanceTier(p.total_sessions);
                                         return (
@@ -811,15 +811,15 @@ export default function AdminDashboardPage() {
                                                 </span>
                                                 <LeaderAvatar src={p.avatar_url} name={p.full_name} />
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-sm font-semibold text-gray-800 truncate">{p.full_name}</p>
-                                                    <p className="text-[11px] text-gray-400 flex items-center gap-1">
+                                                    <p className="text-sm font-semibold text-[var(--text)] truncate">{p.full_name}</p>
+                                                    <p className="text-[11px] text-[var(--text-faint)] flex items-center gap-1">
                                                         <span>{tier.icon}</span><span className="truncate">{tier.label}</span>
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center gap-2 flex-shrink-0">
                                                     <div className="text-right">
-                                                        <p className="text-sm font-bold text-gray-800">{p.sessions_this_month}</p>
-                                                        <p className="text-[10px] text-gray-400">buổi</p>
+                                                        <p className="text-sm font-bold text-[var(--text)]">{p.sessions_this_month}</p>
+                                                        <p className="text-[10px] text-[var(--text-faint)]">buổi</p>
                                                     </div>
                                                     <MiniDelta delta={p.sessions_delta} />
                                                 </div>
@@ -832,7 +832,7 @@ export default function AdminDashboardPage() {
 
                         <button
                             onClick={() => router.push('/admin/rankings')}
-                            className="mt-2 text-xs font-medium text-blue-600 hover:text-blue-700"
+                            className="mt-2 text-xs font-medium text-[var(--primary)] hover:text-[var(--primary)]"
                         >
                             Xem đầy đủ bảng xếp hạng →
                         </button>
@@ -843,7 +843,7 @@ export default function AdminDashboardPage() {
                     <Panel
                         title={`Nạp tiền nhiều nhất · ${periodLabel}`}
                         icon={PiggyBank}
-                        iconCls="text-emerald-500"
+                        iconCls="text-[var(--success)]"
                         className={TOP_ROW}
                         bodyClassName="overflow-y-auto scroll-hover"
                     >
@@ -852,23 +852,23 @@ export default function AdminDashboardPage() {
                         ) : (
                             <Reveal show>
                                 <div className="grid grid-cols-3 gap-2 text-center">
-                                    <div className="rounded-xl bg-emerald-50/70 py-2">
-                                        <p className="text-[10px] text-gray-400 uppercase">Tổng nạp</p>
-                                        <p className="text-sm font-bold text-emerald-600 tabular-nums">{fmtFull(topupSummary.total_amount)}</p>
+                                    <div className="rounded-xl bg-[var(--success-soft)] py-2">
+                                        <p className="text-[10px] text-[var(--text-faint)] uppercase">Tổng nạp</p>
+                                        <p className="text-sm font-bold text-[var(--success)] tabular-nums">{fmtFull(topupSummary.total_amount)}</p>
                                     </div>
-                                    <div className="rounded-xl bg-gray-50 py-2">
-                                        <p className="text-[10px] text-gray-400 uppercase">Số lần</p>
-                                        <p className="text-lg font-bold text-gray-900 leading-6">{topupSummary.total_count}</p>
+                                    <div className="rounded-xl bg-[var(--surface-muted)] py-2">
+                                        <p className="text-[10px] text-[var(--text-faint)] uppercase">Số lần</p>
+                                        <p className="text-lg font-bold text-[var(--text)] leading-6">{topupSummary.total_count}</p>
                                     </div>
-                                    <div className="rounded-xl bg-gray-50 py-2">
-                                        <p className="text-[10px] text-gray-400 uppercase">Người nạp</p>
-                                        <p className="text-lg font-bold text-gray-900 leading-6">{topupSummary.member_count}</p>
+                                    <div className="rounded-xl bg-[var(--surface-muted)] py-2">
+                                        <p className="text-[10px] text-[var(--text-faint)] uppercase">Người nạp</p>
+                                        <p className="text-lg font-bold text-[var(--text)] leading-6">{topupSummary.member_count}</p>
                                     </div>
                                 </div>
 
                                 <div className="mt-2 space-y-0.5">
                                     {topTopups.length === 0 ? (
-                                        <p className="text-sm text-gray-400 text-center py-6">Không có lượt nạp nào trong kỳ này</p>
+                                        <p className="text-sm text-[var(--text-faint)] text-center py-6">Không có lượt nạp nào trong kỳ này</p>
                                     ) : topTopups.map((p, idx) => (
                                         <div key={p.user_id} className="flex items-center gap-3 py-1">
                                             <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${rankBadgeClass(idx)}`}>
@@ -876,10 +876,10 @@ export default function AdminDashboardPage() {
                                             </span>
                                             <LeaderAvatar src={p.avatar_url} name={p.full_name ?? ''} />
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-semibold text-gray-800 truncate">{p.full_name ?? 'Chưa rõ tên'}</p>
-                                                <p className="text-[11px] text-gray-400">{p.count} lần nạp</p>
+                                                <p className="text-sm font-semibold text-[var(--text)] truncate">{p.full_name ?? 'Chưa rõ tên'}</p>
+                                                <p className="text-[11px] text-[var(--text-faint)]">{p.count} lần nạp</p>
                                             </div>
-                                            <p className="text-sm font-bold text-emerald-600 tabular-nums flex-shrink-0">{fmtFull(p.total_amount)}</p>
+                                            <p className="text-sm font-bold text-[var(--success)] tabular-nums flex-shrink-0">{fmtFull(p.total_amount)}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -889,11 +889,11 @@ export default function AdminDashboardPage() {
                     <Panel
                         title={`Phạt nhiều nhất · ${periodLabel}`}
                         icon={AlertTriangle}
-                        iconCls="text-red-500"
+                        iconCls="text-[var(--danger)]"
                         className={BOTTOM_ROW}
                         bodyClassName="xl:overflow-y-auto scroll-hover"
                         action={
-                            <button onClick={() => router.push('/admin/fund')} className="text-xs font-medium text-blue-600 hover:text-blue-700">
+                            <button onClick={() => router.push('/admin/fund')} className="text-xs font-medium text-[var(--primary)] hover:text-[var(--primary)]">
                                 Chi tiết →
                             </button>
                         }
@@ -903,23 +903,23 @@ export default function AdminDashboardPage() {
                         ) : (
                             <Reveal show>
                                 <div className="grid grid-cols-3 gap-2 text-center">
-                                    <div className="rounded-xl bg-red-50/70 py-2">
-                                        <p className="text-[10px] text-gray-400 uppercase">Tổng phạt</p>
-                                        <p className="text-sm font-bold text-red-500 tabular-nums">{fmtFull(penaltySummary.total_amount)}</p>
+                                    <div className="rounded-xl bg-[var(--danger-soft)] py-2">
+                                        <p className="text-[10px] text-[var(--text-faint)] uppercase">Tổng phạt</p>
+                                        <p className="text-sm font-bold text-[var(--danger)] tabular-nums">{fmtFull(penaltySummary.total_amount)}</p>
                                     </div>
-                                    <div className="rounded-xl bg-gray-50 py-2">
-                                        <p className="text-[10px] text-gray-400 uppercase">Số lần</p>
-                                        <p className="text-lg font-bold text-gray-900 leading-6">{penaltySummary.total_count}</p>
+                                    <div className="rounded-xl bg-[var(--surface-muted)] py-2">
+                                        <p className="text-[10px] text-[var(--text-faint)] uppercase">Số lần</p>
+                                        <p className="text-lg font-bold text-[var(--text)] leading-6">{penaltySummary.total_count}</p>
                                     </div>
-                                    <div className="rounded-xl bg-gray-50 py-2">
-                                        <p className="text-[10px] text-gray-400 uppercase">Người bị phạt</p>
-                                        <p className="text-lg font-bold text-gray-900 leading-6">{penaltySummary.member_count}</p>
+                                    <div className="rounded-xl bg-[var(--surface-muted)] py-2">
+                                        <p className="text-[10px] text-[var(--text-faint)] uppercase">Người bị phạt</p>
+                                        <p className="text-lg font-bold text-[var(--text)] leading-6">{penaltySummary.member_count}</p>
                                     </div>
                                 </div>
 
                                 <div className="mt-2 space-y-0.5">
                                     {topPenalized.length === 0 ? (
-                                        <p className="text-sm text-gray-400 text-center py-6">Không có khoản phạt nào trong kỳ này</p>
+                                        <p className="text-sm text-[var(--text-faint)] text-center py-6">Không có khoản phạt nào trong kỳ này</p>
                                     ) : topPenalized.map((p, idx) => (
                                         <div key={p.user_id} className="flex items-center gap-3 py-1">
                                             <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${rankBadgeClass(idx)}`}>
@@ -927,15 +927,15 @@ export default function AdminDashboardPage() {
                                             </span>
                                             <LeaderAvatar src={p.avatar_url} name={p.full_name ?? ''} />
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-semibold text-gray-800 truncate">{p.full_name ?? 'Chưa rõ tên'}</p>
-                                                <p className="text-[11px] text-gray-400 truncate">
+                                                <p className="text-sm font-semibold text-[var(--text)] truncate">{p.full_name ?? 'Chưa rõ tên'}</p>
+                                                <p className="text-[11px] text-[var(--text-faint)] truncate">
                                                     {p.count} lần
                                                     {p.unpaid_amount > 0 && (
-                                                        <span className="text-amber-600"> · chưa thu {fmtFull(p.unpaid_amount)}</span>
+                                                        <span className="text-[var(--warning)]"> · chưa thu {fmtFull(p.unpaid_amount)}</span>
                                                     )}
                                                 </p>
                                             </div>
-                                            <p className="text-sm font-bold text-red-500 tabular-nums flex-shrink-0">{fmtFull(p.total_amount)}</p>
+                                            <p className="text-sm font-bold text-[var(--danger)] tabular-nums flex-shrink-0">{fmtFull(p.total_amount)}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -952,17 +952,17 @@ export default function AdminDashboardPage() {
                             ) : (
                                 <Reveal show>
                                     <div className="grid grid-cols-3 gap-2 text-center">
-                                        <div className="rounded-xl bg-blue-50 py-2">
-                                            <p className="text-[10px] text-gray-400 uppercase">Hôm nay</p>
-                                            <p className="text-lg font-bold text-blue-500 leading-6">{sessionCounts.today}</p>
+                                        <div className="rounded-xl bg-[var(--primary-soft)] py-2">
+                                            <p className="text-[10px] text-[var(--text-faint)] uppercase">Hôm nay</p>
+                                            <p className="text-lg font-bold text-[var(--primary)] leading-6">{sessionCounts.today}</p>
                                         </div>
-                                        <div className="rounded-xl bg-gray-50 py-2">
-                                            <p className="text-[10px] text-gray-400 uppercase">Tuần này</p>
-                                            <p className="text-lg font-bold text-gray-900 leading-6">{sessionCounts.this_week}</p>
+                                        <div className="rounded-xl bg-[var(--surface-muted)] py-2">
+                                            <p className="text-[10px] text-[var(--text-faint)] uppercase">Tuần này</p>
+                                            <p className="text-lg font-bold text-[var(--text)] leading-6">{sessionCounts.this_week}</p>
                                         </div>
-                                        <div className="rounded-xl bg-gray-50 py-2">
-                                            <p className="text-[10px] text-gray-400 uppercase">Tháng này</p>
-                                            <p className="text-lg font-bold text-gray-900 leading-6">{sessionCounts.this_month}</p>
+                                        <div className="rounded-xl bg-[var(--surface-muted)] py-2">
+                                            <p className="text-[10px] text-[var(--text-faint)] uppercase">Tháng này</p>
+                                            <p className="text-lg font-bold text-[var(--text)] leading-6">{sessionCounts.this_month}</p>
                                         </div>
                                     </div>
                                 </Reveal>
@@ -972,7 +972,7 @@ export default function AdminDashboardPage() {
                         <Panel
                             title="Quỹ CLB"
                             icon={Wallet}
-                            iconCls="text-slate-600"
+                            iconCls="text-[var(--text-muted)]"
                             className="flex-1"
                             bodyClassName="overflow-y-auto scroll-hover"
                         >
@@ -981,19 +981,19 @@ export default function AdminDashboardPage() {
                             ) : (
                                 <Reveal show>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div className="rounded-xl bg-emerald-50/60 p-2.5">
-                                            <p className="text-[10px] text-gray-400 uppercase">Thu tháng này</p>
-                                            <p className="text-sm font-bold text-emerald-600 tabular-nums">{monthlyFinance.income.toLocaleString('vi-VN')}đ</p>
+                                        <div className="rounded-xl bg-[var(--success-soft)] p-2.5">
+                                            <p className="text-[10px] text-[var(--text-faint)] uppercase">Thu tháng này</p>
+                                            <p className="text-sm font-bold text-[var(--success)] tabular-nums">{monthlyFinance.income.toLocaleString('vi-VN')}đ</p>
                                         </div>
-                                        <div className="rounded-xl bg-red-50/60 p-2.5">
-                                            <p className="text-[10px] text-gray-400 uppercase">Chi tháng này</p>
-                                            <p className="text-sm font-bold text-red-500 tabular-nums">{monthlyFinance.expense.toLocaleString('vi-VN')}đ</p>
+                                        <div className="rounded-xl bg-[var(--danger-soft)] p-2.5">
+                                            <p className="text-[10px] text-[var(--text-faint)] uppercase">Chi tháng này</p>
+                                            <p className="text-sm font-bold text-[var(--danger)] tabular-nums">{monthlyFinance.expense.toLocaleString('vi-VN')}đ</p>
                                         </div>
                                     </div>
-                                    <div className="mt-2 pt-2 border-t border-dashed border-gray-200 flex items-center justify-between">
+                                    <div className="mt-2 pt-2 border-t border-dashed border-[var(--border)] flex items-center justify-between">
                                         <div>
-                                            <p className="text-[10px] text-gray-400 uppercase">Quỹ còn lại</p>
-                                            <p className="text-lg font-bold text-blue-500 tabular-nums">{(walletSummary?.club_balance ?? 0).toLocaleString('vi-VN')}đ</p>
+                                            <p className="text-[10px] text-[var(--text-faint)] uppercase">Quỹ còn lại</p>
+                                            <p className="text-lg font-bold text-[var(--primary)] tabular-nums">{(walletSummary?.club_balance ?? 0).toLocaleString('vi-VN')}đ</p>
                                         </div>
                                         <span className="text-2xl">💰</span>
                                     </div>
@@ -1005,11 +1005,11 @@ export default function AdminDashboardPage() {
                     <Panel
                         title="Nước trong kho thành viên"
                         icon={CupSoda}
-                        iconCls="text-sky-500"
+                        iconCls="text-[var(--primary)]"
                         className={BOTTOM_ROW}
                         bodyClassName="xl:overflow-y-auto scroll-hover"
                         action={
-                            <button onClick={() => setShowDrinkHolders(true)} className="text-xs font-medium text-blue-600 hover:text-blue-700">
+                            <button onClick={() => setShowDrinkHolders(true)} className="text-xs font-medium text-[var(--primary)] hover:text-[var(--primary)]">
                                 Chi tiết →
                             </button>
                         }
@@ -1019,42 +1019,42 @@ export default function AdminDashboardPage() {
                         ) : (
                             <Reveal show>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <div className="rounded-xl bg-sky-50/70 p-2.5">
-                                        <p className="text-[10px] text-gray-400 uppercase">Tổng số chai</p>
-                                        <p className="text-lg font-bold text-sky-600 tabular-nums leading-6">{drinkStats.total_quantity.toLocaleString('vi-VN')}</p>
+                                    <div className="rounded-xl bg-[var(--primary-soft)] p-2.5">
+                                        <p className="text-[10px] text-[var(--text-faint)] uppercase">Tổng số chai</p>
+                                        <p className="text-lg font-bold text-[var(--primary)] tabular-nums leading-6">{drinkStats.total_quantity.toLocaleString('vi-VN')}</p>
                                     </div>
-                                    <div className="rounded-xl bg-amber-50/70 p-2.5">
-                                        <p className="text-[10px] text-gray-400 uppercase">Giá trị</p>
-                                        <p className="text-sm font-bold text-amber-600 tabular-nums leading-6">{fmtFull(drinkStats.total_value)}</p>
+                                    <div className="rounded-xl bg-[var(--warning-soft)] p-2.5">
+                                        <p className="text-[10px] text-[var(--text-faint)] uppercase">Giá trị</p>
+                                        <p className="text-sm font-bold text-[var(--warning)] tabular-nums leading-6">{fmtFull(drinkStats.total_value)}</p>
                                     </div>
-                                    <div className="rounded-xl bg-gray-50 p-2.5">
-                                        <p className="text-[10px] text-gray-400 uppercase">Người có nước</p>
-                                        <p className="text-lg font-bold text-gray-900 tabular-nums leading-6">{drinkStats.total_members_owning}</p>
+                                    <div className="rounded-xl bg-[var(--surface-muted)] p-2.5">
+                                        <p className="text-[10px] text-[var(--text-faint)] uppercase">Người có nước</p>
+                                        <p className="text-lg font-bold text-[var(--text)] tabular-nums leading-6">{drinkStats.total_members_owning}</p>
                                     </div>
-                                    <div className="rounded-xl bg-gray-50 p-2.5">
-                                        <p className="text-[10px] text-gray-400 uppercase">GD tháng này</p>
-                                        <p className="text-lg font-bold text-gray-900 tabular-nums leading-6">{drinkStats.transactions_this_month}</p>
+                                    <div className="rounded-xl bg-[var(--surface-muted)] p-2.5">
+                                        <p className="text-[10px] text-[var(--text-faint)] uppercase">GD tháng này</p>
+                                        <p className="text-lg font-bold text-[var(--text)] tabular-nums leading-6">{drinkStats.transactions_this_month}</p>
                                     </div>
                                 </div>
 
-                                <div className="mt-2 pt-2 border-t border-dashed border-gray-200">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Loại nước nhiều nhất</p>
+                                <div className="mt-2 pt-2 border-t border-dashed border-[var(--border)]">
+                                    <p className="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">Loại nước nhiều nhất</p>
                                     {drinkBreakdown.length === 0 ? (
-                                        <p className="text-sm text-gray-400 text-center py-3">Chưa có dữ liệu</p>
+                                        <p className="text-sm text-[var(--text-faint)] text-center py-3">Chưa có dữ liệu</p>
                                     ) : (
                                         <div className="space-y-1.5">
                                             {drinkBreakdown.map((d) => (
                                                 <div key={d.drink_id} className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                    <div className="w-8 h-8 rounded-lg bg-[var(--primary-soft)] flex items-center justify-center overflow-hidden flex-shrink-0">
                                                         <ActivityThumbnail src={d.image_url} emoji="🥤" />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="text-sm font-semibold text-gray-800 truncate">{d.name}</p>
-                                                        <p className="text-[11px] text-gray-400">{d.member_count} người sở hữu</p>
+                                                        <p className="text-sm font-semibold text-[var(--text)] truncate">{d.name}</p>
+                                                        <p className="text-[11px] text-[var(--text-faint)]">{d.member_count} người sở hữu</p>
                                                     </div>
                                                     <div className="text-right flex-shrink-0">
-                                                        <p className="text-sm font-bold text-gray-800 tabular-nums">{d.total_quantity}</p>
-                                                        <p className="text-[10px] text-gray-400">chai</p>
+                                                        <p className="text-sm font-bold text-[var(--text)] tabular-nums">{d.total_quantity}</p>
+                                                        <p className="text-[10px] text-[var(--text-faint)]">chai</p>
                                                     </div>
                                                 </div>
                                             ))}

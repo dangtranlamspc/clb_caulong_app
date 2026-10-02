@@ -159,7 +159,7 @@ export default function AdminDrinksManager() {
             <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                     <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Loại nước</h1>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-[var(--text-muted)]">
                         Quản lý danh mục các loại nước: tên, ảnh và giá bán.
                     </p>
                 </div>
@@ -173,13 +173,13 @@ export default function AdminDrinksManager() {
             </div>
 
             {loading && (
-                <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-400">
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--text-muted)]">
                     Đang tải...
                 </div>
             )}
 
             {!loading && drinks.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-400">
+                <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-8 text-center text-sm text-[var(--text-muted)]">
                     Chưa có loại nước nào. Bấm "Thêm nước" để tạo loại đầu tiên.
                 </div>
             )}
@@ -190,11 +190,11 @@ export default function AdminDrinksManager() {
                         {drinks.map((drink) => (
                             <div
                                 key={drink.id}
-                                className={`rounded-2xl border border-slate-200 bg-white p-4 ${!drink.is_active ? "opacity-50" : ""
+                                className={`rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 ${!drink.is_active ? "opacity-50" : ""
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                                    <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--surface-muted)]">
                                         {drink.image_url && (
                                             <img
                                                 src={drink.image_url}
@@ -205,30 +205,30 @@ export default function AdminDrinksManager() {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-sm font-medium text-slate-800">{drink.name}</p>
-                                        <p className="text-sm text-slate-500">{formatVND(drink.price)}</p>
+                                        <p className="text-sm text-[var(--text-muted)]">{formatVND(drink.price)}</p>
                                     </div>
                                     <button
                                         onClick={() => handleToggleActive(drink.id)}
                                         className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${drink.is_active
-                                            ? "bg-emerald-50 text-emerald-600"
-                                            : "bg-slate-100 text-slate-500"
+                                            ? "bg-[var(--success-soft)] text-[var(--success)]"
+                                            : "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                                             }`}
                                     >
                                         {drink.is_active ? "Đang bán" : "Đã ẩn"}
                                     </button>
                                 </div>
 
-                                <div className="mt-3 flex items-center justify-end gap-1 border-t border-slate-100 pt-3">
+                                <div className="mt-3 flex items-center justify-end gap-1 border-t border-[var(--border)] pt-3">
                                     <button
                                         onClick={() => openEditModal(drink)}
-                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100"
+                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] active:bg-[var(--surface-muted)]"
                                         aria-label={`Sửa ${drink.name}`}
                                     >
                                         <Pencil className="h-4 w-4" />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(drink.id, drink.name)}
-                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 active:bg-red-50"
+                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--danger)] active:bg-[var(--danger-soft)]"
                                         aria-label={`Xóa ${drink.name}`}
                                     >
                                         <Trash2 className="h-4 w-4" />
@@ -238,9 +238,9 @@ export default function AdminDrinksManager() {
                         ))}
                     </div>
 
-                    <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white sm:block">
+                    <div className="hidden overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] sm:block">
                         <table className="w-full text-left text-sm">
-                            <thead className="border-b border-slate-200 bg-slate-50 text-slate-500">
+                            <thead className="border-b border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)]">
                                 <tr>
                                     <th className="px-4 py-3 font-medium">Nước</th>
                                     <th className="px-4 py-3 font-medium">Giá</th>
@@ -248,12 +248,12 @@ export default function AdminDrinksManager() {
                                     <th className="px-4 py-3"></th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-[var(--border)]">
                                 {drinks.map((drink) => (
                                     <tr key={drink.id} className={!drink.is_active ? "opacity-50" : ""}>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                                                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--surface-muted)]">
                                                     {drink.image_url && (
                                                         <img
                                                             src={drink.image_url}
@@ -265,14 +265,14 @@ export default function AdminDrinksManager() {
                                                 <span className="font-medium text-slate-800">{drink.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-slate-600">{formatVND(drink.price)}</td>
+                                        <td className="px-4 py-3 text-[var(--text-muted)]">{formatVND(drink.price)}</td>
                                         <td className="px-4 py-3">
                                             <button
                                                 onClick={() => handleToggleActive(drink.id)}
                                                 className={
                                                     drink.is_active
-                                                        ? "rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600"
-                                                        : "rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500"
+                                                        ? "rounded-full bg-[var(--success-soft)] px-2.5 py-1 text-xs font-medium text-[var(--success)]"
+                                                        : "rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-medium text-[var(--text-muted)]"
                                                 }
                                             >
                                                 {drink.is_active ? "Đang bán" : "Đã ẩn"}
@@ -282,13 +282,13 @@ export default function AdminDrinksManager() {
                                             <div className="flex items-center justify-end gap-3">
                                                 <button
                                                     onClick={() => openEditModal(drink)}
-                                                    className="text-xs font-medium text-slate-500 hover:text-slate-700"
+                                                    className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-muted)]"
                                                 >
                                                     Sửa
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(drink.id, drink.name)}
-                                                    className="text-xs font-medium text-red-500 hover:text-red-600"
+                                                    className="text-xs font-medium text-[var(--danger)] hover:text-[var(--danger)]"
                                                 >
                                                     Xóa
                                                 </button>
@@ -310,17 +310,17 @@ export default function AdminDrinksManager() {
                     />
 
                     <div
-                        className={`relative w-full max-h-[90vh] overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-lg sm:rounded-3xl ${closing ? "animate-sheet-out sm:animate-modal-out" : "animate-sheet-in sm:animate-modal-in"
+                        className={`relative w-full max-h-[90vh] overflow-y-auto rounded-t-3xl bg-[var(--surface)] shadow-2xl sm:max-w-lg sm:rounded-3xl ${closing ? "animate-sheet-out sm:animate-modal-out" : "animate-sheet-in sm:animate-modal-in"
                             }`}
                         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
                     >
-                        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-3xl border-b border-gray-100 bg-white px-5 py-4">
-                            <h2 className="text-base font-bold text-gray-900">
+                        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-3xl border-b border-[var(--border)] bg-[var(--surface)] px-5 py-4">
+                            <h2 className="text-base font-bold text-[var(--text)]">
                                 {editingId ? "Sửa loại nước" : "Thêm loại nước"}
                             </h2>
                             <button
                                 onClick={closeModal}
-                                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-400"
+                                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--text-faint)]"
                             >
                                 <X className="h-4 w-4" />
                             </button>
@@ -330,7 +330,7 @@ export default function AdminDrinksManager() {
                             <div className="flex flex-col items-center gap-2">
                                 <label
                                     htmlFor="drink-image"
-                                    className="flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:border-cyan-400 hover:text-cyan-500"
+                                    className="flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)] hover:border-cyan-400 hover:text-cyan-500"
                                 >
                                     {preview ? (
                                         <img src={preview} alt="Xem trước" className="h-full w-full object-cover" />
@@ -349,24 +349,24 @@ export default function AdminDrinksManager() {
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700">Tên nước</label>
+                                <label className="mb-1 block text-sm font-medium text-[var(--text-muted)]">Tên nước</label>
                                 <input
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder="Ví dụ: Aquafina 500ml"
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                                    className="w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700">Giá tiền (đ)</label>
+                                <label className="mb-1 block text-sm font-medium text-[var(--text-muted)]">Giá tiền (đ)</label>
                                 <input
                                     type="text"
                                     inputMode="numeric"
                                     value={formatNumberInput(price)}
                                     onChange={(e) => setPrice(parseNumberInput(e.target.value))}
                                     placeholder="10.000"
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                                    className="w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                                 />
                             </div>
 

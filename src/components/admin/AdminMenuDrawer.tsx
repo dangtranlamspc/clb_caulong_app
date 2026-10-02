@@ -116,18 +116,18 @@ export function AdminMenuDrawer({
                 onClick={onClose}
             />
             <div
-                className={`absolute top-0 left-0 h-full bg-[#F4F6FA] shadow-2xl overflow-y-auto drawer-scroll rounded-r-3xl ${closing ? 'animate-slide-out-left' : 'animate-slide-in-left'
+                className={`absolute top-0 left-0 h-full bg-[var(--bg)] shadow-2xl overflow-y-auto drawer-scroll rounded-r-3xl ${closing ? 'animate-slide-out-left' : 'animate-slide-in-left'
                     }`}
                 style={{ width: 'min(85vw, 360px)' }}
             >
                 <div
-                    className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between rounded-tr-3xl"
+                    className="sticky top-0 z-10 bg-[var(--surface)] border-b border-[var(--border)] px-4 py-3 flex items-center justify-between rounded-tr-3xl"
                     style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
                 >
-                    <h2 className="font-bold text-gray-900 text-sm">⚙️ Khu vực quản trị</h2>
+                    <h2 className="font-bold text-[var(--text)] text-sm">⚙️ Khu vực quản trị</h2>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 flex-shrink-0"
+                        className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)] flex-shrink-0"
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -143,18 +143,18 @@ export function AdminMenuDrawer({
                                 <div key={label}>
                                     <button
                                         onClick={() => toggleMenu(label)}
-                                        className={`w-full rounded-2xl p-3.5 flex items-center gap-3 border shadow-sm active:scale-[0.98] transition-colors text-left ${childActive ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-100'
+                                        className={`w-full rounded-2xl p-3.5 flex items-center gap-3 border shadow-sm active:scale-[0.98] transition-colors text-left ${childActive ? 'bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]' : 'bg-[var(--surface)] border-[var(--border)]'
                                             }`}
                                     >
                                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
                                             <Icon className="w-5 h-5 text-white" />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className={`text-sm font-bold ${childActive ? 'text-blue-700' : 'text-gray-900'}`}>{label}</p>
-                                            <p className="text-xs mt-0.5 truncate text-gray-400">{desc}</p>
+                                            <p className={`text-sm font-bold ${childActive ? 'text-[var(--primary)]' : 'text-[var(--text)]'}`}>{label}</p>
+                                            <p className="text-xs mt-0.5 truncate text-[var(--text-faint)]">{desc}</p>
                                         </div>
                                         <ChevronDown
-                                            className={`w-4 h-4 flex-shrink-0 text-gray-300 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
+                                            className={`w-4 h-4 flex-shrink-0 text-[var(--text-faint)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
                                                 }`}
                                         />
                                     </button>
@@ -164,7 +164,7 @@ export function AdminMenuDrawer({
                                             }`}
                                     >
                                         <div className="overflow-hidden">
-                                            <div className="mt-1.5 ml-5 pl-4 border-l-2 border-gray-200 space-y-1.5 py-0.5">
+                                            <div className="mt-1.5 ml-5 pl-4 border-l-2 border-[var(--border)] space-y-1.5 py-0.5">
                                                 {children.map((child) => {
                                                     const active = isActive(child.href);
                                                     return (
@@ -173,18 +173,18 @@ export function AdminMenuDrawer({
                                                             onClick={() => go(child.href)}
                                                             className={`relative w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors text-left ${active
                                                                 ? 'bg-blue-500 text-white font-semibold'
-                                                                : 'bg-white border border-gray-100 text-gray-600'
+                                                                : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)]'
                                                                 }`}
                                                         >
                                                             <span className="flex-1">{child.label}</span>
-                                                            <ChevronRight className={`w-3.5 h-3.5 flex-shrink-0 ${active ? 'text-white/80' : 'text-gray-300'}`} />
+                                                            <ChevronRight className={`w-3.5 h-3.5 flex-shrink-0 ${active ? 'text-white/80' : 'text-[var(--text-faint)]'}`} />
                                                         </button>
                                                     );
                                                 })}
                                             </div>
                                         </div>
                                     </div>
-                                    {idx === 0 && <div className="h-px bg-gray-200 my-2.5" />}
+                                    {idx === 0 && <div className="h-px bg-[var(--border-strong)] my-2.5" />}
                                 </div>
                             );
                         }
@@ -196,31 +196,31 @@ export function AdminMenuDrawer({
                                     onClick={() => go(href!)}
                                     className={`w-full rounded-2xl p-3.5 flex items-center gap-3 border shadow-sm active:scale-[0.98] transition-colors text-left ${active
                                         ? 'bg-blue-500 border-blue-500'
-                                        : 'bg-white border-gray-100'
+                                        : 'bg-[var(--surface)] border-[var(--border)]'
                                         }`}
                                 >
                                     <div
-                                        className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${active ? 'bg-white/20' : iconBg
+                                        className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${active ? 'bg-[color-mix(in_srgb,var(--surface)_20%,transparent)]' : iconBg
                                             }`}
                                     >
                                         <Icon className="w-5 h-5 text-white" />
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <p className={`text-sm font-bold ${active ? 'text-white' : 'text-gray-900'}`}>
+                                        <p className={`text-sm font-bold ${active ? 'text-white' : 'text-[var(--text)]'}`}>
                                             {label}
                                         </p>
                                         <p
-                                            className={`text-xs mt-0.5 truncate ${active ? 'text-white/80' : 'text-gray-400'
+                                            className={`text-xs mt-0.5 truncate ${active ? 'text-white/80' : 'text-[var(--text-faint)]'
                                                 }`}
                                         >
                                             {desc}
                                         </p>
                                     </div>
                                     <ChevronRight
-                                        className={`w-4 h-4 flex-shrink-0 ${active ? 'text-white/80' : 'text-gray-300'}`}
+                                        className={`w-4 h-4 flex-shrink-0 ${active ? 'text-white/80' : 'text-[var(--text-faint)]'}`}
                                     />
                                 </button>
-                                {idx === 0 && <div className="h-px bg-gray-200 my-2.5" />}
+                                {idx === 0 && <div className="h-px bg-[var(--border-strong)] my-2.5" />}
                             </div>
                         );
                     })}

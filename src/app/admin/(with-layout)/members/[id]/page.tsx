@@ -38,8 +38,8 @@ const ROLE_OPTIONS = [
     { value: 'admin', label: 'Admin' },
 ];
 
-const inputCls = 'w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400';
-const labelCls = 'block text-xs font-semibold text-gray-500 mb-1.5';
+const inputCls = 'w-full text-sm border border-[var(--border)] rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400';
+const labelCls = 'block text-xs font-semibold text-[var(--text-muted)] mb-1.5';
 
 export default function AdminMemberEditPage() {
     const router = useRouter();
@@ -144,10 +144,10 @@ export default function AdminMemberEditPage() {
     if (loading) {
         return (
             <div className="space-y-4">
-                <div className="h-8 bg-gray-200 rounded w-56 animate-pulse" />
-                <div className="bg-white rounded-2xl p-4 border border-gray-100 space-y-4">
+                <div className="h-8 bg-[var(--border-strong)] rounded w-56 animate-pulse" />
+                <div className="bg-[var(--surface)] rounded-2xl p-4 border border-[var(--border)] space-y-4">
                     {[...Array(6)].map((_, i) => (
-                        <div key={i} className="h-10 bg-gray-100 rounded-xl animate-pulse" />
+                        <div key={i} className="h-10 bg-[var(--surface-muted)] rounded-xl animate-pulse" />
                     ))}
                 </div>
             </div>
@@ -157,29 +157,29 @@ export default function AdminMemberEditPage() {
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-3">
-                <button onClick={() => router.push('/admin/members')} className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500">
+                <button onClick={() => router.push('/admin/members')} className="w-9 h-9 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)]">
                     <ArrowLeft className="w-4 h-4" />
                 </button>
-                <h1 className="text-lg font-bold text-gray-900">Chỉnh sửa thành viên</h1>
+                <h1 className="text-lg font-bold text-[var(--text)]">Chỉnh sửa thành viên</h1>
             </div>
 
-            <form onSubmit={onSubmit} className="bg-white rounded-2xl p-4 border border-gray-100 space-y-4">
+            <form onSubmit={onSubmit} className="bg-[var(--surface)] rounded-2xl p-4 border border-[var(--border)] space-y-4">
                 <div>
                     <label className={labelCls}>Họ và tên *</label>
                     <input value={form.full_name} onChange={(e) => set('full_name', e.target.value)} className={inputCls} placeholder="Nguyễn Văn A" />
-                    {errors.full_name && <p className="text-red-500 text-xs mt-1">{errors.full_name}</p>}
+                    {errors.full_name && <p className="text-[var(--danger)] text-xs mt-1">{errors.full_name}</p>}
                 </div>
 
                 <div>
                     <label className={labelCls}>Email *</label>
                     <input value={form.email} onChange={(e) => set('email', e.target.value)} type="email" className={inputCls} placeholder="user@example.com" />
-                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                    {errors.email && <p className="text-[var(--danger)] text-xs mt-1">{errors.email}</p>}
                 </div>
 
                 <div>
                     <label className={labelCls}>Số điện thoại *</label>
                     <input value={form.phone} onChange={(e) => set('phone', e.target.value)} className={inputCls} placeholder="0901234567" />
-                    {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                    {errors.phone && <p className="text-[var(--danger)] text-xs mt-1">{errors.phone}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -249,8 +249,8 @@ export default function AdminMemberEditPage() {
                     />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-                    <button type="button" onClick={() => router.push('/admin/members')} className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-500 bg-gray-100">
+                <div className="flex justify-end gap-3 pt-2 border-t border-[var(--border)]">
+                    <button type="button" onClick={() => router.push('/admin/members')} className="px-4 py-2 rounded-xl text-sm font-semibold text-[var(--text-muted)] bg-[var(--surface-muted)]">
                         Hủy
                     </button>
                     <button type="submit" disabled={saving} className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 flex items-center gap-2 disabled:opacity-60">
@@ -261,18 +261,18 @@ export default function AdminMemberEditPage() {
             </form>
 
             {/* Đổi mật khẩu — tách riêng vì là action độc lập */}
-            <div className="bg-white rounded-2xl p-4 border border-gray-100 space-y-3">
+            <div className="bg-[var(--surface)] rounded-2xl p-4 border border-[var(--border)] space-y-3">
                 <button
                     type="button"
                     onClick={() => setShowPasswordForm((s) => !s)}
-                    className="flex items-center gap-2 text-sm font-semibold text-gray-700"
+                    className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]"
                 >
-                    <KeyRound className="w-4 h-4 text-gray-400" />
+                    <KeyRound className="w-4 h-4 text-[var(--text-faint)]" />
                     Đổi mật khẩu
                 </button>
 
                 {showPasswordForm && (
-                    <div className="pt-2 border-t border-gray-100 space-y-2">
+                    <div className="pt-2 border-t border-[var(--border)] space-y-2">
                         <div>
                             <label className={labelCls}>Mật khẩu mới</label>
                             <input
@@ -282,7 +282,7 @@ export default function AdminMemberEditPage() {
                                 className={inputCls}
                                 placeholder="Tối thiểu 8 ký tự"
                             />
-                            {passwordError && <p className="text-red-500 text-xs mt-1">{passwordError}</p>}
+                            {passwordError && <p className="text-[var(--danger)] text-xs mt-1">{passwordError}</p>}
                         </div>
                         <div className="flex justify-end">
                             <button

@@ -12,11 +12,11 @@ export type HandbookItem = {
 };
 
 const VARIANTS: { value: NonNullable<HandbookItem["variant"]>; label: string; className: string }[] = [
-    { value: "default", label: "Mặc định", className: "bg-gray-100 text-gray-600" },
-    { value: "success", label: "Thành công", className: "bg-emerald-100 text-emerald-700" },
-    { value: "danger", label: "Cảnh báo lỗi", className: "bg-red-100 text-red-700" },
-    { value: "warning", label: "Lưu ý", className: "bg-amber-100 text-amber-700" },
-    { value: "highlight", label: "Nổi bật", className: "bg-blue-100 text-blue-700" },
+    { value: "default", label: "Mặc định", className: "bg-[var(--surface-muted)] text-[var(--text-muted)]" },
+    { value: "success", label: "Thành công", className: "bg-[var(--success-soft)] text-[var(--success)]" },
+    { value: "danger", label: "Cảnh báo lỗi", className: "bg-[var(--danger-soft)] text-[var(--danger)]" },
+    { value: "warning", label: "Lưu ý", className: "bg-[var(--warning-soft)] text-[var(--warning)]" },
+    { value: "highlight", label: "Nổi bật", className: "bg-[var(--primary-soft)] text-[var(--primary)]" },
 ];
 
 function genId() {
@@ -49,19 +49,19 @@ export function HandbookItemsEditor({
     return (
         <div className="space-y-2.5">
             {items.map((item, idx) => (
-                <div key={item.id} className="rounded-2xl border border-gray-100 bg-white p-3 space-y-2.5">
+                <div key={item.id} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 space-y-2.5">
                     <div className="flex items-start gap-2">
-                        <button type="button" onClick={() => move(idx, -1)} className="text-gray-300 hover:text-gray-500 pt-1.5">
+                        <button type="button" onClick={() => move(idx, -1)} className="text-[var(--text-faint)] hover:text-[var(--text-muted)] pt-1.5">
                             <GripVertical className="w-4 h-4" />
                         </button>
 
                         <button
                             type="button"
                             onClick={() => setOpenPicker(openPicker === item.id ? null : item.id)}
-                            className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0"
+                            className="w-10 h-10 rounded-xl bg-[var(--surface-muted)] border border-[var(--border)] flex items-center justify-center flex-shrink-0"
                             title="Chọn icon"
                         >
-                            <LucideIconByName name={item.icon} className="w-4.5 h-4.5 text-gray-500" />
+                            <LucideIconByName name={item.icon} className="w-4.5 h-4.5 text-[var(--text-muted)]" />
                         </button>
 
                         {richText ? (
@@ -79,14 +79,14 @@ export function HandbookItemsEditor({
                                 onChange={(e) => updateItem(item.id, { text: e.target.value })}
                                 placeholder="Nội dung mục..."
                                 rows={2}
-                                className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-400"
+                                className="flex-1 resize-none rounded-xl border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-[var(--primary)]"
                             />
                         )}
 
                         <button
                             type="button"
                             onClick={() => removeItem(item.id)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 flex-shrink-0"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] flex-shrink-0"
                         >
                             <Trash2 className="w-4 h-4" />
                         </button>
@@ -104,7 +104,7 @@ export function HandbookItemsEditor({
                                 key={v.value}
                                 type="button"
                                 onClick={() => updateItem(item.id, { variant: v.value })}
-                                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${item.variant === v.value ? `${v.className} border-transparent font-semibold` : "bg-white border-gray-200 text-gray-400"
+                                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${item.variant === v.value ? `${v.className} border-transparent font-semibold` : "bg-[var(--surface)] border-[var(--border)] text-[var(--text-faint)]"
                                     }`}
                             >
                                 {v.label}
@@ -117,7 +117,7 @@ export function HandbookItemsEditor({
             <button
                 type="button"
                 onClick={addItem}
-                className="w-full rounded-2xl border-2 border-dashed border-gray-200 py-3 flex items-center justify-center gap-1.5 text-sm text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors"
+                className="w-full rounded-2xl border-2 border-dashed border-[var(--border)] py-3 flex items-center justify-center gap-1.5 text-sm text-[var(--text-faint)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:text-[var(--primary)] transition-colors"
             >
                 <Plus className="w-4 h-4" /> Thêm mục
             </button>

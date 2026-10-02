@@ -105,41 +105,41 @@ export default function FundTransactionsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[var(--surface-muted)]">
             <div
-                className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-100"
+                className="sticky top-0 z-10 bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] backdrop-blur-sm border-b border-[var(--border)]"
                 style={{ paddingTop: "env(safe-area-inset-top)" }}
             >
                 <div className="max-w-md mx-auto flex items-center justify-between px-4 py-3.5">
-                    <Link href="/fund" className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0">
-                        <ArrowLeft className="w-4.5 h-4.5 text-gray-600" />
+                    <Link href="/fund" className="w-9 h-9 rounded-full bg-[var(--surface-muted)] flex items-center justify-center flex-shrink-0">
+                        <ArrowLeft className="w-4.5 h-4.5 text-[var(--text-muted)]" />
                     </Link>
-                    <h1 className="text-base font-bold text-gray-900">Lịch sử giao dịch</h1>
+                    <h1 className="text-base font-bold text-[var(--text)]">Lịch sử giao dịch</h1>
                     <div className="w-9 h-9 flex-shrink-0" />
                 </div>
             </div>
 
             <div className="max-w-md mx-auto px-4 py-4 space-y-4">
                 <div className="flex items-center justify-center gap-3">
-                    <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100">
+                    <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-lg text-[var(--text-faint)] hover:bg-[var(--surface-hover)]">
                         <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <span className="text-sm font-semibold text-gray-700 w-24 text-center">
+                    <span className="text-sm font-semibold text-[var(--text)] w-24 text-center">
                         {MONTH_NAMES_VI[month - 1]}/{year}
                     </span>
-                    <button onClick={() => changeMonth(1)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100">
+                    <button onClick={() => changeMonth(1)} className="p-1.5 rounded-lg text-[var(--text-faint)] hover:bg-[var(--surface-hover)]">
                         <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5">
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-3.5 text-center">
-                        <p className="text-[11px] text-emerald-600/70 mb-0.5">Tổng thu</p>
-                        <p className="text-base font-black text-emerald-600">+{fmt(totalThu)}</p>
+                    <div className="bg-[var(--success-soft)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] rounded-2xl p-3.5 text-center">
+                        <p className="text-[11px] text-[var(--success)]/70 mb-0.5">Tổng thu</p>
+                        <p className="text-base font-black text-[var(--success)]">+{fmt(totalThu)}</p>
                     </div>
-                    <div className="bg-red-50 border border-red-100 rounded-2xl p-3.5 text-center">
-                        <p className="text-[11px] text-red-500/70 mb-0.5">Tổng chi</p>
-                        <p className="text-base font-black text-red-500">-{fmt(totalChi)}</p>
+                    <div className="bg-[var(--danger-soft)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] rounded-2xl p-3.5 text-center">
+                        <p className="text-[11px] text-[var(--danger)]/70 mb-0.5">Tổng chi</p>
+                        <p className="text-base font-black text-[var(--danger)]">-{fmt(totalChi)}</p>
                     </div>
                 </div>
 
@@ -153,7 +153,7 @@ export default function FundTransactionsPage() {
                         <button
                             key={o.val || "all"}
                             onClick={() => handleTypeChange(o.val as "" | "thu" | "chi")}
-                            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors ${typeFilter === o.val ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-500"}`}
+                            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors ${typeFilter === o.val ? "bg-blue-600 text-white" : "bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)]"}`}
                         >
                             {o.label}
                         </button>
@@ -163,7 +163,7 @@ export default function FundTransactionsPage() {
                 {/* Danh mục — dropdown mở modal */}
                 <button
                     onClick={openCategorySheet}
-                    className="w-full flex items-center justify-between gap-2 bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-left"
+                    className="w-full flex items-center justify-between gap-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl px-3.5 py-2.5 text-left"
                 >
                     <span className="flex items-center gap-2 min-w-0">
                         {category ? (
@@ -177,24 +177,24 @@ export default function FundTransactionsPage() {
                                         </span>
                                     );
                                 })()}
-                                <span className="text-sm font-semibold text-gray-800 truncate">
+                                <span className="text-sm font-semibold text-[var(--text)] truncate">
                                     {CATEGORY_LABELS[category]}
                                 </span>
                             </>
                         ) : (
-                            <span className="text-sm font-semibold text-gray-500">Tất cả danh mục</span>
+                            <span className="text-sm font-semibold text-[var(--text-muted)]">Tất cả danh mục</span>
                         )}
                     </span>
-                    <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <ChevronDown className="w-4 h-4 text-[var(--text-faint)] flex-shrink-0" />
                 </button>
 
-                <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-50 shadow-sm overflow-hidden">
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl divide-y divide-[var(--border)] shadow-sm overflow-hidden">
                     {loading ? (
                         <div className="p-4 space-y-2">
-                            {[...Array(6)].map((_, i) => <div key={i} className="h-12 bg-gray-50 rounded-xl animate-pulse" />)}
+                            {[...Array(6)].map((_, i) => <div key={i} className="h-12 bg-[var(--surface-muted)] rounded-xl animate-pulse" />)}
                         </div>
                     ) : txs.length === 0 ? (
-                        <p className="px-4 py-14 text-xs text-gray-400 text-center">Không có giao dịch nào</p>
+                        <p className="px-4 py-14 text-xs text-[var(--text-faint)] text-center">Không có giao dịch nào</p>
                     ) : (
                         txs.map((tx) => {
                             const Icon = CATEGORY_ICONS[tx.category] ?? MoreHorizontal;
@@ -205,14 +205,14 @@ export default function FundTransactionsPage() {
                                         <Icon className={`w-4 h-4 ${color.ic}`} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{tx.title}</p>
-                                        <p className="text-[11px] text-gray-400">
+                                        <p className="text-sm font-semibold text-[var(--text)] truncate">{tx.title}</p>
+                                        <p className="text-[11px] text-[var(--text-faint)]">
                                             {CATEGORY_LABELS[tx.category]} · {new Date(tx.created_at).toLocaleString("vi-VN", {
                                                 day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
                                             })}
                                         </p>
                                     </div>
-                                    <span className={`text-sm font-bold whitespace-nowrap ${tx.type === "thu" ? "text-emerald-600" : "text-red-500"}`}>
+                                    <span className={`text-sm font-bold whitespace-nowrap ${tx.type === "thu" ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
                                         {tx.type === "thu" ? "+" : "-"}{fmt(tx.amount)}
                                     </span>
                                 </div>
@@ -226,15 +226,15 @@ export default function FundTransactionsPage() {
                         <button
                             disabled={page <= 1}
                             onClick={() => setPage((p) => p - 1)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-gray-200 disabled:opacity-40"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--surface)] border border-[var(--border)] disabled:opacity-40"
                         >
                             Trước
                         </button>
-                        <span className="text-xs text-gray-400">{meta.page}/{meta.total_pages}</span>
+                        <span className="text-xs text-[var(--text-faint)]">{meta.page}/{meta.total_pages}</span>
                         <button
                             disabled={page >= meta.total_pages}
                             onClick={() => setPage((p) => p + 1)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-gray-200 disabled:opacity-40"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--surface)] border border-[var(--border)] disabled:opacity-40"
                         >
                             Sau
                         </button>
@@ -247,13 +247,13 @@ export default function FundTransactionsPage() {
                 <div
                     className="fixed inset-0 z-[9999] flex items-end justify-center"
                     style={{
-                        background: categorySheetVisible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+                        background: categorySheetVisible ? "var(--overlay)" : "rgba(0,0,0,0)",
                         transition: "background .3s",
                     }}
                     onClick={(e) => e.target === e.currentTarget && closeCategorySheet()}
                 >
                     <div
-                        className="w-full max-w-md bg-white rounded-t-2xl"
+                        className="w-full max-w-md bg-[var(--surface)] rounded-t-2xl"
                         style={{
                             transform: categorySheetVisible ? "translateY(0)" : "translateY(100%)",
                             transition: "transform .3s cubic-bezier(0.32,0.72,0,1)",
@@ -261,20 +261,20 @@ export default function FundTransactionsPage() {
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                            <span className="text-sm font-semibold text-gray-900">Chọn danh mục</span>
-                            <button onClick={closeCategorySheet} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
-                                <X className="w-3.5 h-3.5 text-gray-500" />
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+                            <span className="text-sm font-semibold text-[var(--text)]">Chọn danh mục</span>
+                            <button onClick={closeCategorySheet} className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center">
+                                <X className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                             </button>
                         </div>
 
                         <div className="p-3 max-h-[60vh] overflow-y-auto space-y-1">
                             <button
                                 onClick={() => selectCategory("")}
-                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${category === "" ? "bg-gray-800 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${category === "" ? "bg-gray-800 text-white" : "text-[var(--text)] hover:bg-[var(--surface-hover)]"}`}
                             >
-                                <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${category === "" ? "bg-white/20" : "bg-gray-100"}`}>
-                                    <MoreHorizontal className={`w-4 h-4 ${category === "" ? "text-white" : "text-gray-400"}`} />
+                                <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${category === "" ? "bg-[color-mix(in_srgb,var(--surface)_20%,transparent)]" : "bg-[var(--surface-muted)]"}`}>
+                                    <MoreHorizontal className={`w-4 h-4 ${category === "" ? "text-white" : "text-[var(--text-faint)]"}`} />
                                 </span>
                                 Tất cả danh mục
                             </button>
@@ -287,9 +287,9 @@ export default function FundTransactionsPage() {
                                     <button
                                         key={c}
                                         onClick={() => selectCategory(c)}
-                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${active ? "bg-gray-800 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${active ? "bg-gray-800 text-white" : "text-[var(--text)] hover:bg-[var(--surface-hover)]"}`}
                                     >
-                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${active ? "bg-white/20" : color.bg}`}>
+                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${active ? "bg-[color-mix(in_srgb,var(--surface)_20%,transparent)]" : color.bg}`}>
                                             <Icon className={`w-4 h-4 ${active ? "text-white" : color.ic}`} />
                                         </span>
                                         {CATEGORY_LABELS[c]}

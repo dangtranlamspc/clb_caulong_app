@@ -309,7 +309,7 @@ export default function EventRegistrationsPage({
     if (loading) {
         return (
             <div className="p-8 flex justify-center">
-                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                <Loader2 className="w-5 h-5 animate-spin text-[var(--text-faint)]" />
             </div>
         );
     }
@@ -337,19 +337,19 @@ export default function EventRegistrationsPage({
 
     return (
         <div className="w-full mx-auto">
-            <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-4 md:pr-14 md:flex md:items-center md:justify-between md:gap-4">
+            <div className="sticky top-0 z-10 bg-[var(--surface)] border-b border-[var(--border)] px-6 py-4 md:pr-14 md:flex md:items-center md:justify-between md:gap-4">
                 <div className="pr-12 md:pr-0">
-                    <h1 className="text-xl font-bold text-gray-900">
+                    <h1 className="text-xl font-bold text-[var(--text)]">
                         {activity.emoji} {activity.title}
                     </h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="text-sm text-[var(--text-muted)] mt-0.5">
                         {activity.type === "poll"
                             ? `${(regData.votes ?? []).length} lượt bình chọn`
                             : `${registrations.length} đăng ký`}
                     </p>
                 </div>
                 {isCancelled ? (<div className="mt-3 md:mt-0 md:flex-shrink-0">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-500 text-sm font-medium whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--danger-soft)] text-[var(--danger)] text-sm font-medium whitespace-nowrap">
                         <XCircle className="w-4 h-4" />
                         Đã huỷ
                     </span>
@@ -358,7 +358,7 @@ export default function EventRegistrationsPage({
                         <button
                             onClick={handleRefresh}
                             disabled={refreshing}
-                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap disabled:opacity-60"
+                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--text-muted)] text-sm font-medium whitespace-nowrap disabled:opacity-60"
                         >
                             <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
                             Làm mới
@@ -367,7 +367,7 @@ export default function EventRegistrationsPage({
                             <>
                                 <button
                                     onClick={() => handleCopyPublicLink(activity.id)}
-                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-sm font-medium whitespace-nowrap"
+                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--text-muted)] text-sm font-medium whitespace-nowrap"
                                 >
                                     <Link2 className="w-4 h-4" /> Tạo link công khai
                                 </button>
@@ -416,7 +416,7 @@ export default function EventRegistrationsPage({
             <div className="px-4 py-6 space-y-4">
                 {activity.type === "shirt_order" && registrations.length > 0 && (
                     <div className="flex items-center justify-between gap-3 flex-wrap">
-                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+                        <div className="flex items-center gap-1 bg-[var(--surface-muted)] rounded-lg p-1 w-fit">
                             {(
                                 [
                                     { value: "all", label: "Tất cả" },
@@ -428,8 +428,8 @@ export default function EventRegistrationsPage({
                                     key={opt.value}
                                     onClick={() => setPaymentFilter(opt.value)}
                                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${paymentFilter === opt.value
-                                        ? "bg-white shadow-sm text-blue-600"
-                                        : "text-gray-500 hover:text-gray-700"
+                                        ? "bg-[var(--surface)] shadow-sm text-[var(--primary)]"
+                                        : "text-[var(--text-muted)] hover:text-[var(--text)]"
                                         }`}
                                 >
                                     {opt.label}
@@ -437,11 +437,11 @@ export default function EventRegistrationsPage({
                             ))}
                         </div>
 
-                        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
-                            <span className="text-xs font-medium text-emerald-600">
+                        <div className="flex items-center gap-2 bg-[var(--success-soft)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] rounded-lg px-3 py-1.5">
+                            <span className="text-xs font-medium text-[var(--success)]">
                                 Tổng thu (đã xác nhận)
                             </span>
-                            <span className="text-sm font-bold text-emerald-700 whitespace-nowrap">
+                            <span className="text-sm font-bold text-[var(--success)] whitespace-nowrap">
                                 {fmt(totalCollected)}
                             </span>
                         </div>
@@ -461,7 +461,7 @@ export default function EventRegistrationsPage({
                             }`}
                     >
                         {registrations.length === 0 ? (
-                            <div className="py-16 text-center text-gray-400">
+                            <div className="py-16 text-center text-[var(--text-faint)]">
                                 <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
                                 <p>Chưa có ai đăng ký</p>
                             </div>
@@ -511,10 +511,10 @@ export default function EventRegistrationsPage({
 
                 {showFinalizeModal && createPortal(
                     <div className="fixed inset-0 z-[99999] bg-black/40 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-                            <div className="px-5 py-4 border-b border-gray-100">
-                                <h2 className="font-bold text-gray-900">Chốt danh sách đặt áo</h2>
-                                <p className="text-sm text-gray-500 mt-1">
+                        <div className="bg-[var(--surface)] rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+                            <div className="px-5 py-4 border-b border-[var(--border)]">
+                                <h2 className="font-bold text-[var(--text)]">Chốt danh sách đặt áo</h2>
+                                <p className="text-sm text-[var(--text-muted)] mt-1">
                                     Các đăng ký <strong>chưa thanh toán và chưa gửi yêu cầu thanh toán</strong> bên dưới sẽ được xử lý khi bấm "Chốt":
                                     thành viên sẽ tự động bị trừ ví, khách chưa thanh toán sẽ được đánh dấu đỏ.
                                     Đơn đã bị từ chối hoặc đang chờ admin xác nhận sẽ <strong>không</strong> bị ảnh hưởng — cần xử lý thủ công.
@@ -528,16 +528,16 @@ export default function EventRegistrationsPage({
                                         !r.payment_method
                                     )
                                     .map((r: any) => (
-                                        <div key={r.id} className="flex items-center justify-between text-sm border border-gray-100 rounded-lg px-3 py-2">
+                                        <div key={r.id} className="flex items-center justify-between text-sm border border-[var(--border)] rounded-lg px-3 py-2">
                                             <div>
-                                                <p className="font-medium text-gray-900">
+                                                <p className="font-medium text-[var(--text)]">
                                                     {r.users?.full_name ?? r.guest_full_name ?? "—"}
                                                 </p>
-                                                <p className="text-xs text-gray-400">
+                                                <p className="text-xs text-[var(--text-faint)]">
                                                     {r.user_id ? "Thành viên · sẽ trừ ví" : "Khách · sẽ đánh dấu chưa thanh toán"}
                                                 </p>
                                             </div>
-                                            <span className="font-semibold text-gray-700">
+                                            <span className="font-semibold text-[var(--text)]">
                                                 {fmt(r.total_amount ?? (r.unit_price ?? 0) * (r.quantity ?? 1))}
                                             </span>
                                         </div>
@@ -547,13 +547,13 @@ export default function EventRegistrationsPage({
                                     r.payment_status !== "rejected" &&
                                     !r.payment_method
                                 ).length === 0 && (
-                                        <p className="text-center text-gray-400 py-8">Không còn đơn nào cần xử lý</p>
+                                        <p className="text-center text-[var(--text-faint)] py-8">Không còn đơn nào cần xử lý</p>
                                     )}
                             </div>
-                            <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">
+                            <div className="px-5 py-4 border-t border-[var(--border)] flex justify-end gap-2">
                                 <button
                                     onClick={() => setShowFinalizeModal(false)}
-                                    className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                                    className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                                 >
                                     Huỷ
                                 </button>
@@ -572,21 +572,21 @@ export default function EventRegistrationsPage({
 
                 {showReopenDeadlineModal && createPortal(
                     <div className="fixed inset-0 z-[99999] bg-black/40 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
-                            <h2 className="font-bold text-gray-900">Mở lại hoạt động</h2>
-                            <p className="text-sm text-gray-500">
+                        <div className="bg-[var(--surface)] rounded-2xl w-full max-w-sm p-5 space-y-4">
+                            <h2 className="font-bold text-[var(--text)]">Mở lại hoạt động</h2>
+                            <p className="text-sm text-[var(--text-muted)]">
                                 Hoạt động đã đóng do hết hạn đăng ký. Vui lòng chọn hạn mới để mở lại.
                             </p>
                             <input
                                 type="datetime-local"
                                 value={newDeadline}
                                 onChange={(e) => setNewDeadline(e.target.value)}
-                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                                className="w-full border border-[var(--border)] rounded-lg px-3 py-2 text-sm"
                             />
                             <div className="flex justify-end gap-2">
                                 <button
                                     onClick={() => setShowReopenDeadlineModal(false)}
-                                    className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                                    className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                                 >
                                     Huỷ
                                 </button>
@@ -610,8 +610,8 @@ export default function EventRegistrationsPage({
                         message={<>Từ chối yêu cầu thanh toán của <strong>"{rejectPaymentConfirm.label}"</strong>?</>}
                         confirmLabel="Từ chối"
                         confirmColorClass="bg-red-500 hover:bg-red-600"
-                        icon={<XCircle className="w-5 h-5 text-red-500" />}
-                        iconBgClass="bg-red-50"
+                        icon={<XCircle className="w-5 h-5 text-[var(--danger)]" />}
+                        iconBgClass="bg-[var(--danger-soft)]"
                         loading={rejectingPayment}
                         onConfirm={executeRejectPayment}
                         onCancel={() => setRejectPaymentConfirm(null)}
@@ -625,8 +625,8 @@ export default function EventRegistrationsPage({
                         message={<>Từ chối yêu cầu huỷ của <strong>"{rejectCancelConfirm.label}"</strong>?</>}
                         confirmLabel="Từ chối"
                         confirmColorClass="bg-red-500 hover:bg-red-600"
-                        icon={<XCircle className="w-5 h-5 text-red-500" />}
-                        iconBgClass="bg-red-50"
+                        icon={<XCircle className="w-5 h-5 text-[var(--danger)]" />}
+                        iconBgClass="bg-[var(--danger-soft)]"
                         loading={rejectingCancel}
                         onConfirm={executeRejectCancel}
                         onCancel={() => setRejectCancelConfirm(null)}
@@ -652,8 +652,8 @@ export default function EventRegistrationsPage({
                         message={<>Xoá đăng ký của <strong>"{removeConfirm.label}"</strong>? Hành động này không thể hoàn tác.</>}
                         confirmLabel="Xoá"
                         confirmColorClass="bg-red-600 hover:bg-red-700"
-                        icon={<Trash2 className="w-5 h-5 text-red-600" />}
-                        iconBgClass="bg-red-50"
+                        icon={<Trash2 className="w-5 h-5 text-[var(--danger)]" />}
+                        iconBgClass="bg-[var(--danger-soft)]"
                         loading={removing}
                         onConfirm={executeRemove}
                         onCancel={() => setRemoveConfirm(null)}
@@ -687,16 +687,16 @@ function DeleteShirtOrderGroupModal({
             className="fixed inset-0 z-[999999] bg-black/40 flex items-center justify-center p-4"
             onClick={(e) => e.target === e.currentTarget && !deletingAll && onClose()}
         >
-            <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="bg-[var(--surface)] rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+                <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
                     <div>
-                        <h2 className="font-bold text-gray-900">Xoá đăng ký đặt áo</h2>
-                        <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+                        <h2 className="font-bold text-[var(--text)]">Xoá đăng ký đặt áo</h2>
+                        <p className="text-sm text-[var(--text-muted)] mt-0.5">{label}</p>
                     </div>
                     <button
                         onClick={onClose}
                         disabled={deletingAll}
-                        className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        className="p-1.5 hover:bg-[var(--surface-hover)] rounded-lg text-[var(--text-faint)] hover:text-[var(--text-muted)] disabled:opacity-50"
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -705,21 +705,21 @@ function DeleteShirtOrderGroupModal({
                     {regs.map((r: any) => (
                         <div
                             key={r.id}
-                            className="flex items-center justify-between gap-3 border border-gray-100 rounded-lg px-3 py-2 text-sm"
+                            className="flex items-center justify-between gap-3 border border-[var(--border)] rounded-lg px-3 py-2 text-sm"
                         >
                             <div className="min-w-0">
-                                <p className="font-medium text-gray-900 truncate">
+                                <p className="font-medium text-[var(--text)] truncate">
                                     {r.shirt_type_name ?? "—"}
                                     {r.color_name ? ` · ${r.color_name}` : ""}
                                 </p>
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-[var(--text-faint)]">
                                     {r.gender === "nu" ? "Nữ" : "Nam"} · Size {r.size} · SL {r.quantity}
                                 </p>
                             </div>
                             <button
                                 onClick={() => onDeleteOne(r.id)}
                                 disabled={deletingIds.includes(r.id) || deletingAll}
-                                className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 disabled:opacity-50 flex-shrink-0"
+                                className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] disabled:opacity-50 flex-shrink-0"
                             >
                                 {deletingIds.includes(r.id) ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -730,15 +730,15 @@ function DeleteShirtOrderGroupModal({
                         </div>
                     ))}
                     {regs.length === 0 && (
-                        <p className="text-center text-gray-400 py-8">Không còn sản phẩm nào</p>
+                        <p className="text-center text-[var(--text-faint)] py-8">Không còn sản phẩm nào</p>
                     )}
                 </div>
                 {regs.length > 0 && (
-                    <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">
+                    <div className="px-5 py-4 border-t border-[var(--border)] flex justify-end gap-2">
                         <button
                             onClick={onClose}
                             disabled={deletingAll}
-                            className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                            className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] disabled:opacity-50"
                         >
                             Đóng
                         </button>
@@ -784,21 +784,21 @@ function ConfirmModal({
             className="fixed inset-0 z-[999999] bg-black/40 flex items-center justify-center p-4"
             onClick={(e) => e.target === e.currentTarget && !loading && onCancel()}
         >
-            <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
+            <div className="bg-[var(--surface)] rounded-2xl w-full max-w-sm p-5 space-y-4">
                 <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${iconBgClass}`}>
                         {icon}
                     </div>
                     <div>
-                        <h2 className="font-bold text-gray-900">{title}</h2>
-                        <p className="text-sm text-gray-500 mt-0.5">{message}</p>
+                        <h2 className="font-bold text-[var(--text)]">{title}</h2>
+                        <p className="text-sm text-[var(--text-muted)] mt-0.5">{message}</p>
                     </div>
                 </div>
                 <div className="flex justify-end gap-2">
                     <button
                         onClick={onCancel}
                         disabled={loading}
-                        className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                        className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] disabled:opacity-50"
                     >
                         Huỷ
                     </button>
@@ -849,14 +849,14 @@ function ProofImageModal({
             <div className="relative max-w-lg w-full">
                 <button
                     onClick={handleClose}
-                    className="absolute -top-10 right-0 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                    className="absolute -top-10 right-0 w-9 h-9 rounded-full bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] text-white flex items-center justify-center transition-colors"
                 >
                     <X className="w-5 h-5" />
                 </button>
                 <img
                     src={url}
                     alt="Ảnh chuyển khoản"
-                    className={`w-full max-h-[80vh] object-contain rounded-xl bg-white proof-image ${closing ? "proof-image-out" : "proof-image-in"
+                    className={`w-full max-h-[80vh] object-contain rounded-xl bg-[var(--surface)] proof-image ${closing ? "proof-image-out" : "proof-image-in"
                         }`}
                 />
             </div>
@@ -921,52 +921,52 @@ function getPaymentMethodBadge(r: any) {
         const name = r.users?.full_name ?? r.guest_full_name ?? "";
         return {
             label: name ? `Ví BNB (${name})` : "Ví BNB",
-            cls: "bg-blue-100 text-blue-700",
+            cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
         };
     }
     if (r.payment_method === "transfer") {
-        return { label: "Chuyển khoản", cls: "bg-sky-100 text-sky-700" };
+        return { label: "Chuyển khoản", cls: "bg-[var(--primary-soft)] text-[var(--primary)]" };
     }
     if (r.payment_method === "cash") {
-        return { label: "Tiền mặt", cls: "bg-emerald-100 text-emerald-700" };
+        return { label: "Tiền mặt", cls: "bg-[var(--success-soft)] text-[var(--success)]" };
     }
     return null;
 }
 
 function rowBgClass(r: any) {
     if (r.cancel_requested_at || r.payment_status === "rejected" || r.finalized_as_unpaid) {
-        return "bg-red-100 hover:bg-red-200/70";
+        return "bg-[var(--danger-soft)] hover:bg-red-200/70";
     }
     if (r.payment_status === "confirmed") {
-        return "bg-green-100 hover:bg-green-200/70";
+        return "bg-[var(--success-soft)] hover:bg-green-200/70";
     }
     return "bg-yellow-100 hover:bg-yellow-200/70";
 }
 
 function bucketBgClass(items: any[]) {
     if (items.some((r: any) => r.cancel_requested_at || r.payment_status === "rejected" || r.finalized_as_unpaid)) {
-        return "bg-red-100 border-red-200";
+        return "bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]";
     }
     if (items.every((r: any) => r.payment_status === "confirmed")) {
-        return "bg-green-100 border-green-200";
+        return "bg-[var(--success-soft)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]";
     }
     return "bg-yellow-100 border-yellow-200";
 }
 
 function paymentStatusBadge(r: any) {
     if (r.payment_status === "confirmed") {
-        return { label: "Đã xác nhận", cls: "bg-green-50 text-green-700", showIcon: true };
+        return { label: "Đã xác nhận", cls: "bg-[var(--success-soft)] text-[var(--success)]", showIcon: true };
     }
     if (r.payment_status === "rejected") {
-        return { label: "Đã từ chối", cls: "bg-red-50 text-red-600", showIcon: false };
+        return { label: "Đã từ chối", cls: "bg-[var(--danger-soft)] text-[var(--danger)]", showIcon: false };
     }
     if (isAdminTransferRequestPending(r)) {
-        return { label: "Chờ thanh toán", cls: "bg-orange-50 text-orange-600", showIcon: false };
+        return { label: "Chờ thanh toán", cls: "bg-[var(--warning-soft)] text-[var(--warning)]", showIcon: false };
     }
     if (r.payment_method) {
-        return { label: "Chờ xác nhận", cls: "bg-orange-50 text-orange-600", showIcon: false };
+        return { label: "Chờ xác nhận", cls: "bg-[var(--warning-soft)] text-[var(--warning)]", showIcon: false };
     }
-    return { label: "Chưa thanh toán", cls: "bg-gray-100 text-gray-400", showIcon: false };
+    return { label: "Chưa thanh toán", cls: "bg-[var(--surface-muted)] text-[var(--text-faint)]", showIcon: false };
 }
 
 function paymentKey(r: any) {
@@ -1030,8 +1030,8 @@ function handleDeductWalletClick(
 
 function registrantTypeBadge(r: any) {
     return r.user_id
-        ? { label: "Thành viên", cls: "bg-blue-50 text-blue-600" }
-        : { label: "Khách", cls: "bg-amber-50 text-amber-600" };
+        ? { label: "Thành viên", cls: "bg-[var(--primary-soft)] text-[var(--primary)]" }
+        : { label: "Khách", cls: "bg-[var(--warning-soft)] text-[var(--warning)]" };
 }
 
 function ShirtOrderTable({
@@ -1092,7 +1092,7 @@ function ShirtOrderTable({
 
     if (filteredRegistrations.length === 0) {
         return (
-            <div className="py-16 text-center text-gray-400">
+            <div className="py-16 text-center text-[var(--text-faint)]">
                 <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
                 <p>Không có đăng ký phù hợp với bộ lọc</p>
             </div>
@@ -1228,49 +1228,49 @@ function ShirtOrderTable({
     return (
         <>
             <div className="hidden md:block overflow-x-auto">
-                <table className="w-full min-w-[1360px] text-sm border border-gray-200 border-collapse">
-                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                <table className="w-full min-w-[1360px] text-sm border border-[var(--border)] border-collapse">
+                    <thead className="bg-[var(--surface-muted)] text-[var(--text-muted)] text-xs uppercase">
                         <tr>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Thành viên
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Loại
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Loại áo
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Form áo
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Màu sắc
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Size
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Số áo
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Tên in
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 SL
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Đơn giá
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Tổng tiền
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Thanh toán
                             </th>
-                            <th className="text-center px-4 py-3 border border-gray-200 whitespace-nowrap">
+                            <th className="text-center px-4 py-3 border border-[var(--border)] whitespace-nowrap">
                                 Đã thu
                             </th>
-                            <th className="px-4 py-3 border border-gray-200 w-24">Thao tác</th>
+                            <th className="px-4 py-3 border border-[var(--border)] w-24">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1309,10 +1309,10 @@ function ShirtOrderTable({
                                     {isFirstOfGroup && (
                                         <td
                                             rowSpan={rowSpan}
-                                            className="px-4 py-3 border border-gray-200 align-middle text-center"
+                                            className="px-4 py-3 border border-[var(--border)] align-middle text-center"
                                         >
                                             <div className="flex items-center justify-center gap-2.5">
-                                                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center font-semibold text-blue-600 overflow-hidden flex-shrink-0">
+                                                <div className="w-8 h-8 rounded-full bg-[var(--primary-soft)] flex items-center justify-center font-semibold text-[var(--primary)] overflow-hidden flex-shrink-0">
                                                     {r.users?.avatar_url ? (
                                                         <img
                                                             src={r.users.avatar_url}
@@ -1323,11 +1323,11 @@ function ShirtOrderTable({
                                                     )}
                                                 </div>
                                                 <div className="min-w-0 text-left">
-                                                    <p className="font-medium text-gray-900 truncate">
+                                                    <p className="font-medium text-[var(--text)] truncate">
                                                         {r.users?.full_name ?? r.guest_full_name ?? "—"}
                                                     </p>
                                                     {(r.users?.phone ?? r.guest_phone) && (
-                                                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                                                        <p className="text-xs text-[var(--text-faint)] flex items-center gap-1">
                                                             <Phone className="w-3 h-3" /> {r.users?.phone ?? r.guest_phone}
                                                         </p>
                                                     )}
@@ -1337,7 +1337,7 @@ function ShirtOrderTable({
                                     )}
 
                                     {isFirstOfGroup && (
-                                        <td rowSpan={rowSpan} className="px-4 py-3 border border-gray-200 align-middle text-center">
+                                        <td rowSpan={rowSpan} className="px-4 py-3 border border-[var(--border)] align-middle text-center">
                                             {(() => {
                                                 const typeBadge = registrantTypeBadge(r);
                                                 return (
@@ -1352,7 +1352,7 @@ function ShirtOrderTable({
                                     {showTypeCell && (
                                         <td
                                             rowSpan={typeCellSpan}
-                                            className="px-4 py-3 border border-gray-200 text-gray-600 whitespace-nowrap text-center align-middle"
+                                            className="px-4 py-3 border border-[var(--border)] text-[var(--text-muted)] whitespace-nowrap text-center align-middle"
                                         >
                                             {r.shirt_type_name ?? "—"}
                                         </td>
@@ -1360,12 +1360,12 @@ function ShirtOrderTable({
                                     {showGenderCell && (
                                         <td
                                             rowSpan={genderCellSpan}
-                                            className="px-4 py-3 border border-gray-200 text-center align-middle"
+                                            className="px-4 py-3 border border-[var(--border)] text-center align-middle"
                                         >
                                             <span
                                                 className={`text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${r.gender === "nu"
-                                                    ? "bg-pink-50 text-pink-600"
-                                                    : "bg-blue-50 text-blue-600"
+                                                    ? "bg-[var(--pink-soft)] text-[var(--pink)]"
+                                                    : "bg-[var(--primary-soft)] text-[var(--primary)]"
                                                     }`}
                                             >
                                                 {r.gender === "nu" ? "Nữ" : "Nam"}
@@ -1375,7 +1375,7 @@ function ShirtOrderTable({
                                     {showColorCell && (
                                         <td
                                             rowSpan={colorCellSpan}
-                                            className="px-4 py-3 border border-gray-200 text-gray-600 whitespace-nowrap text-center align-middle"
+                                            className="px-4 py-3 border border-[var(--border)] text-[var(--text-muted)] whitespace-nowrap text-center align-middle"
                                         >
                                             {r.color_name ?? "—"}
                                         </td>
@@ -1383,24 +1383,24 @@ function ShirtOrderTable({
                                     {showSizeCell && (
                                         <td
                                             rowSpan={sizeCellSpan}
-                                            className="px-4 py-3 border border-gray-200 font-medium text-gray-700 text-center align-middle"
+                                            className="px-4 py-3 border border-[var(--border)] font-medium text-[var(--text)] text-center align-middle"
                                         >
                                             {r.size}
                                         </td>
                                     )}
-                                    <td className="px-4 py-3 border border-gray-200 text-gray-600 text-center">
+                                    <td className="px-4 py-3 border border-[var(--border)] text-[var(--text-muted)] text-center">
                                         {r.jersey_number || "—"}
                                     </td>
-                                    <td className="px-4 py-3 border border-gray-200 text-gray-600 text-center">
+                                    <td className="px-4 py-3 border border-[var(--border)] text-[var(--text-muted)] text-center">
                                         {r.print_name || "—"}
                                     </td>
                                     {showSizeCell && (
-                                        <td rowSpan={sizeCellSpan} className="px-4 py-3 border border-gray-200 text-gray-700 font-semibold text-center align-middle">
+                                        <td rowSpan={sizeCellSpan} className="px-4 py-3 border border-[var(--border)] text-[var(--text)] font-semibold text-center align-middle">
                                             {sizeGroupQuantity}
                                         </td>
                                     )}
                                     {showColorCell && (
-                                        <td rowSpan={colorCellSpan} className="px-4 py-3 border border-gray-200 text-gray-600 whitespace-nowrap text-center align-middle">
+                                        <td rowSpan={colorCellSpan} className="px-4 py-3 border border-[var(--border)] text-[var(--text-muted)] whitespace-nowrap text-center align-middle">
                                             {fmt(unitPrice)}
                                         </td>
                                     )}
@@ -1408,7 +1408,7 @@ function ShirtOrderTable({
                                     {isFirstOfGroup && (
                                         <td
                                             rowSpan={rowSpan}
-                                            className="px-4 py-3 border border-gray-200 align-middle font-bold text-gray-900 whitespace-nowrap text-center"
+                                            className="px-4 py-3 border border-[var(--border)] align-middle font-bold text-[var(--text)] whitespace-nowrap text-center"
                                         >
                                             {fmt(groupTotal)}
                                         </td>
@@ -1437,7 +1437,7 @@ function ShirtOrderTable({
                                         return (
                                             <td
                                                 rowSpan={mergePayment ? rowSpan : 1}
-                                                className="px-4 py-3 border border-gray-200 align-middle text-center"
+                                                className="px-4 py-3 border border-[var(--border)] align-middle text-center"
                                             >
                                                 <div className="flex flex-col items-center gap-1.5">
                                                     <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 whitespace-nowrap ${statusBadge.cls}`}>
@@ -1445,7 +1445,7 @@ function ShirtOrderTable({
                                                         {statusBadge.label}
                                                     </span>
                                                     {repReg.registered_by_admin && (
-                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-600 whitespace-nowrap">
+                                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-[var(--purple-soft)] text-[var(--purple)] whitespace-nowrap">
                                                             Admin thêm
                                                         </span>
                                                     )}
@@ -1458,7 +1458,7 @@ function ShirtOrderTable({
                                                                 <button
                                                                     onClick={() => onViewProof(repReg.payment_proof_url)}
                                                                     title="Xem ảnh chuyển khoản"
-                                                                    className="p-0.5 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                                                    className="p-0.5 rounded-full text-[var(--text-faint)] hover:text-[var(--primary)] hover:bg-[var(--primary-soft)]"
                                                                 >
                                                                     <Eye className="w-3.5 h-3.5" />
                                                                 </button>
@@ -1516,9 +1516,9 @@ function ShirtOrderTable({
                                     {isFirstOfGroup && (
                                         <td
                                             rowSpan={rowSpan}
-                                            className="px-4 py-3 border border-gray-200 align-middle text-center whitespace-nowrap"
+                                            className="px-4 py-3 border border-[var(--border)] align-middle text-center whitespace-nowrap"
                                         >
-                                            <span className={`font-semibold ${groupCollected > 0 ? "text-emerald-600" : "text-gray-300"}`}>
+                                            <span className={`font-semibold ${groupCollected > 0 ? "text-[var(--success)]" : "text-[var(--text-faint)]"}`}>
                                                 {groupCollected > 0 ? fmt(groupCollected) : "—"}
                                             </span>
                                         </td>
@@ -1529,10 +1529,10 @@ function ShirtOrderTable({
 
                                         if (groupHasCancelRequest) {
                                             return (
-                                                <td className="px-4 py-3 border border-gray-200 text-center">
+                                                <td className="px-4 py-3 border border-[var(--border)] text-center">
                                                     {r.cancel_requested_at ? (
                                                         <div className="flex flex-col items-center gap-1.5">
-                                                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold whitespace-nowrap">
+                                                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--danger-soft)] text-[var(--danger)] font-semibold whitespace-nowrap">
                                                                 {r.cancel_requested_quantity != null
                                                                     ? `Yêu cầu huỷ ${r.cancel_requested_quantity}/${r.quantity} áo`
                                                                     : "Yêu cầu huỷ toàn bộ"}
@@ -1556,7 +1556,7 @@ function ShirtOrderTable({
                                                         <button
                                                             onClick={() => onRemoveGroup([r], r.users?.full_name ?? r.guest_full_name ?? "")}
                                                             title="Xoá đăng ký"
-                                                            className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                                                            className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)]"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
@@ -1568,11 +1568,11 @@ function ShirtOrderTable({
                                         if (!isFirstOfGroup) return null;
 
                                         return (
-                                            <td rowSpan={rowSpan} className="px-4 py-3 border border-gray-200 text-center align-middle">
+                                            <td rowSpan={rowSpan} className="px-4 py-3 border border-[var(--border)] text-center align-middle">
                                                 <button
                                                     onClick={() => onRemoveGroup(groupRegs, r.users?.full_name ?? r.guest_full_name ?? "")}
                                                     title="Xoá đăng ký"
-                                                    className="py-1.5 px-3 rounded-lg text-xs font-medium bg-red-50 hover:bg-red-100 text-red-600 flex items-center gap-1 mx-auto whitespace-nowrap"
+                                                    className="py-1.5 px-3 rounded-lg text-xs font-medium bg-[var(--danger-soft)] hover:bg-[var(--danger-soft)] text-[var(--danger)] flex items-center gap-1 mx-auto whitespace-nowrap"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" /> Xoá
                                                 </button>
@@ -1642,11 +1642,11 @@ function ShirtOrderTable({
                     return (
                         <div
                             key={first.user_id ?? first.id}
-                            className="rounded-2xl border border-gray-100 bg-white ring-1 ring-black/5 p-4 space-y-3"
+                            className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] ring-1 ring-black/5 p-4 space-y-3"
                             style={{ boxShadow: "0 12px 28px -8px rgba(0,0,0,0.18), 0 4px 10px -4px rgba(0,0,0,0.08)" }}
                         >
                             <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center font-semibold text-blue-600 overflow-hidden flex-shrink-0">
+                                <div className="w-9 h-9 rounded-full bg-[var(--primary-soft)] flex items-center justify-center font-semibold text-[var(--primary)] overflow-hidden flex-shrink-0">
                                     {first.users?.avatar_url ? (
                                         <img
                                             src={first.users.avatar_url}
@@ -1657,11 +1657,11 @@ function ShirtOrderTable({
                                     )}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="font-medium text-gray-900 truncate">
+                                    <p className="font-medium text-[var(--text)] truncate">
                                         {first.users?.full_name ?? first.guest_full_name ?? "—"}
                                     </p>
                                     {(first.users?.phone ?? first.guest_phone) && (
-                                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                                        <p className="text-xs text-[var(--text-faint)] flex items-center gap-1">
                                             <Phone className="w-3 h-3" /> {first.users?.phone ?? first.guest_phone}
                                         </p>
                                     )}
@@ -1674,26 +1674,26 @@ function ShirtOrderTable({
                                     return (
                                         <div key={bIdx} className={`rounded-xl border p-3 space-y-2 ${bucketBgClass(bucket.items)}`}>
                                             <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0 flex items-center justify-center">
+                                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-[var(--surface-muted)] border border-[var(--border)] flex-shrink-0 flex items-center justify-center">
                                                     {imageUrl ? (
                                                         <img src={imageUrl} alt={bucket.color_name ?? ""} className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <span className="text-[9px] text-gray-300">No img</span>
+                                                        <span className="text-[9px] text-[var(--text-faint)]">No img</span>
                                                     )}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-sm font-semibold text-gray-900 truncate">
+                                                    <p className="text-sm font-semibold text-[var(--text)] truncate">
                                                         {bucket.shirt_type_name}
                                                         {bucket.color_name ? ` · ${bucket.color_name}` : ""}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">
-                                                        SL <strong className="text-gray-700">{bucket.totalQty}</strong>
-                                                        {" · "}Đơn giá <strong className="text-gray-700">{fmt(bucket.unitPrice)}</strong>
+                                                    <p className="text-xs text-[var(--text-muted)]">
+                                                        SL <strong className="text-[var(--text)]">{bucket.totalQty}</strong>
+                                                        {" · "}Đơn giá <strong className="text-[var(--text)]">{fmt(bucket.unitPrice)}</strong>
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-1.5 pt-1.5 border-t border-gray-100">
+                                            <div className="space-y-1.5 pt-1.5 border-t border-[var(--border)]">
                                                 {bucket.items.map((r: any) => {
                                                     const itemStatusBadge = paymentStatusBadge(r);
                                                     const itemMethodBadge = getPaymentMethodBadge(r);
@@ -1716,18 +1716,18 @@ function ShirtOrderTable({
                                                             className="flex flex-col gap-1.5 text-xs rounded-lg px-1.5 py-1 -mx-1.5"
                                                         >
                                                             <div className="flex flex-col gap-1">
-                                                                <span className="text-gray-500">
-                                                                    <strong className={r.gender === "nu" ? "text-pink-600" : "text-blue-600"}>
+                                                                <span className="text-[var(--text-muted)]">
+                                                                    <strong className={r.gender === "nu" ? "text-[var(--pink)]" : "text-[var(--primary)]"}>
                                                                         {r.gender === "nu" ? "Nữ" : "Nam"}
                                                                     </strong>
-                                                                    {" · "}Size <strong className="text-gray-700">{r.size}</strong>
-                                                                    {r.jersey_number && <> · Số <strong className="text-gray-700">{r.jersey_number}</strong></>}
-                                                                    {r.print_name && <> · Tên <strong className="text-gray-700">"{r.print_name}"</strong></>}
+                                                                    {" · "}Size <strong className="text-[var(--text)]">{r.size}</strong>
+                                                                    {r.jersey_number && <> · Số <strong className="text-[var(--text)]">{r.jersey_number}</strong></>}
+                                                                    {r.print_name && <> · Tên <strong className="text-[var(--text)]">"{r.print_name}"</strong></>}
                                                                     {" · SL "}
-                                                                    <strong className="text-gray-700">{r.quantity}</strong>
+                                                                    <strong className="text-[var(--text)]">{r.quantity}</strong>
                                                                 </span>
                                                                 {hasCancelRequest && (
-                                                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold w-fit">
+                                                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--danger-soft)] text-[var(--danger)] font-semibold w-fit">
                                                                         Yêu cầu huỷ
                                                                     </span>
                                                                 )}
@@ -1738,7 +1738,7 @@ function ShirtOrderTable({
                                                                             {itemStatusBadge.label}
                                                                         </span>
                                                                         {r.registered_by_admin && (
-                                                                            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-600 w-fit">
+                                                                            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-[var(--purple-soft)] text-[var(--purple)] w-fit">
                                                                                 Admin thêm
                                                                             </span>
                                                                         )}
@@ -1751,7 +1751,7 @@ function ShirtOrderTable({
                                                                                     <button
                                                                                         onClick={() => onViewProof(r.payment_proof_url)}
                                                                                         title="Xem ảnh chuyển khoản"
-                                                                                        className="p-0.5 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                                                                        className="p-0.5 rounded-full text-[var(--text-faint)] hover:text-[var(--primary)] hover:bg-[var(--primary-soft)]"
                                                                                     >
                                                                                         <Eye className="w-3 h-3" />
                                                                                     </button>
@@ -1808,7 +1808,7 @@ function ShirtOrderTable({
                                                                     <div className="pt-1">
                                                                         <button
                                                                             onClick={() => onRemoveGroup([r], r.users?.full_name ?? r.guest_full_name ?? "")}
-                                                                            className="w-full py-2 rounded-lg text-sm font-medium bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center gap-1.5"
+                                                                            className="w-full py-2 rounded-lg text-sm font-medium bg-[var(--danger-soft)] hover:bg-[var(--danger-soft)] text-[var(--danger)] flex items-center justify-center gap-1.5"
                                                                         >
                                                                             <Trash2 className="w-4 h-4" /> Xoá đăng ký
                                                                         </button>
@@ -1824,7 +1824,7 @@ function ShirtOrderTable({
                                 })}
                             </div>
 
-                            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                            <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
                                 <div className="flex flex-wrap items-center gap-1.5">
                                     {mergePayment ? (
                                         <>
@@ -1833,7 +1833,7 @@ function ShirtOrderTable({
                                                 {memberStatusBadge.label}
                                             </span>
                                             {repReg.registered_by_admin && (
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-50 text-purple-600">
+                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-[var(--purple-soft)] text-[var(--purple)]">
                                                     Admin thêm
                                                 </span>
                                             )}
@@ -1846,7 +1846,7 @@ function ShirtOrderTable({
                                                         <button
                                                             onClick={() => onViewProof(repReg.payment_proof_url)}
                                                             title="Xem ảnh chuyển khoản"
-                                                            className="p-0.5 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                                            className="p-0.5 rounded-full text-[var(--text-faint)] hover:text-[var(--primary)] hover:bg-[var(--primary-soft)]"
                                                         >
                                                             <Eye className="w-3.5 h-3.5" />
                                                         </button>
@@ -1855,10 +1855,10 @@ function ShirtOrderTable({
                                             )}
                                         </>
                                     ) : (
-                                        <span className="text-[11px] text-gray-400 italic">Nhiều trạng thái thanh toán</span>
+                                        <span className="text-[11px] text-[var(--text-faint)] italic">Nhiều trạng thái thanh toán</span>
                                     )}
                                 </div>
-                                <span className="text-sm font-bold text-gray-900">{fmt(memberTotal)}</span>
+                                <span className="text-sm font-bold text-[var(--text)]">{fmt(memberTotal)}</span>
                             </div>
 
                             {canConfirmReject && (
@@ -2227,13 +2227,13 @@ function exportToExcel(activity: any, regData: any) {
 
 function getTournamentPaymentBadge(r: any) {
     if (r.payment_method === "wallet") {
-        return { label: "Ví BNB", cls: "bg-blue-100 text-blue-700" };
+        return { label: "Ví BNB", cls: "bg-[var(--primary-soft)] text-[var(--primary)]" };
     }
     if (r.payment_method === "transfer") {
-        return { label: "Chuyển khoản", cls: "bg-sky-100 text-sky-700" };
+        return { label: "Chuyển khoản", cls: "bg-[var(--primary-soft)] text-[var(--primary)]" };
     }
     if (r.payment_method === "cash") {
-        return { label: "Tiền mặt", cls: "bg-emerald-100 text-emerald-700" };
+        return { label: "Tiền mặt", cls: "bg-[var(--success-soft)] text-[var(--success)]" };
     }
     return null;
 }
@@ -2258,15 +2258,15 @@ function TournamentTable({
     return (
         <div>
             {totalExpected > 0 && (
-                <div className="flex items-center justify-between px-4 py-3 bg-blue-50 border-b border-blue-100">
-                    <span className="text-sm text-blue-700 font-medium">Đã thu được</span>
-                    <span className="text-sm font-bold text-blue-700">
+                <div className="flex items-center justify-between px-4 py-3 bg-[var(--primary-soft)] border-b border-[color-mix(in_srgb,var(--primary)_30%,transparent)]">
+                    <span className="text-sm text-[var(--primary)] font-medium">Đã thu được</span>
+                    <span className="text-sm font-bold text-[var(--primary)]">
                         {fmt(totalReceived)} / {fmt(totalExpected)}
                     </span>
                 </div>
             )}
             <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                <thead className="bg-[var(--surface-muted)] text-[var(--text-muted)] text-xs uppercase">
                     <tr>
                         <th className="text-left px-4 py-3">Đội</th>
                         <th className="text-left px-4 py-3">Player 1</th>
@@ -2275,7 +2275,7 @@ function TournamentTable({
                         <th className="px-4 py-3"></th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-[var(--border)]">
                     {sortedRegistrations.map((r: any) => {
                         const badge = getTournamentPaymentBadge(r);
                         const isConfirmed = r.payment_status === "confirmed";
@@ -2284,35 +2284,35 @@ function TournamentTable({
                             (r.payment_method === "transfer" || r.payment_method === "cash");
 
                         return (
-                            <tr key={r.id} className="hover:bg-gray-50">
-                                <td className="px-4 py-3 font-medium text-gray-900">
+                            <tr key={r.id} className="hover:bg-[var(--surface-hover)]">
+                                <td className="px-4 py-3 font-medium text-[var(--text)]">
                                     {r.team_name}
                                 </td>
-                                <td className="px-4 py-3 text-gray-600">
+                                <td className="px-4 py-3 text-[var(--text-muted)]">
                                     {r.player1?.full_name ?? "—"}
                                 </td>
-                                <td className="px-4 py-3 text-gray-600">
+                                <td className="px-4 py-3 text-[var(--text-muted)]">
                                     {r.player2?.full_name ?? "—"}
                                 </td>
                                 <td className="px-4 py-3">
                                     {r.amount_override ? (
                                         <div className="flex flex-col gap-1 items-start">
-                                            <span className="font-medium text-gray-700">
+                                            <span className="font-medium text-[var(--text)]">
                                                 {fmt(r.amount_override)}
                                             </span>
                                             {isConfirmed ? (
-                                                <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-50 text-green-700 flex items-center gap-1 w-fit">
+                                                <span className="text-xs px-2 py-1 rounded-full font-medium bg-[var(--success-soft)] text-[var(--success)] flex items-center gap-1 w-fit">
                                                     <CheckCircle2 className="w-3 h-3" /> Đã xác nhận
                                                 </span>
                                             ) : hasPendingRequest ? (
                                                 <button
                                                     onClick={() => onConfirm(r.id)}
-                                                    className="text-xs px-2 py-1 rounded-full font-medium bg-orange-50 text-orange-600 hover:bg-orange-100"
+                                                    className="text-xs px-2 py-1 rounded-full font-medium bg-[var(--warning-soft)] text-[var(--warning)] hover:bg-[var(--warning-soft)]"
                                                 >
                                                     Chờ xác nhận
                                                 </button>
                                             ) : (
-                                                <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-400 w-fit">
+                                                <span className="text-xs px-2 py-1 rounded-full font-medium bg-[var(--surface-muted)] text-[var(--text-faint)] w-fit">
                                                     Chưa thanh toán
                                                 </span>
                                             )}
@@ -2325,13 +2325,13 @@ function TournamentTable({
                                             )}
                                         </div>
                                     ) : (
-                                        <span className="text-gray-300">—</span>
+                                        <span className="text-[var(--text-faint)]">—</span>
                                     )}
                                 </td>
                                 <td className="px-4 py-3 text-right">
                                     <button
                                         onClick={() => onRemove(r.id, r.team_name)}
-                                        className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                                        className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)]"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -2348,7 +2348,7 @@ function TournamentTable({
 function OfflineEventTable({ registrations, onRemove }: any) {
     return (
         <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+            <thead className="bg-[var(--surface-muted)] text-[var(--text-muted)] text-xs uppercase">
                 <tr>
                     <th className="text-left px-4 py-3">Thành viên</th>
                     <th className="text-left px-4 py-3">Khách đi cùng</th>
@@ -2356,33 +2356,33 @@ function OfflineEventTable({ registrations, onRemove }: any) {
                     <th className="px-4 py-3"></th>
                 </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-[var(--border)]">
                 {registrations.map((r: any) => (
-                    <tr key={r.id} className="hover:bg-gray-50">
+                    <tr key={r.id} className="hover:bg-[var(--surface-hover)]">
                         <td className="px-4 py-3">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center font-semibold text-orange-600 overflow-hidden flex-shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-[var(--warning-soft)] flex items-center justify-center font-semibold text-[var(--warning)] overflow-hidden flex-shrink-0">
                                     {r.users?.avatar_url ? (
                                         <img src={r.users.avatar_url} className="w-full h-full object-cover" />
                                     ) : (
                                         (r.users?.full_name ?? r.guest_full_name)?.[0] ?? "?"
                                     )}
                                 </div>
-                                <p className="font-medium text-gray-900 truncate">
+                                <p className="font-medium text-[var(--text)] truncate">
                                     {r.users?.full_name ?? "—"}
                                 </p>
                             </div>
                         </td>
-                        <td className="px-4 py-3 text-gray-500">
+                        <td className="px-4 py-3 text-[var(--text-muted)]">
                             {r.guest_count > 0 ? `+${r.guest_count}` : "—"}
                         </td>
-                        <td className="px-4 py-3 text-gray-500 max-w-xs truncate">
+                        <td className="px-4 py-3 text-[var(--text-muted)] max-w-xs truncate">
                             {r.notes || "—"}
                         </td>
                         <td className="px-4 py-3 text-right">
                             <button
                                 onClick={() => onRemove(r.id, r.users?.full_name ?? "")}
-                                className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                                className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)]"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -2407,12 +2407,12 @@ function PollResults({ regData }: any) {
                 return (
                     <div key={opt.id} className="card !p-4 space-y-3">
                         <div className="flex items-center justify-between">
-                            <p className="font-semibold text-gray-900">{opt.label}</p>
-                            <span className="text-sm font-medium text-gray-500">
+                            <p className="font-semibold text-[var(--text)]">{opt.label}</p>
+                            <span className="text-sm font-medium text-[var(--text-muted)]">
                                 {optVotes.length} phiếu ({pct}%)
                             </span>
                         </div>
-                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="w-full h-2 bg-[var(--surface-muted)] rounded-full overflow-hidden">
                             <div
                                 className="h-full bg-blue-500 rounded-full"
                                 style={{ width: `${pct}%` }}
@@ -2423,9 +2423,9 @@ function PollResults({ regData }: any) {
                                 {optVotes.map((v: any) => (
                                     <div
                                         key={v.user_id}
-                                        className="flex items-center gap-1.5 bg-gray-50 rounded-full pl-1 pr-3 py-1"
+                                        className="flex items-center gap-1.5 bg-[var(--surface-muted)] rounded-full pl-1 pr-3 py-1"
                                     >
-                                        <div className="w-5 h-5 rounded-full bg-purple-50 flex items-center justify-center text-[10px] font-semibold text-purple-600 overflow-hidden flex-shrink-0">
+                                        <div className="w-5 h-5 rounded-full bg-[var(--purple-soft)] flex items-center justify-center text-[10px] font-semibold text-[var(--purple)] overflow-hidden flex-shrink-0">
                                             {v.users?.avatar_url ? (
                                                 <img
                                                     src={v.users.avatar_url}
@@ -2435,7 +2435,7 @@ function PollResults({ regData }: any) {
                                                 v.users?.full_name?.[0]
                                             )}
                                         </div>
-                                        <span className="text-xs text-gray-600">
+                                        <span className="text-xs text-[var(--text-muted)]">
                                             {v.users?.full_name}
                                         </span>
                                     </div>
@@ -2446,7 +2446,7 @@ function PollResults({ regData }: any) {
                 );
             })}
             {options.length === 0 && (
-                <div className="py-16 text-center text-gray-400">
+                <div className="py-16 text-center text-[var(--text-faint)]">
                     <BarChart3 className="w-10 h-10 mx-auto mb-3 opacity-30" />
                     <p>Chưa có lựa chọn nào</p>
                 </div>

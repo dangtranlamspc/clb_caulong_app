@@ -91,8 +91,8 @@ function Field({
 }) {
     return (
         <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                {label} {required && <span className="text-red-500">*</span>}
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">
+                {label} {required && <span className="text-[var(--danger)]">*</span>}
             </label>
             {children}
         </div>
@@ -111,7 +111,7 @@ function SectionCard({
     children: React.ReactNode;
 }) {
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-5">
             <div className="flex items-center gap-2.5 mb-4">
                 <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -119,7 +119,7 @@ function SectionCard({
                 >
                     {icon}
                 </div>
-                <h3 className="font-bold text-gray-900">{title}</h3>
+                <h3 className="font-bold text-[var(--text)]">{title}</h3>
             </div>
             {children}
         </div>
@@ -148,7 +148,7 @@ function PickCard({
             type="button"
             disabled={disabled}
             onClick={onClick}
-            className={`relative text-left rounded-xl border-2 px-3.5 py-3 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${active ? "shadow-sm" : "border-gray-100 hover:border-gray-200"
+            className={`relative text-left rounded-xl border-2 px-3.5 py-3 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${active ? "shadow-sm" : "border-[var(--border)] hover:border-[var(--border)]"
                 }`}
             style={active ? { borderColor: activeColor, background: `${activeColor}0d` } : undefined}
         >
@@ -161,8 +161,8 @@ function PickCard({
                 </span>
             )}
             {icon}
-            <p className="text-sm font-semibold text-gray-900">{title}</p>
-            {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+            <p className="text-sm font-semibold text-[var(--text)]">{title}</p>
+            {sub && <p className="text-xs text-[var(--text-faint)] mt-0.5">{sub}</p>}
         </button>
     );
 }
@@ -405,22 +405,22 @@ export default function TournamentPublicRegisterPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#F4F6FA]">
-                <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
+            <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
+                <Loader2 className="w-7 h-7 text-[var(--primary)] animate-spin" />
             </div>
         );
     }
 
     if (loadError || !activity) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#F4F6FA] px-4">
+            <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] px-4">
                 <div className="text-center">
-                    <p className="text-gray-500 mb-1">
+                    <p className="text-[var(--text-muted)] mb-1">
                         {loadError || "Không tìm thấy giải đấu"}
                     </p>
                     <button
                         onClick={() => router.back()}
-                        className="text-blue-600 text-sm font-semibold hover:underline"
+                        className="text-[var(--primary)] text-sm font-semibold hover:underline"
                     >
                         Quay lại
                     </button>
@@ -430,24 +430,24 @@ export default function TournamentPublicRegisterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#F4F6FA]">
+        <div className="min-h-screen bg-[var(--bg)]">
             <Toaster position="top-center" />
 
             <div className="max-w-6xl mx-auto px-4 py-6">
-                <div className="flex items-center gap-1.5 text-sm text-gray-400 mb-4">
+                <div className="flex items-center gap-1.5 text-sm text-[var(--text-faint)] mb-4">
                     <button
                         onClick={() => router.push("/activities")}
-                        className="hover:text-gray-600 transition-colors"
+                        className="hover:text-[var(--text-muted)] transition-colors"
                     >
                         Giải đấu
                     </button>
                     <ChevronRight className="w-3.5 h-3.5" />
-                    <span className="text-gray-500">{activity.title}</span>
+                    <span className="text-[var(--text-muted)]">{activity.title}</span>
                     <ChevronRight className="w-3.5 h-3.5" />
-                    <span className="text-gray-900 font-medium">Đăng ký thi đấu</span>
+                    <span className="text-[var(--text)] font-medium">Đăng ký thi đấu</span>
                 </div>
 
-                <h1 className="text-2xl font-bold text-gray-900 mb-6">
+                <h1 className="text-2xl font-bold text-[var(--text)] mb-6">
                     Đăng ký thi đấu cá nhân
                 </h1>
 
@@ -464,24 +464,24 @@ export default function TournamentPublicRegisterPage() {
                                             ? "bg-blue-600 text-white"
                                             : passed
                                                 ? "bg-emerald-500 text-white"
-                                                : "bg-gray-200 text-gray-500"
+                                                : "bg-[var(--border-strong)] text-[var(--text-muted)]"
                                             }`}
                                     >
                                         {passed ? <Check className="w-4 h-4" /> : s.id}
                                     </div>
                                     <div className="hidden sm:block">
                                         <p
-                                            className={`text-xs font-semibold ${active ? "text-blue-600" : passed ? "text-emerald-600" : "text-gray-400"
+                                            className={`text-xs font-semibold ${active ? "text-[var(--primary)]" : passed ? "text-[var(--success)]" : "text-[var(--text-faint)]"
                                                 }`}
                                         >
                                             {s.label}
                                         </p>
-                                        <p className="text-[11px] text-gray-400">{s.desc}</p>
+                                        <p className="text-[11px] text-[var(--text-faint)]">{s.desc}</p>
                                     </div>
                                 </div>
                                 {idx < STEPS.length - 1 && (
                                     <div
-                                        className={`flex-1 h-px mx-3 transition-colors duration-500 ${step > s.id || done ? "bg-emerald-300" : "bg-gray-200"
+                                        className={`flex-1 h-px mx-3 transition-colors duration-500 ${step > s.id || done ? "bg-emerald-300" : "bg-[var(--border-strong)]"
                                             }`}
                                     />
                                 )}
@@ -510,15 +510,15 @@ export default function TournamentPublicRegisterPage() {
                         <>
                             {step === 1 && (
                                 <StepFade stepKey={step} direction={direction}>
-                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
+                                    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-5 mb-4">
                                         <div className="flex items-center gap-2.5 mb-4">
                                             <div
                                                 className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                                                 style={{ background: "#eef2ff" }}
                                             >
-                                                <ListChecks className="w-4.5 h-4.5 text-indigo-600" />
+                                                <ListChecks className="w-4.5 h-4.5 text-[var(--primary)]" />
                                             </div>
-                                            <h3 className="font-bold text-gray-900">Thông tin giải đấu</h3>
+                                            <h3 className="font-bold text-[var(--text)]">Thông tin giải đấu</h3>
                                         </div>
 
                                         {activity.cover_image_url && (
@@ -560,11 +560,11 @@ export default function TournamentPublicRegisterPage() {
                                     <StepFade stepKey={step} direction={direction}>
                                         {step === 1 && (
                                             <SectionCard
-                                                icon={<User className="w-4.5 h-4.5 text-blue-600" />}
+                                                icon={<User className="w-4.5 h-4.5 text-[var(--primary)]" />}
                                                 iconBg="#eef2ff"
                                                 title="Thông tin cá nhân"
                                             >
-                                                <div className="bg-blue-50 border border-blue-100 rounded-xl px-3.5 py-2.5 text-xs text-blue-700 mb-4 flex items-center justify-between gap-2">
+                                                <div className="bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--primary)] mb-4 flex items-center justify-between gap-2">
                                                     <span>Đã là thành viên CLB? Đăng nhập để đăng ký nhanh hơn.</span>
                                                     <button
                                                         onClick={() =>
@@ -572,7 +572,7 @@ export default function TournamentPublicRegisterPage() {
                                                                 `/auth/login?redirect=/activities/${activityId}`,
                                                             )
                                                         }
-                                                        className="text-blue-700 font-semibold whitespace-nowrap hover:underline flex-shrink-0"
+                                                        className="text-[var(--primary)] font-semibold whitespace-nowrap hover:underline flex-shrink-0"
                                                     >
                                                         Đăng nhập
                                                     </button>
@@ -589,7 +589,7 @@ export default function TournamentPublicRegisterPage() {
                                                     </Field>
                                                     <Field label="Số điện thoại" required>
                                                         <div className="relative">
-                                                            <Phone className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                                                            <Phone className="w-4 h-4 text-[var(--text-faint)] absolute left-3 top-1/2 -translate-y-1/2" />
                                                             <input
                                                                 className="input-field pl-9"
                                                                 placeholder="0912 345 678"
@@ -608,7 +608,7 @@ export default function TournamentPublicRegisterPage() {
                                                     </Field>
                                                     <Field label="Email" required>
                                                         <div className="relative">
-                                                            <Mail className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                                                            <Mail className="w-4 h-4 text-[var(--text-faint)] absolute left-3 top-1/2 -translate-y-1/2" />
                                                             <input
                                                                 type="email"
                                                                 className="input-field pl-9"
@@ -623,7 +623,7 @@ export default function TournamentPublicRegisterPage() {
                                                             {(["nam", "nu"] as const).map((g) => (
                                                                 <label
                                                                     key={g}
-                                                                    className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                                                                    className="flex items-center gap-2 text-sm text-[var(--text)] cursor-pointer"
                                                                 >
                                                                     <input
                                                                         type="radio"
@@ -639,7 +639,7 @@ export default function TournamentPublicRegisterPage() {
                                                     </Field>
                                                     <Field label="Địa chỉ">
                                                         <div className="relative">
-                                                            <MapPin className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                                                            <MapPin className="w-4 h-4 text-[var(--text-faint)] absolute left-3 top-1/2 -translate-y-1/2" />
                                                             <input
                                                                 className="input-field pl-9"
                                                                 placeholder="TP. Thủ Đức, TP. Hồ Chí Minh"
@@ -655,19 +655,19 @@ export default function TournamentPublicRegisterPage() {
 
                                     {step === 2 && (
                                         <SectionCard
-                                            icon={<MessageCircle className="w-4.5 h-4.5 text-purple-600" />}
+                                            icon={<MessageCircle className="w-4.5 h-4.5 text-[var(--purple)]" />}
                                             iconBg="#f3e8ff"
                                             title="Thông tin thi đấu"
                                         >
-                                            <div className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-3.5 py-2.5 mb-4">
+                                            <div className="flex items-center justify-between bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl px-3.5 py-2.5 mb-4">
                                                 <div>
-                                                    <p className="text-xs text-gray-400 mb-0.5">
+                                                    <p className="text-xs text-[var(--text-faint)] mb-0.5">
                                                         Vai trò đăng ký (theo giới tính đã chọn)
                                                     </p>
                                                     <span
                                                         className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${form.gender === "nam"
-                                                            ? "bg-blue-50 text-blue-600"
-                                                            : "bg-pink-50 text-pink-600"
+                                                            ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                                            : "bg-[var(--pink-soft)] text-[var(--pink)]"
                                                             }`}
                                                     >
                                                         {form.gender === "nam" ? "VĐV Nam" : "VĐV Nữ"}
@@ -675,14 +675,14 @@ export default function TournamentPublicRegisterPage() {
                                                 </div>
                                                 <button
                                                     onClick={() => goToStep(1)}
-                                                    className="text-xs font-semibold text-blue-600 hover:underline flex-shrink-0"
+                                                    className="text-xs font-semibold text-[var(--primary)] hover:underline flex-shrink-0"
                                                 >
                                                     Đổi giới tính
                                                 </button>
                                             </div>
 
                                             {!genderRoleSupported && (
-                                                <div className="bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5 text-xs text-red-600 mb-4">
+                                                <div className="bg-[var(--danger-soft)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--danger)] mb-4">
                                                     Giải đấu này hiện không tổ chức nội dung dành cho{" "}
                                                     {form.gender === "nam" ? "Nam" : "Nữ"}. Vui lòng quay lại
                                                     đổi giới tính hoặc liên hệ BTC.
@@ -719,7 +719,7 @@ export default function TournamentPublicRegisterPage() {
                                                     value={form.notes}
                                                     onChange={(e) => update({ notes: e.target.value })}
                                                 />
-                                                <p className="text-right text-[11px] text-gray-300 mt-1">
+                                                <p className="text-right text-[11px] text-[var(--text-faint)] mt-1">
                                                     {form.notes.length}/200
                                                 </p>
                                             </Field>
@@ -728,11 +728,11 @@ export default function TournamentPublicRegisterPage() {
 
                                     {step === 3 && (
                                         <SectionCard
-                                            icon={<ListChecks className="w-4.5 h-4.5 text-indigo-600" />}
+                                            icon={<ListChecks className="w-4.5 h-4.5 text-[var(--primary)]" />}
                                             iconBg="#eef2ff"
                                             title="Xác nhận thông tin đăng ký"
                                         >
-                                            <div className="divide-y divide-gray-50">
+                                            <div className="divide-y divide-[var(--border)]">
                                                 <ReviewRow label="Họ và tên" value={form.full_name} />
                                                 <ReviewRow label="Số điện thoại" value={form.phone} />
                                                 <ReviewRow
@@ -760,17 +760,17 @@ export default function TournamentPublicRegisterPage() {
                                                 <ReviewRow label="Ghi chú" value={form.notes || "—"} />
                                             </div>
 
-                                            <div className="flex items-center gap-3 mt-4 pt-3 border-t border-gray-50">
+                                            <div className="flex items-center gap-3 mt-4 pt-3 border-t border-[var(--border)]">
                                                 <button
                                                     onClick={() => goToStep(1)}
-                                                    className="text-xs font-semibold text-blue-600 hover:underline"
+                                                    className="text-xs font-semibold text-[var(--primary)] hover:underline"
                                                 >
                                                     Sửa thông tin cá nhân
                                                 </button>
-                                                <span className="text-gray-200">•</span>
+                                                <span className="text-[var(--text-faint)]">•</span>
                                                 <button
                                                     onClick={() => goToStep(2)}
-                                                    className="text-xs font-semibold text-blue-600 hover:underline"
+                                                    className="text-xs font-semibold text-[var(--primary)] hover:underline"
                                                 >
                                                     Sửa thông tin thi đấu
                                                 </button>
@@ -781,11 +781,11 @@ export default function TournamentPublicRegisterPage() {
                                     {step === 4 && (
                                         hasFee ? (
                                             <SectionCard
-                                                icon={<WalletIcon className="w-4.5 h-4.5 text-amber-600" />}
+                                                icon={<WalletIcon className="w-4.5 h-4.5 text-[var(--warning)]" />}
                                                 iconBg="#fef3c7"
                                                 title="Thanh toán lệ phí"
                                             >
-                                                <div className="bg-amber-50 border border-amber-100 rounded-xl px-3.5 py-2.5 text-xs text-amber-700 mb-4">
+                                                <div className="bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--warning)] mb-4">
                                                     Lệ phí thi đấu: <b>{formatCurrency(entryFee)}</b> / người.
                                                     Vui lòng hoàn tất thanh toán để xác nhận đăng ký.
                                                 </div>
@@ -796,36 +796,36 @@ export default function TournamentPublicRegisterPage() {
                                                         onClick={() => update({ payment_method: "transfer" })}
                                                         title="Chuyển khoản ngân hàng"
                                                         sub="Chuyển khoản qua tài khoản ngân hàng"
-                                                        icon={<Landmark className="w-5 h-5 text-blue-500 mb-1" />}
+                                                        icon={<Landmark className="w-5 h-5 text-[var(--primary)] mb-1" />}
                                                     />
                                                     <PickCard
                                                         active={form.payment_method === "cash"}
                                                         onClick={() => update({ payment_method: "cash" })}
                                                         title="Thanh toán tiền mặt"
                                                         sub="Thanh toán trực tiếp cho BTC"
-                                                        icon={<WalletIcon className="w-5 h-5 text-emerald-500 mb-1" />}
+                                                        icon={<WalletIcon className="w-5 h-5 text-[var(--success)] mb-1" />}
                                                     />
                                                 </div>
 
                                                 {form.payment_method === "transfer" && (
-                                                    <div className="rounded-xl border border-gray-100 p-3.5">
+                                                    <div className="rounded-xl border border-[var(--border)] p-3.5">
                                                         {vietQrUrl && (
                                                             <img
                                                                 src={vietQrUrl}
                                                                 alt="VietQR"
-                                                                className="w-36 h-auto mx-auto rounded-lg border border-gray-100 mb-3"
+                                                                className="w-36 h-auto mx-auto rounded-lg border border-[var(--border)] mb-3"
                                                             />
                                                         )}
-                                                        <p className="text-xs text-gray-400 mb-1">
+                                                        <p className="text-xs text-[var(--text-faint)] mb-1">
                                                             Nội dung chuyển khoản
                                                         </p>
                                                         <div className="flex items-center justify-between gap-2">
-                                                            <span className="font-mono font-semibold text-gray-900 text-sm truncate">
+                                                            <span className="font-mono font-semibold text-[var(--text)] text-sm truncate">
                                                                 {transferRef}
                                                             </span>
                                                             <button
                                                                 onClick={copyRef}
-                                                                className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 flex-shrink-0"
+                                                                className="flex items-center gap-1 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary)] flex-shrink-0"
                                                             >
                                                                 {copied ? (
                                                                     <Check className="w-3.5 h-3.5" />
@@ -840,11 +840,11 @@ export default function TournamentPublicRegisterPage() {
                                             </SectionCard>
                                         ) : (
                                             <SectionCard
-                                                icon={<WalletIcon className="w-4.5 h-4.5 text-emerald-600" />}
+                                                icon={<WalletIcon className="w-4.5 h-4.5 text-[var(--success)]" />}
                                                 iconBg="#e6f7ee"
                                                 title="Hoàn tất đăng ký"
                                             >
-                                                <p className="text-sm text-gray-500 leading-relaxed">
+                                                <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                                                     Giải đấu này không thu lệ phí tham gia. Nhấn{" "}
                                                     <b>&ldquo;Hoàn tất đăng ký&rdquo;</b> để gửi thông tin đăng ký
                                                     của bạn. Xác nhận đăng ký sẽ được gửi về email bạn đã cung cấp.
@@ -857,7 +857,7 @@ export default function TournamentPublicRegisterPage() {
                                         {step < 4 ? (
                                             <button
                                                 onClick={handleBack}
-                                                className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 px-4 py-2.5"
+                                                className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)] px-4 py-2.5"
                                             >
                                                 <ChevronLeft className="w-4 h-4" /> Quay lại
                                             </button>
@@ -885,19 +885,19 @@ export default function TournamentPublicRegisterPage() {
                                     <StepFade stepKey={step} direction={direction}>
                                         {step >= 2 && (
                                             <SectionCard
-                                                icon={<User className="w-4.5 h-4.5 text-blue-600" />}
+                                                icon={<User className="w-4.5 h-4.5 text-[var(--primary)]" />}
                                                 iconBg="#eef2ff"
                                                 title="Thông tin đăng ký"
                                             >
                                                 <div className="flex items-center gap-3.5 mb-3.5">
-                                                    <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center font-bold text-blue-600 text-lg flex-shrink-0">
+                                                    <div className="w-14 h-14 rounded-full bg-[var(--primary-soft)] flex items-center justify-center font-bold text-[var(--primary)] text-lg flex-shrink-0">
                                                         {initials(form.full_name)}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="font-semibold text-gray-900 truncate">
+                                                        <p className="font-semibold text-[var(--text)] truncate">
                                                             {form.full_name || "—"}
                                                         </p>
-                                                        <p className="text-xs text-gray-400">Người đăng ký</p>
+                                                        <p className="text-xs text-[var(--text-faint)]">Người đăng ký</p>
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2 text-xs">
@@ -908,28 +908,28 @@ export default function TournamentPublicRegisterPage() {
                                                         plain
                                                     />
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-gray-400">Vai trò</span>
+                                                        <span className="text-[var(--text-faint)]">Vai trò</span>
                                                         {form.gender ? (
                                                             <span
                                                                 className={`text-xs font-semibold px-2 py-0.5 rounded-full ${form.gender === "nam"
-                                                                    ? "bg-blue-50 text-blue-600"
-                                                                    : "bg-pink-50 text-pink-600"
+                                                                    ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                                                    : "bg-[var(--pink-soft)] text-[var(--pink)]"
                                                                     }`}
                                                             >
                                                                 VĐV {form.gender === "nam" ? "Nam" : "Nữ"}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-gray-400">—</span>
+                                                            <span className="text-[var(--text-faint)]">—</span>
                                                         )}
                                                     </div>
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-gray-400">Trình độ</span>
+                                                        <span className="text-[var(--text-faint)]">Trình độ</span>
                                                         {form.level ? (
-                                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--success-soft)] text-[var(--success)]">
                                                                 Trình {form.level}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-gray-400">—</span>
+                                                            <span className="text-[var(--text-faint)]">—</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -938,19 +938,19 @@ export default function TournamentPublicRegisterPage() {
 
                                         {step === 4 && hasFee && (
                                             <SectionCard
-                                                icon={<WalletIcon className="w-4.5 h-4.5 text-red-500" />}
+                                                icon={<WalletIcon className="w-4.5 h-4.5 text-[var(--danger)]" />}
                                                 iconBg="#fee2e2"
                                                 title="Lệ phí thi đấu"
                                             >
-                                                <p className="text-2xl font-bold text-red-500">
+                                                <p className="text-2xl font-bold text-[var(--danger)]">
                                                     {formatCurrency(entryFee)}
-                                                    <span className="text-xs font-medium text-gray-400"> / người</span>
+                                                    <span className="text-xs font-medium text-[var(--text-faint)]"> / người</span>
                                                 </p>
                                                 <div className="mt-3 space-y-1.5 text-xs">
                                                     <SummaryRow label="Số lượng" value="1 người" plain />
-                                                    <div className="flex items-center justify-between pt-1.5 border-t border-gray-50">
-                                                        <span className="text-gray-500 font-semibold">Tổng cộng</span>
-                                                        <span className="font-bold text-gray-900">
+                                                    <div className="flex items-center justify-between pt-1.5 border-t border-[var(--border)]">
+                                                        <span className="text-[var(--text-muted)] font-semibold">Tổng cộng</span>
+                                                        <span className="font-bold text-[var(--text)]">
                                                             {formatCurrency(entryFee)}
                                                         </span>
                                                     </div>
@@ -959,17 +959,17 @@ export default function TournamentPublicRegisterPage() {
                                         )}
                                     </StepFade>
 
-                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                                        <h3 className="font-bold text-gray-900 text-sm mb-1.5">
+                                    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-5">
+                                        <h3 className="font-bold text-[var(--text)] text-sm mb-1.5">
                                             Bạn cần hỗ trợ?
                                         </h3>
-                                        <p className="text-xs text-gray-400 leading-relaxed mb-3">
+                                        <p className="text-xs text-[var(--text-faint)] leading-relaxed mb-3">
                                             Liên hệ BTC qua số điện thoại hoặc Fanpage để được hỗ trợ
                                             nhanh chóng.
                                         </p>
                                         <a
                                             href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`}
-                                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
                                         >
                                             <Phone className="w-4 h-4" /> Liên hệ BTC
                                         </a>
@@ -1028,8 +1028,8 @@ function SummaryRow({
     if (plain) {
         return (
             <div className="flex items-center justify-between">
-                <span className="text-gray-400">{label}</span>
-                <span className="text-gray-800 font-medium truncate max-w-[60%] text-right">
+                <span className="text-[var(--text-faint)]">{label}</span>
+                <span className="text-[var(--text)] font-medium truncate max-w-[60%] text-right">
                     {value}
                 </span>
             </div>
@@ -1037,10 +1037,10 @@ function SummaryRow({
     }
     return (
         <div className="flex items-start gap-2">
-            <span className="text-gray-300 mt-0.5">{icon}</span>
+            <span className="text-[var(--text-faint)] mt-0.5">{icon}</span>
             <div className="min-w-0">
-                <p className="text-[11px] text-gray-400">{label}</p>
-                <p className="text-gray-800 font-medium break-words sm:truncate">{value}</p>
+                <p className="text-[11px] text-[var(--text-faint)]">{label}</p>
+                <p className="text-[var(--text)] font-medium break-words sm:truncate">{value}</p>
             </div>
         </div>
     );
@@ -1049,8 +1049,8 @@ function SummaryRow({
 function ReviewRow({ label, value }: { label: string; value: string }) {
     return (
         <div className="flex items-center justify-between py-2 text-sm">
-            <span className="text-gray-400">{label}</span>
-            <span className="text-gray-800 font-medium text-right max-w-[60%] truncate">
+            <span className="text-[var(--text-faint)]">{label}</span>
+            <span className="text-[var(--text)] font-medium text-right max-w-[60%] truncate">
                 {value}
             </span>
         </div>
@@ -1071,24 +1071,24 @@ function SuccessView({
         registration?.payment_status !== "confirmed";
 
     return (
-        <div className="max-w-xl mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-                <PartyPopper className="w-7 h-7 text-emerald-500" />
+        <div className="max-w-xl mx-auto bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-[var(--success-soft)] flex items-center justify-center mx-auto mb-4">
+                <PartyPopper className="w-7 h-7 text-[var(--success)]" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-1.5">
+            <h2 className="text-xl font-bold text-[var(--text)] mb-1.5">
                 Đăng ký thành công!
             </h2>
-            <p className="text-sm text-gray-500 mb-1.5">
+            <p className="text-sm text-[var(--text-muted)] mb-1.5">
                 Cảm ơn <b>{form.full_name}</b> đã đăng ký tham gia{" "}
                 <b>{activity.title}</b>.
             </p>
-            <p className="text-xs text-gray-400 mb-6">
+            <p className="text-xs text-[var(--text-faint)] mb-6">
                 {isTransferPending
                     ? <>Sau khi BTC xác nhận thanh toán, email xác nhận{hasFee ? " kèm hoá đơn" : ""} sẽ được gửi tới <b>{form.email}</b>.</>
                     : <>Một email xác nhận{hasFee ? " kèm hoá đơn" : ""} đã được gửi tới <b>{form.email}</b>.</>}
             </p>
 
-            <div className="text-left rounded-xl border border-gray-100 divide-y divide-gray-50 mb-6">
+            <div className="text-left rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] mb-6">
                 <SummaryLine label="Vai trò" value={`VĐV ${form.gender === "nam" ? "Nam" : "Nữ"} · Trình ${form.level}`} />
                 <SummaryLine label="Số điện thoại" value={form.phone} />
                 {hasFee && (
@@ -1103,30 +1103,30 @@ function SuccessView({
             </div>
 
             {/* {isTransferPending && (
-                <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 text-left mb-2">
-                    <p className="text-sm font-semibold text-blue-700 mb-3">
+                <div className="rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] p-4 text-left mb-2">
+                    <p className="text-sm font-semibold text-[var(--primary)] mb-3">
                         Vui lòng chuyển khoản để hoàn tất đăng ký
                     </p>
                     {vietQrUrl && (
                         <img
                             src={vietQrUrl}
                             alt="VietQR"
-                            className="w-44 h-auto mx-auto rounded-lg border border-blue-100 mb-3"
+                            className="w-44 h-auto mx-auto rounded-lg border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] mb-3"
                         />
                     )}
-                    <div className="space-y-1 text-xs text-gray-600 mb-3">
+                    <div className="space-y-1 text-xs text-[var(--text-muted)] mb-3">
                         <p>Ngân hàng: <b>{bankDisplayName}</b></p>
                         <p>Số tài khoản: <b>{bankAccount}</b></p>
                         <p>Chủ tài khoản: <b>{bankAccountName}</b></p>
                         <p>Số tiền: <b>{formatCurrency(entryFee)}</b></p>
                     </div>
-                    <div className="flex items-center justify-between gap-2 bg-white rounded-lg border border-gray-100 px-3 py-2">
-                        <span className="font-mono font-semibold text-gray-900 text-sm truncate">
+                    <div className="flex items-center justify-between gap-2 bg-[var(--surface)] rounded-lg border border-[var(--border)] px-3 py-2">
+                        <span className="font-mono font-semibold text-[var(--text)] text-sm truncate">
                             {transferRef}
                         </span>
                         <button
                             onClick={copyRef}
-                            className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 flex-shrink-0"
+                            className="flex items-center gap-1 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary)] flex-shrink-0"
                         >
                             {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                             Sao chép
@@ -1148,8 +1148,8 @@ function SuccessView({
 function SummaryLine({ label, value }: { label: string; value: string }) {
     return (
         <div className="flex items-center justify-between px-4 py-2.5 text-sm">
-            <span className="text-gray-400">{label}</span>
-            <span className="font-semibold text-gray-800">{value}</span>
+            <span className="text-[var(--text-faint)]">{label}</span>
+            <span className="font-semibold text-[var(--text)]">{value}</span>
         </div>
     );
 }

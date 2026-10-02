@@ -34,6 +34,7 @@ export function CustomSelect({
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -52,8 +53,16 @@ export function CustomSelect({
   };
 
   useLayoutEffect(() => {
-    updatePosition();
-  }, []);
+    if (!open) return;
+    const list = listRef.current;
+    const el = activeRef.current;
+    if (!list) return;
+    if (!el) {
+      list.scrollTop = 0;
+      return;
+    }
+    list.scrollTop = el.offsetTop - (list.clientHeight - el.offsetHeight) / 2;
+  }, [open]);
 
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
@@ -141,6 +150,7 @@ export function CustomSelect({
               return (
                 <button
                   key={opt.value}
+                  ref={isActive ? activeRef : undefined}
                   type="button"
                   onClick={() => {
                     onChange(opt.value);

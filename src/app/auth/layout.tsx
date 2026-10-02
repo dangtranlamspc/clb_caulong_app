@@ -60,7 +60,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <p className="text-white/60 text-sm mt-1">Hệ thống quản lý thành viên</p>
         </div>
 
-        <div className="relative grid grid-cols-2 mb-5 p-1 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
+        <div className="relative grid grid-cols-2 mb-5 p-1 rounded-2xl bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] backdrop-blur-md border border-white/15">
           {TABS.map((tab) => {
             const active = activeTab === tab.href;
             return (
@@ -68,14 +68,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 {active && (
                   <motion.div
                     layoutId="auth-tab-pill"
-                    className="absolute inset-0 -z-10 rounded-xl bg-white shadow-md"
+                    className="absolute inset-0 -z-10 rounded-xl bg-[var(--surface)] shadow-md"
                     transition={
                       reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 34 }
                     }
                   />
                 )}
                 <span
-                  className={`relative text-sm font-semibold transition-colors ${active ? 'text-emerald-700' : 'text-white/70'
+                  className={`relative text-sm font-semibold transition-colors ${active ? 'text-[var(--success)]' : 'text-white/70'
                     }`}
                 >
                   {tab.label}

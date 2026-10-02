@@ -16,36 +16,36 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 
 const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
-    payment_added: { icon: Wallet, cls: 'text-blue-600', bg: 'bg-blue-50' },
-    shirt_order_payment_request: { icon: Wallet, cls: 'text-orange-600', bg: 'bg-orange-50' },
-    shirt_order_registered_by_admin: { icon: Wallet, cls: 'text-orange-600', bg: 'bg-orange-50' },
-    payment_confirmed: { icon: CheckCircle2, cls: 'text-emerald-600', bg: 'bg-emerald-50' },
-    payment_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
-    bill_issued: { icon: Wallet, cls: 'text-amber-600', bg: 'bg-amber-50' },
-    added_to_session: { icon: CalendarDays, cls: 'text-blue-600', bg: 'bg-blue-50' },
-    wallet_guest_confirm: { icon: Wallet, cls: 'text-amber-600', bg: 'bg-amber-50' },
-    shirt_order_payment_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
-    shirt_order_cancel_approved: { icon: CheckCircle2, cls: 'text-emerald-600', bg: 'bg-emerald-50' },
-    shirt_order_cancel_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
-    session_created: { icon: CalendarDays, cls: 'text-indigo-600', bg: 'bg-indigo-50' },
-    member_declined_session: { icon: AlertCircle, cls: 'text-orange-500', bg: 'bg-orange-50' },
+    payment_added: { icon: Wallet, cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)]' },
+    shirt_order_payment_request: { icon: Wallet, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
+    shirt_order_registered_by_admin: { icon: Wallet, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
+    payment_confirmed: { icon: CheckCircle2, cls: 'text-[var(--success)]', bg: 'bg-[var(--success-soft)]' },
+    payment_rejected: { icon: AlertCircle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+    bill_issued: { icon: Wallet, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
+    added_to_session: { icon: CalendarDays, cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)]' },
+    wallet_guest_confirm: { icon: Wallet, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
+    shirt_order_payment_rejected: { icon: AlertCircle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+    shirt_order_cancel_approved: { icon: CheckCircle2, cls: 'text-[var(--success)]', bg: 'bg-[var(--success-soft)]' },
+    shirt_order_cancel_rejected: { icon: AlertCircle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+    session_created: { icon: CalendarDays, cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)]' },
+    member_declined_session: { icon: AlertCircle, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
 
 
-    match_created: { icon: Swords, cls: 'text-indigo-600', bg: 'bg-indigo-50' },
-    match_created_by_admin: { icon: Swords, cls: 'text-indigo-600', bg: 'bg-indigo-50' },
-    match_result_pending: { icon: Swords, cls: 'text-amber-600', bg: 'bg-amber-50' },
-    match_result_approved_win: { icon: Trophy, cls: 'text-emerald-600', bg: 'bg-emerald-50' },
-    match_result_approved_lose: { icon: Trophy, cls: 'text-red-500', bg: 'bg-red-50' },
-    match_result_rejected: { icon: XCircle, cls: 'text-red-500', bg: 'bg-red-50' },
-    match_result_rolled_back: { icon: RotateCcw, cls: 'text-orange-600', bg: 'bg-orange-50' },
-    match_cancelled: { icon: XCircle, cls: 'text-red-500', bg: 'bg-red-50' },
+    match_created: { icon: Swords, cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)]' },
+    match_created_by_admin: { icon: Swords, cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)]' },
+    match_result_pending: { icon: Swords, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
+    match_result_approved_win: { icon: Trophy, cls: 'text-[var(--success)]', bg: 'bg-[var(--success-soft)]' },
+    match_result_approved_lose: { icon: Trophy, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+    match_result_rejected: { icon: XCircle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+    match_result_rolled_back: { icon: RotateCcw, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
+    match_cancelled: { icon: XCircle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
 
-    drink_request_approved: { icon: CheckCircle2, cls: 'text-emerald-600', bg: 'bg-emerald-50' },
-    drink_request_rejected: { icon: AlertCircle, cls: 'text-red-500', bg: 'bg-red-50' },
+    drink_request_approved: { icon: CheckCircle2, cls: 'text-[var(--success)]', bg: 'bg-[var(--success-soft)]' },
+    drink_request_rejected: { icon: AlertCircle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
 
     drink_gift_received: { icon: GlassWater, cls: 'text-cyan-600', bg: 'bg-cyan-50' },
 
-    birthday_wish_received: { icon: Cake, cls: 'text-pink-600', bg: 'bg-pink-50' },
+    birthday_wish_received: { icon: Cake, cls: 'text-[var(--pink)]', bg: 'bg-[var(--pink-soft)]' },
 };
 
 const BADGE = "inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full border text-xs font-semibold text-white shadow-sm";
@@ -81,14 +81,14 @@ function ConfirmDeleteAllModal({
         <div
             className="fixed inset-0 z-[10000] flex items-center justify-center px-4 transition-opacity"
             style={{
-                background: 'rgba(0,0,0,0.5)',
+                background: 'var(--overlay)',
                 opacity: visible ? 1 : 0,
                 transitionDuration: '200ms',
             }}
             onClick={(e) => e.target === e.currentTarget && handleCancel()}
         >
             <div
-                className="w-full max-w-xs bg-white rounded-2xl overflow-hidden transition-transform"
+                className="w-full max-w-xs bg-[var(--surface)] rounded-2xl overflow-hidden transition-transform"
                 style={{
                     transform: visible ? 'scale(1)' : 'scale(0.92)',
                     transitionDuration: '200ms',
@@ -96,24 +96,24 @@ function ConfirmDeleteAllModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
-                    <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
-                        <AlertTriangle className="w-5 h-5 text-red-500" />
+                    <div className="w-12 h-12 rounded-full bg-[var(--danger-soft)] flex items-center justify-center mb-3">
+                        <AlertTriangle className="w-5 h-5 text-[var(--danger)]" />
                     </div>
-                    <p className="text-sm font-bold text-gray-900">Xoá tất cả thông báo?</p>
-                    <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                    <p className="text-sm font-bold text-[var(--text)]">Xoá tất cả thông báo?</p>
+                    <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-relaxed">
                         Hành động này không thể hoàn tác. Toàn bộ thông báo sẽ bị xoá vĩnh viễn.
                     </p>
                 </div>
-                <div className="flex border-t border-gray-100">
+                <div className="flex border-t border-[var(--border)]">
                     <button
                         onClick={handleCancel}
-                        className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100"
+                        className="flex-1 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors border-r border-[var(--border)]"
                     >
                         Huỷ
                     </button>
                     <button
                         onClick={handleConfirm}
-                        className="flex-1 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors"
+                        className="flex-1 py-3 text-sm font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)] transition-colors"
                     >
                         Xoá tất cả
                     </button>
@@ -207,8 +207,8 @@ function NotificationItem({
                 if (!n.is_read) onRead(n.id);
             }}
             className={`relative flex items-center gap-3 pl-4 pr-3 py-4 rounded-2xl border overflow-hidden cursor-pointer transition-colors ${!n.is_read
-                ? 'bg-blue-50/60 border-blue-100 shadow-[0_6px_16px_-4px_rgba(15,23,42,0.14),0_2px_4px_rgba(15,23,42,0.06)]'
-                : 'bg-gray-100/70 border-gray-200 shadow-[0_2px_6px_-2px_rgba(15,23,42,0.06)]'
+                ? 'bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] shadow-[0_6px_16px_-4px_rgba(15,23,42,0.14),0_2px_4px_rgba(15,23,42,0.06)]'
+                : 'bg-[var(--surface-muted)] border-[var(--border)] shadow-[0_2px_6px_-2px_rgba(15,23,42,0.06)]'
                 }`}
         >
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 self-start mt-0.5 ${cfg.bg}`}>
@@ -217,15 +217,15 @@ function NotificationItem({
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                    <p className={`text-[15px] leading-snug ${n.is_read ? 'text-gray-500 font-semibold' : 'text-gray-900 font-bold'}`}>
+                    <p className={`text-[15px] leading-snug ${n.is_read ? 'text-[var(--text-muted)] font-semibold' : 'text-[var(--text)] font-bold'}`}>
                         {n.title}
                     </p>
                     {!n.is_read && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />}
                 </div>
-                <p className={`text-sm mt-1 leading-snug break-words ${n.is_read ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`text-sm mt-1 leading-snug break-words ${n.is_read ? 'text-[var(--text-faint)]' : 'text-[var(--text-muted)]'}`}>
                     {n.message}
                 </p>
-                <p className="text-xs text-gray-400 mt-1.5">
+                <p className="text-xs text-[var(--text-faint)] mt-1.5">
                     {format(new Date(n.created_at), 'dd/MM HH:mm', { locale: vi })}
                 </p>
 
@@ -244,14 +244,14 @@ function NotificationItem({
                         <button
                             onClick={() => onGuestConfirm(n, 'separate')}
                             disabled={guestActionId === n.id}
-                            className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50"
+                            className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-[var(--success-soft)] text-[var(--success)] hover:bg-[var(--success-soft)] disabled:opacity-50"
                         >
                             💵 Khách tự trả
                         </button>
                     </div>
                 )}
                 {isGuestConfirm && alreadyHandled && (
-                    <p className="text-[11px] text-emerald-600 font-medium mt-1.5">
+                    <p className="text-[11px] text-[var(--success)] font-medium mt-1.5">
                         {n.data?.resolved_mode === 'separate'
                             ? '💵 Đã chọn: Khách tự trả'
                             : n.data?.resolved_mode === 'grouped' || n.data?.resolved_mode === 'auto'
@@ -275,7 +275,7 @@ function NotificationItem({
                         <button
                             onClick={() => onRespondAdded(n, 'decline')}
                             disabled={respondAction?.id === n.id}
-                            className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
+                            className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-[var(--danger-soft)] text-[var(--danger)] hover:bg-[var(--danger-soft)] disabled:opacity-50"
                         >
                             {respondAction && respondAction.id === n.id && respondAction.action === 'decline' && (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -341,11 +341,11 @@ function NotificationItem({
                 )}
 
                 {isPenaltyChoice && penaltyResolved && penaltyCancelled && (
-                    <p className="text-[11px] text-gray-400 font-medium mt-1.5">🚫 Admin đã huỷ</p>
+                    <p className="text-[11px] text-[var(--text-faint)] font-medium mt-1.5">🚫 Admin đã huỷ</p>
                 )}
 
                 {isPenaltyChoice && penaltyResolved && !penaltyCancelled && (
-                    <p className="text-[11px] text-emerald-600 font-medium mt-1.5">✓ Đã xử lý</p>
+                    <p className="text-[11px] text-[var(--success)] font-medium mt-1.5">✓ Đã xử lý</p>
                 )}
             </div>
 
@@ -772,23 +772,23 @@ export function NotificationBell() {
 
                     <div
                         ref={panelRef}
-                        className={`absolute inset-y-0 right-0 w-full sm:w-[420px] flex flex-col bg-white sm:border-l sm:border-gray-100 sm:shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${shown ? 'translate-x-0' : 'translate-x-full'}`}
+                        className={`absolute inset-y-0 right-0 w-full sm:w-[420px] flex flex-col bg-[var(--surface)] sm:border-l sm:border-[var(--border)] sm:shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${shown ? 'translate-x-0' : 'translate-x-full'}`}
                     >
                         <div
                             className="flex-shrink-0"
                             style={{ height: 'env(safe-area-inset-top, 0px)', background: '#102744' }}
                         />
 
-                        <div className="flex items-center justify-between gap-2 px-3 h-16 border-b border-gray-100 flex-shrink-0">
+                        <div className="flex items-center justify-between gap-2 px-3 h-16 border-b border-[var(--border)] flex-shrink-0">
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <button
                                     onClick={() => setOpen(false)}
                                     aria-label="Đóng"
-                                    className="w-9 h-9 flex-shrink-0 rounded-full border border-gray-200 bg-white flex items-center justify-center shadow-[0_3px_8px_-1px_rgba(15,23,42,0.22),0_1px_3px_rgba(15,23,42,0.10)] active:scale-95 active:shadow-sm transition"
+                                    className="w-9 h-9 flex-shrink-0 rounded-full border border-[var(--border)] bg-[var(--surface)] flex items-center justify-center shadow-[0_3px_8px_-1px_rgba(15,23,42,0.22),0_1px_3px_rgba(15,23,42,0.10)] active:scale-95 active:shadow-sm transition"
                                 >
-                                    <ChevronLeft className="w-5 h-5 text-gray-700" />
+                                    <ChevronLeft className="w-5 h-5 text-[var(--text)]" />
                                 </button>
-                                <p className="text-xl font-bold text-gray-900 truncate">Thông báo</p>
+                                <p className="text-xl font-bold text-[var(--text)] truncate">Thông báo</p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 {unread > 0 && (
@@ -814,17 +814,17 @@ export function NotificationBell() {
 
                         {/* Danh sách */}
                         <div
-                            className="flex-1 min-h-0 overflow-y-auto bg-gray-50 p-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                            className="flex-1 min-h-0 overflow-y-auto bg-[var(--surface-muted)] p-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                             style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
                         >
                             {loading ? (
                                 <div className="space-y-3">
                                     {[...Array(3)].map((_, i) => (
-                                        <div key={i} className="h-20 bg-gray-200 rounded-2xl animate-pulse" />
+                                        <div key={i} className="h-20 bg-[var(--border-strong)] rounded-2xl animate-pulse" />
                                     ))}
                                 </div>
                             ) : items.length === 0 ? (
-                                <div className="py-10 text-center text-gray-400 text-sm">Chưa có thông báo nào</div>
+                                <div className="py-10 text-center text-[var(--text-faint)] text-sm">Chưa có thông báo nào</div>
                             ) : (
                                 <ul className="space-y-3">
                                     {items.map(n => (

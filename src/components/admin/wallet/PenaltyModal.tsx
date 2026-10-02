@@ -128,33 +128,33 @@ export default function PenaltyModal({
         >
             <div
                 onClick={(e) => e.stopPropagation()}
-                className={`w-full sm:max-w-md bg-white rounded-3xl sm:rounded-2xl p-5 space-y-4 max-h-[92vh] overflow-y-auto transition-all duration-200 ease-out ${visible
+                className={`w-full sm:max-w-md bg-[var(--surface)] rounded-3xl sm:rounded-2xl p-5 space-y-4 max-h-[92vh] overflow-y-auto transition-all duration-200 ease-out ${visible
                     ? "translate-y-0 sm:scale-100 opacity-100"
                     : "translate-y-6 sm:translate-y-0 sm:scale-95 opacity-0"
                     }`}
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
-                            <AlertTriangle className="w-4.5 h-4.5 text-red-500" />
+                        <div className="w-9 h-9 rounded-xl bg-[var(--danger-soft)] flex items-center justify-center">
+                            <AlertTriangle className="w-4.5 h-4.5 text-[var(--danger)]" />
                         </div>
                         <div>
-                            <h2 className="text-sm font-bold text-gray-900">Tạo khoản phạt</h2>
-                            <p className="text-xs text-gray-400 truncate max-w-[220px]">
+                            <h2 className="text-sm font-bold text-[var(--text)]">Tạo khoản phạt</h2>
+                            <p className="text-xs text-[var(--text-faint)] truncate max-w-[220px]">
                                 {memberName}
                             </p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400"
+                        className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)]"
                     >
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
                 <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-2">
+                    <label className="block text-xs font-semibold text-[var(--text-muted)] mb-2">
                         Loại phạt
                     </label>
                     <div className="grid grid-cols-3 gap-2">
@@ -166,8 +166,8 @@ export default function PenaltyModal({
                                     type="button"
                                     onClick={() => handlePickType(value)}
                                     className={`flex flex-col items-center gap-1 py-3 px-1 rounded-xl border-2 text-[11px] font-medium leading-tight text-center transition-colors ${active
-                                        ? "border-red-400 bg-red-50 text-red-600"
-                                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                                        ? "border-red-400 bg-[var(--danger-soft)] text-[var(--danger)]"
+                                        : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-strong)]"
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />
@@ -179,7 +179,7 @@ export default function PenaltyModal({
                 </div>
 
                 <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                    <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
                         Số tiền phạt
                     </label>
                     <input
@@ -189,17 +189,17 @@ export default function PenaltyModal({
                         value={formatNumberInput(amount)}
                         onChange={(e) => setAmount(parseNumberInput(e.target.value))}
                         placeholder={fieldsDisabled ? "Chọn loại phạt trước" : "0"}
-                        className="input-field w-full disabled:bg-gray-50 disabled:text-gray-300"
+                        className="input-field w-full disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-faint)]"
                     />
                     {type && type !== "other" && (
-                        <p className="text-[11px] text-gray-400 mt-1">
+                        <p className="text-[11px] text-[var(--text-faint)] mt-1">
                             Mặc định {DEFAULT_AMOUNTS[type].toLocaleString("vi-VN")}đ — có thể chỉnh lại nếu cần.
                         </p>
                     )}
                 </div>
 
                 <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                    <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
                         Lý do phạt
                     </label>
                     <textarea
@@ -210,12 +210,12 @@ export default function PenaltyModal({
                             fieldsDisabled ? "Chọn loại phạt trước" : "Nhập lý do cụ thể..."
                         }
                         rows={2}
-                        className="input-field w-full resize-none disabled:bg-gray-50 disabled:text-gray-300"
+                        className="input-field w-full resize-none disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-faint)]"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-2">
+                    <label className="block text-xs font-semibold text-[var(--text-muted)] mb-2">
                         Cách thanh toán
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -223,8 +223,8 @@ export default function PenaltyModal({
                             type="button"
                             onClick={() => setPaymentMethod("wallet")}
                             className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 text-xs font-semibold transition-colors ${paymentMethod === "wallet"
-                                ? "border-blue-400 bg-blue-50 text-blue-600"
-                                : "border-gray-200 text-gray-500"
+                                ? "border-blue-400 bg-[var(--primary-soft)] text-[var(--primary)]"
+                                : "border-[var(--border)] text-[var(--text-muted)]"
                                 }`}
                         >
                             <Wallet className="w-3.5 h-3.5" /> Trừ ví ngay
@@ -233,14 +233,14 @@ export default function PenaltyModal({
                             type="button"
                             onClick={() => setPaymentMethod("member_choice")}
                             className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 text-xs font-semibold transition-colors ${paymentMethod === "member_choice"
-                                ? "border-blue-400 bg-blue-50 text-blue-600"
-                                : "border-gray-200 text-gray-500"
+                                ? "border-blue-400 bg-[var(--primary-soft)] text-[var(--primary)]"
+                                : "border-[var(--border)] text-[var(--text-muted)]"
                                 }`}
                         >
                             <Landmark className="w-3.5 h-3.5" /> Member tự chọn
                         </button>
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-1.5">
+                    <p className="text-[11px] text-[var(--text-faint)] mt-1.5">
                         {paymentMethod === "wallet"
                             ? "Trừ thẳng vào ví của thành viên và lưu lịch sử ngay."
                             : "Thành viên sẽ tự chọn ví / chuyển khoản / tiền mặt để thanh toán."}
@@ -250,7 +250,7 @@ export default function PenaltyModal({
                 <div className="flex items-center gap-2 pt-1">
                     <button
                         onClick={onClose}
-                        className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100"
+                        className="flex-1 py-2.5 rounded-xl text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                     >
                         Hủy
                     </button>

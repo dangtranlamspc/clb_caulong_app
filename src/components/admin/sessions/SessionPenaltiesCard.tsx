@@ -11,10 +11,10 @@ function fmt(n: number) {
 
 
 const STATUS_STYLES: Record<string, string> = {
-    awaiting_choice: "bg-amber-100 text-amber-700",
-    submitted: "bg-blue-100 text-blue-700",
-    confirmed: "bg-emerald-100 text-emerald-700",
-    rejected: "bg-red-100 text-red-700",
+    awaiting_choice: "bg-[var(--warning-soft)] text-[var(--warning)]",
+    submitted: "bg-[var(--primary-soft)] text-[var(--primary)]",
+    confirmed: "bg-[var(--success-soft)] text-[var(--success)]",
+    rejected: "bg-[var(--danger-soft)] text-[var(--danger)]",
 };
 const STATUS_LABELS: Record<string, string> = {
     awaiting_choice: "Chờ chọn thanh toán",
@@ -24,9 +24,9 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const PAYMENT_METHOD_STYLES: Record<string, string> = {
-    wallet: "bg-sky-50 text-sky-700 border-sky-200",
-    bank_transfer: "bg-indigo-50 text-indigo-700 border-indigo-200",
-    cash: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    wallet: "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]",
+    bank_transfer: "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]",
+    cash: "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]",
 };
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
     wallet: "Ví BNB",
@@ -139,28 +139,28 @@ const SessionPenaltiesCard = forwardRef<SessionPenaltiesCardHandle, { sessionId:
             }
         };
 
-        if (loading) return <div className="h-24 bg-gray-100 animate-pulse rounded-2xl" />;
+        if (loading) return <div className="h-24 bg-[var(--surface-muted)] animate-pulse rounded-2xl" />;
         if (!data || (data.data ?? []).length === 0) return null;
 
         return (
             <div className="card !p-0 overflow-hidden">
                 <div className="px-4 pt-4 pb-2">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    <p className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide">
                         Khoản phạt trong buổi này
                     </p>
                 </div>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-[var(--border)]">
                     {data.data.map((p: any) => {
                         const isRemoving = removingId === p.id;
                         const isRefund = p.payment_status === "confirmed";
                         return (
                             <div key={p.id} className="px-4 py-2.5 flex items-center gap-3">
-                                <ShieldAlert className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <ShieldAlert className="w-4 h-4 text-[var(--text-faint)] flex-shrink-0" />
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-gray-800 truncate">
+                                    <p className="text-sm font-medium text-[var(--text)] truncate">
                                         {p.deducted_member?.full_name}
                                     </p>
-                                    <p className="text-xs text-gray-400 truncate">
+                                    <p className="text-xs text-[var(--text-faint)] truncate">
                                         {p.description || p.title}
                                     </p>
                                     {p.payment_status === "confirmed" && (
@@ -172,7 +172,7 @@ const SessionPenaltiesCard = forwardRef<SessionPenaltiesCardHandle, { sessionId:
                                 <div className="text-right flex-shrink-0">
                                     <p className="text-sm font-semibold">{fmt(p.amount)}</p>
                                     <span
-                                        className={`inline-block mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_STYLES[p.payment_status] ?? "bg-gray-100 text-gray-500"}`}
+                                        className={`inline-block mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_STYLES[p.payment_status] ?? "bg-[var(--surface-muted)] text-[var(--text-muted)]"}`}
                                     >
                                         {STATUS_LABELS[p.payment_status] ?? p.payment_status}
                                     </span>
@@ -195,11 +195,11 @@ const SessionPenaltiesCard = forwardRef<SessionPenaltiesCardHandle, { sessionId:
                         );
                     })}
                 </div>
-                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/40">
-                    <span className="text-xs font-semibold text-gray-500">
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)] bg-[var(--surface-muted)]">
+                    <span className="text-xs font-semibold text-[var(--text-muted)]">
                         Tổng cộng
                     </span>
-                    <span className="text-sm font-bold text-red-500">
+                    <span className="text-sm font-bold text-[var(--danger)]">
                         {fmt(data.summary?.confirmed_amount ?? 0)}
                     </span>
                 </div>

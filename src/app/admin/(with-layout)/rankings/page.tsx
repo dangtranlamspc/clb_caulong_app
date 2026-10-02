@@ -34,7 +34,7 @@ function getAttendanceTier(totalSessions: number) {
 function AttendanceLevelBadge({ totalSessions }: { totalSessions: number }) {
     const tier = getAttendanceTier(totalSessions);
     return (
-        <span className="inline-flex items-center gap-1 text-[9px] sm:text-xs font-medium text-gray-600 max-w-full">
+        <span className="inline-flex items-center gap-1 text-[9px] sm:text-xs font-medium text-[var(--text-muted)] max-w-full">
             <span className="flex-shrink-0">{tier.icon}</span>
             <span className="truncate">{tier.label}</span>
         </span>
@@ -75,23 +75,23 @@ function YearDropdown({ options, value, onChange }: { options: number[]; value: 
             <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
-                className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 whitespace-nowrap hover:bg-gray-100 hover:border-gray-300 transition-colors duration-200"
+                className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 whitespace-nowrap hover:bg-[var(--surface-hover)] hover:border-[var(--border-strong)] transition-colors duration-200"
             >
-                <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <Calendar className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0" />
                 <span>Năm {value}</span>
-                <ChevronDown className={`w-3 h-3 text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 text-[var(--text-faint)] flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </button>
 
             {mounted && (
                 <div
-                    className={`absolute right-0 mt-1.5 w-28 max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1 origin-top-right transition-all duration-150 ease-out ${open ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'}`}
+                    className={`absolute right-0 mt-1.5 w-28 max-h-64 overflow-y-auto bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg z-20 py-1 origin-top-right transition-all duration-150 ease-out ${open ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'}`}
                 >
                     {options.map((y) => (
                         <button
                             key={y}
                             type="button"
                             onClick={() => { onChange(y); setOpen(false); }}
-                            className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${y === value ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                            className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${y === value ? 'bg-[var(--primary-soft)] text-[var(--primary)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)]'}`}
                         >
                             Năm {y}
                         </button>
@@ -130,20 +130,20 @@ function MonthOptionDropdown({ value, onChange }: { value: 'all' | number; onCha
             <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
-                className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 whitespace-nowrap hover:bg-gray-100 hover:border-gray-300 transition-colors duration-200"
+                className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 whitespace-nowrap hover:bg-[var(--surface-hover)] hover:border-[var(--border-strong)] transition-colors duration-200"
             >
                 <span>{label}</span>
-                <ChevronDown className={`w-3 h-3 text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 text-[var(--text-faint)] flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </button>
 
             {mounted && (
                 <div
-                    className={`absolute right-0 mt-1.5 w-32 max-h-72 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1 origin-top-right transition-all duration-150 ease-out ${open ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'}`}
+                    className={`absolute right-0 mt-1.5 w-32 max-h-72 overflow-y-auto bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg z-20 py-1 origin-top-right transition-all duration-150 ease-out ${open ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'}`}
                 >
                     <button
                         type="button"
                         onClick={() => { onChange('all'); setOpen(false); }}
-                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold border-b border-gray-100 mb-1 transition-colors duration-150 ${value === 'all' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold border-b border-[var(--border)] mb-1 transition-colors duration-150 ${value === 'all' ? 'bg-[var(--primary-soft)] text-[var(--primary)]' : 'text-[var(--text)] hover:bg-[var(--surface-hover)]'}`}
                     >
                         📅 Cả năm
                     </button>
@@ -152,7 +152,7 @@ function MonthOptionDropdown({ value, onChange }: { value: 'all' | number; onCha
                             key={m}
                             type="button"
                             onClick={() => { onChange(m); setOpen(false); }}
-                            className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${value === m ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                            className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${value === m ? 'bg-[var(--primary-soft)] text-[var(--primary)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)]'}`}
                         >
                             Tháng {m}
                         </button>
@@ -166,7 +166,7 @@ function MonthOptionDropdown({ value, onChange }: { value: 'all' | number; onCha
 function DeltaText({ delta, suffix }: { delta: number; suffix: string }) {
     if (delta > 0) {
         return (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--success)]">
                 <TriangleUp className="border-b-emerald-600" />
                 {delta} {suffix}
             </span>
@@ -174,13 +174,13 @@ function DeltaText({ delta, suffix }: { delta: number; suffix: string }) {
     }
     if (delta < 0) {
         return (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-500">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--danger)]">
                 <TriangleDown className="border-t-red-500" />
                 {Math.abs(delta)} {suffix}
             </span>
         );
     }
-    return <span className="inline-flex items-center text-xs font-medium text-gray-400">-</span>;
+    return <span className="inline-flex items-center text-xs font-medium text-[var(--text-faint)]">-</span>;
 }
 
 function ProgressBar({ percent, gradientClass }: { percent: number; gradientClass: string }) {
@@ -193,7 +193,7 @@ function ProgressBar({ percent, gradientClass }: { percent: number; gradientClas
     }, [percent]);
 
     return (
-        <div className="relative flex-1 h-2 sm:h-2.5 bg-gray-100 rounded-full overflow-hidden min-w-[40px] sm:min-w-[60px]">
+        <div className="relative flex-1 h-2 sm:h-2.5 bg-[var(--surface-muted)] rounded-full overflow-hidden min-w-[40px] sm:min-w-[60px]">
             <div
                 className={`h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden ${gradientClass}`}
                 style={{ width: `${width}%` }}
@@ -208,15 +208,15 @@ function Avatar({ src, name, size = 40 }: { src?: string | null; name: string; s
     const [err, setErr] = useState(false);
     const show = src && !err;
     return (
-        <div className="rounded-full overflow-hidden border border-gray-200 flex items-center justify-center bg-blue-100 text-blue-700 font-semibold flex-shrink-0" style={{ width: size, height: size }}>
+        <div className="rounded-full overflow-hidden border border-[var(--border)] flex items-center justify-center bg-[var(--primary-soft)] text-[var(--primary)] font-semibold flex-shrink-0" style={{ width: size, height: size }}>
             {show ? <img src={src} alt={name} className="w-full h-full object-cover" onError={() => setErr(true)} /> : <span>{name?.[0]?.toUpperCase()}</span>}
         </div>
     );
 }
 
 const POS_BADGE_CLS: Record<number, string> = {
-    2: 'bg-blue-100 text-blue-700',
-    3: 'bg-orange-100 text-orange-700',
+    2: 'bg-[var(--primary-soft)] text-[var(--primary)]',
+    3: 'bg-[var(--warning-soft)] text-[var(--warning)]',
 };
 
 function TopThree({ data, valueKey, valueSuffix, deltaKey, deltaSuffix, deltaLabel, renderSub }: {
@@ -241,10 +241,10 @@ function TopThree({ data, valueKey, valueSuffix, deltaKey, deltaSuffix, deltaLab
                 return (
                     <div
                         key={m.id}
-                        className={`relative rounded-2xl p-2.5 sm:p-4 text-center ${liftClass[i]} ${isFirst ? 'bg-amber-50 border-2 border-amber-300 shadow-sm' : 'bg-gray-50 border border-gray-200'}`}
+                        className={`relative rounded-2xl p-2.5 sm:p-4 text-center ${liftClass[i]} ${isFirst ? 'bg-[var(--warning-soft)] border-2 border-[color-mix(in_srgb,var(--warning)_30%,transparent)] shadow-sm' : 'bg-[var(--surface-muted)] border border-[var(--border)]'}`}
                     >
                         {isFirst ? (
-                            <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 fill-amber-300 absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2" />
+                            <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--warning)] fill-amber-300 absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2" />
                         ) : (
                             <span className={`absolute -top-2.5 sm:-top-3 left-2 sm:left-3 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold ${POS_BADGE_CLS[pos]}`}>
                                 {pos}
@@ -253,15 +253,15 @@ function TopThree({ data, valueKey, valueSuffix, deltaKey, deltaSuffix, deltaLab
                         <div className="flex justify-center mb-1.5 sm:mb-2">
                             <Avatar src={m.avatar_url} name={m.full_name} size={isFirst ? 56 : 44} />
                         </div>
-                        <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{m.full_name}</p>
+                        <p className="text-xs sm:text-sm font-semibold text-[var(--text)] truncate">{m.full_name}</p>
                         {renderSub && <div className="mt-0.5">{renderSub(m)}</div>}
-                        <p className={`font-black mt-1 ${isFirst ? 'text-lg sm:text-2xl text-gray-900' : 'text-base sm:text-xl text-gray-800'}`}>
-                            {m[valueKey]} <span className="text-[10px] sm:text-xs font-medium text-gray-400">{valueSuffix}</span>
+                        <p className={`font-black mt-1 ${isFirst ? 'text-lg sm:text-2xl text-[var(--text)]' : 'text-base sm:text-xl text-[var(--text)]'}`}>
+                            {m[valueKey]} <span className="text-[10px] sm:text-xs font-medium text-[var(--text-faint)]">{valueSuffix}</span>
                         </p>
                         <div className="mt-1 flex justify-center">
                             <DeltaText delta={m[deltaKey] ?? 0} suffix={deltaSuffix} />
                         </div>
-                        <p className="hidden sm:block text-[10px] text-gray-400 mt-0.5">{deltaLabel}</p>
+                        <p className="hidden sm:block text-[10px] text-[var(--text-faint)] mt-0.5">{deltaLabel}</p>
                     </div>
                 );
             })}
@@ -271,7 +271,7 @@ function TopThree({ data, valueKey, valueSuffix, deltaKey, deltaSuffix, deltaLab
 
 function PosPill({ pos }: { pos: number }) {
     return (
-        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-[11px] font-bold flex items-center justify-center">
+        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] text-[11px] font-bold flex items-center justify-center">
             {pos}
         </span>
     );
@@ -286,19 +286,19 @@ function SessionMobileCard({ m, pos, prevMonthLabel }: { m: any; pos: number; pr
             <PosPill pos={pos} />
             <Avatar src={m.avatar_url} name={m.full_name} size={32} />
             <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-800 truncate">{m.full_name}</p>
+                <p className="text-sm font-medium text-[var(--text)] truncate">{m.full_name}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                     <AttendanceLevelBadge totalSessions={m.total_sessions ?? 0} />
                 </div>
                 <div className="flex items-center gap-1.5 mt-1.5">
                     <ProgressBar percent={rate} gradientClass="bg-emerald-500" />
-                    <span className="text-[10px] text-gray-400 flex-shrink-0 whitespace-nowrap">
+                    <span className="text-[10px] text-[var(--text-faint)] flex-shrink-0 whitespace-nowrap">
                         {m.sessions_this_month}/{totalClubSessions} ({rate.toFixed(0)}%)
                     </span>
                 </div>
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                <span className="text-sm font-bold text-gray-800 whitespace-nowrap">{m.sessions_this_month} buổi</span>
+                <span className="text-sm font-bold text-[var(--text)] whitespace-nowrap">{m.sessions_this_month} buổi</span>
                 <DeltaText delta={m.sessions_delta ?? 0} suffix="" />
             </div>
         </div>
@@ -311,7 +311,7 @@ function SessionTable({ data, prevMonthLabel }: { data: any[]; prevMonthLabel: s
             <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="text-left text-[11px] text-gray-400 border-b border-gray-100">
+                        <tr className="text-left text-[11px] text-[var(--text-faint)] border-b border-[var(--border)]">
                             <th className="px-3 py-2.5 font-medium w-10">#</th>
                             <th className="px-3 py-2.5 font-medium">Thành viên</th>
                             <th className="px-3 py-2.5 font-medium">Cấp độ</th>
@@ -320,7 +320,7 @@ function SessionTable({ data, prevMonthLabel }: { data: any[]; prevMonthLabel: s
                             <th className="px-3 py-2.5 font-medium text-right whitespace-nowrap">So với<br />{prevMonthLabel}</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50">
+                    <tbody className="divide-y divide-[var(--border)]">
                         {data.map((m, idx) => {
                             const pos = idx + 4;
                             const totalClubSessions = m.total_sessions_in_month ?? 0;
@@ -328,22 +328,22 @@ function SessionTable({ data, prevMonthLabel }: { data: any[]; prevMonthLabel: s
                                 ? Math.min(100, (m.sessions_this_month / totalClubSessions) * 100)
                                 : 0;
                             return (
-                                <tr key={m.id} className="hover:bg-gray-50">
-                                    <td className="px-3 py-2.5 text-gray-400 font-medium">{pos}</td>
+                                <tr key={m.id} className="hover:bg-[var(--surface-hover)]">
+                                    <td className="px-3 py-2.5 text-[var(--text-faint)] font-medium">{pos}</td>
                                     <td className="px-3 py-2.5">
                                         <div className="flex items-center gap-2.5 min-w-0">
                                             <Avatar src={m.avatar_url} name={m.full_name} size={28} />
-                                            <span className="font-medium text-gray-800 truncate">{m.full_name}</span>
+                                            <span className="font-medium text-[var(--text)] truncate">{m.full_name}</span>
                                         </div>
                                     </td>
                                     <td className="px-3 py-2.5">
                                         <AttendanceLevelBadge totalSessions={m.total_sessions ?? 0} />
                                     </td>
-                                    <td className="px-3 py-2.5 text-center font-semibold text-gray-700 whitespace-nowrap">{m.sessions_this_month} buổi</td>
+                                    <td className="px-3 py-2.5 text-center font-semibold text-[var(--text)] whitespace-nowrap">{m.sessions_this_month} buổi</td>
                                     <td className="px-3 py-2.5">
                                         <div className="flex items-center gap-2">
                                             <ProgressBar percent={rate} gradientClass="bg-emerald-500" />
-                                            <span className="text-xs text-gray-500 flex-shrink-0 whitespace-nowrap">
+                                            <span className="text-xs text-[var(--text-muted)] flex-shrink-0 whitespace-nowrap">
                                                 {m.sessions_this_month}/{totalClubSessions} ({rate.toFixed(0)}%)
                                             </span>
                                         </div>
@@ -358,7 +358,7 @@ function SessionTable({ data, prevMonthLabel }: { data: any[]; prevMonthLabel: s
                 </table>
             </div>
 
-            <div className="sm:hidden divide-y divide-gray-50">
+            <div className="sm:hidden divide-y divide-[var(--border)]">
                 {data.map((m, idx) => (
                     <SessionMobileCard key={m.id} m={m} pos={idx + 4} prevMonthLabel={prevMonthLabel} />
                 ))}
@@ -376,19 +376,19 @@ function RankMobileCard({ p, pos }: { p: any; pos: number }) {
             <PosPill pos={pos} />
             <Avatar src={p.avatar_url} name={p.full_name} size={32} />
             <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-800 truncate">{p.full_name}</p>
+                <p className="text-sm font-medium text-[var(--text)] truncate">{p.full_name}</p>
                 <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border whitespace-nowrap mt-0.5 ${cfg.bg} ${cfg.color} ${cfg.border}`}>
                     💎 {p.tier}
                 </span>
                 <div className="flex items-center gap-1.5 mt-1.5">
                     <ProgressBar percent={progressPct} gradientClass="bg-gradient-to-r from-violet-400 to-purple-600" />
-                    <span className="text-[10px] text-gray-400 flex-shrink-0 whitespace-nowrap">
+                    <span className="text-[10px] text-[var(--text-faint)] flex-shrink-0 whitespace-nowrap">
                         {(p.points ?? 0)}/{POINTS_PER_TIER}
                     </span>
                 </div>
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                <span className="text-sm font-bold text-gray-800 whitespace-nowrap">{p.total_points} đ</span>
+                <span className="text-sm font-bold text-[var(--text)] whitespace-nowrap">{p.total_points} đ</span>
                 <DeltaText delta={p.points_this_week ?? 0} suffix="" />
             </div>
         </div>
@@ -401,7 +401,7 @@ function RankTable({ data }: { data: any[] }) {
             <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="text-left text-[11px] text-gray-400 border-b border-gray-100">
+                        <tr className="text-left text-[11px] text-[var(--text-faint)] border-b border-[var(--border)]">
                             <th className="px-3 py-2.5 font-medium w-10">#</th>
                             <th className="px-3 py-2.5 font-medium">Thành viên</th>
                             <th className="px-3 py-2.5 font-medium">Rank</th>
@@ -410,18 +410,18 @@ function RankTable({ data }: { data: any[] }) {
                             <th className="px-3 py-2.5 font-medium text-right whitespace-nowrap">Tiến độ</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50">
+                    <tbody className="divide-y divide-[var(--border)]">
                         {data.map((p, idx) => {
                             const pos = idx + 4;
                             const cfg = getTierConfig(p.tier);
                             const progressPct = Math.min(100, ((p.points ?? 0) / POINTS_PER_TIER) * 100);
                             return (
-                                <tr key={p.id} className="hover:bg-gray-50">
-                                    <td className="px-3 py-2.5 text-gray-400 font-medium">{pos}</td>
+                                <tr key={p.id} className="hover:bg-[var(--surface-hover)]">
+                                    <td className="px-3 py-2.5 text-[var(--text-faint)] font-medium">{pos}</td>
                                     <td className="px-3 py-2.5">
                                         <div className="flex items-center gap-2.5 min-w-0">
                                             <Avatar src={p.avatar_url} name={p.full_name} size={28} />
-                                            <span className="font-medium text-gray-800 truncate">{p.full_name}</span>
+                                            <span className="font-medium text-[var(--text)] truncate">{p.full_name}</span>
                                         </div>
                                     </td>
                                     <td className="px-3 py-2.5">
@@ -429,14 +429,14 @@ function RankTable({ data }: { data: any[] }) {
                                             💎 {p.tier}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-2.5 text-right font-semibold text-gray-700">{p.total_points}</td>
+                                    <td className="px-3 py-2.5 text-right font-semibold text-[var(--text)]">{p.total_points}</td>
                                     <td className="px-3 py-2.5 text-right">
                                         <DeltaText delta={p.points_this_week ?? 0} suffix="" />
                                     </td>
                                     <td className="px-3 py-2.5">
                                         <div className="flex items-center gap-2 justify-end">
                                             <ProgressBar percent={progressPct} gradientClass="bg-gradient-to-r from-violet-400 to-purple-600" />
-                                            <span className="text-xs text-gray-400 flex-shrink-0 whitespace-nowrap">
+                                            <span className="text-xs text-[var(--text-faint)] flex-shrink-0 whitespace-nowrap">
                                                 {(p.points ?? 0)}/{POINTS_PER_TIER}
                                             </span>
                                         </div>
@@ -448,7 +448,7 @@ function RankTable({ data }: { data: any[] }) {
                 </table>
             </div>
 
-            <div className="sm:hidden divide-y divide-gray-50">
+            <div className="sm:hidden divide-y divide-[var(--border)]">
                 {data.map((p, idx) => (
                     <RankMobileCard key={p.id} p={p} pos={idx + 4} />
                 ))}
@@ -504,8 +504,8 @@ export default function RankingsPage() {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Bảng xếp hạng</h1>
-                <button onClick={refreshAll} className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600 flex-shrink-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)]">Bảng xếp hạng</h1>
+                <button onClick={refreshAll} className="p-2 rounded-lg hover:bg-[var(--surface-hover)] transition-colors text-[var(--text-faint)] hover:text-[var(--text-muted)] flex-shrink-0">
                     <RefreshCw className="w-4 h-4" />
                 </button>
             </div>
@@ -514,10 +514,10 @@ export default function RankingsPage() {
                 <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                            <h2 className="font-bold text-gray-900 flex items-center gap-1.5 text-sm sm:text-base">
-                                <Users className="w-4 h-4 text-blue-500 flex-shrink-0" /> <span className="truncate">CHUYÊN CẦN</span>
+                            <h2 className="font-bold text-[var(--text)] flex items-center gap-1.5 text-sm sm:text-base">
+                                <Users className="w-4 h-4 text-[var(--primary)] flex-shrink-0" /> <span className="truncate">CHUYÊN CẦN</span>
                             </h2>
-                            <p className="hidden sm:block text-xs text-gray-400 mt-0.5">Xếp hạng thành viên theo tổng số buổi tham gia</p>
+                            <p className="hidden sm:block text-xs text-[var(--text-faint)] mt-0.5">Xếp hạng thành viên theo tổng số buổi tham gia</p>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <YearDropdown options={yearOptions} value={selectedYear} onChange={setSelectedYear} />
@@ -526,17 +526,17 @@ export default function RankingsPage() {
                     </div>
 
                     {loadingSessions && sessionData.length === 0 ? (
-                        <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-14 animate-pulse bg-gray-100" />)}</div>
+                        <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-14 animate-pulse bg-[var(--surface-muted)]" />)}</div>
                     ) : sessionData.length === 0 ? (
-                        <div className="card py-10 text-center text-gray-400">
+                        <div className="card py-10 text-center text-[var(--text-faint)]">
                             <Users className="w-8 h-8 mx-auto mb-2 opacity-20" />
                             <p className="text-sm">Chưa có dữ liệu</p>
                         </div>
                     ) : (
                         <div className="relative">
                             {loadingSessions && (
-                                <div className="absolute inset-0 z-10 -m-1 bg-white/70 backdrop-blur-[1px] rounded-2xl flex items-start justify-center pt-12">
-                                    <RefreshCw className="w-5 h-5 text-blue-500 animate-spin" />
+                                <div className="absolute inset-0 z-10 -m-1 bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] backdrop-blur-[1px] rounded-2xl flex items-start justify-center pt-12">
+                                    <RefreshCw className="w-5 h-5 text-[var(--primary)] animate-spin" />
                                 </div>
                             )}
                             <div className={`space-y-3 transition-opacity duration-200 ${loadingSessions ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
@@ -550,7 +550,7 @@ export default function RankingsPage() {
                                     renderSub={(m) => <AttendanceLevelBadge totalSessions={m.total_sessions ?? 0} />}
                                 />
                                 {sessionRest.length > 0 && <SessionTable data={sessionRest} prevMonthLabel={prevLabel} />}
-                                <p className="text-[11px] text-gray-400 flex items-start gap-1.5 px-1">
+                                <p className="text-[11px] text-[var(--text-faint)] flex items-start gap-1.5 px-1">
                                     <span>ⓘ</span>
                                     <span>Tỷ lệ tham gia = (Số buổi thành viên đã tham gia / Tổng số buổi CLB tổ chức trong khoảng thời gian đã chọn) × 100%.</span>
                                 </p>
@@ -563,22 +563,22 @@ export default function RankingsPage() {
                 <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                            <h2 className="font-bold text-gray-900 flex items-center gap-1.5 text-sm sm:text-base">
-                                <Trophy className="w-4 h-4 text-purple-500 flex-shrink-0" /> <span className="truncate">ĐIỂM RANK</span>
+                            <h2 className="font-bold text-[var(--text)] flex items-center gap-1.5 text-sm sm:text-base">
+                                <Trophy className="w-4 h-4 text-[var(--purple)] flex-shrink-0" /> <span className="truncate">ĐIỂM RANK</span>
                             </h2>
-                            <p className="hidden sm:block text-xs text-gray-400 mt-0.5">Xếp hạng thành viên theo tổng điểm tích lũy để leo rank</p>
+                            <p className="hidden sm:block text-xs text-[var(--text-faint)] mt-0.5">Xếp hạng thành viên theo tổng điểm tích lũy để leo rank</p>
                         </div>
-                        <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 whitespace-nowrap flex-shrink-0">
-                            <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 whitespace-nowrap flex-shrink-0">
+                            <Calendar className="w-3.5 h-3.5 text-[var(--text-faint)]" />
                             <span className="hidden sm:inline">Tất cả thời gian</span>
                             <span className="sm:hidden">Tất cả</span>
                         </span>
                     </div>
 
                     {loadingRank ? (
-                        <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-14 animate-pulse bg-gray-100" />)}</div>
+                        <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="card h-14 animate-pulse bg-[var(--surface-muted)]" />)}</div>
                     ) : rankData.length === 0 ? (
-                        <div className="card py-10 text-center text-gray-400">
+                        <div className="card py-10 text-center text-[var(--text-faint)]">
                             <Trophy className="w-8 h-8 mx-auto mb-2 opacity-20" />
                             <p className="text-sm">Chưa có dữ liệu</p>
                         </div>

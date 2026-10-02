@@ -244,41 +244,41 @@ export default function TournamentRegistrationsPage() {
     if (loading) {
         return (
             <div className="p-10 flex justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                <Loader2 className="w-6 h-6 animate-spin text-[var(--text-faint)]" />
             </div>
         );
     }
 
     return (
         <div className="w-full p-4 sm:p-6 space-y-5">
-            <div className="flex items-center gap-1.5 text-sm text-gray-400 overflow-x-auto whitespace-nowrap">
+            <div className="flex items-center gap-1.5 text-sm text-[var(--text-faint)] overflow-x-auto whitespace-nowrap">
                 <button
                     onClick={() => router.push("/activities")}
-                    className="hover:text-gray-600"
+                    className="hover:text-[var(--text-muted)]"
                 >
                     Giải đấu
                 </button>
                 <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="text-gray-500">{activity?.title}</span>
+                <span className="text-[var(--text-muted)]">{activity?.title}</span>
                 <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="text-gray-900 font-medium">Quản lý đăng ký</span>
+                <span className="text-[var(--text)] font-medium">Quản lý đăng ký</span>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                    <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)]">
                         Vận động viên đăng ký
                     </h1>
-                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-orange-50 text-orange-600">
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-[var(--warning-soft)] text-[var(--warning)]">
                         {STATUS_LABEL[activity?.status] ?? activity?.status}
                     </span>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                    <button className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">
+                    <button className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]">
                         <Download className="w-4 h-4" />
                         <span className="hidden sm:inline">Xuất danh sách</span>
                     </button>
-                    <button className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 md:hidden">
+                    <button className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] md:hidden">
                         <Filter className="w-4 h-4" />
                         <span>Bộ lọc</span>
                     </button>
@@ -340,10 +340,10 @@ export default function TournamentRegistrationsPage() {
 
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
                 <div className="space-y-4 min-w-0">
-                    <div className="bg-white rounded-xl border border-gray-200 p-4">
+                    <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4">
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-12 gap-3 items-end">
                             <div className="col-span-2 sm:col-span-3 lg:col-span-3">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">
+                                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                                     Tìm kiếm
                                 </label>
                                 <input
@@ -354,7 +354,7 @@ export default function TournamentRegistrationsPage() {
                                 />
                             </div>
                             <div className="lg:col-span-2">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">
+                                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                                     Giới tính
                                 </label>
                                 <CustomSelect
@@ -364,7 +364,7 @@ export default function TournamentRegistrationsPage() {
                                 />
                             </div>
                             <div className="lg:col-span-2">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">
+                                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                                     Trình độ
                                 </label>
                                 <CustomSelect
@@ -374,7 +374,7 @@ export default function TournamentRegistrationsPage() {
                                 />
                             </div>
                             <div className="lg:col-span-2">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">
+                                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                                     Vai trò
                                 </label>
                                 <CustomSelect
@@ -384,7 +384,7 @@ export default function TournamentRegistrationsPage() {
                                 />
                             </div>
                             <div className="lg:col-span-2">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">
+                                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                                     Thanh toán
                                 </label>
                                 <CustomSelect
@@ -396,7 +396,7 @@ export default function TournamentRegistrationsPage() {
                             <div className="lg:col-span-1">
                                 <button
                                     onClick={clearFilters}
-                                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50"
+                                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                                 >
                                     <RotateCcw className="w-3.5 h-3.5" />
                                     <span className="lg:hidden">Xóa lọc</span>
@@ -405,10 +405,10 @@ export default function TournamentRegistrationsPage() {
                         </div>
                     </div>
 
-                    <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="hidden md:block bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
-                                <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                                <thead className="bg-[var(--surface-muted)] text-[var(--text-muted)] text-xs uppercase">
                                     <tr>
                                         <th className="text-left px-4 py-3">STT</th>
                                         <th className="text-left px-4 py-3">Vận động viên</th>
@@ -421,10 +421,10 @@ export default function TournamentRegistrationsPage() {
                                         <th className="text-right px-4 py-3">Thao tác</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-50">
+                                <tbody className="divide-y divide-[var(--border)]">
                                     {pageItems.map((r, i) => (
-                                        <tr key={r.id} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 text-gray-400">
+                                        <tr key={r.id} className="hover:bg-[var(--surface-hover)]">
+                                            <td className="px-4 py-3 text-[var(--text-faint)]">
                                                 {(page - 1) * PAGE_SIZE + i + 1}
                                             </td>
                                             <td className="px-4 py-3">
@@ -438,16 +438,16 @@ export default function TournamentRegistrationsPage() {
                                                         alt=""
                                                     />
                                                     <div className="min-w-0">
-                                                        <p className="font-medium text-gray-900 truncate">
+                                                        <p className="font-medium text-[var(--text)] truncate">
                                                             {r.users?.full_name ?? "—"}
                                                         </p>
-                                                        <p className="text-xs text-gray-400 truncate">
+                                                        <p className="text-xs text-[var(--text-faint)] truncate">
                                                             {r.users?.email ?? ""}
                                                         </p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-600">
+                                            <td className="px-4 py-3 text-[var(--text-muted)]">
                                                 {r.role === "nam" ? "Nam" : "Nữ"}
                                             </td>
                                             <td className="px-4 py-3">
@@ -478,17 +478,17 @@ export default function TournamentRegistrationsPage() {
                                             <td className="px-4 py-3">
                                                 <span
                                                     className={`text-xs font-medium px-2 py-1 rounded-full ${r.role === "nam"
-                                                        ? "bg-blue-50 text-blue-600"
-                                                        : "bg-pink-50 text-pink-600"
+                                                        ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                                        : "bg-[var(--pink-soft)] text-[var(--pink)]"
                                                         }`}
                                                 >
                                                     VĐV {r.role === "nam" ? "Nam" : "Nữ"}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-600">
+                                            <td className="px-4 py-3 text-[var(--text-muted)]">
                                                 {r.users?.phone ?? "—"}
                                             </td>
-                                            <td className="px-4 py-3 text-gray-500">
+                                            <td className="px-4 py-3 text-[var(--text-muted)]">
                                                 {r.created_at
                                                     ? format(new Date(r.created_at), "dd/MM/yyyy HH:mm", {
                                                         locale: vi,
@@ -499,8 +499,8 @@ export default function TournamentRegistrationsPage() {
                                                 <button
                                                     onClick={() => openConfirmPayment(r)}
                                                     className={`text-xs font-medium px-2.5 py-1 rounded-full ${r.payment_status === "confirmed"
-                                                        ? "bg-green-50 text-green-700 cursor-default"
-                                                        : "bg-amber-50 text-amber-600 hover:bg-amber-100"
+                                                        ? "bg-[var(--success-soft)] text-[var(--success)] cursor-default"
+                                                        : "bg-[var(--warning-soft)] text-[var(--warning)] hover:bg-[var(--warning-soft)]"
                                                         }`}
                                                 >
                                                     {r.payment_status === "confirmed"
@@ -510,15 +510,15 @@ export default function TournamentRegistrationsPage() {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center justify-end gap-1">
-                                                    <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600">
+                                                    <button className="p-1.5 hover:bg-[var(--surface-hover)] rounded-lg text-[var(--text-faint)] hover:text-[var(--text-muted)]">
                                                         <Eye className="w-4 h-4" />
                                                     </button>
-                                                    <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-blue-600">
+                                                    <button className="p-1.5 hover:bg-[var(--surface-hover)] rounded-lg text-[var(--text-faint)] hover:text-[var(--primary)]">
                                                         <Pencil className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteReg(r.id)}
-                                                        className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                                                        className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)]"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -530,7 +530,7 @@ export default function TournamentRegistrationsPage() {
                                         <tr>
                                             <td
                                                 colSpan={9}
-                                                className="text-center py-10 text-gray-400"
+                                                className="text-center py-10 text-[var(--text-faint)]"
                                             >
                                                 Không có vận động viên nào phù hợp bộ lọc
                                             </td>
@@ -551,14 +551,14 @@ export default function TournamentRegistrationsPage() {
 
                     <div className="md:hidden space-y-3">
                         {pageItems.length === 0 && (
-                            <div className="bg-white rounded-xl border border-gray-200 text-center py-10 text-gray-400 text-sm">
+                            <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] text-center py-10 text-[var(--text-faint)] text-sm">
                                 Không có vận động viên nào phù hợp bộ lọc
                             </div>
                         )}
                         {pageItems.map((r, i) => (
                             <div
                                 key={r.id}
-                                className="bg-white rounded-xl border border-gray-200 p-4 space-y-3"
+                                className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 space-y-3"
                             >
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-center gap-2.5 min-w-0">
@@ -571,15 +571,15 @@ export default function TournamentRegistrationsPage() {
                                             alt=""
                                         />
                                         <div className="min-w-0">
-                                            <p className="font-medium text-gray-900 truncate">
+                                            <p className="font-medium text-[var(--text)] truncate">
                                                 {r.users?.full_name ?? "—"}
                                             </p>
-                                            <p className="text-xs text-gray-400 truncate">
+                                            <p className="text-xs text-[var(--text-faint)] truncate">
                                                 {r.users?.phone ?? "—"}
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="text-xs text-gray-400 flex-shrink-0">
+                                    <span className="text-xs text-[var(--text-faint)] flex-shrink-0">
                                         #{(page - 1) * PAGE_SIZE + i + 1}
                                     </span>
                                 </div>
@@ -587,8 +587,8 @@ export default function TournamentRegistrationsPage() {
                                 <div className="flex flex-wrap items-center gap-2">
                                     <span
                                         className={`text-xs font-medium px-2 py-1 rounded-full ${r.role === "nam"
-                                            ? "bg-blue-50 text-blue-600"
-                                            : "bg-pink-50 text-pink-600"
+                                            ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                            : "bg-[var(--pink-soft)] text-[var(--pink)]"
                                             }`}
                                     >
                                         VĐV {r.role === "nam" ? "Nam" : "Nữ"}
@@ -617,8 +617,8 @@ export default function TournamentRegistrationsPage() {
                                     <button
                                         onClick={() => openConfirmPayment(r)}
                                         className={`text-xs font-medium px-2.5 py-1 rounded-full ${r.payment_status === "confirmed"
-                                            ? "bg-green-50 text-green-700"
-                                            : "bg-amber-50 text-amber-600"
+                                            ? "bg-[var(--success-soft)] text-[var(--success)]"
+                                            : "bg-[var(--warning-soft)] text-[var(--warning)]"
                                             }`}
                                     >
                                         {r.payment_status === "confirmed"
@@ -627,7 +627,7 @@ export default function TournamentRegistrationsPage() {
                                     </button>
                                 </div>
 
-                                <div className="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-50">
+                                <div className="flex items-center justify-between text-xs text-[var(--text-faint)] pt-2 border-t border-[var(--border)]">
                                     <span>
                                         {r.created_at
                                             ? format(new Date(r.created_at), "dd/MM/yyyy HH:mm", {
@@ -636,15 +636,15 @@ export default function TournamentRegistrationsPage() {
                                             : "—"}
                                     </span>
                                     <div className="flex items-center gap-1">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600">
+                                        <button className="p-1.5 hover:bg-[var(--surface-hover)] rounded-lg text-[var(--text-faint)] hover:text-[var(--text-muted)]">
                                             <Eye className="w-4 h-4" />
                                         </button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-blue-600">
+                                        <button className="p-1.5 hover:bg-[var(--surface-hover)] rounded-lg text-[var(--text-faint)] hover:text-[var(--primary)]">
                                             <Pencil className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleDeleteReg(r.id)}
-                                            className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                                            className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)]"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
@@ -667,23 +667,23 @@ export default function TournamentRegistrationsPage() {
                 </div>
 
                 <div className="space-y-4">
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
-                        <h3 className="font-bold text-gray-900 mb-1">
+                    <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-5">
+                        <h3 className="font-bold text-[var(--text)] mb-1">
                             Chia đội theo trình độ
                         </h3>
-                        <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                        <p className="text-xs text-[var(--text-faint)] mb-4 leading-relaxed">
                             Hệ thống sẽ tự động chia các vận động viên thành các đội cân bằng
                             theo trình độ đã chọn.
                         </p>
 
-                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        <label className="text-sm font-medium text-[var(--text)] mb-2 block">
                             Chọn nội dung chia đội
                         </label>
                         <div className="space-y-2 mb-4">
                             {DRAW_CONTENT_OPTIONS.map((opt) => (
                                 <label
                                     key={opt.value}
-                                    className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                                    className="flex items-center gap-2 text-sm text-[var(--text)] cursor-pointer"
                                 >
                                     <input
                                         type="radio"
@@ -697,7 +697,7 @@ export default function TournamentRegistrationsPage() {
                             ))}
                         </div>
 
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className="text-sm font-medium text-[var(--text)] mb-1 block">
                             Số lượng đội
                         </label>
                         <div className="flex items-center gap-2 mb-4">
@@ -708,7 +708,7 @@ export default function TournamentRegistrationsPage() {
                                 value={teamCount}
                                 onChange={(e) => setTeamCount(e.target.value)}
                             />
-                            <span className="text-sm text-gray-500">đội</span>
+                            <span className="text-sm text-[var(--text-muted)]">đội</span>
                         </div>
 
                         <button
@@ -722,7 +722,7 @@ export default function TournamentRegistrationsPage() {
 
                     <LevelDonutCard stats={stats} />
 
-                    <div className="bg-blue-50 rounded-xl p-4 text-xs text-blue-700 leading-relaxed">
+                    <div className="bg-[var(--primary-soft)] rounded-xl p-4 text-xs text-[var(--primary)] leading-relaxed">
                         Lưu ý: Hệ thống sẽ ưu tiên cân bằng số lượng và trình độ giữa các
                         đội.
                     </div>
@@ -736,11 +736,11 @@ export default function TournamentRegistrationsPage() {
                         e.target === e.currentTarget && setConfirmTarget(null)
                     }
                 >
-                    <div className="bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5 space-y-4">
+                    <div className="bg-[var(--surface)] w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5 space-y-4">
                         <div className="flex items-center justify-between">
-                            <p className="font-bold text-gray-900">Xác nhận thanh toán</p>
+                            <p className="font-bold text-[var(--text)]">Xác nhận thanh toán</p>
                             <button onClick={() => setConfirmTarget(null)}>
-                                <X className="w-5 h-5 text-gray-400" />
+                                <X className="w-5 h-5 text-[var(--text-faint)]" />
                             </button>
                         </div>
 
@@ -754,19 +754,19 @@ export default function TournamentRegistrationsPage() {
                                 alt=""
                             />
                             <div className="min-w-0">
-                                <p className="font-medium text-gray-900 truncate">
+                                <p className="font-medium text-[var(--text)] truncate">
                                     {confirmTarget.users?.full_name ?? "—"}
                                 </p>
-                                <p className="text-xs text-gray-400 truncate">
+                                <p className="text-xs text-[var(--text-faint)] truncate">
                                     {confirmTarget.users?.phone ?? "—"}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="bg-gray-50 rounded-xl p-3.5 space-y-2.5 text-sm">
+                        <div className="bg-[var(--surface-muted)] rounded-xl p-3.5 space-y-2.5 text-sm">
                             <div className="flex items-center justify-between">
-                                <span className="text-gray-500">Phương thức</span>
-                                <span className="flex items-center gap-1.5 font-medium text-gray-900">
+                                <span className="text-[var(--text-muted)]">Phương thức</span>
+                                <span className="flex items-center gap-1.5 font-medium text-[var(--text)]">
                                     {(() => {
                                         const Icon =
                                             PAYMENT_METHOD_ICON[confirmTarget.payment_method] ??
@@ -779,15 +779,15 @@ export default function TournamentRegistrationsPage() {
                             </div>
                             {confirmTarget.payment_method === "transfer" && (
                                 <div className="flex items-center justify-between">
-                                    <span className="text-gray-500">Nội dung CK</span>
-                                    <span className="font-mono font-medium text-red-600">
+                                    <span className="text-[var(--text-muted)]">Nội dung CK</span>
+                                    <span className="font-mono font-medium text-[var(--danger)]">
                                         {confirmTarget.payment_reference ?? "—"}
                                     </span>
                                 </div>
                             )}
                             <div className="flex items-center justify-between">
-                                <span className="text-gray-500">Số tiền</span>
-                                <span className="font-semibold text-gray-900">
+                                <span className="text-[var(--text-muted)]">Số tiền</span>
+                                <span className="font-semibold text-[var(--text)]">
                                     {(
                                         confirmTarget.amount_override ??
                                         activity?.detail?.entry_fee_per_person ??
@@ -799,7 +799,7 @@ export default function TournamentRegistrationsPage() {
                         </div>
 
                         {!confirmTarget.payment_method && (
-                            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg p-2.5">
+                            <p className="text-xs text-[var(--warning)] bg-[var(--warning-soft)] rounded-lg p-2.5">
                                 Vận động viên này chưa chọn phương thức thanh toán — kiểm tra
                                 lại trước khi xác nhận.
                             </p>
@@ -842,9 +842,9 @@ function Pagination({
     return (
         <div
             className={`flex items-center justify-between ${compact
-                ? "bg-white rounded-xl border border-gray-200 px-4 py-3"
-                : "px-4 py-3 border-t border-gray-100"
-                } text-sm text-gray-500`}
+                ? "bg-[var(--surface)] rounded-xl border border-[var(--border)] px-4 py-3"
+                : "px-4 py-3 border-t border-[var(--border)]"
+                } text-sm text-[var(--text-muted)]`}
         >
             <span className="text-xs sm:text-sm">
                 Hiển thị {(page - 1) * pageSize + 1} -{" "}
@@ -855,7 +855,7 @@ function Pagination({
                 <button
                     disabled={page === 1}
                     onClick={() => onChange(page - 1)}
-                    className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40"
+                    className="p-1.5 rounded-lg border border-[var(--border)] disabled:opacity-40"
                 >
                     <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -867,18 +867,18 @@ function Pagination({
                             onClick={() => onChange(p)}
                             className={`w-8 h-8 rounded-lg text-sm font-medium ${page === p
                                 ? "bg-blue-600 text-white"
-                                : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                                : "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                                 }`}
                         >
                             {p}
                         </button>
                     );
                 })}
-                {totalPages > 4 && <span className="px-1 text-gray-400">…</span>}
+                {totalPages > 4 && <span className="px-1 text-[var(--text-faint)]">…</span>}
                 {totalPages > 4 && (
                     <button
                         onClick={() => onChange(totalPages)}
-                        className="w-8 h-8 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50"
+                        className="w-8 h-8 rounded-lg text-sm font-medium border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                     >
                         {totalPages}
                     </button>
@@ -886,7 +886,7 @@ function Pagination({
                 <button
                     disabled={page === totalPages}
                     onClick={() => onChange(page + 1)}
-                    className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40"
+                    className="p-1.5 rounded-lg border border-[var(--border)] disabled:opacity-40"
                 >
                     <ChevronRight className="w-4 h-4" />
                 </button>
@@ -912,9 +912,9 @@ function StatCard({
 }) {
     const pill = pillLevel ? LEVEL_COLORS[pillLevel] : null;
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4">
             <div className="flex items-start justify-between mb-2">
-                <p className="text-xs text-gray-400">{label}</p>
+                <p className="text-xs text-[var(--text-faint)]">{label}</p>
                 {pill ? (
                     <span
                         className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
@@ -931,8 +931,8 @@ function StatCard({
                     </span>
                 )}
             </div>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+            <p className="text-2xl font-bold text-[var(--text)]">{value}</p>
+            <p className="text-xs text-[var(--text-faint)] mt-0.5">{sub}</p>
         </div>
     );
 }
@@ -950,8 +950,8 @@ function LevelDonutCard({ stats }: { stats: any }) {
     const circumference = 2 * Math.PI * radius;
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="font-bold text-gray-900 mb-4 text-sm">
+        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-5">
+            <h3 className="font-bold text-[var(--text)] mb-4 text-sm">
                 Thống kê phân bố trình độ
             </h3>
             <div className="flex items-center gap-5">
@@ -1008,7 +1008,7 @@ function LevelDonutCard({ stats }: { stats: any }) {
                                 className="w-2 h-2 rounded-full"
                                 style={{ background: s.color }}
                             />
-                            <span className="text-gray-600">
+                            <span className="text-[var(--text-muted)]">
                                 {s.key} ({total ? ((s.value / total) * 100).toFixed(2) : "0.00"}
                                 %)
                             </span>

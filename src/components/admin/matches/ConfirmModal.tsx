@@ -49,21 +49,21 @@ export function ConfirmModal({
             onClick={onClose}
         >
             <div
-                className={`bg-white rounded-2xl w-full max-w-sm shadow-xl transition-all duration-200 ${visible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+                className={`bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl transition-all duration-200 ${visible ? "opacity-100 scale-100" : "opacity-0 scale-95"
                     }`}
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="p-5 space-y-2">
-                    <h3 className="font-bold text-gray-900">{title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed whitespace-pre-line">
+                    <h3 className="font-bold text-[var(--text)]">{title}</h3>
+                    <p className="text-sm text-[var(--text-muted)] leading-relaxed whitespace-pre-line">
                         {description}
                     </p>
                 </div>
-                <div className="flex justify-end gap-2 px-5 py-4 border-t border-gray-100">
+                <div className="flex justify-end gap-2 px-5 py-4 border-t border-[var(--border)]">
                     <button
                         onClick={onClose}
                         disabled={resolvedPhase !== "idle"}
-                        className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium transition-colors disabled:opacity-50"
+                        className="px-4 py-2 rounded-lg bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] text-[var(--text-muted)] text-sm font-medium transition-colors disabled:opacity-50"
                     >
                         Hủy
                     </button>

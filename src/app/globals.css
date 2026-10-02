@@ -21,20 +21,35 @@
     display: none;
   }
 
-html {
-  background-color: #10192f; /* giữ navy: hiện ra khi kéo quá mép (overscroll) trên iOS */
-  height: 100%;
-}
+  html {
+    background-color: #10192f;
+    /* giữ navy: hiện ra khi kéo quá mép (overscroll) trên iOS */
+    height: 100%;
+  }
 
-body {
-  background-color: var(--bg);
-  color: var(--text);
-  height: 100%;
-}
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    height: 100%;
+  }
 
   #__next {
     overflow-x: hidden;
   }
+
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    background-color: var(--surface-muted);
+    color: var(--text);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-faint);
+  }
+
 }
 
 @keyframes count-rotate-up {
@@ -42,6 +57,7 @@ body {
     transform: rotateX(-90deg) translateY(55%);
     opacity: 0;
   }
+
   100% {
     transform: rotateX(0deg) translateY(0%);
     opacity: 1;
@@ -67,6 +83,7 @@ body {
     color: var(--text);
     border: 1px solid var(--border);
   }
+
   .input-field::placeholder {
     color: var(--text-faint);
   }
@@ -81,6 +98,7 @@ body {
     color: var(--text-muted);
     border: 1px solid var(--border);
   }
+
   .btn-outline:hover {
     background: var(--surface-hover);
   }
@@ -97,6 +115,7 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -115,6 +134,7 @@ body {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -142,15 +162,13 @@ body {
   position: absolute;
   inset: -12px;
   border-radius: inherit;
-  background: conic-gradient(
-    from var(--angle),
-    #7c3aed,
-    #38bdf8,
-    #34d399,
-    #facc15,
-    #f472b6,
-    #7c3aed
-  );
+  background: conic-gradient(from var(--angle),
+      #7c3aed,
+      #38bdf8,
+      #34d399,
+      #facc15,
+      #f472b6,
+      #7c3aed);
   filter: blur(20px);
   opacity: 0;
   z-index: 0;
@@ -178,9 +196,11 @@ body {
   animation: none;
   mix-blend-mode: normal;
 }
+
 ::view-transition-old(root) {
   z-index: 1;
 }
+
 ::view-transition-new(root) {
   z-index: 2;
 }

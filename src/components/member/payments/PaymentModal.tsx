@@ -110,70 +110,70 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
     return createPortal(
         <div
             className="fixed inset-0 z-[9999] flex flex-col justify-end"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }}
+            style={{ background: 'var(--overlay)', backdropFilter: 'blur(2px)' }}
             onClick={e => e.target === e.currentTarget && onClose()}
         >
             <div
-                className="w-full bg-white rounded-t-2xl"
+                className="w-full bg-[var(--surface)] rounded-t-2xl"
                 style={{ maxHeight: '90vh', overflowY: 'auto', paddingBottom: 'env(safe-area-inset-bottom)' }}
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex justify-center pt-3 pb-1">
-                    <div className="w-9 h-1 rounded-full bg-gray-200" />
+                    <div className="w-9 h-1 rounded-full bg-[var(--border-strong)]" />
                 </div>
 
-                <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
                     <div>
-                        <p className="text-sm font-bold text-gray-900">
+                        <p className="text-sm font-bold text-[var(--text)]">
                             {step === 'choose' ? 'Chọn hình thức thanh toán' :
                                 step === 'transfer' ? 'Chuyển khoản' :
                                     step === 'wallet' ? 'Ví BNB' : 'Thanh toán tiền mặt'}
                         </p>
-                        <p className="text-xs text-gray-400 mt-0.5">{session.title}</p>
+                        <p className="text-xs text-[var(--text-faint)] mt-0.5">{session.title}</p>
                     </div>
-                    <button onClick={onClose} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
-                        <XIcon className="w-4 h-4 text-gray-500" />
+                    <button onClick={onClose} className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center">
+                        <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                 </div>
 
                 <div className="px-5 py-4 space-y-4">
-                    <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
-                        <span className="text-sm text-gray-600">Số tiền cần thanh toán</span>
-                        <span className="text-lg font-black text-red-600">{amount.toLocaleString('vi-VN')}đ</span>
+                    <div className="flex items-center justify-between bg-[var(--danger-soft)] rounded-xl px-4 py-3">
+                        <span className="text-sm text-[var(--text-muted)]">Số tiền cần thanh toán</span>
+                        <span className="text-lg font-black text-[var(--danger)]">{amount.toLocaleString('vi-VN')}đ</span>
                     </div>
 
                     {step === 'choose' && (
                         <div className="space-y-3">
                             <button
                                 onClick={() => setStep('wallet')}
-                                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors text-left"
                             >
-                                <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                    <Wallet className="w-5 h-5 text-blue-600" />
+                                <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+                                    <Wallet className="w-5 h-5 text-[var(--primary)]" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-900">Ví BNB</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">Trừ thẳng vào số dư ví — xác nhận ngay lập tức</p>
+                                    <p className="text-sm font-semibold text-[var(--text)]">Ví BNB</p>
+                                    <p className="text-xs text-[var(--text-faint)] mt-0.5">Trừ thẳng vào số dư ví — xác nhận ngay lập tức</p>
                                 </div>
                             </button>
                             <button
                                 onClick={() => setStep('transfer')}
-                                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
+                                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors text-left"
                             >
-                                <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-xl">🏦</div>
+                                <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 text-xl">🏦</div>
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-900">Chuyển khoản</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">Quét QR VietQR, gửi ảnh bill xác nhận</p>
+                                    <p className="text-sm font-semibold text-[var(--text)]">Chuyển khoản</p>
+                                    <p className="text-xs text-[var(--text-faint)] mt-0.5">Quét QR VietQR, gửi ảnh bill xác nhận</p>
                                 </div>
                             </button>
                             <button
                                 onClick={() => setStep('cash')}
-                                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors text-left"
+                                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--success)] hover:bg-[var(--success-soft)] transition-colors text-left"
                             >
-                                <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 text-xl">💵</div>
+                                <div className="w-11 h-11 rounded-full bg-[var(--success-soft)] flex items-center justify-center flex-shrink-0 text-xl">💵</div>
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-900">Tiền mặt</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">Thông báo admin, nộp tiền trực tiếp</p>
+                                    <p className="text-sm font-semibold text-[var(--text)]">Tiền mặt</p>
+                                    <p className="text-xs text-[var(--text-faint)] mt-0.5">Thông báo admin, nộp tiền trực tiếp</p>
                                 </div>
                             </button>
                         </div>
@@ -181,26 +181,26 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
 
                     {step === 'wallet' && (
                         <div className="space-y-4">
-                            <div className="bg-blue-50 rounded-xl p-4">
-                                <p className="text-xs text-blue-600 mb-1">Số dư ví hiện tại</p>
+                            <div className="bg-[var(--primary-soft)] rounded-xl p-4">
+                                <p className="text-xs text-[var(--primary)] mb-1">Số dư ví hiện tại</p>
                                 {loadingWallet ? (
-                                    <div className="flex items-center gap-2 text-blue-700">
+                                    <div className="flex items-center gap-2 text-[var(--primary)]">
                                         <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                                     </div>
                                 ) : (
-                                    <p className="text-xl font-black text-blue-700">
+                                    <p className="text-xl font-black text-[var(--primary)]">
                                         {(walletBalance ?? 0).toLocaleString('vi-VN')}đ
                                     </p>
                                 )}
                             </div>
                             {walletBalance !== null && walletBalance < amount && (
-                                <div className="bg-red-50 rounded-xl p-3 text-xs text-red-600">
+                                <div className="bg-[var(--danger-soft)] rounded-xl p-3 text-xs text-[var(--danger)]">
                                     Số dư ví không đủ để thanh toán {amount.toLocaleString('vi-VN')}đ. Vui lòng chọn hình thức khác hoặc nạp thêm ví.
                                 </div>
                             )}
                             <div className="flex gap-2">
                                 <button onClick={() => setStep('choose')}
-                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                                    className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]">
                                     Quay lại
                                 </button>
                                 <button
@@ -218,43 +218,43 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
                     {step === 'transfer' && (
                         <div className="space-y-4">
                             <div className="flex justify-center">
-                                <div className="p-3 bg-white rounded-2xl border-2 border-gray-100 shadow-sm">
+                                <div className="p-3 bg-[var(--surface)] rounded-2xl border-2 border-[var(--border)] shadow-sm">
                                     <img src={qrUrl} alt="VietQR" className="w-44 h-44 object-contain"
                                         onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                 </div>
                             </div>
-                            <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+                            <div className="bg-[var(--surface-muted)] rounded-xl p-3 text-sm space-y-2">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500">Số tiền</span>
-                                    <span className="font-bold text-blue-600">{amount.toLocaleString('vi-VN')}đ</span>
+                                    <span className="text-[var(--text-muted)]">Số tiền</span>
+                                    <span className="font-bold text-[var(--primary)]">{amount.toLocaleString('vi-VN')}đ</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-gray-500">Nội dung CK</span>
+                                    <span className="text-[var(--text-muted)]">Nội dung CK</span>
                                     <div className="flex items-center gap-1.5">
                                         <span className="font-mono font-semibold">{suggestedRef}</span>
                                         <button onClick={() => { navigator.clipboard.writeText(suggestedRef); toast.success('Đã copy'); }}
-                                            className="p-1 hover:bg-gray-200 rounded">
-                                            <Copy className="w-3.5 h-3.5 text-gray-400" />
+                                            className="p-1 hover:bg-[var(--border-strong)] rounded">
+                                            <Copy className="w-3.5 h-3.5 text-[var(--text-faint)]" />
                                         </button>
                                     </div>
                                 </div>
                             </div>
                             <input value={payRef} onChange={e => setPayRef(e.target.value)}
-                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
+                                className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:border-[var(--primary)]"
                                 placeholder={`Nhập nội dung: ${suggestedRef}`} />
                             <div>
-                                <p className="text-xs font-semibold text-gray-600 mb-1.5">
-                                    Ảnh bill <span className="text-gray-400 font-normal">(không bắt buộc)</span>
+                                <p className="text-xs font-semibold text-[var(--text-muted)] mb-1.5">
+                                    Ảnh bill <span className="text-[var(--text-faint)] font-normal">(không bắt buộc)</span>
                                 </p>
                                 {!billPreview ? (
                                     <button onClick={() => fileInputRef.current?.click()}
-                                        className="w-full py-5 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center gap-1.5 text-gray-400 hover:border-blue-300 hover:text-blue-500">
+                                        className="w-full py-5 rounded-xl border-2 border-dashed border-[var(--border)] flex flex-col items-center gap-1.5 text-[var(--text-faint)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:text-[var(--primary)]">
                                         <ImagePlus className="w-6 h-6" />
                                         <span className="text-xs">Chọn ảnh bill</span>
                                     </button>
                                 ) : (
-                                    <div className="relative rounded-xl overflow-hidden border border-gray-200">
-                                        <img src={billPreview} className="w-full max-h-48 object-contain bg-gray-50" />
+                                    <div className="relative rounded-xl overflow-hidden border border-[var(--border)]">
+                                        <img src={billPreview} className="w-full max-h-48 object-contain bg-[var(--surface-muted)]" />
                                         <button onClick={() => { setBillFile(null); setBillPreview(null); setBillUrl(null); }}
                                             className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center">
                                             <XIcon className="w-3.5 h-3.5 text-white" />
@@ -276,7 +276,7 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={() => setStep('choose')}
-                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                                    className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]">
                                     Quay lại
                                 </button>
                                 <button onClick={handleSubmitTransfer} disabled={!payRef.trim() || submitting}
@@ -290,13 +290,13 @@ export function PaymentModal({ session, reg, userFullName, onClose, onSuccess }:
 
                     {step === 'cash' && (
                         <div className="space-y-4">
-                            <div className="bg-green-50 rounded-xl p-4 text-sm text-green-800">
+                            <div className="bg-[var(--success-soft)] rounded-xl p-4 text-sm text-[var(--success)]">
                                 <p className="font-semibold mb-1">💵 Thanh toán tiền mặt</p>
-                                <p className="text-xs text-green-600">Nhấn "Thông báo admin" để admin biết bạn sẽ trả tiền mặt. Admin sẽ xác nhận sau khi nhận tiền.</p>
+                                <p className="text-xs text-[var(--success)]">Nhấn "Thông báo admin" để admin biết bạn sẽ trả tiền mặt. Admin sẽ xác nhận sau khi nhận tiền.</p>
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={() => setStep('choose')}
-                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                                    className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]">
                                     Quay lại
                                 </button>
                                 <button onClick={handleCash} disabled={sendingCash}

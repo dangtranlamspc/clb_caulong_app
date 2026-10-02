@@ -17,11 +17,11 @@ const WIN_POINTS = 5;
 const LOSE_POINTS = 2;
 
 const STATUS_CFG: Record<string, { label: string; cls: string; bg: string }> = {
-    pending_opponent: { label: 'Chờ đối thủ chấp nhận', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },
-    pending_result: { label: 'Chờ nhập kết quả', cls: 'text-blue-600', bg: 'bg-blue-50 border-blue-200' },
-    pending_approval: { label: 'Chờ admin duyệt', cls: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
-    approved: { label: 'Đã duyệt — Điểm đã tính', cls: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
-    rejected: { label: 'Đã từ chối', cls: 'text-red-600', bg: 'bg-red-50 border-red-200' },
+    pending_opponent: { label: 'Chờ đối thủ chấp nhận', cls: 'text-[var(--text-muted)]', bg: 'bg-[var(--surface-muted)] border-[var(--border)]' },
+    pending_result: { label: 'Chờ nhập kết quả', cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]' },
+    pending_approval: { label: 'Chờ admin duyệt', cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]' },
+    approved: { label: 'Đã duyệt — Điểm đã tính', cls: 'text-[var(--success)]', bg: 'bg-[var(--success-soft)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]' },
+    rejected: { label: 'Đã từ chối', cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]' },
 };
 
 function ScoreInput({ val, onChange, color }: { val: number; onChange: (v: number) => void; color: string }) {
@@ -53,7 +53,7 @@ function ScoreInput({ val, onChange, color }: { val: number; onChange: (v: numbe
                 isFocused.current = false;
                 setRaw(String(val));
             }}
-            className={`w-20 h-16 text-center text-4xl font-black bg-white rounded-2xl border-2 border-gray-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all ${color}`}
+            className={`w-20 h-16 text-center text-4xl font-black bg-[var(--surface)] rounded-2xl border-2 border-[var(--border)] outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)] transition-all ${color}`}
         />
     );
 }
@@ -71,15 +71,15 @@ function ScoreRow({
     const iWon = myScore > oppScore;
 
     return (
-        <div className={`flex items-center justify-center gap-6 p-4 rounded-2xl border ${myScore === oppScore ? 'bg-gray-50 border-gray-100' : iWon ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+        <div className={`flex items-center justify-center gap-6 p-4 rounded-2xl border ${myScore === oppScore ? 'bg-[var(--surface-muted)] border-[var(--border)]' : iWon ? 'bg-[var(--success-soft)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]' : 'bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]'}`}>
             <div className="flex flex-col items-center gap-2">
-                <span className="text-xs text-blue-500 font-semibold">Bạn</span>
-                <ScoreInput val={isMe ? scoreA : scoreB} onChange={v => isMe ? onChangeA(v) : onChangeB(v)} color={iWon ? 'text-emerald-600' : 'text-gray-700'} />
+                <span className="text-xs text-[var(--primary)] font-semibold">Bạn</span>
+                <ScoreInput val={isMe ? scoreA : scoreB} onChange={v => isMe ? onChangeA(v) : onChangeB(v)} color={iWon ? 'text-[var(--success)]' : 'text-[var(--text)]'} />
             </div>
-            <span className="text-gray-300 font-bold text-2xl">–</span>
+            <span className="text-[var(--text-faint)] font-bold text-2xl">–</span>
             <div className="flex flex-col items-center gap-2">
-                <span className="text-xs text-red-400 font-semibold">Đối thủ</span>
-                <ScoreInput val={isMe ? scoreB : scoreA} onChange={v => isMe ? onChangeB(v) : onChangeA(v)} color={!iWon && myScore !== oppScore ? 'text-red-500' : 'text-gray-700'} />
+                <span className="text-xs text-[var(--danger)] font-semibold">Đối thủ</span>
+                <ScoreInput val={isMe ? scoreB : scoreA} onChange={v => isMe ? onChangeB(v) : onChangeA(v)} color={!iWon && myScore !== oppScore ? 'text-[var(--danger)]' : 'text-[var(--text)]'} />
             </div>
         </div>
     );
@@ -160,9 +160,9 @@ export default function MatchDetailPage() {
     if (loading || !match) {
         return (
             <div className="space-y-4">
-                <div className="h-8 bg-gray-200 rounded-xl w-48 animate-pulse" />
-                <div className="bg-white rounded-2xl h-48 animate-pulse" />
-                <div className="bg-white rounded-2xl h-64 animate-pulse" />
+                <div className="h-8 bg-[var(--border-strong)] rounded-xl w-48 animate-pulse" />
+                <div className="bg-[var(--surface)] rounded-2xl h-48 animate-pulse" />
+                <div className="bg-[var(--surface)] rounded-2xl h-64 animate-pulse" />
             </div>
         );
     }
@@ -244,26 +244,26 @@ export default function MatchDetailPage() {
             <button onClick={() => {
                 sessionStorage.setItem('activity:return-tab', 'matches');
                 router.push('/activity');
-            }} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+            }} className="flex items-center gap-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
                 <ArrowLeft className="w-4 h-4" /> Quay lại
             </button>
 
             <div className={`rounded-2xl px-4 py-3 border flex items-center gap-2 ${cfg.bg}`}>
-                {match.status === 'approved' && <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
-                {match.status === 'pending_approval' && <Hourglass className="w-4 h-4 text-amber-600   flex-shrink-0" />}
-                {match.status === 'rejected' && <XCircle className="w-4 h-4 text-red-500     flex-shrink-0" />}
-                {match.status === 'pending_result' && <Clock className="w-4 h-4 text-blue-600    flex-shrink-0" />}
+                {match.status === 'approved' && <CheckCircle2 className="w-4 h-4 text-[var(--success)] flex-shrink-0" />}
+                {match.status === 'pending_approval' && <Hourglass className="w-4 h-4 text-[var(--warning)]   flex-shrink-0" />}
+                {match.status === 'rejected' && <XCircle className="w-4 h-4 text-[var(--danger)]     flex-shrink-0" />}
+                {match.status === 'pending_result' && <Clock className="w-4 h-4 text-[var(--primary)]    flex-shrink-0" />}
                 <span className={`text-sm font-semibold ${cfg.cls}`}>{cfg.label}</span>
-                {match.reject_reason && <span className="text-xs text-red-400 ml-1">— {match.reject_reason}</span>}
+                {match.reject_reason && <span className="text-xs text-[var(--danger)] ml-1">— {match.reject_reason}</span>}
             </div>
 
-            <div className="bg-white rounded-2xl p-5 shadow-sm overflow-hidden">
+            <div className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full">
+                    <span className="text-xs font-semibold bg-[var(--primary-soft)] text-[var(--primary)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] px-3 py-1 rounded-full">
                         {match.match_type === 'triples' ? '👥 3v3' : match.match_type === 'doubles' ? '👥 Đôi' : '👤 Đơn'} · 1 set
                     </span>
                     {match.played_at && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-[var(--text-faint)]">
                             {format(new Date(match.played_at), 'dd/MM/yyyy', { locale: vi })}
                         </span>
                     )}
@@ -271,14 +271,14 @@ export default function MatchDetailPage() {
 
                 <div className="grid items-start gap-2" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
                     <div className="min-w-0 space-y-2">
-                        <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wide">
+                        <p className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wide">
                             {isTeamA ? 'Đội A (bạn)' : 'Đội A'}
                         </p>
                         {[match.player_a1, match.player_a2, match.player_a3].filter(Boolean).map((p: any) => (
                             <div key={p.id} className="flex items-center gap-2 min-w-0">
                                 <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{p.full_name}</p>
-                                    {p.id === user?.id && <p className="text-[10px] text-blue-500 leading-none mt-0.5">Bạn</p>}
+                                    <p className="text-sm font-semibold text-[var(--text)] truncate leading-tight">{p.full_name}</p>
+                                    {p.id === user?.id && <p className="text-[10px] text-[var(--primary)] leading-none mt-0.5">Bạn</p>}
                                 </div>
                             </div>
                         ))}
@@ -288,37 +288,37 @@ export default function MatchDetailPage() {
                         {(match.status === 'approved' || match.status === 'pending_approval') ? (
                             <>
                                 <div className="flex items-center gap-1.5">
-                                    <span className={`text-2xl font-black leading-none ${match.winner_team === 'A' ? 'text-emerald-600' : 'text-gray-300'}`}>
+                                    <span className={`text-2xl font-black leading-none ${match.winner_team === 'A' ? 'text-[var(--success)]' : 'text-[var(--text-faint)]'}`}>
                                         {match.score_a}
                                     </span>
-                                    <span className="text-gray-300 text-lg leading-none">–</span>
-                                    <span className={`text-2xl font-black leading-none ${match.winner_team === 'B' ? 'text-emerald-600' : 'text-gray-300'}`}>
+                                    <span className="text-[var(--text-faint)] text-lg leading-none">–</span>
+                                    <span className={`text-2xl font-black leading-none ${match.winner_team === 'B' ? 'text-[var(--success)]' : 'text-[var(--text-faint)]'}`}>
                                         {match.score_b}
                                     </span>
                                 </div>
                                 {match.status === 'approved' && match.winner_team && (
                                     <div className="flex items-center gap-1 mt-1">
                                         <Trophy className="w-3 h-3 text-yellow-500 flex-shrink-0" />
-                                        <span className="text-[10px] font-bold text-gray-500 whitespace-nowrap">
+                                        <span className="text-[10px] font-bold text-[var(--text-muted)] whitespace-nowrap">
                                             {match.winner_team === 'A' ? 'Đội A' : 'Đội B'} thắng
                                         </span>
                                     </div>
                                 )}
                             </>
                         ) : (
-                            <span className="text-gray-300 font-bold text-xl leading-none">VS</span>
+                            <span className="text-[var(--text-faint)] font-bold text-xl leading-none">VS</span>
                         )}
                     </div>
 
                     <div className="min-w-0 space-y-2 text-right">
-                        <p className="text-[10px] font-bold text-red-400 uppercase tracking-wide">
+                        <p className="text-[10px] font-bold text-[var(--danger)] uppercase tracking-wide">
                             {isTeamB ? 'Đội B (bạn)' : 'Đội B'}
                         </p>
                         {[match.player_b1, match.player_b2, match.player_b3].filter(Boolean).map((p: any) => (
                             <div key={p.id} className="flex items-center justify-end gap-2 min-w-0">
                                 <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{p.full_name}</p>
-                                    {p.id === user?.id && <p className="text-[10px] text-blue-500 leading-none mt-0.5">Bạn</p>}
+                                    <p className="text-sm font-semibold text-[var(--text)] truncate leading-tight">{p.full_name}</p>
+                                    {p.id === user?.id && <p className="text-[10px] text-[var(--primary)] leading-none mt-0.5">Bạn</p>}
                                 </div>
                             </div>
                         ))}
@@ -326,18 +326,18 @@ export default function MatchDetailPage() {
                 </div>
 
                 {match.status === 'approved' && (
-                    <div className="mt-4 pt-4 border-t border-gray-50">
+                    <div className="mt-4 pt-4 border-t border-[var(--border)]">
                         <div className="flex items-center gap-1.5 mb-3">
                             <Gem className="w-3.5 h-3.5 text-cyan-500" />
-                            <p className="text-xs font-semibold text-gray-500">Điểm nhận được</p>
+                            <p className="text-xs font-semibold text-[var(--text-muted)]">Điểm nhận được</p>
                         </div>
 
-                        <div className={`rounded-xl px-3 py-2.5 text-center border ${pointsNet >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-                            <p className="text-[10px] text-gray-400 font-medium mb-1">
+                        <div className={`rounded-xl px-3 py-2.5 text-center border ${pointsNet >= 0 ? 'bg-[var(--success-soft)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]' : 'bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]'}`}>
+                            <p className="text-[10px] text-[var(--text-faint)] font-medium mb-1">
                                 {iWonFinal ? 'Thắng trận' : 'Thua trận'} ({myFinalScore}–{oppFinalScore})
                             </p>
                             <div className="flex items-center justify-center gap-1">
-                                <span className={`font-black text-base ${pointsNet >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                <span className={`font-black text-base ${pointsNet >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
                                     {pointsNet > 0 ? '+' : ''}{pointsNet} point
                                 </span>
                             </div>
@@ -348,28 +348,28 @@ export default function MatchDetailPage() {
 
             {match.status === 'pending_opponent' && isInvited && (
                 <div className="space-y-2">
-                    <p className="text-sm font-semibold text-center text-gray-600">Bạn có muốn chấp nhận lời thách đấu?</p>
+                    <p className="text-sm font-semibold text-center text-[var(--text-muted)]">Bạn có muốn chấp nhận lời thách đấu?</p>
                     <button onClick={handleAccept} disabled={submitting} className="w-full py-4 rounded-2xl bg-emerald-500 text-white font-bold text-base hover:bg-emerald-600 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-emerald-200">
                         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                         Chấp nhận thách đấu
                     </button>
-                    <button onClick={handleDecline} disabled={submitting} className="w-full py-3 rounded-2xl border border-red-200 text-red-500 text-sm font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5">
+                    <button onClick={handleDecline} disabled={submitting} className="w-full py-3 rounded-2xl border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-[var(--danger)] text-sm font-semibold hover:bg-[var(--danger-soft)] transition-colors flex items-center justify-center gap-1.5">
                         <XCircle className="w-4 h-4" /> Từ chối
                     </button>
                 </div>
             )}
 
             {match.status === 'pending_opponent' && isCreator && (
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 text-center">
-                    <Hourglass className="w-6 h-6 mx-auto text-gray-400 mb-2" />
-                    <p className="text-sm font-semibold text-gray-600">Chờ đối thủ chấp nhận</p>
-                    <p className="text-xs text-gray-400 mt-1">Đã gửi lời thách đến <span className="font-medium">{match.player_b1?.full_name}</span></p>
+                <div className="bg-[var(--surface-muted)] border border-[var(--border)] rounded-2xl px-4 py-4 text-center">
+                    <Hourglass className="w-6 h-6 mx-auto text-[var(--text-faint)] mb-2" />
+                    <p className="text-sm font-semibold text-[var(--text-muted)]">Chờ đối thủ chấp nhận</p>
+                    <p className="text-xs text-[var(--text-faint)] mt-1">Đã gửi lời thách đến <span className="font-medium">{match.player_b1?.full_name}</span></p>
                 </div>
             )}
 
             {match.status === 'pending_result' && isCreator && (
-                <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-                    <p className="text-sm font-bold text-gray-900">Nhập tỉ số (1 set)</p>
+                <div className="bg-[var(--surface)] rounded-2xl p-4 shadow-sm space-y-4">
+                    <p className="text-sm font-bold text-[var(--text)]">Nhập tỉ số (1 set)</p>
 
                     <ScoreRow
                         scoreA={scoreA}
@@ -379,15 +379,15 @@ export default function MatchDetailPage() {
                         isMe={isTeamA}
                     />
 
-                    <div className={`rounded-xl px-4 py-3 border text-center ${!isValidResult ? 'bg-gray-50 border-gray-200' : myScore > oppScore ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className={`rounded-xl px-4 py-3 border text-center ${!isValidResult ? 'bg-[var(--surface-muted)] border-[var(--border)]' : myScore > oppScore ? 'bg-[var(--success-soft)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]' : 'bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]'}`}>
                         {!isValidResult ? (
-                            <p className="text-xs text-gray-500">Tỉ số không được hoà, phải có đội thắng</p>
+                            <p className="text-xs text-[var(--text-muted)]">Tỉ số không được hoà, phải có đội thắng</p>
                         ) : (
                             <div className="space-y-1">
-                                <p className={`text-sm font-bold ${myScore > oppScore ? 'text-emerald-700' : 'text-red-600'}`}>
+                                <p className={`text-sm font-bold ${myScore > oppScore ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
                                     {myScore > oppScore ? '🏆 Bạn thắng!' : '😅 Bạn thua'} ({myScore}–{oppScore})
                                 </p>
-                                <div className={`flex items-center justify-center gap-1.5 text-xs font-semibold ${pointsPreview >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                <div className={`flex items-center justify-center gap-1.5 text-xs font-semibold ${pointsPreview >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
                                     <span>Điểm: {pointsPreview > 0 ? '+' : ''}{pointsPreview}</span>
                                     <Gem className="w-3.5 h-3.5 text-cyan-500" />
                                 </div>
@@ -400,7 +400,7 @@ export default function MatchDetailPage() {
                         Gửi kết quả để duyệt 📋
                     </button>
 
-                    <button onClick={handleCancel} disabled={cancelling || submitting} className="w-full py-3 rounded-2xl border border-red-200 text-red-500 text-sm font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50">
+                    <button onClick={handleCancel} disabled={cancelling || submitting} className="w-full py-3 rounded-2xl border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-[var(--danger)] text-sm font-semibold hover:bg-[var(--danger-soft)] transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50">
                         {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />}
                         Huỷ trận đấu
                     </button>
@@ -408,21 +408,21 @@ export default function MatchDetailPage() {
             )}
 
             {match.status === 'pending_result' && !isCreator && (
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-4 text-center">
-                    <Clock className="w-6 h-6 mx-auto text-blue-400 mb-2" />
-                    <p className="text-sm font-semibold text-blue-700">Chờ đối thủ nhập kết quả</p>
-                    <p className="text-xs text-blue-400 mt-1"><span className="font-medium">{match.player_a1?.full_name}</span> sẽ nhập tỉ số</p>
+                <div className="bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-2xl px-4 py-4 text-center">
+                    <Clock className="w-6 h-6 mx-auto text-[var(--primary)] mb-2" />
+                    <p className="text-sm font-semibold text-[var(--primary)]">Chờ đối thủ nhập kết quả</p>
+                    <p className="text-xs text-[var(--primary)] mt-1"><span className="font-medium">{match.player_a1?.full_name}</span> sẽ nhập tỉ số</p>
                 </div>
             )}
 
             {match.status === 'pending_approval' && isCreator && (
                 <div className="space-y-2">
-                    <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 text-center">
-                        <Hourglass className="w-6 h-6 mx-auto text-amber-500 mb-2" />
-                        <p className="text-sm font-semibold text-amber-700">Đang chờ admin duyệt kết quả</p>
-                        <p className="text-xs text-amber-500 mt-1">Bạn có thể huỷ trận nếu nhập nhầm tỉ số</p>
+                    <div className="bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-2xl px-4 py-4 text-center">
+                        <Hourglass className="w-6 h-6 mx-auto text-[var(--warning)] mb-2" />
+                        <p className="text-sm font-semibold text-[var(--warning)]">Đang chờ admin duyệt kết quả</p>
+                        <p className="text-xs text-[var(--warning)] mt-1">Bạn có thể huỷ trận nếu nhập nhầm tỉ số</p>
                     </div>
-                    <button onClick={handleCancel} disabled={cancelling} className="w-full py-3 rounded-2xl border border-red-200 text-red-500 text-sm font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50">
+                    <button onClick={handleCancel} disabled={cancelling} className="w-full py-3 rounded-2xl border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-[var(--danger)] text-sm font-semibold hover:bg-[var(--danger-soft)] transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50">
                         {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />}
                         Huỷ trận đấu
                     </button>
@@ -430,9 +430,9 @@ export default function MatchDetailPage() {
             )}
 
             {match.status === 'pending_approval' && !isCreator && (
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 text-center">
-                    <Hourglass className="w-6 h-6 mx-auto text-amber-500 mb-2" />
-                    <p className="text-sm font-semibold text-amber-700">Đang chờ admin duyệt kết quả</p>
+                <div className="bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-2xl px-4 py-4 text-center">
+                    <Hourglass className="w-6 h-6 mx-auto text-[var(--warning)] mb-2" />
+                    <p className="text-sm font-semibold text-[var(--warning)]">Đang chờ admin duyệt kết quả</p>
                 </div>
             )}
         </div>

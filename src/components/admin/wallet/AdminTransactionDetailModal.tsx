@@ -21,12 +21,12 @@ const TX_TYPE_LABEL: Record<string, string> = {
 
 function txIcon(tx: any) {
     switch (tx.type) {
-        case 'topup': return { Icon: ArrowDownToLine, cls: 'bg-emerald-50 text-emerald-600' };
-        case 'session_payment': return { Icon: CalendarDays, cls: 'bg-red-50 text-red-500' };
-        case 'manual_expense': return { Icon: ShoppingCart, cls: 'bg-amber-50 text-amber-600' };
-        case 'manual_credit': return { Icon: PlusCircle, cls: 'bg-emerald-50 text-emerald-600' };
-        case 'refund': return { Icon: RotateCcw, cls: 'bg-blue-50 text-blue-600' };
-        default: return { Icon: Wallet, cls: 'bg-gray-50 text-gray-500' };
+        case 'topup': return { Icon: ArrowDownToLine, cls: 'bg-[var(--success-soft)] text-[var(--success)]' };
+        case 'session_payment': return { Icon: CalendarDays, cls: 'bg-[var(--danger-soft)] text-[var(--danger)]' };
+        case 'manual_expense': return { Icon: ShoppingCart, cls: 'bg-[var(--warning-soft)] text-[var(--warning)]' };
+        case 'manual_credit': return { Icon: PlusCircle, cls: 'bg-[var(--success-soft)] text-[var(--success)]' };
+        case 'refund': return { Icon: RotateCcw, cls: 'bg-[var(--primary-soft)] text-[var(--primary)]' };
+        default: return { Icon: Wallet, cls: 'bg-[var(--surface-muted)] text-[var(--text-muted)]' };
     }
 }
 
@@ -225,7 +225,7 @@ export default function AdminTransactionDetailModal({
         <div
             className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
             style={{
-                background: 'rgba(0,0,0,0.5)',
+                background: 'var(--overlay)',
                 backdropFilter: 'blur(2px)',
                 opacity: visible ? 1 : 0,
                 transition: 'opacity 200ms ease-out',
@@ -234,7 +234,7 @@ export default function AdminTransactionDetailModal({
             onClick={e => e.target === e.currentTarget && handleClose()}
         >
             <div
-                className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden relative"
+                className="w-full max-w-md bg-[var(--surface)] rounded-2xl shadow-xl overflow-hidden relative"
                 style={{
                     maxHeight: '90dvh',
                     display: 'flex',
@@ -255,8 +255,8 @@ export default function AdminTransactionDetailModal({
                     }
                 `}</style>
 
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0" id="tx-modal-header">
-                    <p className="text-sm font-bold text-gray-900">Chi tiết giao dịch</p>
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0" id="tx-modal-header">
+                    <p className="text-sm font-bold text-[var(--text)]">Chi tiết giao dịch</p>
 
                     <div className="flex items-center gap-1.5">
                         <button
@@ -275,7 +275,7 @@ export default function AdminTransactionDetailModal({
                         <button
                             onClick={handleDelete}
                             disabled={deleting}
-                            className="flex items-center gap-1.5 px-3 h-7 rounded-full bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold transition-transform duration-150 active:scale-95 disabled:opacity-50"
+                            className="flex items-center gap-1.5 px-3 h-7 rounded-full bg-[var(--danger-soft)] hover:bg-[var(--danger-soft)] text-[var(--danger)] text-xs font-semibold transition-transform duration-150 active:scale-95 disabled:opacity-50"
                             title="Xoá giao dịch"
                         >
                             {deleting ? (
@@ -285,8 +285,8 @@ export default function AdminTransactionDetailModal({
                             )}
                             <span className="hidden sm:inline">Xoá</span>
                         </button>
-                        <button onClick={handleClose} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-transform duration-150 active:scale-90">
-                            <X className="w-4 h-4 text-gray-500" />
+                        <button onClick={handleClose} className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)] transition-transform duration-150 active:scale-90">
+                            <X className="w-4 h-4 text-[var(--text-muted)]" />
                         </button>
                     </div>
                 </div>
@@ -304,103 +304,103 @@ export default function AdminTransactionDetailModal({
                             <div className={`w-14 h-14 rounded-full flex items-center justify-center ${cls}`}>
                                 <Icon className="w-6 h-6" />
                             </div>
-                            <p className={`text-2xl font-black ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+                            <p className={`text-2xl font-black ${isPositive ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
                                 {isPositive ? '+' : ''}{fmt(tx.amount)}
                             </p>
-                            <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
+                            <span className="text-xs font-medium text-[var(--text-faint)] bg-[var(--surface-muted)] px-2.5 py-1 rounded-full">
                                 {shirtOrderLabel
                                     ?? (badgeUsesDescription ? tx.description : (TX_TYPE_LABEL[tx.type] ?? tx.type))}
                             </span>
                         </div>
 
-                        <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 overflow-hidden">
+                        <div className="bg-[var(--surface-muted)] rounded-xl divide-y divide-[var(--border)] overflow-hidden">
                             <div className="flex justify-between px-4 py-3 text-sm">
-                                <span className="text-gray-400">Tiêu đề</span>
-                                <span className="font-semibold text-gray-900 text-right">{tx.title}</span>
+                                <span className="text-[var(--text-faint)]">Tiêu đề</span>
+                                <span className="font-semibold text-[var(--text)] text-right">{tx.title}</span>
                             </div>
                             {/* {tx.description && (
                                 <div className="px-4 py-3 text-sm">
-                                    <p className="text-gray-400 mb-1">Diễn giải</p>
-                                    <p className="text-gray-700">{tx.description}</p>
+                                    <p className="text-[var(--text-faint)] mb-1">Diễn giải</p>
+                                    <p className="text-[var(--text)]">{tx.description}</p>
                                 </div>
                             )} */}
                             <div className="flex justify-between px-4 py-3 text-sm">
-                                <span className="text-gray-400">Thời gian</span>
-                                <span className="font-medium text-gray-700">
+                                <span className="text-[var(--text-faint)]">Thời gian</span>
+                                <span className="font-medium text-[var(--text)]">
                                     {format(new Date(tx.created_at), 'HH:mm, dd/MM/yyyy', { locale: vi })}
                                 </span>
                             </div>
                             <div className="flex justify-between px-4 py-3 text-sm">
-                                <span className="text-gray-400">Số dư sau giao dịch</span>
-                                <span className="font-bold text-gray-900">{fmt(tx.balance_after)}</span>
+                                <span className="text-[var(--text-faint)]">Số dư sau giao dịch</span>
+                                <span className="font-bold text-[var(--text)]">{fmt(tx.balance_after)}</span>
                             </div>
                         </div>
 
                         {isSessionPayment && (
                             <div>
-                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                                <p className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide mb-2">
                                     Chi tiết khoản thanh toán
                                 </p>
 
                                 {isLoadingSessionDetail ? (
-                                    <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
+                                    <div className="flex items-center justify-center py-6 text-[var(--text-faint)] text-sm gap-2">
                                         <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                                     </div>
                                 ) : (
-                                    <div className="rounded-xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
+                                    <div className="rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden">
                                         {displaySessionTitle && (
-                                            <div className="flex justify-between px-4 py-2.5 text-sm bg-blue-50/50">
-                                                <span className="text-gray-500">Buổi đánh</span>
-                                                <span className="font-semibold text-blue-700 text-right">{displaySessionTitle}</span>
+                                            <div className="flex justify-between px-4 py-2.5 text-sm bg-[var(--primary-soft)]">
+                                                <span className="text-[var(--text-muted)]">Buổi đánh</span>
+                                                <span className="font-semibold text-[var(--primary)] text-right">{displaySessionTitle}</span>
                                             </div>
                                         )}
 
                                         <div className="flex justify-between px-4 py-2.5 text-sm">
-                                            <span className="text-gray-500">
+                                            <span className="text-[var(--text-muted)]">
                                                 Tiền sân + cầu của {displayHostName || "người này"}
                                             </span>
-                                            <span className="font-medium text-gray-800">{fmt(displayBase)}</span>
+                                            <span className="font-medium text-[var(--text)]">{fmt(displayBase)}</span>
                                         </div>
 
                                         {displayOtherFee > 0 ? (
                                             <div className="px-4 py-2.5 text-sm">
                                                 {displayOtherFeeNote ? (
                                                     <div className="space-y-1.5">
-                                                        <span className="text-gray-500">Khoản khác</span>
-                                                        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/40 px-2.5 py-1.5">
+                                                        <span className="text-[var(--text-muted)]">Khoản khác</span>
+                                                        <div className="flex items-center justify-between gap-3 rounded-lg border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] px-2.5 py-1.5">
                                                             <div className="flex-1 min-w-0 space-y-0.5">
                                                                 {displayOtherFeeNote
                                                                     .split("\n")
                                                                     .map((l: string) => l.trim())
                                                                     .filter(Boolean)
                                                                     .map((line: string, i: number) => (
-                                                                        <p key={i} className="text-xs text-gray-400 italic">
+                                                                        <p key={i} className="text-xs text-[var(--text-faint)] italic">
                                                                             — {line}
                                                                         </p>
                                                                     ))}
                                                             </div>
-                                                            <span className="font-medium text-amber-600 flex-shrink-0">
+                                                            <span className="font-medium text-[var(--warning)] flex-shrink-0">
                                                                 {fmt(displayOtherFee)}
                                                             </span>
                                                         </div>
                                                     </div>
                                                 ) : (
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-gray-500">Khoản khác</span>
-                                                        <span className="font-medium text-amber-600">{fmt(displayOtherFee)}</span>
+                                                        <span className="text-[var(--text-muted)]">Khoản khác</span>
+                                                        <span className="font-medium text-[var(--warning)]">{fmt(displayOtherFee)}</span>
                                                     </div>
                                                 )}
                                             </div>
                                         ) : (
                                             <div className="flex justify-between px-4 py-2.5 text-sm">
-                                                <span className="text-gray-400">Khoản khác</span>
-                                                <span className="text-gray-400">Không có</span>
+                                                <span className="text-[var(--text-faint)]">Khoản khác</span>
+                                                <span className="text-[var(--text-faint)]">Không có</span>
                                             </div>
                                         )}
 
                                         {displayGuests.length > 0 ? (
                                             <div className="px-4 py-2.5">
-                                                <p className="text-xs text-purple-600 font-medium mb-1.5 flex items-center gap-1">
+                                                <p className="text-xs text-[var(--purple)] font-medium mb-1.5 flex items-center gap-1">
                                                     <Users className="w-3 h-3" /> Gộp thanh toán cùng {displayGuests.length} khách
                                                 </p>
                                                 {displayGuests.map((g: any, idx: number) => {
@@ -410,12 +410,12 @@ export default function AdminTransactionDetailModal({
                                                     const gTotal = gBase + gOtherFee;
 
                                                     return (
-                                                        <div key={g.id ?? idx} className="py-1.5 border-t border-gray-50 first:border-t-0">
+                                                        <div key={g.id ?? idx} className="py-1.5 border-t border-[var(--border)] first:border-t-0">
                                                             <div className="flex justify-between text-sm">
-                                                                <span className="text-gray-600">+ {gName}</span>
-                                                                <span className="font-medium text-gray-700">{fmt(gTotal)}</span>
+                                                                <span className="text-[var(--text-muted)]">+ {gName}</span>
+                                                                <span className="font-medium text-[var(--text)]">{fmt(gTotal)}</span>
                                                             </div>
-                                                            <div className="flex justify-between text-xs text-gray-400 mt-0.5 pl-3">
+                                                            <div className="flex justify-between text-xs text-[var(--text-faint)] mt-0.5 pl-3">
                                                                 <span>Tiền sân + cầu</span>
                                                                 <span>{fmt(gBase)}</span>
                                                             </div>
@@ -423,28 +423,28 @@ export default function AdminTransactionDetailModal({
                                                                 <div className="mt-0.5 pl-3 text-xs">
                                                                     {g.other_fee_note ? (
                                                                         <div className="space-y-1">
-                                                                            <span className="text-amber-500">Khoản khác</span>
-                                                                            <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/40 px-2.5 py-1.5">
+                                                                            <span className="text-[var(--warning)]">Khoản khác</span>
+                                                                            <div className="flex items-center justify-between gap-3 rounded-lg border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] px-2.5 py-1.5">
                                                                                 <div className="flex-1 min-w-0 space-y-0.5">
                                                                                     {g.other_fee_note
                                                                                         .split("\n")
                                                                                         .map((l: string) => l.trim())
                                                                                         .filter(Boolean)
                                                                                         .map((line: string, i: number) => (
-                                                                                            <p key={i} className="text-gray-400 italic">
+                                                                                            <p key={i} className="text-[var(--text-faint)] italic">
                                                                                                 {line}
                                                                                             </p>
                                                                                         ))}
                                                                                 </div>
-                                                                                <span className="text-amber-600 font-medium flex-shrink-0">
+                                                                                <span className="text-[var(--warning)] font-medium flex-shrink-0">
                                                                                     {fmt(gOtherFee)}
                                                                                 </span>
                                                                             </div>
                                                                         </div>
                                                                     ) : (
                                                                         <div className="flex items-center justify-between">
-                                                                            <span className="text-amber-500">Khoản khác</span>
-                                                                            <span className="text-amber-600 font-medium">{fmt(gOtherFee)}</span>
+                                                                            <span className="text-[var(--warning)]">Khoản khác</span>
+                                                                            <span className="text-[var(--warning)] font-medium">{fmt(gOtherFee)}</span>
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -455,14 +455,14 @@ export default function AdminTransactionDetailModal({
                                             </div>
                                         ) : (
                                             <div className="flex justify-between px-4 py-2.5 text-sm">
-                                                <span className="text-gray-400">Gộp với khách</span>
-                                                <span className="text-gray-400">Không, thanh toán riêng</span>
+                                                <span className="text-[var(--text-faint)]">Gộp với khách</span>
+                                                <span className="text-[var(--text-faint)]">Không, thanh toán riêng</span>
                                             </div>
                                         )}
 
-                                        <div className="flex justify-between px-4 py-3 text-sm bg-gray-50">
-                                            <span className="font-semibold text-gray-700">Tổng đã trả</span>
-                                            <span className="font-bold text-gray-900">{fmt(displayTotal)}</span>
+                                        <div className="flex justify-between px-4 py-3 text-sm bg-[var(--surface-muted)]">
+                                            <span className="font-semibold text-[var(--text)]">Tổng đã trả</span>
+                                            <span className="font-bold text-[var(--text)]">{fmt(displayTotal)}</span>
                                         </div>
                                     </div>
                                 )}
@@ -472,40 +472,40 @@ export default function AdminTransactionDetailModal({
 
                         {isShirtOrder && (
                             <div>
-                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                                <p className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide mb-2">
                                     Chi tiết đơn đặt áo {shirtItems.length > 1 ? `(${shirtItems.length} sản phẩm)` : ''}
                                 </p>
 
                                 {loadingDetail ? (
-                                    <div className="flex items-center justify-center py-6 text-gray-400 text-sm gap-2">
+                                    <div className="flex items-center justify-center py-6 text-[var(--text-faint)] text-sm gap-2">
                                         <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                                     </div>
                                 ) : shirtItems.length === 0 ? (
-                                    <p className="text-sm text-gray-400 text-center py-4">
+                                    <p className="text-sm text-[var(--text-faint)] text-center py-4">
                                         {isShirtOrderDeleted ? 'Đăng ký đặt áo này đã bị xoá' : 'Không tải được chi tiết'}
                                     </p>
                                 ) : (
                                     <div className="space-y-3">
                                         {shirtItems.map((item, idx) => (
-                                            <div key={item.id ?? idx} className="rounded-xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
+                                            <div key={item.id ?? idx} className="rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden">
                                                 <div className="flex justify-between px-4 py-2.5 text-sm">
-                                                    <span className="text-gray-500">Loại áo</span>
-                                                    <span className="font-medium text-gray-800">{item.shirt_type_name}</span>
+                                                    <span className="text-[var(--text-muted)]">Loại áo</span>
+                                                    <span className="font-medium text-[var(--text)]">{item.shirt_type_name}</span>
                                                 </div>
                                                 {item.color_name && (
                                                     <div className="flex justify-between px-4 py-2.5 text-sm">
-                                                        <span className="text-gray-500">Màu sắc</span>
-                                                        <span className="font-medium text-gray-800">{item.color_name}</span>
+                                                        <span className="text-[var(--text-muted)]">Màu sắc</span>
+                                                        <span className="font-medium text-[var(--text)]">{item.color_name}</span>
                                                     </div>
                                                 )}
                                                 <div className="flex justify-between px-4 py-2.5 text-sm">
-                                                    <span className="text-gray-500">Size</span>
-                                                    <span className="font-medium text-gray-800">{item.size}</span>
+                                                    <span className="text-[var(--text-muted)]">Size</span>
+                                                    <span className="font-medium text-[var(--text)]">{item.size}</span>
                                                 </div>
                                                 {(item.jersey_number || item.print_name) && (
                                                     <div className="flex justify-between px-4 py-2.5 text-sm">
-                                                        <span className="text-gray-500">Số áo / Tên in</span>
-                                                        <span className="font-medium text-gray-800 text-right">
+                                                        <span className="text-[var(--text-muted)]">Số áo / Tên in</span>
+                                                        <span className="font-medium text-[var(--text)] text-right">
                                                             {item.jersey_number && `Số ${item.jersey_number}`}
                                                             {item.jersey_number && item.print_name && " · "}
                                                             {item.print_name && `"${item.print_name}"`}
@@ -513,33 +513,33 @@ export default function AdminTransactionDetailModal({
                                                     </div>
                                                 )}
                                                 <div className="flex justify-between px-4 py-2.5 text-sm">
-                                                    <span className="text-gray-500">Số lượng</span>
-                                                    <span className="font-medium text-gray-800">{item.quantity}</span>
+                                                    <span className="text-[var(--text-muted)]">Số lượng</span>
+                                                    <span className="font-medium text-[var(--text)]">{item.quantity}</span>
                                                 </div>
                                                 <div className="flex justify-between px-4 py-2.5 text-sm">
-                                                    <span className="text-gray-500">Đơn giá</span>
-                                                    <span className="font-medium text-gray-800">{fmt(item.unit_price)}</span>
+                                                    <span className="text-[var(--text-muted)]">Đơn giá</span>
+                                                    <span className="font-medium text-[var(--text)]">{fmt(item.unit_price)}</span>
                                                 </div>
-                                                <div className="flex justify-between px-4 py-3 text-sm bg-blue-50">
-                                                    <span className="font-semibold text-blue-700">Thành tiền</span>
-                                                    <span className="font-bold text-blue-700">{fmt(item.total_amount)}</span>
+                                                <div className="flex justify-between px-4 py-3 text-sm bg-[var(--primary-soft)]">
+                                                    <span className="font-semibold text-[var(--primary)]">Thành tiền</span>
+                                                    <span className="font-bold text-[var(--primary)]">{fmt(item.total_amount)}</span>
                                                 </div>
                                             </div>
                                         ))}
 
                                         {shirtItems.length > 1 && (
-                                            <div className="flex justify-between px-4 py-3 text-sm bg-emerald-50 rounded-xl border border-emerald-100">
-                                                <span className="font-semibold text-emerald-700">Tổng cộng ({shirtItems.length} sản phẩm)</span>
-                                                <span className="font-bold text-emerald-700">
+                                            <div className="flex justify-between px-4 py-3 text-sm bg-[var(--success-soft)] rounded-xl border border-[color-mix(in_srgb,var(--success)_30%,transparent)]">
+                                                <span className="font-semibold text-[var(--success)]">Tổng cộng ({shirtItems.length} sản phẩm)</span>
+                                                <span className="font-bold text-[var(--success)]">
                                                     {fmt(shirtItems.reduce((s, it) => s + (it.total_amount ?? 0), 0))}
                                                 </span>
                                             </div>
                                         )}
 
                                         {shirtItems[0]?.users?.full_name && (
-                                            <div className="flex justify-between px-4 py-2.5 text-sm bg-blue-50/50 rounded-xl">
-                                                <span className="text-gray-500">Người đặt</span>
-                                                <span className="font-semibold text-blue-700">{shirtItems[0].users.full_name}</span>
+                                            <div className="flex justify-between px-4 py-2.5 text-sm bg-[var(--primary-soft)] rounded-xl">
+                                                <span className="text-[var(--text-muted)]">Người đặt</span>
+                                                <span className="font-semibold text-[var(--primary)]">{shirtItems[0].users.full_name}</span>
                                             </div>
                                         )}
                                     </div>
@@ -549,16 +549,16 @@ export default function AdminTransactionDetailModal({
                     </div>
 
                     {showReversedOverlay && (
-                        <div className="absolute left-0 right-0 bottom-0 z-10 flex flex-col items-center justify-center gap-1 bg-white/70" style={{ top: 65 }}>
-                            <Ban className="w-6 h-6 text-gray-400" />
-                            <p className="text-base font-bold text-gray-600 text-center px-6">
+                        <div className="absolute left-0 right-0 bottom-0 z-10 flex flex-col items-center justify-center gap-1 bg-[color-mix(in_srgb,var(--surface)_70%,transparent)]" style={{ top: 65 }}>
+                            <Ban className="w-6 h-6 text-[var(--text-faint)]" />
+                            <p className="text-base font-bold text-[var(--text-muted)] text-center px-6">
                                 {isSessionCancelled
                                     ? 'Buổi đánh đã bị hủy'
                                     : isShirtOrderCancelled
                                         ? 'Đơn đặt hàng đã huỷ'
                                         : 'Hóa đơn đã được hoàn tác'}
                             </p>
-                            <p className="text-sm font-semibold text-emerald-600">
+                            <p className="text-sm font-semibold text-[var(--success)]">
                                 Đã hoàn tiền
                             </p>
                         </div>

@@ -52,8 +52,8 @@ export function TournamentHeroCard({
                     <div className="flex flex-col items-center pt-14">
                         <div className="relative">
                             <div className="absolute -inset-8 rounded-[48px] bg-violet-500/25 blur-3xl" />
-                            <div className="relative flex h-[190px] w-[190px] items-center justify-center overflow-hidden rounded-[40px] border border-white/20 bg-white/10 p-2.5 shadow-[0_24px_60px_rgba(0,0,0,0.4)] backdrop-blur-md">
-                                <div className="flex h-full w-full items-center justify-center rounded-[32px] bg-white/10">
+                            <div className="relative flex h-[190px] w-[190px] items-center justify-center overflow-hidden rounded-[40px] border border-white/20 bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] p-2.5 shadow-[0_24px_60px_rgba(0,0,0,0.4)] backdrop-blur-md">
+                                <div className="flex h-full w-full items-center justify-center rounded-[32px] bg-[color-mix(in_srgb,var(--surface)_10%,transparent)]">
                                     <Trophy className="h-16 w-16 text-white" />
                                 </div>
                             </div>
@@ -85,7 +85,7 @@ export function TournamentHeroCard({
                             {activity.event_date && (
                                 <div className="flex items-center gap-3.5 justify-center">
 
-                                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/10">
+                                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--surface)_10%,transparent)]">
                                         <CalendarDays className="h-5 w-5 text-cyan-300" />
                                     </div>
 
@@ -108,7 +108,7 @@ export function TournamentHeroCard({
                             {activity.location && (
                                 <div className="flex items-center gap-3.5 justify-center">
 
-                                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/10">
+                                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--surface)_10%,transparent)]">
                                         <MapPin className="h-5 w-5 text-violet-300" />
                                     </div>
 

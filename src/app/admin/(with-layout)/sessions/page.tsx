@@ -39,14 +39,14 @@ const BTN3D = {
 };
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
-  open: { label: "Mở đăng ký", cls: "bg-green-100 text-green-700" },
-  full: { label: "Đã đầy", cls: "bg-amber-100 text-amber-700" },
+  open: { label: "Mở đăng ký", cls: "bg-[var(--success-soft)] text-[var(--success)]" },
+  full: { label: "Đã đầy", cls: "bg-[var(--warning-soft)] text-[var(--warning)]" },
   waiting_payment: {
     label: "Chờ thanh toán",
-    cls: "bg-blue-100 text-blue-700",
+    cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
   },
-  cancelled: { label: "Đã hủy", cls: "bg-red-100 text-red-600" },
-  completed: { label: "Hoàn thành", cls: "bg-slate-100 text-slate-600" },
+  cancelled: { label: "Đã hủy", cls: "bg-[var(--danger-soft)] text-[var(--danger)]" },
+  completed: { label: "Hoàn thành", cls: "bg-[var(--surface-muted)] text-[var(--text-muted)]" },
 };
 
 const STATUS_NEXT: Record<
@@ -372,24 +372,24 @@ export default function SessionsPage() {
       const isIndependentGuest = reg.is_guest && !reg.user_id;
 
       if (isIndependentGuest && reg.payment_method === "cash") {
-        return { label: "💵 Tiền mặt", cls: "bg-emerald-50 text-emerald-700" };
+        return { label: "💵 Tiền mặt", cls: "bg-[var(--success-soft)] text-[var(--success)]" };
       }
       if (Boolean(reg.payment_reference) && reg.payment_reference !== "TIEN_MAT")
         return {
           label: "🏦 Chuyển khoản (đã nộp bill)",
-          cls: "bg-indigo-50 text-indigo-700",
+          cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
         };
       if (reg.payment_method === "cash")
         return {
           label: "💵 Tiền mặt (tự yêu cầu)",
-          cls: "bg-emerald-50 text-emerald-700",
+          cls: "bg-[var(--success-soft)] text-[var(--success)]",
         };
       if (reg.payment_method === "grouped_with_host")
         return {
           label: `👥 Gộp theo ${hostName ?? "host"}`,
-          cls: "bg-sky-50 text-sky-700",
+          cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
         };
-      return { label: "💵 Tiền mặt", cls: "bg-emerald-50 text-emerald-700" };
+      return { label: "💵 Tiền mặt", cls: "bg-[var(--success-soft)] text-[var(--success)]" };
     };
 
     const rows = completeHostRegs
@@ -441,8 +441,8 @@ export default function SessionsPage() {
 
     return (
       <div className="space-y-3">
-        <p className="text-sm text-gray-600">
-          Có <strong className="text-gray-900">{total}</strong> người sẽ được tự
+        <p className="text-sm text-[var(--text-muted)]">
+          Có <strong className="text-[var(--text)]">{total}</strong> người sẽ được tự
           động xác nhận khi hoàn thành:
         </p>
         <ul className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
@@ -487,24 +487,24 @@ export default function SessionsPage() {
               const nestedWalletGuests = [...nestedPending, ...nestedWalletPending];
 
               return (
-                <li key={host.id} className="text-sm text-gray-700">
+                <li key={host.id} className="text-sm text-[var(--text)]">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-medium text-gray-900">{name}</span>
+                    <span className="font-medium text-[var(--text)]">{name}</span>
 
                     {isIndependentGuest && hostPending && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--success-soft)] text-[var(--success)]">
                         💵 Tiền mặt
                       </span>
                     )}
 
                     {isMember && hostPending && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
                         <Wallet className="w-2.5 h-2.5" /> Ví BNB
                       </span>
                     )}
 
                     {hostWalletPending && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--warning-soft)] text-[var(--warning)]">
                         {hostWalletLabel}
                       </span>
                     )}
@@ -519,17 +519,17 @@ export default function SessionsPage() {
                   </div>
 
                   {(nestedWalletGuests.length > 0 || nestedReview.length > 0) && (
-                    <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-gray-100">
+                    <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-[var(--border)]">
                       {nestedWalletGuests.map((g) => (
                         <li
                           key={g.id}
-                          className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
+                          className="text-xs text-[var(--purple)] flex items-center gap-1.5 flex-wrap"
                         >
-                          <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                          <CornerDownRight className="w-3 h-3 text-[var(--text-faint)] flex-shrink-0" />
                           <span>
                             {g.is_guest ? g.guest_full_name : g.users?.full_name}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
                             <Wallet className="w-2.5 h-2.5" /> Ví BNB của {name}
                           </span>
                         </li>
@@ -539,9 +539,9 @@ export default function SessionsPage() {
                         return (
                           <li
                             key={g.id}
-                            className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
+                            className="text-xs text-[var(--purple)] flex items-center gap-1.5 flex-wrap"
                           >
-                            <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                            <CornerDownRight className="w-3 h-3 text-[var(--text-faint)] flex-shrink-0" />
                             <span>
                               {g.is_guest ? g.guest_full_name : g.users?.full_name}
                             </span>
@@ -568,12 +568,12 @@ export default function SessionsPage() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Buổi đánh cầu</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{meta.total ?? 0} buổi</p>
+          <h1 className="text-2xl font-bold text-[var(--text)]">Buổi đánh cầu</h1>
+          <p className="text-[var(--text-muted)] text-sm mt-0.5">{meta.total ?? 0} buổi</p>
         </div>
         <div className="flex items-center gap-2">
           <LayoutGroup>
-            <div className="flex-1 flex gap-1.5 bg-gray-100 rounded-xl p-1.5 overflow-x-auto scrollbar-hide relative">
+            <div className="flex-1 flex gap-1.5 bg-[var(--surface-muted)] rounded-xl p-1.5 overflow-x-auto scrollbar-hide relative">
               {[
                 ["", "Tất cả"],
                 ["open", "Mở"],
@@ -591,7 +591,7 @@ export default function SessionsPage() {
                         status: val,
                       }))
                     }
-                    className={`relative flex-1 h-[46px] px-3 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors flex items-center justify-center ${!isActive ? "bg-gray-200/60 backdrop-blur-sm" : ""
+                    className={`relative flex-1 h-[46px] px-3 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors flex items-center justify-center ${!isActive ? "bg-[var(--border-strong)]/60 backdrop-blur-sm" : ""
                       }`}
                   >
                     {isActive && (
@@ -606,7 +606,7 @@ export default function SessionsPage() {
                       />
                     )}
                     <span
-                      className={`relative z-10 transition-colors ${isActive ? "text-white" : "text-gray-500 hover:text-gray-800"
+                      className={`relative z-10 transition-colors ${isActive ? "text-white" : "text-[var(--text-muted)] hover:text-[var(--text)]"
                         }`}
                     >
                       {lbl}
@@ -630,11 +630,11 @@ export default function SessionsPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="card h-44 animate-pulse bg-gray-100" />
+            <div key={i} className="card h-44 animate-pulse bg-[var(--surface-muted)]" />
           ))}
         </div>
       ) : sessions.length === 0 ? (
-        <div className="card py-16 text-center text-gray-400">
+        <div className="card py-16 text-center text-[var(--text-faint)]">
           <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p>Chưa có buổi đánh nào</p>
         </div>
@@ -646,7 +646,7 @@ export default function SessionsPage() {
                 s.status === "waiting_payment"
                   ? s.pending_action_count > 0
                     ? STATUS_CONFIG.waiting_payment
-                    : { label: "Chờ chốt thanh toán", cls: "bg-indigo-100 text-indigo-700" }
+                    : { label: "Chờ chốt thanh toán", cls: "bg-[var(--primary-soft)] text-[var(--primary)]" }
                   : (STATUS_CONFIG[s.status] ?? STATUS_CONFIG.open);
               const nextActions = STATUS_NEXT[s.status] ?? [];
               const busy = actionId === s.id;
@@ -662,7 +662,7 @@ export default function SessionsPage() {
                   className="card flex flex-col gap-3 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)]"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-gray-900 leading-tight">
+                    <h3 className="font-semibold text-[var(--text)] leading-tight">
                       {s.title}
                     </h3>
                     <span
@@ -672,9 +672,9 @@ export default function SessionsPage() {
                     </span>
                   </div>
 
-                  <div className="space-y-1.5 text-sm text-gray-600">
+                  <div className="space-y-1.5 text-sm text-[var(--text-muted)]">
                     <div className="flex items-center gap-2">
-                      <CalendarDays className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                      <CalendarDays className="w-3.5 h-3.5 flex-shrink-0 text-[var(--text-faint)]" />
                       <span>
                         {format(
                           new Date(s.scheduled_at),
@@ -685,17 +685,17 @@ export default function SessionsPage() {
                     </div>
                     {s.location && (
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                        <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-[var(--text-faint)]" />
                         <span className="truncate">{s.location}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-4">
                       <span className="flex items-center gap-1 flex-wrap">
-                        <Users className="w-3.5 h-3.5 text-gray-400" />
+                        <Users className="w-3.5 h-3.5 text-[var(--text-faint)]" />
                         <span
                           className={
                             s.available_slots <= 0
-                              ? "text-red-500 font-medium"
+                              ? "text-[var(--danger)] font-medium"
                               : ""
                           }
                         >
@@ -704,20 +704,20 @@ export default function SessionsPage() {
                             : `${s.available_slots ?? s.max_slots}/${s.max_slots} chỗ trống`}
                         </span>
                         {(s.male_count > 0 || s.female_count > 0) && (
-                          <span className="text-gray-400 text-xs">
+                          <span className="text-[var(--text-faint)] text-xs">
                             · 👨 {s.male_count ?? 0} · 👩 {s.female_count ?? 0}
                           </span>
                         )}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-gray-400" />
+                        <Clock className="w-3.5 h-3.5 text-[var(--text-faint)]" />
                         {s.duration_minutes} phút
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between border-t border-gray-100 pt-2">
-                    <span className="text-xs text-gray-400">
+                  <div className="flex items-center justify-between border-t border-[var(--border)] pt-2">
+                    <span className="text-xs text-[var(--text-faint)]">
                       {s.confirmed_count ?? 0} đã xác nhận ·{" "}
                       {s.pending_count ?? 0} chờ
                     </span>
@@ -812,7 +812,7 @@ export default function SessionsPage() {
       {hasMore && (
         <div ref={sentinelRef} className="flex justify-center py-6">
           {loadingMore && (
-            <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <div className="flex items-center gap-2 text-[var(--text-faint)] text-sm">
               <Loader2 className="w-4 h-4 animate-spin" /> Đang tải thêm...
             </div>
           )}
@@ -831,7 +831,7 @@ export default function SessionsPage() {
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{
-              background: "rgba(0,0,0,0.4)",
+              background: "var(--overlay)",
               backdropFilter: "blur(2px)",
               opacity: deleteModalVisible ? 1 : 0,
               transition: "opacity 200ms ease-out",
@@ -839,7 +839,7 @@ export default function SessionsPage() {
             onClick={closeDeleteModal}
           >
             <div
-              className="bg-white rounded-2xl w-full max-w-sm shadow-xl"
+              className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl"
               style={{
                 transform: deleteModalVisible
                   ? "scale(1) translateY(0)"
@@ -850,32 +850,32 @@ export default function SessionsPage() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                  <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
+                    <Trash2 className="w-4 h-4 text-[var(--danger)]" />
                   </div>
-                  <h3 className="font-bold text-gray-900">Xóa buổi đánh?</h3>
+                  <h3 className="font-bold text-[var(--text)]">Xóa buổi đánh?</h3>
                 </div>
                 <button
                   onClick={closeDeleteModal}
-                  className="p-1 text-gray-400 hover:text-gray-600"
+                  className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                 >
                   <XCircle className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="p-5">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[var(--text-muted)]">
                   Xóa buổi{" "}
-                  <strong className="text-gray-700">
+                  <strong className="text-[var(--text)]">
                     "{deleteTarget.title}"
                   </strong>
                   ? Hành động này không thể hoàn tác.
                 </p>
               </div>
 
-              <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+              <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
                 <button
                   onClick={closeDeleteModal}
                   className="btn-secondary text-sm"
@@ -901,7 +901,7 @@ export default function SessionsPage() {
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{
-              background: "rgba(0,0,0,0.4)",
+              background: "var(--overlay)",
               backdropFilter: "blur(2px)",
               opacity: cancelModalVisible ? 1 : 0,
               transition: "opacity 200ms ease-out",
@@ -909,7 +909,7 @@ export default function SessionsPage() {
             onClick={closeCancelModal}
           >
             <div
-              className="bg-white rounded-2xl w-full max-w-sm shadow-xl"
+              className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl"
               style={{
                 transform: cancelModalVisible
                   ? "scale(1) translateY(0)"
@@ -920,30 +920,30 @@ export default function SessionsPage() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-                    <XCircle className="w-4 h-4 text-red-500" />
+                  <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
+                    <XCircle className="w-4 h-4 text-[var(--danger)]" />
                   </div>
-                  <h3 className="font-bold text-gray-900">Hủy buổi đánh?</h3>
+                  <h3 className="font-bold text-[var(--text)]">Hủy buổi đánh?</h3>
                 </div>
                 <button
                   onClick={closeCancelModal}
-                  className="p-1 text-gray-400 hover:text-gray-600"
+                  className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                 >
                   <XCircle className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="p-5 space-y-2">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[var(--text-muted)]">
                   Hủy buổi{" "}
-                  <strong className="text-gray-700">
+                  <strong className="text-[var(--text)]">
                     "{cancelTarget.title}"
                   </strong>
                   ?
                 </p>
-                <p className="text-sm text-red-500">
+                <p className="text-sm text-[var(--danger)]">
                   Toàn bộ thành viên đã đăng ký buổi này sẽ bị{" "}
                   <strong>xóa khỏi danh sách</strong>, kể cả người đã xác nhận
                   thanh toán. Bạn có thể "Mở lại" buổi sau nhưng danh sách đăng
@@ -951,7 +951,7 @@ export default function SessionsPage() {
                 </p>
               </div>
 
-              <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+              <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
                 <button
                   onClick={closeCancelModal}
                   className="btn-secondary text-sm"
@@ -977,7 +977,7 @@ export default function SessionsPage() {
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{
-              background: "rgba(0,0,0,0.4)",
+              background: "var(--overlay)",
               backdropFilter: "blur(2px)",
               opacity: completeModalVisible ? 1 : 0,
               transition: "opacity 200ms ease-out",
@@ -985,7 +985,7 @@ export default function SessionsPage() {
             onClick={closeCompleteModal}
           >
             <div
-              className="bg-white rounded-2xl w-full max-w-md shadow-xl"
+              className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
               style={{
                 transform: completeModalVisible
                   ? "scale(1) translateY(0)"
@@ -996,24 +996,24 @@ export default function SessionsPage() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <div className="w-8 h-8 rounded-full bg-[var(--success-soft)] flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-4 h-4 text-[var(--success)]" />
                   </div>
-                  <h3 className="font-bold text-gray-900">Hoàn thành buổi đánh?</h3>
+                  <h3 className="font-bold text-[var(--text)]">Hoàn thành buổi đánh?</h3>
                 </div>
                 <button
                   onClick={closeCompleteModal}
-                  className="p-1 text-gray-400 hover:text-gray-600"
+                  className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                 >
                   <XCircle className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="p-5 text-sm text-gray-500">
+              <div className="p-5 text-sm text-[var(--text-muted)]">
                 {loadingCompleteRegs ? (
-                  <div className="flex items-center justify-center py-6 gap-2 text-gray-400">
+                  <div className="flex items-center justify-center py-6 gap-2 text-[var(--text-faint)]">
                     <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                   </div>
                 ) : completePending.length +
@@ -1026,7 +1026,7 @@ export default function SessionsPage() {
                 )}
               </div>
 
-              <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+              <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
                 <button onClick={closeCompleteModal} className="btn-secondary text-sm">
                   Hủy
                 </button>

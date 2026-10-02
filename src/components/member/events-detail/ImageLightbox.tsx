@@ -22,7 +22,7 @@ export function ImageLightbox({
         >
             <button
                 onClick={onClose}
-                className={`absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 ${visible ? "opacity-100 scale-100" : "opacity-0 scale-75"
+                className={`absolute top-4 right-4 w-9 h-9 rounded-full bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] flex items-center justify-center transition-all duration-200 ${visible ? "opacity-100 scale-100" : "opacity-0 scale-75"
                     }`}
             >
                 <XIcon className="w-5 h-5 text-white" />

@@ -39,11 +39,11 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 const TYPE_ICON_BG: Record<string, string> = {
-    shirt_order: "bg-blue-50",
-    tournament: "bg-amber-50",
-    birthday: "bg-pink-50",
-    offline_event: "bg-orange-50",
-    poll: "bg-purple-50",
+    shirt_order: "bg-[var(--primary-soft)]",
+    tournament: "bg-[var(--warning-soft)]",
+    birthday: "bg-[var(--pink-soft)]",
+    offline_event: "bg-[var(--warning-soft)]",
+    poll: "bg-[var(--purple-soft)]",
 };
 
 
@@ -78,23 +78,23 @@ function getStatusDisplay(a: any) {
     ) {
         return {
             label: "Đã đóng đăng ký",
-            className: "bg-green-50 text-green-700",
+            className: "bg-[var(--success-soft)] text-[var(--success)]",
         };
     }
     return {
         label: STATUS_LABEL[a.status] ?? a.status,
-        className: STATUS_CFG[a.status] ?? "bg-gray-50 text-gray-500",
+        className: STATUS_CFG[a.status] ?? "bg-[var(--surface-muted)] text-[var(--text-muted)]",
     };
 }
 
 const STATUS_CFG: Record<string, string> = {
-    draft: "bg-gray-50 text-gray-500",
-    open: "bg-orange-50 text-orange-600",
-    upcoming: "bg-purple-50 text-purple-600",
-    ongoing: "bg-blue-50 text-blue-600",
-    closed: "bg-green-50 text-green-700",
-    completed: "bg-slate-50 text-slate-500",
-    cancelled: "bg-red-50 text-red-500",
+    draft: "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+    open: "bg-[var(--warning-soft)] text-[var(--warning)]",
+    upcoming: "bg-[var(--purple-soft)] text-[var(--purple)]",
+    ongoing: "bg-[var(--primary-soft)] text-[var(--primary)]",
+    closed: "bg-[var(--success-soft)] text-[var(--success)]",
+    completed: "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+    cancelled: "bg-[var(--danger-soft)] text-[var(--danger)]",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -136,25 +136,25 @@ function SkeletonTableRow() {
     return (
         <tr className="animate-pulse">
             <td className="px-4 py-3">
-                <div className="h-4 bg-gray-100 rounded w-40" />
+                <div className="h-4 bg-[var(--surface-muted)] rounded w-40" />
             </td>
             <td className="px-4 py-3">
-                <div className="h-4 bg-gray-100 rounded w-20" />
+                <div className="h-4 bg-[var(--surface-muted)] rounded w-20" />
             </td>
             <td className="px-4 py-3">
-                <div className="h-4 bg-gray-100 rounded w-24" />
+                <div className="h-4 bg-[var(--surface-muted)] rounded w-24" />
             </td>
             <td className="px-4 py-3">
-                <div className="h-4 bg-gray-100 rounded w-24" />
+                <div className="h-4 bg-[var(--surface-muted)] rounded w-24" />
             </td>
             <td className="px-4 py-3">
-                <div className="h-6 bg-gray-100 rounded-full w-24" />
+                <div className="h-6 bg-[var(--surface-muted)] rounded-full w-24" />
             </td>
             <td className="px-4 py-3">
-                <div className="h-4 bg-gray-100 rounded w-14" />
+                <div className="h-4 bg-[var(--surface-muted)] rounded w-14" />
             </td>
             <td className="px-4 py-3 text-right">
-                <div className="h-4 bg-gray-100 rounded w-12 ml-auto" />
+                <div className="h-4 bg-[var(--surface-muted)] rounded w-12 ml-auto" />
             </td>
         </tr>
     );
@@ -162,26 +162,26 @@ function SkeletonTableRow() {
 
 function SkeletonMobileCard() {
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
+        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm overflow-hidden animate-pulse">
             <div className="p-4 flex items-start gap-3">
-                <div className="w-11 h-11 rounded-xl bg-gray-100 flex-shrink-0" />
+                <div className="w-11 h-11 rounded-xl bg-[var(--surface-muted)] flex-shrink-0" />
                 <div className="min-w-0 flex-1 pt-0.5 space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                        <div className="h-4 bg-gray-100 rounded w-32" />
-                        <div className="h-5 bg-gray-100 rounded-full w-20 flex-shrink-0" />
+                        <div className="h-4 bg-[var(--surface-muted)] rounded w-32" />
+                        <div className="h-5 bg-[var(--surface-muted)] rounded-full w-20 flex-shrink-0" />
                     </div>
-                    <div className="h-3 bg-gray-100 rounded w-16" />
+                    <div className="h-3 bg-[var(--surface-muted)] rounded w-16" />
                     <div className="flex gap-3">
-                        <div className="h-3 bg-gray-100 rounded w-20" />
-                        <div className="h-3 bg-gray-100 rounded w-20" />
+                        <div className="h-3 bg-[var(--surface-muted)] rounded w-20" />
+                        <div className="h-3 bg-[var(--surface-muted)] rounded w-20" />
                     </div>
                 </div>
             </div>
-            <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-50 bg-gray-50/50">
-                <div className="h-4 bg-gray-100 rounded w-24" />
+            <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--border)] bg-[var(--surface-muted)]">
+                <div className="h-4 bg-[var(--surface-muted)] rounded w-24" />
                 <div className="flex gap-1">
-                    <div className="h-8 w-8 bg-gray-100 rounded-lg" />
-                    <div className="h-8 w-8 bg-gray-100 rounded-lg" />
+                    <div className="h-8 w-8 bg-[var(--surface-muted)] rounded-lg" />
+                    <div className="h-8 w-8 bg-[var(--surface-muted)] rounded-lg" />
                 </div>
             </div>
         </div>
@@ -218,46 +218,46 @@ function TournamentEndedOptionsModal({
             onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
         >
             <div
-                className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+                className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
             >
                 <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
-                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                        <Trophy className="w-5 h-5 text-slate-500" />
+                    <div className="w-12 h-12 rounded-full bg-[var(--surface-muted)] flex items-center justify-center mb-3">
+                        <Trophy className="w-5 h-5 text-[var(--text-muted)]" />
                     </div>
-                    <p className="text-sm font-bold text-gray-900">Giải đấu đã kết thúc</p>
-                    <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                    <p className="text-sm font-bold text-[var(--text)]">Giải đấu đã kết thúc</p>
+                    <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-relaxed">
                         "{activity?.title}" đã kết thúc. Bạn muốn xem gì?
                     </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 px-5 pb-2">
                     <button
                         onClick={onSelectHistory}
-                        className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                        className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border border-[var(--border)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:bg-[var(--primary-soft)] transition-colors"
                     >
-                        <Calendar className="w-5 h-5 text-blue-600" />
-                        <span className="text-xs font-semibold text-gray-700">Lịch sử đấu</span>
+                        <Calendar className="w-5 h-5 text-[var(--primary)]" />
+                        <span className="text-xs font-semibold text-[var(--text)]">Lịch sử đấu</span>
                     </button>
                     <button
                         onClick={onSelectStandings}
-                        className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
+                        className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border border-[var(--border)] hover:border-[color-mix(in_srgb,var(--success)_30%,transparent)] hover:bg-[var(--success-soft)] transition-colors"
                     >
-                        <Trophy className="w-5 h-5 text-emerald-600" />
-                        <span className="text-xs font-semibold text-gray-700">BXH</span>
+                        <Trophy className="w-5 h-5 text-[var(--success)]" />
+                        <span className="text-xs font-semibold text-[var(--text)]">BXH</span>
                     </button>
                 </div>
                 <div className="px-5 pb-5">
                     <button
                         onClick={onSelectRegistrations}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+                        className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl border border-[var(--border)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:bg-[var(--primary-soft)] transition-colors"
                     >
-                        <Users className="w-4 h-4 text-indigo-600" />
-                        <span className="text-xs font-semibold text-gray-700">Danh sách đăng ký</span>
+                        <Users className="w-4 h-4 text-[var(--primary)]" />
+                        <span className="text-xs font-semibold text-[var(--text)]">Danh sách đăng ký</span>
                     </button>
                 </div>
-                <div className="flex border-t border-gray-100">
+                <div className="flex border-t border-[var(--border)]">
                     <button
                         onClick={handleClose}
-                        className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+                        className="flex-1 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
                     >
                         Đóng
                     </button>
@@ -293,27 +293,27 @@ function ContinueTournamentModal({
             onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
         >
             <div
-                className={`bg-white rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
+                className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"}`}
             >
                 <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
-                    <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
-                        <Trophy className="w-5 h-5 text-emerald-600" />
+                    <div className="w-12 h-12 rounded-full bg-[var(--success-soft)] flex items-center justify-center mb-3">
+                        <Trophy className="w-5 h-5 text-[var(--success)]" />
                     </div>
-                    <p className="text-sm font-bold text-gray-900">Giải đấu đang diễn ra</p>
-                    <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                    <p className="text-sm font-bold text-[var(--text)]">Giải đấu đang diễn ra</p>
+                    <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-relaxed">
                         "{activity?.title}" đã bắt đầu thi đấu. Bạn có muốn tiếp tục xem lịch thi đấu?
                     </p>
                 </div>
-                <div className="flex border-t border-gray-100">
+                <div className="flex border-t border-[var(--border)]">
                     <button
                         onClick={handleClose}
-                        className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100"
+                        className="flex-1 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors border-r border-[var(--border)]"
                     >
                         Đóng
                     </button>
                     <button
                         onClick={onContinue}
-                        className="flex-1 py-3 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 transition-colors"
+                        className="flex-1 py-3 text-sm font-semibold text-[var(--success)] hover:bg-[var(--success-soft)] transition-colors"
                     >
                         Tiếp tục giải đấu
                     </button>
@@ -560,8 +560,8 @@ export default function ActivitiesListPage() {
         <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Hoạt động</h1>
-                    <p className="text-gray-500 text-sm mt-0.5">
+                    <h1 className="text-2xl font-bold text-[var(--text)]">Hoạt động</h1>
+                    <p className="text-[var(--text-muted)] text-sm mt-0.5">
                         {items.length} hoạt động
                     </p>
                 </div>
@@ -578,7 +578,7 @@ export default function ActivitiesListPage() {
 
             <div
                 ref={tabsWrapRef}
-                className="hidden md:flex relative gap-1 bg-gray-100 rounded-lg p-1 w-fit flex-wrap"
+                className="hidden md:flex relative gap-1 bg-[var(--surface-muted)] rounded-lg p-1 w-fit flex-wrap"
             >
                 {pillStyle.width > 0 && (
                     <div
@@ -594,7 +594,7 @@ export default function ActivitiesListPage() {
                     onClick={() => setTypeFilter("")}
                     className={`relative z-10 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${!typeFilter
                         ? "text-white"
-                        : "text-gray-500 hover:text-gray-700"
+                        : "text-[var(--text-muted)] hover:text-[var(--text)]"
                         }`}
                 >
                     Tất cả
@@ -608,7 +608,7 @@ export default function ActivitiesListPage() {
                         onClick={() => setTypeFilter(opt.value)}
                         className={`relative z-10 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 whitespace-nowrap ${typeFilter === opt.value
                             ? "text-white"
-                            : "text-gray-500 hover:text-gray-700"
+                            : "text-[var(--text-muted)] hover:text-[var(--text)]"
                             }`}
                     >
                         {opt.label}
@@ -626,7 +626,7 @@ export default function ActivitiesListPage() {
 
             {items.length === 0 && !loading ? (
                 <div className="card !p-0 overflow-hidden">
-                    <div className="py-16 text-center text-gray-400">
+                    <div className="py-16 text-center text-[var(--text-faint)]">
                         <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-30" />
                         <p>Chưa có hoạt động nào</p>
                     </div>
@@ -635,7 +635,7 @@ export default function ActivitiesListPage() {
                 <>
                     <div className="hidden md:block card !p-0 overflow-hidden">
                         <table className="w-full text-sm">
-                            <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                            <thead className="bg-[var(--surface-muted)] text-[var(--text-muted)] text-xs uppercase">
                                 <tr>
                                     <th className="text-left px-4 py-3">Hoạt động</th>
                                     <th className="text-left px-4 py-3">Loại</th>
@@ -646,7 +646,7 @@ export default function ActivitiesListPage() {
                                     <th className="px-4 py-3"></th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-50">
+                            <tbody className="divide-y divide-[var(--border)]">
                                 {loading ? (
                                     <>
                                         {Array.from({ length: 5 }).map((_, i) => (
@@ -655,11 +655,11 @@ export default function ActivitiesListPage() {
                                     </>
                                 ) : (
                                     items.map((a) => (
-                                        <tr key={a.id} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 font-medium text-gray-900">
+                                        <tr key={a.id} className="hover:bg-[var(--surface-hover)]">
+                                            <td className="px-4 py-3 font-medium text-[var(--text)]">
                                                 <div className="flex items-center gap-2.5">
                                                     <div
-                                                        className={`w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0 overflow-hidden ${TYPE_ICON_BG[a.type] ?? "bg-gray-50"}`}
+                                                        className={`w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0 overflow-hidden ${TYPE_ICON_BG[a.type] ?? "bg-[var(--surface-muted)]"}`}
                                                     >
                                                         <ActivityThumbnail
                                                             src={a.cover_image_url ?? TYPE_DEFAULT_IMAGE[a.type]}
@@ -669,17 +669,17 @@ export default function ActivitiesListPage() {
                                                     <span>{a.title}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-500">
+                                            <td className="px-4 py-3 text-[var(--text-muted)]">
                                                 {TYPE_LABEL[a.type]}
                                             </td>
-                                            <td className="px-4 py-3 text-gray-500">
+                                            <td className="px-4 py-3 text-[var(--text-muted)]">
                                                 {a.deadline
                                                     ? format(new Date(a.deadline), "dd/MM/yyyy", {
                                                         locale: vi,
                                                     })
                                                     : "—"}
                                             </td>
-                                            <td className="px-4 py-3 text-gray-500">
+                                            <td className="px-4 py-3 text-[var(--text-muted)]">
                                                 {a.event_date
                                                     ? format(new Date(a.event_date), "dd/MM/yyyy", {
                                                         locale: vi,
@@ -696,7 +696,7 @@ export default function ActivitiesListPage() {
                                             <td className="px-4 py-3">
                                                 <button
                                                     onClick={() => handleViewRegistrations(a)}
-                                                    className="flex items-center gap-1 text-blue-600 hover:underline"
+                                                    className="flex items-center gap-1 text-[var(--primary)] hover:underline"
                                                 >
                                                     <Users className="w-3.5 h-3.5" /> Xem
                                                 </button>
@@ -705,13 +705,13 @@ export default function ActivitiesListPage() {
                                                 <div className="flex items-center justify-end gap-1">
                                                     <button
                                                         onClick={() => handleEditClick(a)}
-                                                        className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-blue-600"
+                                                        className="p-1.5 hover:bg-[var(--surface-hover)] rounded-lg text-[var(--text-faint)] hover:text-[var(--primary)]"
                                                     >
                                                         <Pencil className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(a.id, a.title)}
-                                                        className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
+                                                        className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)]"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -731,11 +731,11 @@ export default function ActivitiesListPage() {
                             items.map((a) => (
                                 <div
                                     key={a.id}
-                                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                                    className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm overflow-hidden"
                                 >
                                     <div className="p-4 flex items-start gap-3">
                                         <div
-                                            className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 overflow-hidden ${TYPE_ICON_BG[a.type] ?? "bg-gray-50"}`}
+                                            className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 overflow-hidden ${TYPE_ICON_BG[a.type] ?? "bg-[var(--surface-muted)]"}`}
                                         >
                                             <ActivityThumbnail
                                                 src={a.cover_image_url ?? TYPE_DEFAULT_IMAGE[a.type]}
@@ -744,7 +744,7 @@ export default function ActivitiesListPage() {
                                         </div>
                                         <div className="min-w-0 flex-1 pt-0.5">
                                             <div className="flex items-start justify-between gap-2">
-                                                <p className="font-semibold text-gray-900 leading-snug break-words">
+                                                <p className="font-semibold text-[var(--text)] leading-snug break-words">
                                                     {a.title}
                                                 </p>
                                                 <span
@@ -755,7 +755,7 @@ export default function ActivitiesListPage() {
                                             </div>
 
                                             {(a.deadline || a.event_date) && (
-                                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mt-2">
+                                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--text-muted)] mt-2">
                                                     {a.deadline && (
                                                         <span className="flex items-center gap-1">
                                                             <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
@@ -777,23 +777,23 @@ export default function ActivitiesListPage() {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-50 bg-gray-50/50">
+                                    <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--border)] bg-[var(--surface-muted)]">
                                         <button
                                             onClick={() => handleViewRegistrations(a)}
-                                            className="flex items-center gap-1.5 text-sm text-blue-600 font-medium py-1"
+                                            className="flex items-center gap-1.5 text-sm text-[var(--primary)] font-medium py-1"
                                         >
                                             <Users className="w-4 h-4" /> Xem đăng ký
                                         </button>
                                         <div className="flex items-center gap-0.5">
                                             <button
                                                 onClick={() => handleEditClick(a)}
-                                                className="p-2 hover:bg-gray-200/60 active:bg-gray-200 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                                                className="p-2 hover:bg-[var(--border-strong)]/60 active:bg-[var(--border-strong)] rounded-lg text-[var(--text-faint)] hover:text-[var(--primary)] transition-colors"
                                             >
                                                 <Pencil className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(a.id, a.title)}
-                                                className="p-2 hover:bg-red-50 active:bg-red-100 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+                                                className="p-2 hover:bg-[var(--danger-soft)] active:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>

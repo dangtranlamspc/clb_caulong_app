@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
-  Trophy,
   ClipboardList,
   Wallet2,
   GlassWater
@@ -222,7 +221,7 @@ export default function HomePage() {
                   className="w-12 h-12 rounded-full object-cover border-2 border-white/30 flex-shrink-0"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-lg flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] flex items-center justify-center text-white font-black text-lg flex-shrink-0">
                   {user?.full_name?.[0]?.toUpperCase()}
                 </div>
               )}
@@ -236,10 +235,10 @@ export default function HomePage() {
 
             <div className="flex items-stretch gap-2.5 mt-4">
               {loading ? (
-                <div className="h-14 flex-1 bg-white/10 rounded-2xl animate-pulse" />
+                <div className="h-14 flex-1 bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] rounded-2xl animate-pulse" />
               ) : (
                 <>
-                  <div className="bg-white/15 rounded-2xl px-3 py-2 flex items-center gap-2 flex-1">
+                  <div className="bg-[color-mix(in_srgb,var(--surface)_15%,transparent)] rounded-2xl px-3 py-2 flex items-center gap-2 flex-1">
                     <span className="text-2xl">{levelBadge.emoji}</span>
                     <div className="text-white mt-0.5 leading-tight">
                       <p className="text-[13px] font-bold">{levelBadge.line1}</p>
@@ -251,7 +250,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
+                  <div className="bg-[color-mix(in_srgb,var(--surface)_15%,transparent)] rounded-2xl px-4 py-2 text-center">
                     <p className="text-white/75 text-[10px] leading-none">W / L</p>
                     <p className="text-white font-black text-lg mt-0.5">
                       {myStats?.revice?.wins ?? 0} / {myStats?.revice?.losses ?? 0}
@@ -264,7 +263,7 @@ export default function HomePage() {
                     </p>
                   </div>
 
-                  <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
+                  <div className="bg-[color-mix(in_srgb,var(--surface)_15%,transparent)] rounded-2xl px-4 py-2 text-center">
                     <p className="text-white/75 text-[10px] leading-none">Tháng này</p>
                     <p className="text-white font-black text-xl mt-0.5">
                       {myStats?.sessions_this_month ?? 0}
@@ -331,7 +330,6 @@ export default function HomePage() {
                   style={{
                     background: "linear-gradient(135deg, #f857a6, #ec4899)",
                     boxShadow: "0 2px 8px rgba(248,87,166,0.35)",
-                    animation: "cakeWiggle 2.5s ease-in-out infinite",
                   }}
                 >
                   🎂

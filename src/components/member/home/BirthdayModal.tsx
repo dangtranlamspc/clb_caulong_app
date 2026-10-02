@@ -112,7 +112,7 @@ export function BirthdayModal({ open, member, currentUserId, onClose, onSendWish
             style={{ animation: "fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)" }}
         >
             <div
-                className="rounded-[2.5rem] w-full max-w-sm overflow-hidden relative shadow-2xl bg-white dark:bg-slate-900 border border-white/20 dark:border-slate-800"
+                className="rounded-[2.5rem] w-full max-w-sm overflow-hidden relative shadow-2xl bg-[var(--surface)] dark:bg-slate-900 border border-white/20 dark:border-slate-800"
                 onClick={(e) => e.stopPropagation()}
                 style={{
                     animation: "modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -147,8 +147,8 @@ export function BirthdayModal({ open, member, currentUserId, onClose, onSendWish
                             background: "radial-gradient(circle at 50% 20%, rgba(255,255,255,0.8), transparent 70%)",
                         }}
                     />
-                    <div className="absolute -top-12 -left-10 w-36 h-36 rounded-full bg-white/10 blur-xl" />
-                    <div className="absolute -bottom-10 -right-8 w-40 h-40 rounded-full bg-white/15 blur-xl" />
+                    <div className="absolute -top-12 -left-10 w-36 h-36 rounded-full bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] blur-xl" />
+                    <div className="absolute -bottom-10 -right-8 w-40 h-40 rounded-full bg-[color-mix(in_srgb,var(--surface)_15%,transparent)] blur-xl" />
 
                     {isToday &&
                         confetti.map((c) => (
@@ -246,13 +246,13 @@ export function BirthdayModal({ open, member, currentUserId, onClose, onSendWish
                             <PartyPopper className="w-3.5 h-3.5 scale-x-[-1]" />
                         </div>
                     ) : isPast ? (
-                        <div className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-slate-400 dark:text-slate-500">
-                            <Cake className="w-3.5 h-3.5 text-slate-400" />
+                        <div className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-[var(--text-muted)] dark:text-[var(--text-muted)]">
+                            <Cake className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                             <span>Đã qua ngày sinh nhật</span>
                         </div>
                     ) : (
-                        <div className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-slate-400 dark:text-slate-500">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <div className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-[var(--text-muted)] dark:text-[var(--text-muted)]">
+                            <Sparkles className="w-3.5 h-3.5 text-[var(--warning)]" />
                             <span>Sắp tới sinh nhật</span>
                         </div>
                     )}
@@ -263,11 +263,11 @@ export function BirthdayModal({ open, member, currentUserId, onClose, onSendWish
 
                     <div
                         className={`flex items-center gap-2 mt-2 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${isToday
-                            ? "bg-pink-50 text-pink-600 dark:bg-pink-950/40 dark:text-pink-300 border border-pink-200/60 dark:border-pink-800/40"
-                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                            ? "bg-[var(--pink-soft)] text-[var(--pink)] dark:bg-pink-950/40 dark:text-pink-300 border border-[color-mix(in_srgb,var(--pink)_30%,transparent)] dark:border-pink-800/40"
+                            : "bg-[var(--surface-muted)] text-[var(--text-muted)] dark:bg-slate-800 dark:text-slate-300"
                             }`}
                     >
-                        <Cake className={`w-3.5 h-3.5 ${isToday ? "text-pink-500" : "text-slate-400"}`} />
+                        <Cake className={`w-3.5 h-3.5 ${isToday ? "text-[var(--pink)]" : "text-[var(--text-muted)]"}`} />
                         <span>
                             {day} tháng {month}
                             {isToday && " · Hôm nay 🎉"}
@@ -275,15 +275,15 @@ export function BirthdayModal({ open, member, currentUserId, onClose, onSendWish
                     </div>
 
                     {member.level && (
-                        <span className="mt-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                            Cấp độ: <span className="text-slate-600 dark:text-slate-300 font-semibold">{member.level}</span>
+                        <span className="mt-1 text-[11px] font-medium text-[var(--text-muted)] dark:text-[var(--text-muted)]">
+                            Cấp độ: <span className="text-[var(--text-muted)] dark:text-slate-300 font-semibold">{member.level}</span>
                         </span>
                     )}
 
                     {isToday && !isOwnBirthday && (
-                        <div className="w-full mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div className="w-full mt-4 pt-4 border-t border-[var(--border)] dark:border-slate-800">
                             {sent ? (
-                                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 rounded-xl text-emerald-600 dark:text-emerald-300 text-xs font-medium flex items-center justify-center gap-2">
+                                <div className="p-3 bg-[var(--success-soft)] dark:bg-emerald-950/40 border border-[color-mix(in_srgb,var(--success)_30%,transparent)] dark:border-emerald-800/40 rounded-xl text-[var(--success)] dark:text-emerald-300 text-xs font-medium flex items-center justify-center gap-2">
                                     <Gift className="w-4 h-4 animate-bounce" />
                                     <span>Đã gửi lời chúc yêu thương! ❤️</span>
                                 </div>
@@ -296,7 +296,7 @@ export function BirthdayModal({ open, member, currentUserId, onClose, onSendWish
                                         onChange={(e) => setWishText(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && handleSend()}
                                         disabled={sending}
-                                        className="flex-1 px-4 py-3 text-sm rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/40 transition-all disabled:opacity-60"
+                                        className="flex-1 px-4 py-3 text-sm rounded-2xl bg-[var(--surface-muted)] dark:bg-slate-800/80 border border-[var(--border)] dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/40 transition-all disabled:opacity-60"
                                     />
                                     <button
                                         onClick={handleSend}
@@ -311,8 +311,8 @@ export function BirthdayModal({ open, member, currentUserId, onClose, onSendWish
                     )}
 
                     {isToday && isOwnBirthday && (
-                        <div className="w-full mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                            <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                        <div className="w-full mt-4 pt-4 border-t border-[var(--border)] dark:border-slate-800">
+                            <p className="text-xs font-medium text-[var(--text-muted)] dark:text-[var(--text-muted)]">
                                 Hôm nay là sinh nhật của bạn 🎂 Chúc bạn thật nhiều niềm vui!
                             </p>
                         </div>

@@ -101,21 +101,21 @@ export function CancelShirtOrderModal({
             className="fixed inset-0 z-[99999] bg-black/40 flex items-end md:items-center justify-center p-0 md:p-4"
             onClick={(e) => e.target === e.currentTarget && !cancellingAll && onClose()}
         >
-            <div className="bg-white rounded-t-2xl md:rounded-2xl w-full max-w-md flex flex-col max-h-[85vh] overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50 flex-shrink-0">
-                    <h2 className="font-bold text-gray-900">Huỷ đơn đặt áo</h2>
+            <div className="bg-[var(--surface)] rounded-t-2xl md:rounded-2xl w-full max-w-md flex flex-col max-h-[85vh] overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
+                    <h2 className="font-bold text-[var(--text)]">Huỷ đơn đặt áo</h2>
                     <button
                         onClick={onClose}
                         disabled={cancellingAll}
-                        className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-50"
+                        className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center disabled:opacity-50"
                     >
-                        <X className="w-4 h-4 text-gray-500" />
+                        <X className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
                     {items.length === 0 ? (
-                        <p className="text-center text-gray-400 py-8">Không còn sản phẩm nào</p>
+                        <p className="text-center text-[var(--text-faint)] py-8">Không còn sản phẩm nào</p>
                     ) : (
                         items.map((r) => {
                             const maxQty = r.quantity ?? 1;
@@ -127,23 +127,23 @@ export function CancelShirtOrderModal({
                             const canChoosePartial = maxQty > 1;
 
                             return (
-                                <div key={r.id} className="border border-gray-100 rounded-xl p-3 space-y-3">
+                                <div key={r.id} className="border border-[var(--border)] rounded-xl p-3 space-y-3">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-gray-900 truncate">
+                                            <p className="text-sm font-semibold text-[var(--text)] truncate">
                                                 {type?.name ?? "—"}
                                                 {r.color_name ? ` · ${r.color_name}` : ""}
                                             </p>
-                                            <p className="text-xs text-gray-400">
+                                            <p className="text-xs text-[var(--text-faint)]">
                                                 {r.gender === "nu" ? "Nữ" : "Nam"} · Size {r.size} · {fmt(priceOf(r))}/áo
                                             </p>
                                             {isPaid && (
-                                                <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold">
+                                                <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--success-soft)] text-[var(--success)] font-semibold">
                                                     Đã thanh toán — chỉ huỷ toàn bộ
                                                 </span>
                                             )}
                                         </div>
-                                        <span className="text-xs text-gray-500 flex-shrink-0">Còn {maxQty} áo</span>
+                                        <span className="text-xs text-[var(--text-muted)] flex-shrink-0">Còn {maxQty} áo</span>
                                     </div>
 
                                     {canChoosePartial ? (
@@ -155,7 +155,7 @@ export function CancelShirtOrderModal({
                                                         handleCancelItem(r, "all", maxQty);
                                                     }}
                                                     disabled={isCancelling}
-                                                    className="flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 bg-white border-gray-200 text-gray-500 hover:bg-red-50 hover:border-red-200 hover:text-red-600 flex items-center justify-center gap-1.5"
+                                                    className="flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--danger-soft)] hover:border-[color-mix(in_srgb,var(--danger)_30%,transparent)] hover:text-[var(--danger)] flex items-center justify-center gap-1.5"
                                                 >
                                                     {isCancelling && mode === "all" && (
                                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -166,8 +166,8 @@ export function CancelShirtOrderModal({
                                                     onClick={() => setMode(r.id, "partial", maxQty)}
                                                     disabled={isCancelling}
                                                     className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 ${mode === "partial"
-                                                        ? "bg-red-50 border-red-200 text-red-600"
-                                                        : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                                                        ? "bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-[var(--danger)]"
+                                                        : "bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                                                         }`}
                                                 >
                                                     Huỷ một phần
@@ -176,11 +176,11 @@ export function CancelShirtOrderModal({
 
                                             {mode === "partial" && (
                                                 <div className="flex items-center justify-between gap-2">
-                                                    <div className="flex items-center gap-1.5 bg-gray-50 rounded-lg px-1.5 py-1">
+                                                    <div className="flex items-center gap-1.5 bg-[var(--surface-muted)] rounded-lg px-1.5 py-1">
                                                         <button
                                                             onClick={() => setQty(r.id, selectedQty - 1, maxQty - 1)}
                                                             disabled={isCancelling}
-                                                            className="w-6 h-6 rounded-md bg-white border border-gray-200 flex items-center justify-center disabled:opacity-50"
+                                                            className="w-6 h-6 rounded-md bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center disabled:opacity-50"
                                                         >
                                                             <Minus className="w-3 h-3" />
                                                         </button>
@@ -188,7 +188,7 @@ export function CancelShirtOrderModal({
                                                         <button
                                                             onClick={() => setQty(r.id, selectedQty + 1, maxQty - 1)}
                                                             disabled={isCancelling}
-                                                            className="w-6 h-6 rounded-md bg-white border border-gray-200 flex items-center justify-center disabled:opacity-50"
+                                                            className="w-6 h-6 rounded-md bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center disabled:opacity-50"
                                                         >
                                                             <Plus className="w-3 h-3" />
                                                         </button>
@@ -197,7 +197,7 @@ export function CancelShirtOrderModal({
                                                     <button
                                                         onClick={() => handleCancelItem(r, "partial", selectedQty)}
                                                         disabled={isCancelling}
-                                                        className="py-1.5 px-3 rounded-lg text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 flex items-center gap-1.5 disabled:opacity-50 ml-auto"
+                                                        className="py-1.5 px-3 rounded-lg text-xs font-semibold bg-[var(--danger-soft)] hover:bg-[var(--danger-soft)] text-[var(--danger)] flex items-center gap-1.5 disabled:opacity-50 ml-auto"
                                                     >
                                                         {isCancelling ? (
                                                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -214,7 +214,7 @@ export function CancelShirtOrderModal({
                                             <button
                                                 onClick={() => handleCancelItem(r, "all", maxQty)}
                                                 disabled={isCancelling}
-                                                className="py-1.5 px-3 rounded-lg text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 flex items-center gap-1.5 disabled:opacity-50"
+                                                className="py-1.5 px-3 rounded-lg text-xs font-semibold bg-[var(--danger-soft)] hover:bg-[var(--danger-soft)] text-[var(--danger)] flex items-center gap-1.5 disabled:opacity-50"
                                             >
                                                 {isCancelling ? (
                                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -232,7 +232,7 @@ export function CancelShirtOrderModal({
                 </div>
 
                 {items.length > 0 && (
-                    <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
+                    <div className="px-5 py-4 border-t border-[var(--border)] flex-shrink-0">
                         <button
                             onClick={handleCancelAll}
                             disabled={cancellingAll}

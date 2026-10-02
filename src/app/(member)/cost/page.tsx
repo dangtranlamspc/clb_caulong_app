@@ -76,29 +76,29 @@ function FeeRow({
     .map((l) => l.trim())
     .filter(Boolean);
   return (
-    <div className={nested ? "pl-3 border-l-2 border-amber-200" : ""}>
+    <div className={nested ? "pl-3 border-l-2 border-[color-mix(in_srgb,var(--warning)_30%,transparent)]" : ""}>
       <div className="flex items-baseline gap-2">
         <span
-          className={`truncate text-sm ${nested ? "text-gray-700" : "font-semibold text-gray-800"
+          className={`truncate text-sm ${nested ? "text-[var(--text)]" : "font-semibold text-[var(--text)]"
             }`}
         >
           {name}
           {nested && (
-            <span className="ml-1.5 text-[11px] font-normal text-gray-400">
+            <span className="ml-1.5 text-[11px] font-normal text-[var(--text-faint)]">
               đi cùng
             </span>
           )}
         </span>
-        <span className="flex-1 min-w-4 border-b border-dotted border-amber-300 -translate-y-[3px]" />
+        <span className="flex-1 min-w-4 border-b border-dotted border-[color-mix(in_srgb,var(--warning)_30%,transparent)] -translate-y-[3px]" />
         <span
-          className={`flex-shrink-0 tabular-nums text-sm text-amber-700 ${nested ? "font-medium" : "font-semibold"
+          className={`flex-shrink-0 tabular-nums text-sm text-[var(--warning)] ${nested ? "font-medium" : "font-semibold"
             }`}
         >
           {fmtFull(amount)}
         </span>
       </div>
       {lines.map((l, i) => (
-        <p key={i} className="text-xs text-gray-500 mt-0.5">
+        <p key={i} className="text-xs text-[var(--text-muted)] mt-0.5">
           {l}
         </p>
       ))}
@@ -142,7 +142,7 @@ function SessionCostDetailModal({
     <div
       className="fixed inset-0 z-[9999] flex flex-col justify-end sm:items-center sm:justify-center"
       style={{
-        background: "rgba(0,0,0,0.5)",
+        background: "var(--overlay)",
         backdropFilter: "blur(2px)",
         opacity: visible ? 1 : 0,
         transition: "opacity 200ms ease-out",
@@ -150,7 +150,7 @@ function SessionCostDetailModal({
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col"
+        className="w-full sm:max-w-md bg-[var(--surface)] rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col"
         style={{
           maxHeight: "85vh",
           transform: visible ? "translateY(0)" : "translateY(24px)",
@@ -160,34 +160,34 @@ function SessionCostDetailModal({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-          <p className="text-sm font-bold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
+          <p className="text-sm font-bold text-[var(--text)]">
             Chi tiết chi phí buổi đánh
           </p>
           <button
             onClick={handleClose}
-            className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)]"
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-[var(--text-muted)]" />
           </button>
         </div>
 
         <div className="px-5 py-4 space-y-4 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-10 text-gray-400 gap-2 text-sm">
+            <div className="flex items-center justify-center py-10 text-[var(--text-faint)] gap-2 text-sm">
               <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
             </div>
           ) : !detail ? (
-            <p className="text-sm text-gray-400 text-center py-8">
+            <p className="text-sm text-[var(--text-faint)] text-center py-8">
               Không tải được dữ liệu
             </p>
           ) : (
             <>
               <div>
-                <p className="font-bold text-gray-900">
+                <p className="font-bold text-[var(--text)]">
                   {detail.session.title}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-xs text-[var(--text-faint)] mt-0.5">
                   {new Date(detail.session.scheduled_at).toLocaleDateString(
                     "vi-VN",
                     {
@@ -200,35 +200,35 @@ function SessionCostDetailModal({
                 </p>
               </div>
 
-              <div className="rounded-xl bg-gray-50 p-3 space-y-1.5">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+              <div className="rounded-xl bg-[var(--surface-muted)] p-3 space-y-1.5">
+                <p className="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wider mb-1">
                   Chi phí thực tế
                 </p>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">🏟 Tiền sân</span>
-                  <span className="font-medium text-gray-700">
+                  <span className="text-[var(--text-muted)]">🏟 Tiền sân</span>
+                  <span className="font-medium text-[var(--text)]">
                     {fmtFull(detail.chi_phi.court_fee)}
                   </span>
                 </div>
                 {detail.chi_phi.shuttle_count > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">
+                    <span className="text-[var(--text-muted)]">
                       🏸 Tiền cầu
-                      <span className="text-gray-400 text-xs ml-1">
+                      <span className="text-[var(--text-faint)] text-xs ml-1">
                         ({detail.chi_phi.shuttle_count} ×{" "}
                         {fmtFull(detail.chi_phi.shuttle_price)})
                       </span>
                     </span>
-                    <span className="font-medium text-gray-700">
+                    <span className="font-medium text-[var(--text)]">
                       {fmtFull(detail.chi_phi.shuttle_cost)}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm pt-1.5 border-t border-gray-200 mt-1">
-                  <span className="font-semibold text-gray-700">
+                <div className="flex justify-between text-sm pt-1.5 border-t border-[var(--border)] mt-1">
+                  <span className="font-semibold text-[var(--text)]">
                     Tổng chi phí (sân + cầu)
                   </span>
-                  <span className="font-black text-emerald-600">
+                  <span className="font-black text-[var(--success)]">
                     {fmtFull(
                       detail.chi_phi.court_fee + detail.chi_phi.shuttle_cost,
                     )}
@@ -237,11 +237,11 @@ function SessionCostDetailModal({
               </div>
 
               {detail.chi_phi.other_fee > 0 && (
-                <div className="rounded-xl border border-amber-100 bg-amber-50/60 overflow-hidden">
-                  <div className="px-3.5 py-2.5 text-sm font-medium text-gray-600 border-b border-amber-100/70">
+                <div className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] overflow-hidden">
+                  <div className="px-3.5 py-2.5 text-sm font-medium text-[var(--text-muted)] border-b border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
                     💰 Khoản thu khác
                     {detail.chi_phi.other_fee_note && (
-                      <span className="text-gray-400 italic font-normal">
+                      <span className="text-[var(--text-faint)] italic font-normal">
                         {" "}({detail.chi_phi.other_fee_note})
                       </span>
                     )}
@@ -254,7 +254,7 @@ function SessionCostDetailModal({
                         return (
                           <div
                             key={i}
-                            className="rounded-xl border border-amber-200/80 bg-white overflow-hidden"
+                            className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--surface)] overflow-hidden"
                           >
                             <div className="px-3 py-2.5 space-y-2">
                               <FeeRow name={item.name} amount={item.amount} note={item.note} />
@@ -269,11 +269,11 @@ function SessionCostDetailModal({
                               ))}
                             </div>
                             {hasGuests && (
-                              <div className="flex items-center justify-between px-3 py-2 bg-amber-50 border-t border-dashed border-amber-200">
-                                <span className="text-xs font-medium text-amber-800">
+                              <div className="flex items-center justify-between px-3 py-2 bg-[var(--warning-soft)] border-t border-dashed border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
+                                <span className="text-xs font-medium text-[var(--warning)]">
                                   Tổng nhóm
                                 </span>
-                                <span className="text-sm font-bold text-amber-800 tabular-nums">
+                                <span className="text-sm font-bold text-[var(--warning)] tabular-nums">
                                   {fmtFull(item.total ?? item.amount)}
                                 </span>
                               </div>
@@ -284,11 +284,11 @@ function SessionCostDetailModal({
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center px-3.5 py-2.5 bg-amber-100/60">
-                    <span className="text-xs font-semibold text-amber-800 uppercase tracking-wide">
+                  <div className="flex justify-between items-center px-3.5 py-2.5 bg-[var(--warning-soft)]">
+                    <span className="text-xs font-semibold text-[var(--warning)] uppercase tracking-wide">
                       Tổng khoản thu khác
                     </span>
-                    <span className="text-base font-bold text-amber-800 tabular-nums">
+                    <span className="text-base font-bold text-[var(--warning)] tabular-nums">
                       {fmtFull(detail.chi_phi.other_fee)}
                     </span>
                   </div>
@@ -296,42 +296,42 @@ function SessionCostDetailModal({
               )}
 
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                <p className="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wider mb-2">
                   Khoản từng người cần thanh toán (
                   {detail.paid_list?.length ?? 0} người)
                 </p>
 
                 {(!detail.paid_list || detail.paid_list.length === 0) ? (
-                  <div className="rounded-xl border border-gray-100">
-                    <p className="text-sm text-gray-400 text-center py-4">
+                  <div className="rounded-xl border border-[var(--border)]">
+                    <p className="text-sm text-[var(--text-faint)] text-center py-4">
                       Chưa có ai được chốt thanh toán
                     </p>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-gray-100 divide-y divide-gray-100 overflow-hidden">
+                  <div className="rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden">
                     {detail.paid_list.map((p: any) => {
                       const grouped = p.guest_names?.length ?? 0;
                       return (
                         <div key={p.registration_id} className="px-3.5 py-3">
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-sm font-medium text-gray-800 truncate">
+                            <span className="text-sm font-medium text-[var(--text)] truncate">
                               {p.full_name}
                               {p.is_guest && (
-                                <span className="text-gray-400 text-xs ml-1">(khách)</span>
+                                <span className="text-[var(--text-faint)] text-xs ml-1">(khách)</span>
                               )}
                             </span>
-                            <span className="text-sm font-bold text-gray-900 tabular-nums flex-shrink-0">
+                            <span className="text-sm font-bold text-[var(--text)] tabular-nums flex-shrink-0">
                               {fmtFull(p.total_amount)}
                             </span>
                           </div>
 
                           {grouped > 0 && (
                             <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                              <span className="text-[11px] text-gray-400">Gộp cùng</span>
+                              <span className="text-[11px] text-[var(--text-faint)]">Gộp cùng</span>
                               {p.guest_names.map((n: string, i: number) => (
                                 <span
                                   key={i}
-                                  className="text-[11px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium"
+                                  className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--purple-soft)] text-[var(--purple)] font-medium"
                                 >
                                   {n}
                                 </span>
@@ -352,23 +352,23 @@ function SessionCostDetailModal({
                 const isBreakEven = profit === 0;
 
                 const tone = isBreakEven
-                  ? "text-blue-600 bg-blue-50 border-blue-200"
+                  ? "text-[var(--primary)] bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]"
                   : isProfit
-                    ? "text-emerald-600 bg-emerald-50 border-emerald-200"
-                    : "text-red-500 bg-red-50 border-red-200";
+                    ? "text-[var(--success)] bg-[var(--success-soft)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]"
+                    : "text-[var(--danger)] bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]";
 
                 return (
-                  <div className="mt-2 rounded-xl border border-gray-100 overflow-hidden">
-                    <div className="px-3.5 py-2.5 space-y-1.5 bg-gray-50">
+                  <div className="mt-2 rounded-xl border border-[var(--border)] overflow-hidden">
+                    <div className="px-3.5 py-2.5 space-y-1.5 bg-[var(--surface-muted)]">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">💰 Tổng chi</span>
-                        <span className="font-semibold text-gray-700 tabular-nums">
+                        <span className="text-[var(--text-muted)]">💰 Tổng chi</span>
+                        <span className="font-semibold text-[var(--text)] tabular-nums">
                           {fmtFull(totalCost)}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">💵 Tổng thu</span>
-                        <span className="font-semibold text-gray-700 tabular-nums">
+                        <span className="text-[var(--text-muted)]">💵 Tổng thu</span>
+                        <span className="font-semibold text-[var(--text)] tabular-nums">
                           {fmtFull(totalPaid)}
                         </span>
                       </div>
@@ -422,12 +422,12 @@ function SessionCostCard({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left bg-white rounded-2xl overflow-hidden border-2 ${profitBorder} shadow-lg -translate-y-0.5 active:scale-[0.99] active:translate-y-0 transition-transform`}
+      className={`w-full text-left bg-[var(--surface)] rounded-2xl overflow-hidden border-2 ${profitBorder} shadow-lg -translate-y-0.5 active:scale-[0.99] active:translate-y-0 transition-transform`}
     >
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm text-gray-900">{full}</p>
-          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+          <p className="font-bold text-sm text-[var(--text)]">{full}</p>
+          <p className="text-xs text-[var(--text-faint)] mt-0.5 flex items-center gap-1">
             <Users className="w-3 h-3" />
             {participants.total} người · ♂ {participants.male_count} · ♀{" "}
             {participants.female_count}
@@ -437,8 +437,8 @@ function SessionCostCard({
           {!isBreakEven && (
             <span
               className={`flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full ${isProfit
-                ? "bg-emerald-50 text-emerald-600"
-                : "bg-red-50 text-red-500"
+                ? "bg-[var(--success-soft)] text-[var(--success)]"
+                : "bg-[var(--danger-soft)] text-[var(--danger)]"
                 }`}
             >
               {isProfit ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -450,56 +450,56 @@ function SessionCostCard({
         </div>
       </div>
 
-      <div className="mx-4 mb-3 rounded-xl bg-gray-50 px-3 py-2.5 space-y-1.5">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+      <div className="mx-4 mb-3 rounded-xl bg-[var(--surface-muted)] px-3 py-2.5 space-y-1.5">
+        <p className="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wider mb-2">
           Chi phí thực tế
         </p>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-500">🏟 Sân</span>
-          <span className="font-medium text-gray-700">
+          <span className="text-[var(--text-muted)]">🏟 Sân</span>
+          <span className="font-medium text-[var(--text)]">
             {fmtFull(chi_phi.court_fee)}
           </span>
         </div>
         {chi_phi.shuttle_count > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">
+            <span className="text-[var(--text-muted)]">
               🏸 Cầu
-              <span className="text-gray-400 text-xs ml-1">
+              <span className="text-[var(--text-faint)] text-xs ml-1">
                 {chi_phi.shuttle_count} × {fmt(chi_phi.shuttle_price)}
               </span>
             </span>
-            <span className="font-medium text-gray-700">
+            <span className="font-medium text-[var(--text)]">
               {fmtFull(chi_phi.shuttle_cost)}
             </span>
           </div>
         )}
         {chi_phi.other_fee > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">
+            <span className="text-[var(--text-muted)]">
               📌 Khoản khác
               {chi_phi.other_fee_note && (
-                <span className="text-gray-400 text-xs ml-1">
+                <span className="text-[var(--text-faint)] text-xs ml-1">
                   ({chi_phi.other_fee_note})
                 </span>
               )}
             </span>
-            <span className="font-medium text-amber-600">
+            <span className="font-medium text-[var(--warning)]">
               {fmtFull(chi_phi.other_fee)}
             </span>
           </div>
         )}
 
-        <div className="pt-1.5 border-t border-gray-200 mt-1 space-y-1">
+        <div className="pt-1.5 border-t border-[var(--border)] mt-1 space-y-1">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">💰 Tổng chi</span>
-            <span className="font-semibold text-gray-700">
+            <span className="text-[var(--text-muted)]">💰 Tổng chi</span>
+            <span className="font-semibold text-[var(--text)]">
               {fmtFull(chi_phi.total_cost)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">💵 Tổng thu</span>
+            <span className="text-[var(--text-muted)]">💵 Tổng thu</span>
             <span
-              className={`font-semibold ${isBreakEven ? "text-blue-600" : isProfit ? "text-emerald-600" : "text-red-500"}`}
+              className={`font-semibold ${isBreakEven ? "text-[var(--primary)]" : isProfit ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
             >
               {fmtFull(chi_phi.total_paid)}
             </span>
@@ -507,13 +507,13 @@ function SessionCostCard({
         </div>
 
         {!isBreakEven && (
-          <div className="flex justify-between text-sm pt-1.5 border-t border-gray-200 mt-1">
-            <span className="font-semibold text-gray-700 flex items-center gap-1">
-              {isProfit ? <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-500" />}
+          <div className="flex justify-between text-sm pt-1.5 border-t border-[var(--border)] mt-1">
+            <span className="font-semibold text-[var(--text)] flex items-center gap-1">
+              {isProfit ? <TrendingUp className="w-3.5 h-3.5 text-[var(--success)]" /> : <TrendingDown className="w-3.5 h-3.5 text-[var(--danger)]" />}
               {isProfit ? "Lãi" : "Lỗ"}
             </span>
             <span
-              className={`font-black ${isProfit ? "text-emerald-600" : "text-red-500"}`}
+              className={`font-black ${isProfit ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
             >
               {isProfit ? "+" : ""}
               {fmtFull(chi_phi.profit)}
@@ -528,14 +528,14 @@ function SessionCostCard({
 function SkeletonStats() {
   return (
     <div className="space-y-3 animate-pulse">
-      <div className="h-28 bg-white rounded-2xl" />
+      <div className="h-28 bg-[var(--surface)] rounded-2xl" />
       <div className="grid grid-cols-3 gap-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-16 bg-white rounded-2xl" />
+          <div key={i} className="h-16 bg-[var(--surface)] rounded-2xl" />
         ))}
       </div>
       {[0, 1, 2].map((i) => (
-        <div key={i} className="h-40 bg-white rounded-2xl" />
+        <div key={i} className="h-40 bg-[var(--surface)] rounded-2xl" />
       ))}
     </div>
   );
@@ -589,15 +589,12 @@ export default function CostPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1
-          className="text-xl font-bold text-dark flex items-center gap-2"
-          style={{ textShadow: "0 1px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.8)" }}
-        >
-          <Wallet className="w-5 h-5 text-violet-600" /> Chi phí
+        <h1 className="text-xl font-bold text-[var(--text)] flex items-center gap-2">
+          <Wallet className="w-5 h-5 text-[var(--purple)]" /> Chi phí
         </h1>
         <button
           onClick={() => load(true)}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-dark/70 hover:bg-white/10 transition-colors"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-dark/70 hover:bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] transition-colors"
         >
           <RefreshCw
             className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
@@ -635,45 +632,37 @@ export default function CostPage() {
       {loading ? (
         <SkeletonStats />
       ) : !data ? (
-        <div className="bg-white rounded-2xl py-14 text-center">
-          <p className="text-gray-400 text-sm">Không thể tải dữ liệu</p>
+        <div className="bg-[var(--surface)] rounded-2xl py-14 text-center">
+          <p className="text-[var(--text-faint)] text-sm">Không thể tải dữ liệu</p>
         </div>
       ) : (
         <>
           <FadeIn delay={0}>
-            <div className="bg-gradient-to-br from-violet-600 to-blue-600 rounded-2xl p-4 text-white">
-              <p className="text-white/60 text-xs mb-3">
-                Tổng quan chi phí thực tế
-              </p>
+            <div className="rounded-2xl p-4 text-white bg-gradient-to-br from-violet-600 to-blue-600 dark:from-violet-900 dark:via-indigo-900 dark:to-blue-950 dark:border dark:border-white/10">
+              <p className="text-white/75 text-xs mb-3">Tổng quan chi phí thực tế</p>
               <div className="grid grid-cols-4 gap-3">
-                <div className="bg-white/15 rounded-xl p-3 text-center">
-                  <p className="text-xl font-black">
-                    {fmt(s.total_actual_cost)}
-                  </p>
-                  <p className="text-white/60 text-[10px] mt-0.5">Sân + cầu</p>
+                <div className="bg-white/15 dark:bg-white/10 rounded-xl p-3 text-center">
+                  <p className="text-xl font-black">{fmt(s.total_actual_cost)}</p>
+                  <p className="text-white/75 text-[10px] mt-0.5">Sân + cầu</p>
                 </div>
-                <div className="bg-white/15 rounded-xl p-3 text-center">
-                  <p className="text-xl font-black text-amber-300">
-                    {fmt(s.total_other_fee)}
-                  </p>
-                  <p className="text-white/60 text-[10px] mt-0.5">Khoản khác</p>
+                <div className="bg-white/15 dark:bg-white/10 rounded-xl p-3 text-center">
+                  <p className="text-xl font-black text-amber-300">{fmt(s.total_other_fee)}</p>
+                  <p className="text-white/75 text-[10px] mt-0.5">Khoản khác</p>
                 </div>
-                <div className="bg-white/15 rounded-xl p-3 text-center">
+                <div className="bg-white/15 dark:bg-white/10 rounded-xl p-3 text-center">
                   <p
                     className={`text-xl font-black ${s.total_profit >= 0 ? "text-emerald-300" : "text-red-300"}`}
                   >
                     {s.total_profit >= 0 ? "+" : ""}
                     {fmt(s.total_profit)}
                   </p>
-                  <p className="text-white/60 text-[10px] mt-0.5">
+                  <p className="text-white/75 text-[10px] mt-0.5">
                     {s.total_profit >= 0 ? "Lãi lũy kế" : "Lỗ lũy kế"}
                   </p>
                 </div>
-                <div className="bg-white/15 rounded-xl p-3 text-center">
-                  <p className="text-xl font-black">
-                    {s.total_male + s.total_female}
-                  </p>
-                  <p className="text-white/60 text-[10px] mt-0.5">
+                <div className="bg-white/15 dark:bg-white/10 rounded-xl p-3 text-center">
+                  <p className="text-xl font-black">{s.total_male + s.total_female}</p>
+                  <p className="text-white/75 text-[10px] mt-0.5">
                     ♂ {s.total_male} · ♀ {s.total_female}
                   </p>
                 </div>
@@ -683,23 +672,23 @@ export default function CostPage() {
 
           <FadeIn delay={80}>
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
-                <p className="text-2xl font-black text-gray-800">
+              <div className="bg-[var(--surface)] rounded-2xl p-3 text-center shadow-sm">
+                <p className="text-2xl font-black text-[var(--text)]">
                   {s.total_sessions}
                 </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Buổi đánh</p>
+                <p className="text-[10px] text-[var(--text-faint)] mt-0.5">Buổi đánh</p>
               </div>
-              <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
-                <p className="text-2xl font-black text-gray-800">
+              <div className="bg-[var(--surface)] rounded-2xl p-3 text-center shadow-sm">
+                <p className="text-2xl font-black text-[var(--text)]">
                   {s.total_shuttle_count}
                 </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Quả cầu</p>
+                <p className="text-[10px] text-[var(--text-faint)] mt-0.5">Quả cầu</p>
               </div>
-              <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
-                <p className="text-xl font-black text-gray-800">
+              <div className="bg-[var(--surface)] rounded-2xl p-3 text-center shadow-sm">
+                <p className="text-xl font-black text-[var(--text)]">
                   {fmt(s.avg_cost_per_session)}
                 </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">TB/buổi</p>
+                <p className="text-[10px] text-[var(--text-faint)] mt-0.5">TB/buổi</p>
               </div>
             </div>
           </FadeIn>
@@ -708,10 +697,10 @@ export default function CostPage() {
             <div key={month} className="space-y-3">
               <FadeIn delay={220 + groupIdx * 40}>
                 <div className="flex items-center gap-2 px-1">
-                  <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                  <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--surface-muted)] px-2.5 py-1 rounded-full">
                     {month}
                   </span>
-                  <div className="flex-1 h-px bg-gray-100" />
+                  <div className="flex-1 h-px bg-[var(--surface-muted)]" />
                 </div>
               </FadeIn>
               {items.map((item: any, idx: number) => (
@@ -730,8 +719,8 @@ export default function CostPage() {
 
           {completedSessions.length === 0 && (
             <FadeIn delay={200}>
-              <div className="bg-white rounded-2xl py-14 text-center">
-                <p className="text-gray-400 text-sm">Chưa có buổi đánh nào hoàn thành</p>
+              <div className="bg-[var(--surface)] rounded-2xl py-14 text-center">
+                <p className="text-[var(--text-faint)] text-sm">Chưa có buổi đánh nào hoàn thành</p>
               </div>
             </FadeIn>
           )}

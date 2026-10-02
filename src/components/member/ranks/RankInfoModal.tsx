@@ -107,7 +107,7 @@ export function RankInfoModal({ onClose }: RankInfoModalProps) {
             >
                 <button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-colors"
+                    className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full flex items-center justify-center bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] text-white backdrop-blur-sm transition-colors"
                 >
                     <X className="w-5 h-5" />
                 </button>
@@ -132,7 +132,7 @@ export function RankInfoModal({ onClose }: RankInfoModalProps) {
                 {!isFirst && (
                     <button
                         onClick={goPrev}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-colors"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] text-white backdrop-blur-sm transition-colors"
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
@@ -140,7 +140,7 @@ export function RankInfoModal({ onClose }: RankInfoModalProps) {
                 {!isLast && (
                     <button
                         onClick={goNext}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] text-white backdrop-blur-sm transition-colors"
                     >
                         <ChevronRight className="w-5 h-5" />
                     </button>

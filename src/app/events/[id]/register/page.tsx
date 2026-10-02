@@ -330,7 +330,7 @@ export default function TournamentRegisterPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--text-faint)]" />
       </div>
     );
   }
@@ -342,9 +342,9 @@ export default function TournamentRegisterPage() {
     (entryFee === 0 && !!registration);
 
   return (
-    <div className="min-h-screen bg-[#F4F6FA]">
+    <div className="min-h-screen bg-[var(--bg)]">
       <div
-        className="sticky top-0 z-40 bg-[#F4F6FA]/95 backdrop-blur-sm border-b border-gray-100 px-4 sm:px-6 md:px-8"
+        className="sticky top-0 z-40 bg-[var(--bg)]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 sm:px-6 md:px-8"
         style={{
           paddingTop: "calc(1rem + env(safe-area-inset-top))",
           paddingBottom: "0.75rem",
@@ -355,23 +355,23 @@ export default function TournamentRegisterPage() {
             <button
               onClick={() => router.back()}
               aria-label="Quay lại"
-              className="w-9 h-9 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-600 hover:bg-gray-50 flex-shrink-0"
+              className="w-9 h-9 rounded-full bg-[var(--surface)] shadow-sm flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-hover)] flex-shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-1.5 text-sm text-gray-400 min-w-0">
+            <div className="flex items-center gap-1.5 text-sm text-[var(--text-faint)] min-w-0">
               <span className="flex-shrink-0">Giải đấu</span>
               <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="truncate min-w-0">{activity.title}</span>
               <ChevronRight className="w-3.5 h-3.5 flex-shrink-0 hidden sm:block" />
-              <span className="text-gray-900 font-medium flex-shrink-0 hidden sm:inline">
+              <span className="text-[var(--text)] font-medium flex-shrink-0 hidden sm:inline">
                 Đăng ký thi đấu
               </span>
             </div>
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)]">
             Đăng ký thi đấu cá nhân
           </h1>
         </div>
@@ -380,7 +380,7 @@ export default function TournamentRegisterPage() {
       {/* ── Nội dung cuộn bình thường ── */}
       <div className="p-4 sm:p-6 md:p-8 pt-4 sm:pt-5">
         <div className="max-w-6xl mx-auto space-y-4 sm:space-y-5">
-          <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm">
+          <div className="bg-[var(--surface)] rounded-2xl p-4 sm:p-5 shadow-sm">
             <div className="flex items-center">
               {STEPS.map((s, i) => (
                 <div
@@ -391,26 +391,26 @@ export default function TournamentRegisterPage() {
                     <div
                       className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${step >= s.key
                         ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-400"
+                        : "bg-[var(--surface-muted)] text-[var(--text-faint)]"
                         }`}
                     >
                       {s.key}
                     </div>
                     <div className="min-w-0">
                       <p
-                        className={`text-xs sm:text-sm font-semibold truncate ${step >= s.key ? "text-gray-900" : "text-gray-400"
+                        className={`text-xs sm:text-sm font-semibold truncate ${step >= s.key ? "text-[var(--text)]" : "text-[var(--text-faint)]"
                           }`}
                       >
                         {s.title}
                       </p>
-                      <p className="hidden sm:block text-xs text-gray-400 truncate">
+                      <p className="hidden sm:block text-xs text-[var(--text-faint)] truncate">
                         {s.sub}
                       </p>
                     </div>
                   </div>
                   {i < STEPS.length - 1 && (
                     <div
-                      className={`flex-1 h-0.5 mx-2.5 sm:mx-3 ${step > s.key ? "bg-blue-600" : "bg-gray-100"
+                      className={`flex-1 h-0.5 mx-2.5 sm:mx-3 ${step > s.key ? "bg-blue-600" : "bg-[var(--surface-muted)]"
                         }`}
                     />
                   )}
@@ -422,11 +422,11 @@ export default function TournamentRegisterPage() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] items-start gap-4 sm:gap-5">
             <div className="contents lg:flex lg:flex-col lg:gap-5 lg:col-start-2 lg:row-start-1">
               <div className="space-y-4 sm:space-y-5 order-1 lg:order-none">
-                <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
-                  <p className="font-bold text-gray-900 text-sm">
+                <div className="bg-[var(--surface)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+                  <p className="font-bold text-[var(--text)] text-sm">
                     Thông tin giải đấu
                   </p>
-                  <div className="rounded-xl overflow-hidden h-24 sm:h-28 bg-gray-100">
+                  <div className="rounded-xl overflow-hidden h-24 sm:h-28 bg-[var(--surface-muted)]">
                     {activity.cover_image_url && (
                       <img
                         src={activity.cover_image_url}
@@ -462,20 +462,20 @@ export default function TournamentRegisterPage() {
                 </div>
 
                 {entryFee > 0 && (
-                  <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-1">
-                    <p className="font-bold text-gray-900 text-sm mb-1">
+                  <div className="bg-[var(--surface)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1">
+                    <p className="font-bold text-[var(--text)] text-sm mb-1">
                       Lệ phí thi đấu
                     </p>
-                    <p className="text-xl sm:text-2xl font-black text-red-600">
+                    <p className="text-xl sm:text-2xl font-black text-[var(--danger)]">
                       {fmt(entryFee)}{" "}
-                      <span className="text-sm font-medium text-gray-400">
+                      <span className="text-sm font-medium text-[var(--text-faint)]">
                         / người
                       </span>
                     </p>
-                    <div className="flex justify-between text-sm text-gray-500 pt-1">
+                    <div className="flex justify-between text-sm text-[var(--text-muted)] pt-1">
                       <span>Số lượng</span> <span>1 người</span>
                     </div>
-                    <div className="flex justify-between text-sm font-semibold text-gray-900 pt-1 border-t border-gray-50 mt-1">
+                    <div className="flex justify-between text-sm font-semibold text-[var(--text)] pt-1 border-t border-[var(--border)] mt-1">
                       <span>Tổng cộng</span> <span>{fmt(entryFee)}</span>
                     </div>
                   </div>
@@ -483,8 +483,8 @@ export default function TournamentRegisterPage() {
               </div>
 
               <div className="order-3 lg:order-none">
-                <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-2.5">
-                  <p className="font-bold text-gray-900 text-sm">
+                <div className="bg-[var(--surface)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-2.5">
+                  <p className="font-bold text-[var(--text)] text-sm">
                     Thông tin đăng ký
                   </p>
                   <SidebarRow label="Họ và tên" value={form.full_name || "—"} />
@@ -497,7 +497,7 @@ export default function TournamentRegisterPage() {
                     label="Trình độ"
                     value={
                       form.level ? (
-                        <span className="text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded-full text-xs">{`Trình ${form.level}`}</span>
+                        <span className="text-[var(--warning)] font-semibold bg-[var(--warning-soft)] px-2 py-0.5 rounded-full text-xs">{`Trình ${form.level}`}</span>
                       ) : (
                         "—"
                       )
@@ -511,16 +511,16 @@ export default function TournamentRegisterPage() {
               </div>
 
               <div className="order-5 lg:order-none">
-                <div className="bg-blue-50 rounded-2xl p-4 sm:p-5 space-y-2">
-                  <p className="font-bold text-gray-900 text-sm">Bạn cần hỗ trợ?</p>
-                  <p className="text-xs text-blue-700 leading-relaxed">
+                <div className="bg-[var(--primary-soft)] rounded-2xl p-4 sm:p-5 space-y-2">
+                  <p className="font-bold text-[var(--text)] text-sm">Bạn cần hỗ trợ?</p>
+                  <p className="text-xs text-[var(--primary)] leading-relaxed">
                     Liên hệ BTC qua số điện thoại hoặc Fanpage để được hỗ trợ nhanh
                     nhất.
                   </p>
                   <button
                     type="button"
                     onClick={() => setShowContactModal(true)}
-                    className="w-full py-2 rounded-lg bg-white text-blue-600 text-sm font-medium border border-blue-100"
+                    className="w-full py-2 rounded-lg bg-[var(--surface)] text-[var(--primary)] text-sm font-medium border border-[color-mix(in_srgb,var(--primary)_30%,transparent)]"
                   >
                     Liên hệ BTC
                   </button>
@@ -531,23 +531,23 @@ export default function TournamentRegisterPage() {
             <div className="contents lg:flex lg:flex-col lg:gap-5 lg:col-start-1 lg:row-start-1">
               <div className="space-y-4 sm:space-y-5 min-w-0 order-2 lg:order-none">
                 {step === 1 && (
-                  <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+                  <div className="bg-[var(--surface)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
                     <SectionTitle
                       icon={<User className="w-4 h-4" />}
                       title="Thông tin cá nhân"
                     />
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Họ và tên <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-[var(--text)] mb-1">
+                        Họ và tên <span className="text-[var(--danger)]">*</span>
                       </label>
                       {form.member ? (
                         <button
                           type="button"
                           onClick={() => setShowMemberSearch(true)}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-gray-200 text-left"
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[var(--border)] text-left"
                         >
-                          <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-[var(--surface-muted)] overflow-hidden flex-shrink-0">
                             {form.member.avatar_url && (
                               <img
                                 src={form.member.avatar_url}
@@ -555,10 +555,10 @@ export default function TournamentRegisterPage() {
                               />
                             )}
                           </div>
-                          <span className="flex-1 min-w-0 truncate text-sm font-medium text-gray-900">
+                          <span className="flex-1 min-w-0 truncate text-sm font-medium text-[var(--text)]">
                             {form.full_name}
                           </span>
-                          <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex-shrink-0">
+                          <span className="text-xs font-semibold text-[var(--success)] bg-[var(--success-soft)] px-2 py-0.5 rounded-full flex-shrink-0">
                             Thành viên
                           </span>
                           <button
@@ -567,7 +567,7 @@ export default function TournamentRegisterPage() {
                               e.stopPropagation();
                               clearMember();
                             }}
-                            className="text-gray-300 hover:text-red-500 flex-shrink-0"
+                            className="text-[var(--text-faint)] hover:text-[var(--danger)] flex-shrink-0"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -585,13 +585,13 @@ export default function TournamentRegisterPage() {
                           <button
                             type="button"
                             onClick={() => setShowMemberSearch(true)}
-                            className="px-3 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 flex-shrink-0"
+                            className="px-3 rounded-xl border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] flex-shrink-0"
                           >
                             <Search className="w-4 h-4" />
                           </button>
                         </div>
                       )}
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-[var(--text-faint)] mt-1">
                         {form.member
                           ? "Đã tự động điền thông tin tài khoản của bạn. Bấm để đổi sang thành viên khác."
                           : "Chọn từ danh sách thành viên để tự động điền thông tin."}
@@ -632,12 +632,12 @@ export default function TournamentRegisterPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Giới tính <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
+                        Giới tính <span className="text-[var(--danger)]">*</span>
                       </label>
                       <div className="flex gap-4">
                         {(["nam", "nu"] as const).map((g) => (
-                          <label key={g} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                          <label key={g} className="flex items-center gap-2 text-sm text-[var(--text)] cursor-pointer">
                             <input
                               type="radio"
                               checked={form.gender === g}
@@ -651,8 +651,8 @@ export default function TournamentRegisterPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Vai trò đăng ký <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-[var(--text)] mb-2">
+                        Vai trò đăng ký <span className="text-[var(--danger)]">*</span>
                       </label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {(
@@ -668,18 +668,18 @@ export default function TournamentRegisterPage() {
                               type="button"
                               disabled={isLocked}
                               onClick={() => setForm((f) => ({ ...f, role: r.value }))}
-                              className={`flex items-center gap-3 rounded-2xl border-2 p-3 sm:p-3.5 text-left transition-colors ${form.role === r.value ? "border-blue-500 bg-blue-50/40" : "border-gray-200"
+                              className={`flex items-center gap-3 rounded-2xl border-2 p-3 sm:p-3.5 text-left transition-colors ${form.role === r.value ? "border-blue-500 bg-[var(--primary-soft)]" : "border-[var(--border)]"
                                 } ${isLocked ? "opacity-40 cursor-not-allowed grayscale" : ""}`}
                             >
                               <span
-                                className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${r.value === "nam" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"
+                                className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${r.value === "nam" ? "bg-[var(--primary-soft)] text-[var(--primary)]" : "bg-[var(--pink-soft)] text-[var(--pink)]"
                                   }`}
                               >
                                 {r.value === "nam" ? "♂" : "♀"}
                               </span>
                               <div className="min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{r.label}</p>
-                                <p className="text-xs text-gray-400 truncate">
+                                <p className="text-sm font-semibold text-[var(--text)] truncate">{r.label}</p>
+                                <p className="text-xs text-[var(--text-faint)] truncate">
                                   {isLocked ? "Không khớp giới tính tài khoản" : r.sub}
                                 </p>
                               </div>
@@ -688,15 +688,15 @@ export default function TournamentRegisterPage() {
                         })}
                       </div>
                       {isMember && (
-                        <p className="text-xs text-gray-400 mt-1.5">
+                        <p className="text-xs text-[var(--text-faint)] mt-1.5">
                           Vai trò đăng ký tự động khớp với giới tính tài khoản của bạn.
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Trình độ hiện tại <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-[var(--text)] mb-2">
+                        Trình độ hiện tại <span className="text-[var(--danger)]">*</span>
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                         {LEVEL_OPTIONS.map((lv) => (
@@ -704,7 +704,7 @@ export default function TournamentRegisterPage() {
                             key={lv.value}
                             type="button"
                             onClick={() => setForm((f) => ({ ...f, level: lv.value as any }))}
-                            className={`relative rounded-2xl border-2 p-2.5 sm:p-3 text-center transition-colors ${form.level === lv.value ? "border-blue-500 bg-blue-50/40" : "border-gray-200"}`}
+                            className={`relative rounded-2xl border-2 p-2.5 sm:p-3 text-center transition-colors ${form.level === lv.value ? "border-blue-500 bg-[var(--primary-soft)]" : "border-[var(--border)]"}`}
                           >
                             {form.level === lv.value && (
                               <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-4 h-4 rounded bg-blue-600 flex items-center justify-center">
@@ -714,15 +714,15 @@ export default function TournamentRegisterPage() {
                             <span className="w-8 h-8 sm:w-9 sm:h-9 mx-auto rounded-full flex items-center justify-center text-sm font-bold mb-1.5" style={{ background: lv.bg, color: lv.color }}>
                               {lv.value}
                             </span>
-                            <p className="text-xs sm:text-sm font-semibold text-gray-800">{lv.label}</p>
-                            <p className="text-[11px] sm:text-xs text-gray-400">{lv.sub}</p>
+                            <p className="text-xs sm:text-sm font-semibold text-[var(--text)]">{lv.label}</p>
+                            <p className="text-[11px] sm:text-xs text-[var(--text-faint)]">{lv.sub}</p>
                           </button>
                         ))}
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
                         Ghi chú thêm (nếu có)
                       </label>
                       <textarea
@@ -735,7 +735,7 @@ export default function TournamentRegisterPage() {
                           setForm((f) => ({ ...f, notes: e.target.value }))
                         }
                       />
-                      <p className="text-xs text-gray-400 mt-1 text-right">
+                      <p className="text-xs text-[var(--text-faint)] mt-1 text-right">
                         {form.notes.length}/200
                       </p>
                     </div>
@@ -743,19 +743,19 @@ export default function TournamentRegisterPage() {
                 )}
 
                 {step === 2 && (
-                  <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+                  <div className="bg-[var(--surface)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
                     <SectionTitle icon="💳" title="Hoàn tất đăng ký" />
 
                     {entryFee === 0 ? (
                       isDone ? (
                         <div className="text-center py-6 space-y-3">
-                          <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 flex items-center justify-center">
-                            <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+                          <div className="w-14 h-14 mx-auto rounded-full bg-[var(--success-soft)] flex items-center justify-center">
+                            <CheckCircle2 className="w-7 h-7 text-[var(--success)]" />
                           </div>
-                          <h3 className="font-bold text-gray-900 text-lg">
+                          <h3 className="font-bold text-[var(--text)] text-lg">
                             Đăng ký thành công!
                           </h3>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-[var(--text-muted)]">
                             Cảm ơn bạn đã đăng ký tham gia giải đấu.
                           </p>
                           <button
@@ -767,7 +767,7 @@ export default function TournamentRegisterPage() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-[var(--text-muted)]">
                             Giải đấu này không thu lệ phí. Bấm xác nhận để hoàn tất
                             đăng ký.
                           </p>
@@ -785,13 +785,13 @@ export default function TournamentRegisterPage() {
                       )
                     ) : paymentOutcome === "confirmed" ? (
                       <div className="text-center py-6 space-y-3">
-                        <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 flex items-center justify-center">
-                          <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+                        <div className="w-14 h-14 mx-auto rounded-full bg-[var(--success-soft)] flex items-center justify-center">
+                          <CheckCircle2 className="w-7 h-7 text-[var(--success)]" />
                         </div>
-                        <h3 className="font-bold text-gray-900 text-lg">
+                        <h3 className="font-bold text-[var(--text)] text-lg">
                           Đã thanh toán thành công!
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-[var(--text-muted)]">
                           Đã trừ {fmt(entryFee)} từ Ví BNB của bạn.
                           {walletNewBalance != null &&
                             ` Số dư còn lại: ${fmt(walletNewBalance)}.`}
@@ -805,13 +805,13 @@ export default function TournamentRegisterPage() {
                       </div>
                     ) : paymentOutcome === "pending_admin" ? (
                       <div className="text-center py-6 space-y-3">
-                        <div className="w-14 h-14 mx-auto rounded-full bg-amber-50 flex items-center justify-center">
-                          <CheckCircle2 className="w-7 h-7 text-amber-600" />
+                        <div className="w-14 h-14 mx-auto rounded-full bg-[var(--warning-soft)] flex items-center justify-center">
+                          <CheckCircle2 className="w-7 h-7 text-[var(--warning)]" />
                         </div>
-                        <h3 className="font-bold text-gray-900 text-lg">
+                        <h3 className="font-bold text-[var(--text)] text-lg">
                           Đã gửi yêu cầu thành công!
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-[var(--text-muted)]">
                           BTC sẽ kiểm tra và xác nhận thanh toán của bạn trong thời
                           gian sớm nhất.
                         </p>
@@ -824,13 +824,13 @@ export default function TournamentRegisterPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="bg-amber-50 rounded-xl px-4 py-3 text-sm text-amber-700">
+                        <div className="bg-[var(--warning-soft)] rounded-xl px-4 py-3 text-sm text-[var(--warning)]">
                           Lệ phí thi đấu: <strong>{fmt(entryFee)}</strong>/người.
                           Vui lòng hoàn tất thanh toán để xác nhận đăng ký.
                         </div>
 
                         <div>
-                          <p className="text-sm font-medium text-gray-700 mb-2">
+                          <p className="text-sm font-medium text-[var(--text)] mb-2">
                             Phương thức thanh toán
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -859,7 +859,7 @@ export default function TournamentRegisterPage() {
                             />
                           </div>
                           {!isMember && (
-                            <p className="text-xs text-gray-400 mt-2">
+                            <p className="text-xs text-[var(--text-faint)] mt-2">
                               Đăng ký khách (không có tài khoản) chỉ hỗ trợ chuyển
                               khoản hoặc tiền mặt.
                             </p>
@@ -880,10 +880,10 @@ export default function TournamentRegisterPage() {
                         )}
 
                         {payMethod === "transfer" && (
-                          <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                          <div className="bg-[var(--surface-muted)] rounded-xl p-4 space-y-3">
                             {submitting && !registration ? (
                               <div className="flex justify-center py-6">
-                                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                                <Loader2 className="w-5 h-5 animate-spin text-[var(--text-faint)]" />
                               </div>
                             ) : (
                               <>
@@ -891,15 +891,15 @@ export default function TournamentRegisterPage() {
                                   <img
                                     src={qrUrl}
                                     alt="QR chuyển khoản"
-                                    className="w-40 h-40 sm:w-48 sm:h-48 rounded-lg border border-gray-200 bg-white"
+                                    className="w-40 h-40 sm:w-48 sm:h-48 rounded-lg border border-[var(--border)] bg-[var(--surface)]"
                                   />
                                 </div>
                                 <div className="flex items-center justify-between gap-3">
                                   <div className="min-w-0">
-                                    <p className="text-xs text-gray-400">
+                                    <p className="text-xs text-[var(--text-faint)]">
                                       Nội dung chuyển khoản
                                     </p>
-                                    <p className="font-mono font-semibold text-red-600 truncate">
+                                    <p className="font-mono font-semibold text-[var(--danger)] truncate">
                                       {paymentRef}
                                     </p>
                                   </div>
@@ -911,7 +911,7 @@ export default function TournamentRegisterPage() {
                                         "Đã copy nội dung chuyển khoản",
                                       );
                                     }}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-white flex-shrink-0"
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--text-muted)] hover:bg-[var(--surface)] flex-shrink-0"
                                   >
                                     <Copy className="w-3.5 h-3.5" /> Sao chép
                                   </button>
@@ -955,7 +955,7 @@ export default function TournamentRegisterPage() {
                     <button
                       onClick={goBack}
                       aria-label="Quay lại"
-                      className="flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-white flex-shrink-0"
+                      className="flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface)] flex-shrink-0"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       <span className="hidden sm:inline">Quay lại</span>
@@ -972,7 +972,7 @@ export default function TournamentRegisterPage() {
                   <div className="flex items-center justify-between">
                     <button
                       onClick={goBack}
-                      className="flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-white"
+                      className="flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface)]"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       <span className="hidden sm:inline">Quay lại</span>
@@ -992,36 +992,36 @@ export default function TournamentRegisterPage() {
             e.target === e.currentTarget && setShowMemberSearch(false)
           }
         >
-          <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3">
+          <div className="bg-[var(--surface)] w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3">
             <div className="flex items-center justify-between">
-              <p className="font-bold text-gray-900">Tìm thành viên</p>
+              <p className="font-bold text-[var(--text)]">Tìm thành viên</p>
               <button onClick={() => setShowMemberSearch(false)}>
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5 text-[var(--text-faint)]" />
               </button>
             </div>
             <div className="relative">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[var(--text-faint)] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 autoFocus
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Nhập tên thành viên..."
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm"
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[var(--border)] text-sm"
               />
             </div>
             <div className="max-h-72 overflow-y-auto space-y-1">
               {searching ? (
                 <div className="flex justify-center py-6">
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[var(--text-faint)]" />
                 </div>
               ) : (
                 searchResults.map((m) => (
                   <button
                     key={m.id}
                     onClick={() => selectMember(m)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--surface-hover)] text-left"
                   >
-                    <div className="w-9 h-9 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-[var(--surface-muted)] overflow-hidden flex-shrink-0">
                       {m.avatar_url && (
                         <img
                           src={m.avatar_url}
@@ -1029,7 +1029,7 @@ export default function TournamentRegisterPage() {
                         />
                       )}
                     </div>
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-[var(--text)] truncate">
                       {m.full_name}
                     </p>
                   </button>
@@ -1038,7 +1038,7 @@ export default function TournamentRegisterPage() {
               {!searching &&
                 search.trim().length >= 2 &&
                 searchResults.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-6">
+                  <p className="text-sm text-[var(--text-faint)] text-center py-6">
                     Không tìm thấy — bạn có thể đăng ký như khách bằng cách đóng
                     cửa sổ này và tự nhập thông tin.
                   </p>
@@ -1055,14 +1055,14 @@ export default function TournamentRegisterPage() {
             e.target === e.currentTarget && setShowContactModal(false)
           }
         >
-          <div className="bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-4">
+          <div className="bg-[var(--surface)] w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-4">
             <div className="flex items-center justify-between">
-              <p className="font-bold text-gray-900">Liên hệ Ban tổ chức</p>
+              <p className="font-bold text-[var(--text)]">Liên hệ Ban tổ chức</p>
               <button onClick={() => setShowContactModal(false)}>
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5 text-[var(--text-faint)]" />
               </button>
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-[var(--text-muted)]">
               Chọn cách bạn muốn liên hệ để được hỗ trợ nhanh nhất.
             </p>
 
@@ -1072,16 +1072,16 @@ export default function TournamentRegisterPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setShowContactModal(false)}
-                className="flex items-center gap-3 rounded-2xl border-2 border-gray-200 p-3.5 hover:border-blue-500 hover:bg-blue-50/40 transition-colors"
+                className="flex items-center gap-3 rounded-2xl border-2 border-[var(--border)] p-3.5 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors"
               >
-                <span className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="w-10 h-10 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center flex-shrink-0">
                   <MessageCircle className="w-5 h-5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-[var(--text)]">
                     Nhắn tin qua Zalo
                   </p>
-                  <p className="text-xs text-gray-400 truncate">
+                  <p className="text-xs text-[var(--text-faint)] truncate">
                     Trò chuyện trực tiếp với BTC
                   </p>
                 </div>
@@ -1090,16 +1090,16 @@ export default function TournamentRegisterPage() {
               <a
                 href={`tel:${CONTACT_PHONE}`}
                 onClick={() => setShowContactModal(false)}
-                className="flex items-center gap-3 rounded-2xl border-2 border-gray-200 p-3.5 hover:border-blue-500 hover:bg-blue-50/40 transition-colors"
+                className="flex items-center gap-3 rounded-2xl border-2 border-[var(--border)] p-3.5 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors"
               >
-                <span className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                <span className="w-10 h-10 rounded-full bg-[var(--success-soft)] text-[var(--success)] flex items-center justify-center flex-shrink-0">
                   <PhoneCall className="w-5 h-5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-[var(--text)]">
                     Gọi điện thoại
                   </p>
-                  <p className="text-xs text-gray-400 truncate">
+                  <p className="text-xs text-[var(--text-faint)] truncate">
                     {CONTACT_PHONE}
                   </p>
                 </div>
@@ -1121,10 +1121,10 @@ function SectionTitle({
 }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+      <span className="w-8 h-8 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center flex-shrink-0">
         {icon}
       </span>
-      <h3 className="font-bold text-gray-900">{title}</h3>
+      <h3 className="font-bold text-[var(--text)]">{title}</h3>
     </div>
   );
 }
@@ -1146,11 +1146,11 @@ function FieldInput({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label className="block text-sm font-medium text-[var(--text)] mb-1">
+        {label} {required && <span className="text-[var(--danger)]">*</span>}
       </label>
-      <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
-        {icon && <span className="text-gray-400 flex-shrink-0">{icon}</span>}
+      <div className="flex items-center gap-2 border border-[var(--border)] rounded-xl px-3 py-2">
+        {icon && <span className="text-[var(--text-faint)] flex-shrink-0">{icon}</span>}
         <input
           type={type}
           value={value}
@@ -1179,17 +1179,17 @@ function PaymentOption({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-start gap-3 rounded-2xl border-2 p-3 sm:p-3.5 text-left transition-colors ${active ? "border-blue-500 bg-blue-50/40" : "border-gray-200"
+      className={`flex items-start gap-3 rounded-2xl border-2 p-3 sm:p-3.5 text-left transition-colors ${active ? "border-blue-500 bg-[var(--primary-soft)]" : "border-[var(--border)]"
         }`}
     >
-      <span className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+      <span className="w-9 h-9 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center flex-shrink-0">
         {icon}
       </span>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-gray-900 truncate">
+        <p className="text-sm font-semibold text-[var(--text)] truncate">
           {label}
         </p>
-        <p className="text-xs text-gray-400 truncate">{sub}</p>
+        <p className="text-xs text-[var(--text-faint)] truncate">{sub}</p>
       </div>
     </button>
   );
@@ -1206,10 +1206,10 @@ function SidebarRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
-      <span className="flex items-center gap-1.5 text-gray-400 flex-shrink-0">
+      <span className="flex items-center gap-1.5 text-[var(--text-faint)] flex-shrink-0">
         {icon} {label}
       </span>
-      <span className="font-medium text-gray-800 text-right truncate">
+      <span className="font-medium text-[var(--text)] text-right truncate">
         {value}
       </span>
     </div>

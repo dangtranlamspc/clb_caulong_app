@@ -77,14 +77,14 @@ const BANK_DISPLAY_NAMES: Record<string, string> = {
 
 
 const TIER_BADGE_CLS: Record<string, string> = {
-  'Tân thủ': 'bg-zinc-100 text-zinc-700 border-zinc-200',
-  'Phong trào': 'bg-orange-50 text-orange-700 border-orange-200',
-  'Cứng cựa': 'bg-slate-100 text-slate-700 border-slate-200',
-  'Chủ lực': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  'Cao thủ': 'bg-sky-50 text-sky-700 border-sky-200',
-  'Kiện tướng': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  'Đại Kiện Tướng': 'bg-blue-50 text-blue-700 border-blue-200',
-  'Huyền Thoại': 'bg-purple-50 text-purple-700 border-purple-200',
+  "Tân thủ": "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] dark:bg-zinc-500/15 dark:text-zinc-300 dark:border-zinc-500/30",
+  "Phong trào": "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)] dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/30",
+  "Cứng cựa": "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] dark:bg-slate-400/15 dark:text-slate-300 dark:border-slate-400/30",
+  "Chủ lực": "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-500/15 dark:text-yellow-300 dark:border-yellow-500/30",
+  "Cao thủ": "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30",
+  "Kiện tướng": "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)] dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+  "Đại Kiện Tướng": "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30",
+  "Huyền Thoại": "bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)] dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30",
 };
 
 function fmt(n: number) {
@@ -105,42 +105,42 @@ function getPaymentMethodBadge(reg: any, hostName?: string, ownName?: string) {
     return {
       label: hostName ? `Ví BNB của ${hostName}` : "Ví BNB",
       icon: <Wallet className="w-2.5 h-2.5" />,
-      cls: "bg-blue-100 text-blue-700",
+      cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
     };
   }
   if (m === "wallet" && isGroupedGuest) {
     return {
       label: ownName ? `Ví BNB của ${ownName}` : "Ví BNB",
       icon: <Wallet className="w-2.5 h-2.5" />,
-      cls: "bg-blue-100 text-blue-700",
+      cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
     };
   }
   if (m === "wallet" || m === "wallet_grouped") {
     return {
       label: "Ví BNB",
       icon: <Wallet className="w-2.5 h-2.5" />,
-      cls: "bg-blue-100 text-blue-700",
+      cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
     };
   }
   if (m === "grouped_with_host") {
     return {
       label: hostName ? `Chuyển khoản (gộp ${hostName})` : "Chuyển khoản",
       icon: <span>🏦</span>,
-      cls: "bg-sky-100 text-sky-700",
+      cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
     };
   }
   if (m === "cash") {
     return {
       label: "Tiền mặt",
       icon: <span>💵</span>,
-      cls: "bg-emerald-100 text-emerald-700",
+      cls: "bg-[var(--success-soft)] text-[var(--success)]",
     };
   }
   if (reg.payment_reference) {
     return {
       label: "Chuyển khoản",
       icon: <span>🏦</span>,
-      cls: "bg-sky-100 text-sky-700",
+      cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
     };
   }
   return null;
@@ -189,11 +189,11 @@ function WalletGuestConfirmModal({
   return createPortal(
     <div
       className="fixed inset-0 z-[99999] flex flex-col justify-end"
-      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(2px)" }}
+      style={{ background: "var(--overlay)", backdropFilter: "blur(2px)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="w-full bg-white rounded-t-2xl"
+        className="w-full bg-[var(--surface)] rounded-t-2xl"
         style={{
           maxHeight: "90vh",
           overflowY: "auto",
@@ -202,35 +202,35 @@ function WalletGuestConfirmModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-9 h-1 rounded-full bg-gray-200" />
+          <div className="w-9 h-1 rounded-full bg-[var(--border-strong)]" />
         </div>
 
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
           <div>
-            <p className="text-sm font-bold text-gray-900">
+            <p className="text-sm font-bold text-[var(--text)]">
               Xác nhận thanh toán khách đi cùng
             </p>
-            <p className="text-xs text-amber-600 mt-0.5">
+            <p className="text-xs text-[var(--warning)] mt-0.5">
               ⏱ Còn {hoursLeft}h để xác nhận — sau đó sẽ tự động gộp vào ví
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
           >
-            <XIcon className="w-4 h-4 text-gray-500" />
+            <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
           </button>
         </div>
 
         <div className="px-5 py-4 space-y-4">
           {/* Info */}
-          <div className="bg-blue-50 rounded-xl px-4 py-3 flex items-start gap-3">
-            <Wallet className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-[var(--primary-soft)] rounded-xl px-4 py-3 flex items-start gap-3">
+            <Wallet className="w-5 h-5 text-[var(--primary)] flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-blue-900">
+              <p className="text-sm font-semibold text-[var(--primary)]">
                 Phần của bạn đã được trừ ví
               </p>
-              <p className="text-xs text-blue-600 mt-0.5">
+              <p className="text-xs text-[var(--primary)] mt-0.5">
                 Khách đi cùng ({guestNames}) cần thanh toán{" "}
                 <strong>{fmt(guestTotal)}</strong>. Bạn muốn gộp chung vào ví
                 không?
@@ -241,46 +241,46 @@ function WalletGuestConfirmModal({
           <button
             onClick={() => handleConfirm("grouped")}
             disabled={submitting}
-            className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 active:scale-[0.99] transition-all text-left disabled:opacity-50"
+            className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] active:scale-[0.99] transition-all text-left disabled:opacity-50"
           >
-            <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <Wallet className="w-5 h-5 text-blue-600" />
+            <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+              <Wallet className="w-5 h-5 text-[var(--primary)]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-[var(--text)]">
                 Trừ thêm vào ví của tôi
               </p>
-              <p className="text-lg font-black text-blue-600">
+              <p className="text-lg font-black text-[var(--primary)]">
                 {fmt(guestTotal)}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-[var(--text-faint)] mt-0.5">
                 Gộp tiền cho {guestNames} vào ví BNB của bạn
               </p>
             </div>
             {submitting && (
-              <Loader2 className="w-4 h-4 animate-spin text-blue-600 flex-shrink-0" />
+              <Loader2 className="w-4 h-4 animate-spin text-[var(--primary)] flex-shrink-0" />
             )}
           </button>
 
           <button
             onClick={() => handleConfirm("separate")}
             disabled={submitting}
-            className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 active:scale-[0.99] transition-all text-left disabled:opacity-50"
+            className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--success)] hover:bg-[var(--success-soft)] active:scale-[0.99] transition-all text-left disabled:opacity-50"
           >
-            <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 text-xl">
+            <div className="w-11 h-11 rounded-full bg-[var(--success-soft)] flex items-center justify-center flex-shrink-0 text-xl">
               💵
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-[var(--text)]">
                 Khách tự thanh toán tiền mặt
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-[var(--text-faint)] mt-0.5">
                 {guestNames} sẽ nộp tiền mặt trực tiếp cho admin
               </p>
             </div>
           </button>
 
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-[var(--text-faint)] text-center">
             Nếu không xác nhận trước{" "}
             {format(deadlineDate, "HH:mm dd/MM", { locale: vi })}, hệ thống sẽ
             tự động trừ ví gộp chung.
@@ -722,8 +722,8 @@ export default function SessionDetailPage() {
 
   if (!session)
     return (
-      <div className="min-h-screen bg-[#F4F6FA] flex items-center justify-center">
-        <div className="text-center py-20 text-gray-400">
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+        <div className="text-center py-20 text-[var(--text-faint)]">
           Không tìm thấy buổi đánh
         </div>
       </div>
@@ -786,20 +786,20 @@ export default function SessionDetailPage() {
 
   const statusPillCls =
     myReg && (effectiveStatus === "open" || effectiveStatus === "full")
-      ? "bg-blue-50 text-blue-700"
+      ? "bg-[var(--primary-soft)] text-[var(--primary)]"
       : effectiveStatus === "open"
-        ? "bg-emerald-50 text-emerald-700"
+        ? "bg-[var(--success-soft)] text-[var(--success)]"
         : effectiveStatus === "full"
-          ? "bg-amber-50 text-amber-700"
+          ? "bg-[var(--warning-soft)] text-[var(--warning)]"
           : isAwaitingAdminFinish
-            ? "bg-blue-50 text-blue-700"
+            ? "bg-[var(--primary-soft)] text-[var(--primary)]"
             : effectiveStatus === "waiting_payment"
-              ? "bg-orange-50 text-orange-700"
+              ? "bg-[var(--warning-soft)] text-[var(--warning)]"
               : effectiveStatus === "completed"
-                ? "bg-gray-100 text-gray-500"
+                ? "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                 : effectiveStatus === "cancelled"
-                  ? "bg-red-50 text-red-600"
-                  : "bg-gray-100 text-gray-500";
+                  ? "bg-[var(--danger-soft)] text-[var(--danger)]"
+                  : "bg-[var(--surface-muted)] text-[var(--text-muted)]";
 
   const statusPillLabel =
     myReg && (effectiveStatus === "open" || effectiveStatus === "full")
@@ -850,7 +850,7 @@ export default function SessionDetailPage() {
         style={{ animation: "fadeSlideUp .3s ease both" }}
       >
         {opts?.nested && (
-          <span className="w-3 h-px bg-gray-200 flex-shrink-0 -ml-3 mr-[-2px]" />
+          <span className="w-3 h-px bg-[var(--border-strong)] flex-shrink-0 -ml-3 mr-[-2px]" />
         )}
         {u?.avatar_url ? (
           <img
@@ -860,18 +860,18 @@ export default function SessionDetailPage() {
           />
         ) : (
           <div
-            className={`rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${opts?.nested ? "w-7 h-7 text-[10px] bg-purple-100 text-purple-700" : "w-9 h-9 text-xs bg-blue-100 text-blue-700"}`}
+            className={`rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${opts?.nested ? "w-7 h-7 text-[10px] bg-[var(--purple-soft)] text-[var(--purple)]" : "w-9 h-9 text-xs bg-[var(--primary-soft)] text-[var(--primary)]"}`}
           >
             {initials}
           </div>
         )}
         <div className="flex-1 min-w-0">
           <p
-            className={`font-medium text-gray-900 truncate flex items-center gap-1 ${opts?.nested ? "text-xs" : "text-sm"}`}
+            className={`font-medium text-[var(--text)] truncate flex items-center gap-1 ${opts?.nested ? "text-xs" : "text-sm"}`}
           >
             {fullName}
             {m.is_guest && (
-              <span className="text-xs text-gray-400 ml-1">(khách)</span>
+              <span className="text-xs text-[var(--text-faint)] ml-1">(khách)</span>
             )}
             {tierCls && (
               <span
@@ -881,7 +881,7 @@ export default function SessionDetailPage() {
               </span>
             )}
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[var(--text-faint)]">
             {gender === "male" ? "Nam" : gender === "female" ? "Nữ" : ""}
             {skillLevel && <span> · {skillLabel}</span>}
           </p>
@@ -970,15 +970,15 @@ export default function SessionDetailPage() {
             return (
               <div>
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm text-gray-800 truncate">{label}</span>
-                  <span className="text-sm font-semibold text-gray-800 tabular-nums flex-shrink-0">
+                  <span className="text-sm text-[var(--text)] truncate">{label}</span>
+                  <span className="text-sm font-semibold text-[var(--text)] tabular-nums flex-shrink-0">
                     {fmt(x === r ? hostOwnAmount : amountOf(x))}
                   </span>
                 </div>
                 {hasFee && (
-                  <p className="text-[11px] text-gray-400 mt-0.5">
+                  <p className="text-[11px] text-[var(--text-faint)] mt-0.5">
                     Sân + cầu {fmt(x.base_amount)} · Khoản khác{" "}
-                    <span className="text-amber-600">{fmt(x.other_fee_amount)}</span>
+                    <span className="text-[var(--warning)]">{fmt(x.other_fee_amount)}</span>
                     {x.other_fee_note && (
                       <span className="italic"> ({x.other_fee_note})</span>
                     )}
@@ -990,9 +990,9 @@ export default function SessionDetailPage() {
 
           const statusIcon = (ok: boolean) =>
             ok ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-[var(--success)] flex-shrink-0" />
             ) : (
-              <Hourglass className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <Hourglass className="w-4 h-4 text-[var(--warning)] flex-shrink-0" />
             );
 
           const allGroupedPaid =
@@ -1002,18 +1002,18 @@ export default function SessionDetailPage() {
           return (
             <div
               key={r.id}
-              className={`rounded-2xl overflow-hidden border ${isMe ? "border-blue-200 bg-blue-50/40" : "border-gray-100 bg-gray-50"
+              className={`rounded-2xl overflow-hidden border ${isMe ? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)]" : "border-[var(--border)] bg-[var(--surface-muted)]"
                 }`}
             >
               {/* Khối 1: gộp theo host */}
               <div className="px-3.5 py-3">
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs font-semibold text-gray-500 truncate">
+                    <span className="text-xs font-semibold text-[var(--text-muted)] truncate">
                       {groupedWithHostGuests.length > 0
                         ? `Gộp ví ${name}`
                         : name}
-                      {isMe && <span className="text-blue-500"> (bạn)</span>}
+                      {isMe && <span className="text-[var(--primary)]"> (bạn)</span>}
                     </span>
                     {(() => {
                       const badge = getPaymentMethodBadge(r);
@@ -1029,7 +1029,7 @@ export default function SessionDetailPage() {
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     {statusIcon(allGroupedPaid)}
                     <span
-                      className={`text-base font-bold tabular-nums ${isMe ? "text-blue-600" : "text-gray-900"
+                      className={`text-base font-bold tabular-nums ${isMe ? "text-[var(--primary)]" : "text-[var(--text)]"
                         }`}
                     >
                       {fmt(amount)}
@@ -1037,7 +1037,7 @@ export default function SessionDetailPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2 pl-2.5 border-l-2 border-gray-200">
+                <div className="space-y-2 pl-2.5 border-l-2 border-[var(--border)]">
                   <PersonLine x={r} label={name} />
                   {groupedWithHostGuests.map((g: any) => (
                     <PersonLine key={g.id} x={g} label={nameOf(g)} />
@@ -1048,10 +1048,10 @@ export default function SessionDetailPage() {
               {soloGuests.map((g: any) => {
                 const gBadge = getPaymentMethodBadge(g, name, nameOf(g));
                 return (
-                  <div key={g.id} className="px-3.5 py-3 border-t border-gray-200/70">
+                  <div key={g.id} className="px-3.5 py-3 border-t border-[var(--border)]">
                     <div className="flex items-center justify-between gap-3 mb-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xs font-semibold text-gray-500 truncate">
+                        <span className="text-xs font-semibold text-[var(--text-muted)] truncate">
                           {nameOf(g)} · trả riêng
                         </span>
                         {gBadge && (
@@ -1064,12 +1064,12 @@ export default function SessionDetailPage() {
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         {statusIcon(g.payment_status === "confirmed")}
-                        <span className="text-base font-bold tabular-nums text-gray-900">
+                        <span className="text-base font-bold tabular-nums text-[var(--text)]">
                           {fmt(amountOf(g))}
                         </span>
                       </div>
                     </div>
-                    <div className="pl-2.5 border-l-2 border-gray-200">
+                    <div className="pl-2.5 border-l-2 border-[var(--border)]">
                       <PersonLine x={g} label={nameOf(g)} />
                     </div>
                   </div>
@@ -1077,12 +1077,12 @@ export default function SessionDetailPage() {
               })}
 
               {soloGuests.length > 0 && (
-                <div className="flex items-center justify-between px-3.5 py-2.5 bg-gray-100/80 border-t border-gray-200/70">
-                  <span className="text-xs font-semibold text-gray-600">
+                <div className="flex items-center justify-between px-3.5 py-2.5 bg-[var(--surface-muted)] border-t border-[var(--border)]">
+                  <span className="text-xs font-semibold text-[var(--text-muted)]">
                     Tổng cả nhóm
                   </span>
                   <span
-                    className={`text-sm font-bold tabular-nums ${isMe ? "text-blue-600" : "text-gray-900"
+                    className={`text-sm font-bold tabular-nums ${isMe ? "text-[var(--primary)]" : "text-[var(--text)]"
                       }`}
                   >
                     {fmt(groupTotal)}
@@ -1124,9 +1124,9 @@ export default function SessionDetailPage() {
                     scrollbar-width: none;
                 }
             `}</style>
-      <div className="min-h-screen bg-[#F4F6FA] pb-4">
+      <div className="min-h-screen bg-[var(--bg)] pb-4">
         <div
-          className="sticky top-0 z-30 bg-white/85 backdrop-blur-md border-b border-gray-100/80 px-4 py-3 flex items-center justify-between"
+          className="sticky top-0 z-30 bg-[color-mix(in_srgb,var(--surface)_85%,transparent)] backdrop-blur-md border-b border-[var(--border)] px-4 py-3 flex items-center justify-between"
           style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
         >
           <button
@@ -1142,7 +1142,7 @@ export default function SessionDetailPage() {
                 doNavigate();
               }
             }}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 active:scale-95 transition-all -ml-1 pl-1 pr-2 py-1 rounded-lg"
+            className="flex items-center gap-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] active:scale-95 transition-all -ml-1 pl-1 pr-2 py-1 rounded-lg"
           >
             <ArrowLeft className="w-4 h-4" /> Quay lại
           </button>
@@ -1150,7 +1150,7 @@ export default function SessionDetailPage() {
             (session.status === "open" || session.status === "full") && (
               <button
                 onClick={() => setShowGuestModal(true)}
-                className="flex items-center gap-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] px-4 py-2.5 rounded-xl shadow-sm shadow-blue-200 transition-all"
+                className="flex items-center gap-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] px-4 py-2.5 rounded-xl shadow-sm shadow-blue-200 dark:shadow-[0_6px_14px_-4px_rgba(0,0,0,0.7)] transition-all"
               >
                 <UserPlus className="w-4 h-4" /> Thêm người đi cùng
               </button>
@@ -1159,7 +1159,7 @@ export default function SessionDetailPage() {
 
         <div className="max-w-lg mx-auto px-4 pt-5 space-y-4">
           <div
-            className="bg-white rounded-3xl p-5 shadow-sm"
+            className="bg-[var(--surface)] rounded-3xl p-5 shadow-sm"
             style={{
               animation: "fadeSlideUp .35s ease both",
               viewTransitionName: `session-card-${String(id)}`,
@@ -1167,7 +1167,7 @@ export default function SessionDetailPage() {
           >
             <div className="flex items-start justify-between gap-3 mb-4">
               <h1
-                className="text-xl font-bold text-gray-900 leading-tight"
+                className="text-xl font-bold text-[var(--text)] leading-tight"
                 style={{ viewTransitionName: `session-title-${String(id)}` }}
               >
                 {session.title}
@@ -1184,25 +1184,25 @@ export default function SessionDetailPage() {
                 myReg?.added_response !== "pending")) && (
                 <div className="flex items-center gap-1.5 mb-4 -mt-1">
                   {myReg?.participation_status === "pending_approval" && (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-50 text-amber-700 flex items-center gap-1">
+                    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-[var(--warning-soft)] text-[var(--warning)] flex items-center gap-1">
                       <Hourglass className="w-3 h-3" /> Chờ admin duyệt
                     </span>
                   )}
                   {myReg?.participation_status === "awaiting_checkin" &&
                     myReg?.added_response !== "pending" && (
-                      <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600 flex items-center gap-1">
+                      <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-[var(--surface-muted)] text-[var(--text-muted)] flex items-center gap-1">
                         <Hourglass className="w-3 h-3" /> Chờ admin điểm danh
                       </span>
                     )}
                 </div>
               )}
 
-            <div className="space-y-3 text-sm text-gray-600">
+            <div className="space-y-3 text-sm text-[var(--text-muted)]">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                  <CalendarDays className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+                  <CalendarDays className="w-4 h-4 text-[var(--primary)]" />
                 </div>
-                <span className="font-medium text-gray-700">
+                <span className="font-medium text-[var(--text)]">
                   {format(
                     new Date(session.scheduled_at),
                     "EEEE, dd/MM/yyyy — HH:mm",
@@ -1212,46 +1212,46 @@ export default function SessionDetailPage() {
               </div>
               {session.location && (
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-4 h-4 text-rose-500" />
+                  <div className="w-8 h-8 rounded-xl bg-[var(--pink-soft)] flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-4 h-4 text-[var(--pink)]" />
                   </div>
                   <span>{session.location}</span>
                 </div>
               )}
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-4 h-4 text-purple-500" />
+                <div className="w-8 h-8 rounded-xl bg-[var(--purple-soft)] flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-4 h-4 text-[var(--purple)]" />
                 </div>
                 <span>{session.duration_minutes} phút</span>
               </div>
             </div>
 
             {session.status === "completed" ? (
-              <div className="mt-4 pt-4 border-t border-gray-50">
+              <div className="mt-4 pt-4 border-t border-[var(--border)]">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                    <Users className="w-4 h-4 text-indigo-500" />
+                  <div className="w-8 h-8 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+                    <Users className="w-4 h-4 text-[var(--primary)]" />
                   </div>
-                  <span className="font-medium text-gray-700">
+                  <span className="font-medium text-[var(--text)]">
                     {registrations.filter(r => r.participation_status === "confirmed").length} người đã tham gia
                   </span>
                 </div>
               </div>
             ) : (
-              <div className="mt-4 pt-4 border-t border-gray-50">
+              <div className="mt-4 pt-4 border-t border-[var(--border)]">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--text-faint)]">
                     <Users className="w-3.5 h-3.5" />
                     Chỗ trống
                   </span>
                   <span
                     className={`text-xs font-semibold ${slotDimmed
-                      ? "text-gray-400"
+                      ? "text-[var(--text-faint)]"
                       : isFull
-                        ? "text-red-500"
+                        ? "text-[var(--danger)]"
                         : slotRatio >= 0.6
-                          ? "text-amber-500"
-                          : "text-emerald-600"
+                          ? "text-[var(--warning)]"
+                          : "text-[var(--success)]"
                       }`}
                   >
                     {isFull
@@ -1259,7 +1259,7 @@ export default function SessionDetailPage() {
                       : `Còn ${session.available_slots}/${session.max_slots}`}
                   </span>
                 </div>
-                <div className="w-full h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                <div className="w-full h-2.5 rounded-full bg-[var(--surface-muted)] overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${slotPct}%`, background: slotBarColor }}
@@ -1269,7 +1269,7 @@ export default function SessionDetailPage() {
             )}
 
             {session.description && (
-              <p className="mt-4 pt-4 border-t border-gray-50 text-sm text-gray-500 leading-relaxed">
+              <p className="mt-4 pt-4 border-t border-[var(--border)] text-sm text-[var(--text-muted)] leading-relaxed">
                 {session.description}
               </p>
             )}
@@ -1279,18 +1279,18 @@ export default function SessionDetailPage() {
             myReg.added_response === "pending" &&
             myReg.participation_status !== "confirmed" && (
               <div
-                className="bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-4 space-y-3"
+                className="bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-2xl px-4 py-4 space-y-3"
                 style={{ animation: "fadeSlideUp .35s ease both" }}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <CalendarDays className="w-4.5 h-4.5 text-indigo-600" />
+                  <div className="w-9 h-9 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+                    <CalendarDays className="w-4.5 h-4.5 text-[var(--primary)]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-indigo-800">
+                    <p className="text-sm font-semibold text-[var(--primary)]">
                       Admin đã thêm bạn vào buổi này
                     </p>
-                    <p className="text-xs text-indigo-600 mt-0.5">
+                    <p className="text-xs text-[var(--primary)] mt-0.5">
                       Xác nhận tham gia hoặc báo bận để admin sắp xếp lại nếu cần.
                     </p>
                   </div>
@@ -1312,7 +1312,7 @@ export default function SessionDetailPage() {
                   <button
                     onClick={() => handleRespondAdded("decline")}
                     disabled={respondPhase !== "idle"}
-                    className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold px-3 py-2.5 rounded-xl bg-white border border-red-200 text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold px-3 py-2.5 rounded-xl bg-[var(--surface)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-[var(--danger)] hover:bg-[var(--danger-soft)] disabled:opacity-50 transition-colors"
                   >
                     {respondPhase === "decline" ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1331,24 +1331,24 @@ export default function SessionDetailPage() {
               costDetail.chi_phi.court_fee > 0 ||
               costDetail.chi_phi.other_fee > 0) && (
               <div
-                className="bg-white rounded-2xl p-5 shadow-sm space-y-3"
+                className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm space-y-3"
                 style={{ animation: "fadeSlideUp .3s ease both" }}
               >
-                <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                <h3 className="font-bold text-[var(--text)] text-sm flex items-center gap-2">
                   🧾 Chi phí buổi đánh
                 </h3>
 
                 {costDetail.chi_phi.shuttle_count > 0 && (
-                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 overflow-hidden">
+                  <div className="rounded-xl border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[var(--success-soft)] overflow-hidden">
                     <div className="flex items-center justify-between px-3.5 py-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-700">🏸 Tiền cầu</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-sm font-medium text-[var(--text)]">🏸 Tiền cầu</p>
+                        <p className="text-xs text-[var(--text-faint)]">
                           {costDetail.chi_phi.shuttle_count} quả ×{" "}
                           {fmt(costDetail.chi_phi.shuttle_price)}
                         </p>
                       </div>
-                      <span className="text-base font-bold text-emerald-600 flex-shrink-0 ml-3">
+                      <span className="text-base font-bold text-[var(--success)] flex-shrink-0 ml-3">
                         {fmt(costDetail.chi_phi.shuttle_cost)}
                       </span>
                     </div>
@@ -1357,37 +1357,37 @@ export default function SessionDetailPage() {
 
                 {Array.isArray(costDetail.chi_phi.court_breakdown) &&
                   costDetail.chi_phi.court_breakdown.length > 0 ? (
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 overflow-hidden">
-                    <div className="px-3.5 py-2.5 text-sm font-medium text-gray-600 border-b border-blue-100/70">
+                  <div className="rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] overflow-hidden">
+                    <div className="px-3.5 py-2.5 text-sm font-medium text-[var(--text-muted)] border-b border-[color-mix(in_srgb,var(--primary)_30%,transparent)]">
                       🏟 Sân
                     </div>
-                    <div className="divide-y divide-blue-100/70">
+                    <div className="divide-y divide-[color-mix(in_srgb,var(--primary)_30%,transparent)]">
                       {costDetail.chi_phi.court_breakdown.map((c: any, i: number) => (
                         <div
                           key={i}
                           className="flex items-center justify-between px-3.5 py-2.5"
                         >
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-700 truncate">
+                            <p className="text-sm font-medium text-[var(--text)] truncate">
                               {c.name}
                             </p>
                             {c.minutes ? (
-                              <p className="text-xs text-gray-400">
+                              <p className="text-xs text-[var(--text-faint)]">
                                 {c.minutes} phút × {fmt(c.price_per_hour)}/tiếng
                               </p>
                             ) : null}
                           </div>
-                          <span className="text-sm font-semibold text-blue-600 flex-shrink-0 ml-3">
+                          <span className="text-sm font-semibold text-[var(--primary)] flex-shrink-0 ml-3">
                             {fmt(c.total)}
                           </span>
                         </div>
                       ))}
                     </div>
-                    <div className="flex justify-between items-center px-3.5 py-2.5 bg-blue-100/50">
-                      <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                    <div className="flex justify-between items-center px-3.5 py-2.5 bg-[var(--primary-soft)]">
+                      <span className="text-xs font-semibold text-[var(--primary)] uppercase tracking-wide">
                         Tổng tiền sân
                       </span>
-                      <span className="text-base font-bold text-blue-700">
+                      <span className="text-base font-bold text-[var(--primary)]">
                         {fmt(costDetail.chi_phi.court_fee)}
                       </span>
                     </div>
@@ -1395,7 +1395,7 @@ export default function SessionDetailPage() {
                 ) : (
                   costDetail.chi_phi.court_fee > 0 && (
                     <div className="flex justify-between text-sm px-1">
-                      <span className="text-gray-600">🏟 Sân</span>
+                      <span className="text-[var(--text-muted)]">🏟 Sân</span>
                       <span className="font-medium">
                         {fmt(costDetail.chi_phi.court_fee)}
                       </span>
@@ -1404,11 +1404,11 @@ export default function SessionDetailPage() {
                 )}
 
                 {costDetail.chi_phi.other_fee > 0 && (
-                  <div className="rounded-xl border border-amber-100 bg-amber-50/60 overflow-hidden">
-                    <div className="px-3.5 py-2.5 text-sm font-medium text-gray-600 border-b border-amber-100/70">
+                  <div className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] overflow-hidden">
+                    <div className="px-3.5 py-2.5 text-sm font-medium text-[var(--text-muted)] border-b border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
                       💰 Khoản thu khác
                       {costDetail.chi_phi.other_fee_note && (
-                        <span className="text-gray-400 italic font-normal">
+                        <span className="text-[var(--text-faint)] italic font-normal">
                           {" "}({costDetail.chi_phi.other_fee_note})
                         </span>
                       )}
@@ -1427,32 +1427,32 @@ export default function SessionDetailPage() {
                               note?: string | null,
                               nested?: boolean,
                             ) => (
-                              <div className={nested ? "pl-3 border-l-2 border-amber-200" : ""}>
+                              <div className={nested ? "pl-3 border-l-2 border-[color-mix(in_srgb,var(--warning)_30%,transparent)]" : ""}>
                                 <div className="flex items-baseline gap-2">
                                   <span
                                     className={`truncate ${nested
-                                      ? "text-sm text-gray-700"
-                                      : "text-sm font-semibold text-gray-800"
+                                      ? "text-sm text-[var(--text)]"
+                                      : "text-sm font-semibold text-[var(--text)]"
                                       }`}
                                   >
                                     {name}
                                     {nested && (
-                                      <span className="ml-1.5 text-[11px] font-normal text-gray-400">
+                                      <span className="ml-1.5 text-[11px] font-normal text-[var(--text-faint)]">
                                         đi cùng
                                       </span>
                                     )}
                                   </span>
                                   {/* đường chấm dẫn mắt từ tên sang giá */}
-                                  <span className="flex-1 min-w-4 border-b border-dotted border-amber-300 -translate-y-[3px]" />
+                                  <span className="flex-1 min-w-4 border-b border-dotted border-[color-mix(in_srgb,var(--warning)_30%,transparent)] -translate-y-[3px]" />
                                   <span
-                                    className={`flex-shrink-0 tabular-nums text-sm text-amber-700 ${nested ? "font-medium" : "font-semibold"
+                                    className={`flex-shrink-0 tabular-nums text-sm text-[var(--warning)] ${nested ? "font-medium" : "font-semibold"
                                       }`}
                                   >
                                     {fmt(amount)}
                                   </span>
                                 </div>
                                 {noteLines(note).map((line, li) => (
-                                  <p key={li} className="text-xs text-gray-500 mt-0.5">
+                                  <p key={li} className="text-xs text-[var(--text-muted)] mt-0.5">
                                     {line}
                                   </p>
                                 ))}
@@ -1462,7 +1462,7 @@ export default function SessionDetailPage() {
                             return (
                               <div
                                 key={i}
-                                className="rounded-xl border border-amber-200/80 bg-white overflow-hidden"
+                                className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--surface)] overflow-hidden"
                               >
                                 <div className="px-3 py-2.5 space-y-2">
                                   {renderRow(item.name, item.amount, item.note)}
@@ -1472,11 +1472,11 @@ export default function SessionDetailPage() {
                                 </div>
 
                                 {hasGuests && (
-                                  <div className="flex items-center justify-between px-3 py-2 bg-amber-50 border-t border-dashed border-amber-200">
-                                    <span className="text-xs font-medium text-amber-800">
+                                  <div className="flex items-center justify-between px-3 py-2 bg-[var(--warning-soft)] border-t border-dashed border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
+                                    <span className="text-xs font-medium text-[var(--warning)]">
                                       Tổng nhóm
                                     </span>
-                                    <span className="text-sm font-bold text-amber-800 tabular-nums">
+                                    <span className="text-sm font-bold text-[var(--warning)] tabular-nums">
                                       {fmt(item.total ?? item.amount)}
                                     </span>
                                   </div>
@@ -1487,21 +1487,19 @@ export default function SessionDetailPage() {
                         </div>
                       )}
 
-                    <div className="flex justify-between items-center px-3.5 py-2.5 bg-amber-100/60">
-                      <span className="text-xs font-semibold text-amber-800 uppercase tracking-wide">
+                    <div className="flex justify-between items-center px-3.5 py-2.5 bg-[var(--warning-soft)]">
+                      <span className="text-xs font-semibold text-[var(--warning)] uppercase tracking-wide">
                         Tổng khoản thu khác
                       </span>
-                      <span className="text-base font-bold text-amber-800">
+                      <span className="text-base font-bold text-[var(--warning)]">
                         {fmt(costDetail.chi_phi.other_fee)}
                       </span>
                     </div>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between rounded-xl bg-gray-900 px-4 py-3.5 mt-1">
-                  <span className="text-sm font-semibold text-gray-200">
-                    Tổng chi phí
-                  </span>
+                <div className="flex items-center justify-between rounded-xl bg-gray-900 dark:bg-[var(--surface-muted)] dark:border dark:border-[var(--border)] px-4 py-3.5 mt-1">
+                  <span className="text-sm font-semibold text-white/80">Tổng chi phí</span>
                   <span className="text-lg font-bold text-white">
                     {fmt(costDetail.summary.total_cost)}
                   </span>
@@ -1511,7 +1509,7 @@ export default function SessionDetailPage() {
                   .length > 0 && (
                     <button
                       onClick={openAmountsModal}
-                      className="w-full py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-700 transition-colors flex items-center justify-center gap-1.5"
+                      className="w-full py-2.5 rounded-xl bg-[var(--surface-muted)] hover:bg-[var(--surface-hover)] text-sm font-semibold text-[var(--text)] transition-colors flex items-center justify-center gap-1.5"
                     >
                       <Users className="w-3.5 h-3.5" />
                       Mỗi người cần thanh toán
@@ -1522,17 +1520,17 @@ export default function SessionDetailPage() {
 
           {myReg && myReg.participation_status === "pending_approval" && (
             <div
-              className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3"
+              className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm flex items-center gap-3"
               style={{ animation: "fadeSlideUp .35s ease both" }}
             >
-              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
-                <Hourglass className="w-5 h-5 text-amber-500" />
+              <div className="w-10 h-10 rounded-full bg-[var(--warning-soft)] flex items-center justify-center flex-shrink-0">
+                <Hourglass className="w-5 h-5 text-[var(--warning)]" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-[var(--text)]">
                   Đã đăng ký thành công
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
                   Admin đang duyệt đăng ký của bạn, vui lòng chờ trong ít phút.
                 </p>
               </div>
@@ -1554,27 +1552,27 @@ export default function SessionDetailPage() {
 
               return (
                 <div
-                  className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 space-y-3"
+                  className="bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-2xl px-4 py-4 space-y-3"
                   style={{ animation: "fadeSlideUp .35s ease both" }}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                      <Wallet className="w-4.5 h-4.5 text-amber-600" />
+                    <div className="w-9 h-9 rounded-full bg-[var(--warning-soft)] flex items-center justify-center flex-shrink-0">
+                      <Wallet className="w-4.5 h-4.5 text-[var(--warning)]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-amber-800">
+                      <p className="text-sm font-semibold text-[var(--warning)]">
                         Cần xác nhận thanh toán cho khách đi cùng
                       </p>
-                      <p className="text-xs text-amber-600 mt-0.5">
+                      <p className="text-xs text-[var(--warning)] mt-0.5">
                         Chọn trừ ví chung hay để khách tự thanh toán tiền mặt.
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-white/70 rounded-xl px-3 py-2.5 space-y-1.5">
+                  <div className="bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] rounded-xl px-3 py-2.5 space-y-1.5">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Phần của bạn</span>
-                      <span className="font-semibold text-gray-900">
+                      <span className="text-[var(--text-muted)]">Phần của bạn</span>
+                      <span className="font-semibold text-[var(--text)]">
                         {fmt(soloAmount)}
                       </span>
                     </div>
@@ -1583,19 +1581,19 @@ export default function SessionDetailPage() {
                         key={g.id}
                         className="flex justify-between items-center text-sm"
                       >
-                        <span className="text-purple-600">
+                        <span className="text-[var(--purple)]">
                           + {g.guest_full_name}
                         </span>
-                        <span className="font-semibold text-gray-700">
+                        <span className="font-semibold text-[var(--text)]">
                           {fmt(g.amount_override ?? 0)}
                         </span>
                       </div>
                     ))}
-                    <div className="flex justify-between items-center text-sm pt-1.5 border-t border-amber-100">
-                      <span className="font-semibold text-amber-700">
+                    <div className="flex justify-between items-center text-sm pt-1.5 border-t border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
+                      <span className="font-semibold text-[var(--warning)]">
                         Tổng cộng
                       </span>
-                      <span className="font-bold text-amber-700">
+                      <span className="font-bold text-[var(--warning)]">
                         {fmt(groupTotal)}
                       </span>
                     </div>
@@ -1617,7 +1615,7 @@ export default function SessionDetailPage() {
                     <button
                       onClick={() => handleInlineGuestConfirm("separate")}
                       disabled={guestConfirmSubmitting !== null}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-[var(--success-soft)] text-[var(--success)] hover:bg-[var(--success-soft)] disabled:opacity-50 transition-colors"
                     >
                       {guestConfirmSubmitting === "separate" ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1648,22 +1646,22 @@ export default function SessionDetailPage() {
                 (myReg.amount_override ?? 0) + groupedGuestsTotal;
 
               return (
-                <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <div className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[var(--success-soft)] flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-[var(--success)]" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-[var(--text)]">
                       Đã thanh toán thành công
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[var(--text-muted)]">
                         Số tiền đã đóng:{" "}
-                        <span className="font-semibold text-emerald-600">
+                        <span className="font-semibold text-[var(--success)]">
                           {fmt(paidTotal)}
                         </span>
                         {groupedGuestsTotal > 0 && (
-                          <span className="text-gray-400">
+                          <span className="text-[var(--text-faint)]">
                             {" "}
                             (gồm cả{" "}
                             {groupedGuests
@@ -1675,7 +1673,7 @@ export default function SessionDetailPage() {
                         )}
                       </p>
                       {myReg.payment_method === "wallet" && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] font-semibold">
                           <Wallet className="w-2.5 h-2.5" /> Ví BNB
                         </span>
                       )}
@@ -1686,15 +1684,15 @@ export default function SessionDetailPage() {
             })()}
 
           {myReg && myReg.payment_status === "rejected" && (
-            <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-5 h-5 text-red-500" />
+            <div className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-[var(--danger)]" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-[var(--text)]">
                   Thanh toán bị từ chối
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
                   Vui lòng liên hệ admin để được hỗ trợ thanh toán lại.
                 </p>
               </div>
@@ -1702,14 +1700,14 @@ export default function SessionDetailPage() {
           )}
 
           <div
-            className="bg-white rounded-2xl p-5 shadow-sm"
+            className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm"
             style={{
               animation: "fadeSlideUp .35s ease both",
               animationDelay: "40ms",
             }}
           >
-            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-600" />
+            <h3 className="font-bold text-[var(--text)] mb-3 flex items-center gap-2">
+              <Users className="w-4 h-4 text-[var(--primary)]" />
               Đã đăng ký ({approvedRegistrations.length})
             </h3>
             {loadingRegs ? (
@@ -1719,21 +1717,21 @@ export default function SessionDetailPage() {
                     key={i}
                     className="flex items-center gap-3 animate-pulse"
                   >
-                    <div className="w-9 h-9 rounded-full bg-gray-100" />
+                    <div className="w-9 h-9 rounded-full bg-[var(--surface-muted)]" />
                     <div className="flex-1 space-y-1.5">
-                      <div className="h-3 bg-gray-100 rounded w-2/3" />
-                      <div className="h-2.5 bg-gray-100 rounded w-1/3" />
+                      <div className="h-3 bg-[var(--surface-muted)] rounded w-2/3" />
+                      <div className="h-2.5 bg-[var(--surface-muted)] rounded w-1/3" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : approvedRegistrations.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">
+              <p className="text-sm text-[var(--text-faint)] text-center py-6">
                 Chưa có ai đăng ký buổi này
               </p>
             ) : (
               <>
-                <ul className="divide-y divide-gray-50">
+                <ul className="divide-y divide-[var(--border)]">
                   {regRoots.slice(0, 3).map((root: any) => {
                     const guests = regGuestsOf(root.id);
                     return (
@@ -1760,7 +1758,7 @@ export default function SessionDetailPage() {
                   return (
                     <button
                       onClick={openAllRegsModal}
-                      className="w-full mt-2 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-600 transition-colors"
+                      className="w-full mt-2 py-2.5 rounded-xl bg-[var(--surface-muted)] hover:bg-[var(--surface-hover)] text-sm font-semibold text-[var(--text-muted)] transition-colors"
                     >
                       Xem tất cả (còn {remainingCount} người)
                     </button>
@@ -1774,17 +1772,17 @@ export default function SessionDetailPage() {
             myReg.participation_status === "awaiting_checkin" &&
             myReg.added_response !== "pending" && (
               <div
-                className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3"
+                className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm flex items-center gap-3"
                 style={{ animation: "fadeSlideUp .35s ease both" }}
               >
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                  <Hourglass className="w-5 h-5 text-slate-500" />
+                <div className="w-10 h-10 rounded-full bg-[var(--surface-muted)] flex items-center justify-center flex-shrink-0">
+                  <Hourglass className="w-5 h-5 text-[var(--text-muted)]" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-[var(--text)]">
                     Đang chờ điểm danh
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-[var(--text-muted)] mt-0.5">
                     Admin sẽ điểm danh khi buổi bắt đầu. Sau khi buổi kết thúc, số
                     tiền cần thanh toán sẽ hiện ở đây.
                   </p>
@@ -1796,15 +1794,15 @@ export default function SessionDetailPage() {
             myReg.participation_status === "confirmed" &&
             myReg.payment_status === "pending" &&
             !myReg.amount_override && (
-              <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                  <Hourglass className="w-5 h-5 text-blue-500" />
+              <div className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+                  <Hourglass className="w-5 h-5 text-[var(--primary)]" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-[var(--text)]">
                     Đã điểm danh có mặt
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-[var(--text-muted)] mt-0.5">
                     Số tiền cần thanh toán sẽ được admin thông báo sau khi buổi
                     kết thúc.
                   </p>
@@ -1817,7 +1815,7 @@ export default function SessionDetailPage() {
               <div
                 className="fixed inset-0 z-50 flex items-center justify-center p-4"
                 style={{
-                  background: "rgba(0,0,0,0.4)",
+                  background: "var(--overlay)",
                   backdropFilter: "blur(2px)",
                   opacity: amountsModalVisible ? 1 : 0,
                   transition: "opacity 200ms ease-out",
@@ -1825,7 +1823,7 @@ export default function SessionDetailPage() {
                 onClick={closeAmountsModal}
               >
                 <div
-                  className="w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[85vh] flex flex-col"
+                  className="w-full max-w-md bg-[var(--surface)] rounded-2xl shadow-xl max-h-[85vh] flex flex-col"
                   style={{
                     transform: amountsModalVisible
                       ? "scale(1) translateY(0)"
@@ -1836,25 +1834,25 @@ export default function SessionDetailPage() {
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-600" />
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
+                    <h3 className="font-bold text-[var(--text)] flex items-center gap-2">
+                      <Users className="w-4 h-4 text-[var(--primary)]" />
                       Số tiền từng người
                     </h3>
                     <button
                       onClick={closeAmountsModal}
-                      className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                      className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
                     >
-                      <XIcon className="w-4 h-4 text-gray-500" />
+                      <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                   </div>
                   <div className="px-5 py-4 overflow-y-auto scrollbar-hide">
                     {renderPersonAmounts()}
                   </div>
-                  <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
+                  <div className="px-5 py-3 border-t border-[var(--border)] flex-shrink-0">
                     <button
                       onClick={closeAmountsModal}
-                      className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
+                      className="w-full py-2.5 rounded-xl bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)]"
                     >
                       Đóng
                     </button>
@@ -1879,7 +1877,7 @@ export default function SessionDetailPage() {
                 }
               >
                 <div
-                  className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl"
+                  className="w-full max-w-md bg-[var(--surface)] rounded-t-2xl sm:rounded-2xl shadow-xl"
                   style={{
                     transform: guestModalVisible
                       ? "translateY(0)"
@@ -1890,13 +1888,13 @@ export default function SessionDetailPage() {
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                    <h3 className="font-bold text-gray-900">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                    <h3 className="font-bold text-[var(--text)]">
                       Thêm người đi cùng
                     </h3>
                     <button
                       onClick={closeGuestModal}
-                      className="p-1 text-gray-400 hover:text-gray-600"
+                      className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                     >
                       <XIcon className="w-5 h-5" />
                     </button>
@@ -1911,8 +1909,8 @@ export default function SessionDetailPage() {
                         key={val}
                         onClick={() => setGuestTab(val as any)}
                         className={`flex-1 py-1.5 rounded-lg text-sm font-medium ${guestTab === val
-                          ? "bg-blue-50 text-blue-600"
-                          : "text-gray-400"
+                          ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                          : "text-[var(--text-faint)]"
                           }`}
                       >
                         {lbl}
@@ -1931,48 +1929,48 @@ export default function SessionDetailPage() {
                               setMemberSearch(e.target.value);
                               setSelectedCompanion(null);
                             }}
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                            className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
                             placeholder="Tìm theo tên hoặc số điện thoại..."
                           />
                         </div>
 
                         {selectedCompanion && (
-                          <div className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl bg-blue-50 border border-blue-200">
-                            <span className="flex-1 text-sm font-medium text-blue-700 truncate">
+                          <div className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)]">
+                            <span className="flex-1 text-sm font-medium text-[var(--primary)] truncate">
                               {selectedCompanion.full_name}
                             </span>
                             <button
                               onClick={() => setSelectedCompanion(null)}
                               className="w-5 h-5 rounded-full hover:bg-blue-200 flex items-center justify-center flex-shrink-0"
                             >
-                              <XIcon className="w-3.5 h-3.5 text-blue-600" />
+                              <XIcon className="w-3.5 h-3.5 text-[var(--primary)]" />
                             </button>
                           </div>
                         )}
 
                         {!selectedCompanion && (
-                          <div className="max-h-60 overflow-y-auto scrollbar-hide -mx-1 border border-gray-100 rounded-xl">
+                          <div className="max-h-60 overflow-y-auto scrollbar-hide -mx-1 border border-[var(--border)] rounded-xl">
                             {searchingMembers ? (
-                              <p className="text-sm text-gray-400 text-center py-4">
+                              <p className="text-sm text-[var(--text-faint)] text-center py-4">
                                 Đang tìm...
                               </p>
                             ) : memberSearchResults.length === 0 ? (
-                              <p className="text-sm text-gray-400 text-center py-4">
+                              <p className="text-sm text-[var(--text-faint)] text-center py-4">
                                 {memberSearch.trim()
                                   ? "Không tìm thấy thành viên"
                                   : "Nhập tên hoặc số điện thoại để tìm"}
                               </p>
                             ) : (
-                              <ul className="divide-y divide-gray-50">
+                              <ul className="divide-y divide-[var(--border)]">
                                 {memberSearchResults
                                   .filter((m: any) => m.id !== user?.id)
                                   .map((m: any) => (
                                     <li key={m.id}>
                                       <button
                                         onClick={() => setSelectedCompanion(m)}
-                                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[var(--surface-hover)] transition-colors"
                                       >
-                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                        <div className="w-8 h-8 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                                           {m.avatar_url ? (
                                             <img
                                               src={m.avatar_url}
@@ -1980,16 +1978,16 @@ export default function SessionDetailPage() {
                                               className="w-full h-full object-cover"
                                             />
                                           ) : (
-                                            <span className="text-xs font-semibold text-blue-700">
+                                            <span className="text-xs font-semibold text-[var(--primary)]">
                                               {m.full_name?.[0]?.toUpperCase() ?? "?"}
                                             </span>
                                           )}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <p className="text-sm font-medium text-gray-900 truncate">
+                                          <p className="text-sm font-medium text-[var(--text)] truncate">
                                             {m.full_name}
                                           </p>
-                                          <p className="text-xs text-gray-400">{m.phone}</p>
+                                          <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>
                                         </div>
                                       </button>
                                     </li>
@@ -1999,7 +1997,7 @@ export default function SessionDetailPage() {
                           </div>
                         )}
 
-                        <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+                        <p className="text-xs text-[var(--primary)] bg-[var(--primary-soft)] rounded-lg px-3 py-2">
                           ⓘ {selectedCompanion?.full_name ?? "Thành viên"} sẽ
                           nhận thông báo được thêm vào buổi. Khi thanh toán, bạn
                           có thể chọn gộp tiền của họ vào ví của mình hoặc để họ
@@ -2009,7 +2007,7 @@ export default function SessionDetailPage() {
                     ) : (
                       <>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-[var(--text)] mb-1">
                             Họ tên *
                           </label>
                           <input
@@ -2021,13 +2019,13 @@ export default function SessionDetailPage() {
                                 full_name: e.target.value,
                               }))
                             }
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                            className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
                             placeholder="Tên khách đi cùng"
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-[var(--text)] mb-1">
                               Giới tính
                             </label>
                             <CustomSelect
@@ -2042,7 +2040,7 @@ export default function SessionDetailPage() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-[var(--text)] mb-1">
                               Trình độ
                             </label>
                             <CustomSelect
@@ -2064,7 +2062,7 @@ export default function SessionDetailPage() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-[var(--text)] mb-1">
                             Email (không bắt buộc, để gửi hóa đơn)
                           </label>
                           <input
@@ -2073,11 +2071,11 @@ export default function SessionDetailPage() {
                             onChange={(e) =>
                               setGuestForm((f) => ({ ...f, email: e.target.value }))
                             }
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                            className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
                             placeholder="vidu@email.com"
                           />
                         </div>
-                        <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+                        <p className="text-xs text-[var(--primary)] bg-[var(--primary-soft)] rounded-lg px-3 py-2">
                           ⓘ Tiền của khách đi cùng sẽ được gộp vào số tiền bạn
                           cần thanh toán sau khi buổi kết thúc.
                         </p>
@@ -2085,10 +2083,10 @@ export default function SessionDetailPage() {
                     )}
                   </div>
 
-                  <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+                  <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
                     <button
                       onClick={closeGuestModal}
-                      className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl border border-gray-200 text-sm text-gray-500 hover:bg-gray-50"
+                      className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                     >
                       Hủy
                     </button>
@@ -2139,7 +2137,7 @@ export default function SessionDetailPage() {
                     ${interestedPhase === "idle" ? "flex-1" : "flex-shrink-0 w-10 !px-0 rounded-full"}
                     ${interestedPhase === "success"
                       ? "bg-pink-500 text-white"
-                      : "bg-white border border-pink-200 text-pink-500 hover:bg-pink-50"
+                      : "bg-[var(--surface)] border border-[color-mix(in_srgb,var(--pink)_30%,transparent)] text-[var(--pink)] hover:bg-[var(--pink-soft)]"
                     }`}
                 >
                   {interestedPhase === "loading" ? (
@@ -2181,13 +2179,13 @@ export default function SessionDetailPage() {
                   label="Hủy đăng ký"
                   idleIcon={<XCircle className="w-3.5 h-3.5" />}
                   onClick={handleCancel}
-                  idleClassName="bg-white border border-red-200 text-red-500 hover:bg-red-50"
+                  idleClassName="bg-[var(--surface)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-[var(--danger)] hover:bg-[var(--danger-soft)]"
                   successClassName="bg-red-500 text-white"
                 />
               )}
 
             {isFull && !myReg && (
-              <div className="w-full py-4 rounded-2xl bg-gray-100 text-gray-400 font-medium text-center text-sm">
+              <div className="w-full py-4 rounded-2xl bg-[var(--surface-muted)] text-[var(--text-faint)] font-medium text-center text-sm">
                 Buổi đã đầy chỗ
               </div>
             )}
@@ -2210,7 +2208,7 @@ export default function SessionDetailPage() {
                 onClick={(e) => e.target === e.currentTarget && closePayModal()}
               >
                 <div
-                  className="w-full bg-white rounded-t-2xl"
+                  className="w-full bg-[var(--surface)] rounded-t-2xl"
                   style={{
                     maxHeight: "90vh",
                     overflowY: "auto",
@@ -2223,11 +2221,11 @@ export default function SessionDetailPage() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex justify-center pt-3 pb-1">
-                    <div className="w-9 h-1 rounded-full bg-gray-200" />
+                    <div className="w-9 h-1 rounded-full bg-[var(--border-strong)]" />
                   </div>
-                  <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                  <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
                     <div>
-                      <p className="text-sm font-bold text-gray-900">
+                      <p className="text-sm font-bold text-[var(--text)]">
                         {!payType
                           ? "Chọn hình thức thanh toán"
                           : payMethod === "choose"
@@ -2238,15 +2236,15 @@ export default function SessionDetailPage() {
                                 ? "Trừ ví BNB"
                                 : "Tiền mặt"}
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-[var(--text-faint)] mt-0.5">
                         {session.title}
                       </p>
                     </div>
                     <button
                       onClick={closePayModal}
-                      className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                      className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
                     >
-                      <XIcon className="w-4 h-4 text-gray-500" />
+                      <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                   </div>
 
@@ -2256,7 +2254,7 @@ export default function SessionDetailPage() {
                         className="space-y-3"
                         style={{ animation: "fadeSlideUp .25s ease both" }}
                       >
-                        <p className="text-xs text-gray-500 font-medium">
+                        <p className="text-xs text-[var(--text-muted)] font-medium">
                           Bạn muốn thanh toán:
                         </p>
                         <button
@@ -2264,19 +2262,19 @@ export default function SessionDetailPage() {
                             setPayType("solo");
                             setPayMethod("choose");
                           }}
-                          className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
+                          className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors text-left"
                         >
-                          <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-xl">
+                          <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-xl">
                             👤
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-gray-900">
+                            <p className="text-sm font-semibold text-[var(--text)]">
                               Tiền của riêng tôi
                             </p>
-                            <p className="text-lg font-black text-blue-600 mt-0.5">
+                            <p className="text-lg font-black text-[var(--primary)] mt-0.5">
                               {fmt(soloAmount)}
                             </p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-[var(--text-faint)]">
                               {companionLabel.charAt(0).toUpperCase() +
                                 companionLabel.slice(1)}{" "}
                               ({myGuests.map(companionName).join(", ")}) tự
@@ -2289,19 +2287,19 @@ export default function SessionDetailPage() {
                             setPayType("grouped");
                             setPayMethod("choose");
                           }}
-                          className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-purple-400 hover:bg-purple-50 transition-colors text-left"
+                          className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--purple)] hover:bg-[var(--purple-soft)] transition-colors text-left"
                         >
-                          <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center text-xl">
+                          <div className="w-11 h-11 rounded-full bg-[var(--purple-soft)] flex items-center justify-center text-xl">
                             👥
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-gray-900">
+                            <p className="text-sm font-semibold text-[var(--text)]">
                               Gộp cả {companionLabel}
                             </p>
-                            <p className="text-lg font-black text-purple-600 mt-0.5">
+                            <p className="text-lg font-black text-[var(--purple)] mt-0.5">
                               {fmt(groupedAmount)}
                             </p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-[var(--text-faint)]">
                               Bao gồm:{" "}
                               {myGuests
                                 .map(
@@ -2331,11 +2329,11 @@ export default function SessionDetailPage() {
                             key={payType}
                             style={{ animation: "fadeSlideUp .25s ease both" }}
                           >
-                            <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
-                              <span className="text-sm text-gray-600">
+                            <div className="flex items-center justify-between bg-[var(--danger-soft)] rounded-xl px-4 py-3">
+                              <span className="text-sm text-[var(--text-muted)]">
                                 Số tiền thanh toán
                               </span>
-                              <span className="text-lg font-black text-red-600">
+                              <span className="text-lg font-black text-[var(--danger)]">
                                 {fmt(amt)}
                               </span>
                             </div>
@@ -2351,16 +2349,16 @@ export default function SessionDetailPage() {
                                 {/* Ví BNB */}
                                 <button
                                   onClick={() => setPayMethod("wallet")}
-                                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors text-left"
                                 >
-                                  <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                    <Wallet className="w-5 h-5 text-blue-600" />
+                                  <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+                                    <Wallet className="w-5 h-5 text-[var(--primary)]" />
                                   </div>
                                   <div>
-                                    <p className="text-sm font-semibold text-gray-900">
+                                    <p className="text-sm font-semibold text-[var(--text)]">
                                       Ví BNB
                                     </p>
-                                    <p className="text-xs text-gray-400 mt-0.5">
+                                    <p className="text-xs text-[var(--text-faint)] mt-0.5">
                                       Trừ thẳng vào số dư ví — xác nhận ngay lập
                                       tức
                                     </p>
@@ -2369,16 +2367,16 @@ export default function SessionDetailPage() {
                                 {/* Chuyển khoản */}
                                 <button
                                   onClick={() => setPayMethod("transfer")}
-                                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
+                                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors text-left"
                                 >
-                                  <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-xl">
+                                  <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-xl">
                                     🏦
                                   </div>
                                   <div>
-                                    <p className="text-sm font-semibold text-gray-900">
+                                    <p className="text-sm font-semibold text-[var(--text)]">
                                       Chuyển khoản
                                     </p>
-                                    <p className="text-xs text-gray-400 mt-0.5">
+                                    <p className="text-xs text-[var(--text-faint)] mt-0.5">
                                       Quét QR VietQR, gửi ảnh bill xác nhận
                                     </p>
                                   </div>
@@ -2386,16 +2384,16 @@ export default function SessionDetailPage() {
                                 {/* Tiền mặt */}
                                 <button
                                   onClick={() => setPayMethod("cash")}
-                                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors text-left"
+                                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--success)] hover:bg-[var(--success-soft)] transition-colors text-left"
                                 >
-                                  <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center text-xl">
+                                  <div className="w-11 h-11 rounded-full bg-[var(--success-soft)] flex items-center justify-center text-xl">
                                     💵
                                   </div>
                                   <div>
-                                    <p className="text-sm font-semibold text-gray-900">
+                                    <p className="text-sm font-semibold text-[var(--text)]">
                                       Tiền mặt
                                     </p>
-                                    <p className="text-xs text-gray-400 mt-0.5">
+                                    <p className="text-xs text-[var(--text-faint)] mt-0.5">
                                       Thông báo admin, nộp tiền trực tiếp
                                     </p>
                                   </div>
@@ -2403,7 +2401,7 @@ export default function SessionDetailPage() {
                                 {myGuests.length > 0 && (
                                   <button
                                     onClick={() => setPayType(null)}
-                                    className="w-full py-2 text-xs text-gray-400 hover:text-gray-600"
+                                    className="w-full py-2 text-xs text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                                   >
                                     ← Quay lại chọn kiểu thanh toán
                                   </button>
@@ -2420,12 +2418,12 @@ export default function SessionDetailPage() {
                                   animation: "fadeSlideUp .25s ease both",
                                 }}
                               >
-                                <div className="bg-blue-50 rounded-xl p-4">
-                                  <p className="text-sm font-semibold text-blue-900 mb-1 flex items-center gap-2">
+                                <div className="bg-[var(--primary-soft)] rounded-xl p-4">
+                                  <p className="text-sm font-semibold text-[var(--primary)] mb-1 flex items-center gap-2">
                                     <Wallet className="w-4 h-4" /> Thanh toán
                                     bằng Ví BNB
                                   </p>
-                                  <p className="text-xs text-blue-600">
+                                  <p className="text-xs text-[var(--primary)]">
                                     Số dư ví sẽ bị trừ ngay lập tức. Admin không
                                     cần duyệt thêm.
                                   </p>
@@ -2433,7 +2431,7 @@ export default function SessionDetailPage() {
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() => setPayMethod("choose")}
-                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
+                                    className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]"
                                   >
                                     Quay lại
                                   </button>
@@ -2563,8 +2561,8 @@ export default function SessionDetailPage() {
                                       animation: "fadeSlideUp .25s ease both",
                                     }}
                                   >
-                                    <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
-                                      <p className="text-xs text-gray-400">
+                                    <div className="bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl p-4 flex flex-col items-center gap-2">
+                                      <p className="text-xs text-[var(--text-faint)]">
                                         Quét mã QR để thanh toán
                                       </p>
                                       <img
@@ -2579,49 +2577,49 @@ export default function SessionDetailPage() {
                                       />
                                     </div>
 
-                                    <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
+                                    <div className="bg-[var(--surface-muted)] rounded-xl divide-y divide-[var(--border)] text-sm overflow-hidden">
                                       <div className="flex justify-between px-4 py-2.5">
-                                        <span className="text-gray-500">
+                                        <span className="text-[var(--text-muted)]">
                                           Ngân hàng
                                         </span>
-                                        <span className="font-semibold text-gray-900">
+                                        <span className="font-semibold text-[var(--text)]">
                                           {bankDisplayName}
                                         </span>
                                       </div>
                                       <div className="flex justify-between px-4 py-2.5">
-                                        <span className="text-gray-500">
+                                        <span className="text-[var(--text-muted)]">
                                           Số tài khoản
                                         </span>
-                                        <span className="font-semibold text-gray-900">
+                                        <span className="font-semibold text-[var(--text)]">
                                           {bankAccount}
                                         </span>
                                       </div>
                                       <div className="flex justify-between px-4 py-2.5">
-                                        <span className="text-gray-500">
+                                        <span className="text-[var(--text-muted)]">
                                           Tên tài khoản
                                         </span>
-                                        <span className="font-semibold text-gray-900">
+                                        <span className="font-semibold text-[var(--text)]">
                                           {bankAccountName}
                                         </span>
                                       </div>
                                       <div className="flex justify-between px-4 py-2.5">
-                                        <span className="text-gray-500">
+                                        <span className="text-[var(--text-muted)]">
                                           Số tiền
                                         </span>
-                                        <span className="font-bold text-red-600">
+                                        <span className="font-bold text-[var(--danger)]">
                                           {fmt(amt)}
                                         </span>
                                       </div>
                                       <div className="px-4 py-2.5">
                                         <div className="flex justify-between">
-                                          <span className="text-gray-500">
+                                          <span className="text-[var(--text-muted)]">
                                             Nội dung CK
                                           </span>
-                                          <span className="font-mono font-semibold text-gray-900">
+                                          <span className="font-mono font-semibold text-[var(--text)]">
                                             {ref}
                                           </span>
                                         </div>
-                                        <p className="text-[11px] text-gray-400 mt-1">
+                                        <p className="text-[11px] text-[var(--text-faint)] mt-1">
                                           Nội dung chuyển khoản là bắt buộc
                                         </p>
                                       </div>
@@ -2630,14 +2628,14 @@ export default function SessionDetailPage() {
                                     <div className="flex gap-2">
                                       <button
                                         onClick={handleCopyContent}
-                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
                                       >
                                         <Copy className="w-3.5 h-3.5" /> Sao
                                         chép nội dung
                                       </button>
                                       <button
                                         onClick={handleSaveQr}
-                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
                                       >
                                         <Download className="w-3.5 h-3.5" /> Lưu
                                         QR
@@ -2647,7 +2645,7 @@ export default function SessionDetailPage() {
                                     <div className="flex gap-2">
                                       <button
                                         onClick={() => setPayMethod("choose")}
-                                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
+                                        className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]"
                                       >
                                         Quay lại
                                       </button>
@@ -2675,11 +2673,11 @@ export default function SessionDetailPage() {
                                   animation: "fadeSlideUp .25s ease both",
                                 }}
                               >
-                                <div className="bg-green-50 rounded-xl p-4">
-                                  <p className="text-sm font-semibold text-green-800 mb-1">
+                                <div className="bg-[var(--success-soft)] rounded-xl p-4">
+                                  <p className="text-sm font-semibold text-[var(--success)] mb-1">
                                     💵 Thanh toán tiền mặt
                                   </p>
-                                  <p className="text-xs text-green-600">
+                                  <p className="text-xs text-[var(--success)]">
                                     Admin sẽ xác nhận sau khi nhận tiền trực
                                     tiếp.
                                   </p>
@@ -2687,7 +2685,7 @@ export default function SessionDetailPage() {
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() => setPayMethod("choose")}
-                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
+                                    className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]"
                                   >
                                     Quay lại
                                   </button>
@@ -2741,7 +2739,7 @@ export default function SessionDetailPage() {
               <div
                 className="fixed inset-0 z-50 flex items-center justify-center p-4"
                 style={{
-                  background: "rgba(0,0,0,0.4)",
+                  background: "var(--overlay)",
                   backdropFilter: "blur(2px)",
                   opacity: allRegsModalVisible ? 1 : 0,
                   transition: "opacity 200ms ease-out",
@@ -2749,7 +2747,7 @@ export default function SessionDetailPage() {
                 onClick={closeAllRegsModal}
               >
                 <div
-                  className="w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[85vh] flex flex-col"
+                  className="w-full max-w-md bg-[var(--surface)] rounded-2xl shadow-xl max-h-[85vh] flex flex-col"
                   style={{
                     transform: allRegsModalVisible
                       ? "scale(1) translateY(0)"
@@ -2760,20 +2758,20 @@ export default function SessionDetailPage() {
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-600" />
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
+                    <h3 className="font-bold text-[var(--text)] flex items-center gap-2">
+                      <Users className="w-4 h-4 text-[var(--primary)]" />
                       Đã đăng ký ({approvedRegistrations.length})
                     </h3>
                     <button
                       onClick={closeAllRegsModal}
-                      className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                      className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
                     >
-                      <XIcon className="w-4 h-4 text-gray-500" />
+                      <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                   </div>
                   <div className="px-5 py-2 overflow-y-auto scrollbar-hide">
-                    <ul className="divide-y divide-gray-50">
+                    <ul className="divide-y divide-[var(--border)]">
                       {regRoots.map((root: any) => {
                         const guests = regGuestsOf(root.id);
                         return (
@@ -2791,10 +2789,10 @@ export default function SessionDetailPage() {
                       })}
                     </ul>
                   </div>
-                  <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
+                  <div className="px-5 py-3 border-t border-[var(--border)] flex-shrink-0">
                     <button
                       onClick={closeAllRegsModal}
-                      className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
+                      className="w-full py-2.5 rounded-xl bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)]"
                     >
                       Đóng
                     </button>

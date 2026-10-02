@@ -80,14 +80,14 @@ export default function ActivitiesOverview() {
     const animatedRevenue = useCountUp(loading ? 0 : stats.revenue);
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
+        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-4 space-y-4">
             <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-gray-900">Tổng quan</h2>
+                <h2 className="font-semibold text-[var(--text)]">Tổng quan</h2>
                 <div className="flex items-center gap-1.5">
                     <select
                         value={month}
                         onChange={(e) => setMonth(Number(e.target.value))}
-                        className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        className="text-sm border border-[var(--border)] rounded-lg px-2 py-1.5 bg-[var(--surface-muted)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
                     >
                         {MONTH_OPTIONS.map((m) => (
                             <option key={m.value} value={m.value}>
@@ -98,7 +98,7 @@ export default function ActivitiesOverview() {
                     <select
                         value={year}
                         onChange={(e) => setYear(Number(e.target.value))}
-                        className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        className="text-sm border border-[var(--border)] rounded-lg px-2 py-1.5 bg-[var(--surface-muted)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
                     >
                         {YEAR_OPTIONS.map((y) => (
                             <option key={y} value={y}>
@@ -110,49 +110,49 @@ export default function ActivitiesOverview() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-500 mb-1.5">Tổng hoạt động</p>
+                <div className="bg-[var(--surface-muted)] rounded-xl p-3">
+                    <p className="text-xs text-[var(--text-muted)] mb-1.5">Tổng hoạt động</p>
                     <div className="flex items-center justify-between">
-                        <span className="text-xl font-bold text-gray-900 tabular-nums">
+                        <span className="text-xl font-bold text-[var(--text)] tabular-nums">
                             {Math.round(animatedActivities)}
                         </span>
-                        <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center">
+                        <span className="w-8 h-8 rounded-lg bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center">
                             <Boxes className="w-4 h-4" />
                         </span>
                     </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-500 mb-1.5">Đơn hàng</p>
+                <div className="bg-[var(--surface-muted)] rounded-xl p-3">
+                    <p className="text-xs text-[var(--text-muted)] mb-1.5">Đơn hàng</p>
                     <div className="flex items-center justify-between">
-                        <span className="text-xl font-bold text-gray-900 tabular-nums">
+                        <span className="text-xl font-bold text-[var(--text)] tabular-nums">
                             {Math.round(animatedOrders)}
                         </span>
-                        <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center">
+                        <span className="w-8 h-8 rounded-lg bg-[var(--warning-soft)] text-[var(--warning)] flex items-center justify-center">
                             <Package className="w-4 h-4" />
                         </span>
                     </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-500 mb-1.5">Đã thanh toán</p>
+                <div className="bg-[var(--surface-muted)] rounded-xl p-3">
+                    <p className="text-xs text-[var(--text-muted)] mb-1.5">Đã thanh toán</p>
                     <div className="flex items-center justify-between">
-                        <span className="text-xl font-bold text-gray-900 tabular-nums">
+                        <span className="text-xl font-bold text-[var(--text)] tabular-nums">
                             {Math.round(animatedPaid)}
                         </span>
-                        <span className="w-8 h-8 rounded-lg bg-green-50 text-green-500 flex items-center justify-center">
+                        <span className="w-8 h-8 rounded-lg bg-[var(--success-soft)] text-[var(--success)] flex items-center justify-center">
                             <CheckCircle2 className="w-4 h-4" />
                         </span>
                     </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-500 mb-1.5">Chưa thanh toán</p>
+                <div className="bg-[var(--surface-muted)] rounded-xl p-3">
+                    <p className="text-xs text-[var(--text-muted)] mb-1.5">Chưa thanh toán</p>
                     <div className="flex items-center justify-between">
-                        <span className="text-xl font-bold text-gray-900 tabular-nums">
+                        <span className="text-xl font-bold text-[var(--text)] tabular-nums">
                             {Math.round(animatedUnpaid)}
                         </span>
-                        <span className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center">
+                        <span className="w-8 h-8 rounded-lg bg-[var(--danger-soft)] text-[var(--danger)] flex items-center justify-center">
                             <XCircle className="w-4 h-4" />
                         </span>
                     </div>
@@ -161,8 +161,8 @@ export default function ActivitiesOverview() {
 
             <div className="flex items-center justify-between pt-1">
                 <div>
-                    <p className="text-xs text-gray-500 mb-1">Doanh thu</p>
-                    <p className="text-2xl font-bold text-gray-900 tabular-nums">
+                    <p className="text-xs text-[var(--text-muted)] mb-1">Doanh thu</p>
+                    <p className="text-2xl font-bold text-[var(--text)] tabular-nums">
                         {formatCurrency(Math.round(animatedRevenue))}
                     </p>
                 </div>

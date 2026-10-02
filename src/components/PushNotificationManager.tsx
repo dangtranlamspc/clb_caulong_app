@@ -73,12 +73,12 @@ export function PushNotificationManager() {
     }
 
     if (permission === "granted" && subscribed) {
-        return <p className="text-sm text-gray-500">Đã bật thông báo</p>;
+        return <p className="text-sm text-[var(--text-muted)]">Đã bật thông báo</p>;
     }
 
     if (permission === "denied") {
         return (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-[var(--text-faint)]">
                 Bạn đã chặn thông báo. Vào cài đặt trình duyệt để bật lại.
             </p>
         );

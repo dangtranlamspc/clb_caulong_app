@@ -77,24 +77,24 @@ export function AdjustUserDrinkModal({
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-5">
+            <div className="relative bg-[var(--surface)] rounded-2xl shadow-2xl w-full max-w-md p-5">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-gray-900">Điều chỉnh nước — {userName}</h3>
-                    <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                    <h3 className="font-bold text-[var(--text)]">Điều chỉnh nước — {userName}</h3>
+                    <button onClick={onClose} className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)]">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
                 {loading ? (
-                    <div className="py-10 text-center text-gray-400 text-sm">Đang tải...</div>
+                    <div className="py-10 text-center text-[var(--text-faint)] text-sm">Đang tải...</div>
                 ) : (
                     <div className="space-y-3.5">
                         {owned.length > 0 && (
                             <div>
-                                <p className="text-xs font-semibold text-gray-500 mb-1.5">Đang sở hữu</p>
+                                <p className="text-xs font-semibold text-[var(--text-muted)] mb-1.5">Đang sở hữu</p>
                                 <div className="flex flex-wrap gap-1.5">
                                     {owned.map((o) => (
-                                        <span key={o.drink_id} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-50 text-sky-700 text-xs font-medium">
+                                        <span key={o.drink_id} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--primary-soft)] text-[var(--primary)] text-xs font-medium">
                                             <GlassWater className="w-3 h-3" />
                                             {o.drinks?.name} × {o.quantity}
                                         </span>
@@ -106,52 +106,52 @@ export function AdjustUserDrinkModal({
                         <div className="grid grid-cols-2 gap-2">
                             <button
                                 onClick={() => setAction("grant")}
-                                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-sm font-semibold ${action === "grant" ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-200 text-gray-600"}`}
+                                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-sm font-semibold ${action === "grant" ? "bg-emerald-500 border-emerald-500 text-white" : "border-[var(--border)] text-[var(--text-muted)]"}`}
                             >
                                 <Plus className="w-4 h-4" /> Tặng thêm
                             </button>
                             <button
                                 onClick={() => setAction("deduct")}
-                                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-sm font-semibold ${action === "deduct" ? "bg-red-500 border-red-500 text-white" : "border-gray-200 text-gray-600"}`}
+                                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-sm font-semibold ${action === "deduct" ? "bg-red-500 border-red-500 text-white" : "border-[var(--border)] text-[var(--text-muted)]"}`}
                             >
                                 <Minus className="w-4 h-4" /> Trừ bớt
                             </button>
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold text-gray-500">Loại nước</label>
+                            <label className="text-xs font-semibold text-[var(--text-muted)]">Loại nước</label>
                             <select
                                 value={drinkId}
                                 onChange={(e) => setDrinkId(e.target.value)}
-                                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
+                                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm"
                             >
                                 {drinks.map((d) => (
                                     <option key={d.id} value={d.id}>{d.name}</option>
                                 ))}
                             </select>
                             {action === "deduct" && (
-                                <p className="text-xs text-gray-400 mt-1">Đang sở hữu: {currentOwned}</p>
+                                <p className="text-xs text-[var(--text-faint)] mt-1">Đang sở hữu: {currentOwned}</p>
                             )}
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold text-gray-500">Số lượng</label>
+                            <label className="text-xs font-semibold text-[var(--text-muted)]">Số lượng</label>
                             <input
                                 type="number"
                                 min={1}
                                 value={quantity}
                                 onChange={(e) => setQuantity(e.target.value === "" ? "" : Number(e.target.value))}
-                                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
+                                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm"
                                 placeholder="Nhập số lượng"
                             />
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold text-gray-500">Ghi chú (tuỳ chọn)</label>
+                            <label className="text-xs font-semibold text-[var(--text-muted)]">Ghi chú (tuỳ chọn)</label>
                             <input
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
-                                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
+                                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm"
                                 placeholder="VD: Thưởng thi đấu tốt"
                             />
                         </div>

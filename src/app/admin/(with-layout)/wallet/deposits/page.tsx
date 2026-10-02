@@ -66,17 +66,17 @@ export default function WalletAdminDepositsPage() {
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-2">
-                <Wallet className="w-6 h-6 text-blue-600" />
-                <h1 className="text-2xl font-bold text-gray-900">Yêu cầu nạp tiền Ví</h1>
+                <Wallet className="w-6 h-6 text-[var(--primary)]" />
+                <h1 className="text-2xl font-bold text-[var(--text)]">Yêu cầu nạp tiền Ví</h1>
             </div>
 
-            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit overflow-x-auto">
+            <div className="flex gap-1 bg-[var(--surface-muted)] rounded-lg p-1 w-fit overflow-x-auto">
                 {[["pending", "Chờ duyệt"], ["approved", "Đã duyệt"], ["rejected", "Từ chối"], ["", "Tất cả"]].map(
                     ([val, lbl]) => (
                         <button
                             key={val}
                             onClick={() => setStatus(val)}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${status === val ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${status === val ? "bg-[var(--surface)] text-[var(--text)] shadow-sm" : "text-[var(--text-muted)]"
                                 }`}
                         >
                             {lbl}
@@ -87,9 +87,9 @@ export default function WalletAdminDepositsPage() {
 
             <div className="space-y-3">
                 {loading ? (
-                    [...Array(3)].map((_, i) => <div key={i} className="card h-24 animate-pulse bg-gray-100" />)
+                    [...Array(3)].map((_, i) => <div key={i} className="card h-24 animate-pulse bg-[var(--surface-muted)]" />)
                 ) : requests.length === 0 ? (
-                    <div className="card py-16 text-center text-gray-400">
+                    <div className="card py-16 text-center text-[var(--text-faint)]">
                         <Wallet className="w-8 h-8 mx-auto mb-2 opacity-20" />
                         <p>Không có yêu cầu nào</p>
                     </div>
@@ -100,7 +100,7 @@ export default function WalletAdminDepositsPage() {
                             <div key={r.id} className="card space-y-3">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700 flex-shrink-0 overflow-hidden">
+                                        <div className="w-9 h-9 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-sm font-semibold text-[var(--primary)] flex-shrink-0 overflow-hidden">
                                             {r.users?.avatar_url ? (
                                                 <img src={r.users.avatar_url} alt={r.users?.full_name} className="w-full h-full object-cover" />
                                             ) : (
@@ -108,32 +108,32 @@ export default function WalletAdminDepositsPage() {
                                             )}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900">{r.users?.full_name}</p>
-                                            <p className="text-xs text-gray-400">
+                                            <p className="text-sm font-semibold text-[var(--text)]">{r.users?.full_name}</p>
+                                            <p className="text-xs text-[var(--text-faint)]">
                                                 {r.users?.phone} · {format(new Date(r.created_at), "dd/MM HH:mm", { locale: vi })}
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="text-lg font-black text-blue-600 whitespace-nowrap">{fmt(r.amount)}</span>
+                                    <span className="text-lg font-black text-[var(--primary)] whitespace-nowrap">{fmt(r.amount)}</span>
                                 </div>
 
-                                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                                    <span className="px-2 py-0.5 rounded-full bg-gray-50 border border-gray-200">
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
+                                    <span className="px-2 py-0.5 rounded-full bg-[var(--surface-muted)] border border-[var(--border)]">
                                         {r.payment_method === "cash" ? "💵 Tiền mặt" : "🏦 Chuyển khoản"}
                                     </span>
                                     {r.payment_reference && (
-                                        <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{r.payment_reference}</span>
+                                        <span className="font-mono bg-[var(--surface-muted)] px-1.5 py-0.5 rounded">{r.payment_reference}</span>
                                     )}
                                     {r.payment_proof_url && (
                                         <button
                                             onClick={() => setViewingBillUrl(r.payment_proof_url)}
-                                            className="flex items-center gap-1 text-blue-600 hover:underline"
+                                            className="flex items-center gap-1 text-[var(--primary)] hover:underline"
                                         >
                                             <Eye className="w-3.5 h-3.5" /> Xem bill
                                         </button>
                                     )}
                                 </div>
-                                {r.note && <p className="text-xs text-gray-400 italic">{r.note}</p>}
+                                {r.note && <p className="text-xs text-[var(--text-faint)] italic">{r.note}</p>}
 
                                 {r.status === "pending" && showReject !== r.id && (
                                     <div className="flex gap-2">
@@ -147,7 +147,7 @@ export default function WalletAdminDepositsPage() {
                                         <button
                                             onClick={() => setShowReject(r.id)}
                                             disabled={busy}
-                                            className="flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium rounded-lg disabled:opacity-50"
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-[var(--danger-soft)] hover:bg-[var(--danger-soft)] text-[var(--danger)] text-xs font-medium rounded-lg disabled:opacity-50"
                                         >
                                             <XCircle className="w-3.5 h-3.5" /> Từ chối
                                         </button>
@@ -156,7 +156,7 @@ export default function WalletAdminDepositsPage() {
 
                                 {r.status !== "pending" && (
                                     <span
-                                        className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${r.status === "approved" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+                                        className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${r.status === "approved" ? "bg-[var(--success-soft)] text-[var(--success)]" : "bg-[var(--danger-soft)] text-[var(--danger)]"
                                             }`}
                                     >
                                         {r.status === "approved" ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}

@@ -91,12 +91,12 @@ export default function HandbookAdminPage() {
     return (
         <div className="max-w-2xl mx-auto space-y-4">
             <div>
-                <h1 className="text-lg font-bold text-gray-900">Sổ tay CLB</h1>
-                <p className="text-xs text-gray-400 mt-0.5">Bìa → Mục lục → Nội dung → Nội dung con</p>
+                <h1 className="text-lg font-bold text-[var(--text)]">Sổ tay CLB</h1>
+                <p className="text-xs text-[var(--text-faint)] mt-0.5">Bìa → Mục lục → Nội dung → Nội dung con</p>
             </div>
 
             {loading ? (
-                <div className="py-16 text-center text-sm text-gray-400">Đang tải...</div>
+                <div className="py-16 text-center text-sm text-[var(--text-faint)]">Đang tải...</div>
             ) : (
                 <div className="space-y-5">
                     <SingletonCard
@@ -121,7 +121,7 @@ export default function HandbookAdminPage() {
                     {/* SECTIONS */}
                     <div className="space-y-2.5">
                         <div className="flex items-center justify-between">
-                            <p className="text-xs font-semibold text-gray-500">Các mục nội dung</p>
+                            <p className="text-xs font-semibold text-[var(--text-muted)]">Các mục nội dung</p>
                             <button
                                 onClick={() => openModal({ mode: "content", parentId: null })}
                                 className="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center shadow-sm active:scale-[0.96]"
@@ -131,12 +131,12 @@ export default function HandbookAdminPage() {
                         </div>
 
                         {tree.sections.length === 0 ? (
-                            <div className="py-10 text-center text-sm text-gray-400 bg-white rounded-2xl border border-gray-100">
+                            <div className="py-10 text-center text-sm text-[var(--text-faint)] bg-[var(--surface)] rounded-2xl border border-[var(--border)]">
                                 Chưa có mục nào. Bấm nút + để thêm mục đầu tiên (VD: "01 Mục tiêu Team").
                             </div>
                         ) : (
                             tree.sections.map((section, idx) => (
-                                <div key={section.id} className="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                                <div key={section.id} className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-sm overflow-hidden">
                                     <PageRow
                                         page={section}
                                         canUp={idx > 0}
@@ -154,9 +154,9 @@ export default function HandbookAdminPage() {
                                     />
 
                                     {expanded[section.id] && (
-                                        <div className="bg-[#F7F8FA] border-t border-gray-100 p-2.5 pl-8 space-y-2">
+                                        <div className="bg-[#F7F8FA] border-t border-[var(--border)] p-2.5 pl-8 space-y-2">
                                             {(section.children ?? []).map((child: any, cIdx: number) => (
-                                                <div key={child.id} className="rounded-xl bg-white border border-gray-100 shadow-sm">
+                                                <div key={child.id} className="rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-sm">
                                                     <PageRow
                                                         page={child}
                                                         compact
@@ -173,7 +173,7 @@ export default function HandbookAdminPage() {
                                             ))}
                                             <button
                                                 onClick={() => openModal({ mode: "content", parentId: section.id })}
-                                                className="w-full rounded-xl border-2 border-dashed border-gray-200 py-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-500"
+                                                className="w-full rounded-xl border-2 border-dashed border-[var(--border)] py-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-[var(--text-faint)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:text-[var(--primary)]"
                                             >
                                                 <Plus className="w-3.5 h-3.5" /> Thêm nội dung con
                                             </button>
@@ -212,14 +212,14 @@ function SingletonCard({
 }) {
     if (!page) {
         return (
-            <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-4 flex items-center gap-3">
+            <div className="rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--surface)] p-4 flex items-center gap-3">
                 <button onClick={onEdit} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                    <div className="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 text-gray-300">
+                    <div className="w-11 h-11 rounded-xl bg-[var(--surface-muted)] flex items-center justify-center flex-shrink-0 text-[var(--text-faint)]">
                         <Icon className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
-                        <p className="text-sm font-bold text-gray-700">{label}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{emptyText}</p>
+                        <p className="text-sm font-bold text-[var(--text)]">{label}</p>
+                        <p className="text-xs text-[var(--text-faint)] mt-0.5">{emptyText}</p>
                     </div>
                 </button>
                 {onAdd && (
@@ -236,30 +236,30 @@ function SingletonCard({
     }
 
     return (
-        <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-3 flex items-center gap-3 hover:border-blue-200">
+        <div className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-sm p-3 flex items-center gap-3 hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)]">
             <button onClick={onEdit} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                 {thumbnail ? (
                     <img src={thumbnail} alt={label} className="w-11 h-11 rounded-xl object-cover flex-shrink-0" />
                 ) : (
-                    <div className="w-11 h-11 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
-                        <LucideIconByName name={page.icon} className="w-5 h-5 text-gray-500" />
+                    <div className="w-11 h-11 rounded-xl bg-[var(--surface-muted)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
+                        <LucideIconByName name={page.icon} className="w-5 h-5 text-[var(--text-muted)]" />
                     </div>
                 )}
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
-                        {!page.is_active && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">Đang ẩn</span>}
+                        <p className="text-[10px] font-semibold text-[var(--text-faint)] uppercase tracking-wide">{label}</p>
+                        {!page.is_active && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-faint)]">Đang ẩn</span>}
                     </div>
-                    <p className="text-sm font-bold text-gray-900 truncate">{page.title}</p>
+                    <p className="text-sm font-bold text-[var(--text)] truncate">{page.title}</p>
                 </div>
             </button>
             <div className="flex items-center gap-1 flex-shrink-0">
                 {onAdd && (
-                    <button onClick={onAdd} title={addLabel} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-500">
+                    <button onClick={onAdd} title={addLabel} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary)]">
                         <Plus className="w-4 h-4" />
                     </button>
                 )}
-                <button onClick={onEdit} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-300">
+                <button onClick={onEdit} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)]">
                     <Pencil className="w-4 h-4" />
                 </button>
             </div>
@@ -289,45 +289,45 @@ function PageRow({
     return (
         <div className={`flex items-center gap-2.5 ${compact ? "p-2" : "p-3"}`}>
             <div className="flex flex-col gap-0.5 flex-shrink-0">
-                <button onClick={onUp} disabled={!canUp || reordering} className="w-6 h-6 rounded-md flex items-center justify-center text-gray-300 disabled:opacity-30 hover:bg-gray-50">
+                <button onClick={onUp} disabled={!canUp || reordering} className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--text-faint)] disabled:opacity-30 hover:bg-[var(--surface-hover)]">
                     <ChevronUp className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={onDown} disabled={!canDown || reordering} className="w-6 h-6 rounded-md flex items-center justify-center text-gray-300 disabled:opacity-30 hover:bg-gray-50">
+                <button onClick={onDown} disabled={!canDown || reordering} className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--text-faint)] disabled:opacity-30 hover:bg-[var(--surface-hover)]">
                     <ChevronDown className="w-3.5 h-3.5" />
                 </button>
             </div>
 
             {expandable && (
-                <button onClick={onToggleExpand} className="w-6 h-6 flex-shrink-0 flex items-center justify-center text-gray-400">
+                <button onClick={onToggleExpand} className="w-6 h-6 flex-shrink-0 flex items-center justify-center text-[var(--text-faint)]">
                     <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`} />
                 </button>
             )}
 
-            <div className={`${compact ? "w-9 h-9" : "w-11 h-11"} rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0`}>
-                <LucideIconByName name={page.icon} className="w-4.5 h-4.5 text-gray-500" />
+            <div className={`${compact ? "w-9 h-9" : "w-11 h-11"} rounded-xl bg-[var(--surface-muted)] border border-[var(--border)] flex items-center justify-center flex-shrink-0`}>
+                <LucideIconByName name={page.icon} className="w-4.5 h-4.5 text-[var(--text-muted)]" />
             </div>
 
             <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                     {page.page_code && (
-                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full flex-shrink-0">{page.page_code}</span>
+                        <span className="text-[10px] font-bold text-[var(--primary)] bg-[var(--primary-soft)] px-1.5 py-0.5 rounded-full flex-shrink-0">{page.page_code}</span>
                     )}
-                    <p className={`${compact ? "text-xs" : "text-sm"} font-bold text-gray-900 truncate`}>{page.title}</p>
+                    <p className={`${compact ? "text-xs" : "text-sm"} font-bold text-[var(--text)] truncate`}>{page.title}</p>
                     {expandable && !!childCount && (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">{childCount} mục con</span>
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] flex-shrink-0">{childCount} mục con</span>
                     )}
                 </div>
-                {page.subtitle && <p className="text-xs text-gray-400 truncate">{page.subtitle}</p>}
+                {page.subtitle && <p className="text-xs text-[var(--text-faint)] truncate">{page.subtitle}</p>}
             </div>
 
             <div className="flex items-center gap-1 flex-shrink-0">
-                <button onClick={onToggleActive} title={page.is_active ? "Đang hiển thị" : "Đang ẩn"} className={`w-8 h-8 rounded-lg flex items-center justify-center ${page.is_active ? "text-emerald-500 hover:bg-emerald-50" : "text-gray-300 hover:bg-gray-50"}`}>
+                <button onClick={onToggleActive} title={page.is_active ? "Đang hiển thị" : "Đang ẩn"} className={`w-8 h-8 rounded-lg flex items-center justify-center ${page.is_active ? "text-[var(--success)] hover:bg-[var(--success-soft)]" : "text-[var(--text-faint)] hover:bg-[var(--surface-hover)]"}`}>
                     {page.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
-                <button onClick={onEdit} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-500">
+                <button onClick={onEdit} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary)]">
                     <Pencil className="w-4 h-4" />
                 </button>
-                <button onClick={onDelete} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500">
+                <button onClick={onDelete} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]">
                     <Trash2 className="w-4 h-4" />
                 </button>
             </div>

@@ -56,21 +56,21 @@ export default function EventTypeFilterDropdown({
       <button
         type="button"
         onClick={toggle}
-        className={`w-full flex items-center justify-between gap-2 bg-white border rounded-xl px-4 py-3 text-sm font-medium text-gray-900 transition-colors ${open
+        className={`w-full flex items-center justify-between gap-2 bg-[var(--surface)] border rounded-xl px-4 py-3 text-sm font-medium text-[var(--text)] transition-colors ${open
             ? "border-blue-400 ring-2 ring-blue-100"
-            : "border-gray-200 hover:border-gray-300"
+            : "border-[var(--border)] hover:border-[var(--border-strong)]"
           }`}
       >
         <span className="truncate">{currentLabel}</span>
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""
+          className={`w-4 h-4 text-[var(--text-faint)] flex-shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""
             }`}
         />
       </button>
 
       {mounted && (
         <div
-          className="absolute z-20 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden origin-top"
+          className="absolute z-20 mt-2 w-full bg-[var(--surface)] rounded-xl shadow-lg border border-[var(--border)] overflow-hidden origin-top"
           style={{
             transform: open
               ? "scale(1) translateY(0)"
@@ -88,8 +88,8 @@ export default function EventTypeFilterDropdown({
                 close();
               }}
               className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors ${!value
-                  ? "bg-blue-50 text-blue-700 font-medium"
-                  : "text-gray-700 hover:bg-gray-50"
+                  ? "bg-[var(--primary-soft)] text-[var(--primary)] font-medium"
+                  : "text-[var(--text)] hover:bg-[var(--surface-hover)]"
                 }`}
             >
               {allLabel}
@@ -104,8 +104,8 @@ export default function EventTypeFilterDropdown({
                   close();
                 }}
                 className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors ${value === opt.value
-                    ? "bg-blue-50 text-blue-700 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
+                    ? "bg-[var(--primary-soft)] text-[var(--primary)] font-medium"
+                    : "text-[var(--text)] hover:bg-[var(--surface-hover)]"
                   }`}
               >
                 {opt.label}

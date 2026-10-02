@@ -47,21 +47,21 @@ function relativeDay(dateStr: string | null) {
 }
 
 const TIER_STYLE: Record<string, { color: string; bg: string; dot: string }> = {
-  "Tân thủ": { color: "text-gray-600", bg: "bg-gray-100", dot: "🔘" },
-  "Phong trào": { color: "text-green-700", bg: "bg-green-50", dot: "🟢" },
+  "Tân thủ": { color: "text-[var(--text-muted)]", bg: "bg-[var(--surface-muted)]", dot: "🔘" },
+  "Phong trào": { color: "text-[var(--success)]", bg: "bg-[var(--success-soft)]", dot: "🟢" },
   "Cứng cựa": { color: "text-cyan-700", bg: "bg-cyan-50", dot: "🔵" },
-  "Chủ lực": { color: "text-blue-700", bg: "bg-blue-50", dot: "🔷" },
-  "Cao thủ": { color: "text-purple-700", bg: "bg-purple-50", dot: "🟣" },
-  "Kiện tướng": { color: "text-amber-700", bg: "bg-amber-50", dot: "🥇" },
-  "Đại Kiện Tướng": { color: "text-orange-700", bg: "bg-orange-50", dot: "🏆" },
-  "Huyền Thoại": { color: "text-rose-700", bg: "bg-rose-50", dot: "👑" },
+  "Chủ lực": { color: "text-[var(--primary)]", bg: "bg-[var(--primary-soft)]", dot: "🔷" },
+  "Cao thủ": { color: "text-[var(--purple)]", bg: "bg-[var(--purple-soft)]", dot: "🟣" },
+  "Kiện tướng": { color: "text-[var(--warning)]", bg: "bg-[var(--warning-soft)]", dot: "🥇" },
+  "Đại Kiện Tướng": { color: "text-[var(--warning)]", bg: "bg-[var(--warning-soft)]", dot: "🏆" },
+  "Huyền Thoại": { color: "text-[var(--pink)]", bg: "bg-[var(--pink-soft)]", dot: "👑" },
 };
 
 function RankTag({ tier, points }: { tier: string | null; points?: number }) {
-  if (!tier) return <span className="text-xs text-gray-300">—</span>;
+  if (!tier) return <span className="text-xs text-[var(--text-faint)]">—</span>;
   const t = TIER_STYLE[tier] ?? {
-    color: "text-gray-600",
-    bg: "bg-gray-100",
+    color: "text-[var(--text-muted)]",
+    bg: "bg-[var(--surface-muted)]",
     dot: "•",
   };
   return (
@@ -95,24 +95,24 @@ function parseThousands(value: string) {
 function StatusBadge({ balance }: { balance: number }) {
   if (balance < 0)
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600 whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--danger-soft)] text-[var(--danger)] whitespace-nowrap">
         Âm ví
       </span>
     );
   if (balance === 0)
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--surface-muted)] text-[var(--text-muted)] whitespace-nowrap">
         Hết tiền
       </span>
     );
   if (balance < 50000)
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-600 whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--warning-soft)] text-[var(--warning)] whitespace-nowrap">
         Sắp hết
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600 whitespace-nowrap">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--success-soft)] text-[var(--success)] whitespace-nowrap">
       Bình thường
     </span>
   );
@@ -133,9 +133,9 @@ function MemberMobileCard({
     <button
       onClick={onSelect}
       style={{ animationDelay: `${delay}ms` }}
-      className={`w-full flex items-start gap-3 px-4 py-3.5 text-left rounded-2xl bg-white border transition-all duration-150 active:scale-[0.98] animate-row-fade ${active
-        ? "border-blue-300 ring-2 ring-blue-100 shadow-lg"
-        : "border-gray-100 shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.1)]"
+      className={`w-full flex items-start gap-3 px-4 py-3.5 text-left rounded-2xl bg-[var(--surface)] border transition-all duration-150 active:scale-[0.98] animate-row-fade ${active
+        ? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] ring-2 ring-blue-100 shadow-lg"
+        : "border-[var(--border)] shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.1)]"
         }`}
     >
       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 overflow-hidden">
@@ -155,13 +155,13 @@ function MemberMobileCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-semibold text-gray-900 truncate text-sm">
+            <p className="font-semibold text-[var(--text)] truncate text-sm">
               {m.full_name}
             </p>
-            <p className="text-xs text-gray-400">{m.phone}</p>
+            <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>
           </div>
           <span
-            className={`text-sm font-bold whitespace-nowrap flex-shrink-0 ${m.balance < 0 ? "text-red-500" : "text-gray-900"}`}
+            className={`text-sm font-bold whitespace-nowrap flex-shrink-0 ${m.balance < 0 ? "text-[var(--danger)]" : "text-[var(--text)]"}`}
           >
             {fmt(m.balance)}
           </span>
@@ -170,7 +170,7 @@ function MemberMobileCard({
           <RankTag tier={m.tier} points={m.total_points} />
           <StatusBadge balance={m.balance} />
         </div>
-        <p className="text-[11px] text-gray-400 mt-1.5">
+        <p className="text-[11px] text-[var(--text-faint)] mt-1.5">
           Buổi gần nhất: {relativeDay(m.last_session_at)}
         </p>
       </div>
@@ -194,7 +194,7 @@ function Checkbox({
       onClick={onChange}
       className={`relative w-[18px] h-[18px] rounded-[6px] border-[1.5px] flex items-center justify-center transition-all duration-150 ease-out active:scale-80 ${active
         ? "bg-blue-600 border-blue-600 shadow-sm shadow-blue-200"
-        : "bg-white border-gray-300 hover:border-blue-400 hover:bg-blue-50/50"
+        : "bg-[var(--surface)] border-[var(--border-strong)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)]"
         }`}
     >
       <Minus
@@ -390,7 +390,7 @@ function MemberPanel({
   const isNegativeAmount = amountDisplay.trim().startsWith("-");
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-white lg:border-l border-gray-100">
+    <div className="flex flex-col h-full min-h-0 bg-[var(--surface)] lg:border-l border-[var(--border)]">
       <style jsx>{`
         @media (max-width: 639px) {
           .hide-scrollbar-mobile {
@@ -402,7 +402,7 @@ function MemberPanel({
           }
         }
       `}</style>
-      <div className="flex items-start justify-between p-4 sm:p-5 border-b border-gray-100 flex-shrink-0">
+      <div className="flex items-start justify-between p-4 sm:p-5 border-b border-[var(--border)] flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-base sm:text-lg font-bold text-white flex-shrink-0 overflow-hidden">
             {member.avatar_url ? (
@@ -419,11 +419,11 @@ function MemberPanel({
             )}
           </div>
           <div className="min-w-0">
-            <p className="font-bold text-gray-900 truncate">
+            <p className="font-bold text-[var(--text)] truncate">
               {member.full_name}
             </p>
             <RankTag tier={member.tier} points={member.total_points} />
-            <p className="text-xs text-gray-400 mt-0.5">{member.phone}</p>
+            <p className="text-xs text-[var(--text-faint)] mt-0.5">{member.phone}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -442,23 +442,23 @@ function MemberPanel({
           </button>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-transform duration-150 active:scale-90"
+            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)] transition-transform duration-150 active:scale-90"
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-[var(--text-muted)]" />
           </button>
         </div>
       </div>
 
-      <div className="px-4 sm:px-5 py-4 border-b border-gray-100 flex-shrink-0">
-        <p className="text-xs text-gray-400 mb-1">Số dư ví hiện tại</p>
+      <div className="px-4 sm:px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
+        <p className="text-xs text-[var(--text-faint)] mb-1">Số dư ví hiện tại</p>
         <p
-          className={`text-2xl sm:text-3xl font-black ${member.balance < 0 ? "text-red-500" : "text-gray-900"}`}
+          className={`text-2xl sm:text-3xl font-black ${member.balance < 0 ? "text-[var(--danger)]" : "text-[var(--text)]"}`}
         >
           {fmt(member.balance)}
         </p>
       </div>
 
-      <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center gap-2 flex-shrink-0">
+      <div className="px-4 sm:px-5 py-3 border-b border-[var(--border)] flex items-center gap-2 flex-shrink-0">
         <button
           onClick={() => {
             setShowTopup(true);
@@ -473,7 +473,7 @@ function MemberPanel({
             setShowDeduct(true);
             setShowTopup(false);
           }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-transform duration-150 active:scale-95 text-red-600 text-xs sm:text-sm font-medium flex-shrink-0"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] hover:bg-[var(--danger-soft)] transition-transform duration-150 active:scale-95 text-[var(--danger)] text-xs sm:text-sm font-medium flex-shrink-0"
         >
           <Minus className="w-3.5 h-3.5" /> Trừ tiền
         </button>
@@ -507,9 +507,9 @@ function MemberPanel({
       >
         <div className="overflow-hidden">
           <div
-            className={`px-4 sm:px-5 py-3 border-b ${showDeduct ? "bg-red-50 border-red-100" : "bg-blue-50 border-blue-100"}`}
+            className={`px-4 sm:px-5 py-3 border-b ${showDeduct ? "bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]" : "bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]"}`}
           >
-            <p className={`text-xs font-semibold mb-2 ${showDeduct ? "text-red-800" : "text-blue-800"}`}>
+            <p className={`text-xs font-semibold mb-2 ${showDeduct ? "text-[var(--danger)]" : "text-[var(--primary)]"}`}>
               {showTopup ? "Nạp tiền thủ công" : "Trừ tiền thủ công"}
             </p>
             <div className="flex flex-col gap-2">
@@ -519,25 +519,25 @@ function MemberPanel({
                 value={amountDisplay}
                 onChange={handleAmountChange}
                 placeholder="Số tiền"
-                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow duration-150 bg-white ${showDeduct
-                  ? "border-red-200 focus:border-red-400 focus:ring-red-100"
-                  : "border-blue-200 focus:border-blue-400 focus:ring-blue-100"
+                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow duration-150 bg-[var(--surface)] ${showDeduct
+                  ? "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] focus:border-[var(--danger)] focus:ring-red-100"
+                  : "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus:border-[var(--primary)] focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
                   }`}
               />
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Ghi chú"
-                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow duration-150 bg-white ${showDeduct
-                  ? "border-red-200 focus:border-red-400 focus:ring-red-100"
-                  : "border-blue-200 focus:border-blue-400 focus:ring-blue-100"
+                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-shadow duration-150 bg-[var(--surface)] ${showDeduct
+                  ? "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] focus:border-[var(--danger)] focus:ring-red-100"
+                  : "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus:border-[var(--primary)] focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
                   }`}
               />
               <div className="flex gap-2">
                 <button
                   onClick={closeForm}
                   disabled={submitting}
-                  className="flex-1 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-200 transition-transform duration-150 active:scale-[0.98] text-gray-600 text-sm font-semibold rounded-lg disabled:opacity-50 disabled:active:scale-100"
+                  className="flex-1 px-3 py-2 bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] transition-transform duration-150 active:scale-[0.98] text-[var(--text-muted)] text-sm font-semibold rounded-lg disabled:opacity-50 disabled:active:scale-100"
                 >
                   Thu lại
                 </button>
@@ -556,16 +556,16 @@ function MemberPanel({
 
       <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 hide-scrollbar-mobile">
         <div className="px-4 sm:px-5 pt-4 pb-2">
-          <p className="font-bold text-gray-900 text-sm">Lịch sử giao dịch</p>
+          <p className="font-bold text-[var(--text)] text-sm">Lịch sử giao dịch</p>
         </div>
         {loadingTx ? (
           <div className="px-4 sm:px-5 py-2 space-y-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-8 bg-gray-100 rounded animate-pulse" />
+              <div key={i} className="h-8 bg-[var(--surface-muted)] rounded animate-pulse" />
             ))}
           </div>
         ) : transactions.length === 0 ? (
-          <div className="px-4 sm:px-5 py-6 text-center text-gray-400 text-sm">
+          <div className="px-4 sm:px-5 py-6 text-center text-[var(--text-faint)] text-sm">
             Chưa có giao dịch nào
           </div>
         ) : (
@@ -608,7 +608,7 @@ function MemberPanel({
                   return (
                     <tr
                       key={tx.id}
-                      className={`border-b border-gray-50 animate-row-fade transition-colors duration-200 align-middle ${isSelected ? "bg-blue-50/70 hover:bg-blue-50" : "hover:bg-gray-50"
+                      className={`border-b border-[var(--border)] animate-row-fade transition-colors duration-200 align-middle ${isSelected ? "bg-[var(--primary-soft)] hover:bg-[var(--primary-soft)]" : "hover:bg-[var(--surface-hover)]"
                         }`}
                     >
                       <td className="px-3 sm:px-5 py-2.5" onClick={(e) => e.stopPropagation()}>
@@ -616,7 +616,7 @@ function MemberPanel({
                       </td>
                       <td
                         onClick={() => onSelectTx(tx)}
-                        className="pl-1 pr-2 py-2.5 text-[11px] sm:text-xs text-gray-400 whitespace-nowrap cursor-pointer"
+                        className="pl-1 pr-2 py-2.5 text-[11px] sm:text-xs text-[var(--text-faint)] whitespace-nowrap cursor-pointer"
                       >
                         {format(new Date(tx.created_at), "dd/MM", { locale: vi })}
                         <span className="hidden sm:inline">
@@ -625,7 +625,7 @@ function MemberPanel({
                       </td>
                       <td
                         onClick={() => onSelectTx(tx)}
-                        className="px-2 py-2.5 text-gray-700 cursor-pointer whitespace-normal break-words leading-snug"
+                        className="px-2 py-2.5 text-[var(--text)] cursor-pointer whitespace-normal break-words leading-snug"
                       >
                         {(tx.type === "manual_expense" || tx.type === "manual_credit") && tx.description
                           ? tx.description
@@ -633,14 +633,14 @@ function MemberPanel({
                       </td>
                       <td
                         onClick={() => onSelectTx(tx)}
-                        className={`pl-2 pr-1.5 py-2.5 font-bold text-right whitespace-nowrap cursor-pointer ${tx.amount > 0 ? "text-emerald-600" : "text-red-500"}`}
+                        className={`pl-2 pr-1.5 py-2.5 font-bold text-right whitespace-nowrap cursor-pointer ${tx.amount > 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
                       >
                         {tx.amount > 0 ? "+" : ""}
                         {fmt(tx.amount)}
                       </td>
                       <td
                         onClick={() => onSelectTx(tx)}
-                        className="pl-1.5 pr-3 sm:pr-5 py-2.5 text-[11px] sm:text-xs text-gray-400 text-right whitespace-nowrap cursor-pointer"
+                        className="pl-1.5 pr-3 sm:pr-5 py-2.5 text-[11px] sm:text-xs text-[var(--text-faint)] text-right whitespace-nowrap cursor-pointer"
                       >
                         {fmt(tx.balance_after)}
                       </td>
@@ -817,14 +817,14 @@ function StatMembersModal({
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{
-        background: visible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+        background: visible ? "var(--overlay)" : "rgba(0,0,0,0)",
         backdropFilter: visible ? "blur(2px)" : "none",
         transition: "background .2s ease, backdrop-filter .2s ease",
       }}
       onClick={handleClose}
     >
       <div
-        className="w-full max-w-lg bg-white rounded-2xl shadow-xl h-[80vh] sm:h-[85vh] overflow-hidden relative flex flex-col"
+        className="w-full max-w-lg bg-[var(--surface)] rounded-2xl shadow-xl h-[80vh] sm:h-[85vh] overflow-hidden relative flex flex-col"
         style={{
           transform: visible ? "scale(1) translateY(0)" : "scale(0.95) translateY(12px)",
           opacity: visible ? 1 : 0,
@@ -834,23 +834,23 @@ function StatMembersModal({
       >
         <button
           onClick={handleClose}
-          className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 shadow-sm"
+          className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] flex items-center justify-center text-[var(--text-muted)] shadow-sm"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Header cố định */}
-        <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900 pr-8">{title}</h2>
-          <p className="text-xs text-gray-400 mt-0.5">{meta.total ?? 0} thành viên</p>
+        <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-[var(--border)]">
+          <h2 className="text-lg font-bold text-[var(--text)] pr-8">{title}</h2>
+          <p className="text-xs text-[var(--text-faint)] mt-0.5">{meta.total ?? 0} thành viên</p>
 
           <div className="relative mt-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-faint)]" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm kiếm thành viên..."
-              className="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="w-full pl-8 pr-3 py-2 text-sm bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
             />
           </div>
         </div>
@@ -859,11 +859,11 @@ function StatMembersModal({
           {loading ? (
             <div className="px-5 py-4 space-y-2">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-14 bg-gray-100 rounded-xl animate-pulse" />
+                <div key={i} className="h-14 bg-[var(--surface-muted)] rounded-xl animate-pulse" />
               ))}
             </div>
           ) : members.length === 0 ? (
-            <div className="px-5 py-16 text-center text-gray-400 text-sm">
+            <div className="px-5 py-16 text-center text-[var(--text-faint)] text-sm">
               Không có thành viên nào
             </div>
           ) : (
@@ -875,7 +875,7 @@ function StatMembersModal({
                     onSelectMember(m);
                     handleClose();
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-[var(--surface-hover)] transition-colors text-left"
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 overflow-hidden">
                     {m.avatar_url ? (
@@ -885,10 +885,10 @@ function StatMembersModal({
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-gray-900 truncate text-sm">{m.full_name}</p>
-                    <p className="text-xs text-gray-400">{m.phone}</p>
+                    <p className="font-semibold text-[var(--text)] truncate text-sm">{m.full_name}</p>
+                    <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>
                   </div>
-                  <span className={`text-sm font-bold whitespace-nowrap ${m.balance < 0 ? "text-red-500" : "text-gray-900"}`}>
+                  <span className={`text-sm font-bold whitespace-nowrap ${m.balance < 0 ? "text-[var(--danger)]" : "text-[var(--text)]"}`}>
                     {fmt(m.balance)}
                   </span>
                 </button>
@@ -898,21 +898,21 @@ function StatMembersModal({
         </div>
 
         {totalPages > 1 && (
-          <div className="flex-shrink-0 flex items-center justify-center gap-1 px-5 py-3 border-t border-gray-100">
+          <div className="flex-shrink-0 flex items-center justify-center gap-1 px-5 py-3 border-t border-[var(--border)]">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50"
+              className="w-7 h-7 rounded-md border border-[var(--border)] flex items-center justify-center disabled:opacity-40 hover:bg-[var(--surface-hover)]"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="text-xs text-gray-500 px-2">
+            <span className="text-xs text-[var(--text-muted)] px-2">
               {page} / {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50"
+              className="w-7 h-7 rounded-md border border-[var(--border)] flex items-center justify-center disabled:opacity-40 hover:bg-[var(--surface-hover)]"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -1009,14 +1009,14 @@ function TopupRequestsModal({
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{
-        background: visible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+        background: visible ? "var(--overlay)" : "rgba(0,0,0,0)",
         backdropFilter: visible ? "blur(2px)" : "none",
         transition: "background .2s ease, backdrop-filter .2s ease",
       }}
       onClick={handleClose}
     >
       <div
-        className="w-full max-w-lg bg-white rounded-2xl shadow-xl h-[80vh] sm:h-[85vh] overflow-hidden relative flex flex-col"
+        className="w-full max-w-lg bg-[var(--surface)] rounded-2xl shadow-xl h-[80vh] sm:h-[85vh] overflow-hidden relative flex flex-col"
         style={{
           transform: visible ? "scale(1) translateY(0)" : "scale(0.95) translateY(12px)",
           opacity: visible ? 1 : 0,
@@ -1026,14 +1026,14 @@ function TopupRequestsModal({
       >
         <button
           onClick={handleClose}
-          className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 shadow-sm"
+          className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] flex items-center justify-center text-[var(--text-muted)] shadow-sm"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900 pr-8">Yêu cầu nạp tiền</h2>
-          <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit mt-3">
+        <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-[var(--border)]">
+          <h2 className="text-lg font-bold text-[var(--text)] pr-8">Yêu cầu nạp tiền</h2>
+          <div className="flex gap-1 bg-[var(--surface-muted)] rounded-lg p-1 w-fit mt-3">
             {(
               [
                 ["pending", "Chờ duyệt"],
@@ -1043,7 +1043,7 @@ function TopupRequestsModal({
               <button
                 key={val}
                 onClick={() => setActiveTab(val)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${activeTab === val ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${activeTab === val ? "bg-[var(--surface)] text-[var(--text)] shadow-sm" : "text-[var(--text-muted)]"
                   }`}
               >
                 {lbl}
@@ -1055,10 +1055,10 @@ function TopupRequestsModal({
         <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3">
           {loading ? (
             [...Array(3)].map((_, i) => (
-              <div key={i} className="h-24 rounded-xl animate-pulse bg-gray-100" />
+              <div key={i} className="h-24 rounded-xl animate-pulse bg-[var(--surface-muted)]" />
             ))
           ) : requests.length === 0 ? (
-            <div className="py-16 text-center text-gray-400">
+            <div className="py-16 text-center text-[var(--text-faint)]">
               <Wallet className="w-8 h-8 mx-auto mb-2 opacity-20" />
               <p>{activeTab === "pending" ? "Không có yêu cầu nào" : "Chưa có lịch sử duyệt"}</p>
             </div>
@@ -1066,10 +1066,10 @@ function TopupRequestsModal({
             requests.map((r) => {
               const busy = actionId === r.id;
               return (
-                <div key={r.id} className="border border-gray-100 rounded-xl p-3 space-y-3">
+                <div key={r.id} className="border border-[var(--border)] rounded-xl p-3 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700 flex-shrink-0 overflow-hidden">
+                      <div className="w-9 h-9 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-sm font-semibold text-[var(--primary)] flex-shrink-0 overflow-hidden">
                         {r.users?.avatar_url ? (
                           <img src={r.users.avatar_url} alt={r.users?.full_name} className="w-full h-full object-cover" />
                         ) : (
@@ -1077,36 +1077,36 @@ function TopupRequestsModal({
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{r.users?.full_name}</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-sm font-semibold text-[var(--text)] truncate">{r.users?.full_name}</p>
+                        <p className="text-xs text-[var(--text-faint)]">
                           {r.users?.phone} · {format(new Date(r.created_at), "dd/MM HH:mm", { locale: vi })}
                         </p>
                       </div>
                     </div>
-                    <span className="text-base font-black text-blue-600 whitespace-nowrap">{fmt(r.amount)}</span>
+                    <span className="text-base font-black text-[var(--primary)] whitespace-nowrap">{fmt(r.amount)}</span>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                    <span className="px-2 py-0.5 rounded-full bg-gray-50 border border-gray-200">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
+                    <span className="px-2 py-0.5 rounded-full bg-[var(--surface-muted)] border border-[var(--border)]">
                       {r.payment_method === "cash" ? "💵 Tiền mặt" : "🏦 Chuyển khoản"}
                     </span>
                     {r.payment_reference && (
-                      <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{r.payment_reference}</span>
+                      <span className="font-mono bg-[var(--surface-muted)] px-1.5 py-0.5 rounded">{r.payment_reference}</span>
                     )}
                     {r.payment_proof_url && (
                       <button
                         onClick={() => setViewingBillUrl(r.payment_proof_url)}
-                        className="flex items-center gap-1 text-blue-600 hover:underline"
+                        className="flex items-center gap-1 text-[var(--primary)] hover:underline"
                       >
                         <Eye className="w-3.5 h-3.5" /> Xem bill
                       </button>
                     )}
                   </div>
-                  {r.note && <p className="text-xs text-gray-400 italic">{r.note}</p>}
+                  {r.note && <p className="text-xs text-[var(--text-faint)] italic">{r.note}</p>}
 
                   {activeTab === "resolved" ? (
                     <span
-                      className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${r.status === "approved" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+                      className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${r.status === "approved" ? "bg-[var(--success-soft)] text-[var(--success)]" : "bg-[var(--danger-soft)] text-[var(--danger)]"
                         }`}
                     >
                       {r.status === "approved" ? (
@@ -1130,7 +1130,7 @@ function TopupRequestsModal({
                       <button
                         onClick={() => setShowReject(r.id)}
                         disabled={busy}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium rounded-lg disabled:opacity-50"
+                        className="flex items-center gap-1 px-3 py-1.5 bg-[var(--danger-soft)] hover:bg-[var(--danger-soft)] text-[var(--danger)] text-xs font-medium rounded-lg disabled:opacity-50"
                       >
                         <XCircle className="w-3.5 h-3.5" /> Từ chối
                       </button>
@@ -1382,18 +1382,18 @@ export default function WalletAdminSummaryPage() {
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field)
-      return <ArrowUpDown className="w-3 h-3 text-gray-300" />;
+      return <ArrowUpDown className="w-3 h-3 text-[var(--text-faint)]" />;
     return sortOrder === "desc" ? (
-      <ArrowDown className="w-3 h-3 text-blue-600" />
+      <ArrowDown className="w-3 h-3 text-[var(--primary)]" />
     ) : (
-      <ArrowUp className="w-3 h-3 text-blue-600" />
+      <ArrowUp className="w-3 h-3 text-[var(--primary)]" />
     );
   };
 
   if (!stats) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
@@ -1404,8 +1404,8 @@ export default function WalletAdminSummaryPage() {
       value: fmt(stats.club_balance),
       delta: `${stats.club_balance_delta >= 0 ? "+" : ""}${fmt(stats.club_balance_delta)} trong 30 ngày qua`,
       deltaPositive: stats.club_balance_delta >= 0,
-      icon: <Wallet className="w-5 h-5 text-blue-600" />,
-      iconBg: "bg-blue-50",
+      icon: <Wallet className="w-5 h-5 text-[var(--primary)]" />,
+      iconBg: "bg-[var(--primary-soft)]",
       status: "", // tất cả
     },
     {
@@ -1413,8 +1413,8 @@ export default function WalletAdminSummaryPage() {
       value: String(stats.member_count),
       delta: `${stats.member_pct}% tổng thành viên`,
       deltaPositive: true,
-      icon: <Users className="w-5 h-5 text-emerald-600" />,
-      iconBg: "bg-emerald-50",
+      icon: <Users className="w-5 h-5 text-[var(--success)]" />,
+      iconBg: "bg-[var(--success-soft)]",
       status: "ok",
     },
     {
@@ -1422,8 +1422,8 @@ export default function WalletAdminSummaryPage() {
       value: String(stats.negative_count),
       delta: `${stats.negative_pct}% tổng thành viên`,
       deltaPositive: false,
-      icon: <AlertTriangle className="w-5 h-5 text-orange-500" />,
-      iconBg: "bg-orange-50",
+      icon: <AlertTriangle className="w-5 h-5 text-[var(--warning)]" />,
+      iconBg: "bg-[var(--warning-soft)]",
       status: "negative",
     },
     {
@@ -1431,14 +1431,14 @@ export default function WalletAdminSummaryPage() {
       value: fmt(stats.total_debt),
       delta: "Chưa có dữ liệu so sánh tháng trước",
       deltaPositive: false,
-      icon: <TrendingDown className="w-5 h-5 text-purple-600" />,
-      iconBg: "bg-purple-50",
+      icon: <TrendingDown className="w-5 h-5 text-[var(--purple)]" />,
+      iconBg: "bg-[var(--purple-soft)]",
       status: "negative",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-[var(--surface-muted)] font-sans">
       <style>{`
                 @keyframes rowFade {
                     from { opacity: 0; }
@@ -1453,15 +1453,15 @@ export default function WalletAdminSummaryPage() {
                 .animate-card-fade { animation: cardFadeUp 0.28s ease-out both; will-change: transform, opacity; }
             `}</style>
 
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between flex-wrap gap-2">
+      <div className="bg-[var(--surface)] border-b border-[var(--border)] px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-blue-600" />
-          <span className="font-bold text-gray-900 text-base sm:text-lg">Ví BNB</span>
+          <Wallet className="w-5 h-5 text-[var(--primary)]" />
+          <span className="font-bold text-[var(--text)] text-base sm:text-lg">Ví BNB</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowTopupModal(true)}
-            className="relative flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="relative flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors"
           >
             <Inbox className="w-4 h-4" />
             <span>Duyệt nạp tiền</span>
@@ -1474,7 +1474,7 @@ export default function WalletAdminSummaryPage() {
           <button
             onClick={handleExportReport}
             disabled={exporting}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors disabled:opacity-50"
           >
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             <span className="hidden sm:inline">{exporting ? "Đang xuất..." : "Xuất báo cáo Excel"}</span>
@@ -1490,20 +1490,20 @@ export default function WalletAdminSummaryPage() {
               type="button"
               onClick={() => setStatModal({ title: s.label, status: s.status })}
               style={{ animationDelay: `${i * 40}ms` }}
-              className="text-left bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 transition-all duration-150 animate-card-fade hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
+              className="text-left bg-[var(--surface)] rounded-xl p-3 sm:p-4 shadow-sm border border-[var(--border)] transition-all duration-150 animate-card-fade hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
             >
               <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${s.iconBg}`}>
                   {s.icon}
                 </div>
-                <p className="text-[11px] sm:text-xs text-gray-500 leading-tight">
+                <p className="text-[11px] sm:text-xs text-[var(--text-muted)] leading-tight">
                   {s.label}
                 </p>
               </div>
-              <p className="text-lg sm:text-2xl font-black text-gray-900 truncate">
+              <p className="text-lg sm:text-2xl font-black text-[var(--text)] truncate">
                 {s.value}
               </p>
-              <p className={`text-[10px] sm:text-xs mt-1 font-medium ${s.deltaPositive ? "text-emerald-600" : "text-red-500"}`}>
+              <p className={`text-[10px] sm:text-xs mt-1 font-medium ${s.deltaPositive ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
                 {s.delta}
               </p>
             </button>
@@ -1511,15 +1511,15 @@ export default function WalletAdminSummaryPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
+          <div className="bg-[var(--surface)] rounded-xl shadow-sm border border-[var(--border)] flex-1 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[var(--border)]">
               <div className="relative flex-1 sm:max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-faint)]" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Tìm kiếm thành viên..."
-                  className="pl-8 pr-3 py-2 sm:py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-shadow duration-150 w-full"
+                  className="pl-8 pr-3 py-2 sm:py-1.5 text-sm bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)] transition-shadow duration-150 w-full"
                 />
               </div>
               <div className="flex gap-2">
@@ -1537,7 +1537,7 @@ export default function WalletAdminSummaryPage() {
                       { value: 'low', label: 'Sắp hết' },
                       { value: 'negative', label: 'Âm ví' },
                     ]}
-                    triggerClassName="w-full flex items-center justify-between text-left px-3 py-2 sm:py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none"
+                    triggerClassName="w-full flex items-center justify-between text-left px-3 py-2 sm:py-1.5 text-sm border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--text)] focus:outline-none"
                   />
                 </div>
                 <div className="flex-1 sm:flex-none sm:w-44">
@@ -1555,7 +1555,7 @@ export default function WalletAdminSummaryPage() {
                         label: `${TIER_STYLE[k].dot} ${k}`,
                       })),
                     ]}
-                    triggerClassName="w-full flex items-center justify-between text-left px-3 py-2 sm:py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none"
+                    triggerClassName="w-full flex items-center justify-between text-left px-3 py-2 sm:py-1.5 text-sm border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--text)] focus:outline-none"
                   />
                 </div>
               </div>
@@ -1568,38 +1568,38 @@ export default function WalletAdminSummaryPage() {
               <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm min-w-[640px]">
                   <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="text-left px-4 sm:px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    <tr className="border-b border-[var(--border)]">
+                      <th className="text-left px-4 sm:px-5 py-3 text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide">
                         <button
                           onClick={() => handleSort("full_name")}
-                          className="flex items-center gap-1 hover:text-gray-600 transition-colors duration-150"
+                          className="flex items-center gap-1 hover:text-[var(--text-muted)] transition-colors duration-150"
                         >
                           Thành viên <SortIcon field="full_name" />
                         </button>
                       </th>
-                      <th className="text-left px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                      <th className="text-left px-3 py-3 text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide">
                         Hạng
                       </th>
-                      <th className="text-right px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                      <th className="text-right px-3 py-3 text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide">
                         <button
                           onClick={() => handleSort("balance")}
-                          className="flex items-center gap-1 hover:text-gray-600 transition-colors duration-150 ml-auto"
+                          className="flex items-center gap-1 hover:text-[var(--text-muted)] transition-colors duration-150 ml-auto"
                         >
                           Số dư ví <SortIcon field="balance" />
                         </button>
                       </th>
-                      <th className="text-center px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                      <th className="text-center px-3 py-3 text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide">
                         Trạng thái
                       </th>
-                      <th className="hidden sm:table-cell text-left px-3 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                      <th className="hidden sm:table-cell text-left px-3 py-3 text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide">
                         <button
                           onClick={() => handleSort("last_session_at")}
-                          className="flex items-center gap-1 hover:text-gray-600 transition-colors duration-150"
+                          className="flex items-center gap-1 hover:text-[var(--text-muted)] transition-colors duration-150"
                         >
                           Buổi gần nhất <SortIcon field="last_session_at" />
                         </button>
                       </th>
-                      <th className="px-4 sm:px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">
+                      <th className="px-4 sm:px-5 py-3 text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide text-right">
                         Thao tác
                       </th>
                     </tr>
@@ -1609,7 +1609,7 @@ export default function WalletAdminSummaryPage() {
                       [...Array(5)].map((_, i) => (
                         <tr key={i}>
                           <td colSpan={6} className="px-4 sm:px-5 py-3">
-                            <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                            <div className="h-4 bg-[var(--surface-muted)] rounded animate-pulse" />
                           </td>
                         </tr>
                       ))
@@ -1617,7 +1617,7 @@ export default function WalletAdminSummaryPage() {
                       <tr>
                         <td
                           colSpan={6}
-                          className="px-4 sm:px-5 py-12 text-center text-gray-400"
+                          className="px-4 sm:px-5 py-12 text-center text-[var(--text-faint)]"
                         >
                           Không tìm thấy thành viên
                         </td>
@@ -1626,7 +1626,7 @@ export default function WalletAdminSummaryPage() {
                       members.map((m, i) => (
                         <tr
                           key={m.id}
-                          className={`border-b border-gray-50 hover:bg-blue-50/30 cursor-pointer transition-colors duration-150 animate-row-fade ${selectedMember?.id === m.id ? "bg-blue-50" : ""}`}
+                          className={`border-b border-[var(--border)] hover:bg-[var(--primary-soft)] cursor-pointer transition-colors duration-150 animate-row-fade ${selectedMember?.id === m.id ? "bg-[var(--primary-soft)]" : ""}`}
                           style={{ animationDelay: `${Math.min(i, 8) * 25}ms` }}
                           onClick={() =>
                             setSelectedMember(
@@ -1653,10 +1653,10 @@ export default function WalletAdminSummaryPage() {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="font-semibold text-gray-900 truncate">
+                                <p className="font-semibold text-[var(--text)] truncate">
                                   {m.full_name}
                                 </p>
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-[var(--text-faint)]">
                                   {m.phone}
                                 </p>
                               </div>
@@ -1666,14 +1666,14 @@ export default function WalletAdminSummaryPage() {
                             <RankTag tier={m.tier} points={m.total_points} />
                           </td>
                           <td
-                            className={`px-3 py-3 text-right font-bold whitespace-nowrap ${m.balance < 0 ? "text-red-500" : "text-gray-900"}`}
+                            className={`px-3 py-3 text-right font-bold whitespace-nowrap ${m.balance < 0 ? "text-[var(--danger)]" : "text-[var(--text)]"}`}
                           >
                             {fmt(m.balance)}
                           </td>
                           <td className="px-3 py-3 text-center">
                             <StatusBadge balance={m.balance} />
                           </td>
-                          <td className="hidden sm:table-cell px-3 py-3 text-gray-500 text-xs whitespace-nowrap">
+                          <td className="hidden sm:table-cell px-3 py-3 text-[var(--text-muted)] text-xs whitespace-nowrap">
                             {relativeDay(m.last_session_at)}
                           </td>
                           <td className="px-4 sm:px-5 py-3 text-right">
@@ -1698,11 +1698,11 @@ export default function WalletAdminSummaryPage() {
                 {loading ? (
                   [...Array(5)].map((_, i) => (
                     <div key={i} className="px-4 py-3">
-                      <div className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+                      <div className="h-12 bg-[var(--surface-muted)] rounded-lg animate-pulse" />
                     </div>
                   ))
                 ) : members.length === 0 ? (
-                  <div className="px-4 py-12 text-center text-gray-400 text-sm">
+                  <div className="px-4 py-12 text-center text-[var(--text-faint)] text-sm">
                     Không tìm thấy thành viên
                   </div>
                 ) : (
@@ -1723,8 +1723,8 @@ export default function WalletAdminSummaryPage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 sm:px-5 py-3 border-t border-gray-100">
-              <p className="text-xs text-gray-400 order-2 sm:order-1">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 sm:px-5 py-3 border-t border-[var(--border)]">
+              <p className="text-xs text-[var(--text-faint)] order-2 sm:order-1">
                 Hiển thị {(page - 1) * perPage + 1} –{" "}
                 {Math.min(page * perPage, meta.total ?? 0)} của{" "}
                 {meta.total ?? 0} thành viên
@@ -1733,7 +1733,7 @@ export default function WalletAdminSummaryPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 transition-transform duration-150 active:scale-90"
+                  className="w-7 h-7 rounded-md border border-[var(--border)] flex items-center justify-center disabled:opacity-40 hover:bg-[var(--surface-hover)] transition-transform duration-150 active:scale-90"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
@@ -1741,7 +1741,7 @@ export default function WalletAdminSummaryPage() {
                   typeof item === "string" ? (
                     <span
                       key={item}
-                      className="w-7 h-7 flex items-center justify-center text-xs text-gray-400 select-none"
+                      className="w-7 h-7 flex items-center justify-center text-xs text-[var(--text-faint)] select-none"
                       aria-hidden="true"
                     >
                       …
@@ -1753,7 +1753,7 @@ export default function WalletAdminSummaryPage() {
                       aria-current={page === item ? "page" : undefined}
                       className={`w-7 h-7 rounded-md text-xs font-medium transition-transform duration-150 active:scale-90 ${page === item
                           ? "bg-blue-600 text-white"
-                          : "border border-gray-200 hover:bg-gray-50 text-gray-600"
+                          : "border border-[var(--border)] hover:bg-[var(--surface-hover)] text-[var(--text-muted)]"
                         }`}
                     >
                       {item}
@@ -1763,7 +1763,7 @@ export default function WalletAdminSummaryPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages || totalPages === 0}
-                  className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 transition-transform duration-150 active:scale-90"
+                  className="w-7 h-7 rounded-md border border-[var(--border)] flex items-center justify-center disabled:opacity-40 hover:bg-[var(--surface-hover)] transition-transform duration-150 active:scale-90"
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -1782,7 +1782,7 @@ export default function WalletAdminSummaryPage() {
               <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center pointer-events-none">
                 <div
                   ref={panelRef}
-                  className={`pointer-events-auto bg-white shadow-xl overflow-hidden flex flex-col transform-gpu overscroll-contain
+                  className={`pointer-events-auto bg-[var(--surface)] shadow-xl overflow-hidden flex flex-col transform-gpu overscroll-contain
           transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform
           w-full h-[85dvh] max-h-[85dvh] rounded-t-2xl
           lg:w-[480px] lg:h-[85vh] lg:max-h-[720px] lg:rounded-2xl
@@ -1792,7 +1792,7 @@ export default function WalletAdminSummaryPage() {
                     }`}
                 >
                   <div className="lg:hidden flex justify-center pt-2 pb-1 flex-shrink-0">
-                    <span className="w-10 h-1 rounded-full bg-gray-200" />
+                    <span className="w-10 h-1 rounded-full bg-[var(--border-strong)]" />
                   </div>
                   <div className="flex-1 min-h-0 overscroll-contain flex flex-col">
                     <MemberPanel

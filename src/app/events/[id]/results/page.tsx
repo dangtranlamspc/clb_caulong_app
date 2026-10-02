@@ -170,27 +170,27 @@ export default function TournamentResultsPage() {
 
     if (loading) {
         return (
-            <div className="mx-auto min-h-screen w-full max-w-md bg-white p-4">
-                <div className="h-8 w-40 animate-pulse rounded-lg bg-gray-100" />
-                <div className="mt-4 h-10 animate-pulse rounded-full bg-gray-100" />
-                <div className="mt-4 h-64 animate-pulse rounded-2xl bg-gray-100" />
+            <div className="mx-auto min-h-screen w-full max-w-md bg-[var(--surface)] p-4">
+                <div className="h-8 w-40 animate-pulse rounded-lg bg-[var(--surface-muted)]" />
+                <div className="mt-4 h-10 animate-pulse rounded-full bg-[var(--surface-muted)]" />
+                <div className="mt-4 h-64 animate-pulse rounded-2xl bg-[var(--surface-muted)]" />
             </div>
         );
     }
 
     return (
-        <div className="mx-auto flex h-[100dvh] w-full max-w-md flex-col bg-white">
+        <div className="mx-auto flex h-[100dvh] w-full max-w-md flex-col bg-[var(--surface)]">
             <div className="flex-shrink-0">
                 <Header onBack={() => router.back()} onHome={goToActivityEventsTab} />
 
                 {/* Tabs */}
                 <div className="px-4 pt-1">
-                    <div className="flex gap-1 rounded-2xl bg-gray-100 p-1">
+                    <div className="flex gap-1 rounded-2xl bg-[var(--surface-muted)] p-1">
                         <button
                             onClick={() => setTab("all")}
                             className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${tab === "all"
-                                ? "bg-white text-gray-900 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
-                                : "text-gray-400 hover:text-gray-500"
+                                ? "bg-[var(--surface)] text-[var(--text)] shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                                : "text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                                 }`}
                         >
                             Tất cả lượt
@@ -198,8 +198,8 @@ export default function TournamentResultsPage() {
                         <button
                             onClick={() => setTab("byTeam")}
                             className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${tab === "byTeam"
-                                ? "bg-white text-gray-900 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
-                                : "text-gray-400 hover:text-gray-500"
+                                ? "bg-[var(--surface)] text-[var(--text)] shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                                : "text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                                 }`}
                         >
                             Theo đội
@@ -224,7 +224,7 @@ export default function TournamentResultsPage() {
                                     onChange={(val) => setSelectedTeamId(val)}
                                     options={teamOptions}
                                     placeholder="Chọn đội"
-                                    triggerClassName="w-full flex items-center justify-between rounded-full border border-gray-200 px-4 py-2 text-sm font-bold text-gray-800 text-left"
+                                    triggerClassName="w-full flex items-center justify-between rounded-full border border-[var(--border)] px-4 py-2 text-sm font-bold text-[var(--text)] text-left"
                                 />
                             </div>
                         </div>
@@ -253,13 +253,13 @@ export default function TournamentResultsPage() {
                         return (
                             <section
                                 key={round.round_number}
-                                className={`overflow-hidden rounded-2xl border shadow-sm ${isPlayoff ? "border-amber-200 bg-amber-50/30" : "border-gray-100 bg-white"
+                                className={`overflow-hidden rounded-2xl border shadow-sm ${isPlayoff ? "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)]" : "border-[var(--border)] bg-[var(--surface)]"
                                     }`}
                             >
                                 <div
                                     className={`flex items-center justify-between gap-2 px-4 py-2.5 ${isPlayoff
                                         ? "bg-gradient-to-r from-amber-400 to-orange-500"
-                                        : "bg-gradient-to-r from-blue-50 to-white border-b border-gray-100"
+                                        : "bg-gradient-to-r from-blue-50 to-white border-b border-[var(--border)]"
                                         }`}
                                 >
                                     <div className="flex min-w-0 items-center gap-2">
@@ -271,7 +271,7 @@ export default function TournamentResultsPage() {
                                             </span>
                                         )}
                                         <h2
-                                            className={`truncate text-sm font-black ${isPlayoff ? "text-white" : "text-gray-900"
+                                            className={`truncate text-sm font-black ${isPlayoff ? "text-white" : "text-[var(--text)]"
                                                 }`}
                                         >
                                             {isPlayoff ? "Tranh hạng" : `Lượt ${round.round_number}`}
@@ -281,7 +281,7 @@ export default function TournamentResultsPage() {
                                     <div className="flex flex-shrink-0 items-center gap-2">
                                         {date && (
                                             <span
-                                                className={`text-[11px] font-semibold ${isPlayoff ? "text-white/90" : "text-gray-400"
+                                                className={`text-[11px] font-semibold ${isPlayoff ? "text-white/90" : "text-[var(--text-faint)]"
                                                     }`}
                                             >
                                                 {date}
@@ -289,10 +289,10 @@ export default function TournamentResultsPage() {
                                         )}
                                         <span
                                             className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isPlayoff
-                                                ? "bg-white/25 text-white"
+                                                ? "bg-[color-mix(in_srgb,var(--surface)_25%,transparent)] text-white"
                                                 : allDone
-                                                    ? "bg-emerald-50 text-emerald-600"
-                                                    : "bg-amber-50 text-amber-600"
+                                                    ? "bg-[var(--success-soft)] text-[var(--success)]"
+                                                    : "bg-[var(--warning-soft)] text-[var(--warning)]"
                                                 }`}
                                         >
                                             {doneCount}/{matches.length} trận
@@ -300,7 +300,7 @@ export default function TournamentResultsPage() {
                                     </div>
                                 </div>
 
-                                <div className="divide-y divide-gray-50">
+                                <div className="divide-y divide-[var(--border)]">
                                     {matches.map((m: any) => (
                                         <MatchRow
                                             key={m.id}
@@ -312,8 +312,8 @@ export default function TournamentResultsPage() {
                                 </div>
 
                                 {round.bye_team_name && !isPlayoff && (
-                                    <p className="border-t border-gray-50 bg-gray-50/60 px-4 py-2 text-[11px] text-gray-400">
-                                        Nghỉ: <span className="font-semibold text-gray-600">{round.bye_team_name}</span>
+                                    <p className="border-t border-[var(--border)] bg-[var(--surface-muted)] px-4 py-2 text-[11px] text-[var(--text-faint)]">
+                                        Nghỉ: <span className="font-semibold text-[var(--text-muted)]">{round.bye_team_name}</span>
                                     </p>
                                 )}
                             </section>
@@ -321,7 +321,7 @@ export default function TournamentResultsPage() {
                     })}
 
                     {filteredRounds.length === 0 && (
-                        <div className="py-10 text-center text-sm text-gray-400">
+                        <div className="py-10 text-center text-sm text-[var(--text-faint)]">
                             Chưa có kết quả thi đấu
                         </div>
                     )}
@@ -360,20 +360,20 @@ function MatchRow({
 
     const nameCls = (won: boolean, lost: boolean) =>
         `truncate text-sm ${won
-            ? "font-black text-emerald-600"
+            ? "font-black text-[var(--success)]"
             : lost
-                ? "font-semibold text-gray-400"
-                : "font-bold text-gray-800"
+                ? "font-semibold text-[var(--text-faint)]"
+                : "font-bold text-[var(--text)]"
         }`;
 
     const scoreCls = (won: boolean, lost: boolean) =>
-        won ? "text-emerald-600" : lost ? "text-red-400" : "text-gray-700";
+        won ? "text-[var(--success)]" : lost ? "text-[var(--danger)]" : "text-[var(--text)]";
 
     return (
         <div className="px-3 py-3">
             {label && (
                 <p className="mb-2 text-center">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-700">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--warning-soft)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--warning)]">
                         <Trophy className="h-3 w-3" />
                         {label}
                     </span>
@@ -388,25 +388,25 @@ function MatchRow({
 
                 <div className="flex w-[76px] flex-col items-center gap-0.5">
                     {completed ? (
-                        <div className="flex items-center justify-center gap-1.5 rounded-xl bg-gray-50 px-3 py-1 text-base font-black tabular-nums ring-1 ring-gray-100">
+                        <div className="flex items-center justify-center gap-1.5 rounded-xl bg-[var(--surface-muted)] px-3 py-1 text-base font-black tabular-nums ring-1 ring-gray-100">
                             <span className={scoreCls(team1Won, team2Won)}>{s1}</span>
-                            <span className="text-gray-300">-</span>
+                            <span className="text-[var(--text-faint)]">-</span>
                             <span className={scoreCls(team2Won, team1Won)}>{s2}</span>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-center rounded-xl bg-gray-50 px-3 py-1 text-xs font-black tracking-widest text-gray-300 ring-1 ring-gray-100">
+                        <div className="flex items-center justify-center rounded-xl bg-[var(--surface-muted)] px-3 py-1 text-xs font-black tracking-widest text-[var(--text-faint)] ring-1 ring-gray-100">
                             VS
                         </div>
                     )}
 
                     {completed ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[var(--success)]" />
                     ) : ongoing ? (
-                        <span className="text-[10px] font-bold text-amber-500 animate-pulse">
+                        <span className="text-[10px] font-bold text-[var(--warning)] animate-pulse">
                             Đang đấu
                         </span>
                     ) : (
-                        <span className="flex items-center gap-0.5 text-[10px] font-medium text-gray-300">
+                        <span className="flex items-center gap-0.5 text-[10px] font-medium text-[var(--text-faint)]">
                             <Clock className="h-3 w-3" /> Chưa đấu
                         </span>
                     )}
@@ -423,18 +423,18 @@ function MatchRow({
 
 function Header({ onBack, onHome }: { onBack: () => void; onHome: () => void }) {
     return (
-        <div className="flex items-center gap-2 bg-white px-3 pb-2 pt-3">
+        <div className="flex items-center gap-2 bg-[var(--surface)] px-3 pb-2 pt-3">
             <button
                 onClick={onBack}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-gray-700 transition hover:bg-gray-100"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text)] transition hover:bg-[var(--surface-hover)]"
                 aria-label="Quay lại"
             >
                 <ChevronLeft className="h-5 w-5" />
             </button>
-            <h1 className="flex-1 truncate text-lg font-black text-gray-900">Kết quả giải đấu</h1>
+            <h1 className="flex-1 truncate text-lg font-black text-[var(--text)]">Kết quả giải đấu</h1>
             <button
                 onClick={onHome}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-gray-700 transition hover:bg-gray-100"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text)] transition hover:bg-[var(--surface-hover)]"
                 title="Về trang hoạt động"
                 aria-label="Về trang hoạt động"
             >

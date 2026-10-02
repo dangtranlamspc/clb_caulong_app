@@ -99,17 +99,17 @@ export default function PollFormPage({
 
     if (loading)
         return (
-            <div className="max-w-lg mx-auto p-8 text-center text-gray-400">
+            <div className="max-w-lg mx-auto p-8 text-center text-[var(--text-faint)]">
                 Đang tải...
             </div>
         );
 
     return (
         <div className="max-w-lg mx-auto space-y-4 p-6">
-            <h1 className="text-xl font-bold text-gray-900">📊 Bình chọn</h1>
+            <h1 className="text-xl font-bold text-[var(--text)]">📊 Bình chọn</h1>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">
                     Tiêu đề
                 </label>
                 <input
@@ -120,7 +120,7 @@ export default function PollFormPage({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">
                     Hạn bình chọn
                 </label>
                 <input
@@ -132,7 +132,7 @@ export default function PollFormPage({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
                     Các lựa chọn
                 </label>
                 <div className="space-y-2">
@@ -148,7 +148,7 @@ export default function PollFormPage({
                                 <button
                                     type="button"
                                     onClick={() => removeOption(idx)}
-                                    className="p-2 text-gray-400 hover:text-red-500"
+                                    className="p-2 text-[var(--text-faint)] hover:text-[var(--danger)]"
                                 >
                                     <X className="w-4 h-4" />
                                 </button>
@@ -159,13 +159,13 @@ export default function PollFormPage({
                 <button
                     type="button"
                     onClick={addOption}
-                    className="mt-2 flex items-center gap-1.5 text-sm text-blue-600 font-medium"
+                    className="mt-2 flex items-center gap-1.5 text-sm text-[var(--primary)] font-medium"
                 >
                     <Plus className="w-4 h-4" /> Thêm lựa chọn
                 </button>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-[var(--text)]">
                 <input
                     type="checkbox"
                     checked={form.allow_multiple}
@@ -177,7 +177,7 @@ export default function PollFormPage({
             </label>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">
                     Mô tả (tuỳ chọn)
                 </label>
                 <textarea
@@ -191,7 +191,7 @@ export default function PollFormPage({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">
                     Trạng thái
                 </label>
                 <select

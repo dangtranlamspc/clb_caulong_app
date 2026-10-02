@@ -162,22 +162,22 @@ export default function LoginPage() {
 
   if (forgotStep === 'email') {
     return (
-      <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
+      <div className="bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
         <button
           onClick={resetForgotState}
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-4"
+          className="flex items-center gap-1.5 text-sm text-[var(--text-faint)] hover:text-[var(--text-muted)] mb-4"
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại đăng nhập
         </button>
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Quên mật khẩu</h2>
-        <p className="text-gray-500 text-sm mb-6">
+        <h2 className="text-xl font-bold text-[var(--text)] mb-1">Quên mật khẩu</h2>
+        <p className="text-[var(--text-muted)] text-sm mb-6">
           Nhập email đã đăng ký, chúng tôi sẽ gửi mã xác thực để bạn đặt lại mật khẩu.
         </p>
         <form onSubmit={onSubmitForgotEmail} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-faint)]" />
               <input
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
@@ -205,19 +205,19 @@ export default function LoginPage() {
 
   if (forgotStep === 'code') {
     return (
-      <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 text-center">
+      <div className="bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 text-center">
         <button
           onClick={() => setForgotStep('email')}
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-4"
+          className="flex items-center gap-1.5 text-sm text-[var(--text-faint)] hover:text-[var(--text-muted)] mb-4"
         >
           <ArrowLeft className="w-4 h-4" /> Đổi email khác
         </button>
         <div className="w-14 h-14 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-4">
           <KeyRound className="w-6 h-6 text-brand-600" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Nhập mã xác thực</h2>
-        <p className="text-gray-500 text-sm mb-6">
-          Mã 6 số đã được gửi đến <span className="font-medium text-gray-700">{forgotEmail}</span>
+        <h2 className="text-xl font-bold text-[var(--text)] mb-1">Nhập mã xác thực</h2>
+        <p className="text-[var(--text-muted)] text-sm mb-6">
+          Mã 6 số đã được gửi đến <span className="font-medium text-[var(--text)]">{forgotEmail}</span>
         </p>
         <OtpInput
           value={code}
@@ -239,7 +239,7 @@ export default function LoginPage() {
         <button
           onClick={onResendResetCode}
           disabled={resendCooldown > 0}
-          className="text-sm text-brand-600 font-medium mt-4 disabled:text-gray-300"
+          className="text-sm text-brand-600 font-medium mt-4 disabled:text-[var(--text-faint)]"
         >
           {resendCooldown > 0 ? `Gửi lại mã sau ${resendCooldown}s` : 'Gửi lại mã'}
         </button>
@@ -249,14 +249,14 @@ export default function LoginPage() {
 
   if (forgotStep === 'newPassword') {
     return (
-      <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Đặt mật khẩu mới</h2>
-        <p className="text-gray-500 text-sm mb-6">
-          Tạo mật khẩu mới cho tài khoản <span className="font-medium text-gray-700">{forgotEmail}</span>
+      <div className="bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
+        <h2 className="text-xl font-bold text-[var(--text)] mb-1">Đặt mật khẩu mới</h2>
+        <p className="text-[var(--text-muted)] text-sm mb-6">
+          Tạo mật khẩu mới cho tài khoản <span className="font-medium text-[var(--text)]">{forgotEmail}</span>
         </p>
         <form onSubmit={onSubmitNewPassword} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mật khẩu mới</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Mật khẩu mới</label>
             <div className="relative">
               <input
                 value={newPw}
@@ -270,14 +270,14 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowNewPw(!showNewPw)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 p-1"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-faint)] p-1"
               >
                 {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Xác nhận mật khẩu mới</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Xác nhận mật khẩu mới</label>
             <input
               value={confirmPw}
               onChange={(e) => setConfirmPw(e.target.value)}
@@ -302,12 +302,12 @@ export default function LoginPage() {
 
   if (forgotStep === 'done') {
     return (
-      <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 text-center">
-        <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+      <div className="bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 text-center">
+        <div className="w-14 h-14 rounded-full bg-[var(--success-soft)] flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 className="w-6 h-6 text-[var(--success)]" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Đặt lại mật khẩu thành công!</h2>
-        <p className="text-gray-500 text-sm mb-6">
+        <h2 className="text-xl font-bold text-[var(--text)] mb-2">Đặt lại mật khẩu thành công!</h2>
+        <p className="text-[var(--text-muted)] text-sm mb-6">
           Bạn có thể đăng nhập bằng mật khẩu mới ngay bây giờ.
         </p>
         <motion.button
@@ -324,17 +324,17 @@ export default function LoginPage() {
   // ══════════════ RENDER: ĐĂNG NHẬP (mặc định) ══════════════
 
   return (
-    <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
-      <h2 className="text-xl font-bold text-gray-900 mb-1">Đăng nhập</h2>
-      <p className="text-gray-500 text-sm mb-6">Chào mừng bạn quay trở lại</p>
+    <div className="bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
+      <h2 className="text-xl font-bold text-[var(--text)] mb-1">Đăng nhập</h2>
+      <p className="text-[var(--text-muted)] text-sm mb-6">Chào mừng bạn quay trở lại</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">
             Email hoặc số điện thoại
           </label>
           <div className="relative">
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex gap-1 text-gray-400">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex gap-1 text-[var(--text-faint)]">
               <Mail className="w-4 h-4" />
             </div>
             <input
@@ -345,12 +345,12 @@ export default function LoginPage() {
             />
           </div>
           {errors.identifier && (
-            <p className="text-red-500 text-xs mt-1">{errors.identifier.message as string}</p>
+            <p className="text-[var(--danger)] text-xs mt-1">{errors.identifier.message as string}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mật khẩu</label>
+          <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Mật khẩu</label>
           <div className="relative">
             <input
               {...register('password', { required: 'Vui lòng nhập mật khẩu' })}
@@ -361,24 +361,24 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPw(!showPw)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-faint)] hover:text-[var(--text-muted)] p-1"
             >
               {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
           {errors.password && (
-            <p className="text-red-500 text-xs mt-1">{errors.password.message as string}</p>
+            <p className="text-[var(--danger)] text-xs mt-1">{errors.password.message as string}</p>
           )}
         </div>
 
         <label className="flex items-center gap-3 cursor-pointer select-none">
           <div className="relative">
             <input {...register('rememberMe')} type="checkbox" className="sr-only peer" />
-            <div className="w-10 h-6 bg-gray-200 peer-checked:bg-brand-500 rounded-full transition-colors" />
-            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4" />
+            <div className="w-10 h-6 bg-[var(--border-strong)] peer-checked:bg-brand-500 rounded-full transition-colors" />
+            <div className="absolute left-1 top-1 w-4 h-4 bg-[var(--surface)] rounded-full shadow transition-transform peer-checked:translate-x-4" />
           </div>
-          <span className="text-sm text-gray-600">
-            Ghi nhớ đăng nhập <span className="text-gray-400">(7 ngày)</span>
+          <span className="text-sm text-[var(--text-muted)]">
+            Ghi nhớ đăng nhập <span className="text-[var(--text-faint)]">(7 ngày)</span>
           </span>
         </label>
 

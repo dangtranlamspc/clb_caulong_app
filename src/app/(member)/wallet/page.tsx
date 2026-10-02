@@ -25,6 +25,7 @@ import { TransactionDetailModal } from "@/components/member/wallets/TransactionD
 import { createPortal } from "react-dom";
 import { smt, txIcon } from "@/lib/wallet-helpers";
 import { useSearchParams, useRouter } from "next/navigation";
+import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 
 const TX_FILTER_OPTS = [
   { value: "", label: "Tất cả" },
@@ -59,7 +60,7 @@ function QuickAmountBtn({
       onClick={onClick}
       className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${active
         ? "bg-blue-600 text-white border-blue-600"
-        : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+        : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)]"
         }`}
     >
       {smt(value)}
@@ -143,11 +144,11 @@ function TopupModal({
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex flex-col justify-end"
-      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
+      style={{ background: "var(--overlay)", backdropFilter: "blur(2px)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="w-full bg-white rounded-t-2xl"
+        className="w-full bg-[var(--surface)] rounded-t-2xl"
         style={{
           maxHeight: "90vh",
           overflowY: "auto",
@@ -156,10 +157,10 @@ function TopupModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-9 h-1 rounded-full bg-gray-200" />
+          <div className="w-9 h-1 rounded-full bg-[var(--border-strong)]" />
         </div>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-          <p className="text-sm font-bold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
+          <p className="text-sm font-bold text-[var(--text)]">
             {step === "amount"
               ? "Nạp tiền vào ví"
               : step === "transfer"
@@ -168,9 +169,9 @@ function TopupModal({
           </p>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
           >
-            <XIcon className="w-4 h-4 text-gray-500" />
+            <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
           </button>
         </div>
 
@@ -178,7 +179,7 @@ function TopupModal({
           {step === "amount" && (
             <>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                   Số tiền muốn nạp
                 </label>
                 <input
@@ -186,7 +187,7 @@ function TopupModal({
                   inputMode="numeric"
                   value={amountDisplay}
                   onChange={(e) => handleAmountChange(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-lg font-bold text-center focus:outline-none focus:border-blue-400"
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--border)] text-lg font-bold text-center focus:outline-none focus:border-[var(--primary)]"
                   placeholder="0"
                 />
               </div>
@@ -226,7 +227,7 @@ function TopupModal({
           {step === "transfer" && (
             <div className="space-y-4">
               <div className="flex justify-center">
-                <div className="p-3 bg-white rounded-2xl border-2 border-gray-100 shadow-sm">
+                <div className="p-3 bg-[var(--surface)] rounded-2xl border-2 border-[var(--border)] shadow-sm">
                   <img
                     src={qrUrl!}
                     alt="VietQR"
@@ -237,13 +238,13 @@ function TopupModal({
                   />
                 </div>
               </div>
-              <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+              <div className="bg-[var(--surface-muted)] rounded-xl p-3 text-sm space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Số tiền</span>
-                  <span className="font-bold text-blue-600">{smt(amount)}</span>
+                  <span className="text-[var(--text-muted)]">Số tiền</span>
+                  <span className="font-bold text-[var(--primary)]">{smt(amount)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Nội dung CK</span>
+                  <span className="text-[var(--text-muted)]">Nội dung CK</span>
                   <div className="flex items-center gap-1.5">
                     <span className="font-mono font-semibold">
                       {suggestedRef}
@@ -253,20 +254,20 @@ function TopupModal({
                         navigator.clipboard.writeText(suggestedRef);
                         toast.success("Đã copy");
                       }}
-                      className="p-1 hover:bg-gray-200 rounded"
+                      className="p-1 hover:bg-[var(--border-strong)] rounded"
                     >
-                      <Copy className="w-3.5 h-3.5 text-gray-400" />
+                      <Copy className="w-3.5 h-3.5 text-[var(--text-faint)]" />
                     </button>
                   </div>
                 </div>
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-gray-600 mb-1.5">
+                <p className="text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                   Ảnh bill (tuỳ chọn)
                 </p>
                 {!billPreview ? (
-                  <label className="w-full py-5 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center gap-1.5 text-gray-400 hover:border-blue-300 hover:text-blue-500 cursor-pointer">
+                  <label className="w-full py-5 rounded-xl border-2 border-dashed border-[var(--border)] flex flex-col items-center gap-1.5 text-[var(--text-faint)] hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:text-[var(--primary)] cursor-pointer">
                     <ImagePlus className="w-6 h-6" />
                     <span className="text-xs">Chọn ảnh bill</span>
                     <input
@@ -284,10 +285,10 @@ function TopupModal({
                     />
                   </label>
                 ) : (
-                  <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                  <div className="relative rounded-xl overflow-hidden border border-[var(--border)]">
                     <img
                       src={billPreview}
-                      className="w-full max-h-40 object-contain bg-gray-50"
+                      className="w-full max-h-40 object-contain bg-[var(--surface-muted)]"
                     />
                     <button
                       onClick={() => {
@@ -305,7 +306,7 @@ function TopupModal({
               <div className="flex gap-2">
                 <button
                   onClick={() => setStep("amount")}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
+                  className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]"
                 >
                   Quay lại
                 </button>
@@ -322,7 +323,7 @@ function TopupModal({
               </div>
               <button
                 onClick={() => setStep("cash")}
-                className="w-full text-xs text-gray-400 underline"
+                className="w-full text-xs text-[var(--text-faint)] underline"
               >
                 Tôi nạp bằng tiền mặt
               </button>
@@ -331,22 +332,22 @@ function TopupModal({
 
           {step === "cash" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between bg-green-50 rounded-xl px-4 py-3">
-                <span className="text-sm text-gray-600">Số tiền nạp</span>
-                <span className="text-lg font-black text-green-600">
+              <div className="flex items-center justify-between bg-[var(--success-soft)] rounded-xl px-4 py-3">
+                <span className="text-sm text-[var(--text-muted)]">Số tiền nạp</span>
+                <span className="text-lg font-black text-[var(--success)]">
                   {smt(amount)}
                 </span>
               </div>
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm"
                 placeholder="Ghi chú (tuỳ chọn)"
               />
               <div className="flex gap-2">
                 <button
                   onClick={() => setStep("transfer")}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500"
+                  className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]"
                 >
                   Quay lại
                 </button>
@@ -443,9 +444,9 @@ export default function WalletPage() {
   if (loading || !summary) {
     return (
       <div className="space-y-4">
-        <div className="h-8 bg-gray-200 rounded-xl w-32 animate-pulse" />
-        <div className="bg-white rounded-3xl h-56 animate-pulse" />
-        <div className="bg-white rounded-2xl h-24 animate-pulse" />
+        <div className="h-8 bg-[var(--border-strong)] rounded-xl w-32 animate-pulse" />
+        <div className="bg-[var(--surface)] rounded-3xl h-56 animate-pulse" />
+        <div className="bg-[var(--surface)] rounded-2xl h-24 animate-pulse" />
       </div>
     );
   }
@@ -464,24 +465,16 @@ export default function WalletPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1
-          className="text-xl font-bold text-dark"
-          style={{ textShadow: "0 1px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.8)" }}
-        >
-          Ví BNB
-        </h1>
-        <p
-          className="text-sm text-dark/80 mt-0.5"
-          style={{ textShadow: "0 1px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.7)" }}
-        >
+        <h1 className="text-xl font-bold text-[var(--text)]">Ví BNB</h1>
+        <p className="text-sm text-[var(--text-muted)] mt-0.5">
           Quản lý số dư và lịch sử giao dịch
         </p>
       </div>
 
       {pending_topup && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-3">
-          <Loader2 className="w-4 h-4 text-amber-600 animate-spin flex-shrink-0" />
-          <p className="text-sm text-amber-700">
+        <div className="bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-2xl px-4 py-3 flex items-center gap-3">
+          <Loader2 className="w-4 h-4 text-[var(--warning)] animate-spin flex-shrink-0" />
+          <p className="text-sm text-[var(--warning)]">
             Yêu cầu nạp <strong>{smt(pending_topup.amount)}</strong> đang chờ
             admin duyệt
           </p>
@@ -495,10 +488,6 @@ export default function WalletPage() {
             "linear-gradient(135deg, #2563eb 0%, #1e40af 60%, #312e81 100%)",
         }}
       >
-        <div
-          aria-hidden
-          className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10"
-        />
         <div className="relative flex items-center justify-between mb-3">
           <span className="text-sm text-white/80 flex items-center gap-1.5">
             Số dư hiện tại
@@ -510,15 +499,12 @@ export default function WalletPage() {
               )}
             </button>
           </span>
-          {/* <button className="flex items-center gap-1 text-xs font-medium bg-white/15 px-2.5 py-1 rounded-full hover:bg-white/25 transition-colors">
-            Chi tiết <ChevronRight className="w-3 h-3" />
-          </button> */}
         </div>
         <p className="relative text-3xl font-black mb-3">
           {hideBalance ? "••••••••" : smt(wallet.balance)}
         </p>
         <span
-          className={`relative inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${isDebt ? "bg-red-500/30" : "bg-white/15"}`}
+          className={`relative inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${isDebt ? "bg-red-500/30" : "bg-[color-mix(in_srgb,var(--surface)_15%,transparent)]"}`}
         >
           <span
             className={`w-1.5 h-1.5 rounded-full ${isDebt ? "bg-red-300" : "bg-emerald-300"}`}
@@ -527,29 +513,29 @@ export default function WalletPage() {
         </span>
       </div>
 
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
+      <div className="bg-[var(--surface)] rounded-2xl p-4 shadow-sm">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 text-lg">
+          <div className="w-9 h-9 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 text-lg">
             🏸
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-[var(--text)]">
               Đủ cho khoảng{" "}
-              <strong className="text-gray-900">{sessions_left}</strong> buổi
+              <strong className="text-[var(--text)]">{sessions_left}</strong> buổi
               đánh nữa
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-[var(--text-faint)]">
               (Dựa trên chi phí trung bình {smt(avg_session_cost)}/buổi)
             </p>
           </div>
         </div>
-        <div className="flex justify-between text-xs text-gray-400 mb-1">
+        <div className="flex justify-between text-xs text-[var(--text-faint)] mb-1">
           <span>
             {smt(Math.max(wallet.balance, 0))} / {smt(target_balance)}
           </span>
           <span>{Math.round(progress_ratio * 100)}%</span>
         </div>
-        <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+        <div className="w-full h-2 rounded-full bg-[var(--surface-muted)] overflow-hidden">
           <div
             className="h-full rounded-full bg-blue-500 transition-all duration-500"
             style={{ width: `${progress_ratio * 100}%` }}
@@ -560,13 +546,13 @@ export default function WalletPage() {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setShowTopupModal(true)}
-          className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-lg shadow-blue-200 transition-colors"
+          className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-lg shadow-blue-200 dark:shadow-none transition-colors"
         >
           <PlusCircle className="w-4 h-4" /> Nạp thêm
         </button>
         <a
           href="#history"
-          className="flex items-center justify-center gap-2 py-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm transition-colors"
+          className="flex items-center justify-center gap-2 py-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--text)] font-semibold text-sm transition-colors"
         >
           <History className="w-4 h-4" /> Lịch sử giao dịch
         </a>
@@ -578,19 +564,19 @@ export default function WalletPage() {
             label: "Tổng nạp",
             value: smt(wallet.total_topup),
             Icon: ArrowDownToLine,
-            cls: "bg-emerald-50 text-emerald-600",
+            cls: "bg-[var(--success-soft)] text-[var(--success)]",
           },
           {
             label: "Tổng đã chi",
             value: smt(wallet.total_spent),
             Icon: ArrowUpFromLine,
-            cls: "bg-red-50 text-red-500",
+            cls: "bg-[var(--danger-soft)] text-[var(--danger)]",
           },
           {
             label: "Số buổi đã tham gia",
             value: String(attended_sessions),
             Icon: Users,
-            cls: "bg-blue-50 text-blue-600",
+            cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
           },
           {
             label: "Công nợ",
@@ -598,13 +584,13 @@ export default function WalletPage() {
             Icon: AlertCircle,
             cls:
               wallet.debt > 0
-                ? "bg-red-50 text-red-500"
-                : "bg-gray-50 text-gray-400",
+                ? "bg-[var(--danger-soft)] text-[var(--danger)]"
+                : "bg-[var(--surface-muted)] text-[var(--text-faint)]",
           },
         ].map(({ label, value, Icon, cls }) => (
           <div
             key={label}
-            className="bg-white rounded-2xl p-3.5 shadow-sm flex items-center gap-3"
+            className="bg-[var(--surface)] rounded-2xl p-3.5 shadow-sm flex items-center gap-3"
           >
             <div
               className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${cls}`}
@@ -612,8 +598,8 @@ export default function WalletPage() {
               <Icon className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] text-gray-400 truncate">{label}</p>
-              <p className="text-sm font-bold text-gray-900 truncate">
+              <p className="text-[11px] text-[var(--text-faint)] truncate">{label}</p>
+              <p className="text-sm font-bold text-[var(--text)] truncate">
                 {value}
               </p>
             </div>
@@ -621,33 +607,28 @@ export default function WalletPage() {
         ))}
       </div>
 
-      <div id="history" className="bg-white rounded-2xl p-5 shadow-sm">
+      <div id="history" className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-gray-900">Lịch sử giao dịch</h3>
-          <select
-            value={txFilter}
-            onChange={(e) => setTxFilter(e.target.value)}
-            className="text-xs font-medium text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
-          >
-            {TX_FILTER_OPTS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+          <h3 className="font-bold text-[var(--text)]">Lịch sử giao dịch</h3>
+          <div className="w-40 flex-shrink-0">
+            <CustomSelect
+              value={txFilter}
+              onChange={setTxFilter}
+              options={TX_FILTER_OPTS}
+              triggerClassName="w-full flex items-center justify-between gap-1.5 text-xs font-medium rounded-lg px-3 py-2 border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text)] focus:outline-none"
+            />
+          </div>
         </div>
 
         {transactions.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">
+          <p className="text-sm text-[var(--text-faint)] text-center py-8">
             Chưa có giao dịch nào
           </p>
         ) : (
-          <ul className="divide-y divide-gray-50">
+          <ul className="divide-y divide-[var(--border)]">
             {transactions.map((tx) => {
               const { Icon, cls } = txIcon(tx);
               const isPositive = tx.amount > 0;
-              // Với các khoản admin điều chỉnh số dư ("Điều chỉnh số dư"),
-              // hiển thị trực tiếp "Trừ/Cộng tiền <mô tả>" thay vì tiêu đề chung chung
               const isGenericAdjustment =
                 tx.title === "Điều chỉnh số dư" && Boolean(tx.description);
               const displayTitle = isGenericAdjustment
@@ -657,7 +638,7 @@ export default function WalletPage() {
                 <li
                   key={tx.id}
                   onClick={() => setSelectedTx(tx)}
-                  className="flex items-start gap-3 py-3 cursor-pointer hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
+                  className="flex items-start gap-3 py-3 cursor-pointer hover:bg-[var(--surface-hover)] -mx-2 px-2 rounded-lg transition-colors"
                 >
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${cls}`}
@@ -666,28 +647,28 @@ export default function WalletPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-gray-900 truncate">
+                      <p className="text-sm font-semibold text-[var(--text)] truncate">
                         {displayTitle}
                       </p>
                       <span
-                        className={`text-sm font-bold flex-shrink-0 ${isPositive ? "text-emerald-600" : "text-red-500"}`}
+                        className={`text-sm font-bold flex-shrink-0 ${isPositive ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
                       >
                         {isPositive ? "+" : ""}
                         {smt(tx.amount)}
                       </span>
                     </div>
                     {!isGenericAdjustment && (
-                      <p className="text-xs text-gray-400 truncate">
+                      <p className="text-xs text-[var(--text-faint)] truncate">
                         {tx.description}
                       </p>
                     )}
                     <div className="flex items-center justify-between mt-0.5">
-                      <span className="text-[11px] text-gray-400">
+                      <span className="text-[11px] text-[var(--text-faint)]">
                         {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm", {
                           locale: vi,
                         })}
                       </span>
-                      <span className="text-[11px] text-gray-400">
+                      <span className="text-[11px] text-[var(--text-faint)]">
                         Số dư: {smt(tx.balance_after)}
                       </span>
                     </div>

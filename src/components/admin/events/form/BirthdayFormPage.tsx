@@ -73,15 +73,15 @@ export default function BirthdayFormPage({
 
     if (loading)
         return (
-            <div className="max-w-lg mx-auto p-8 text-center text-gray-400">Đang tải...</div>
+            <div className="max-w-lg mx-auto p-8 text-center text-[var(--text-faint)]">Đang tải...</div>
         );
 
     return (
         <div className="max-w-lg mx-auto space-y-4 p-6">
-            <h1 className="text-xl font-bold text-gray-900">🎂 Sinh nhật thành viên</h1>
+            <h1 className="text-xl font-bold text-[var(--text)]">🎂 Sinh nhật thành viên</h1>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tiêu đề</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">Tiêu đề</label>
                 <input
                     className="input-field"
                     value={form.title}
@@ -91,7 +91,7 @@ export default function BirthdayFormPage({
 
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tháng</label>
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1">Tháng</label>
                     <select
                         className="input-field"
                         value={form.month}
@@ -105,7 +105,7 @@ export default function BirthdayFormPage({
                     </select>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Năm</label>
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1">Năm</label>
                     <input
                         type="number"
                         className="input-field"
@@ -116,7 +116,7 @@ export default function BirthdayFormPage({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">
                     Ngày tổ chức mừng SN (tuỳ chọn)
                 </label>
                 <input
@@ -128,7 +128,7 @@ export default function BirthdayFormPage({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">Trạng thái</label>
                 <select
                     className="input-field"
                     value={form.status}
@@ -140,7 +140,7 @@ export default function BirthdayFormPage({
                 </select>
             </div>
 
-            <p className="text-xs text-gray-400 italic">
+            <p className="text-xs text-[var(--text-faint)] italic">
                 Danh sách thành viên có sinh nhật sẽ tự động lấy từ hồ sơ thành viên theo
                 tháng/năm đã chọn, không cần đăng ký.
             </p>

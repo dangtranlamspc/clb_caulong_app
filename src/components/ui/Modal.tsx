@@ -59,18 +59,18 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
             <div
                 className={`hide-scrollbar relative w-full sm:w-auto sm:min-w-[420px] sm:max-w-xl
                     max-h-[92vh] overflow-y-auto
-                    bg-white rounded-t-2xl sm:rounded-2xl shadow-xl
+                    bg-[var(--surface)] rounded-t-2xl sm:rounded-2xl shadow-xl
                     transition-all duration-300 ease-out
                     ${isVisible
                         ? 'translate-y-0 opacity-100 sm:scale-100'
                         : 'translate-y-full opacity-0 sm:translate-y-4 sm:scale-95'
                     }`}
             >
-                <div className="sticky top-0 bg-white flex items-center justify-between px-4 py-3 border-b border-gray-100 rounded-t-2xl z-10">
-                    <h2 className="text-base font-bold text-gray-900">{title}</h2>
+                <div className="sticky top-0 bg-[var(--surface)] flex items-center justify-between px-4 py-3 border-b border-[var(--border)] rounded-t-2xl z-10">
+                    <h2 className="text-base font-bold text-[var(--text)]">{title}</h2>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)] transition-colors"
                     >
                         <X className="w-4 h-4" />
                     </button>

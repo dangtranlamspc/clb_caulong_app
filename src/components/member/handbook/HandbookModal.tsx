@@ -179,7 +179,7 @@ export function HandbookModal({ open, onClose }: { open: boolean; onClose: () =>
                                     <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
                                 </button>
                             ) : (
-                                <div className="w-8 h-8 flex items-center justify-center text-blue-500 flex-shrink-0">
+                                <div className="w-8 h-8 flex items-center justify-center text-[var(--primary)] flex-shrink-0">
                                     <BookOpen className="w-4.5 h-4.5" />
                                 </div>
                             )}
@@ -211,7 +211,7 @@ export function HandbookModal({ open, onClose }: { open: boolean; onClose: () =>
                             <p className="text-emerald-100/70 text-sm font-medium">Đang tải...</p>
                         </div>
                     ) : !tree || (!tree.cover && !tree.toc && tree.sections.length === 0) ? (
-                        <div className="py-16 text-center text-sm text-gray-400">Sổ tay chưa có nội dung</div>
+                        <div className="py-16 text-center text-sm text-[var(--text-faint)]">Sổ tay chưa có nội dung</div>
                     ) : (
                         <div key={viewKey(view)} className="h-full animate-handbook-content">
                             {view.screen === "cover" && tree.cover ? (
@@ -297,7 +297,7 @@ function CoverScreen({ cover, onNext }: { cover: HandbookNode; onNext: () => voi
                 <p className="text-white text-5xl font-black leading-[1.05] tracking-tight drop-shadow-md">
                     SỔ TAY
                 </p>
-                <p className="text-emerald-400 text-5xl font-black italic leading-[1.05] tracking-tight drop-shadow-md">
+                <p className="text-[var(--success)] text-5xl font-black italic leading-[1.05] tracking-tight drop-shadow-md">
                     THÀNH VIÊN
                 </p>
                 <p className="text-white text-5xl font-black leading-[1.05] tracking-tight drop-shadow-md">
@@ -328,7 +328,7 @@ function CoverScreen({ cover, onNext }: { cover: HandbookNode; onNext: () => voi
                             {Array.from({ length: totalPages }).map((_, i) => (
                                 <span
                                     key={i}
-                                    className={`h-1.5 rounded-full transition-all ${i === pageIndex ? "w-4 bg-emerald-400" : "w-1.5 bg-white/30"
+                                    className={`h-1.5 rounded-full transition-all ${i === pageIndex ? "w-4 bg-emerald-400" : "w-1.5 bg-[color-mix(in_srgb,var(--surface)_30%,transparent)]"
                                         }`}
                                 />
                             ))}

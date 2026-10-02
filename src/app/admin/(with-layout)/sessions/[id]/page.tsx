@@ -49,37 +49,37 @@ const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: any }> =
 {
   pendingApproval: {
     label: "Chờ duyệt",
-    cls: "bg-orange-50 text-orange-600 border-orange-200",
+    cls: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
     icon: Hourglass,
   },
   pending: {
     label: "Chờ thanh toán",
-    cls: "bg-amber-50 text-amber-700 border-amber-200",
+    cls: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
     icon: Hourglass,
   },
   pendingReview: {
     label: "Chờ chốt thanh toán",
-    cls: "bg-blue-50 text-blue-700 border-blue-200",
+    cls: "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]",
     icon: Eye,
   },
   confirmed: {
     label: "Đã xác nhận thanh toán",
-    cls: "bg-green-50 text-green-700 border-green-200",
+    cls: "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]",
     icon: CheckCircle2,
   },
   rejected: {
     label: "Thanh toán bị từ chối",
-    cls: "bg-red-50 text-red-600 border-red-200",
+    cls: "bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]",
     icon: XCircle,
   },
   awaitingCheckin: {
     label: "Chờ điểm danh",
-    cls: "bg-slate-50 text-slate-600 border border-slate-200",
+    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)]",
     icon: Hourglass,
   },
   awaitingFinish: {
     label: "Chờ buổi đánh kết thúc",
-    cls: "bg-slate-50 text-slate-600 border border-slate-200",
+    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)]",
     icon: Hourglass,
   },
 };
@@ -587,7 +587,7 @@ export default function SessionDetailPage() {
       const isIndependentGuest = reg.is_guest && !reg.user_id;
 
       if (isIndependentGuest && reg.payment_method === "cash") {
-        return { label: "💵 Tiền mặt", cls: "bg-emerald-50 text-emerald-700" };
+        return { label: "💵 Tiền mặt", cls: "bg-[var(--success-soft)] text-[var(--success)]" };
       }
       if (
         Boolean(reg.payment_reference) &&
@@ -595,19 +595,19 @@ export default function SessionDetailPage() {
       )
         return {
           label: "🏦 Chuyển khoản (đã nộp bill)",
-          cls: "bg-indigo-50 text-indigo-700",
+          cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
         };
       if (reg.payment_method === "cash")
         return {
           label: "💵 Tiền mặt (tự yêu cầu)",
-          cls: "bg-emerald-50 text-emerald-700",
+          cls: "bg-[var(--success-soft)] text-[var(--success)]",
         };
       if (reg.payment_method === "grouped_with_host")
         return {
           label: `👥 Gộp theo ${hostName ?? "host"}`,
-          cls: "bg-sky-50 text-sky-700",
+          cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
         };
-      return { label: "💵 Tiền mặt", cls: "bg-emerald-50 text-emerald-700" };
+      return { label: "💵 Tiền mặt", cls: "bg-[var(--success-soft)] text-[var(--success)]" };
     };
 
     return (
@@ -616,9 +616,9 @@ export default function SessionDetailPage() {
           pendingReview.length > 0 ||
           walletPendingConfirm.length > 0) && (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[var(--text-muted)]">
                 Có{" "}
-                <strong className="text-gray-900">
+                <strong className="text-[var(--text)]">
                   {pending.length +
                     pendingReview.length +
                     walletPendingConfirm.length}
@@ -673,20 +673,20 @@ export default function SessionDetailPage() {
                     ];
 
                     return (
-                      <li key={host.id} className="text-sm text-gray-700">
+                      <li key={host.id} className="text-sm text-[var(--text)]">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-[var(--text)]">
                             {name}
                           </span>
 
                           {isIndependentGuest && hostPending && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--success-soft)] text-[var(--success)]">
                               💵 Tiền mặt
                             </span>
                           )}
 
                           {isMember && hostPending && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
                               <Wallet className="w-2.5 h-2.5" /> Ví BNB
                             </span>
                           )}
@@ -700,7 +700,7 @@ export default function SessionDetailPage() {
                                     : g.users?.full_name,
                                 )
                                 .join(", ")}
-                              className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700"
+                              className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--warning-soft)] text-[var(--warning)]"
                             >
                               {hostWalletLabel}
                             </span>
@@ -717,19 +717,19 @@ export default function SessionDetailPage() {
 
                         {(nestedWalletGuests.length > 0 ||
                           nestedReview.length > 0) && (
-                            <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-gray-100">
+                            <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-[var(--border)]">
                               {nestedWalletGuests.map((g) => (
                                 <li
                                   key={g.id}
-                                  className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
+                                  className="text-xs text-[var(--purple)] flex items-center gap-1.5 flex-wrap"
                                 >
-                                  <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                                  <CornerDownRight className="w-3 h-3 text-[var(--text-faint)] flex-shrink-0" />
                                   <span>
                                     {g.is_guest
                                       ? g.guest_full_name
                                       : g.users?.full_name}
                                   </span>
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700">
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
                                     <Wallet className="w-2.5 h-2.5" /> Ví BNB của{" "}
                                     {name}
                                   </span>
@@ -740,9 +740,9 @@ export default function SessionDetailPage() {
                                 return (
                                   <li
                                     key={g.id}
-                                    className="text-xs text-purple-600 flex items-center gap-1.5 flex-wrap"
+                                    className="text-xs text-[var(--purple)] flex items-center gap-1.5 flex-wrap"
                                   >
-                                    <CornerDownRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                                    <CornerDownRight className="w-3 h-3 text-[var(--text-faint)] flex-shrink-0" />
                                     <span>
                                       {g.is_guest
                                         ? g.guest_full_name
@@ -767,8 +767,8 @@ export default function SessionDetailPage() {
           )}
 
         {rejected.length > 0 && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-3 space-y-2">
-            <p className="text-sm font-semibold text-red-700 flex items-center gap-1.5">
+          <div className="rounded-xl border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--danger-soft)] p-3 space-y-2">
+            <p className="text-sm font-semibold text-[var(--danger)] flex items-center gap-1.5">
               ⚠️ Sẽ KHÔNG được xử lý tự động
             </p>
             <ul className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
@@ -779,18 +779,18 @@ export default function SessionDetailPage() {
                 return (
                   <li
                     key={r.id}
-                    className="text-xs text-red-600 flex items-center gap-1.5"
+                    className="text-xs text-[var(--danger)] flex items-center gap-1.5"
                   >
                     <XCircle className="w-3 h-3 flex-shrink-0" />
                     <span className="font-medium">{name}</span>
-                    <span className="text-red-400">
+                    <span className="text-[var(--danger)]">
                       — thanh toán bị từ chối
                     </span>
                   </li>
                 );
               })}
             </ul>
-            <p className="text-[11px] text-red-600">
+            <p className="text-[11px] text-[var(--danger)]">
               Buổi vẫn sẽ hoàn thành, nhưng những người này giữ nguyên trạng
               thái — bạn cần xử lý thủ công sau.
             </p>
@@ -1266,9 +1266,9 @@ export default function SessionDetailPage() {
   if (loading) {
     return (
       <div className="space-y-4 max-w-3xl mx-auto">
-        <div className="h-8 bg-gray-200 rounded w-64 animate-pulse" />
-        <div className="card h-32 animate-pulse bg-gray-100" />
-        <div className="card h-64 animate-pulse bg-gray-100" />
+        <div className="h-8 bg-[var(--border-strong)] rounded w-64 animate-pulse" />
+        <div className="card h-32 animate-pulse bg-[var(--surface-muted)]" />
+        <div className="card h-64 animate-pulse bg-[var(--surface-muted)]" />
       </div>
     );
   }
@@ -1462,21 +1462,21 @@ export default function SessionDetailPage() {
         <>
           <button
             onClick={() => handleApproveRegistration(reg.id)}
-            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-gray-100 active:bg-gray-200 transition-colors"
+            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors"
           >
             <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center">
               <CheckCircle2 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-[11px] font-medium text-gray-700">Duyệt</span>
+            <span className="text-[11px] font-medium text-[var(--text)]">Duyệt</span>
           </button>
           <button
             onClick={() => handleRejectRegistration(reg.id, displayName)}
-            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-gray-100 active:bg-gray-200 transition-colors rounded-r-2xl"
+            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors rounded-r-2xl"
           >
             <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
               <XCircle className="w-5 h-5 text-white" />
             </div>
-            <span className="text-[11px] font-medium text-gray-700">
+            <span className="text-[11px] font-medium text-[var(--text)]">
               Từ chối
             </span>
           </button>
@@ -1489,23 +1489,23 @@ export default function SessionDetailPage() {
         <>
           <button
             onClick={() => handleCheckinPresent(reg.id)}
-            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-gray-100 active:bg-gray-200 transition-colors"
+            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors"
           >
             <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center">
               <UserCheck className="w-5 h-5 text-white" />
             </div>
-            <span className="text-[11px] font-medium text-gray-700">
+            <span className="text-[11px] font-medium text-[var(--text)]">
               Có mặt
             </span>
           </button>
           <button
             onClick={() => handleCheckinAbsent(reg.id, displayName)}
-            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-gray-100 active:bg-gray-200 transition-colors rounded-r-2xl"
+            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors rounded-r-2xl"
           >
             <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
               <UserX className="w-5 h-5 text-white" />
             </div>
-            <span className="text-[11px] font-medium text-gray-700">
+            <span className="text-[11px] font-medium text-[var(--text)]">
               Vắng mặt
             </span>
           </button>
@@ -1517,12 +1517,12 @@ export default function SessionDetailPage() {
       return (
         <button
           onClick={() => handleCheckinAbsent(reg.id, displayName)}
-          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-gray-100 active:bg-gray-200 transition-colors rounded-r-2xl"
+          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors rounded-r-2xl"
         >
           <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
             <UserX className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[11px] font-medium text-gray-700">
+          <span className="text-[11px] font-medium text-[var(--text)]">
             Vắng mặt
           </span>
         </button>
@@ -1533,23 +1533,23 @@ export default function SessionDetailPage() {
       <>
         <button
           onClick={() => handleConfirm(reg.id)}
-          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-gray-100 active:bg-gray-200 transition-colors"
+          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors"
         >
           <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[11px] font-medium text-gray-700">
+          <span className="text-[11px] font-medium text-[var(--text)]">
             Xác nhận
           </span>
         </button>
         <button
           onClick={() => setShowReject(reg.id)}
-          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-gray-100 active:bg-gray-200 transition-colors rounded-r-2xl"
+          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors rounded-r-2xl"
         >
           <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
             <XCircle className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[11px] font-medium text-gray-700">Từ chối</span>
+          <span className="text-[11px] font-medium text-[var(--text)]">Từ chối</span>
         </button>
       </>
     );
@@ -1616,10 +1616,10 @@ export default function SessionDetailPage() {
       >
         <div className="flex items-start gap-3">
           {isNested && (
-            <CornerDownRight className="w-3.5 h-3.5 text-gray-300 mt-1 flex-shrink-0" />
+            <CornerDownRight className="w-3.5 h-3.5 text-[var(--text-faint)] mt-1 flex-shrink-0" />
           )}
           <div
-            className={`rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 overflow-hidden ${isNested ? "w-7 h-7" : "w-9 h-9"}`}
+            className={`rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 overflow-hidden ${isNested ? "w-7 h-7" : "w-9 h-9"}`}
           >
             {user?.avatar_url ? (
               <img
@@ -1632,7 +1632,7 @@ export default function SessionDetailPage() {
               />
             ) : (
               <span
-                className={`text-blue-700 font-semibold ${isNested ? "text-xs" : "text-sm"}`}
+                className={`text-[var(--primary)] font-semibold ${isNested ? "text-xs" : "text-sm"}`}
               >
                 {displayName?.[0]?.toUpperCase() ?? "?"}
               </span>
@@ -1642,34 +1642,34 @@ export default function SessionDetailPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span
-                className={`font-semibold text-gray-900 ${isNested ? "text-sm" : "text-[15px]"}`}
+                className={`font-semibold text-[var(--text)] ${isNested ? "text-sm" : "text-[15px]"}`}
               >
                 {displayName}
               </span>
               {user?.member_type && (
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${user.member_type === "co_dinh"
-                    ? "bg-purple-50 text-purple-700 border-purple-200"
-                    : "bg-gray-50 text-gray-500 border-gray-200"
+                    ? "bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)]"
+                    : "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]"
                     }`}
                 >
                   {user.member_type === "co_dinh" ? "Thành viên" : "Vãng lai"}
                 </span>
               )}
               {reg.is_guest && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-gray-50 text-gray-500 border-gray-200 font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] font-medium">
                   Khách
                 </span>
               )}
               {reg.is_guest
                 ? reg.guest_skill_level && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-violet-50 text-violet-600 border-violet-200 font-medium">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)] font-medium">
                     {SKILL_LABEL[reg.guest_skill_level] ??
                       reg.guest_skill_level}
                   </span>
                 )
                 : user?.level && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-violet-50 text-violet-600 border-violet-200 font-medium">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)] font-medium">
                     {LEVEL_LABELS[user.level] ?? user.level}
                   </span>
                 )}
@@ -1677,12 +1677,12 @@ export default function SessionDetailPage() {
 
             <div className="flex flex-wrap items-center gap-1.5 mt-1">
               {displayGender && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-gray-50 text-gray-500 border-gray-200 font-medium">
+                <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] font-medium">
                   {displayGender === "male" ? "Nam" : "Nữ"}
                 </span>
               )}
               {reg.is_guest && reg.guest_email && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200 font-medium truncate max-w-[180px]">
+                <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)] font-medium truncate max-w-[180px]">
                   {reg.guest_email}
                 </span>
               )}
@@ -1697,19 +1697,19 @@ export default function SessionDetailPage() {
               </span>
 
               {reg.payment_method === "cash" && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200 font-medium">
+                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)] font-medium">
                   💵 Tiền mặt
                 </span>
               )}
 
               {reg.payment_method === "bank_transfer" && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 font-medium">
+                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] font-medium">
                   🏦 Chuyển khoản
                 </span>
               )}
               {reg.payment_method === "wallet_pending_confirm" &&
                 reg.host_registration_id && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 font-medium">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)] flex items-center gap-1 font-medium">
                     <Wallet className="w-3 h-3" />
                     Chờ {hostName ?? "host"} quyết định
                   </span>
@@ -1717,14 +1717,14 @@ export default function SessionDetailPage() {
 
               {reg.payment_method === "wallet_grouped" &&
                 reg.host_registration_id && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200 flex items-center gap-1 font-medium">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center gap-1 font-medium">
                     <Wallet className="w-3 h-3" />
                     Ví BNB của {hostName ?? "host"}
                   </span>
                 )}
 
               {reg.payment_method === "wallet" && reg.host_registration_id && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200 flex items-center gap-1 font-medium">
+                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center gap-1 font-medium">
                   <Wallet className="w-3 h-3" />
                   Ví BNB của {displayName}
                 </span>
@@ -1733,7 +1733,7 @@ export default function SessionDetailPage() {
               {((reg.payment_method === "wallet" && !reg.host_registration_id) ||
                 (reg.payment_method === "wallet_grouped" && !reg.host_registration_id) ||
                 (reg.payment_method === "wallet_pending_confirm" && !reg.host_registration_id)) && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200 flex items-center gap-1 font-medium">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center gap-1 font-medium">
                     <Wallet className="w-3 h-3" />
                     Ví BNB
                     {reg.payment_method === "wallet_pending_confirm" ? " (chờ xác nhận)" : ""}
@@ -1741,14 +1741,14 @@ export default function SessionDetailPage() {
                 )}
 
               {reg.points_awarded && reg.payment_status === "confirmed" && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 font-medium">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--purple-soft)] text-[var(--purple)] border border-[color-mix(in_srgb,var(--purple)_30%,transparent)] font-medium">
                   🏸 Đã cộng điểm
                 </span>
               )}
 
               {!hasBreakdown && (
                 <span
-                  className={`ml-auto text-xs font-bold whitespace-nowrap ${totalAmount != null ? "text-gray-900" : "text-gray-300 italic font-normal"}`}
+                  className={`ml-auto text-xs font-bold whitespace-nowrap ${totalAmount != null ? "text-[var(--text)]" : "text-[var(--text-faint)] italic font-normal"}`}
                 >
                   {totalAmount != null ? formatVnd(totalAmount) : "-"}
                 </span>
@@ -1780,46 +1780,46 @@ export default function SessionDetailPage() {
 
             {hasBreakdown && (
               <div className="mt-2 space-y-1.5 text-xs">
-                <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 px-2.5 py-1.5">
-                  <span className="text-gray-500">Tiền sân + cầu</span>
-                  <span className="font-medium text-gray-700">
+                <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] px-2.5 py-1.5">
+                  <span className="text-[var(--text-muted)]">Tiền sân + cầu</span>
+                  <span className="font-medium text-[var(--text)]">
                     {formatVnd(reg.base_amount)}
                   </span>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-gray-500">Khoản khác</span>
+                  <span className="text-[var(--text-muted)]">Khoản khác</span>
                   {reg.other_fee_note ? (
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/40 px-2.5 py-1.5">
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] px-2.5 py-1.5">
                       <ul className="flex-1 min-w-0 space-y-0.5 list-none">
                         {reg.other_fee_note
                           .split("\n")
                           .map((l: string) => l.trim())
                           .filter(Boolean)
                           .map((line: string, i: number) => (
-                            <li key={i} className="text-[11px] text-gray-400 italic">
+                            <li key={i} className="text-[11px] text-[var(--text-faint)] italic">
                               — {line}
                             </li>
                           ))}
                       </ul>
-                      <span className="font-medium text-amber-600 flex-shrink-0">
+                      <span className="font-medium text-[var(--warning)] flex-shrink-0">
                         {formatVnd(reg.other_fee_amount)}
                       </span>
                     </div>
                   ) : (
                     <div className="flex justify-end">
-                      <span className="font-medium text-amber-600">
+                      <span className="font-medium text-[var(--warning)]">
                         {formatVnd(reg.other_fee_amount)}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg bg-gray-100 px-2.5 py-2">
-                  <span className="text-sm font-semibold text-gray-700">
+                <div className="flex items-center justify-between rounded-lg bg-[var(--surface-muted)] px-2.5 py-2">
+                  <span className="text-sm font-semibold text-[var(--text)]">
                     Tổng của {displayName}
                   </span>
-                  <span className="text-sm font-bold text-gray-900">
+                  <span className="text-sm font-bold text-[var(--text)]">
                     {formatVnd(totalAmount)}
                   </span>
                 </div>
@@ -1827,7 +1827,7 @@ export default function SessionDetailPage() {
             )}
 
             {reg.notes && (
-              <p className="text-xs text-gray-400 mt-1 italic">{reg.notes}</p>
+              <p className="text-xs text-[var(--text-faint)] mt-1 italic">{reg.notes}</p>
             )}
           </div>
         </div>
@@ -1872,7 +1872,7 @@ export default function SessionDetailPage() {
             {renderRowContent(reg, isNested, hostName)}
             {showActions && (
               <div
-                className={`flex justify-end gap-2 border-t border-gray-100 py-2.5 ${isNested ? "pl-9 pr-3" : "px-4"
+                className={`flex justify-end gap-2 border-t border-[var(--border)] py-2.5 ${isNested ? "pl-9 pr-3" : "px-4"
                   }`}
               >
                 <DesktopRowActions reg={reg} />
@@ -1957,12 +1957,12 @@ export default function SessionDetailPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => router.push("/admin/sessions")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+              className="p-2 hover:bg-[var(--surface-hover)] rounded-lg transition-colors flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
 
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate flex-1 min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-[var(--text)] truncate flex-1 min-w-0">
               {session.title}
             </h1>
           </div>
@@ -1972,16 +1972,16 @@ export default function SessionDetailPage() {
               onClick={handleManualRefresh}
               disabled={manualRefreshing}
               title="Tải lại dữ liệu"
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50"
+              className="p-2 hover:bg-[var(--surface-hover)] rounded-lg transition-colors flex-shrink-0 disabled:opacity-50"
             >
               <RotateCcw
-                className={`w-5 h-5 text-gray-500 ${manualRefreshing ? "animate-spin" : ""}`}
+                className={`w-5 h-5 text-[var(--text-muted)] ${manualRefreshing ? "animate-spin" : ""}`}
               />
             </button>
 
             {canAddMember &&
               (awaitingCheckin.length > 0 || pendingApproval.length > 0) && (
-                <span className="flex-shrink-0 whitespace-nowrap text-xs text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                <span className="flex-shrink-0 whitespace-nowrap text-xs text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border)] px-2.5 py-1.5 rounded-lg">
                   {pendingApproval.length > 0 &&
                     `Còn ${pendingApproval.length} đăng ký chờ duyệt`}
                   {pendingApproval.length > 0 &&
@@ -2239,37 +2239,37 @@ export default function SessionDetailPage() {
 
         <div className="card grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-4 p-5 text-sm shadow-md">
           <div className="flex flex-col gap-1">
-            <span className="text-gray-400 text-xs">Thời gian</span>
-            <div className="flex items-center gap-1 font-medium text-gray-800">
-              <CalendarDays className="w-3.5 h-3.5 text-blue-500" />
+            <span className="text-[var(--text-faint)] text-xs">Thời gian</span>
+            <div className="flex items-center gap-1 font-medium text-[var(--text)]">
+              <CalendarDays className="w-3.5 h-3.5 text-[var(--primary)]" />
               {format(new Date(session.scheduled_at), "dd/MM HH:mm", {
                 locale: vi,
               })}
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-gray-400 text-xs">Thời lượng</span>
-            <div className="flex items-center gap-1 font-medium text-gray-800">
-              <Clock className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-[var(--text-faint)] text-xs">Thời lượng</span>
+            <div className="flex items-center gap-1 font-medium text-[var(--text)]">
+              <Clock className="w-3.5 h-3.5 text-[var(--text-faint)]" />
               {session.duration_minutes} phút
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-gray-400 text-xs">Địa điểm</span>
-            <div className="flex items-center gap-1 font-medium text-gray-800 truncate">
-              <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span className="text-[var(--text-faint)] text-xs">Địa điểm</span>
+            <div className="flex items-center gap-1 font-medium text-[var(--text)] truncate">
+              <MapPin className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0" />
               <span className="truncate">{session.location || "—"}</span>
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-gray-400 text-xs">Chỗ trống</span>
+            <span className="text-[var(--text-faint)] text-xs">Chỗ trống</span>
             <div className="flex items-center gap-1 font-medium">
-              <Users className="w-3.5 h-3.5 text-gray-400" />
+              <Users className="w-3.5 h-3.5 text-[var(--text-faint)]" />
               <span
                 className={
                   session.available_slots <= 0
-                    ? "text-red-500"
-                    : "text-gray-800"
+                    ? "text-[var(--danger)]"
+                    : "text-[var(--text)]"
                 }
               >
                 {session.available_slots}/{session.max_slots}
@@ -2279,7 +2279,7 @@ export default function SessionDetailPage() {
         </div>
 
         {hasCostData && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden">
+          <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden">
             <SessionCostCard sessionId={id!} />
           </div>
         )}
@@ -2293,7 +2293,7 @@ export default function SessionDetailPage() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="h-7 w-28 rounded-full bg-gray-200 animate-pulse"
+                  className="h-7 w-28 rounded-full bg-[var(--border-strong)] animate-pulse"
                 />
               ))}
             </div>
@@ -2302,14 +2302,14 @@ export default function SessionDetailPage() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden p-4"
+                  className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden p-4"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+                    <div className="w-9 h-9 rounded-full bg-[var(--border-strong)] animate-pulse flex-shrink-0" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 rounded bg-gray-200 animate-pulse" />
-                      <div className="h-3 w-1/4 rounded bg-gray-200 animate-pulse" />
-                      <div className="h-5 w-24 rounded-full bg-gray-200 animate-pulse mt-2" />
+                      <div className="h-4 w-1/3 rounded bg-[var(--border-strong)] animate-pulse" />
+                      <div className="h-3 w-1/4 rounded bg-[var(--border-strong)] animate-pulse" />
+                      <div className="h-5 w-24 rounded-full bg-[var(--border-strong)] animate-pulse mt-2" />
                     </div>
                   </div>
                 </div>
@@ -2323,37 +2323,37 @@ export default function SessionDetailPage() {
                 {
                   label: "Chờ duyệt",
                   count: pendingApproval.length,
-                  cls: "bg-orange-50 text-orange-600 border border-orange-200",
+                  cls: "bg-[var(--warning-soft)] text-[var(--warning)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
                 },
                 {
                   label: "Chờ điểm danh",
                   count: awaitingCheckin.length,
-                  cls: "bg-slate-50 text-slate-600 border border-slate-200",
+                  cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)]",
                 },
                 {
                   label: "Chờ buổi đánh kết thúc",
                   count: awaitingFinish.length,
-                  cls: "bg-slate-50 text-slate-600 border border-slate-200",
+                  cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)]",
                 },
                 {
                   label: "Chờ thanh toán",
                   count: pending.length,
-                  cls: "bg-amber-50 text-amber-700 border border-amber-200",
+                  cls: "bg-[var(--warning-soft)] text-[var(--warning)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
                 },
                 {
                   label: "Chờ chốt thanh toán",
                   count: pendingReview.length + walletPendingConfirm.length,
-                  cls: "bg-blue-50 text-blue-700 border border-blue-200",
+                  cls: "bg-[var(--primary-soft)] text-[var(--primary)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)]",
                 },
                 {
                   label: "Đã xác nhận thanh toán",
                   count: confirmed.length,
-                  cls: "bg-green-50 text-green-700 border border-green-200",
+                  cls: "bg-[var(--success-soft)] text-[var(--success)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)]",
                 },
                 {
                   label: "Thanh toán bị từ chối",
                   count: rejected.length,
-                  cls: "bg-red-50 text-red-600 border border-red-200",
+                  cls: "bg-[var(--danger-soft)] text-[var(--danger)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)]",
                 },
               ]
                 .filter(({ count }) => count > 0)
@@ -2369,7 +2369,7 @@ export default function SessionDetailPage() {
 
             <div>
               {registrations.length === 0 ? (
-                <div className="card py-12 text-center text-gray-400 shadow-md">
+                <div className="card py-12 text-center text-[var(--text-faint)] shadow-md">
                   <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
                   <p>Chưa có ai đăng ký buổi này</p>
                 </div>
@@ -2419,18 +2419,18 @@ export default function SessionDetailPage() {
                           <>
                             <button
                               onClick={() => toggleHostGuests(host.id)}
-                              className="w-full flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-100 bg-blue-50/50 hover:bg-blue-50 active:bg-blue-100 transition-colors group"
+                              className="w-full flex items-center justify-between gap-2 px-4 py-3 border-t border-[var(--border)] bg-[var(--primary-soft)] hover:bg-[var(--primary-soft)] active:bg-[var(--primary-soft)] transition-colors group"
                             >
                               <span className="flex items-center gap-2">
-                                <span className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                <span className="w-7 h-7 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center text-xs font-bold flex-shrink-0">
                                   {guests.length}
                                 </span>
-                                <span className="text-sm font-semibold text-blue-700">
+                                <span className="text-sm font-semibold text-[var(--primary)]">
                                   {isExpanded ? "Ẩn" : "Hiện"} người đi cùng
                                 </span>
                               </span>
                               <ChevronDown
-                                className={`w-4 h-4 text-blue-500 transition-transform duration-300 flex-shrink-0 ${isExpanded ? "rotate-180" : ""
+                                className={`w-4 h-4 text-[var(--primary)] transition-transform duration-300 flex-shrink-0 ${isExpanded ? "rotate-180" : ""
                                   }`}
                               />
                             </button>
@@ -2443,7 +2443,7 @@ export default function SessionDetailPage() {
                             >
                               <div className="overflow-hidden">
                                 <div
-                                  className="bg-gray-50/70 divide-y divide-gray-100 border-t border-gray-100 transition-opacity duration-300"
+                                  className="bg-[var(--surface-muted)] divide-y divide-[var(--border)] border-t border-[var(--border)] transition-opacity duration-300"
                                   style={{ opacity: isExpanded ? 1 : 0 }}
                                 >
                                   {guests.map((g) =>
@@ -2460,17 +2460,17 @@ export default function SessionDetailPage() {
                         )}
 
                         {guests.length > 0 && billIssued && (
-                          <div className="border-t border-gray-100 bg-gray-50/40 divide-y divide-gray-100">
+                          <div className="border-t border-[var(--border)] bg-[var(--surface-muted)] divide-y divide-[var(--border)]">
                             <div className="flex items-center justify-between px-4 py-2.5">
-                              <span className="text-xs font-semibold text-gray-500">
+                              <span className="text-xs font-semibold text-[var(--text-muted)]">
                                 {hasGrouped ? `Gộp ví ${hostDisplayName}` : hostDisplayName}
                                 {hasGrouped && (
-                                  <span className="font-normal text-gray-400">
+                                  <span className="font-normal text-[var(--text-faint)]">
                                     {" "}({1 + groupedGuestsAll.length} người)
                                   </span>
                                 )}
                               </span>
-                              <span className="text-sm font-bold text-gray-900">
+                              <span className="text-sm font-bold text-[var(--text)]">
                                 {formatVnd(groupedTotal)}
                               </span>
                             </div>
@@ -2480,19 +2480,19 @@ export default function SessionDetailPage() {
                                 key={g.id}
                                 className="flex items-center justify-between px-4 py-2.5"
                               >
-                                <span className="text-xs font-semibold text-gray-500">
+                                <span className="text-xs font-semibold text-[var(--text-muted)]">
                                   Trả riêng: {g.users?.full_name ?? g.guest_full_name ?? "?"}
                                 </span>
-                                <span className="text-sm font-bold text-gray-900">
+                                <span className="text-sm font-bold text-[var(--text)]">
                                   {formatVnd(g.amount_override ?? 0)}
                                 </span>
                               </div>
                             ))}
 
                             {hasSolo && (
-                              <div className="flex items-center justify-between px-4 py-3 bg-gray-100/70">
-                                <span className="text-xs font-bold text-gray-700">Tổng cả nhóm</span>
-                                <span className="text-sm font-bold text-gray-900">
+                              <div className="flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)]">
+                                <span className="text-xs font-bold text-[var(--text)]">Tổng cả nhóm</span>
+                                <span className="text-sm font-bold text-[var(--text)]">
                                   {formatVnd(groupedTotal + soloTotal)}
                                 </span>
                               </div>
@@ -2505,13 +2505,13 @@ export default function SessionDetailPage() {
                     return (
                       <div
                         key={host.id}
-                        className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden"
+                        className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden"
                       >
                         {isDesktop ? (
                           <div>
                             {renderRowContent(host, false, hostDisplayName, groupedGuestsForHost)}
                             {showHostActions && (
-                              <div className="flex justify-end gap-2 border-t border-gray-100 px-4 py-2.5">
+                              <div className="flex justify-end gap-2 border-t border-[var(--border)] px-4 py-2.5">
                                 <DesktopRowActions reg={host} />
                               </div>
                             )}
@@ -2584,7 +2584,7 @@ export default function SessionDetailPage() {
                 <img
                   src={viewingBillUrl}
                   alt="Ảnh bill chuyển khoản"
-                  className="w-full max-h-[80vh] object-contain rounded-xl bg-white"
+                  className="w-full max-h-[80vh] object-contain rounded-xl bg-[var(--surface)]"
                 />
               </div>
             </div>,
@@ -2598,14 +2598,14 @@ export default function SessionDetailPage() {
             <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
               style={{
-                background: "rgba(0,0,0,0.4)",
+                background: "var(--overlay)",
                 backdropFilter: "blur(2px)",
                 opacity: addModalVisible ? 1 : 0,
                 transition: "opacity 200ms ease-out",
               }}
             >
               <div
-                className="bg-white rounded-2xl w-full max-w-md shadow-xl"
+                className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
                 style={{
                   transform: addModalVisible
                     ? "scale(1) translateY(0)"
@@ -2616,13 +2616,13 @@ export default function SessionDetailPage() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                  <h3 className="font-bold text-gray-900">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                  <h3 className="font-bold text-[var(--text)]">
                     Thêm thành viên vào buổi
                   </h3>
                   <button
                     onClick={closeAddModal}
-                    className="p-1 text-gray-400 hover:text-gray-600"
+                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                   >
                     <XCircle className="w-5 h-5" />
                   </button>
@@ -2636,7 +2636,7 @@ export default function SessionDetailPage() {
                     <button
                       key={val}
                       onClick={() => setAddTab(val as any)}
-                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium ${addTab === val ? "bg-blue-50 text-blue-600" : "text-gray-400"}`}
+                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium ${addTab === val ? "bg-[var(--primary-soft)] text-[var(--primary)]" : "text-[var(--text-faint)]"}`}
                     >
                       {lbl}
                     </button>
@@ -2647,7 +2647,7 @@ export default function SessionDetailPage() {
                   {addTab === "account" ? (
                     <>
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-faint)]" />
                         <input
                           autoFocus
                           value={search}
@@ -2662,7 +2662,7 @@ export default function SessionDetailPage() {
                           {selectedMembers.map((m) => (
                             <span
                               key={m.id}
-                              className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium"
+                              className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] text-xs font-medium"
                             >
                               {m.full_name}
                               <button
@@ -2680,17 +2680,17 @@ export default function SessionDetailPage() {
                         </div>
                       )}
 
-                      <div className="max-h-72 overflow-y-auto -mx-1 border border-gray-100 rounded-xl">
+                      <div className="max-h-72 overflow-y-auto -mx-1 border border-[var(--border)] rounded-xl">
                         {searching ? (
-                          <p className="text-sm text-gray-400 text-center py-4">
+                          <p className="text-sm text-[var(--text-faint)] text-center py-4">
                             Đang tìm...
                           </p>
                         ) : searchResults.length === 0 ? (
-                          <p className="text-sm text-gray-400 text-center py-4">
+                          <p className="text-sm text-[var(--text-faint)] text-center py-4">
                             Không tìm thấy thành viên
                           </p>
                         ) : (
-                          <ul className="divide-y divide-gray-50">
+                          <ul className="divide-y divide-[var(--border)]">
                             {searchResults.map((m) => {
                               const isSelected = selectedMembers.some(
                                 (x) => x.id === m.id,
@@ -2706,21 +2706,21 @@ export default function SessionDetailPage() {
                                       );
                                     }}
                                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isSelected
-                                      ? "bg-blue-50"
-                                      : "hover:bg-gray-50"
+                                      ? "bg-[var(--primary-soft)]"
+                                      : "hover:bg-[var(--surface-hover)]"
                                       }`}
                                   >
                                     <div
                                       className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${isSelected
                                         ? "bg-blue-600 border-blue-600"
-                                        : "border-gray-300"
+                                        : "border-[var(--border-strong)]"
                                         }`}
                                     >
                                       {isSelected && (
                                         <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                                       )}
                                     </div>
-                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                    <div className="w-8 h-8 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                                       {m.avatar_url ? (
                                         <img
                                           src={m.avatar_url}
@@ -2733,24 +2733,24 @@ export default function SessionDetailPage() {
                                           }}
                                         />
                                       ) : (
-                                        <span className="text-xs font-semibold text-blue-700">
+                                        <span className="text-xs font-semibold text-[var(--primary)]">
                                           {m.full_name?.[0]?.toUpperCase() ??
                                             "?"}
                                         </span>
                                       )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-gray-900 truncate">
+                                      <p className="text-sm font-medium text-[var(--text)] truncate">
                                         {m.full_name}
                                       </p>
-                                      <p className="text-xs text-gray-400">
+                                      <p className="text-xs text-[var(--text-faint)]">
                                         {m.phone}
                                       </p>
                                     </div>
                                     <span
                                       className={`text-[10px] px-2 py-0.5 rounded-full border flex-shrink-0 ${m.member_type === "co_dinh"
-                                        ? "bg-purple-50 text-purple-700 border-purple-200"
-                                        : "bg-gray-50 text-gray-500 border-gray-200"
+                                        ? "bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)]"
+                                        : "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]"
                                         }`}
                                     >
                                       {m.member_type === "co_dinh"
@@ -2765,14 +2765,14 @@ export default function SessionDetailPage() {
                         )}
                       </div>
 
-                      <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+                      <p className="text-xs text-[var(--primary)] bg-[var(--primary-soft)] rounded-lg px-3 py-2">
                         ⓘ Đã chọn {selectedMembers.length} thành viên. Mỗi người
                         sẽ nhận được thông báo đã được thêm vào buổi. Thanh toán
                         sau khi buổi kết thúc.
                       </p>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[var(--text)] mb-1">
                           Đi cùng (tuỳ chọn, để gộp tiền vào ví host)
                         </label>
                         <CustomSelect
@@ -2789,7 +2789,7 @@ export default function SessionDetailPage() {
                             }))}
                         />
                         {hostRegId && selectedMembers.length > 1 && (
-                          <p className="text-[11px] text-amber-600 mt-1">
+                          <p className="text-[11px] text-[var(--warning)] mt-1">
                             ⚠️ Bạn đang chọn nhiều thành viên cùng lúc + chọn
                             "đi cùng host" — tất cả {selectedMembers.length}{" "}
                             người sẽ được gắn vào cùng 1 host này.
@@ -2800,7 +2800,7 @@ export default function SessionDetailPage() {
                   ) : (
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[var(--text)] mb-1">
                           Họ tên *
                         </label>
                         <input
@@ -2817,7 +2817,7 @@ export default function SessionDetailPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-[var(--text)] mb-1">
                             Giới tính
                           </label>
                           <CustomSelect
@@ -2832,7 +2832,7 @@ export default function SessionDetailPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-[var(--text)] mb-1">
                             Trình độ
                           </label>
                           <CustomSelect
@@ -2856,7 +2856,7 @@ export default function SessionDetailPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[var(--text)] mb-1">
                           Email (không bắt buộc, để gửi hóa đơn)
                         </label>
                         <input
@@ -2873,10 +2873,10 @@ export default function SessionDetailPage() {
                           <button
                             type="button"
                             onClick={() => setGuestSendEmail((v) => !v)}
-                            className="mt-2 w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                            className="mt-2 w-full flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-hover)] transition-colors"
                           >
-                            <span className="flex items-center gap-2 text-sm text-gray-700">
-                              <Mail className="w-4 h-4 text-gray-400" />
+                            <span className="flex items-center gap-2 text-sm text-[var(--text)]">
+                              <Mail className="w-4 h-4 text-[var(--text-faint)]" />
                               Gửi email thông báo ngay
                             </span>
                             <span
@@ -2884,7 +2884,7 @@ export default function SessionDetailPage() {
                                 }`}
                             >
                               <span
-                                className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                                className="inline-block h-4 w-4 rounded-full bg-[var(--surface)] shadow transition-transform duration-200"
                                 style={{
                                   transform: guestSendEmail ? "translateX(18px)" : "translateX(2px)",
                                 }}
@@ -2894,7 +2894,7 @@ export default function SessionDetailPage() {
                         )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[var(--text)] mb-1">
                           Đi cùng (tuỳ chọn)
                         </label>
                         <CustomSelect
@@ -2914,7 +2914,7 @@ export default function SessionDetailPage() {
 
                         {hostRegId && (
                           <>
-                            <label className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                            <label className="flex items-center gap-2 mt-2 text-sm text-[var(--text-muted)]">
                               <input
                                 type="checkbox"
                                 checked={guestPaySeparately}
@@ -2923,7 +2923,7 @@ export default function SessionDetailPage() {
                               />
                               Thanh toán riêng (không gộp với người đi cùng)
                             </label>
-                            <p className="text-[11px] text-gray-400 mt-1">
+                            <p className="text-[11px] text-[var(--text-faint)] mt-1">
                               {guestPaySeparately
                                 ? "Khách này sẽ tự thanh toán tiền mặt riêng, nhận hóa đơn riêng qua email."
                                 : "Mặc định: người đi cùng trả hộ, hóa đơn sẽ gộp gửi về người đi cùng."}
@@ -2932,7 +2932,7 @@ export default function SessionDetailPage() {
                         )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[var(--text)] mb-1">
                           Ghi chú (tuỳ chọn)
                         </label>
                         <input
@@ -2945,10 +2945,10 @@ export default function SessionDetailPage() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100">
+                <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
                   <button
                     onClick={closeAddModal}
-                    className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0"
+                    className="px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors flex-shrink-0"
                   >
                     Hủy
                   </button>
@@ -2979,7 +2979,7 @@ export default function SessionDetailPage() {
 
 
         {selectedMembers.length > (session.available_slots ?? 0) && (
-          <p className="text-[11px] text-red-600 mt-1">
+          <p className="text-[11px] text-[var(--danger)] mt-1">
             ⚠️ Bạn đang chọn {selectedMembers.length} người nhưng buổi chỉ còn{" "}
             {session.available_slots ?? 0} chỗ trống.
           </p>
@@ -2991,7 +2991,7 @@ export default function SessionDetailPage() {
             <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
               style={{
-                background: "rgba(0,0,0,0.4)",
+                background: "var(--overlay)",
                 backdropFilter: "blur(2px)",
                 opacity: confirmModalVisible ? 1 : 0,
                 transition: "opacity 200ms ease-out",
@@ -2999,7 +2999,7 @@ export default function SessionDetailPage() {
               onClick={closeConfirmModal}
             >
               <div
-                className="bg-white rounded-2xl w-full max-w-md shadow-xl"
+                className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
                 style={{
                   transform: confirmModalVisible
                     ? "scale(1) translateY(0)"
@@ -3010,41 +3010,41 @@ export default function SessionDetailPage() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
                   <div className="flex items-center gap-2">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${confirmModal.key === "closeList"
-                        ? "bg-red-50"
+                        ? "bg-[var(--danger-soft)]"
                         : confirmModal.key === "completeSession"
-                          ? "bg-emerald-50"
-                          : "bg-green-50"
+                          ? "bg-[var(--success-soft)]"
+                          : "bg-[var(--success-soft)]"
                         }`}
                     >
                       {confirmModal.key === "closeList" ? (
-                        <UserX className="w-4 h-4 text-red-500" />
+                        <UserX className="w-4 h-4 text-[var(--danger)]" />
                       ) : confirmModal.key === "completeSession" ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <CheckCircle2 className="w-4 h-4 text-[var(--success)]" />
                       ) : (
-                        <UserCheck className="w-4 h-4 text-green-600" />
+                        <UserCheck className="w-4 h-4 text-[var(--success)]" />
                       )}
                     </div>
-                    <h3 className="font-bold text-gray-900">
+                    <h3 className="font-bold text-[var(--text)]">
                       {confirmModal.title}
                     </h3>
                   </div>
                   <button
                     onClick={closeConfirmModal}
-                    className="p-1 text-gray-400 hover:text-gray-600"
+                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                   >
                     <XCircle className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="p-5 text-sm text-gray-500">
+                <div className="p-5 text-sm text-[var(--text-muted)]">
                   {confirmModal.message}
                 </div>
 
-                <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
                   <button
                     onClick={closeConfirmModal}
                     className="btn-secondary text-sm"
@@ -3080,7 +3080,7 @@ export default function SessionDetailPage() {
             <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
               style={{
-                background: "rgba(0,0,0,0.4)",
+                background: "var(--overlay)",
                 backdropFilter: "blur(2px)",
                 opacity: rollbackModalVisible ? 1 : 0,
                 transition: "opacity 200ms ease-out",
@@ -3088,7 +3088,7 @@ export default function SessionDetailPage() {
               onClick={closeRollbackModal}
             >
               <div
-                className="bg-white rounded-2xl w-full max-w-md shadow-xl"
+                className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
                 style={{
                   transform: rollbackModalVisible
                     ? "scale(1) translateY(0)"
@@ -3099,27 +3099,27 @@ export default function SessionDetailPage() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
-                      <RotateCcw className="w-4 h-4 text-orange-500" />
+                    <div className="w-8 h-8 rounded-full bg-[var(--warning-soft)] flex items-center justify-center flex-shrink-0">
+                      <RotateCcw className="w-4 h-4 text-[var(--warning)]" />
                     </div>
-                    <h3 className="font-bold text-gray-900">
+                    <h3 className="font-bold text-[var(--text)]">
                       Hoàn tác hóa đơn?
                     </h3>
                   </div>
                   <button
                     onClick={closeRollbackModal}
-                    className="p-1 text-gray-400 hover:text-gray-600"
+                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                   >
                     <XCircle className="w-5 h-5" />
                   </button>
                 </div>
 
                 <div className="p-5 space-y-3">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[var(--text-muted)]">
                     Hoàn tác hóa đơn đã gửi cho buổi{" "}
-                    <strong className="text-gray-700">{session.title}</strong>?
+                    <strong className="text-[var(--text)]">{session.title}</strong>?
                   </p>
 
                   {(() => {
@@ -3127,28 +3127,28 @@ export default function SessionDetailPage() {
                     if (preview.length === 0) return null;
                     const total = preview.reduce((s, p) => s + p.amount, 0);
                     return (
-                      <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 space-y-2">
-                        <p className="text-xs font-semibold text-blue-700">
+                      <div className="rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] p-3 space-y-2">
+                        <p className="text-xs font-semibold text-[var(--primary)]">
                           Tiền sẽ hoàn về ví ({preview.length} người)
                         </p>
                         <ul className="space-y-1 max-h-40 overflow-y-auto pr-1">
                           {preview.map((p) => (
                             <li
                               key={p.user_id}
-                              className="flex items-center justify-between text-xs text-gray-600"
+                              className="flex items-center justify-between text-xs text-[var(--text-muted)]"
                             >
                               <span>{p.full_name}</span>
-                              <span className="font-semibold text-blue-700">
+                              <span className="font-semibold text-[var(--primary)]">
                                 {formatVnd(p.amount)}
                               </span>
                             </li>
                           ))}
                         </ul>
-                        <div className="flex items-center justify-between border-t border-blue-100 pt-1.5">
-                          <span className="text-xs font-semibold text-gray-700">
+                        <div className="flex items-center justify-between border-t border-[color-mix(in_srgb,var(--primary)_30%,transparent)] pt-1.5">
+                          <span className="text-xs font-semibold text-[var(--text)]">
                             Tổng hoàn
                           </span>
-                          <span className="text-sm font-bold text-blue-700">
+                          <span className="text-sm font-bold text-[var(--primary)]">
                             {formatVnd(total)}
                           </span>
                         </div>
@@ -3157,23 +3157,23 @@ export default function SessionDetailPage() {
                   })()}
 
                   <ul className="space-y-2">
-                    <li className="flex items-start gap-2 text-sm text-gray-600">
-                      <Wallet className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
+                      <Wallet className="w-4 h-4 text-[var(--primary)] flex-shrink-0 mt-0.5" />
                       <span>
                         Tiền đã trừ ví sẽ được <strong>hoàn lại</strong> và ghi
                         vào lịch sử ví.
                       </span>
                     </li>
-                    <li className="flex items-start gap-2 text-sm text-gray-600">
-                      <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
+                      <XCircle className="w-4 h-4 text-[var(--danger)] flex-shrink-0 mt-0.5" />
                       <span>
                         <strong>Tất cả</strong> xác nhận thanh toán (kể cả tiền
                         mặt/chuyển khoản admin đã xác nhận thủ công) sẽ bị huỷ,
                         member sẽ nhận thông báo.
                       </span>
                     </li>
-                    <li className="flex items-start gap-2 text-sm text-gray-600">
-                      <Calculator className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
+                      <Calculator className="w-4 h-4 text-[var(--success)] flex-shrink-0 mt-0.5" />
                       <span>
                         Buổi sẽ mở lại để bạn chỉnh sửa chi phí và gửi hóa đơn
                         mới.
@@ -3185,8 +3185,8 @@ export default function SessionDetailPage() {
                     const emailCandidates = getRollbackEmailCandidates();
                     if (emailCandidates.length === 0) return null;
                     return (
-                      <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3 space-y-2">
-                        <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3 space-y-2">
+                        <p className="text-xs font-semibold text-[var(--text-muted)] flex items-center gap-1.5">
                           <Mail className="w-3.5 h-3.5" />
                           Gửi mail "hóa đơn bị huỷ" cho khách (mặc định: không gửi)
                         </p>
@@ -3199,7 +3199,7 @@ export default function SessionDetailPage() {
                                 key={g.id}
                                 className="flex items-center justify-between gap-2"
                               >
-                                <span className="text-sm text-gray-700 truncate">
+                                <span className="text-sm text-[var(--text)] truncate">
                                   {name}
                                 </span>
                                 <button
@@ -3209,7 +3209,7 @@ export default function SessionDetailPage() {
                                     }`}
                                 >
                                   <span
-                                    className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                                    className="inline-block h-4 w-4 rounded-full bg-[var(--surface)] shadow transition-transform duration-200"
                                     style={{
                                       transform: checked
                                         ? "translateX(18px)"
@@ -3226,7 +3226,7 @@ export default function SessionDetailPage() {
                   })()}
                 </div>
 
-                <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
                   <button
                     onClick={closeRollbackModal}
                     className="btn-secondary text-sm"
@@ -3255,7 +3255,7 @@ export default function SessionDetailPage() {
             <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
               style={{
-                background: "rgba(0,0,0,0.4)",
+                background: "var(--overlay)",
                 backdropFilter: "blur(2px)",
                 opacity: penaltyRefundModalVisible ? 1 : 0,
                 transition: "opacity 200ms ease-out",
@@ -3263,7 +3263,7 @@ export default function SessionDetailPage() {
               onClick={closePenaltyRefundModal}
             >
               <div
-                className="bg-white rounded-2xl w-full max-w-md shadow-xl"
+                className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
                 style={{
                   transform: penaltyRefundModalVisible
                     ? "scale(1) translateY(0)"
@@ -3274,48 +3274,48 @@ export default function SessionDetailPage() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-                      <ShieldAlert className="w-4 h-4 text-red-500" />
+                    <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
+                      <ShieldAlert className="w-4 h-4 text-[var(--danger)]" />
                     </div>
-                    <h3 className="font-bold text-gray-900">Hoàn luôn tiền phạt?</h3>
+                    <h3 className="font-bold text-[var(--text)]">Hoàn luôn tiền phạt?</h3>
                   </div>
                   <button
                     onClick={closePenaltyRefundModal}
-                    className="p-1 text-gray-400 hover:text-gray-600"
+                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                   >
                     <XCircle className="w-5 h-5" />
                   </button>
                 </div>
 
                 <div className="p-5 space-y-3">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[var(--text-muted)]">
                     Buổi này có <strong>{penaltiesToRefund.length}</strong> khoản phạt
                     đã được trừ thẳng vào ví. Bạn có muốn hoàn lại các khoản này luôn
                     không?
                   </p>
-                  <ul className="space-y-1.5 max-h-48 overflow-y-auto pr-1 rounded-xl border border-gray-100 p-2">
+                  <ul className="space-y-1.5 max-h-48 overflow-y-auto pr-1 rounded-xl border border-[var(--border)] p-2">
                     {penaltiesToRefund.map((p: any) => (
                       <li
                         key={p.id}
-                        className="flex items-center justify-between text-xs text-gray-600 px-1 py-1"
+                        className="flex items-center justify-between text-xs text-[var(--text-muted)] px-1 py-1"
                       >
                         <span className="truncate">
                           {p.users?.full_name}{" "}
-                          <span className="text-gray-400">— {p.reason}</span>
+                          <span className="text-[var(--text-faint)]">— {p.reason}</span>
                         </span>
-                        <span className="font-semibold text-red-500 flex-shrink-0 ml-2">
+                        <span className="font-semibold text-[var(--danger)] flex-shrink-0 ml-2">
                           {formatVnd(p.amount)}
                         </span>
                       </li>
                     ))}
                   </ul>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs font-semibold text-gray-700">
+                    <span className="text-xs font-semibold text-[var(--text)]">
                       Tổng cộng
                     </span>
-                    <span className="text-sm font-bold text-red-500">
+                    <span className="text-sm font-bold text-[var(--danger)]">
                       {formatVnd(
                         penaltiesToRefund.reduce((s, p) => s + Number(p.amount), 0),
                       )}
@@ -3323,7 +3323,7 @@ export default function SessionDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 px-5 py-4 border-t border-gray-100">
+                <div className="flex flex-col gap-2 px-5 py-4 border-t border-[var(--border)]">
                   <button
                     onClick={() => handleRollbackFinish(true)}
                     disabled={rollingBack}
@@ -3335,7 +3335,7 @@ export default function SessionDetailPage() {
                   <button
                     onClick={() => handleRollbackFinish(false)}
                     disabled={rollingBack}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] text-[var(--text)] text-sm font-semibold transition-colors disabled:opacity-50"
                   >
                     Không hoàn tiền phạt
                   </button>
@@ -3351,7 +3351,7 @@ export default function SessionDetailPage() {
             <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
               style={{
-                background: "rgba(0,0,0,0.4)",
+                background: "var(--overlay)",
                 backdropFilter: "blur(2px)",
                 opacity: cancelModalVisible ? 1 : 0,
                 transition: "opacity 200ms ease-out",
@@ -3359,7 +3359,7 @@ export default function SessionDetailPage() {
               onClick={closeCancelModal}
             >
               <div
-                className="bg-white rounded-2xl w-full max-w-sm shadow-xl"
+                className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl"
                 style={{
                   transform: cancelModalVisible
                     ? "scale(1) translateY(0)"
@@ -3370,31 +3370,31 @@ export default function SessionDetailPage() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-                      <XCircle className="w-4 h-4 text-red-500" />
+                    <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
+                      <XCircle className="w-4 h-4 text-[var(--danger)]" />
                     </div>
-                    <h3 className="font-bold text-gray-900">Hủy buổi đánh?</h3>
+                    <h3 className="font-bold text-[var(--text)]">Hủy buổi đánh?</h3>
                   </div>
                   <button
                     onClick={closeCancelModal}
-                    className="p-1 text-gray-400 hover:text-gray-600"
+                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                   >
                     <XCircle className="w-5 h-5" />
                   </button>
                 </div>
 
                 <div className="p-5">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[var(--text-muted)]">
                     Hủy buổi{" "}
-                    <strong className="text-gray-700">"{session.title}"</strong>
+                    <strong className="text-[var(--text)]">"{session.title}"</strong>
                     ? Buổi chưa có ai đăng ký nên có thể hủy an toàn. Bạn có thể
                     mở lại sau nếu cần.
                   </p>
                 </div>
 
-                <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
                   <button
                     onClick={closeCancelModal}
                     className="btn-secondary text-sm"

@@ -408,18 +408,18 @@ export default function ShirtOrderFormPage({
 
     if (loading)
         return (
-            <div className="max-w-lg mx-auto p-8 text-center text-gray-400">
+            <div className="max-w-lg mx-auto p-8 text-center text-[var(--text-faint)]">
                 Đang tải...
             </div>
         );
 
     return (
         <div className="w-full space-y-4 p-6 pt-10">
-            <h1 className="text-xl font-bold text-gray-900 pr-8">👕 Đặt áo nhóm</h1>
+            <h1 className="text-xl font-bold text-[var(--text)] pr-8">👕 Đặt áo nhóm</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 <div className="lg:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1">
                         Tiêu đề
                     </label>
                     <input
@@ -430,7 +430,7 @@ export default function ShirtOrderFormPage({
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1">
                         Deadline đăng ký
                     </label>
                     <input
@@ -443,7 +443,7 @@ export default function ShirtOrderFormPage({
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1">
                         Trạng thái
                     </label>
                     <select
@@ -462,7 +462,7 @@ export default function ShirtOrderFormPage({
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text)] mb-1">
                     Mô tả (tuỳ chọn)
                 </label>
                 <textarea
@@ -476,14 +476,14 @@ export default function ShirtOrderFormPage({
             </div>
 
             <div className="flex items-center justify-between pt-2">
-                <p className="text-sm font-semibold text-gray-700">
+                <p className="text-sm font-semibold text-[var(--text)]">
                     Các loại áo ({shirtTypes.length})
                 </p>
                 <button
                     type="button"
                     onClick={addShirtType}
                     disabled={shirtTypes.length >= MAX_SHIRT_TYPES}
-                    className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:opacity-40"
+                    className="flex items-center gap-1 text-xs font-medium text-[var(--primary)] hover:text-[var(--primary)] disabled:opacity-40"
                 >
                     <Plus className="w-3.5 h-3.5" /> Thêm loại áo
                 </button>
@@ -493,7 +493,7 @@ export default function ShirtOrderFormPage({
                 {shirtTypes.map((t, idx) => (
                     <div
                         key={t.id}
-                        className="rounded-xl border border-gray-200 p-4 space-y-3 bg-gray-50/50"
+                        className="rounded-xl border border-[var(--border)] p-4 space-y-3 bg-[var(--surface-muted)]"
                     >
                         <div className="flex items-center justify-between gap-2">
                             <input
@@ -508,7 +508,7 @@ export default function ShirtOrderFormPage({
                                 <button
                                     type="button"
                                     onClick={() => removeShirtType(t.id)}
-                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                    className="p-2 text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-lg flex-shrink-0"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
@@ -516,7 +516,7 @@ export default function ShirtOrderFormPage({
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                            <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                                 Giá / áo (đ)
                             </label>
                             <input
@@ -533,7 +533,7 @@ export default function ShirtOrderFormPage({
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                            <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">
                                 Size Nam
                             </label>
                             <div className="flex flex-wrap gap-1.5">
@@ -544,7 +544,7 @@ export default function ShirtOrderFormPage({
                                         onClick={() => toggleSize(t.id, "nam", size)}
                                         className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${t.available_sizes.nam.includes(size)
                                             ? "bg-blue-600 text-white border-blue-600"
-                                            : "bg-white text-gray-500 border-gray-200"
+                                            : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]"
                                             }`}
                                     >
                                         {size}
@@ -554,7 +554,7 @@ export default function ShirtOrderFormPage({
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                            <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">
                                 Size Nữ
                             </label>
                             <div className="flex flex-wrap gap-1.5">
@@ -565,7 +565,7 @@ export default function ShirtOrderFormPage({
                                         onClick={() => toggleSize(t.id, "nu", size)}
                                         className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${t.available_sizes.nu.includes(size)
                                             ? "bg-pink-600 text-white border-pink-600"
-                                            : "bg-white text-gray-500 border-gray-200"
+                                            : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]"
                                             }`}
                                     >
                                         {size}
@@ -577,7 +577,7 @@ export default function ShirtOrderFormPage({
                         {/* ── Màu sắc, mỗi màu có ảnh riêng ── */}
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                                <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)]">
                                     <Palette className="w-3.5 h-3.5" /> Màu sắc (
                                     {t.colors.length}/{MAX_COLORS_PER_TYPE})
                                 </label>
@@ -585,7 +585,7 @@ export default function ShirtOrderFormPage({
                                     type="button"
                                     onClick={() => addColor(t.id)}
                                     disabled={t.colors.length >= MAX_COLORS_PER_TYPE}
-                                    className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:opacity-40"
+                                    className="flex items-center gap-1 text-xs font-medium text-[var(--primary)] hover:text-[var(--primary)] disabled:opacity-40"
                                 >
                                     <Plus className="w-3.5 h-3.5" /> Thêm màu
                                 </button>
@@ -597,7 +597,7 @@ export default function ShirtOrderFormPage({
                                     return (
                                         <div
                                             key={c.id}
-                                            className="rounded-lg border border-gray-200 bg-white p-3 space-y-2"
+                                            className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 space-y-2"
                                         >
                                             <div className="flex items-center gap-2">
                                                 <input
@@ -612,7 +612,7 @@ export default function ShirtOrderFormPage({
                                                     <button
                                                         type="button"
                                                         onClick={() => removeColor(t.id, c.id)}
-                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                                        className="p-1.5 text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-lg flex-shrink-0"
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5" />
                                                     </button>
@@ -620,14 +620,14 @@ export default function ShirtOrderFormPage({
                                             </div>
 
                                             <div>
-                                                <p className="text-[11px] text-gray-400 mb-1">
+                                                <p className="text-[11px] text-[var(--text-faint)] mb-1">
                                                     Ảnh ({c.images.length}/{MAX_IMAGES_PER_COLOR})
                                                 </p>
                                                 <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5">
                                                     {c.images.map((img, index) => (
                                                         <div
                                                             key={img.url + index}
-                                                            className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
+                                                            className="relative group aspect-square rounded-lg overflow-hidden border border-[var(--border)] bg-[var(--surface-muted)]"
                                                         >
                                                             <img
                                                                 src={img.url}
@@ -653,7 +653,7 @@ export default function ShirtOrderFormPage({
                                                                 fileInputRefs.current[key]?.click()
                                                             }
                                                             disabled={uploadingKey === key}
-                                                            className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors disabled:opacity-50 bg-white"
+                                                            className="aspect-square rounded-lg border-2 border-dashed border-[var(--border-strong)] flex flex-col items-center justify-center text-[var(--text-faint)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors disabled:opacity-50 bg-[var(--surface)]"
                                                         >
                                                             {uploadingKey === key ? (
                                                                 <Loader2 size={14} className="animate-spin" />

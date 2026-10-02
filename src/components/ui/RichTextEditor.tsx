@@ -91,8 +91,8 @@ export default function RichTextEditor({
     const activeSize = editor.getAttributes("textStyle").fontSize || "";
 
     return (
-        <div className="rounded-lg border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400">
-            <div className="flex items-center flex-wrap gap-0.5 border-b border-gray-200 bg-gray-50 px-2 py-1.5">
+        <div className="rounded-lg border border-[var(--border)] overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400">
+            <div className="flex items-center flex-wrap gap-0.5 border-b border-[var(--border)] bg-[var(--surface-muted)] px-2 py-1.5">
                 <ToolbarButton
                     active={editor.isActive("bold")}
                     onClick={() => editor.chain().focus().toggleBold().run()}
@@ -114,7 +114,7 @@ export default function RichTextEditor({
                 >
                     <UnderlineIcon className="w-3.5 h-3.5" />
                 </ToolbarButton>
-                <div className="w-px h-4 bg-gray-200 mx-1" />
+                <div className="w-px h-4 bg-[var(--border-strong)] mx-1" />
                 <ToolbarButton
                     active={editor.isActive("bulletList")}
                     onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -129,11 +129,11 @@ export default function RichTextEditor({
                 >
                     <ListOrdered className="w-3.5 h-3.5" />
                 </ToolbarButton>
-                <div className="w-px h-4 bg-gray-200 mx-1" />
+                <div className="w-px h-4 bg-[var(--border-strong)] mx-1" />
                 <ToolbarButton active={editor.isActive("link")} onClick={setLink} label="Chèn liên kết">
                     <LinkIcon className="w-3.5 h-3.5" />
                 </ToolbarButton>
-                <div className="w-px h-4 bg-gray-200 mx-1" />
+                <div className="w-px h-4 bg-[var(--border-strong)] mx-1" />
 
                 <div className="flex items-center gap-1 px-1">
                     {TEXT_COLORS.map((c) => (
@@ -151,7 +151,7 @@ export default function RichTextEditor({
                         />
                     ))}
                 </div>
-                <div className="w-px h-4 bg-gray-200 mx-1" />
+                <div className="w-px h-4 bg-[var(--border-strong)] mx-1" />
 
                 <select
                     value={activeSize}
@@ -160,7 +160,7 @@ export default function RichTextEditor({
                         if (val) editor.chain().focus().setFontSize(val).run();
                         else editor.chain().focus().unsetFontSize().run();
                     }}
-                    className="text-xs rounded-md border border-gray-200 bg-white px-1.5 py-1 outline-none"
+                    className="text-xs rounded-md border border-[var(--border)] bg-[var(--surface)] px-1.5 py-1 outline-none"
                 >
                     {FONT_SIZES.map((s) => (
                         <option key={s.label} value={s.value}>
@@ -171,7 +171,7 @@ export default function RichTextEditor({
             </div>
             <div className="relative">
                 {isEmpty && placeholder && (
-                    <p className="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none">
+                    <p className="absolute top-2 left-3 text-sm text-[var(--text-faint)] pointer-events-none">
                         {placeholder}
                     </p>
                 )}
@@ -201,7 +201,7 @@ function ToolbarButton({
             type="button"
             onClick={onClick}
             title={label}
-            className={`p-1.5 rounded-md transition-colors ${active ? "bg-gray-200 text-gray-900" : "text-gray-500 hover:bg-gray-100"
+            className={`p-1.5 rounded-md transition-colors ${active ? "bg-[var(--border-strong)] text-[var(--text)]" : "text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                 }`}
         >
             {children}

@@ -772,28 +772,28 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
 
     if (loading)
         return (
-            <div className="w-full p-8 text-center text-gray-400">Đang tải...</div>
+            <div className="w-full p-8 text-center text-[var(--text-faint)]">Đang tải...</div>
         );
 
     const canToggleRegistration = !!id && ["open", "closed"].includes(form.status);
 
     return (
         <div
-            className="flex-shrink-0 bg-[#F4F6FA] px-4 sm:px-6 pt-4 sm:pt-6"
+            className="flex-shrink-0 bg-[var(--bg)] px-4 sm:px-6 pt-4 sm:pt-6"
             style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}
         >
-            <div className="flex-shrink-0 bg-[#F4F6FA] px-4 sm:px-6 pt-4 sm:pt-6">
+            <div className="flex-shrink-0 bg-[var(--bg)] px-4 sm:px-6 pt-4 sm:pt-6">
                 <div className="mb-5 sm:mb-6 space-y-3 md:space-y-0">
                     <div className="flex flex-wrap items-center gap-3 gap-y-2">
                         <div className="flex items-center gap-3 min-w-0">
                             <button
                                 onClick={handleClose}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none flex-shrink-0"
+                                className="text-[var(--text-faint)] hover:text-[var(--text-muted)] text-xl leading-none flex-shrink-0"
                                 aria-label="Quay lại"
                             >
                                 ←
                             </button>
-                            <h1 className="text-lg font-bold text-gray-900 truncate">
+                            <h1 className="text-lg font-bold text-[var(--text)] truncate">
                                 {id ? "Chỉnh sửa giải đấu" : "Tạo giải đấu"}
                             </h1>
                         </div>
@@ -854,8 +854,8 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                     </div>
                 </div>
 
-                <div className="border-b border-gray-200 pb-3">
-                    <span className="text-sm font-medium text-blue-600 border-b-2 border-blue-600 -mb-3 pb-3 inline-block">
+                <div className="border-b border-[var(--border)] pb-3">
+                    <span className="text-sm font-medium text-[var(--primary)] border-b-2 border-blue-600 -mb-3 pb-3 inline-block">
                         Thông tin giải đấu
                     </span>
                 </div>
@@ -924,7 +924,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                                 setForm((f) => ({ ...f, max_teams: e.target.value }))
                                             }
                                         />
-                                        <span className="text-sm text-gray-500 shrink-0">
+                                        <span className="text-sm text-[var(--text-muted)] shrink-0">
                                             {form.format_type === "don" ? "người" : "đội"}
                                         </span>
                                     </div>
@@ -934,8 +934,8 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                             {form.format_type === "doi_bong" && (
                                 <>
                                     <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                        <label className="text-sm font-medium text-gray-700">
-                                            Thành phần mỗi đội <span className="text-red-500">*</span>
+                                        <label className="text-sm font-medium text-[var(--text)]">
+                                            Thành phần mỗi đội <span className="text-[var(--danger)]">*</span>
                                         </label>
                                         <div className="flex items-center gap-2">
                                             <div className="w-[132px]">
@@ -963,7 +963,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                     </div>
 
                                     <CompositionGrid slots={form.composition} onChange={handleSlotChange} />
-                                    <p className="text-xs text-gray-400 mt-2">
+                                    <p className="text-xs text-[var(--text-faint)] mt-2">
                                         Mỗi ô là 1 vị trí trong đội. Hệ thống dùng thành phần này để
                                         kiểm tra slot còn trống khi thành viên đăng ký, và để bốc
                                         thăm chia đội.
@@ -994,8 +994,8 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                         </SectionCard>
 
                         <SectionCard icon="📋" title="III. NỘI DUNG THI ĐẤU">
-                            <label className="text-sm font-medium text-gray-700">
-                                Nội dung thi đấu <span className="text-red-500">*</span>
+                            <label className="text-sm font-medium text-[var(--text)]">
+                                Nội dung thi đấu <span className="text-[var(--danger)]">*</span>
                             </label>
                             <div className="space-y-2 mt-2">
                                 {form.rules.match_contents.map((item) => {
@@ -1003,9 +1003,9 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                     return (
                                         <div
                                             key={item.id}
-                                            className="flex items-center gap-3 rounded-xl border border-gray-200 p-3"
+                                            className="flex items-center gap-3 rounded-xl border border-[var(--border)] p-3"
                                         >
-                                            <span className="text-gray-300 cursor-grab select-none hidden sm:inline">
+                                            <span className="text-[var(--text-faint)] cursor-grab select-none hidden sm:inline">
                                                 ⠿
                                             </span>
                                             <div
@@ -1024,7 +1024,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                             <button
                                                 type="button"
                                                 onClick={() => removeMatchContent(item.id)}
-                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                                className="p-1.5 text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-lg flex-shrink-0"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -1035,7 +1035,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                             <button
                                 type="button"
                                 onClick={addMatchContent}
-                                className="mt-3 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-400"
+                                className="mt-3 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-[var(--border-strong)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:border-gray-400"
                             >
                                 <Plus className="w-4 h-4" /> Thêm nội dung
                             </button>
@@ -1058,7 +1058,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                         >
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-700 mb-2">
+                                    <p className="text-sm font-medium text-[var(--text)] mb-2">
                                         1. Mỗi nội dung thi đấu
                                     </p>
                                     <div className="grid grid-cols-2 gap-3">
@@ -1137,7 +1137,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                 {form.prizes.map((prize) => (
                                     <div
                                         key={prize.id}
-                                        className="rounded-xl border border-gray-200 p-4 space-y-3"
+                                        className="rounded-xl border border-[var(--border)] p-4 space-y-3"
                                     >
                                         <div className="flex items-center gap-3">
                                             <input
@@ -1159,7 +1159,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                             <button
                                                 type="button"
                                                 onClick={() => removePrize(prize.id)}
-                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                                className="p-1.5 text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-lg flex-shrink-0"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -1193,7 +1193,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                            <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
                                                 Quyền lợi khác
                                             </label>
                                             <div className="space-y-2">
@@ -1210,7 +1210,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                                         <button
                                                             type="button"
                                                             onClick={() => removePrizePerk(prize.id, idx)}
-                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                                            className="p-1.5 text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-lg flex-shrink-0"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
@@ -1220,7 +1220,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                             <button
                                                 type="button"
                                                 onClick={() => addPrizePerk(prize.id)}
-                                                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+                                                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary)]"
                                             >
                                                 <Plus className="w-3.5 h-3.5" /> Thêm quyền lợi
                                             </button>
@@ -1232,7 +1232,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                             <button
                                 type="button"
                                 onClick={addPrize}
-                                className="mt-1 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-400"
+                                className="mt-1 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-[var(--border-strong)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:border-gray-400"
                             >
                                 <Plus className="w-4 h-4" /> Thêm hạng giải
                             </button>
@@ -1254,7 +1254,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                     }
                                 />
                             </Field>
-                            <p className="text-xs text-gray-400 mt-1.5">
+                            <p className="text-xs text-[var(--text-faint)] mt-1.5">
                                 Áp dụng cho từng người đăng ký cá nhân (không nhân theo cặp).
                             </p>
                         </SectionCard>
@@ -1297,7 +1297,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                         setForm((f) => ({ ...f, description: e.target.value }))
                                     }
                                 />
-                                <p className="text-xs text-gray-400 mt-1 text-right">
+                                <p className="text-xs text-[var(--text-faint)] mt-1 text-right">
                                     {form.description.length}/160
                                 </p>
                             </Field>
@@ -1352,7 +1352,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                 />
                             </Field>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1">
                                     Thời gian đăng ký
                                 </label>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1393,7 +1393,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                         setForm((f) => ({ ...f, deadline: e.target.value }))
                                     }
                                 />
-                                <p className="text-xs text-gray-400 mt-1.5 leading-snug">
+                                <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-snug">
                                     Sau thời điểm này hệ thống có thể tự đóng đăng ký.
                                 </p>
                             </Field>
@@ -1418,7 +1418,7 @@ export default function TournamentFormPage({ id }: TournamentFormPageProps) {
                                         setForm((f) => ({ ...f, admin_notes: e.target.value }))
                                     }
                                 />
-                                <p className="text-xs text-gray-400 mt-1 text-right">
+                                <p className="text-xs text-[var(--text-faint)] mt-1 text-right">
                                     {form.admin_notes.length}/300
                                 </p>
                             </Field>
@@ -1548,8 +1548,8 @@ function SectionCard({
     plain?: boolean;
 }) {
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5">
-            <h2 className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-4 tracking-wide">
+        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 sm:p-5">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-[var(--text)] mb-4 tracking-wide">
                 {icon && <span>{icon}</span>}
                 {title}
             </h2>
@@ -1569,8 +1569,8 @@ function Field({
 }) {
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-                {label} {required && <span className="text-red-500">*</span>}
+            <label className="block text-sm font-medium text-[var(--text)] mb-1">
+                {label} {required && <span className="text-[var(--danger)]">*</span>}
             </label>
             {children}
         </div>
@@ -1588,7 +1588,7 @@ function ToggleField({
 }) {
     return (
         <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">{label}</span>
+            <span className="text-sm font-medium text-[var(--text)]">{label}</span>
             <button
                 type="button"
                 onClick={() => onChange(!checked)}
@@ -1598,7 +1598,7 @@ function ToggleField({
                 aria-pressed={checked}
             >
                 <span
-                    className={`absolute top-0.5 left-0.5 w-[18px] h-[18px] rounded-full bg-white shadow transition-transform ${checked ? "translate-x-[18px]" : "translate-x-0"
+                    className={`absolute top-0.5 left-0.5 w-[18px] h-[18px] rounded-full bg-[var(--surface)] shadow transition-transform ${checked ? "translate-x-[18px]" : "translate-x-0"
                         }`}
                 />
             </button>
@@ -1622,7 +1622,7 @@ function ImageUploadBox({
     return (
         <div>
             <div
-                className={`rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center ${objectFit === "cover" ? "h-40" : "min-h-[100px]"
+                className={`rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--surface-muted)] flex items-center justify-center ${objectFit === "cover" ? "h-40" : "min-h-[100px]"
                     }`}
             >
                 {imageUrl ? (
@@ -1636,7 +1636,7 @@ function ImageUploadBox({
                         }
                     />
                 ) : (
-                    <span className="text-xs text-gray-400 py-10">Chưa có ảnh</span>
+                    <span className="text-xs text-[var(--text-faint)] py-10">Chưa có ảnh</span>
                 )}
             </div>
             <input
@@ -1654,7 +1654,7 @@ function ImageUploadBox({
                 type="button"
                 disabled={uploading}
                 onClick={() => inputRef.current?.click()}
-                className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] disabled:opacity-50"
             >
                 {uploading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 {uploading ? "Đang tải lên..." : imageUrl ? "Thay đổi" : "Tải lên"}
@@ -1672,7 +1672,7 @@ function CompositionSlotCard({
 }) {
     const isNu = slot.role === "nu";
     return (
-        <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-3">
+        <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3">
             <div
                 className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{
@@ -1691,7 +1691,7 @@ function CompositionSlotCard({
                         value: slotOptionKey(o.role, o.level),
                         label: o.label,
                     }))}
-                    triggerClassName="w-full flex items-center justify-between text-left text-sm font-medium text-gray-700 bg-transparent border-none py-1 pr-0"
+                    triggerClassName="w-full flex items-center justify-between text-left text-sm font-medium text-[var(--text)] bg-transparent border-none py-1 pr-0"
                 />
             </div>
         </div>

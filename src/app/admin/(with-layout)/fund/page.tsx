@@ -45,10 +45,10 @@ const CATEGORY_ICONS: Record<string, any> = {
 };
 
 const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-    pending: { label: "Chờ duyệt", cls: "bg-amber-100 text-amber-700" },
-    approved: { label: "Đã duyệt", cls: "bg-emerald-100 text-emerald-700" },
-    rejected: { label: "Từ chối", cls: "bg-red-100 text-red-700" },
-    reversed: { label: "Đã huỷ", cls: "bg-gray-100 text-gray-500" },
+    pending: { label: "Chờ duyệt", cls: "bg-[var(--warning-soft)] text-[var(--warning)]" },
+    approved: { label: "Đã duyệt", cls: "bg-[var(--success-soft)] text-[var(--success)]" },
+    rejected: { label: "Từ chối", cls: "bg-[var(--danger-soft)] text-[var(--danger)]" },
+    reversed: { label: "Đã huỷ", cls: "bg-[var(--surface-muted)] text-[var(--text-muted)]" },
 };
 
 const MONTH_NAMES_VI = [
@@ -58,8 +58,8 @@ const MONTH_NAMES_VI = [
 
 function CategoryIcon({ category, type }: { category: string; type: "thu" | "chi" }) {
     const Icon = CATEGORY_ICONS[category] ?? MoreHorizontal;
-    const bg = type === "thu" ? "bg-emerald-100" : "bg-red-100";
-    const text = type === "thu" ? "text-emerald-600" : "text-red-500";
+    const bg = type === "thu" ? "bg-[var(--success-soft)]" : "bg-[var(--danger-soft)]";
+    const text = type === "thu" ? "text-[var(--success)]" : "text-[var(--danger)]";
     return (
         <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center flex-shrink-0`}>
             <Icon className={`w-4.5 h-4.5 ${text}`} />
@@ -70,7 +70,7 @@ function CategoryIcon({ category, type }: { category: string; type: "thu" | "chi
 function FundSourceBadge({ tx }: { tx: any }) {
     if (tx.type !== "thu") {
         return (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 text-slate-600">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-[var(--surface-muted)] text-[var(--text-muted)]">
                 <Wallet className="w-3 h-3" />
                 Quỹ BnB
             </span>
@@ -78,16 +78,16 @@ function FundSourceBadge({ tx }: { tx: any }) {
     }
 
     if (!tx.deducted_member?.full_name) {
-        return <span className="text-gray-300 text-xs">—</span>;
+        return <span className="text-[var(--text-faint)] text-xs">—</span>;
     }
 
     if (!tx.actual_payment_method) {
         return (
             <div className="flex flex-col gap-1 items-center text-center">
-                <span className="text-xs font-semibold text-gray-700 truncate max-w-[140px]">
+                <span className="text-xs font-semibold text-[var(--text)] truncate max-w-[140px]">
                     {tx.deducted_member.full_name}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-amber-50 text-amber-600">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-[var(--warning-soft)] text-[var(--warning)]">
                     Chờ TV chọn PT
                 </span>
             </div>
@@ -346,8 +346,8 @@ export default function FundManagementPage() {
         <div className="max-w-[1680px] mx-auto space-y-4 pb-8 px-2">
             <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900">Quản lý quỹ</h1>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <h1 className="text-xl font-bold text-[var(--text)]">Quản lý quỹ</h1>
+                    <p className="text-xs text-[var(--text-faint)] mt-0.5">
                         Theo dõi và quản lý thu chi của câu lạc bộ
                     </p>
                 </div>
@@ -357,11 +357,11 @@ export default function FundManagementPage() {
                         <button
                             ref={monthBtnRef}
                             onClick={toggleMonthPicker}
-                            className="flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 rounded-xl px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:border-gray-300 whitespace-nowrap"
+                            className="flex items-center gap-1.5 sm:gap-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-[var(--text)] hover:border-[var(--border-strong)] whitespace-nowrap"
                         >
-                            <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                            <Calendar className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0" />
                             {MONTH_NAMES_VI[month - 1]}/{year}
-                            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform flex-shrink-0 ${monthPickerOpen ? "rotate-180" : ""}`} />
+                            <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-faint)] transition-transform flex-shrink-0 ${monthPickerOpen ? "rotate-180" : ""}`} />
                         </button>
 
                         {monthPickerOpen && typeof document !== "undefined" && createPortal(
@@ -369,16 +369,16 @@ export default function FundManagementPage() {
                                 <div className="fixed inset-0 z-[9998]" onClick={() => setMonthPickerOpen(false)} />
                                 <div
                                     style={{ position: "fixed", top: monthPickerPos.top, right: monthPickerPos.right }}
-                                    className="z-[9999] w-56 bg-white border border-gray-100 rounded-xl shadow-lg p-3"
+                                    className="z-[9999] w-56 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg p-3"
                                 >
                                     <div className="flex items-center justify-between mb-2">
-                                        <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100">
+                                        <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-lg text-[var(--text-faint)] hover:bg-[var(--surface-hover)]">
                                             <ChevronLeft className="w-4 h-4" />
                                         </button>
-                                        <span className="text-sm font-semibold text-gray-700">
+                                        <span className="text-sm font-semibold text-[var(--text)]">
                                             {MONTH_NAMES_VI[month - 1]}/{year}
                                         </span>
-                                        <button onClick={() => changeMonth(1)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100">
+                                        <button onClick={() => changeMonth(1)} className="p-1.5 rounded-lg text-[var(--text-faint)] hover:bg-[var(--surface-hover)]">
                                             <ChevronRight className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -387,7 +387,7 @@ export default function FundManagementPage() {
                                             <button
                                                 key={m}
                                                 onClick={() => { setMonth(idx + 1); setPage(1); setMonthPickerOpen(false); }}
-                                                className={`py-1.5 rounded-lg text-[11px] font-semibold ${month === idx + 1 ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-500 hover:bg-gray-100"}`}
+                                                className={`py-1.5 rounded-lg text-[11px] font-semibold ${month === idx + 1 ? "bg-blue-600 text-white" : "bg-[var(--surface-muted)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"}`}
                                             >
                                                 {idx + 1}
                                             </button>
@@ -401,7 +401,7 @@ export default function FundManagementPage() {
 
                     <button
                         onClick={openFilterSheet}
-                        className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-600 hover:border-gray-300 whitespace-nowrap flex-shrink-0"
+                        className="flex items-center gap-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-xl px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-[var(--text-muted)] hover:border-[var(--border-strong)] whitespace-nowrap flex-shrink-0"
                     >
                         <SlidersHorizontal className="w-3.5 h-3.5" /> Bộ lọc
                         {(typeFilter || categoryFilter || statusFilter) && (
@@ -422,25 +422,25 @@ export default function FundManagementPage() {
 
             <div className="grid grid-cols-2 lg:grid-cols-[2fr_1fr_1fr] gap-3 items-stretch">
                 {/* Balance card */}
-                <div className="col-span-2 lg:col-span-1 bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-2xl p-5 flex items-center justify-between gap-4 overflow-hidden relative">
+                <div className="col-span-2 lg:col-span-1 bg-gradient-to-br from-blue-50 to-white border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-2xl p-5 flex items-center justify-between gap-4 overflow-hidden relative">
                     <Sparkles className="w-4 h-4 text-blue-300 absolute top-4 right-28 hidden sm:block" />
                     <Sparkles className="w-3 h-3 text-blue-200 absolute top-9 right-40 hidden sm:block" />
 
                     <div>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1">
+                        <div className="flex items-center gap-1.5 text-xs text-[var(--text-faint)] mb-1">
                             Số dư hiện tại
-                            <button onClick={() => setShowBalance((v) => !v)} className="text-gray-300 hover:text-gray-500">
+                            <button onClick={() => setShowBalance((v) => !v)} className="text-[var(--text-faint)] hover:text-[var(--text-muted)]">
                                 {showBalance ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                             </button>
                         </div>
                         {loadingSummary ? (
-                            <div className="h-8 w-40 bg-blue-100/60 rounded-lg animate-pulse" />
+                            <div className="h-8 w-40 bg-[var(--primary-soft)] rounded-lg animate-pulse" />
                         ) : (
-                            <p className="text-2xl sm:text-3xl font-black text-blue-700">
+                            <p className="text-2xl sm:text-3xl font-black text-[var(--primary)]">
                                 {showBalance ? fmt(summary?.balance ?? 0) : "••••••••"}
                             </p>
                         )}
-                        <p className="text-[11px] text-gray-400 mt-1">
+                        <p className="text-[11px] text-[var(--text-faint)] mt-1">
                             {summary?.updated_at
                                 ? `Cập nhật lần cuối: ${new Date(summary.updated_at).toLocaleString("vi-VN")}`
                                 : ""}
@@ -450,7 +450,7 @@ export default function FundManagementPage() {
                     <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
                         <Wallet className="w-8 h-8 sm:w-9 sm:h-9 text-white" />
                         <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center">
-                            <Coins className="w-3.5 h-3.5 text-amber-800" />
+                            <Coins className="w-3.5 h-3.5 text-[var(--warning)]" />
                         </div>
                     </div>
                 </div>
@@ -459,7 +459,7 @@ export default function FundManagementPage() {
                     onClick={() => setShowAddModal(true)}
                     className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-4 py-3.5 transition-colors text-left"
                 >
-                    <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-[color-mix(in_srgb,var(--surface)_15%,transparent)] flex items-center justify-center flex-shrink-0">
                         <Plus className="w-4.5 h-4.5" />
                     </div>
                     <div className="min-w-0">
@@ -472,7 +472,7 @@ export default function FundManagementPage() {
                     onClick={() => setShowApproveSheet(true)}
                     className="relative flex items-center gap-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl px-4 py-3.5 transition-colors text-left"
                 >
-                    <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-[color-mix(in_srgb,var(--surface)_15%,transparent)] flex items-center justify-center flex-shrink-0">
                         <HandCoins className="w-4.5 h-4.5" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -486,40 +486,40 @@ export default function FundManagementPage() {
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white border border-gray-100 rounded-2xl p-3.5 space-y-1.5 shadow-sm">
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3.5 space-y-1.5 shadow-sm">
                     <div className="flex items-center gap-1.5">
-                        <div className="w-6 h-6 rounded-full bg-purple-50 flex items-center justify-center">
-                            <Hourglass className="w-3.5 h-3.5 text-purple-500" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--purple-soft)] flex items-center justify-center">
+                            <Hourglass className="w-3.5 h-3.5 text-[var(--purple)]" />
                         </div>
-                        <span className="text-[11px] font-medium text-gray-400">Chờ duyệt</span>
+                        <span className="text-[11px] font-medium text-[var(--text-faint)]">Chờ duyệt</span>
                     </div>
-                    <p className="text-lg font-bold text-gray-900">{pendingCount}</p>
-                    <p className="text-[10px] text-gray-400">Yêu cầu</p>
+                    <p className="text-lg font-bold text-[var(--text)]">{pendingCount}</p>
+                    <p className="text-[10px] text-[var(--text-faint)]">Yêu cầu</p>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl p-3.5 space-y-1.5 shadow-sm">
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3.5 space-y-1.5 shadow-sm">
                     <div className="flex items-center gap-1.5">
-                        <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center">
-                            <ArrowUp className="w-3.5 h-3.5 text-emerald-500" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--success-soft)] flex items-center justify-center">
+                            <ArrowUp className="w-3.5 h-3.5 text-[var(--success)]" />
                         </div>
-                        <span className="text-[11px] font-medium text-gray-400">Thu hôm nay</span>
+                        <span className="text-[11px] font-medium text-[var(--text-faint)]">Thu hôm nay</span>
                     </div>
-                    <p className="text-lg font-bold text-emerald-600">+{fmt(summary?.thu_hom_nay ?? 0)}</p>
+                    <p className="text-lg font-bold text-[var(--success)]">+{fmt(summary?.thu_hom_nay ?? 0)}</p>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl p-3.5 space-y-1.5 shadow-sm">
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3.5 space-y-1.5 shadow-sm">
                     <div className="flex items-center gap-1.5">
-                        <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center">
-                            <ArrowDown className="w-3.5 h-3.5 text-red-400" />
+                        <div className="w-6 h-6 rounded-full bg-[var(--danger-soft)] flex items-center justify-center">
+                            <ArrowDown className="w-3.5 h-3.5 text-[var(--danger)]" />
                         </div>
-                        <span className="text-[11px] font-medium text-gray-400">Chi hôm nay</span>
+                        <span className="text-[11px] font-medium text-[var(--text-faint)]">Chi hôm nay</span>
                     </div>
-                    <p className="text-lg font-bold text-red-500">-{fmt(summary?.chi_hom_nay ?? 0)}</p>
+                    <p className="text-lg font-bold text-[var(--danger)]">-{fmt(summary?.chi_hom_nay ?? 0)}</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_270px] gap-4 items-start">
-                <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                    <div className="flex items-center justify-between gap-3 px-4 py-3.5 border-b border-gray-100">
-                        <p className="text-sm font-bold text-gray-900 flex-shrink-0">Lịch sử giao dịch</p>
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
+                    <div className="flex items-center justify-between gap-3 px-4 py-3.5 border-b border-[var(--border)]">
+                        <p className="text-sm font-bold text-[var(--text)] flex-shrink-0">Lịch sử giao dịch</p>
 
 
                         <div className="hidden lg:flex items-center gap-2">
@@ -534,15 +534,15 @@ export default function FundManagementPage() {
                                     { value: "reversed", label: "Đã huỷ" },
                                 ]}
                                 placeholder="Trạng thái"
-                                triggerClassName="flex items-center justify-between gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-gray-600 hover:border-gray-300 w-36"
+                                triggerClassName="flex items-center justify-between gap-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs font-medium text-[var(--text-muted)] hover:border-[var(--border-strong)] w-36"
                             />
                             <div className="relative w-40 sm:w-56">
-                                <Search className="w-3.5 h-3.5 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <Search className="w-3.5 h-3.5 text-[var(--text-faint)] absolute left-3 top-1/2 -translate-y-1/2" />
                                 <input
                                     value={search}
                                     onChange={(e) => handleSearchChange(e.target.value)}
                                     placeholder="Tìm kiếm giao dịch..."
-                                    className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-gray-200 focus:outline-none focus:border-blue-400"
+                                    className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-[var(--border)] focus:outline-none focus:border-[var(--primary)]"
                                 />
                             </div>
                         </div>
@@ -551,11 +551,11 @@ export default function FundManagementPage() {
                     {loadingTxs ? (
                         <div className="p-4 space-y-2">
                             {[...Array(5)].map((_, i) => (
-                                <div key={i} className="h-14 bg-gray-50 rounded-xl animate-pulse" />
+                                <div key={i} className="h-14 bg-[var(--surface-muted)] rounded-xl animate-pulse" />
                             ))}
                         </div>
                     ) : txs.length === 0 ? (
-                        <p className="px-4 py-14 text-sm text-gray-400 text-center">
+                        <p className="px-4 py-14 text-sm text-[var(--text-faint)] text-center">
                             Không có giao dịch nào trong tháng này
                         </p>
                     ) : (
@@ -563,7 +563,7 @@ export default function FundManagementPage() {
                             <div className="hidden xl:block overflow-x-auto">
                                 <table className="w-full min-w-[880px] text-sm table-fixed">
                                     <thead>
-                                        <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
+                                        <tr className="text-left text-xs text-[var(--text-faint)] border-b border-[var(--border)]">
                                             <th className="px-2 py-2.5 font-medium whitespace-nowrap w-10 text-center">#</th>
                                             <th className="px-3 py-2.5 font-medium whitespace-nowrap w-56">Nội dung</th>
                                             <th className="px-3 py-2.5 font-medium whitespace-nowrap w-28 text-center">Thời gian</th>
@@ -579,37 +579,37 @@ export default function FundManagementPage() {
                                         {txs.map((tx, idx) => {
                                             const st = STATUS_CFG[tx.status] ?? STATUS_CFG.approved;
                                             return (
-                                                <tr key={tx.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
-                                                    <td className="px-4 py-3 text-gray-400 text-center">{(page - 1) * 10 + idx + 1}</td>
+                                                <tr key={tx.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-hover)]">
+                                                    <td className="px-4 py-3 text-[var(--text-faint)] text-center">{(page - 1) * 10 + idx + 1}</td>
                                                     <td className="px-4 py-3">
                                                         <div className="flex items-center gap-2.5">
                                                             <CategoryIcon category={tx.category} type={tx.type} />
                                                             <div className="min-w-0">
-                                                                <p className="font-medium text-gray-900 truncate max-w-[300px]">{tx.title}</p>
-                                                                <p className="text-xs text-gray-400 truncate max-w-[170px]">
+                                                                <p className="font-medium text-[var(--text)] truncate max-w-[300px]">{tx.title}</p>
+                                                                <p className="text-xs text-[var(--text-faint)] truncate max-w-[170px]">
                                                                     {CATEGORY_LABELS[tx.category] ?? tx.category}
                                                                 </p>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap text-xs text-center">
+                                                    <td className="px-3 py-3 text-[var(--text-muted)] whitespace-nowrap text-xs text-center">
                                                         {new Date(tx.created_at).toLocaleString("vi-VN", {
                                                             day: "2-digit", month: "2-digit", year: "numeric",
                                                             hour: "2-digit", minute: "2-digit",
                                                         })}
                                                     </td>
                                                     <td className="px-4 py-3 text-center">
-                                                        <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${tx.type === "thu" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"}`}>
+                                                        <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${tx.type === "thu" ? "bg-[var(--success-soft)] text-[var(--success)]" : "bg-[var(--danger-soft)] text-[var(--danger)]"}`}>
                                                             {tx.type === "thu" ? "Thu" : "Chi"}
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3 text-center">
                                                         <FundSourceBadge tx={tx} />
                                                     </td>
-                                                    <td className={`px-4 py-3 text-center font-bold whitespace-nowrap ${tx.type === "thu" ? "text-emerald-600" : "text-red-500"}`}>
+                                                    <td className={`px-4 py-3 text-center font-bold whitespace-nowrap ${tx.type === "thu" ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
                                                         {tx.type === "thu" ? "+" : "-"}{fmt(tx.amount)}
                                                     </td>
-                                                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-center">
+                                                    <td className="px-4 py-3 text-[var(--text-muted)] whitespace-nowrap text-center">
                                                         {tx.created_by_user?.full_name ?? "—"}
                                                     </td>
                                                     <td className="px-4 py-3 whitespace-nowrap text-center">
@@ -619,14 +619,14 @@ export default function FundManagementPage() {
                                                     </td>
                                                     <td className="px-4 py-3 text-center relative">
                                                         {isAwaitingMemberChoice(tx) ? (
-                                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-amber-600 bg-amber-50">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-[var(--warning)] bg-[var(--warning-soft)]">
                                                                 Chờ TV thanh toán
                                                             </span>
                                                         ) : tx.status === "approved" ? (
                                                             <button
                                                                 onClick={() => handleCancel(tx)}
                                                                 disabled={actingId === tx.id}
-                                                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50"
+                                                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)] disabled:opacity-50"
                                                             >
                                                                 {actingId === tx.id ? (
                                                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -640,7 +640,7 @@ export default function FundManagementPage() {
                                                                 <button
                                                                     onClick={(e) => openMenuAt(e, tx.id)}
                                                                     disabled={actingId === tx.id}
-                                                                    className="p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100"
+                                                                    className="p-1.5 rounded-lg text-[var(--text-faint)] hover:text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                                                                 >
                                                                     {actingId === tx.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoreHorizontal className="w-4 h-4" />}
                                                                 </button>
@@ -649,20 +649,20 @@ export default function FundManagementPage() {
                                                                         <div className="fixed inset-0 z-[9998]" onClick={() => setOpenMenuId(null)} />
                                                                         <div
                                                                             style={{ position: "fixed", top: menuPos.top, left: menuPos.left }}
-                                                                            className="w-40 bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-[9999]"
+                                                                            className="w-40 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg py-1 z-[9999]"
                                                                         >
                                                                             {tx.status === "pending" && (
                                                                                 <>
-                                                                                    <button onClick={() => handleApprove(tx.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50">
+                                                                                    <button onClick={() => handleApprove(tx.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--success)] hover:bg-[var(--success-soft)]">
                                                                                         <Check className="w-3.5 h-3.5" /> Duyệt
                                                                                     </button>
-                                                                                    <button onClick={() => handleReject(tx.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50">
+                                                                                    <button onClick={() => handleReject(tx.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--danger)] hover:bg-[var(--danger-soft)]">
                                                                                         <XCircle className="w-3.5 h-3.5" /> Từ chối
                                                                                     </button>
                                                                                 </>
                                                                             )}
                                                                             {tx.status !== "approved" && (
-                                                                                <button onClick={() => handleDelete(tx)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50">
+                                                                                <button onClick={() => handleDelete(tx)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--text-muted)] hover:bg-[var(--surface-hover)]">
                                                                                     <Trash2 className="w-3.5 h-3.5" /> Xóa
                                                                                 </button>
                                                                             )}
@@ -689,12 +689,12 @@ export default function FundManagementPage() {
                                     return (
                                         <div
                                             key={tx.id}
-                                            className="rounded-2xl border border-gray-100 bg-white shadow-md shadow-gray-200/60 px-4 py-3.5 flex items-center gap-3"
+                                            className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-md shadow-gray-200/60 px-4 py-3.5 flex items-center gap-3"
                                         >
                                             <CategoryIcon category={tx.category} type={tx.type} />
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-gray-900 line-clamp-2 leading-snug">{tx.title}</p>
-                                                <p className="text-xs text-gray-400 truncate mt-0.5">
+                                                <p className="font-medium text-[var(--text)] line-clamp-2 leading-snug">{tx.title}</p>
+                                                <p className="text-xs text-[var(--text-faint)] truncate mt-0.5">
                                                     {new Date(tx.created_at).toLocaleDateString("vi-VN")} · {CATEGORY_LABELS[tx.category] ?? tx.category}
                                                 </p>
                                                 <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
@@ -707,20 +707,20 @@ export default function FundManagementPage() {
                                                 </div>
                                             </div>
                                             <div className="text-right flex-shrink-0">
-                                                <p className={`text-sm font-bold whitespace-nowrap ${tx.type === "thu" ? "text-emerald-600" : "text-red-500"}`}>
+                                                <p className={`text-sm font-bold whitespace-nowrap ${tx.type === "thu" ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
                                                     {tx.type === "thu" ? "+" : "-"}{fmt(tx.amount)}
                                                 </p>
                                             </div>
 
                                             {isAwaitingMemberChoice(tx) ? (
-                                                <span className="flex-shrink-0 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg whitespace-nowrap">
+                                                <span className="flex-shrink-0 text-[10px] font-semibold text-[var(--warning)] bg-[var(--warning-soft)] px-2 py-1 rounded-lg whitespace-nowrap">
                                                     Chờ TV
                                                 </span>
                                             ) : isApproved ? (
                                                 <button
                                                     onClick={() => handleCancel(tx)}
                                                     disabled={actingId === tx.id}
-                                                    className="flex-shrink-0 p-1.5 rounded-lg text-red-500 hover:bg-red-50 disabled:opacity-50"
+                                                    className="flex-shrink-0 p-1.5 rounded-lg text-[var(--danger)] hover:bg-[var(--danger-soft)] disabled:opacity-50"
                                                     title="Huỷ giao dịch"
                                                 >
                                                     {actingId === tx.id ? (
@@ -735,7 +735,7 @@ export default function FundManagementPage() {
                                                         <button
                                                             onClick={(e) => openMenuAt(e, tx.id)}
                                                             disabled={actingId === tx.id}
-                                                            className="p-1.5 rounded-lg text-gray-300"
+                                                            className="p-1.5 rounded-lg text-[var(--text-faint)]"
                                                         >
                                                             {actingId === tx.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoreHorizontal className="w-4 h-4" />}
                                                         </button>
@@ -744,20 +744,20 @@ export default function FundManagementPage() {
                                                                 <div className="fixed inset-0 z-[9998]" onClick={() => setOpenMenuId(null)} />
                                                                 <div
                                                                     style={{ position: "fixed", top: menuPos.top, left: menuPos.left }}
-                                                                    className="w-36 bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-[9999]"
+                                                                    className="w-36 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg py-1 z-[9999]"
                                                                 >
                                                                     {isPending && (
                                                                         <>
-                                                                            <button onClick={() => handleApprove(tx.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600">
+                                                                            <button onClick={() => handleApprove(tx.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--success)]">
                                                                                 <Check className="w-3.5 h-3.5" /> Duyệt
                                                                             </button>
-                                                                            <button onClick={() => handleReject(tx.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500">
+                                                                            <button onClick={() => handleReject(tx.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--danger)]">
                                                                                 <XCircle className="w-3.5 h-3.5" /> Từ chối
                                                                             </button>
                                                                         </>
                                                                     )}
                                                                     {canDelete && (
-                                                                        <button onClick={() => handleDelete(tx)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-500">
+                                                                        <button onClick={() => handleDelete(tx)} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--text-muted)]">
                                                                             <Trash2 className="w-3.5 h-3.5" /> Xóa
                                                                         </button>
                                                                     )}
@@ -776,19 +776,19 @@ export default function FundManagementPage() {
                     )}
 
                     {meta.total_pages > 1 && (
-                        <div className="flex items-center justify-center gap-2 py-3 border-t border-gray-100">
+                        <div className="flex items-center justify-center gap-2 py-3 border-t border-[var(--border)]">
                             <button
                                 disabled={page <= 1}
                                 onClick={() => setPage((p) => p - 1)}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 disabled:opacity-40"
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--surface-muted)] disabled:opacity-40"
                             >
                                 Trước
                             </button>
-                            <span className="text-xs text-gray-400">{meta.page}/{meta.total_pages}</span>
+                            <span className="text-xs text-[var(--text-faint)]">{meta.page}/{meta.total_pages}</span>
                             <button
                                 disabled={page >= meta.total_pages}
                                 onClick={() => setPage((p) => p + 1)}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 disabled:opacity-40"
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--surface-muted)] disabled:opacity-40"
                             >
                                 Sau
                             </button>
@@ -797,37 +797,37 @@ export default function FundManagementPage() {
                 </div>
 
                 <div className="hidden xl:block space-y-4">
-                    <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3 shadow-sm">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Tổng quan trong tháng</p>
+                    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 space-y-3 shadow-sm">
+                        <p className="text-xs font-bold text-[var(--text-faint)] uppercase tracking-wide">Tổng quan trong tháng</p>
                         {loadingSummary ? (
-                            <div className="h-24 bg-gray-50 rounded-xl animate-pulse" />
+                            <div className="h-24 bg-[var(--surface-muted)] rounded-xl animate-pulse" />
                         ) : (
                             <div className="space-y-2.5">
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="flex items-center gap-1.5 text-gray-500">
-                                        <TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> Tổng thu
+                                    <span className="flex items-center gap-1.5 text-[var(--text-muted)]">
+                                        <TrendingUp className="w-3.5 h-3.5 text-[var(--success)]" /> Tổng thu
                                     </span>
-                                    <span className="font-bold text-emerald-600">
+                                    <span className="font-bold text-[var(--success)]">
                                         +{fmt(summary?.month_overview?.total_thu ?? 0)}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="flex items-center gap-1.5 text-gray-500">
-                                        <TrendingDown className="w-3.5 h-3.5 text-red-400" /> Tổng chi
+                                    <span className="flex items-center gap-1.5 text-[var(--text-muted)]">
+                                        <TrendingDown className="w-3.5 h-3.5 text-[var(--danger)]" /> Tổng chi
                                     </span>
-                                    <span className="font-bold text-red-500">
+                                    <span className="font-bold text-[var(--danger)]">
                                         -{fmt(summary?.month_overview?.total_chi ?? 0)}
                                     </span>
                                 </div>
-                                <div className="flex items-center justify-between text-sm pt-2 border-t border-gray-50">
-                                    <span className="text-gray-500">Số dư đầu tháng</span>
-                                    <span className="font-semibold text-gray-700">
+                                <div className="flex items-center justify-between text-sm pt-2 border-t border-[var(--border)]">
+                                    <span className="text-[var(--text-muted)]">Số dư đầu tháng</span>
+                                    <span className="font-semibold text-[var(--text)]">
                                         {fmt(summary?.month_overview?.start_balance ?? 0)}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-500">Số dư cuối tháng</span>
-                                    <span className="font-semibold text-gray-700">
+                                    <span className="text-[var(--text-muted)]">Số dư cuối tháng</span>
+                                    <span className="font-semibold text-[var(--text)]">
                                         {fmt(summary?.month_overview?.end_balance ?? 0)}
                                     </span>
                                 </div>
@@ -835,12 +835,12 @@ export default function FundManagementPage() {
                         )}
                     </div>
 
-                    <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3 shadow-sm">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Danh mục thường dùng</p>
+                    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 space-y-3 shadow-sm">
+                        <p className="text-xs font-bold text-[var(--text-faint)] uppercase tracking-wide">Danh mục thường dùng</p>
                         {loadingSummary ? (
-                            <div className="h-32 bg-gray-50 rounded-xl animate-pulse" />
+                            <div className="h-32 bg-[var(--surface-muted)] rounded-xl animate-pulse" />
                         ) : (summary?.category_breakdown ?? []).length === 0 ? (
-                            <p className="text-xs text-gray-400 text-center py-4">Chưa có dữ liệu</p>
+                            <p className="text-xs text-[var(--text-faint)] text-center py-4">Chưa có dữ liệu</p>
                         ) : (
                             <div className="space-y-2">
                                 {summary.category_breakdown.map((c: any) => {
@@ -848,11 +848,11 @@ export default function FundManagementPage() {
                                     const positive = c.amount >= 0;
                                     return (
                                         <div key={c.category} className="flex items-center gap-2.5">
-                                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${positive ? "bg-emerald-50" : "bg-red-50"}`}>
-                                                <Icon className={`w-3.5 h-3.5 ${positive ? "text-emerald-500" : "text-red-400"}`} />
+                                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${positive ? "bg-[var(--success-soft)]" : "bg-[var(--danger-soft)]"}`}>
+                                                <Icon className={`w-3.5 h-3.5 ${positive ? "text-[var(--success)]" : "text-[var(--danger)]"}`} />
                                             </div>
-                                            <span className="text-xs text-gray-500 flex-1">{c.label}</span>
-                                            <span className={`text-xs font-bold ${positive ? "text-emerald-600" : "text-red-500"}`}>
+                                            <span className="text-xs text-[var(--text-muted)] flex-1">{c.label}</span>
+                                            <span className={`text-xs font-bold ${positive ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
                                                 {positive ? "+" : ""}{fmt(c.amount)}
                                             </span>
                                         </div>
@@ -861,7 +861,7 @@ export default function FundManagementPage() {
                             </div>
                         )}
 
-                        <a href="#" className="flex items-center justify-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 pt-2 border-t border-gray-50">
+                        <a href="#" className="flex items-center justify-center gap-1 text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary)] pt-2 border-t border-[var(--border)]">
                             Xem báo cáo chi tiết <ChevronRight className="w-3.5 h-3.5" />
                         </a>
                     </div>
@@ -871,13 +871,13 @@ export default function FundManagementPage() {
                 <div
                     className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center"
                     style={{
-                        background: filterSheetVisible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+                        background: filterSheetVisible ? "var(--overlay)" : "rgba(0,0,0,0)",
                         transition: "background .3s",
                     }}
                     onClick={(e) => e.target === e.currentTarget && closeFilterSheet()}
                 >
                     <div
-                        className="w-full sm:max-w-sm bg-white rounded-t-2xl sm:rounded-2xl"
+                        className="w-full sm:max-w-sm bg-[var(--surface)] rounded-t-2xl sm:rounded-2xl"
                         style={{
                             transform: filterSheetVisible ? "translateY(0)" : "translateY(100%)",
                             transition: "transform .3s cubic-bezier(0.32,0.72,0,1)",
@@ -885,16 +885,16 @@ export default function FundManagementPage() {
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                            <span className="text-sm font-semibold text-gray-900">Bộ lọc</span>
-                            <button onClick={closeFilterSheet} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
-                                <X className="w-3.5 h-3.5 text-gray-500" />
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+                            <span className="text-sm font-semibold text-[var(--text)]">Bộ lọc</span>
+                            <button onClick={closeFilterSheet} className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center">
+                                <X className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                             </button>
                         </div>
 
                         <div className="p-4 space-y-4">
                             <div>
-                                <p className="text-xs font-semibold text-gray-500 mb-2">Loại giao dịch</p>
+                                <p className="text-xs font-semibold text-[var(--text-muted)] mb-2">Loại giao dịch</p>
                                 <div className="grid grid-cols-3 gap-2">
                                     {[
                                         { val: "", label: "Tất cả" },
@@ -904,7 +904,7 @@ export default function FundManagementPage() {
                                         <button
                                             key={o.val || "all"}
                                             onClick={() => { setTypeFilter(o.val); setPage(1); }}
-                                            className={`py-2 rounded-lg text-xs font-semibold ${typeFilter === o.val ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500"}`}
+                                            className={`py-2 rounded-lg text-xs font-semibold ${typeFilter === o.val ? "bg-blue-600 text-white" : "bg-[var(--surface-muted)] text-[var(--text-muted)]"}`}
                                         >
                                             {o.label}
                                         </button>
@@ -913,13 +913,13 @@ export default function FundManagementPage() {
                             </div>
 
                             <div>
-                                <p className="text-xs font-semibold text-gray-500 mb-2">Danh mục</p>
+                                <p className="text-xs font-semibold text-[var(--text-muted)] mb-2">Danh mục</p>
                                 <div className="grid grid-cols-2 gap-2">
                                     {[{ val: "", label: "Tất cả" }, ...Object.entries(CATEGORY_LABELS).map(([val, label]) => ({ val, label }))].map((o) => (
                                         <button
                                             key={o.val || "all_cat"}
                                             onClick={() => { setCategoryFilter(o.val); setPage(1); }}
-                                            className={`py-2 rounded-lg text-xs font-semibold ${categoryFilter === o.val ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-500"}`}
+                                            className={`py-2 rounded-lg text-xs font-semibold ${categoryFilter === o.val ? "bg-gray-800 text-white" : "bg-[var(--surface-muted)] text-[var(--text-muted)]"}`}
                                         >
                                             {o.label}
                                         </button>
@@ -928,7 +928,7 @@ export default function FundManagementPage() {
                             </div>
 
                             <div>
-                                <p className="text-xs font-semibold text-gray-500 mb-2">Trạng thái</p>
+                                <p className="text-xs font-semibold text-[var(--text-muted)] mb-2">Trạng thái</p>
                                 <div className="grid grid-cols-3 gap-2">
                                     {[
                                         { val: "", label: "Tất cả" },
@@ -940,7 +940,7 @@ export default function FundManagementPage() {
                                         <button
                                             key={o.val || "all_status"}
                                             onClick={() => { setStatusFilter(o.val); setPage(1); }}
-                                            className={`py-2 rounded-lg text-xs font-semibold ${statusFilter === o.val ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500"}`}
+                                            className={`py-2 rounded-lg text-xs font-semibold ${statusFilter === o.val ? "bg-blue-600 text-white" : "bg-[var(--surface-muted)] text-[var(--text-muted)]"}`}
                                         >
                                             {o.label}
                                         </button>
@@ -950,7 +950,7 @@ export default function FundManagementPage() {
                         </div>
 
                         <div className="px-4 pb-4 pt-1">
-                            <button onClick={closeFilterSheet} className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700">
+                            <button onClick={closeFilterSheet} className="w-full py-2.5 rounded-xl bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)]">
                                 Xong
                             </button>
                         </div>

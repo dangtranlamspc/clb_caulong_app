@@ -336,17 +336,17 @@ export default function AdminAddShirtOrderModal({
                         <button
                             type="button"
                             onClick={backToBuild}
-                            className="p-1.5 -ml-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+                            className="p-1.5 -ml-1 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                         >
                             <ArrowLeft className="w-4 h-4" />
                         </button>
                     )}
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <UserPlus className="w-5 h-5 text-blue-600" />
+                        <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
+                            <UserPlus className="w-5 h-5 text-[var(--primary)]" />
                             {step === "build" ? "Thêm đăng ký" : "Chọn phương thức thanh toán"}
                         </h2>
-                        <p className="text-sm text-gray-500 mt-0.5">
+                        <p className="text-sm text-[var(--text-muted)] mt-0.5">
                             {activity?.emoji} {activity?.title}
                         </p>
                     </div>
@@ -362,11 +362,11 @@ export default function AdminAddShirtOrderModal({
                         className={`space-y-5 min-w-0 transition-all duration-300 ${!cartPanelMounted ? "max-w-2xl mx-auto w-full" : ""
                             }`}
                     >
-                        <div className="grid grid-cols-2 gap-2 bg-gray-100 rounded-xl p-1">
+                        <div className="grid grid-cols-2 gap-2 bg-[var(--surface-muted)] rounded-xl p-1">
                             <button
                                 type="button"
                                 onClick={() => setMode("member")}
-                                className={`py-2 rounded-lg text-sm font-semibold transition-colors ${mode === "member" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+                                className={`py-2 rounded-lg text-sm font-semibold transition-colors ${mode === "member" ? "bg-[var(--surface)] text-[var(--primary)] shadow-sm" : "text-[var(--text-muted)]"
                                     }`}
                             >
                                 Thành viên CLB
@@ -374,7 +374,7 @@ export default function AdminAddShirtOrderModal({
                             <button
                                 type="button"
                                 onClick={() => setMode("guest")}
-                                className={`py-2 rounded-lg text-sm font-semibold transition-colors ${mode === "guest" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+                                className={`py-2 rounded-lg text-sm font-semibold transition-colors ${mode === "guest" ? "bg-[var(--surface)] text-[var(--primary)] shadow-sm" : "text-[var(--text-muted)]"
                                     }`}
                             >
                                 Khách
@@ -383,13 +383,13 @@ export default function AdminAddShirtOrderModal({
 
                         {mode === "member" ? (
                             <div className="space-y-2">
-                                <label className="block text-xs font-semibold text-gray-500">
+                                <label className="block text-xs font-semibold text-[var(--text-muted)]">
                                     Tìm thành viên
                                 </label>
                                 {selectedMember ? (
-                                    <div className="flex items-center justify-between gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5">
+                                    <div className="flex items-center justify-between gap-2 rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] px-3 py-2.5">
                                         <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-semibold text-blue-600 overflow-hidden flex-shrink-0">
+                                            <div className="w-8 h-8 rounded-full bg-[var(--primary-soft)] flex items-center justify-center font-semibold text-[var(--primary)] overflow-hidden flex-shrink-0">
                                                 {selectedMember.avatar_url ? (
                                                     <img
                                                         src={selectedMember.avatar_url}
@@ -400,11 +400,11 @@ export default function AdminAddShirtOrderModal({
                                                 )}
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                <p className="text-sm font-medium text-[var(--text)] truncate">
                                                     {selectedMember.full_name}
                                                 </p>
                                                 {selectedMember.phone && (
-                                                    <p className="text-xs text-gray-500">{selectedMember.phone}</p>
+                                                    <p className="text-xs text-[var(--text-muted)]">{selectedMember.phone}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -414,14 +414,14 @@ export default function AdminAddShirtOrderModal({
                                                 setSelectedMember(null);
                                                 setQuery("");
                                             }}
-                                            className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-500 flex-shrink-0"
+                                            className="p-1.5 rounded-lg hover:bg-[var(--primary-soft)] text-[var(--primary)] flex-shrink-0"
                                         >
                                             <X className="w-4 h-4" />
                                         </button>
                                     </div>
                                 ) : (
                                     <div className="relative">
-                                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                        <Search className="w-4 h-4 text-[var(--text-faint)] absolute left-3 top-1/2 -translate-y-1/2" />
                                         <input
                                             value={query}
                                             onChange={(e) => setQuery(e.target.value)}
@@ -429,9 +429,9 @@ export default function AdminAddShirtOrderModal({
                                             className="input-field pl-9"
                                         />
                                         {(searching || results.length > 0) && query && (
-                                            <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                                            <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
                                                 {searching ? (
-                                                    <div className="flex items-center justify-center py-4 text-gray-400 text-sm gap-2">
+                                                    <div className="flex items-center justify-center py-4 text-[var(--text-faint)] text-sm gap-2">
                                                         <Loader2 className="w-4 h-4 animate-spin" /> Đang tìm...
                                                     </div>
                                                 ) : (
@@ -443,9 +443,9 @@ export default function AdminAddShirtOrderModal({
                                                                 setSelectedMember(m);
                                                                 setResults([]);
                                                             }}
-                                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-gray-50 text-left"
+                                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-[var(--surface-hover)] text-left"
                                                         >
-                                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-semibold text-gray-600 overflow-hidden flex-shrink-0">
+                                                            <div className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center font-semibold text-[var(--text-muted)] overflow-hidden flex-shrink-0">
                                                                 {m.avatar_url ? (
                                                                     <img
                                                                         src={m.avatar_url}
@@ -456,11 +456,11 @@ export default function AdminAddShirtOrderModal({
                                                                 )}
                                                             </div>
                                                             <div className="min-w-0">
-                                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                                <p className="text-sm font-medium text-[var(--text)] truncate">
                                                                     {m.full_name}
                                                                 </p>
                                                                 {m.phone && (
-                                                                    <p className="text-xs text-gray-400">{m.phone}</p>
+                                                                    <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>
                                                                 )}
                                                             </div>
                                                         </button>
@@ -474,7 +474,7 @@ export default function AdminAddShirtOrderModal({
                         ) : (
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                                    <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
                                         Họ tên khách
                                     </label>
                                     <input
@@ -485,7 +485,7 @@ export default function AdminAddShirtOrderModal({
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                                    <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
                                         SĐT (tuỳ chọn)
                                     </label>
                                     <input
@@ -498,11 +498,11 @@ export default function AdminAddShirtOrderModal({
                             </div>
                         )}
 
-                        <div className="h-px bg-gray-100" />
+                        <div className="h-px bg-[var(--surface-muted)]" />
 
                         {/* ── Loại áo ── */}
                         <div>
-                            <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                            <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                 Loại áo
                             </label>
                             <div className="flex flex-wrap gap-2">
@@ -513,7 +513,7 @@ export default function AdminAddShirtOrderModal({
                                         onClick={() => setShirtTypeId(t.id)}
                                         className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${shirtTypeId === t.id
                                             ? "bg-blue-600 text-white border-blue-600"
-                                            : "bg-white text-gray-600 border-gray-200"
+                                            : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]"
                                             }`}
                                     >
                                         {t.name}
@@ -525,15 +525,15 @@ export default function AdminAddShirtOrderModal({
                         {/* ── Màu sắc: ảnh lớn + swatch nhỏ gọn ── */}
                         {colors.length > 0 && (
                             <div>
-                                <label className="block text-xs font-semibold text-gray-500 mb-2">
-                                    Màu sắc {selectedColor && <span className="text-gray-400 font-normal">— {selectedColor.name}</span>}
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-2">
+                                    Màu sắc {selectedColor && <span className="text-[var(--text-faint)] font-normal">— {selectedColor.name}</span>}
                                 </label>
                                 <div className="flex flex-col sm:flex-row gap-4">
                                     <button
                                         type="button"
                                         onClick={openLightbox}
                                         disabled={!colorImage}
-                                        className="relative w-36 h-36 md:w-44 md:h-44 rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0 group disabled:cursor-default"
+                                        className="relative w-36 h-36 md:w-44 md:h-44 rounded-2xl overflow-hidden border border-[var(--border)] bg-[var(--surface-muted)] flex-shrink-0 group disabled:cursor-default"
                                     >
                                         {colorImage ? (
                                             <>
@@ -547,7 +547,7 @@ export default function AdminAddShirtOrderModal({
                                                 </div>
                                             </>
                                         ) : (
-                                            <span className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                                            <span className="w-full h-full flex items-center justify-center text-xs text-[var(--text-faint)]">
                                                 Không có ảnh
                                             </span>
                                         )}
@@ -575,11 +575,11 @@ export default function AdminAddShirtOrderModal({
                                                         }}
                                                     >
                                                         {!swatchColor && (
-                                                            <span className="text-[9px] font-semibold text-gray-400">?</span>
+                                                            <span className="text-[9px] font-semibold text-[var(--text-faint)]">?</span>
                                                         )}
                                                     </span>
                                                     <span
-                                                        className={`text-[10px] font-medium text-center leading-tight truncate w-full ${isActive ? "text-blue-600" : "text-gray-500"
+                                                        className={`text-[10px] font-medium text-center leading-tight truncate w-full ${isActive ? "text-[var(--primary)]" : "text-[var(--text-muted)]"
                                                             }`}
                                                     >
                                                         {c.name}
@@ -595,7 +595,7 @@ export default function AdminAddShirtOrderModal({
                         {/* ── Giới tính + Số lượng (số lượng ngắn lại) ── */}
                         <div className="flex gap-3">
                             <div className="flex-1">
-                                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                     Giới tính
                                 </label>
                                 <div className="flex gap-2">
@@ -608,7 +608,7 @@ export default function AdminAddShirtOrderModal({
                                                 ? g === "nu"
                                                     ? "bg-pink-600 text-white border-pink-600"
                                                     : "bg-blue-600 text-white border-blue-600"
-                                                : "bg-white text-gray-600 border-gray-200"
+                                                : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]"
                                                 }`}
                                         >
                                             {g === "nu" ? "Nữ" : "Nam"}
@@ -617,7 +617,7 @@ export default function AdminAddShirtOrderModal({
                                 </div>
                             </div>
                             <div className="w-20 flex-shrink-0">
-                                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                     SL
                                 </label>
                                 <input
@@ -638,11 +638,11 @@ export default function AdminAddShirtOrderModal({
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                            <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                 Size
                             </label>
                             {sizes.length === 0 ? (
-                                <p className="text-sm text-gray-400">
+                                <p className="text-sm text-[var(--text-faint)]">
                                     Chưa có size cho {gender === "nu" ? "Nữ" : "Nam"} ở loại áo này
                                 </p>
                             ) : (
@@ -654,7 +654,7 @@ export default function AdminAddShirtOrderModal({
                                             onClick={() => setSize(s)}
                                             className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${size === s
                                                 ? "bg-gray-900 text-white border-gray-900"
-                                                : "bg-white text-gray-600 border-gray-200"
+                                                : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]"
                                                 }`}
                                         >
                                             {s}
@@ -667,7 +667,7 @@ export default function AdminAddShirtOrderModal({
                         {/* ── Số áo + Tên in ── */}
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
                                     Số áo (tuỳ chọn)
                                 </label>
                                 <input
@@ -679,7 +679,7 @@ export default function AdminAddShirtOrderModal({
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">
                                     Tên in trên áo (tuỳ chọn)
                                 </label>
                                 <input
@@ -693,14 +693,14 @@ export default function AdminAddShirtOrderModal({
                         </div>
 
                         {price > 0 && (
-                            <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-2.5 text-sm">
-                                <span className="text-gray-500">Thành tiền sản phẩm này</span>
-                                <span className="font-semibold text-gray-900">{fmt(lineTotal)}</span>
+                            <div className="flex items-center justify-between bg-[var(--surface-muted)] rounded-xl px-4 py-2.5 text-sm">
+                                <span className="text-[var(--text-muted)]">Thành tiền sản phẩm này</span>
+                                <span className="font-semibold text-[var(--text)]">{fmt(lineTotal)}</span>
                             </div>
                         )}
 
                         {!hasPerson && (
-                            <p className="text-xs text-amber-600 text-center -mt-2">
+                            <p className="text-xs text-[var(--warning)] text-center -mt-2">
                                 Vui lòng {mode === "member" ? "chọn thành viên" : "nhập tên khách"} trước khi thêm sản phẩm
                             </p>
                         )}
@@ -718,7 +718,7 @@ export default function AdminAddShirtOrderModal({
                                 <button
                                     type="button"
                                     onClick={onCancel}
-                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                                    className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                                 >
                                     Huỷ
                                 </button>
@@ -728,20 +728,20 @@ export default function AdminAddShirtOrderModal({
 
                     {cartPanelMounted && (
                         <div
-                            className={`flex flex-col lg:border-l lg:border-gray-100 lg:pl-6 transition-all duration-300 ease-out ${cartPanelVisible
+                            className={`flex flex-col lg:border-l lg:border-[var(--border)] lg:pl-6 transition-all duration-300 ease-out ${cartPanelVisible
                                 ? "opacity-100 translate-y-0 lg:translate-x-0"
                                 : "opacity-0 translate-y-3 lg:translate-y-0 lg:translate-x-4"
                                 }`}
                         >
                             <div className="flex items-center gap-2 mb-3">
-                                <ShoppingCart className="w-4 h-4 text-gray-400" />
-                                <h3 className="text-sm font-bold text-gray-900">
+                                <ShoppingCart className="w-4 h-4 text-[var(--text-faint)]" />
+                                <h3 className="text-sm font-bold text-[var(--text)]">
                                     Đơn hàng ({cart.length})
                                 </h3>
                             </div>
 
                             {personLabel && (
-                                <div className="text-xs text-gray-500 mb-3 rounded-lg bg-blue-50 text-blue-700 px-3 py-2">
+                                <div className="text-xs text-[var(--text-muted)] mb-3 rounded-lg bg-[var(--primary-soft)] text-[var(--primary)] px-3 py-2">
                                     Đăng ký cho: <span className="font-semibold">{personLabel}</span>
                                 </div>
                             )}
@@ -754,29 +754,29 @@ export default function AdminAddShirtOrderModal({
                                         0,
                                     );
                                     return (
-                                        <div key={group.key} className="rounded-xl border border-gray-200 p-3 space-y-2">
+                                        <div key={group.key} className="rounded-xl border border-[var(--border)] p-3 space-y-2">
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="min-w-0">
-                                                    <p className="text-sm font-semibold text-gray-900 truncate">
+                                                    <p className="text-sm font-semibold text-[var(--text)] truncate">
                                                         {group.shirt_type_name}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">
+                                                    <p className="text-xs text-[var(--text-muted)]">
                                                         {group.color_name ? `${group.color_name} · ` : ""}
                                                         {group.gender === "nu" ? "Nữ" : "Nam"} · Size {group.size} · SL {groupQty}
                                                     </p>
                                                 </div>
-                                                <span className="text-sm font-semibold text-gray-900 flex-shrink-0">
+                                                <span className="text-sm font-semibold text-[var(--text)] flex-shrink-0">
                                                     {fmt(groupTotal)}
                                                 </span>
                                             </div>
 
-                                            <div className="space-y-1.5 pt-1.5 border-t border-gray-100">
+                                            <div className="space-y-1.5 pt-1.5 border-t border-[var(--border)]">
                                                 {group.items.map((item) => (
                                                     <div
                                                         key={item.cart_id}
                                                         className="flex items-center justify-between gap-2 text-xs"
                                                     >
-                                                        <span className="text-gray-500 truncate">
+                                                        <span className="text-[var(--text-muted)] truncate">
                                                             {item.jersey_number || item.print_name ? (
                                                                 <>
                                                                     {item.jersey_number && `Số ${item.jersey_number}`}
@@ -792,7 +792,7 @@ export default function AdminAddShirtOrderModal({
                                                         <button
                                                             type="button"
                                                             onClick={() => removeCartItem(item.cart_id)}
-                                                            className="p-1 -m-1 text-gray-300 hover:text-red-500 flex-shrink-0"
+                                                            className="p-1 -m-1 text-[var(--text-faint)] hover:text-[var(--danger)] flex-shrink-0"
                                                         >
                                                             <Trash2 className="w-3.5 h-3.5" />
                                                         </button>
@@ -804,16 +804,16 @@ export default function AdminAddShirtOrderModal({
                                 })}
                             </div>
 
-                            <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                            <div className="mt-4 pt-4 border-t border-[var(--border)] space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-gray-500">Tổng cộng</span>
-                                    <span className="text-xl font-bold text-gray-900">{fmt(cartTotal)}</span>
+                                    <span className="text-sm text-[var(--text-muted)]">Tổng cộng</span>
+                                    <span className="text-xl font-bold text-[var(--text)]">{fmt(cartTotal)}</span>
                                 </div>
                                 <div className="flex gap-2">
                                     <button
                                         type="button"
                                         onClick={onCancel}
-                                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                                        className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                                     >
                                         Huỷ
                                     </button>
@@ -832,23 +832,23 @@ export default function AdminAddShirtOrderModal({
             ) : (
                 /* ══════════ BƯỚC THANH TOÁN ══════════ */
                 <div className="max-w-md mx-auto space-y-5">
-                    <div className="rounded-xl bg-gray-50 p-4 space-y-2">
+                    <div className="rounded-xl bg-[var(--surface-muted)] p-4 space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500">Đăng ký cho</span>
-                            <span className="font-semibold text-gray-900">{personLabel}</span>
+                            <span className="text-[var(--text-muted)]">Đăng ký cho</span>
+                            <span className="font-semibold text-[var(--text)]">{personLabel}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500">Số sản phẩm</span>
-                            <span className="font-semibold text-gray-900">{cart.length}</span>
+                            <span className="text-[var(--text-muted)]">Số sản phẩm</span>
+                            <span className="font-semibold text-[var(--text)]">{cart.length}</span>
                         </div>
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                            <span className="text-sm text-gray-500">Tổng tiền</span>
-                            <span className="text-lg font-bold text-gray-900">{fmt(cartTotal)}</span>
+                        <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
+                            <span className="text-sm text-[var(--text-muted)]">Tổng tiền</span>
+                            <span className="text-lg font-bold text-[var(--text)]">{fmt(cartTotal)}</span>
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                             Phương thức thanh toán
                         </label>
 
@@ -859,7 +859,7 @@ export default function AdminAddShirtOrderModal({
                                     onClick={() => setPayment("wallet")}
                                     className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition-colors ${payment === "wallet"
                                         ? "bg-blue-600 text-white border-blue-600"
-                                        : "bg-white text-gray-600 border-gray-200"
+                                        : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]"
                                         }`}
                                 >
                                     <Wallet className="w-3.5 h-3.5" /> Trừ ví BNB
@@ -869,7 +869,7 @@ export default function AdminAddShirtOrderModal({
                                     onClick={() => setPayment("none")}
                                     className={`py-2.5 rounded-xl text-sm font-medium border transition-colors ${payment === "none"
                                         ? "bg-gray-900 text-white border-gray-900"
-                                        : "bg-white text-gray-600 border-gray-200"
+                                        : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]"
                                         }`}
                                 >
                                     Member tự chọn
@@ -882,7 +882,7 @@ export default function AdminAddShirtOrderModal({
                                     onClick={() => setPayment("none")}
                                     className={`py-2.5 rounded-xl text-sm font-medium border transition-colors ${payment === "none"
                                         ? "bg-gray-900 text-white border-gray-900"
-                                        : "bg-white text-gray-600 border-gray-200"
+                                        : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]"
                                         }`}
                                 >
                                     Chưa thanh toán
@@ -892,7 +892,7 @@ export default function AdminAddShirtOrderModal({
                                     onClick={() => setPayment("cash")}
                                     className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition-colors ${payment === "cash"
                                         ? "bg-emerald-600 text-white border-emerald-600"
-                                        : "bg-white text-gray-600 border-gray-200"
+                                        : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]"
                                         }`}
                                 >
                                     <Banknote className="w-3.5 h-3.5" /> Tiền mặt
@@ -901,17 +901,17 @@ export default function AdminAddShirtOrderModal({
                         )}
 
                         {payment === "wallet" && mode === "member" && (
-                            <p className="text-xs text-blue-600 mt-2">
+                            <p className="text-xs text-[var(--primary)] mt-2">
                                 Số dư ví của thành viên sẽ bị trừ ngay cho toàn bộ đơn và ghi lại lịch sử giao dịch.
                             </p>
                         )}
                         {payment === "none" && mode === "member" && (
-                            <p className="text-xs text-gray-500 mt-2">
+                            <p className="text-xs text-[var(--text-muted)] mt-2">
                                 Đơn sẽ ở trạng thái chờ, thành viên tự vào app chọn Ví BNB / Chuyển khoản / Tiền mặt để thanh toán.
                             </p>
                         )}
                         {payment === "cash" && mode === "guest" && (
-                            <p className="text-xs text-emerald-600 mt-2">
+                            <p className="text-xs text-[var(--success)] mt-2">
                                 Đơn sẽ ở trạng thái chờ xác nhận, vào bảng đăng ký và bấm "Xác nhận" khi đã nhận đủ tiền mặt.
                             </p>
                         )}
@@ -921,7 +921,7 @@ export default function AdminAddShirtOrderModal({
                         <button
                             type="button"
                             onClick={backToBuild}
-                            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                            className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                         >
                             Quay lại
                         </button>
@@ -949,7 +949,7 @@ export default function AdminAddShirtOrderModal({
                     <button
                         type="button"
                         onClick={closeLightbox}
-                        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"
+                        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] flex items-center justify-center text-white"
                     >
                         <X className="w-5 h-5" />
                     </button>

@@ -129,15 +129,15 @@ function Stepper({ currentStep }: { currentStep: number }) {
                         <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                             {currentStep}
                         </span>
-                        <span className="text-sm font-semibold text-gray-900">
+                        <span className="text-sm font-semibold text-[var(--text)]">
                             {STEP_LABELS[currentStep - 1]}
                         </span>
                     </div>
-                    <span className="text-xs text-gray-400 flex-shrink-0">
+                    <span className="text-xs text-[var(--text-faint)] flex-shrink-0">
                         Bước {currentStep}/{STEP_LABELS.length}
                     </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-1.5 rounded-full bg-[var(--surface-muted)] overflow-hidden">
                     <div
                         className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
                         style={{
@@ -158,16 +158,16 @@ function Stepper({ currentStep }: { currentStep: number }) {
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${isActive
                                     ? "bg-blue-600 text-white"
                                     : isDone
-                                        ? "bg-blue-50 text-blue-600"
-                                        : "bg-gray-100 text-gray-400"
+                                        ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                        : "bg-[var(--surface-muted)] text-[var(--text-faint)]"
                                     }`}
                             >
                                 <span
                                     className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isActive
-                                        ? "bg-white text-blue-600"
+                                        ? "bg-[var(--surface)] text-[var(--primary)]"
                                         : isDone
-                                            ? "bg-blue-100 text-blue-600"
-                                            : "bg-gray-200"
+                                            ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                            : "bg-[var(--border-strong)]"
                                         }`}
                                 >
                                     {isDone ? <CheckCircle2 className="w-3.5 h-3.5" /> : stepNum}
@@ -176,7 +176,7 @@ function Stepper({ currentStep }: { currentStep: number }) {
                             </div>
                             {i < STEP_LABELS.length - 1 && (
                                 <div
-                                    className={`w-6 h-px flex-shrink-0 ${isDone ? "bg-blue-200" : "bg-gray-200"
+                                    className={`w-6 h-px flex-shrink-0 ${isDone ? "bg-blue-200" : "bg-[var(--border-strong)]"
                                         }`}
                                 />
                             )}
@@ -220,7 +220,7 @@ function ImageLightbox({
         >
             <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] text-white flex items-center justify-center transition-colors"
             >
                 ✕
             </button>
@@ -527,15 +527,15 @@ export default function GuestShirtOrderPage({
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            <div className="min-h-screen flex items-center justify-center bg-[var(--surface-muted)]">
+                <Loader2 className="w-6 h-6 animate-spin text-[var(--primary)]" />
             </div>
         );
     }
 
     if (!activity) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">
+            <div className="min-h-screen flex items-center justify-center bg-[var(--surface-muted)] text-[var(--text-muted)]">
                 Không tìm thấy hoạt động đặt áo này.
             </div>
         );
@@ -548,7 +548,7 @@ export default function GuestShirtOrderPage({
             g === "nam" ? "Nam" : g === "nu" ? "Nữ" : "Oversize";
 
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
+            <div className="min-h-screen bg-[var(--surface-muted)] flex items-center justify-center p-4 sm:p-6">
                 <div
                     className="max-w-sm w-full space-y-4"
                     style={{ animation: "fadeSlideUp .35s ease both" }}
@@ -569,7 +569,7 @@ export default function GuestShirtOrderPage({
                     }
                 `}</style>
 
-                    <div className="bg-white rounded-3xl shadow-sm p-6 pt-8">
+                    <div className="bg-[var(--surface)] rounded-3xl shadow-sm p-6 pt-8">
                         <div className="relative flex flex-col items-center text-center mb-6">
                             <div className="relative w-20 h-20">
                                 <span
@@ -596,26 +596,26 @@ export default function GuestShirtOrderPage({
                                 </div>
                             </div>
 
-                            <h1 className="text-lg font-bold mt-4 text-emerald-600">
+                            <h1 className="text-lg font-bold mt-4 text-[var(--success)]">
                                 Đặt áo thành công!
                             </h1>
-                            <p className="text-sm text-gray-400 mt-1.5 leading-relaxed">
+                            <p className="text-sm text-[var(--text-faint)] mt-1.5 leading-relaxed">
                                 Cảm ơn {buyerName} đã đặt áo cho "{activity.title}". BTC sẽ liên
                                 hệ xác nhận trong thời gian sớm nhất.
                             </p>
                         </div>
 
-                        <div className="border border-gray-100 rounded-2xl overflow-hidden">
-                            <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
-                                <span className="text-sm font-bold text-gray-900">
+                        <div className="border border-[var(--border)] rounded-2xl overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)]">
+                                <span className="text-sm font-bold text-[var(--text)]">
                                     Chi tiết đơn hàng
                                 </span>
-                                <span className="text-sm font-bold text-emerald-600">
+                                <span className="text-sm font-bold text-[var(--success)]">
                                     {paymentMethod === "transfer" ? "Chuyển khoản" : "Tiền mặt"}
                                 </span>
                             </div>
 
-                            <div className="divide-y divide-gray-50">
+                            <div className="divide-y divide-[var(--border)]">
                                 {orderedItems.map((item) => {
                                     const type = shirtTypes.find(
                                         (t) => t.id === item.shirt_type_id,
@@ -628,7 +628,7 @@ export default function GuestShirtOrderPage({
                                             key={item.localId}
                                             className="flex items-center gap-3 px-4 py-3"
                                         >
-                                            <div className="w-12 h-12 rounded-lg bg-gray-50 overflow-hidden flex items-center justify-center flex-shrink-0">
+                                            <div className="w-12 h-12 rounded-lg bg-[var(--surface-muted)] overflow-hidden flex items-center justify-center flex-shrink-0">
                                                 {getTypeImage(type, item.color_id) ? (
                                                     <img
                                                         src={getTypeImage(type, item.color_id) as string}
@@ -640,16 +640,16 @@ export default function GuestShirtOrderPage({
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                <p className="text-sm font-medium text-[var(--text)] truncate">
                                                     {type?.name ?? "—"}
                                                 </p>
-                                                <p className="text-xs text-gray-400">
+                                                <p className="text-xs text-[var(--text-faint)]">
                                                     {genderLabel(item.gender)}
                                                     {color?.name ? ` · ${color.name}` : ""} · Size{" "}
                                                     {item.size} × {item.quantity}
                                                 </p>
                                             </div>
-                                            <span className="text-sm font-semibold text-gray-700 flex-shrink-0">
+                                            <span className="text-sm font-semibold text-[var(--text)] flex-shrink-0">
                                                 {formatCurrency(priceFor(item))}
                                             </span>
                                         </div>
@@ -657,11 +657,11 @@ export default function GuestShirtOrderPage({
                                 })}
                             </div>
 
-                            <div className="flex items-center justify-between px-4 py-3.5 bg-gray-50 border-t border-gray-100">
-                                <span className="text-sm font-bold text-gray-900">
+                            <div className="flex items-center justify-between px-4 py-3.5 bg-[var(--surface-muted)] border-t border-[var(--border)]">
+                                <span className="text-sm font-bold text-[var(--text)]">
                                     Tổng cộng
                                 </span>
-                                <span className="text-lg font-black text-emerald-600">
+                                <span className="text-lg font-black text-[var(--success)]">
                                     {formatCurrency(submitted.total_amount ?? total)}
                                 </span>
                             </div>
@@ -670,7 +670,7 @@ export default function GuestShirtOrderPage({
                         <div className="mt-6">
                             <button
                                 onClick={() => window.location.reload()}
-                                className="w-full text-center text-sm font-medium text-emerald-600 hover:text-emerald-700"
+                                className="w-full text-center text-sm font-medium text-[var(--success)] hover:text-[var(--success)]"
                             >
                                 Đặt thêm đơn khác
                             </button>
@@ -691,14 +691,14 @@ export default function GuestShirtOrderPage({
     )}&accountName=${encodeURIComponent(bankAccountName)}`;
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-16">
+        <div className="min-h-screen bg-[var(--surface-muted)] pb-16">
             <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
                 {/* Header */}
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
+                    <h1 className="text-2xl font-bold text-[var(--text)]">
                         {activity.title}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-2 mt-1.5 text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-2 mt-1.5 text-sm text-[var(--text-muted)]">
                         {activity.deadline && (
                             <span>
                                 Hạn chốt:{" "}
@@ -708,12 +708,12 @@ export default function GuestShirtOrderPage({
                             </span>
                         )}
                         {daysLeft !== null && daysLeft >= 0 && (
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--warning-soft)] text-[var(--warning)]">
                                 Còn {daysLeft} ngày
                             </span>
                         )}
                         {daysLeft !== null && daysLeft < 0 && (
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--danger-soft)] text-[var(--danger)]">
                                 Đã hết hạn đặt áo
                             </span>
                         )}
@@ -725,8 +725,8 @@ export default function GuestShirtOrderPage({
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
                     <div className="space-y-5 min-w-0">
                         {step === 1 && (
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                                <h2 className="font-bold text-gray-900 mb-3">
+                            <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-5">
+                                <h2 className="font-bold text-[var(--text)] mb-3">
                                     1. Chọn mẫu áo
                                 </h2>
 
@@ -746,7 +746,7 @@ export default function GuestShirtOrderPage({
                                                 }
                                                 className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap tab-btn ${activeTab
                                                     ? "bg-blue-600 text-white shadow-md shadow-blue-200 tab-btn-active"
-                                                    : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                                    : "bg-[var(--surface-muted)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
                                                     }`}
                                             >
                                                 {t.name}
@@ -783,17 +783,17 @@ export default function GuestShirtOrderPage({
                                     <div className="flex flex-col-reverse sm:flex-row gap-5">
                                         <div className="flex-1 space-y-4">
                                             <div>
-                                                <p className="text-lg font-bold text-gray-900">
+                                                <p className="text-lg font-bold text-[var(--text)]">
                                                     {selectedType.name}
                                                 </p>
-                                                <p className="text-blue-600 font-bold">
+                                                <p className="text-[var(--primary)] font-bold">
                                                     {formatCurrency(selectedType.price_per_shirt ?? 0)}
                                                 </p>
                                             </div>
 
                                             {selectedType.colors?.length > 0 && (
                                                 <div>
-                                                    <p className="text-sm text-gray-500 mb-2">
+                                                    <p className="text-sm text-[var(--text-muted)] mb-2">
                                                         Màu sắc
                                                     </p>
                                                     <div className="flex items-center gap-3 flex-wrap">
@@ -815,7 +815,7 @@ export default function GuestShirtOrderPage({
                                                                     <span
                                                                         className={`color-dot relative w-11 h-11 rounded-full border-2 flex items-center justify-center shadow-sm ${isSelected
                                                                             ? "border-blue-500 color-dot-pop"
-                                                                            : "border-gray-200"
+                                                                            : "border-[var(--border)]"
                                                                             }`}
                                                                         style={{
                                                                             background: hex ?? "#e5e7eb",
@@ -835,8 +835,8 @@ export default function GuestShirtOrderPage({
                                                                     </span>
                                                                     <span
                                                                         className={`text-[11px] max-w-[64px] truncate ${isSelected
-                                                                            ? "text-blue-600 font-semibold"
-                                                                            : "text-gray-500"
+                                                                            ? "text-[var(--primary)] font-semibold"
+                                                                            : "text-[var(--text-muted)]"
                                                                             }`}
                                                                     >
                                                                         {c.name}
@@ -850,7 +850,7 @@ export default function GuestShirtOrderPage({
                                         </div>
 
                                         <div
-                                            className="w-full sm:w-[420px] aspect-[16/10] rounded-xl bg-gray-50 overflow-hidden flex items-center justify-center flex-shrink-0 cursor-zoom-in"
+                                            className="w-full sm:w-[420px] aspect-[16/10] rounded-xl bg-[var(--surface-muted)] overflow-hidden flex items-center justify-center flex-shrink-0 cursor-zoom-in"
                                             onClick={() =>
                                                 getTypeImage(selectedType, current.color_id) &&
                                                 setLightboxOpen(true)
@@ -905,22 +905,22 @@ export default function GuestShirtOrderPage({
 
                         {/* STEP 2 — Thông tin đặt áo */}
                         {step === 2 && (
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                            <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-5 space-y-4">
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => setStep(1)}
-                                        className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-colors"
+                                        className="p-1.5 -ml-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
                                     >
                                         <ChevronLeft className="w-4 h-4" />
                                     </button>
-                                    <h2 className="font-bold text-gray-900">
+                                    <h2 className="font-bold text-[var(--text)]">
                                         2. Thông tin đặt áo
                                     </h2>
                                 </div>
 
                                 {selectedType && (
-                                    <div className="flex items-center gap-4 bg-blue-50/50 border border-blue-100 rounded-xl p-3">
-                                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg bg-white overflow-hidden flex items-center justify-center flex-shrink-0">
+                                    <div className="flex items-center gap-4 bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-xl p-3">
+                                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg bg-[var(--surface)] overflow-hidden flex items-center justify-center flex-shrink-0">
                                             {getTypeImage(selectedType, current.color_id) ? (
                                                 <img
                                                     src={
@@ -937,10 +937,10 @@ export default function GuestShirtOrderPage({
                                             )}
                                         </div>
                                         <div className="text-sm">
-                                            <p className="font-semibold text-gray-900">
+                                            <p className="font-semibold text-[var(--text)]">
                                                 {selectedType.name}
                                             </p>
-                                            <p className="text-blue-600 font-bold text-xs">
+                                            <p className="text-[var(--primary)] font-bold text-xs">
                                                 {formatCurrency(selectedType.price_per_shirt ?? 0)}
                                             </p>
                                         </div>
@@ -949,7 +949,7 @@ export default function GuestShirtOrderPage({
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                             Người mua
                                         </label>
                                         <input
@@ -960,7 +960,7 @@ export default function GuestShirtOrderPage({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                             SĐT
                                         </label>
                                         <input
@@ -971,7 +971,7 @@ export default function GuestShirtOrderPage({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                             Giới tính
                                         </label>
                                         <CustomSelect
@@ -981,7 +981,7 @@ export default function GuestShirtOrderPage({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                             Trình
                                         </label>
                                         <CustomSelect
@@ -991,7 +991,7 @@ export default function GuestShirtOrderPage({
                                         />
                                     </div>
                                     <div className="sm:col-span-2">
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                             Nickname
                                         </label>
                                         <input
@@ -1003,11 +1003,11 @@ export default function GuestShirtOrderPage({
                                     </div>
                                 </div>
 
-                                <hr className="border-gray-100" />
+                                <hr className="border-[var(--border)]" />
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                             Form áo
                                         </label>
                                         <div className="flex items-center gap-4 h-[42px]">
@@ -1018,7 +1018,7 @@ export default function GuestShirtOrderPage({
                                             ).map((o) => (
                                                 <label
                                                     key={o.value}
-                                                    className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer"
+                                                    className="flex items-center gap-1.5 text-sm text-[var(--text)] cursor-pointer"
                                                 >
                                                     <input
                                                         type="radio"
@@ -1039,7 +1039,7 @@ export default function GuestShirtOrderPage({
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                             Size áo
                                         </label>
                                         <CustomSelect
@@ -1052,7 +1052,7 @@ export default function GuestShirtOrderPage({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                             Tên in sau lưng
                                         </label>
                                         <div className="flex gap-2">
@@ -1069,14 +1069,14 @@ export default function GuestShirtOrderPage({
                                             />
                                             <button
                                                 onClick={handleGetNickname}
-                                                className="px-3 rounded-lg border border-blue-200 text-blue-600 text-xs font-semibold whitespace-nowrap hover:bg-blue-50 transition-colors"
+                                                className="px-3 rounded-lg border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] text-xs font-semibold whitespace-nowrap hover:bg-[var(--primary-soft)] transition-colors"
                                             >
                                                 Lấy nickname
                                             </button>
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                             Số áo
                                         </label>
                                         <div className="flex gap-2">
@@ -1095,7 +1095,7 @@ export default function GuestShirtOrderPage({
                                             <button
                                                 onClick={handleCheckJerseyNumber}
                                                 disabled={checking}
-                                                className="px-3 rounded-lg border border-blue-200 text-blue-600 text-xs font-semibold whitespace-nowrap hover:bg-blue-50 transition-colors disabled:opacity-50"
+                                                className="px-3 rounded-lg border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] text-xs font-semibold whitespace-nowrap hover:bg-[var(--primary-soft)] transition-colors disabled:opacity-50"
                                             >
                                                 {checking ? "..." : "Kiểm tra"}
                                             </button>
@@ -1103,8 +1103,8 @@ export default function GuestShirtOrderPage({
                                         {checkResult && (
                                             <p
                                                 className={`text-xs mt-1.5 flex items-center gap-1 ${checkResult.available
-                                                    ? "text-green-600"
-                                                    : "text-red-500"
+                                                    ? "text-[var(--success)]"
+                                                    : "text-[var(--danger)]"
                                                     }`}
                                             >
                                                 {checkResult.available ? (
@@ -1119,7 +1119,7 @@ export default function GuestShirtOrderPage({
                                         )}
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                        <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                             Số lượng
                                         </label>
                                         <div className="flex items-center gap-2 h-[42px]">
@@ -1130,7 +1130,7 @@ export default function GuestShirtOrderPage({
                                                         quantity: Math.max(1, c.quantity - 1),
                                                     }))
                                                 }
-                                                className="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                                                className="w-9 h-9 rounded-lg border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                                             >
                                                 <Minus className="w-3.5 h-3.5" />
                                             </button>
@@ -1144,7 +1144,7 @@ export default function GuestShirtOrderPage({
                                                         quantity: c.quantity + 1,
                                                     }))
                                                 }
-                                                className="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                                                className="w-9 h-9 rounded-lg border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                                             >
                                                 <Plus className="w-3.5 h-3.5" />
                                             </button>
@@ -1153,7 +1153,7 @@ export default function GuestShirtOrderPage({
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                                    <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                         Ghi chú cho đơn hàng (nếu có)
                                     </label>
                                     <textarea
@@ -1164,7 +1164,7 @@ export default function GuestShirtOrderPage({
                                         value={notes}
                                         onChange={(e) => setNotes(e.target.value)}
                                     />
-                                    <p className="text-[11px] text-gray-300 text-right mt-1">
+                                    <p className="text-[11px] text-[var(--text-faint)] text-right mt-1">
                                         {notes.length}/300
                                     </p>
                                 </div>
@@ -1172,7 +1172,7 @@ export default function GuestShirtOrderPage({
                                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2">
                                     <button
                                         onClick={handleAddAnotherFromStep2}
-                                        className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-blue-300 text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
+                                        className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-dashed border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] text-sm font-semibold hover:bg-[var(--primary-soft)] transition-colors"
                                     >
                                         <Plus className="w-4 h-4" /> Thêm sản phẩm khác
                                     </button>
@@ -1188,22 +1188,22 @@ export default function GuestShirtOrderPage({
 
                         {/* STEP 3 — Xác nhận */}
                         {step === 3 && (
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                            <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-5 space-y-4">
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => setStep(1)}
-                                        className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-colors"
+                                        className="p-1.5 -ml-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
                                     >
                                         <ChevronLeft className="w-4 h-4" />
                                     </button>
-                                    <h2 className="font-bold text-gray-900">
+                                    <h2 className="font-bold text-[var(--text)]">
                                         3. Xác nhận sản phẩm đặt áo
                                     </h2>
                                 </div>
 
                                 <div className="space-y-2">
                                     {cart.length === 0 && (
-                                        <p className="text-xs text-gray-400 text-center py-6">
+                                        <p className="text-xs text-[var(--text-faint)] text-center py-6">
                                             Chưa có áo nào trong đơn.
                                         </p>
                                     )}
@@ -1217,9 +1217,9 @@ export default function GuestShirtOrderPage({
                                         return (
                                             <div
                                                 key={item.localId}
-                                                className="flex items-start gap-3 bg-gray-50 rounded-xl p-3"
+                                                className="flex items-start gap-3 bg-[var(--surface-muted)] rounded-xl p-3"
                                             >
-                                                <div className="w-14 h-14 rounded-lg bg-white overflow-hidden flex items-center justify-center flex-shrink-0">
+                                                <div className="w-14 h-14 rounded-lg bg-[var(--surface)] overflow-hidden flex items-center justify-center flex-shrink-0">
                                                     {getTypeImage(type, item.color_id) ? (
                                                         <img
                                                             src={
@@ -1233,11 +1233,11 @@ export default function GuestShirtOrderPage({
                                                     )}
                                                 </div>
                                                 <div className="text-xs space-y-0.5 flex-1">
-                                                    <p className="font-semibold text-gray-900 text-sm">
+                                                    <p className="font-semibold text-[var(--text)] text-sm">
                                                         {type?.name}
                                                         {color?.name ? ` - ${color.name}` : ""}
                                                     </p>
-                                                    <p className="text-gray-500">
+                                                    <p className="text-[var(--text-muted)]">
                                                         {item.gender === "nam"
                                                             ? "Nam"
                                                             : item.gender === "nu"
@@ -1246,25 +1246,25 @@ export default function GuestShirtOrderPage({
                                                         - Size {item.size}
                                                     </p>
                                                     {item.print_name && (
-                                                        <p className="text-gray-500">
+                                                        <p className="text-[var(--text-muted)]">
                                                             Tên in: {item.print_name}
                                                         </p>
                                                     )}
                                                     {item.jersey_number && (
-                                                        <p className="text-gray-500">
+                                                        <p className="text-[var(--text-muted)]">
                                                             Số áo: {item.jersey_number}
                                                         </p>
                                                     )}
-                                                    <p className="text-gray-500">
+                                                    <p className="text-[var(--text-muted)]">
                                                         Số lượng: {item.quantity}
                                                     </p>
-                                                    <p className="text-blue-600 font-bold">
+                                                    <p className="text-[var(--primary)] font-bold">
                                                         {formatCurrency(priceFor(item))}
                                                     </p>
                                                 </div>
                                                 <button
                                                     onClick={() => handleRemoveFromCart(item.localId)}
-                                                    className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                                    className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors flex-shrink-0"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
@@ -1275,7 +1275,7 @@ export default function GuestShirtOrderPage({
 
                                 <button
                                     onClick={() => setStep(1)}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-dashed border-blue-300 text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
+                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-dashed border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] text-sm font-semibold hover:bg-[var(--primary-soft)] transition-colors"
                                 >
                                     <Plus className="w-4 h-4" /> Chọn thêm áo
                                 </button>
@@ -1293,23 +1293,23 @@ export default function GuestShirtOrderPage({
                         )}
 
                         {step === 4 && (
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                            <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-5 space-y-4">
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => setStep(3)}
-                                        className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-colors"
+                                        className="p-1.5 -ml-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
                                     >
                                         <ChevronLeft className="w-4 h-4" />
                                     </button>
-                                    <h2 className="font-bold text-gray-900">4. Thanh toán</h2>
+                                    <h2 className="font-bold text-[var(--text)]">4. Thanh toán</h2>
                                 </div>
 
-                                <div className="flex bg-gray-100 rounded-lg p-1">
+                                <div className="flex bg-[var(--surface-muted)] rounded-lg p-1">
                                     <button
                                         onClick={() => setPaymentMethod("transfer")}
                                         className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${paymentMethod === "transfer"
-                                            ? "bg-white shadow-sm text-blue-600"
-                                            : "text-gray-500"
+                                            ? "bg-[var(--surface)] shadow-sm text-[var(--primary)]"
+                                            : "text-[var(--text-muted)]"
                                             }`}
                                     >
                                         Chuyển khoản
@@ -1317,8 +1317,8 @@ export default function GuestShirtOrderPage({
                                     <button
                                         onClick={() => setPaymentMethod("cash")}
                                         className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${paymentMethod === "cash"
-                                            ? "bg-white shadow-sm text-blue-600"
-                                            : "text-gray-500"
+                                            ? "bg-[var(--surface)] shadow-sm text-[var(--primary)]"
+                                            : "text-[var(--text-muted)]"
                                             }`}
                                     >
                                         Tiền mặt
@@ -1327,8 +1327,8 @@ export default function GuestShirtOrderPage({
 
                                 {paymentMethod === "transfer" && (
                                     <div className="space-y-4">
-                                        <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
-                                            <p className="text-xs text-gray-400">Quét mã QR để thanh toán</p>
+                                        <div className="bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl p-4 flex flex-col items-center gap-2">
+                                            <p className="text-xs text-[var(--text-faint)]">Quét mã QR để thanh toán</p>
                                             <img
                                                 src={qrUrl}
                                                 alt="VietQR"
@@ -1336,64 +1336,64 @@ export default function GuestShirtOrderPage({
                                             />
                                         </div>
 
-                                        <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
+                                        <div className="bg-[var(--surface-muted)] rounded-xl divide-y divide-[var(--border)] text-sm overflow-hidden">
                                             <div className="flex justify-between px-4 py-2.5">
-                                                <span className="text-gray-500">Ngân hàng</span>
-                                                <span className="font-semibold text-gray-900">
+                                                <span className="text-[var(--text-muted)]">Ngân hàng</span>
+                                                <span className="font-semibold text-[var(--text)]">
                                                     {bankDisplayName}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between px-4 py-2.5">
-                                                <span className="text-gray-500">Số tài khoản</span>
+                                                <span className="text-[var(--text-muted)]">Số tài khoản</span>
                                                 <button
                                                     onClick={() => {
                                                         navigator.clipboard.writeText(bankAccount);
                                                         toast.success("Đã sao chép");
                                                     }}
-                                                    className="flex items-center gap-1 font-semibold text-gray-900"
+                                                    className="flex items-center gap-1 font-semibold text-[var(--text)]"
                                                 >
                                                     {bankAccount}
-                                                    <Copy className="w-3 h-3 text-gray-400" />
+                                                    <Copy className="w-3 h-3 text-[var(--text-faint)]" />
                                                 </button>
                                             </div>
                                             <div className="flex justify-between px-4 py-2.5">
-                                                <span className="text-gray-500">Tên tài khoản</span>
-                                                <span className="font-semibold text-gray-900">
+                                                <span className="text-[var(--text-muted)]">Tên tài khoản</span>
+                                                <span className="font-semibold text-[var(--text)]">
                                                     {bankAccountName}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between px-4 py-2.5">
-                                                <span className="text-gray-500">Số tiền</span>
-                                                <span className="font-bold text-red-600">
+                                                <span className="text-[var(--text-muted)]">Số tiền</span>
+                                                <span className="font-bold text-[var(--danger)]">
                                                     {formatCurrency(total)}
                                                 </span>
                                             </div>
                                             <div className="px-4 py-2.5">
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-gray-500">Nội dung CK</span>
+                                                    <span className="text-[var(--text-muted)]">Nội dung CK</span>
                                                     <button
                                                         onClick={() => {
                                                             navigator.clipboard.writeText(paymentRef);
                                                             toast.success("Đã sao chép");
                                                         }}
-                                                        className="flex items-center gap-1 font-mono font-semibold text-gray-900"
+                                                        className="flex items-center gap-1 font-mono font-semibold text-[var(--text)]"
                                                     >
                                                         {paymentRef}
-                                                        <Copy className="w-3 h-3 text-gray-400" />
+                                                        <Copy className="w-3 h-3 text-[var(--text-faint)]" />
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
-                                        <p className="text-[11px] text-gray-400">
+                                        <p className="text-[11px] text-[var(--text-faint)]">
                                             Vui lòng nhập đúng nội dung để được xác nhận thanh toán nhanh
                                             nhất
                                         </p>
 
                                         <div>
-                                            <p className="text-xs font-semibold text-gray-500 mb-1.5">
+                                            <p className="text-xs font-semibold text-[var(--text-muted)] mb-1.5">
                                                 Ảnh chuyển khoản
                                             </p>
-                                            <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-gray-200 rounded-xl py-5 cursor-pointer hover:border-blue-300 transition-colors">
+                                            <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-[var(--border)] rounded-xl py-5 cursor-pointer hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] transition-colors">
                                                 {proofPreview ? (
                                                     <img
                                                         src={proofPreview}
@@ -1402,11 +1402,11 @@ export default function GuestShirtOrderPage({
                                                     />
                                                 ) : (
                                                     <>
-                                                        <UploadCloud className="w-6 h-6 text-gray-300" />
-                                                        <span className="text-xs text-gray-400">
+                                                        <UploadCloud className="w-6 h-6 text-[var(--text-faint)]" />
+                                                        <span className="text-xs text-[var(--text-faint)]">
                                                             Tải lên ảnh chuyển khoản
                                                         </span>
-                                                        <span className="text-[10px] text-gray-300">
+                                                        <span className="text-[10px] text-[var(--text-faint)]">
                                                             JPG, PNG tối đa 5MB
                                                         </span>
                                                     </>
@@ -1425,13 +1425,13 @@ export default function GuestShirtOrderPage({
                                 )}
 
                                 {paymentMethod === "cash" && (
-                                    <p className="text-xs text-gray-400">
+                                    <p className="text-xs text-[var(--text-faint)]">
                                         Bạn sẽ thanh toán trực tiếp bằng tiền mặt khi nhận áo.
                                         BTC sẽ liên hệ xác nhận đơn hàng.
                                     </p>
                                 )}
 
-                                <label className="flex items-center gap-2 text-sm text-gray-600 pt-2">
+                                <label className="flex items-center gap-2 text-sm text-[var(--text-muted)] pt-2">
                                     <input
                                         type="checkbox"
                                         checked={agree}
@@ -1451,11 +1451,11 @@ export default function GuestShirtOrderPage({
                                         : "Xác nhận đặt áo"}
                                 </button>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100 mt-2">
-                                    <div className="text-xs text-gray-500 pt-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-[var(--border)] mt-2">
+                                    <div className="text-xs text-[var(--text-muted)] pt-4">
                                         Thời gian hỗ trợ: 8:00 - 22:00 (Tất cả các ngày)
                                     </div>
-                                    <div className="text-xs text-gray-500 pt-4">
+                                    <div className="text-xs text-[var(--text-muted)] pt-4">
                                         Lưu ý: Đơn đã xác nhận thanh toán sẽ không thể sửa
                                     </div>
                                 </div>
@@ -1464,11 +1464,11 @@ export default function GuestShirtOrderPage({
                     </div>
 
                     <div className="space-y-4">
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                            <h3 className="font-bold text-gray-900 mb-3">Đơn hàng của bạn</h3>
+                        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-4">
+                            <h3 className="font-bold text-[var(--text)] mb-3">Đơn hàng của bạn</h3>
                             <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                                 {cart.length === 0 && (
-                                    <p className="text-xs text-gray-400 text-center py-4">
+                                    <p className="text-xs text-[var(--text-faint)] text-center py-4">
                                         Chưa có áo nào trong đơn.
                                     </p>
                                 )}
@@ -1479,13 +1479,13 @@ export default function GuestShirtOrderPage({
                                     return (
                                         <div
                                             key={item.localId}
-                                            className="flex items-start justify-between gap-2 bg-gray-50 rounded-xl p-3"
+                                            className="flex items-start justify-between gap-2 bg-[var(--surface-muted)] rounded-xl p-3"
                                         >
                                             <div className="text-xs space-y-0.5">
-                                                <p className="font-semibold text-gray-900">
+                                                <p className="font-semibold text-[var(--text)]">
                                                     {type?.name}
                                                 </p>
-                                                <p className="text-gray-500">
+                                                <p className="text-[var(--text-muted)]">
                                                     {item.gender === "nam"
                                                         ? "Nam"
                                                         : item.gender === "nu"
@@ -1493,17 +1493,17 @@ export default function GuestShirtOrderPage({
                                                             : "Oversize"}{" "}
                                                     - {item.size}
                                                 </p>
-                                                <p className="text-gray-500">
+                                                <p className="text-[var(--text-muted)]">
                                                     Số lượng: {item.quantity}
                                                 </p>
-                                                <p className="text-blue-600 font-bold">
+                                                <p className="text-[var(--primary)] font-bold">
                                                     {formatCurrency(priceFor(item))}
                                                 </p>
                                             </div>
                                             {step === 3 && (
                                                 <button
                                                     onClick={() => handleRemoveFromCart(item.localId)}
-                                                    className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                                    className="p-1.5 hover:bg-[var(--danger-soft)] rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors flex-shrink-0"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
@@ -1514,28 +1514,28 @@ export default function GuestShirtOrderPage({
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2">
-                            <h3 className="font-bold text-gray-900 mb-1">
+                        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-4 space-y-2">
+                            <h3 className="font-bold text-[var(--text)] mb-1">
                                 Tóm tắt đơn hàng
                             </h3>
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Tạm tính</span>
-                                <span className="text-gray-800">
+                                <span className="text-[var(--text-muted)]">Tạm tính</span>
+                                <span className="text-[var(--text)]">
                                     {formatCurrency(subtotal)}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">In tên (miễn phí)</span>
-                                <span className="text-gray-800">0đ</span>
+                                <span className="text-[var(--text-muted)]">In tên (miễn phí)</span>
+                                <span className="text-[var(--text)]">0đ</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">In số (miễn phí)</span>
-                                <span className="text-gray-800">0đ</span>
+                                <span className="text-[var(--text-muted)]">In số (miễn phí)</span>
+                                <span className="text-[var(--text)]">0đ</span>
                             </div>
-                            <hr className="border-gray-100" />
+                            <hr className="border-[var(--border)]" />
                             <div className="flex justify-between items-center">
-                                <span className="font-bold text-gray-900">Tổng cộng</span>
-                                <span className="text-lg font-bold text-red-500">
+                                <span className="font-bold text-[var(--text)]">Tổng cộng</span>
+                                <span className="text-lg font-bold text-[var(--danger)]">
                                     {formatCurrency(total)}
                                 </span>
                             </div>

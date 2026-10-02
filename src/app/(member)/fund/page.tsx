@@ -39,12 +39,12 @@ const CATEGORY_ICONS: Record<string, any> = {
 };
 
 const CATEGORY_COLORS: Record<string, { bg: string; ic: string }> = {
-    phat: { bg: "bg-amber-100", ic: "text-amber-600" },
-    dong_gop: { bg: "bg-emerald-100", ic: "text-emerald-600" },
-    tai_tro: { bg: "bg-blue-100", ic: "text-blue-600" },
-    mua_sam: { bg: "bg-purple-100", ic: "text-purple-600" },
-    tiec_team: { bg: "bg-orange-100", ic: "text-orange-600" },
-    chi_khac: { bg: "bg-gray-100", ic: "text-gray-500" },
+    phat: { bg: "bg-[var(--warning-soft)]", ic: "text-[var(--warning)]" },
+    dong_gop: { bg: "bg-[var(--success-soft)]", ic: "text-[var(--success)]" },
+    tai_tro: { bg: "bg-[var(--primary-soft)]", ic: "text-[var(--primary)]" },
+    mua_sam: { bg: "bg-[var(--purple-soft)]", ic: "text-[var(--purple)]" },
+    tiec_team: { bg: "bg-[var(--warning-soft)]", ic: "text-[var(--warning)]" },
+    chi_khac: { bg: "bg-[var(--surface-muted)]", ic: "text-[var(--text-muted)]" },
 };
 
 type FundTxCategory = "phat" | "dong_gop" | "tai_tro" | "mua_sam" | "tiec_team" | "chi_khac";
@@ -121,7 +121,7 @@ function RequestWithdrawModal({
         <div
             className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center"
             style={{
-                background: "rgba(0,0,0,0.5)",
+                background: "var(--overlay)",
                 backdropFilter: "blur(2px)",
                 opacity: visible ? 1 : 0,
                 transition: "opacity 200ms ease-out",
@@ -129,7 +129,7 @@ function RequestWithdrawModal({
             onClick={(e) => e.target === e.currentTarget && handleClose()}
         >
             <div
-                className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden relative"
+                className="w-full sm:max-w-sm bg-[var(--surface)] rounded-t-3xl sm:rounded-3xl overflow-hidden relative"
                 style={{
                     transform: visible ? "translateY(0)" : "translateY(24px)",
                     opacity: visible ? 1 : 0,
@@ -139,31 +139,31 @@ function RequestWithdrawModal({
             >
                 <button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 z-20 w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                    className="absolute top-4 right-4 z-20 w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
                 >
-                    <X className="w-4 h-4 text-gray-600" />
+                    <X className="w-4 h-4 text-[var(--text-muted)]" />
                 </button>
 
                 <div className="px-5 pt-6 pb-6">
                     <div className="flex items-center gap-2 mb-4">
-                        <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center">
-                            <ArrowDown className="w-4.5 h-4.5 text-red-500" />
+                        <div className="w-9 h-9 rounded-xl bg-[var(--danger-soft)] flex items-center justify-center">
+                            <ArrowDown className="w-4.5 h-4.5 text-[var(--danger)]" />
                         </div>
                         <div>
-                            <p className="text-base font-bold text-gray-900">Yêu cầu rút quỹ</p>
-                            <p className="text-[11px] text-gray-400">Gửi yêu cầu chi, admin sẽ xét duyệt</p>
+                            <p className="text-base font-bold text-[var(--text)]">Yêu cầu rút quỹ</p>
+                            <p className="text-[11px] text-[var(--text-faint)]">Gửi yêu cầu chi, admin sẽ xét duyệt</p>
                         </div>
                     </div>
 
                     {success ? (
                         <div className="flex flex-col items-center text-center py-6">
-                            <CheckCircle2 className="w-12 h-12 text-emerald-500 mb-3" />
-                            <p className="font-bold text-gray-900">{success}</p>
+                            <CheckCircle2 className="w-12 h-12 text-[var(--success)] mb-3" />
+                            <p className="font-bold text-[var(--text)]">{success}</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
                             <div>
-                                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Loại chi</label>
+                                <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">Loại chi</label>
                                 <div className="flex gap-2">
                                     {WITHDRAW_CATEGORIES.map((c) => (
                                         <button
@@ -172,7 +172,7 @@ function RequestWithdrawModal({
                                             onClick={() => setCategory(c.value)}
                                             className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors ${category === c.value
                                                 ? "bg-red-500 text-white border-red-500"
-                                                : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                                                : "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--surface-hover)]"
                                                 }`}
                                         >
                                             {c.label}
@@ -182,41 +182,41 @@ function RequestWithdrawModal({
                             </div>
 
                             <div>
-                                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Nội dung</label>
+                                <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">Nội dung</label>
                                 <input
                                     type="text"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="Ví dụ: Mua ống cầu tháng 8"
-                                    className="w-full text-sm px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400"
+                                    className="w-full text-sm px-3 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[var(--danger)]"
                                 />
                             </div>
 
                             <div>
-                                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Số tiền (đ)</label>
+                                <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">Số tiền (đ)</label>
                                 <input
                                     type="text"
                                     inputMode="numeric"
                                     value={amount ? new Intl.NumberFormat("vi-VN").format(Number(amount.replace(/\D/g, ""))) : ""}
                                     onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
                                     placeholder="0"
-                                    className="w-full text-sm px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400"
+                                    className="w-full text-sm px-3 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[var(--danger)]"
                                 />
                             </div>
 
                             <div>
-                                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Ghi chú (không bắt buộc)</label>
+                                <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">Ghi chú (không bắt buộc)</label>
                                 <textarea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     rows={2}
                                     placeholder="Lý do chi, chứng từ liên quan..."
-                                    className="w-full text-sm px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 resize-none"
+                                    className="w-full text-sm px-3 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[var(--danger)] resize-none"
                                 />
                             </div>
 
                             {error && (
-                                <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+                                <p className="text-xs text-[var(--danger)] bg-[var(--danger-soft)] rounded-lg px-3 py-2">{error}</p>
                             )}
 
                             <button
@@ -295,7 +295,7 @@ function ContributeModal({
         <div
             className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center"
             style={{
-                background: "rgba(0,0,0,0.5)",
+                background: "var(--overlay)",
                 backdropFilter: "blur(2px)",
                 opacity: visible ? 1 : 0,
                 transition: "opacity 200ms ease-out",
@@ -303,7 +303,7 @@ function ContributeModal({
             onClick={(e) => e.target === e.currentTarget && handleClose()}
         >
             <div
-                className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden relative"
+                className="w-full sm:max-w-sm bg-[var(--surface)] rounded-t-3xl sm:rounded-3xl overflow-hidden relative"
                 style={{
                     transform: visible ? "translateY(0)" : "translateY(24px)",
                     opacity: visible ? 1 : 0,
@@ -313,25 +313,25 @@ function ContributeModal({
             >
                 <button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 z-20 w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                    className="absolute top-4 right-4 z-20 w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
                 >
-                    <X className="w-4 h-4 text-gray-600" />
+                    <X className="w-4 h-4 text-[var(--text-muted)]" />
                 </button>
 
                 <div className="px-5 pt-6 pb-6">
                     <div className="flex items-center gap-2 mb-4">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <Wallet className="w-4.5 h-4.5 text-blue-600" />
+                        <div className="w-9 h-9 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center">
+                            <Wallet className="w-4.5 h-4.5 text-[var(--primary)]" />
                         </div>
                         <div>
-                            <p className="text-base font-bold text-gray-900">Góp quỹ</p>
-                            <p className="text-[11px] text-gray-400">Nhập thông tin rồi chọn cách thanh toán</p>
+                            <p className="text-base font-bold text-[var(--text)]">Góp quỹ</p>
+                            <p className="text-[11px] text-[var(--text-faint)]">Nhập thông tin rồi chọn cách thanh toán</p>
                         </div>
                     </div>
 
                     <div className="space-y-3">
                         <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1.5 block">Loại đóng góp</label>
+                            <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">Loại đóng góp</label>
                             <div className="flex gap-2">
                                 {CONTRIBUTE_CATEGORIES.map((c) => (
                                     <button
@@ -340,7 +340,7 @@ function ContributeModal({
                                         onClick={() => setCategory(c.value)}
                                         className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors ${category === c.value
                                             ? "bg-blue-600 text-white border-blue-600"
-                                            : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                                            : "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--surface-hover)]"
                                             }`}
                                     >
                                         {c.label}
@@ -350,41 +350,41 @@ function ContributeModal({
                         </div>
 
                         <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1.5 block">Nội dung</label>
+                            <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">Nội dung</label>
                             <input
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="Ví dụ: Ủng hộ quỹ CLB tháng 8"
-                                className="w-full text-sm px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                                className="w-full text-sm px-3 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)] focus:border-[var(--primary)]"
                             />
                         </div>
 
                         <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1.5 block">Số tiền (đ)</label>
+                            <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">Số tiền (đ)</label>
                             <input
                                 type="text"
                                 inputMode="numeric"
                                 value={amount ? new Intl.NumberFormat("vi-VN").format(Number(amount.replace(/\D/g, ""))) : ""}
                                 onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
                                 placeholder="0"
-                                className="w-full text-sm px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                                className="w-full text-sm px-3 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)] focus:border-[var(--primary)]"
                             />
                         </div>
 
                         <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1.5 block">Ghi chú (không bắt buộc)</label>
+                            <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">Ghi chú (không bắt buộc)</label>
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 rows={2}
                                 placeholder="Thêm ghi chú nếu cần..."
-                                className="w-full text-sm px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 resize-none"
+                                className="w-full text-sm px-3 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)] focus:border-[var(--primary)] resize-none"
                             />
                         </div>
 
                         {error && (
-                            <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+                            <p className="text-xs text-[var(--danger)] bg-[var(--danger-soft)] rounded-lg px-3 py-2">{error}</p>
                         )}
 
                         <button
@@ -471,33 +471,33 @@ function ContributionMethodModal({
             onClick={(e) => e.target === e.currentTarget && handleClose()}
         >
             <div
-                className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl max-h-[92vh] overflow-y-auto"
+                className="w-full sm:max-w-md bg-[var(--surface)] rounded-t-3xl sm:rounded-2xl max-h-[92vh] overflow-y-auto"
                 style={{
                     transform: visible ? "translateY(0)" : "translateY(100%)",
                     transition: "transform 280ms cubic-bezier(0.32,0.72,0,1)",
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
                     <div>
-                        <p className="text-sm font-bold text-gray-900">Chọn phương thức góp quỹ</p>
-                        <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[220px]">{data.title}</p>
+                        <p className="text-sm font-bold text-[var(--text)]">Chọn phương thức góp quỹ</p>
+                        <p className="text-xs text-[var(--text-faint)] mt-0.5 truncate max-w-[220px]">{data.title}</p>
                     </div>
-                    <button onClick={handleClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                    <button onClick={handleClose} className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)]">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
                 <div className="px-5 py-4 space-y-4">
-                    <div className="flex items-center justify-between bg-blue-50 rounded-xl px-4 py-3">
-                        <span className="text-sm text-gray-600">Số tiền góp quỹ</span>
-                        <span className="text-lg font-black text-blue-600">{fmt(data.amount)}</span>
+                    <div className="flex items-center justify-between bg-[var(--primary-soft)] rounded-xl px-4 py-3">
+                        <span className="text-sm text-[var(--text-muted)]">Số tiền góp quỹ</span>
+                        <span className="text-lg font-black text-[var(--primary)]">{fmt(data.amount)}</span>
                     </div>
 
                     {success ? (
                         <div className="flex flex-col items-center text-center py-6">
-                            <CheckCircle2 className="w-12 h-12 text-emerald-500 mb-3" />
-                            <p className="font-bold text-gray-900">{success}</p>
+                            <CheckCircle2 className="w-12 h-12 text-[var(--success)] mb-3" />
+                            <p className="font-bold text-[var(--text)]">{success}</p>
                         </div>
                     ) : (
                         <>
@@ -505,34 +505,34 @@ function ContributionMethodModal({
                                 <div className="space-y-3">
                                     <button
                                         onClick={() => setMethod("wallet")}
-                                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors text-left"
                                     >
-                                        <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                            <Wallet className="w-5 h-5 text-blue-600" />
+                                        <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+                                            <Wallet className="w-5 h-5 text-[var(--primary)]" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900">Ví BNB</p>
-                                            <p className="text-xs text-gray-400 mt-0.5">Trừ ví ngay — quỹ được cộng ngay lập tức</p>
+                                            <p className="text-sm font-semibold text-[var(--text)]">Ví BNB</p>
+                                            <p className="text-xs text-[var(--text-faint)] mt-0.5">Trừ ví ngay — quỹ được cộng ngay lập tức</p>
                                         </div>
                                     </button>
                                     <button
                                         onClick={() => setMethod("transfer")}
-                                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
+                                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors text-left"
                                     >
-                                        <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-xl">🏦</div>
+                                        <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-xl">🏦</div>
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900">Chuyển khoản</p>
-                                            <p className="text-xs text-gray-400 mt-0.5">Quét QR, admin xác nhận rồi mới cộng quỹ</p>
+                                            <p className="text-sm font-semibold text-[var(--text)]">Chuyển khoản</p>
+                                            <p className="text-xs text-[var(--text-faint)] mt-0.5">Quét QR, admin xác nhận rồi mới cộng quỹ</p>
                                         </div>
                                     </button>
                                     <button
                                         onClick={() => setMethod("cash")}
-                                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors text-left"
+                                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--success)] hover:bg-[var(--success-soft)] transition-colors text-left"
                                     >
-                                        <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center text-xl">💵</div>
+                                        <div className="w-11 h-11 rounded-full bg-[var(--success-soft)] flex items-center justify-center text-xl">💵</div>
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900">Tiền mặt</p>
-                                            <p className="text-xs text-gray-400 mt-0.5">Admin xác nhận sau khi nhận tiền trực tiếp</p>
+                                            <p className="text-sm font-semibold text-[var(--text)]">Tiền mặt</p>
+                                            <p className="text-xs text-[var(--text-faint)] mt-0.5">Admin xác nhận sau khi nhận tiền trực tiếp</p>
                                         </div>
                                     </button>
                                 </div>
@@ -540,15 +540,15 @@ function ContributionMethodModal({
 
                             {method === "wallet" && (
                                 <div className="space-y-4">
-                                    <div className="bg-blue-50 rounded-xl p-4">
-                                        <p className="text-sm font-semibold text-blue-900 mb-1 flex items-center gap-2">
+                                    <div className="bg-[var(--primary-soft)] rounded-xl p-4">
+                                        <p className="text-sm font-semibold text-[var(--primary)] mb-1 flex items-center gap-2">
                                             <Wallet className="w-4 h-4" /> Góp quỹ bằng Ví BNB
                                         </p>
-                                        <p className="text-xs text-blue-600">Ví sẽ bị trừ và quỹ được cộng ngay lập tức, không cần admin xác nhận.</p>
+                                        <p className="text-xs text-[var(--primary)]">Ví sẽ bị trừ và quỹ được cộng ngay lập tức, không cần admin xác nhận.</p>
                                     </div>
-                                    {error && <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+                                    {error && <p className="text-xs text-[var(--danger)] bg-[var(--danger-soft)] rounded-lg px-3 py-2">{error}</p>}
                                     <div className="flex gap-2">
-                                        <button onClick={() => setMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                                        <button onClick={() => setMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]">
                                             Quay lại
                                         </button>
                                         <button
@@ -564,26 +564,26 @@ function ContributionMethodModal({
 
                             {method === "transfer" && (
                                 <div className="space-y-4">
-                                    <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
-                                        <p className="text-xs text-gray-400">Quét mã QR để chuyển khoản</p>
+                                    <div className="bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl p-4 flex flex-col items-center gap-2">
+                                        <p className="text-xs text-[var(--text-faint)]">Quét mã QR để chuyển khoản</p>
                                         <img src={qr} alt="VietQR" className="w-48 h-48 object-contain" />
                                     </div>
-                                    <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
+                                    <div className="bg-[var(--surface-muted)] rounded-xl divide-y divide-[var(--border)] text-sm overflow-hidden">
                                         <div className="flex justify-between px-4 py-2.5">
-                                            <span className="text-gray-500">Số tiền</span>
-                                            <span className="font-bold text-blue-600">{fmt(data.amount)}</span>
+                                            <span className="text-[var(--text-muted)]">Số tiền</span>
+                                            <span className="font-bold text-[var(--primary)]">{fmt(data.amount)}</span>
                                         </div>
                                         <div className="px-4 py-2.5 flex justify-between">
-                                            <span className="text-gray-500">Nội dung CK</span>
-                                            <span className="font-mono font-semibold text-gray-900">{ref}</span>
+                                            <span className="text-[var(--text-muted)]">Nội dung CK</span>
+                                            <span className="font-mono font-semibold text-[var(--text)]">{ref}</span>
                                         </div>
                                     </div>
-                                    <button onClick={handleCopy} className="w-full py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700">
+                                    <button onClick={handleCopy} className="w-full py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text)]">
                                         Sao chép nội dung
                                     </button>
-                                    {error && <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+                                    {error && <p className="text-xs text-[var(--danger)] bg-[var(--danger-soft)] rounded-lg px-3 py-2">{error}</p>}
                                     <div className="flex gap-2">
-                                        <button onClick={() => setMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                                        <button onClick={() => setMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]">
                                             Quay lại
                                         </button>
                                         <button
@@ -599,13 +599,13 @@ function ContributionMethodModal({
 
                             {method === "cash" && (
                                 <div className="space-y-4">
-                                    <div className="bg-green-50 rounded-xl p-4">
-                                        <p className="text-sm font-semibold text-green-800 mb-1">💵 Góp quỹ tiền mặt</p>
-                                        <p className="text-xs text-green-600">Admin sẽ xác nhận sau khi nhận tiền trực tiếp, quỹ sẽ được cộng sau khi xác nhận.</p>
+                                    <div className="bg-[var(--success-soft)] rounded-xl p-4">
+                                        <p className="text-sm font-semibold text-[var(--success)] mb-1">💵 Góp quỹ tiền mặt</p>
+                                        <p className="text-xs text-[var(--success)]">Admin sẽ xác nhận sau khi nhận tiền trực tiếp, quỹ sẽ được cộng sau khi xác nhận.</p>
                                     </div>
-                                    {error && <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+                                    {error && <p className="text-xs text-[var(--danger)] bg-[var(--danger-soft)] rounded-lg px-3 py-2">{error}</p>}
                                     <div className="flex gap-2">
-                                        <button onClick={() => setMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                                        <button onClick={() => setMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]">
                                             Quay lại
                                         </button>
                                         <button
@@ -665,7 +665,7 @@ function MonthYearFilterModal({
         <div
             className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center"
             style={{
-                background: "rgba(0,0,0,0.5)",
+                background: "var(--overlay)",
                 backdropFilter: "blur(2px)",
                 opacity: visible ? 1 : 0,
                 transition: "opacity 200ms ease-out",
@@ -673,7 +673,7 @@ function MonthYearFilterModal({
             onClick={(e) => e.target === e.currentTarget && handleClose()}
         >
             <div
-                className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden relative"
+                className="w-full sm:max-w-sm bg-[var(--surface)] rounded-t-3xl sm:rounded-3xl overflow-hidden relative"
                 style={{
                     transform: visible ? "translateY(0)" : "translateY(24px)",
                     opacity: visible ? 1 : 0,
@@ -683,33 +683,33 @@ function MonthYearFilterModal({
             >
                 <button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 z-20 w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                    className="absolute top-4 right-4 z-20 w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
                 >
-                    <X className="w-4 h-4 text-gray-600" />
+                    <X className="w-4 h-4 text-[var(--text-muted)]" />
                 </button>
 
                 <div className="px-5 pt-6 pb-6">
                     <div className="flex items-center gap-2 mb-4">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <Calendar className="w-4.5 h-4.5 text-blue-600" />
+                        <div className="w-9 h-9 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center">
+                            <Calendar className="w-4.5 h-4.5 text-[var(--primary)]" />
                         </div>
                         <div>
-                            <p className="text-base font-bold text-gray-900">Chọn tháng xem quỹ</p>
-                            <p className="text-[11px] text-gray-400">Lọc số dư và giao dịch theo tháng</p>
+                            <p className="text-base font-bold text-[var(--text)]">Chọn tháng xem quỹ</p>
+                            <p className="text-[11px] text-[var(--text-faint)]">Lọc số dư và giao dịch theo tháng</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between mb-4 bg-gray-50 rounded-xl px-3 py-2">
+                    <div className="flex items-center justify-between mb-4 bg-[var(--surface-muted)] rounded-xl px-3 py-2">
                         <button
                             onClick={() => setSelYear((y) => y - 1)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface)]"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <span className="text-sm font-bold text-gray-900">Năm {selYear}</span>
+                        <span className="text-sm font-bold text-[var(--text)]">Năm {selYear}</span>
                         <button
                             onClick={() => setSelYear((y) => y + 1)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--surface)]"
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
@@ -726,7 +726,7 @@ function MonthYearFilterModal({
                                     onClick={() => setSelMonth(m)}
                                     className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${isActive
                                         ? "bg-blue-600 text-white border-blue-600"
-                                        : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                                        : "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] hover:bg-[var(--surface-hover)]"
                                         }`}
                                 >
                                     {label}
@@ -821,18 +821,18 @@ export default function FundPage() {
     return (
         <div className="max-w-md mx-auto space-y-5 pb-8 px-3">
             <div className="flex items-center justify-between px-1 pt-2 gap-2">
-                <h1 className="text-base font-bold text-gray-900 flex-shrink-0">Quỹ chung</h1>
+                <h1 className="text-base font-bold text-[var(--text)] flex-shrink-0">Quỹ chung</h1>
                 <div className="flex items-center gap-2 flex-wrap justify-end">
                     <button
                         onClick={() => setShowMonthPicker(true)}
-                        className="flex items-center gap-1 bg-white border border-gray-200 text-gray-600 text-xs font-semibold px-2.5 py-2 rounded-xl active:scale-95 transition-transform"
+                        className="flex items-center gap-1 bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)] text-xs font-semibold px-2.5 py-2 rounded-xl active:scale-95 transition-transform"
                     >
                         <Calendar className="w-3.5 h-3.5" />
                         {filterMonth}/{filterYear}
                     </button>
                     <button
                         onClick={() => setShowWithdrawRequest(true)}
-                        className="flex items-center gap-1.5 bg-white border border-red-200 text-red-500 text-xs font-semibold px-3 py-2 rounded-xl active:scale-95 transition-transform"
+                        className="flex items-center gap-1.5 bg-[var(--surface)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-[var(--danger)] text-xs font-semibold px-3 py-2 rounded-xl active:scale-95 transition-transform"
                     >
                         <ArrowDown className="w-3.5 h-3.5" />
                         Rút quỹ
@@ -847,23 +847,23 @@ export default function FundPage() {
                 </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-3xl p-5 flex items-center justify-between gap-4 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-blue-50 to-white border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-3xl p-5 flex items-center justify-between gap-4 relative overflow-hidden">
                 <Sparkles className="w-4 h-4 text-blue-300 absolute top-4 right-24" />
                 <div>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1">
+                    <div className="flex items-center gap-1.5 text-xs text-[var(--text-faint)] mb-1">
                         Số dư hiện tại
-                        <button onClick={() => setShowBalance((v) => !v)} className="text-gray-300 hover:text-gray-500">
+                        <button onClick={() => setShowBalance((v) => !v)} className="text-[var(--text-faint)] hover:text-[var(--text-muted)]">
                             {showBalance ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                         </button>
                     </div>
                     {loading ? (
-                        <div className="h-8 w-36 bg-blue-100/60 rounded-lg animate-pulse" />
+                        <div className="h-8 w-36 bg-[var(--primary-soft)] rounded-lg animate-pulse" />
                     ) : (
-                        <p className="text-2xl font-black text-blue-700">
+                        <p className="text-2xl font-black text-[var(--primary)]">
                             {showBalance ? fmt(summary?.balance ?? 0) : "••••••••"}
                         </p>
                     )}
-                    <p className="text-[11px] text-gray-400 mt-1">
+                    <p className="text-[11px] text-[var(--text-faint)] mt-1">
                         {summary?.updated_at
                             ? `Cập nhật lần cuối: ${new Date(summary.updated_at).toLocaleString("vi-VN")}`
                             : ""}
@@ -872,53 +872,53 @@ export default function FundPage() {
                 <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
                     <Wallet className="w-8 h-8 text-white" />
                     <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center">
-                        <Coins className="w-3.5 h-3.5 text-amber-800" />
+                        <Coins className="w-3.5 h-3.5 text-[var(--warning)]" />
                     </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2.5">
-                <div className="bg-white border border-gray-100 rounded-2xl p-3 space-y-1 shadow-sm">
-                    <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center">
-                        <ArrowUp className="w-3.5 h-3.5 text-emerald-500" />
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 space-y-1 shadow-sm">
+                    <div className="w-6 h-6 rounded-full bg-[var(--success-soft)] flex items-center justify-center">
+                        <ArrowUp className="w-3.5 h-3.5 text-[var(--success)]" />
                     </div>
-                    <p className="text-[10px] text-gray-400">Thu T{filterMonth}/{filterYear}</p>
-                    <p className="text-sm font-bold text-emerald-600">
+                    <p className="text-[10px] text-[var(--text-faint)]">Thu T{filterMonth}/{filterYear}</p>
+                    <p className="text-sm font-bold text-[var(--success)]">
                         +{fmt(summary?.month_overview?.total_thu ?? 0)}
                     </p>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl p-3 space-y-1 shadow-sm">
-                    <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center">
-                        <ArrowDown className="w-3.5 h-3.5 text-red-400" />
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 space-y-1 shadow-sm">
+                    <div className="w-6 h-6 rounded-full bg-[var(--danger-soft)] flex items-center justify-center">
+                        <ArrowDown className="w-3.5 h-3.5 text-[var(--danger)]" />
                     </div>
-                    <p className="text-[10px] text-gray-400">Chi T{filterMonth}/{filterYear}</p>
-                    <p className="text-sm font-bold text-red-500">
+                    <p className="text-[10px] text-[var(--text-faint)]">Chi T{filterMonth}/{filterYear}</p>
+                    <p className="text-sm font-bold text-[var(--danger)]">
                         -{fmt(summary?.month_overview?.total_chi ?? 0)}
                     </p>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl p-3 space-y-1 shadow-sm">
-                    <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center">
-                        <Receipt className="w-3.5 h-3.5 text-blue-500" />
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 space-y-1 shadow-sm">
+                    <div className="w-6 h-6 rounded-full bg-[var(--primary-soft)] flex items-center justify-center">
+                        <Receipt className="w-3.5 h-3.5 text-[var(--primary)]" />
                     </div>
-                    <p className="text-[10px] text-gray-400">Giao dịch</p>
-                    <p className="text-sm font-bold text-gray-900">{txs.length}</p>
+                    <p className="text-[10px] text-[var(--text-faint)]">Giao dịch</p>
+                    <p className="text-sm font-bold text-[var(--text)]">{txs.length}</p>
                 </div>
             </div>
 
             <section>
                 <div className="flex items-center justify-between mb-2 px-0.5">
-                    <h3 className="text-sm font-bold text-gray-900">Nguồn thu</h3>
-                    <Link href="/fund/thu" className="text-xs font-semibold text-blue-600">
+                    <h3 className="text-sm font-bold text-[var(--text)]">Nguồn thu</h3>
+                    <Link href="/fund/thu" className="text-xs font-semibold text-[var(--primary)]">
                         Xem tất cả
                     </Link>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-50 shadow-sm">
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl divide-y divide-[var(--border)] shadow-sm">
                     {loading ? (
                         <div className="p-4 space-y-2">
-                            {[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-gray-50 rounded-xl animate-pulse" />)}
+                            {[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-[var(--surface-muted)] rounded-xl animate-pulse" />)}
                         </div>
                     ) : recentThu.length === 0 ? (
-                        <p className="px-4 py-6 text-xs text-gray-400 text-center">Chưa có khoản thu nào</p>
+                        <p className="px-4 py-6 text-xs text-[var(--text-faint)] text-center">Chưa có khoản thu nào</p>
                     ) : (
                         recentThu.map((tx) => {
                             const Icon = CATEGORY_ICONS[tx.category] ?? MoreHorizontal;
@@ -929,12 +929,12 @@ export default function FundPage() {
                                         <Icon className={`w-4 h-4 ${color.ic}`} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{tx.title}</p>
-                                        <p className="text-[11px] text-gray-400">
+                                        <p className="text-sm font-semibold text-[var(--text)] truncate">{tx.title}</p>
+                                        <p className="text-[11px] text-[var(--text-faint)]">
                                             {CATEGORY_LABELS[tx.category]} · {new Date(tx.created_at).toLocaleDateString("vi-VN")}
                                         </p>
                                     </div>
-                                    <span className="text-sm font-bold text-emerald-600 whitespace-nowrap">+{fmt(tx.amount)}</span>
+                                    <span className="text-sm font-bold text-[var(--success)] whitespace-nowrap">+{fmt(tx.amount)}</span>
                                 </div>
                             );
                         })
@@ -944,18 +944,18 @@ export default function FundPage() {
 
             <section>
                 <div className="flex items-center justify-between mb-2 px-0.5">
-                    <h3 className="text-sm font-bold text-gray-900">Khoản chi</h3>
-                    <Link href="/fund/chi" className="text-xs font-semibold text-blue-600">
+                    <h3 className="text-sm font-bold text-[var(--text)]">Khoản chi</h3>
+                    <Link href="/fund/chi" className="text-xs font-semibold text-[var(--primary)]">
                         Xem tất cả
                     </Link>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-50 shadow-sm">
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl divide-y divide-[var(--border)] shadow-sm">
                     {loading ? (
                         <div className="p-4 space-y-2">
-                            {[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-gray-50 rounded-xl animate-pulse" />)}
+                            {[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-[var(--surface-muted)] rounded-xl animate-pulse" />)}
                         </div>
                     ) : recentChi.length === 0 ? (
-                        <p className="px-4 py-6 text-xs text-gray-400 text-center">Chưa có khoản chi nào</p>
+                        <p className="px-4 py-6 text-xs text-[var(--text-faint)] text-center">Chưa có khoản chi nào</p>
                     ) : (
                         recentChi.map((tx) => {
                             const Icon = CATEGORY_ICONS[tx.category] ?? MoreHorizontal;
@@ -966,12 +966,12 @@ export default function FundPage() {
                                         <Icon className={`w-4 h-4 ${color.ic}`} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{tx.title}</p>
-                                        <p className="text-[11px] text-gray-400">
+                                        <p className="text-sm font-semibold text-[var(--text)] truncate">{tx.title}</p>
+                                        <p className="text-[11px] text-[var(--text-faint)]">
                                             {CATEGORY_LABELS[tx.category]} · {new Date(tx.created_at).toLocaleDateString("vi-VN")}
                                         </p>
                                     </div>
-                                    <span className="text-sm font-bold text-red-500 whitespace-nowrap">-{fmt(tx.amount)}</span>
+                                    <span className="text-sm font-bold text-[var(--danger)] whitespace-nowrap">-{fmt(tx.amount)}</span>
                                 </div>
                             );
                         })
@@ -981,18 +981,18 @@ export default function FundPage() {
 
             <section>
                 <div className="flex items-center justify-between mb-2 px-0.5">
-                    <h3 className="text-sm font-bold text-gray-900">Lịch sử giao dịch</h3>
-                    <Link href="/fund/transactions" className="text-xs font-semibold text-blue-600">
+                    <h3 className="text-sm font-bold text-[var(--text)]">Lịch sử giao dịch</h3>
+                    <Link href="/fund/transactions" className="text-xs font-semibold text-[var(--primary)]">
                         Xem tất cả
                     </Link>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-50 shadow-sm">
+                <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl divide-y divide-[var(--border)] shadow-sm">
                     {loading ? (
                         <div className="p-4 space-y-2">
-                            {[...Array(4)].map((_, i) => <div key={i} className="h-12 bg-gray-50 rounded-xl animate-pulse" />)}
+                            {[...Array(4)].map((_, i) => <div key={i} className="h-12 bg-[var(--surface-muted)] rounded-xl animate-pulse" />)}
                         </div>
                     ) : recentTxs.length === 0 ? (
-                        <p className="px-4 py-6 text-xs text-gray-400 text-center">Chưa có giao dịch nào</p>
+                        <p className="px-4 py-6 text-xs text-[var(--text-faint)] text-center">Chưa có giao dịch nào</p>
                     ) : (
                         recentTxs.map((tx) => {
                             const Icon = CATEGORY_ICONS[tx.category] ?? MoreHorizontal;
@@ -1003,18 +1003,18 @@ export default function FundPage() {
                                         <Icon className={`w-4 h-4 ${color.ic}`} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{tx.title}</p>
-                                        <p className="text-[11px] text-gray-400">
+                                        <p className="text-sm font-semibold text-[var(--text)] truncate">{tx.title}</p>
+                                        <p className="text-[11px] text-[var(--text-faint)]">
                                             {new Date(tx.created_at).toLocaleString("vi-VN", {
                                                 day: "2-digit", month: "2-digit", year: "numeric",
                                                 hour: "2-digit", minute: "2-digit",
                                             })}
                                         </p>
                                     </div>
-                                    <span className={`text-sm font-bold whitespace-nowrap ${tx.type === "thu" ? "text-emerald-600" : "text-red-500"}`}>
+                                    <span className={`text-sm font-bold whitespace-nowrap ${tx.type === "thu" ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
                                         {tx.type === "thu" ? "+" : "-"}{fmt(tx.amount)}
                                     </span>
-                                    <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                                    <ChevronRight className="w-4 h-4 text-[var(--text-faint)] flex-shrink-0" />
                                 </div>
                             );
                         })

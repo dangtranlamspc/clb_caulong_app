@@ -20,9 +20,9 @@ function getMatchStatus(m: any): "completed" | "ongoing" | "pending" {
 }
 
 function scoreColorClass(mine: number, other: number) {
-    if (mine > other) return "text-emerald-600";
-    if (mine < other) return "text-red-400";
-    return "text-gray-900";
+    if (mine > other) return "text-[var(--success)]";
+    if (mine < other) return "text-[var(--danger)]";
+    return "text-[var(--text)]";
 }
 
 function MatchStatusPill({ status }: { status: "completed" | "ongoing" | "pending" }) {
@@ -72,9 +72,9 @@ function ViewTeamMembersColumn({
 }) {
     return (
         <div>
-            <div className="px-3.5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl mb-2.5">
-                <p className="font-semibold text-gray-900 text-sm truncate">{team?.name ?? "—"}</p>
-                <p className="text-xs text-gray-400">{team?.members?.length ?? 0} người</p>
+            <div className="px-3.5 py-2.5 bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl mb-2.5">
+                <p className="font-semibold text-[var(--text)] text-sm truncate">{team?.name ?? "—"}</p>
+                <p className="text-xs text-[var(--text-faint)]">{team?.members?.length ?? 0} người</p>
             </div>
 
             <div className="space-y-2.5">
@@ -95,13 +95,13 @@ function ViewTeamMembersColumn({
                                     }
                                     : undefined
                             }
-                            className={`w-[78%] sm:w-full px-3.5 py-3 rounded-xl border-2 text-sm bg-white transition-all duration-200 ease-out
+                            className={`w-[78%] sm:w-full px-3.5 py-3 rounded-xl border-2 text-sm bg-[var(--surface)] transition-all duration-200 ease-out
                                 ${!primaryColor && !isMe ? "shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]" : ""}
                                 ${isMe
-                                    ? "border-blue-400 bg-blue-50/40"
+                                    ? "border-blue-400 bg-[var(--primary-soft)]"
                                     : primaryColor
                                         ? ""
-                                        : "border-gray-100"
+                                        : "border-[var(--border)]"
                                 }`}
                         >
                             <div className="flex items-center gap-2 min-w-0 mb-1.5">
@@ -113,7 +113,7 @@ function ViewTeamMembersColumn({
                                     className="w-7 h-7 rounded-full object-cover flex-shrink-0"
                                     alt=""
                                 />
-                                <span className="text-gray-800 font-medium break-words leading-snug min-w-0 flex-1">
+                                <span className="text-[var(--text)] font-medium break-words leading-snug min-w-0 flex-1">
                                     {m.users?.full_name ?? m.guest_full_name ?? "—"}
                                 </span>
                                 {isMe && <MemberBadge />}
@@ -121,7 +121,7 @@ function ViewTeamMembersColumn({
 
                             <div className="flex items-center gap-1.5 flex-wrap pl-9">
                                 <span
-                                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.role === "nam" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"
+                                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${m.role === "nam" ? "bg-[var(--primary-soft)] text-[var(--primary)]" : "bg-[var(--pink-soft)] text-[var(--pink)]"
                                         }`}
                                 >
                                     {m.role === "nam" ? "Nam" : "Nữ"}
@@ -154,7 +154,7 @@ function ViewTeamMembersColumn({
                     );
                 })}
                 {(team?.members ?? []).length === 0 && (
-                    <p className="text-xs text-gray-300 text-center py-3">Chưa có thành viên</p>
+                    <p className="text-xs text-[var(--text-faint)] text-center py-3">Chưa có thành viên</p>
                 )}
             </div>
         </div>
@@ -555,16 +555,16 @@ function MatchLineupsViewModal({
                 onMouseDown={(e) => e.target === e.currentTarget}
             >
                 <div
-                    className={`bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+                    className={`bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-2xl max-h-[88vh] overflow-hidden flex flex-col transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
                         }`}
                 >
-                    <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0">
-                        <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
-                            {team1?.name} <span className="text-gray-300 font-normal mx-1.5">vs</span> {team2?.name}
+                    <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[var(--border)] flex-shrink-0">
+                        <h3 className="font-bold text-[var(--text)] text-sm sm:text-base truncate">
+                            {team1?.name} <span className="text-[var(--text-faint)] font-normal mx-1.5">vs</span> {team2?.name}
                         </h3>
                         <button
                             onClick={handleClose}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex-shrink-0"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)] flex-shrink-0"
                         >
                             ✕
                         </button>
@@ -572,8 +572,8 @@ function MatchLineupsViewModal({
 
                     <div ref={scrollRef} className={`p-4 sm:p-5 overflow-y-auto flex-1 min-h-0 space-y-5 ${HIDE_SCROLLBAR_CLASS}`}>
                         {matchContents.length > 0 && (
-                            <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-3">
-                                <p className="text-xs text-blue-700 leading-relaxed">
+                            <div className="bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-xl p-3">
+                                <p className="text-xs text-[var(--primary)] leading-relaxed">
                                     Đường nối màu thể hiện các vận động viên đã được ghép cùng nhau thi đấu ở từng nội dung.
                                 </p>
                             </div>
@@ -618,18 +618,18 @@ function MatchLineupsViewModal({
 
                         <div>
                             <div className="flex items-center justify-between mb-2 gap-2">
-                                <h4 className="text-sm font-bold text-gray-900">Đội hình thi đấu</h4>
+                                <h4 className="text-sm font-bold text-[var(--text)]">Đội hình thi đấu</h4>
                                 <MatchStatusPill status={matchStatus} />
                             </div>
 
                             {loading ? (
-                                <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
+                                <div className="flex items-center gap-2 text-sm text-[var(--text-faint)] py-4">
                                     <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                                 </div>
                             ) : lineups.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center gap-1.5 py-8 border border-dashed border-gray-200 rounded-xl">
-                                    <Users className="w-6 h-6 text-gray-300" />
-                                    <p className="text-xs text-gray-400">Chưa có đội hình cho nội dung nào</p>
+                                <div className="flex flex-col items-center justify-center gap-1.5 py-8 border border-dashed border-[var(--border)] rounded-xl">
+                                    <Users className="w-6 h-6 text-[var(--text-faint)]" />
+                                    <p className="text-xs text-[var(--text-faint)]">Chưa có đội hình cho nội dung nào</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2.5">
@@ -638,7 +638,7 @@ function MatchLineupsViewModal({
                                         return (
                                             <div
                                                 key={l.content_id}
-                                                className="relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
+                                                className="relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm"
                                             >
                                                 <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: color }} />
                                                 <div className="pl-4 pr-3.5 py-3">
@@ -651,14 +651,14 @@ function MatchLineupsViewModal({
 
                                                     <div className="space-y-1.5">
                                                         <div className="flex items-start gap-2">
-                                                            <span className="text-[10px] font-semibold text-gray-400 mt-1 w-14 flex-shrink-0 truncate">
+                                                            <span className="text-[10px] font-semibold text-[var(--text-faint)] mt-1 w-14 flex-shrink-0 truncate">
                                                                 {team1?.name}
                                                             </span>
                                                             <div className="flex flex-wrap gap-1 flex-1 min-w-0">
                                                                 {l.team1_player_ids.map((id: string) => (
                                                                     <span
                                                                         key={id}
-                                                                        className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-700 bg-gray-50 border border-gray-100 rounded-md px-1.5 py-0.5"
+                                                                        className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--text)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-md px-1.5 py-0.5"
                                                                     >
                                                                         {memberName(team1, id)}
                                                                         {memberIsMe(team1, id) && <MemberBadge />}
@@ -667,14 +667,14 @@ function MatchLineupsViewModal({
                                                             </div>
                                                         </div>
                                                         <div className="flex items-start gap-2">
-                                                            <span className="text-[10px] font-semibold text-gray-400 mt-1 w-14 flex-shrink-0 truncate">
+                                                            <span className="text-[10px] font-semibold text-[var(--text-faint)] mt-1 w-14 flex-shrink-0 truncate">
                                                                 {team2?.name}
                                                             </span>
                                                             <div className="flex flex-wrap gap-1 flex-1 min-w-0">
                                                                 {l.team2_player_ids.map((id: string) => (
                                                                     <span
                                                                         key={id}
-                                                                        className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-700 bg-gray-50 border border-gray-100 rounded-md px-1.5 py-0.5"
+                                                                        className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--text)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-md px-1.5 py-0.5"
                                                                     >
                                                                         {memberName(team2, id)}
                                                                         {memberIsMe(team2, id) && <MemberBadge />}
@@ -692,10 +692,10 @@ function MatchLineupsViewModal({
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-end px-4 sm:px-5 py-3 sm:py-3.5 border-t border-gray-100 flex-shrink-0">
+                    <div className="flex items-center justify-end px-4 sm:px-5 py-3 sm:py-3.5 border-t border-[var(--border)] flex-shrink-0">
                         <button
                             onClick={handleClose}
-                            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                            className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                         >
                             Đóng
                         </button>
@@ -814,7 +814,7 @@ export default function TournamentMatchDetailPage() {
     const isDraw = isCompleted && match.team1_score === match.team2_score;
 
     return (
-        <div className="min-h-screen bg-[#F4F6FA]">
+        <div className="min-h-screen bg-[var(--bg)]">
             <div
                 className="sticky top-0 z-30"
                 style={{
@@ -828,15 +828,15 @@ export default function TournamentMatchDetailPage() {
                 <div className="max-w-lg lg:max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 -ml-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                        className="p-2 -ml-2 hover:bg-[var(--surface-hover)] active:bg-[var(--border-strong)] rounded-lg transition-colors flex-shrink-0"
                     >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
                     </button>
-                    <h1 className="text-base font-bold text-gray-900 truncate flex-1">Chi tiết trận đấu</h1>
+                    <h1 className="text-base font-bold text-[var(--text)] truncate flex-1">Chi tiết trận đấu</h1>
                     {match && (
                         <button
                             onClick={() => setShowLineupsModal(true)}
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 rounded-full px-3 py-1.5 transition-colors flex-shrink-0"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--surface-hover)] rounded-full px-3 py-1.5 transition-colors flex-shrink-0"
                         >
                             <Users className="w-3.5 h-3.5" /> Xem trận
                         </button>
@@ -845,49 +845,49 @@ export default function TournamentMatchDetailPage() {
                         onClick={goToActivityEventsTab}
                         title="Về trang hoạt động"
                         aria-label="Về trang hoạt động"
-                        className="p-2 -mr-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                        className="p-2 -mr-2 hover:bg-[var(--surface-hover)] active:bg-[var(--border-strong)] rounded-lg transition-colors flex-shrink-0"
                     >
-                        <Home className="w-5 h-5 text-gray-600" />
+                        <Home className="w-5 h-5 text-[var(--text-muted)]" />
                     </button>
                 </div>
             </div>
 
             <div className="max-w-lg lg:max-w-3xl mx-auto px-4 pt-4 pb-8">
                 {loading ? (
-                    <div className="flex items-center justify-center py-20 text-gray-400 text-sm gap-2">
+                    <div className="flex items-center justify-center py-20 text-[var(--text-faint)] text-sm gap-2">
                         <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                     </div>
                 ) : notFound || !match ? (
-                    <div className="bg-white rounded-2xl py-16 text-center border border-dashed border-gray-200">
-                        <p className="text-gray-400 text-sm">Không tìm thấy trận đấu</p>
+                    <div className="bg-[var(--surface)] rounded-2xl py-16 text-center border border-dashed border-[var(--border)]">
+                        <p className="text-[var(--text-faint)] text-sm">Không tìm thấy trận đấu</p>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-5">
+                    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm px-5 py-5">
                         <div className="flex items-center justify-center gap-2 flex-wrap">
                             <span className="inline-flex items-center gap-1.5">
-                                <span className="text-base font-bold text-gray-900">{match.team1?.name ?? "—"}</span>
+                                <span className="text-base font-bold text-[var(--text)]">{match.team1?.name ?? "—"}</span>
                                 {isTeam1Mine && <MyTeamBadge />}
                             </span>
-                            <span className="text-xs text-gray-300 font-medium">vs</span>
+                            <span className="text-xs text-[var(--text-faint)] font-medium">vs</span>
                             <span className="inline-flex items-center gap-1.5">
-                                <span className="text-base font-bold text-gray-900">{match.team2?.name ?? "—"}</span>
+                                <span className="text-base font-bold text-[var(--text)]">{match.team2?.name ?? "—"}</span>
                                 {isTeam2Mine && <MyTeamBadge />}
                             </span>
                         </div>
                         {metaParts.length > 0 && (
-                            <p className="text-center text-xs text-gray-400 mt-1 mb-5">{metaParts.join(" · ")}</p>
+                            <p className="text-center text-xs text-[var(--text-faint)] mt-1 mb-5">{metaParts.join(" · ")}</p>
                         )}
 
                         {contentScores.length > 0 && (
                             <div className="space-y-3 mb-5">
                                 {contentScores.map((cs) => (
                                     <div key={cs.content_id} className="flex items-center justify-between gap-3">
-                                        <span className="text-sm font-semibold text-gray-600">{cs.label}</span>
-                                        <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-5 py-3 min-w-[128px] justify-center">
+                                        <span className="text-sm font-semibold text-[var(--text-muted)]">{cs.label}</span>
+                                        <div className="flex items-center gap-3 bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl px-5 py-3 min-w-[128px] justify-center">
                                             <span className={`text-2xl font-black tabular-nums ${scoreColorClass(cs.score1, cs.score2)}`}>
                                                 {cs.score1}
                                             </span>
-                                            <span className="text-gray-300 font-semibold">-</span>
+                                            <span className="text-[var(--text-faint)] font-semibold">-</span>
                                             <span className={`text-2xl font-black tabular-nums ${scoreColorClass(cs.score2, cs.score1)}`}>
                                                 {cs.score2}
                                             </span>
@@ -898,13 +898,13 @@ export default function TournamentMatchDetailPage() {
                         )}
 
                         {isCompleted && (
-                            <div className="bg-blue-50 rounded-xl px-4 py-3 mb-4">
-                                <p className="text-xs font-semibold text-blue-500 mb-1">Tổng điểm</p>
+                            <div className="bg-[var(--primary-soft)] rounded-xl px-4 py-3 mb-4">
+                                <p className="text-xs font-semibold text-[var(--primary)] mb-1">Tổng điểm</p>
                                 <div className="flex items-center justify-center gap-4">
                                     <span className={`text-4xl font-black tabular-nums ${scoreColorClass(match.team1_score, match.team2_score)}`}>
                                         {match.team1_score}
                                     </span>
-                                    <span className="text-gray-300 font-semibold text-2xl">-</span>
+                                    <span className="text-[var(--text-faint)] font-semibold text-2xl">-</span>
                                     <span className={`text-4xl font-black tabular-nums ${scoreColorClass(match.team2_score, match.team1_score)}`}>
                                         {match.team2_score}
                                     </span>

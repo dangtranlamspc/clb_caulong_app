@@ -72,13 +72,13 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 const TYPE_COLOR: Record<string, string> = {
-    admin_grant: "bg-emerald-100 text-emerald-700",
-    admin_deduct: "bg-red-100 text-red-700",
-    gift: "bg-blue-100 text-blue-700",
+    admin_grant: "bg-[var(--success-soft)] text-[var(--success)]",
+    admin_deduct: "bg-[var(--danger-soft)] text-[var(--danger)]",
+    gift: "bg-[var(--primary-soft)] text-[var(--primary)]",
     self_add: "bg-teal-100 text-teal-700",
-    self_deduct: "bg-orange-100 text-orange-700",
-    to_club: "bg-amber-100 text-amber-700",
-    admin_transfer: "bg-purple-100 text-purple-700",
+    self_deduct: "bg-[var(--warning-soft)] text-[var(--warning)]",
+    to_club: "bg-[var(--warning-soft)] text-[var(--warning)]",
+    admin_transfer: "bg-[var(--purple-soft)] text-[var(--purple)]",
 };
 
 export default function DrinksOverviewPage() {
@@ -191,13 +191,13 @@ export default function DrinksOverviewPage() {
             </div>
 
             <div>
-                <p className="text-sm font-semibold text-gray-700 mb-2">Theo từng loại nước đang lưu hành</p>
+                <p className="text-sm font-semibold text-[var(--text)] mb-2">Theo từng loại nước đang lưu hành</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     {loadingBreakdown && breakdown.length === 0 && (
-                        <div className="col-span-full text-center py-6 text-gray-400 text-sm">Đang tải...</div>
+                        <div className="col-span-full text-center py-6 text-[var(--text-faint)] text-sm">Đang tải...</div>
                     )}
                     {!loadingBreakdown && breakdown.length === 0 && (
-                        <div className="col-span-full text-center py-6 text-gray-400 text-sm">Chưa có nước nào đang lưu hành</div>
+                        <div className="col-span-full text-center py-6 text-[var(--text-faint)] text-sm">Chưa có nước nào đang lưu hành</div>
                     )}
                     {breakdown.map((b) => (
                         <DrinkBreakdownCard key={b.drink_id} drink={b} onClick={() => setDrinkMembersTarget(b)} />
@@ -207,12 +207,12 @@ export default function DrinksOverviewPage() {
 
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                 <div className="relative w-full sm:w-72">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
                     <input
                         value={search}
                         onChange={(e) => { setPage(1); setSearch(e.target.value); }}
                         placeholder="Tìm theo tên, SĐT..."
-                        className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
                     />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:flex-wrap sm:justify-end">
@@ -227,7 +227,7 @@ export default function DrinksOverviewPage() {
                     <div className="flex gap-2 order-2 sm:contents">
                         <button
                             onClick={() => setRequestsOpen(true)}
-                            className="relative flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+                            className="relative flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-hover)] shadow-sm"
                         >
                             <ClipboardList className="w-4 h-4" />
                             Yêu cầu chờ duyệt
@@ -239,7 +239,7 @@ export default function DrinksOverviewPage() {
                         </button>
                         <button
                             onClick={() => setHistoryOpen(true)}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-hover)] shadow-sm"
                         >
                             <History className="w-4 h-4" />
                             Lịch sử giao dịch
@@ -248,49 +248,49 @@ export default function DrinksOverviewPage() {
                 </div>
             </div>
 
-            <div className="sm:bg-white sm:rounded-2xl sm:shadow-sm sm:border sm:border-gray-100 overflow-hidden">
+            <div className="sm:bg-[var(--surface)] sm:rounded-2xl sm:shadow-sm sm:border sm:border-[var(--border)] overflow-hidden">
                 <div className="sm:hidden p-3 space-y-3">
                     {loadingMembers && (
-                        <div className="text-center py-10 text-gray-400 text-sm">Đang tải...</div>
+                        <div className="text-center py-10 text-[var(--text-faint)] text-sm">Đang tải...</div>
                     )}
                     {!loadingMembers && members.length === 0 && (
-                        <div className="text-center py-10 text-gray-400 text-sm">Chưa có thành viên nào sở hữu nước</div>
+                        <div className="text-center py-10 text-[var(--text-faint)] text-sm">Chưa có thành viên nào sở hữu nước</div>
                     )}
                     {members.map((m) => (
-                        <div key={m.user_id} className="p-4 space-y-3 rounded-2xl border border-gray-100 shadow-md bg-white">
+                        <div key={m.user_id} className="p-4 space-y-3 rounded-2xl border border-[var(--border)] shadow-md bg-[var(--surface)]">
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2.5 min-w-0">
                                     {m.avatar_url ? (
                                         <img src={m.avatar_url} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
                                     ) : (
-                                        <div className="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-xs flex-shrink-0">
+                                        <div className="w-9 h-9 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold text-xs flex-shrink-0">
                                             {m.full_name?.[0]?.toUpperCase()}
                                         </div>
                                     )}
                                     <div className="min-w-0">
-                                        <p className="font-semibold text-gray-900 text-sm truncate">{m.full_name}</p>
-                                        {m.phone && <p className="text-xs text-gray-400">{m.phone}</p>}
+                                        <p className="font-semibold text-[var(--text)] text-sm truncate">{m.full_name}</p>
+                                        {m.phone && <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>}
                                     </div>
                                 </div>
                                 <div className="text-right flex-shrink-0">
-                                    <p className="text-xs text-gray-400">Tổng SL</p>
-                                    <p className="font-bold text-sky-600 text-lg">{formatNumber(m.total_quantity)}</p>
+                                    <p className="text-xs text-[var(--text-faint)]">Tổng SL</p>
+                                    <p className="font-bold text-[var(--primary)] text-lg">{formatNumber(m.total_quantity)}</p>
                                 </div>
                             </div>
 
                             <div className="flex flex-wrap gap-2">
                                 {m.drinks.map((d) => (
-                                    <div key={d.drink_id} className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl bg-sky-50 text-sky-700">
-                                        <div className="w-14 h-18 rounded-lg bg-white border border-sky-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                    <div key={d.drink_id} className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
+                                        <div className="w-14 h-18 rounded-lg bg-[var(--surface)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                                             {d.image_url ? (
                                                 <img src={d.image_url} alt={d.name} className="w-full h-full object-contain p-0.5" />
                                             ) : (
-                                                <GlassWater className="w-5 h-5 text-sky-400" />
+                                                <GlassWater className="w-5 h-5 text-[var(--primary)]" />
                                             )}
                                         </div>
                                         <div className="leading-tight">
                                             <p className="text-xs font-semibold">{d.name}</p>
-                                            <p className="text-[11px] text-sky-500">SL: {d.quantity}</p>
+                                            <p className="text-[11px] text-[var(--primary)]">SL: {d.quantity}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -310,7 +310,7 @@ export default function DrinksOverviewPage() {
 
                 <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-sm">
-                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                        <thead className="bg-[var(--surface-muted)] text-[var(--text-muted)] text-xs uppercase">
                             <tr>
                                 <th className="text-left px-4 py-3 font-semibold whitespace-nowrap">Thành viên</th>
                                 <th className="text-left px-4 py-3 font-semibold">Đang sở hữu</th>
@@ -318,50 +318,50 @@ export default function DrinksOverviewPage() {
                                 <th className="text-right px-4 py-3 font-semibold whitespace-nowrap">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-[var(--border)]">
                             {loadingMembers && (
-                                <tr><td colSpan={4} className="text-center py-8 text-gray-400">Đang tải...</td></tr>
+                                <tr><td colSpan={4} className="text-center py-8 text-[var(--text-faint)]">Đang tải...</td></tr>
                             )}
                             {!loadingMembers && members.length === 0 && (
-                                <tr><td colSpan={4} className="text-center py-8 text-gray-400">Chưa có thành viên nào sở hữu nước</td></tr>
+                                <tr><td colSpan={4} className="text-center py-8 text-[var(--text-faint)]">Chưa có thành viên nào sở hữu nước</td></tr>
                             )}
                             {members.map((m) => (
-                                <tr key={m.user_id} className="hover:bg-gray-50">
+                                <tr key={m.user_id} className="hover:bg-[var(--surface-hover)]">
                                     <td className="px-4 py-3 whitespace-nowrap">
                                         <div className="flex items-center gap-2.5">
                                             {m.avatar_url ? (
                                                 <img src={m.avatar_url} className="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
                                             ) : (
-                                                <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-xs flex-shrink-0">
+                                                <div className="w-8 h-8 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold text-xs flex-shrink-0">
                                                     {m.full_name?.[0]?.toUpperCase()}
                                                 </div>
                                             )}
                                             <div>
-                                                <p className="font-semibold text-gray-900">{m.full_name}</p>
-                                                {m.phone && <p className="text-xs text-gray-400">{m.phone}</p>}
+                                                <p className="font-semibold text-[var(--text)]">{m.full_name}</p>
+                                                {m.phone && <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>}
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex flex-nowrap gap-2">
                                             {m.drinks.map((d) => (
-                                                <div key={d.drink_id} className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl bg-sky-50 text-sky-700 flex-shrink-0">
-                                                    <div className="w-14 h-20 rounded-lg bg-white border border-sky-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                <div key={d.drink_id} className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl bg-[var(--primary-soft)] text-[var(--primary)] flex-shrink-0">
+                                                    <div className="w-14 h-20 rounded-lg bg-[var(--surface)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                                                         {d.image_url ? (
                                                             <img src={d.image_url} alt={d.name} className="w-full h-full object-contain p-0.5" />
                                                         ) : (
-                                                            <GlassWater className="w-5 h-5 text-sky-400" />
+                                                            <GlassWater className="w-5 h-5 text-[var(--primary)]" />
                                                         )}
                                                     </div>
                                                     <div className="leading-tight whitespace-nowrap">
                                                         <p className="text-xs font-semibold">{d.name}</p>
-                                                        <p className="text-[11px] text-sky-500">SL: {d.quantity}</p>
+                                                        <p className="text-[11px] text-[var(--primary)]">SL: {d.quantity}</p>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 text-right font-bold text-gray-900 whitespace-nowrap">{formatNumber(m.total_quantity)}</td>
+                                    <td className="px-4 py-3 text-right font-bold text-[var(--text)] whitespace-nowrap">{formatNumber(m.total_quantity)}</td>
                                     <td className="px-4 py-3 text-right whitespace-nowrap">
                                         <button
                                             onClick={() => setAdjustTarget(m)}
@@ -377,10 +377,10 @@ export default function DrinksOverviewPage() {
                 </div>
 
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 py-3 border-t border-gray-100">
-                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Trước</button>
-                        <span className="text-sm text-gray-500">Trang {page}/{totalPages}</span>
-                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Sau</button>
+                    <div className="flex items-center justify-center gap-2 py-3 border-t border-[var(--border)]">
+                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] disabled:opacity-40">Trước</button>
+                        <span className="text-sm text-[var(--text-muted)]">Trang {page}/{totalPages}</span>
+                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] disabled:opacity-40">Sau</button>
                     </div>
                 )}
             </div>
@@ -442,15 +442,15 @@ function StatCard({ icon: Icon, label, value, color, onClick }: { icon: any; lab
     return (
         <div
             onClick={onClick}
-            className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 ${clickable ? "cursor-pointer hover:border-sky-300 hover:shadow-md transition-all" : ""
+            className={`bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-4 flex items-center gap-3 ${clickable ? "cursor-pointer hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:shadow-md transition-all" : ""
                 }`}
         >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
                 <Icon className="w-5 h-5 text-white" />
             </div>
             <div className="min-w-0">
-                <p className="text-xs text-gray-400 truncate">{label}</p>
-                <p className="text-base font-bold text-gray-900 truncate">{value}</p>
+                <p className="text-xs text-[var(--text-faint)] truncate">{label}</p>
+                <p className="text-base font-bold text-[var(--text)] truncate">{value}</p>
             </div>
         </div>
     );
@@ -460,19 +460,19 @@ function DrinkBreakdownCard({ drink, onClick }: { drink: DrinkBreakdown; onClick
     return (
         <button
             onClick={onClick}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 flex items-center gap-3 text-left hover:border-sky-300 hover:shadow-md transition-all"
+            className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-3 flex items-center gap-3 text-left hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:shadow-md transition-all"
         >
-            <div className="w-11 h-11 rounded-xl bg-sky-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <div className="w-11 h-11 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {drink.image_url ? (
                     <img src={drink.image_url} alt={drink.name} className="w-full h-full object-contain p-1" />
                 ) : (
-                    <GlassWater className="w-5 h-5 text-sky-400" />
+                    <GlassWater className="w-5 h-5 text-[var(--primary)]" />
                 )}
             </div>
             <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-900 truncate">{drink.name}</p>
-                <p className="text-base font-bold text-sky-600">{formatNumber(drink.total_quantity)}</p>
-                <p className="text-[11px] text-gray-400">{formatNumber(drink.member_count)} thành viên</p>
+                <p className="text-xs font-semibold text-[var(--text)] truncate">{drink.name}</p>
+                <p className="text-base font-bold text-[var(--primary)]">{formatNumber(drink.total_quantity)}</p>
+                <p className="text-[11px] text-[var(--text-faint)]">{formatNumber(drink.member_count)} thành viên</p>
             </div>
         </button>
     );
@@ -532,75 +532,75 @@ function DrinkMembersModal({ drink, onClose }: { drink: DrinkBreakdown; onClose:
                 onClick={requestClose}
             />
             <div
-                className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
+                className={`relative bg-[var(--surface)] rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
                     }`}
             >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
                     <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-sky-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-[var(--primary-soft)] flex items-center justify-center overflow-hidden flex-shrink-0">
                             {drink.image_url ? (
                                 <img src={drink.image_url} className="w-full h-full object-contain p-1" alt="" />
                             ) : (
-                                <GlassWater className="w-4 h-4 text-sky-400" />
+                                <GlassWater className="w-4 h-4 text-[var(--primary)]" />
                             )}
                         </div>
                         <div className="min-w-0">
-                            <h3 className="font-bold text-gray-900 truncate">{drink.name}</h3>
-                            <p className="text-xs text-gray-400">
+                            <h3 className="font-bold text-[var(--text)] truncate">{drink.name}</h3>
+                            <p className="text-xs text-[var(--text-faint)]">
                                 {formatNumber(drink.total_quantity)} chai · {formatNumber(drink.member_count)} thành viên
                             </p>
                         </div>
                     </div>
-                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 flex-shrink-0">
+                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)] flex-shrink-0">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                <div className="px-5 py-3 border-b border-gray-100 flex-shrink-0">
+                <div className="px-5 py-3 border-b border-[var(--border)] flex-shrink-0">
                     <div className="relative">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
                         <input
                             value={search}
                             onChange={(e) => { setPage(1); setSearch(e.target.value); }}
                             placeholder="Tìm theo tên, SĐT..."
-                            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+                            className="w-full pl-9 pr-3 py-2 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
                         />
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+                <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)]">
                     {loading && (
-                        <div className="text-center py-10 text-gray-400 text-sm">Đang tải...</div>
+                        <div className="text-center py-10 text-[var(--text-faint)] text-sm">Đang tải...</div>
                     )}
                     {!loading && rows.length === 0 && (
-                        <div className="text-center py-10 text-gray-400 text-sm">Không có thành viên nào sở hữu</div>
+                        <div className="text-center py-10 text-[var(--text-faint)] text-sm">Không có thành viên nào sở hữu</div>
                     )}
                     {!loading && rows.map((r) => (
                         <div key={r.user_id} className="p-4 flex items-center gap-3">
                             {r.avatar_url ? (
                                 <img src={r.avatar_url} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
                             ) : (
-                                <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-xs flex-shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold text-xs flex-shrink-0">
                                     {r.full_name?.[0]?.toUpperCase()}
                                 </div>
                             )}
                             <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-gray-900 text-sm truncate">{r.full_name}</p>
-                                {r.phone && <p className="text-xs text-gray-400">{r.phone}</p>}
+                                <p className="font-semibold text-[var(--text)] text-sm truncate">{r.full_name}</p>
+                                {r.phone && <p className="text-xs text-[var(--text-faint)]">{r.phone}</p>}
                             </div>
                             <div className="text-right flex-shrink-0">
-                                <p className="text-xs text-gray-400">Sở hữu</p>
-                                <p className="font-bold text-gray-900">{r.quantity}</p>
+                                <p className="text-xs text-[var(--text-faint)]">Sở hữu</p>
+                                <p className="font-bold text-[var(--text)]">{r.quantity}</p>
                             </div>
                         </div>
                     ))}
                 </div>
 
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 py-3 border-t border-gray-100 flex-shrink-0">
-                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Trước</button>
-                        <span className="text-sm text-gray-500">Trang {page}/{totalPages}</span>
-                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Sau</button>
+                    <div className="flex items-center justify-center gap-2 py-3 border-t border-[var(--border)] flex-shrink-0">
+                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] disabled:opacity-40">Trước</button>
+                        <span className="text-sm text-[var(--text-muted)]">Trang {page}/{totalPages}</span>
+                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] disabled:opacity-40">Sau</button>
                     </div>
                 )}
             </div>
@@ -664,37 +664,37 @@ function TotalMembersModal({ onClose }: { onClose: () => void }) {
                 onClick={requestClose}
             />
             <div
-                className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
+                className={`relative bg-[var(--surface)] rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
                     }`}
             >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
                     <div>
-                        <h3 className="font-bold text-gray-900">Thành viên sở hữu nước</h3>
-                        <p className="text-xs text-gray-400">Danh sách toàn bộ thành viên đang có nước trong kho</p>
+                        <h3 className="font-bold text-[var(--text)]">Thành viên sở hữu nước</h3>
+                        <p className="text-xs text-[var(--text-faint)]">Danh sách toàn bộ thành viên đang có nước trong kho</p>
                     </div>
-                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 flex-shrink-0">
+                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)] flex-shrink-0">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                <div className="px-5 py-3 border-b border-gray-100 flex-shrink-0">
+                <div className="px-5 py-3 border-b border-[var(--border)] flex-shrink-0">
                     <div className="relative">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
                         <input
                             value={search}
                             onChange={(e) => { setPage(1); setSearch(e.target.value); }}
                             placeholder="Tìm theo tên, SĐT..."
-                            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+                            className="w-full pl-9 pr-3 py-2 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
                         />
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto no-scrollbar divide-y divide-gray-100">
+                <div className="flex-1 overflow-y-auto no-scrollbar divide-y divide-[var(--border)]">
                     {loading && (
-                        <div className="text-center py-10 text-gray-400 text-sm">Đang tải...</div>
+                        <div className="text-center py-10 text-[var(--text-faint)] text-sm">Đang tải...</div>
                     )}
                     {!loading && rows.length === 0 && (
-                        <div className="text-center py-10 text-gray-400 text-sm">Không tìm thấy thành viên</div>
+                        <div className="text-center py-10 text-[var(--text-faint)] text-sm">Không tìm thấy thành viên</div>
                     )}
                     {!loading && rows.map((m) => (
                         <div key={m.user_id} className="p-4 space-y-2.5">
@@ -703,23 +703,23 @@ function TotalMembersModal({ onClose }: { onClose: () => void }) {
                                     {m.avatar_url ? (
                                         <img src={m.avatar_url} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
                                     ) : (
-                                        <div className="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-xs flex-shrink-0">
+                                        <div className="w-9 h-9 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold text-xs flex-shrink-0">
                                             {m.full_name?.[0]?.toUpperCase()}
                                         </div>
                                     )}
                                     <div className="min-w-0">
-                                        <p className="font-semibold text-gray-900 text-sm truncate">{m.full_name}</p>
-                                        {m.phone && <p className="text-xs text-gray-400">{m.phone}</p>}
+                                        <p className="font-semibold text-[var(--text)] text-sm truncate">{m.full_name}</p>
+                                        {m.phone && <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>}
                                     </div>
                                 </div>
                                 <div className="text-right flex-shrink-0">
-                                    <p className="text-xs text-gray-400">Tổng SL</p>
-                                    <p className="font-bold text-sky-600 text-lg">{formatNumber(m.total_quantity)}</p>
+                                    <p className="text-xs text-[var(--text-faint)]">Tổng SL</p>
+                                    <p className="font-bold text-[var(--primary)] text-lg">{formatNumber(m.total_quantity)}</p>
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-1.5">
                                 {m.drinks.map((d) => (
-                                    <span key={d.drink_id} className="px-2 py-1 rounded-lg bg-sky-50 text-sky-700 text-[11px] font-semibold">
+                                    <span key={d.drink_id} className="px-2 py-1 rounded-lg bg-[var(--primary-soft)] text-[var(--primary)] text-[11px] font-semibold">
                                         {d.name}: {d.quantity}
                                     </span>
                                 ))}
@@ -729,10 +729,10 @@ function TotalMembersModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 py-3 border-t border-gray-100 flex-shrink-0">
-                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Trước</button>
-                        <span className="text-sm text-gray-500">Trang {page}/{totalPages}</span>
-                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Sau</button>
+                    <div className="flex items-center justify-center gap-2 py-3 border-t border-[var(--border)] flex-shrink-0">
+                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] disabled:opacity-40">Trước</button>
+                        <span className="text-sm text-[var(--text-muted)]">Trang {page}/{totalPages}</span>
+                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] disabled:opacity-40">Sau</button>
                     </div>
                 )}
             </div>
@@ -783,41 +783,41 @@ function TotalQuantityModal({
                 onClick={requestClose}
             />
             <div
-                className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
+                className={`relative bg-[var(--surface)] rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
                     }`}
             >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
                     <div>
-                        <h3 className="font-bold text-gray-900">Tổng số lượng nước</h3>
-                        <p className="text-xs text-gray-400">{formatNumber(grandTotal)} chai đang lưu hành, theo từng loại</p>
+                        <h3 className="font-bold text-[var(--text)]">Tổng số lượng nước</h3>
+                        <p className="text-xs text-[var(--text-faint)]">{formatNumber(grandTotal)} chai đang lưu hành, theo từng loại</p>
                     </div>
-                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 flex-shrink-0">
+                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)] flex-shrink-0">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto no-scrollbar divide-y divide-gray-100">
+                <div className="flex-1 overflow-y-auto no-scrollbar divide-y divide-[var(--border)]">
                     {breakdown.length === 0 && (
-                        <div className="text-center py-10 text-gray-400 text-sm">Chưa có nước nào đang lưu hành</div>
+                        <div className="text-center py-10 text-[var(--text-faint)] text-sm">Chưa có nước nào đang lưu hành</div>
                     )}
                     {breakdown.map((b) => (
                         <button
                             key={b.drink_id}
                             onClick={() => onSelectDrink(b)}
-                            className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 text-left"
+                            className="w-full flex items-center gap-3 p-4 hover:bg-[var(--surface-hover)] text-left"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            <div className="w-10 h-10 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                                 {b.image_url ? (
                                     <img src={b.image_url} alt={b.name} className="w-full h-full object-contain p-1" />
                                 ) : (
-                                    <GlassWater className="w-5 h-5 text-sky-400" />
+                                    <GlassWater className="w-5 h-5 text-[var(--primary)]" />
                                 )}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{b.name}</p>
-                                <p className="text-xs text-gray-400">{formatNumber(b.member_count)} thành viên sở hữu</p>
+                                <p className="text-sm font-semibold text-[var(--text)] truncate">{b.name}</p>
+                                <p className="text-xs text-[var(--text-faint)]">{formatNumber(b.member_count)} thành viên sở hữu</p>
                             </div>
-                            <p className="text-base font-bold text-sky-600 flex-shrink-0">{formatNumber(b.total_quantity)}</p>
+                            <p className="text-base font-bold text-[var(--primary)] flex-shrink-0">{formatNumber(b.total_quantity)}</p>
                         </button>
                     ))}
                 </div>
@@ -917,74 +917,74 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                 onClick={requestClose}
             />
             <div
-                className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
+                className={`relative bg-[var(--surface)] rounded-2xl shadow-2xl w-full max-w-md p-5 max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
                     }`}
             >
                 <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                    <h3 className="font-bold text-gray-900">Thêm nước cho thành viên</h3>
-                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                    <h3 className="font-bold text-[var(--text)]">Thêm nước cho thành viên</h3>
+                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)]">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
                 <div className="space-y-3.5 overflow-y-auto pr-0.5 no-scrollbar">
                     <div>
-                        <label className="text-xs font-semibold text-gray-500">Thành viên</label>
+                        <label className="text-xs font-semibold text-[var(--text-muted)]">Thành viên</label>
                         {selectedUser ? (
-                            <div className="mt-1 flex items-center justify-between px-3 py-2.5 rounded-xl border border-sky-200 bg-sky-50">
+                            <div className="mt-1 flex items-center justify-between px-3 py-2.5 rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)]">
                                 <div className="flex items-center gap-2.5">
                                     {selectedUser.avatar_url ? (
                                         <img src={selectedUser.avatar_url} className="w-7 h-7 rounded-full object-cover" alt="" />
                                     ) : (
-                                        <div className="w-7 h-7 rounded-full bg-sky-200 flex items-center justify-center text-sky-700 font-bold text-xs">
+                                        <div className="w-7 h-7 rounded-full bg-sky-200 flex items-center justify-center text-[var(--primary)] font-bold text-xs">
                                             {selectedUser.full_name?.[0]?.toUpperCase()}
                                         </div>
                                     )}
                                     <div>
-                                        <p className="text-sm font-semibold text-gray-900">{selectedUser.full_name}</p>
-                                        {selectedUser.phone && <p className="text-xs text-gray-400">{selectedUser.phone}</p>}
+                                        <p className="text-sm font-semibold text-[var(--text)]">{selectedUser.full_name}</p>
+                                        {selectedUser.phone && <p className="text-xs text-[var(--text-faint)]">{selectedUser.phone}</p>}
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => { setSelectedUser(null); setQuery(""); }}
-                                    className="text-xs font-semibold text-sky-600 hover:underline"
+                                    className="text-xs font-semibold text-[var(--primary)] hover:underline"
                                 >
                                     Đổi
                                 </button>
                             </div>
                         ) : (
                             <div className="relative mt-1">
-                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
                                 <input
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder="Nhập tên hoặc SĐT thành viên..."
-                                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+                                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
                                 />
                                 {(searching || results.length > 0) && (
-                                    <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto no-scrollbar rounded-xl border border-gray-200 bg-white shadow-lg">
+                                    <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto no-scrollbar rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
                                         {searching && (
-                                            <div className="px-3 py-2.5 text-xs text-gray-400">Đang tìm...</div>
+                                            <div className="px-3 py-2.5 text-xs text-[var(--text-faint)]">Đang tìm...</div>
                                         )}
                                         {!searching && results.length === 0 && query.trim().length >= 2 && (
-                                            <div className="px-3 py-2.5 text-xs text-gray-400">Không tìm thấy thành viên</div>
+                                            <div className="px-3 py-2.5 text-xs text-[var(--text-faint)]">Không tìm thấy thành viên</div>
                                         )}
                                         {!searching && results.map((u) => (
                                             <button
                                                 key={u.id}
                                                 onClick={() => { setSelectedUser(u); setResults([]); }}
-                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-gray-50 text-left"
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-[var(--surface-hover)] text-left"
                                             >
                                                 {u.avatar_url ? (
                                                     <img src={u.avatar_url} className="w-7 h-7 rounded-full object-cover" alt="" />
                                                 ) : (
-                                                    <div className="w-7 h-7 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-xs">
+                                                    <div className="w-7 h-7 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold text-xs">
                                                         {u.full_name?.[0]?.toUpperCase()}
                                                     </div>
                                                 )}
                                                 <div>
-                                                    <p className="text-sm font-semibold text-gray-900">{u.full_name}</p>
-                                                    {u.phone && <p className="text-xs text-gray-400">{u.phone}</p>}
+                                                    <p className="text-sm font-semibold text-[var(--text)]">{u.full_name}</p>
+                                                    {u.phone && <p className="text-xs text-[var(--text-faint)]">{u.phone}</p>}
                                                 </div>
                                             </button>
                                         ))}
@@ -995,28 +995,28 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold text-gray-500">Loại nước &amp; số lượng</label>
+                        <label className="text-xs font-semibold text-[var(--text-muted)]">Loại nước &amp; số lượng</label>
                         <div className="mt-1.5 space-y-2 max-h-64 overflow-y-auto no-scrollbar">
                             {drinks.length === 0 && (
-                                <p className="text-xs text-gray-400 py-2">Đang tải danh sách nước...</p>
+                                <p className="text-xs text-[var(--text-faint)] py-2">Đang tải danh sách nước...</p>
                             )}
                             {drinks.map((d) => (
                                 <div
                                     key={d.id}
-                                    className="flex items-center gap-3 rounded-xl border border-gray-100 p-2.5"
+                                    className="flex items-center gap-3 rounded-xl border border-[var(--border)] p-2.5"
                                 >
-                                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--surface-muted)]">
                                         {d.image_url ? (
                                             <img src={d.image_url} alt={d.name} className="h-full w-full object-cover" />
                                         ) : (
                                             <div className="flex h-full w-full items-center justify-center">
-                                                <GlassWater className="h-4 w-4 text-gray-300" />
+                                                <GlassWater className="h-4 w-4 text-[var(--text-faint)]" />
                                             </div>
                                         )}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-medium text-gray-800">{d.name}</p>
-                                        <p className="text-[11px] text-gray-400">{formatCurrency(d.price)}</p>
+                                        <p className="truncate text-sm font-medium text-[var(--text)]">{d.name}</p>
+                                        <p className="text-[11px] text-[var(--text-faint)]">{formatCurrency(d.price)}</p>
                                     </div>
                                     <input
                                         type="number"
@@ -1024,7 +1024,7 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                                         placeholder="0"
                                         value={amounts[d.id] ?? ""}
                                         onChange={(e) => setAmounts((prev) => ({ ...prev, [d.id]: e.target.value }))}
-                                        className="w-16 flex-shrink-0 rounded-lg border border-gray-200 px-2 py-1.5 text-center text-sm focus:border-sky-400 focus:outline-none"
+                                        className="w-16 flex-shrink-0 rounded-lg border border-[var(--border)] px-2 py-1.5 text-center text-sm focus:border-[var(--primary)] focus:outline-none"
                                     />
                                 </div>
                             ))}
@@ -1032,11 +1032,11 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold text-gray-500">Ghi chú (tuỳ chọn)</label>
+                        <label className="text-xs font-semibold text-[var(--text-muted)]">Ghi chú (tuỳ chọn)</label>
                         <input
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
-                            className="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
+                            className="w-full mt-1 px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm"
                             placeholder="VD: Thưởng thi đấu tốt"
                         />
                     </div>
@@ -1192,12 +1192,12 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
                 onClick={requestClose}
             />
             <div
-                className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 max-h-[92vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
+                className={`relative bg-[var(--surface)] rounded-2xl shadow-2xl w-full max-w-md p-5 max-h-[92vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
                     }`}
             >
                 <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                    <h3 className="font-bold text-gray-900">Điều chỉnh nước — {member.full_name}</h3>
-                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                    <h3 className="font-bold text-[var(--text)]">Điều chỉnh nước — {member.full_name}</h3>
+                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)]">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
@@ -1206,19 +1206,19 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
                     <div className="grid grid-cols-3 gap-2 mb-3.5">
                         <button
                             onClick={() => switchAction("grant")}
-                            className={`flex items-center justify-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-colors duration-150 ${action === "grant" ? "bg-emerald-500 border-emerald-500 text-white" : "border-gray-200 text-gray-600"}`}
+                            className={`flex items-center justify-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-colors duration-150 ${action === "grant" ? "bg-emerald-500 border-emerald-500 text-white" : "border-[var(--border)] text-[var(--text-muted)]"}`}
                         >
                             <Plus className="w-3.5 h-3.5" /> Tặng thêm
                         </button>
                         <button
                             onClick={() => switchAction("deduct")}
-                            className={`flex items-center justify-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-colors duration-150 ${action === "deduct" ? "bg-red-500 border-red-500 text-white" : "border-gray-200 text-gray-600"}`}
+                            className={`flex items-center justify-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-colors duration-150 ${action === "deduct" ? "bg-red-500 border-red-500 text-white" : "border-[var(--border)] text-[var(--text-muted)]"}`}
                         >
                             <Minus className="w-3.5 h-3.5" /> Trừ bớt
                         </button>
                         <button
                             onClick={() => switchAction("transfer")}
-                            className={`flex items-center justify-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-colors duration-150 ${action === "transfer" ? "bg-sky-500 border-sky-500 text-white" : "border-gray-200 text-gray-600"}`}
+                            className={`flex items-center justify-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-colors duration-150 ${action === "transfer" ? "bg-sky-500 border-sky-500 text-white" : "border-[var(--border)] text-[var(--text-muted)]"}`}
                         >
                             <UserPlus className="w-3.5 h-3.5" /> Chuyển nước
                         </button>
@@ -1227,62 +1227,62 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
                     <div key={action} className="space-y-3.5 tab-content-in">
                         {action === "transfer" && (
                             <div>
-                                <label className="text-xs font-semibold text-gray-500">Chuyển đến thành viên</label>
+                                <label className="text-xs font-semibold text-[var(--text-muted)]">Chuyển đến thành viên</label>
                                 {transferTarget ? (
-                                    <div className="mt-1 flex items-center justify-between px-3 py-2.5 rounded-xl border border-sky-200 bg-sky-50">
+                                    <div className="mt-1 flex items-center justify-between px-3 py-2.5 rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)]">
                                         <div className="flex items-center gap-2.5">
                                             {transferTarget.avatar_url ? (
                                                 <img src={transferTarget.avatar_url} className="w-7 h-7 rounded-full object-cover" alt="" />
                                             ) : (
-                                                <div className="w-7 h-7 rounded-full bg-sky-200 flex items-center justify-center text-sky-700 font-bold text-xs">
+                                                <div className="w-7 h-7 rounded-full bg-sky-200 flex items-center justify-center text-[var(--primary)] font-bold text-xs">
                                                     {transferTarget.full_name?.[0]?.toUpperCase()}
                                                 </div>
                                             )}
                                             <div>
-                                                <p className="text-sm font-semibold text-gray-900">{transferTarget.full_name}</p>
-                                                {transferTarget.phone && <p className="text-xs text-gray-400">{transferTarget.phone}</p>}
+                                                <p className="text-sm font-semibold text-[var(--text)]">{transferTarget.full_name}</p>
+                                                {transferTarget.phone && <p className="text-xs text-[var(--text-faint)]">{transferTarget.phone}</p>}
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => { setTransferTarget(null); setTransferQuery(""); }}
-                                            className="text-xs font-semibold text-sky-600 hover:underline"
+                                            className="text-xs font-semibold text-[var(--primary)] hover:underline"
                                         >
                                             Đổi
                                         </button>
                                     </div>
                                 ) : (
                                     <div className="relative mt-1">
-                                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
                                         <input
                                             value={transferQuery}
                                             onChange={(e) => setTransferQuery(e.target.value)}
                                             placeholder="Nhập tên hoặc SĐT thành viên nhận..."
-                                            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+                                            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
                                         />
                                         {(transferSearching || transferResults.length > 0) && (
-                                            <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                                            <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
                                                 {transferSearching && (
-                                                    <div className="px-3 py-2.5 text-xs text-gray-400">Đang tìm...</div>
+                                                    <div className="px-3 py-2.5 text-xs text-[var(--text-faint)]">Đang tìm...</div>
                                                 )}
                                                 {!transferSearching && transferResults.length === 0 && transferQuery.trim().length >= 2 && (
-                                                    <div className="px-3 py-2.5 text-xs text-gray-400">Không tìm thấy thành viên</div>
+                                                    <div className="px-3 py-2.5 text-xs text-[var(--text-faint)]">Không tìm thấy thành viên</div>
                                                 )}
                                                 {!transferSearching && transferResults.map((u) => (
                                                     <button
                                                         key={u.id}
                                                         onClick={() => { setTransferTarget(u); setTransferResults([]); }}
-                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-gray-50 text-left"
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-[var(--surface-hover)] text-left"
                                                     >
                                                         {u.avatar_url ? (
                                                             <img src={u.avatar_url} className="w-7 h-7 rounded-full object-cover" alt="" />
                                                         ) : (
-                                                            <div className="w-7 h-7 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-xs">
+                                                            <div className="w-7 h-7 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold text-xs">
                                                                 {u.full_name?.[0]?.toUpperCase()}
                                                             </div>
                                                         )}
                                                         <div>
-                                                            <p className="text-sm font-semibold text-gray-900">{u.full_name}</p>
-                                                            {u.phone && <p className="text-xs text-gray-400">{u.phone}</p>}
+                                                            <p className="text-sm font-semibold text-[var(--text)]">{u.full_name}</p>
+                                                            {u.phone && <p className="text-xs text-[var(--text-faint)]">{u.phone}</p>}
                                                         </div>
                                                     </button>
                                                 ))}
@@ -1294,13 +1294,13 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
                         )}
 
                         <div>
-                            <label className="text-xs font-semibold text-gray-500">Loại nước &amp; số lượng</label>
+                            <label className="text-xs font-semibold text-[var(--text-muted)]">Loại nước &amp; số lượng</label>
                             <div className="mt-1.5 space-y-2 max-h-96 overflow-y-auto no-scrollbar">
                                 {drinks.length === 0 && (
-                                    <p className="text-xs text-gray-400 py-2">Đang tải danh sách nước...</p>
+                                    <p className="text-xs text-[var(--text-faint)] py-2">Đang tải danh sách nước...</p>
                                 )}
                                 {drinks.length > 0 && visibleDrinks.length === 0 && (
-                                    <p className="text-xs text-gray-400 py-2">
+                                    <p className="text-xs text-[var(--text-faint)] py-2">
                                         {action === "transfer"
                                             ? "Thành viên chưa sở hữu loại nước nào để chuyển."
                                             : "Thành viên chưa sở hữu loại nước nào để trừ."}
@@ -1313,21 +1313,21 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
                                     return (
                                         <div
                                             key={d.id}
-                                            className={`flex items-center gap-3 rounded-xl border p-2.5 ${exceeds ? "border-red-300 bg-red-50" : "border-gray-100"
+                                            className={`flex items-center gap-3 rounded-xl border p-2.5 ${exceeds ? "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--danger-soft)]" : "border-[var(--border)]"
                                                 }`}
                                         >
-                                            <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                                            <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--surface-muted)]">
                                                 {d.image_url ? (
                                                     <img src={d.image_url} alt={d.name} className="h-full w-full object-cover" />
                                                 ) : (
                                                     <div className="flex h-full w-full items-center justify-center">
-                                                        <GlassWater className="h-4 w-4 text-gray-300" />
+                                                        <GlassWater className="h-4 w-4 text-[var(--text-faint)]" />
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium text-gray-800">{d.name}</p>
-                                                <p className="text-[11px] text-gray-400">
+                                                <p className="truncate text-sm font-medium text-[var(--text)]">{d.name}</p>
+                                                <p className="text-[11px] text-[var(--text-faint)]">
                                                     {action === "deduct" || action === "transfer"
                                                         ? `Đang sở hữu: ${owned}`
                                                         : formatCurrency(d.price)}
@@ -1340,8 +1340,8 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
                                                 value={amounts[d.id] ?? ""}
                                                 onChange={(e) => setAmounts((prev) => ({ ...prev, [d.id]: e.target.value }))}
                                                 className={`w-16 flex-shrink-0 rounded-lg border px-2 py-1.5 text-center text-sm focus:outline-none ${exceeds
-                                                    ? "border-red-300 focus:border-red-400"
-                                                    : "border-gray-200 focus:border-sky-400"
+                                                    ? "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] focus:border-[var(--danger)]"
+                                                    : "border-[var(--border)] focus:border-[var(--primary)]"
                                                     }`}
                                             />
                                         </div>
@@ -1351,11 +1351,11 @@ function AdjustDrinkModal({ member, onClose, onSuccess }: { member: MemberRow; o
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold text-gray-500">Ghi chú (tuỳ chọn)</label>
+                            <label className="text-xs font-semibold text-[var(--text-muted)]">Ghi chú (tuỳ chọn)</label>
                             <input
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
-                                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm"
+                                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm"
                                 placeholder="VD: Thưởng thi đấu tốt"
                             />
                         </div>
@@ -1402,7 +1402,7 @@ function AnimatedCheckbox({
             role="checkbox"
             className={`relative w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center
                 transition-all duration-200 ease-out active:scale-75
-                ${checked ? "bg-sky-500 border-sky-500 scale-100" : "bg-white border-gray-300 hover:border-sky-400 scale-100"}
+                ${checked ? "bg-sky-500 border-sky-500 scale-100" : "bg-[var(--surface)] border-[var(--border-strong)] hover:border-[var(--primary)] scale-100"}
                 ${className}`}
         >
             <svg
@@ -1428,7 +1428,7 @@ function AnimatedCheckbox({
 
 function SkeletonBlock({ className = "" }: { className?: string }) {
     return (
-        <div className={`rounded-md bg-gray-200 relative overflow-hidden ${className}`}>
+        <div className={`rounded-md bg-[var(--border-strong)] relative overflow-hidden ${className}`}>
             <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
         </div>
     );
@@ -1506,32 +1506,32 @@ function ConfirmDeleteHistoryModal({
             onMouseDown={(e) => e.target === e.currentTarget && handleCancel()}
         >
             <div
-                className={`bg-white rounded-2xl shadow-2xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
+                className={`bg-[var(--surface)] rounded-2xl shadow-2xl w-full max-w-sm transition-all duration-200 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2"
                     }`}
             >
                 <div className="flex flex-col items-center text-center px-5 pt-6 pb-5">
-                    <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
-                        <Trash2 className="w-5 h-5 text-red-500" />
+                    <div className="w-12 h-12 rounded-full bg-[var(--danger-soft)] flex items-center justify-center mb-3">
+                        <Trash2 className="w-5 h-5 text-[var(--danger)]" />
                     </div>
-                    <p className="text-sm font-bold text-gray-900">
+                    <p className="text-sm font-bold text-[var(--text)]">
                         Xoá {count > 1 ? `${count} giao dịch` : "giao dịch này"}?
                     </p>
-                    <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                    <p className="text-xs text-[var(--text-faint)] mt-1.5 leading-relaxed">
                         Hành động này không thể hoàn tác.
                     </p>
                 </div>
-                <div className="flex border-t border-gray-100">
+                <div className="flex border-t border-[var(--border)]">
                     <button
                         onClick={handleCancel}
                         disabled={deleting}
-                        className="flex-1 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100 disabled:opacity-50"
+                        className="flex-1 py-3 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors border-r border-[var(--border)] disabled:opacity-50"
                     >
                         Huỷ
                     </button>
                     <button
                         onClick={onConfirm}
                         disabled={deleting}
-                        className="flex-1 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                        className="flex-1 py-3 text-sm font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)] transition-colors disabled:opacity-50"
                     >
                         {deleting ? "Đang xoá..." : "Xoá"}
                     </button>
@@ -1677,23 +1677,23 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
                 onClick={requestClose}
             />
             <div
-                className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
+                className={`relative bg-[var(--surface)] rounded-2xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
                     }`}
             >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                    <h3 className="font-bold text-gray-900">Lịch sử giao dịch nước</h3>
-                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                    <h3 className="font-bold text-[var(--text)]">Lịch sử giao dịch nước</h3>
+                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)]">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
+                <div className="px-5 py-3 border-b border-[var(--border)] flex items-center justify-between gap-2">
                     <div className="w-48">
                         <CustomSelect
                             value={type}
                             onChange={(v) => { setPage(1); setType(v); }}
                             options={TYPE_OPTIONS}
-                            triggerClassName="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700 text-left"
+                            triggerClassName="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-muted)] text-xs font-semibold text-[var(--text)] text-left"
                         />
                     </div>
 
@@ -1712,14 +1712,14 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
 
                 <div className="flex-1 overflow-y-auto">
                     <div
-                        className="sm:hidden divide-y divide-gray-100 transition-opacity duration-200"
+                        className="sm:hidden divide-y divide-[var(--border)] transition-opacity duration-200"
                         style={{ opacity: fetching && !showSkeleton ? 0.45 : 1 }}
                     >
                         {showSkeleton && Array.from({ length: skeletonCount }).map((_, i) => (
                             <HistoryRowSkeletonMobile key={i} />
                         ))}
                         {!showSkeleton && rows.length === 0 && (
-                            <div className="text-center py-8 text-gray-400 text-sm">Chưa có giao dịch nào</div>
+                            <div className="text-center py-8 text-[var(--text-faint)] text-sm">Chưa có giao dịch nào</div>
                         )}
                         {!showSkeleton && rows.map((r, i) => (
                             <div
@@ -1735,16 +1735,16 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
                                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${TYPE_COLOR[r.type]}`}>
                                             {TYPE_LABEL[r.type]}
                                         </span>
-                                        <span className="text-xs text-gray-400 flex-shrink-0">
+                                        <span className="text-xs text-[var(--text-faint)] flex-shrink-0">
                                             {new Date(r.created_at).toLocaleString("vi-VN")}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-700">{describeAction(r)}</p>
+                                    <p className="text-sm text-[var(--text)]">{describeAction(r)}</p>
                                     <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-600">{r.drinks?.name}</span>
-                                        <span className="font-semibold text-gray-900">SL: {r.quantity}</span>
+                                        <span className="text-[var(--text-muted)]">{r.drinks?.name}</span>
+                                        <span className="font-semibold text-[var(--text)]">SL: {r.quantity}</span>
                                     </div>
-                                    {r.note && <p className="text-xs text-gray-400">{r.note}</p>}
+                                    {r.note && <p className="text-xs text-[var(--text-faint)]">{r.note}</p>}
                                     <div className="flex justify-end">
                                         <button
                                             onClick={() => deleteOne(r.id)}
@@ -1762,7 +1762,7 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
 
                     {/* Desktop: table */}
                     <table className="hidden sm:table w-full text-sm">
-                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase sticky top-0">
+                        <thead className="bg-[var(--surface-muted)] text-[var(--text-muted)] text-xs uppercase sticky top-0">
                             <tr>
                                 <th className="w-10 px-4 py-2.5">
                                     <AnimatedCheckbox checked={allSelected} onChange={toggleAll} />
@@ -1775,35 +1775,35 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
                             </tr>
                         </thead>
                         <tbody
-                            className="divide-y divide-gray-100 transition-opacity duration-200"
+                            className="divide-y divide-[var(--border)] transition-opacity duration-200"
                             style={{ opacity: fetching && !showSkeleton ? 0.45 : 1 }}
                         >
                             {showSkeleton && Array.from({ length: skeletonCount }).map((_, i) => (
                                 <HistoryRowSkeletonDesktop key={i} />
                             ))}
                             {!showSkeleton && rows.length === 0 && (
-                                <tr><td colSpan={6} className="text-center py-8 text-gray-400">Chưa có giao dịch nào</td></tr>
+                                <tr><td colSpan={6} className="text-center py-8 text-[var(--text-faint)]">Chưa có giao dịch nào</td></tr>
                             )}
                             {!showSkeleton && rows.map((r, i) => (
                                 <tr
                                     key={r.id}
-                                    className={`history-fade-in transition-colors ${selected.has(r.id) ? "bg-sky-50/60" : ""}`}
+                                    className={`history-fade-in transition-colors ${selected.has(r.id) ? "bg-[var(--primary-soft)]" : ""}`}
                                     style={{ animationDelay: `${Math.min(i, 10) * 20}ms` }}
                                 >
                                     <td className="px-4 py-2.5">
                                         <AnimatedCheckbox checked={selected.has(r.id)} onChange={() => toggleOne(r.id)} />
                                     </td>
-                                    <td className="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">
+                                    <td className="px-4 py-2.5 text-xs text-[var(--text-muted)] whitespace-nowrap">
                                         {new Date(r.created_at).toLocaleString("vi-VN")}
                                     </td>
                                     <td className="px-4 py-2.5">
                                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold mr-1.5 ${TYPE_COLOR[r.type]}`}>
                                             {TYPE_LABEL[r.type]}
                                         </span>
-                                        <span className="text-gray-700">{describeAction(r)}</span>
-                                        {r.note && <p className="text-xs text-gray-400 mt-0.5">{r.note}</p>}
+                                        <span className="text-[var(--text)]">{describeAction(r)}</span>
+                                        {r.note && <p className="text-xs text-[var(--text-faint)] mt-0.5">{r.note}</p>}
                                     </td>
-                                    <td className="px-4 py-2.5 text-gray-700">{r.drinks?.name}</td>
+                                    <td className="px-4 py-2.5 text-[var(--text)]">{r.drinks?.name}</td>
                                     <td className="px-4 py-2.5 text-right font-semibold">{r.quantity}</td>
                                     <td className="px-4 py-2.5 text-right">
                                         <button
@@ -1823,10 +1823,10 @@ function HistoryModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 py-3 border-t border-gray-100">
-                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Trước</button>
-                        <span className="text-sm text-gray-500">Trang {page}/{totalPages}</span>
-                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Sau</button>
+                    <div className="flex items-center justify-center gap-2 py-3 border-t border-[var(--border)]">
+                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] disabled:opacity-40">Trước</button>
+                        <span className="text-sm text-[var(--text-muted)]">Trang {page}/{totalPages}</span>
+                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] disabled:opacity-40">Sau</button>
                     </div>
                 )}
             </div>
@@ -1924,9 +1924,9 @@ function RequestsModal({ onClose, onChanged }: { onClose: () => void; onChanged:
     ];
 
     const STATUS_BADGE: Record<string, string> = {
-        pending: "bg-amber-100 text-amber-700",
-        approved: "bg-emerald-100 text-emerald-700",
-        rejected: "bg-red-100 text-red-700",
+        pending: "bg-[var(--warning-soft)] text-[var(--warning)]",
+        approved: "bg-[var(--success-soft)] text-[var(--success)]",
+        rejected: "bg-[var(--danger-soft)] text-[var(--danger)]",
     };
     const STATUS_LABEL: Record<string, string> = {
         pending: "Chờ duyệt",
@@ -1962,28 +1962,28 @@ function RequestsModal({ onClose, onChanged }: { onClose: () => void; onChanged:
                 onClick={requestClose}
             />
             <div
-                className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
+                className={`relative bg-[var(--surface)] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col ${closing ? "modal-panel-out" : "modal-panel-in"
                     }`}
             >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                    <h3 className="font-bold text-gray-900">Yêu cầu tự thêm nước</h3>
-                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                    <h3 className="font-bold text-[var(--text)]">Yêu cầu tự thêm nước</h3>
+                    <button onClick={requestClose} className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)]">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                <div className="px-5 py-3 border-b border-gray-100">
+                <div className="px-5 py-3 border-b border-[var(--border)]">
                     <div className="w-48">
                         <CustomSelect
                             value={status}
                             onChange={(v) => { setPage(1); setStatus(v); }}
                             options={STATUS_OPTIONS}
-                            triggerClassName="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700 text-left"
+                            triggerClassName="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-muted)] text-xs font-semibold text-[var(--text)] text-left"
                         />
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto divide-y divide-gray-100" style={{ opacity: fetching && !showSkeleton ? 0.45 : 1, transition: "opacity 0.2s" }}>
+                <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)]" style={{ opacity: fetching && !showSkeleton ? 0.45 : 1, transition: "opacity 0.2s" }}>
                     {showSkeleton && Array.from({ length: 5 }).map((_, i) => (
                         <div key={i} className="p-4 flex items-center gap-3">
                             <SkeletonBlock className="w-10 h-10 rounded-full flex-shrink-0" />
@@ -1996,7 +1996,7 @@ function RequestsModal({ onClose, onChanged }: { onClose: () => void; onChanged:
                     ))}
 
                     {!showSkeleton && rows.length === 0 && (
-                        <div className="text-center py-10 text-gray-400 text-sm">Không có yêu cầu nào</div>
+                        <div className="text-center py-10 text-[var(--text-faint)] text-sm">Không có yêu cầu nào</div>
                     )}
 
                     {!showSkeleton && rows.map((r, i) => (
@@ -2004,25 +2004,25 @@ function RequestsModal({ onClose, onChanged }: { onClose: () => void; onChanged:
                             {r.users?.avatar_url ? (
                                 <img src={r.users.avatar_url} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
                             ) : (
-                                <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-xs flex-shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold text-xs flex-shrink-0">
                                     {r.users?.full_name?.[0]?.toUpperCase()}
                                 </div>
                             )}
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="font-semibold text-gray-900 text-sm">{r.users?.full_name}</p>
+                                    <p className="font-semibold text-[var(--text)] text-sm">{r.users?.full_name}</p>
                                     <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_BADGE[r.status]}`}>
                                         {STATUS_LABEL[r.status]}
                                     </span>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                    Muốn thêm <span className="font-semibold text-gray-700">{r.quantity}</span> {r.drinks?.name}
+                                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                                    Muốn thêm <span className="font-semibold text-[var(--text)]">{r.quantity}</span> {r.drinks?.name}
                                 </p>
-                                {r.note && <p className="text-xs text-gray-400 mt-0.5">Ghi chú: {r.note}</p>}
+                                {r.note && <p className="text-xs text-[var(--text-faint)] mt-0.5">Ghi chú: {r.note}</p>}
                                 {r.status === "rejected" && r.reject_reason && (
-                                    <p className="text-xs text-red-500 mt-0.5">Lý do từ chối: {r.reject_reason}</p>
+                                    <p className="text-xs text-[var(--danger)] mt-0.5">Lý do từ chối: {r.reject_reason}</p>
                                 )}
-                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                <p className="text-[11px] text-[var(--text-faint)] mt-0.5">
                                     {new Date(r.created_at).toLocaleString("vi-VN")}
                                 </p>
                             </div>
@@ -2051,10 +2051,10 @@ function RequestsModal({ onClose, onChanged }: { onClose: () => void; onChanged:
                 </div>
 
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 py-3 border-t border-gray-100">
-                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Trước</button>
-                        <span className="text-sm text-gray-500">Trang {page}/{totalPages}</span>
-                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 disabled:opacity-40">Sau</button>
+                    <div className="flex items-center justify-center gap-2 py-3 border-t border-[var(--border)]">
+                        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] disabled:opacity-40">Trước</button>
+                        <span className="text-sm text-[var(--text-muted)]">Trang {page}/{totalPages}</span>
+                        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] disabled:opacity-40">Sau</button>
                     </div>
                 )}
             </div>

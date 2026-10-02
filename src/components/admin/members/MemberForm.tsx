@@ -32,8 +32,8 @@ const ROLE_OPTIONS = [
     { value: 'admin', label: 'Admin' },
 ];
 
-const inputCls = 'w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400';
-const labelCls = 'block text-xs font-semibold text-gray-500 mb-1.5';
+const inputCls = 'w-full text-sm border border-[var(--border)] rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400';
+const labelCls = 'block text-xs font-semibold text-[var(--text-muted)] mb-1.5';
 
 const emptyForm = {
     full_name: '', email: '', phone: '', password: '',
@@ -132,7 +132,7 @@ export default function MemberForm({ mode, memberId, onSuccess, onCancel, onOpen
         return (
             <div className="space-y-4">
                 {[...Array(6)].map((_, i) => (
-                    <div key={i} className="h-10 bg-gray-100 rounded-xl animate-pulse" />
+                    <div key={i} className="h-10 bg-[var(--surface-muted)] rounded-xl animate-pulse" />
                 ))}
             </div>
         );
@@ -143,26 +143,26 @@ export default function MemberForm({ mode, memberId, onSuccess, onCancel, onOpen
             <div>
                 <label className={labelCls}>Họ và tên *</label>
                 <input value={form.full_name} onChange={(e) => set('full_name', e.target.value)} className={inputCls} placeholder="Nguyễn Văn A" />
-                {errors.full_name && <p className="text-red-500 text-xs mt-1">{errors.full_name}</p>}
+                {errors.full_name && <p className="text-[var(--danger)] text-xs mt-1">{errors.full_name}</p>}
             </div>
 
             <div>
                 <label className={labelCls}>Email *</label>
                 <input value={form.email} onChange={(e) => set('email', e.target.value)} type="email" className={inputCls} placeholder="user@example.com" />
-                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                {errors.email && <p className="text-[var(--danger)] text-xs mt-1">{errors.email}</p>}
             </div>
 
             <div>
                 <label className={labelCls}>Số điện thoại *</label>
                 <input value={form.phone} onChange={(e) => set('phone', e.target.value)} className={inputCls} placeholder="0901234567" />
-                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                {errors.phone && <p className="text-[var(--danger)] text-xs mt-1">{errors.phone}</p>}
             </div>
 
             {!isEdit && (
                 <div>
                     <label className={labelCls}>Mật khẩu *</label>
                     <input value={form.password} onChange={(e) => set('password', e.target.value)} type="password" className={inputCls} placeholder="••••••••" />
-                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                    {errors.password && <p className="text-[var(--danger)] text-xs mt-1">{errors.password}</p>}
                 </div>
             )}
 
@@ -206,8 +206,8 @@ export default function MemberForm({ mode, memberId, onSuccess, onCancel, onOpen
                 <CustomSelect value={form.role} onChange={(val) => set('role', val)} options={ROLE_OPTIONS} />
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
-                <button type="button" onClick={onCancel} className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-500 bg-gray-100">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--border)]">
+                <button type="button" onClick={onCancel} className="px-4 py-2 rounded-xl text-sm font-semibold text-[var(--text-muted)] bg-[var(--surface-muted)]">
                     Hủy
                 </button>
 
@@ -215,7 +215,7 @@ export default function MemberForm({ mode, memberId, onSuccess, onCancel, onOpen
                     <button
                         type="button"
                         onClick={onOpenChangePassword}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-white border border-gray-200 flex items-center gap-2 hover:bg-gray-50 transition-colors"
+                        className="px-4 py-2 rounded-xl text-sm font-semibold text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)] flex items-center gap-2 hover:bg-[var(--surface-hover)] transition-colors"
                     >
                         <KeyRound className="w-4 h-4" />
                         Đổi mật khẩu

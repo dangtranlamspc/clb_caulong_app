@@ -117,9 +117,9 @@ export default function SettingsPage() {
   if (fetching) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-40 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-40 bg-[var(--border-strong)] rounded animate-pulse" />
         <div className="card space-y-4">
-          {[...Array(5)].map((_, i) => <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />)}
+          {[...Array(5)].map((_, i) => <div key={i} className="h-12 bg-[var(--surface-muted)] rounded-xl animate-pulse" />)}
         </div>
       </div>
     );
@@ -128,20 +128,20 @@ export default function SettingsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Link href="/profile" className="p-2 -ml-2 text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-100">
+        <Link href="/profile" className="p-2 -ml-2 text-[var(--text-muted)] hover:text-[var(--text)] rounded-xl hover:bg-[var(--surface-hover)]">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">Chỉnh sửa hồ sơ</h1>
+        <h1 className="text-xl font-bold text-[var(--text)]">Chỉnh sửa hồ sơ</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="card flex flex-col items-center gap-3 py-6">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200 flex items-center justify-center">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--surface-muted)] border-2 border-[var(--border)] flex items-center justify-center">
               {displayedAvatar ? (
                 <img src={displayedAvatar} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl font-bold text-gray-400">
+                <span className="text-2xl font-bold text-[var(--text-faint)]">
                   {watch('full_name')?.[0]?.toUpperCase() ?? '?'}
                 </span>
               )}
@@ -155,26 +155,26 @@ export default function SettingsPage() {
               <Camera className="w-4 h-4" />
             </button>
           </div>
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-[var(--text-faint)] text-center">
             {avatarFile ? 'Ảnh mới sẽ được lưu khi bạn bấm "Lưu thay đổi"' : 'Ảnh thật hoặc emoji, tối đa 5MB'}
           </p>
         </div>
 
         <div className="card space-y-4">
-          <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Thông tin cơ bản</h2>
+          <h2 className="font-semibold text-[var(--text)] text-sm uppercase tracking-wide">Thông tin cơ bản</h2>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Họ và tên *</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Họ và tên *</label>
             <input
               {...register('full_name', { required: 'Vui lòng nhập họ tên' })}
               className="input-field"
               placeholder="Nguyễn Văn A"
             />
-            {errors.full_name && <p className="text-red-500 text-xs mt-1">{errors.full_name.message as string}</p>}
+            {errors.full_name && <p className="text-[var(--danger)] text-xs mt-1">{errors.full_name.message as string}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email *</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Email *</label>
             <input
               {...register('email', {
                 required: 'Vui lòng nhập email',
@@ -184,11 +184,11 @@ export default function SettingsPage() {
               className="input-field"
               inputMode="email"
             />
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message as string}</p>}
+            {errors.email && <p className="text-[var(--danger)] text-xs mt-1">{errors.email.message as string}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Số điện thoại *</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Số điện thoại *</label>
             <input
               {...register('phone', {
                 required: 'Vui lòng nhập SĐT',
@@ -198,20 +198,20 @@ export default function SettingsPage() {
               inputMode="tel"
               type="tel"
             />
-            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message as string}</p>}
+            {errors.phone && <p className="text-[var(--danger)] text-xs mt-1">{errors.phone.message as string}</p>}
           </div>
         </div>
 
         <div className="card space-y-4">
-          <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Thông tin bổ sung</h2>
+          <h2 className="font-semibold text-[var(--text)] text-sm uppercase tracking-wide">Thông tin bổ sung</h2>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Ngày sinh</label>
+              <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Ngày sinh</label>
               <input {...register('date_of_birth')} type="date" className="input-field" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Giới tính</label>
+              <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Giới tính</label>
               <select {...register('gender')} className="input-field">
                 <option value="">Chọn</option>
                 <option value="male">Nam</option>
@@ -222,7 +222,7 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Size áo</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-2">Size áo</label>
             <div className="flex flex-wrap gap-2">
               {SIZES.map(size => (
                 <label key={size} className="cursor-pointer">
@@ -230,7 +230,7 @@ export default function SettingsPage() {
                   <span className={`block px-3 py-2 rounded-xl border text-sm font-semibold transition-all
                     ${selectedSize === size
                       ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
-                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-brand-400'
+                      : 'bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] hover:border-brand-400'
                     }`}>
                     {size}
                   </span>
@@ -239,10 +239,10 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="card space-y-4">
-            <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Thành viên & trình độ</h2>
+            <h2 className="font-semibold text-[var(--text)] text-sm uppercase tracking-wide">Thành viên & trình độ</h2>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Loại thành viên</label>
+              <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Loại thành viên</label>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   {
@@ -258,9 +258,9 @@ export default function SettingsPage() {
                 ].map(opt => (
                   <label key={opt.value} className="cursor-pointer">
                     <input {...register('member_type')} type="radio" value={opt.value} className="sr-only peer" />
-                    <div className="p-3 rounded-xl border-2 border-gray-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all text-center">
-                      <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
-                      <p className="text-xs text-gray-400 mt-0.5 whitespace-pre-line">{opt.desc}</p>
+                    <div className="p-3 rounded-xl border-2 border-[var(--border)] peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all text-center">
+                      <p className="text-sm font-semibold text-[var(--text)]">{opt.label}</p>
+                      <p className="text-xs text-[var(--text-faint)] mt-0.5 whitespace-pre-line">{opt.desc}</p>
                     </div>
                   </label>
                 ))}
@@ -268,7 +268,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Trình độ</label>
+              <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Trình độ</label>
               <select {...register('level')} className="input-field">
                 <option value="">-- Chọn trình độ --</option>
                 <option value="yeu">Yếu</option>

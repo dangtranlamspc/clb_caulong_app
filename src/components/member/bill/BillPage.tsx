@@ -57,12 +57,12 @@ export default function BillPage() {
     if (loading) {
         return (
             <div className="max-w-sm mx-auto">
-                <div className="bg-white rounded-3xl h-[70vh] animate-pulse" />
+                <div className="bg-[var(--surface)] rounded-3xl h-[70vh] animate-pulse" />
             </div>
         );
     }
 
-    if (!session || !myReg) return <div className="text-center py-20 text-gray-400">Không tìm thấy hóa đơn</div>;
+    if (!session || !myReg) return <div className="text-center py-20 text-[var(--text-faint)]">Không tìm thấy hóa đơn</div>;
 
     const isInstant = method === 'wallet';
     const paid = isInstant || myReg?.payment_status === 'confirmed';
@@ -114,7 +114,7 @@ export default function BillPage() {
                 }
             `}</style>
 
-            <div className="bg-white rounded-3xl shadow-sm p-6 pt-8">
+            <div className="bg-[var(--surface)] rounded-3xl shadow-sm p-6 pt-8">
                 <div className="relative flex flex-col items-center text-center mb-6">
                     <div className="relative w-20 h-20">
                         {paid && (
@@ -133,42 +133,42 @@ export default function BillPage() {
                         </div>
                     </div>
 
-                    <h1 className={`text-lg font-bold mt-4 ${paid ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    <h1 className={`text-lg font-bold mt-4 ${paid ? 'text-[var(--success)]' : 'text-[var(--warning)]'}`}>
                         {paid ? 'Thanh toán thành công!' : 'Đã gửi yêu cầu thanh toán!'}
                     </h1>
-                    <p className="text-sm text-gray-400 mt-1.5 leading-relaxed">
+                    <p className="text-sm text-[var(--text-faint)] mt-1.5 leading-relaxed">
                         {paid
                             ? 'Buổi đánh đã được thanh toán thành công. Cảm ơn bạn đã sử dụng dịch vụ của CLB.'
                             : 'Admin sẽ xác nhận sau khi nhận được thanh toán của bạn.'}
                     </p>
                 </div>
 
-                <div className="border border-gray-100 rounded-2xl overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
-                        <span className="text-sm font-bold text-gray-900">Chi tiết thanh toán</span>
-                        <span className="text-sm font-bold text-emerald-600">{METHOD_LABEL[method] ?? 'Chuyển khoản'}</span>
+                <div className="border border-[var(--border)] rounded-2xl overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)]">
+                        <span className="text-sm font-bold text-[var(--text)]">Chi tiết thanh toán</span>
+                        <span className="text-sm font-bold text-[var(--success)]">{METHOD_LABEL[method] ?? 'Chuyển khoản'}</span>
                     </div>
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-[var(--border)]">
                         {lineItems.map((item, i) => (
                             <div key={i} className="px-4 py-3">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                                        <p className="text-xs text-gray-400">{item.sub}</p>
+                                        <p className="text-sm font-medium text-[var(--text)]">{item.label}</p>
+                                        <p className="text-xs text-[var(--text-faint)]">{item.sub}</p>
                                     </div>
-                                    <span className="text-sm font-semibold text-gray-700">{fmt(item.amount)}</span>
+                                    <span className="text-sm font-semibold text-[var(--text)]">{fmt(item.amount)}</span>
                                 </div>
 
-                                <div className="mt-2 pl-3 space-y-1 border-l-2 border-gray-100">
-                                    <div className="flex items-center justify-between text-xs text-gray-400">
+                                <div className="mt-2 pl-3 space-y-1 border-l-2 border-[var(--border)]">
+                                    <div className="flex items-center justify-between text-xs text-[var(--text-faint)]">
                                         <span>Tiền sân</span>
                                         <span>{fmt(courtFeePerPerson)}</span>
                                     </div>
-                                    <div className="flex items-center justify-between text-xs text-gray-400">
+                                    <div className="flex items-center justify-between text-xs text-[var(--text-faint)]">
                                         <span>Cầu {shuttleCount} × {fmt(shuttlePrice)}</span>
                                         <span>{fmt(shuttleFeePerPerson)}</span>
                                     </div>
-                                    <div className="flex items-center justify-between text-xs text-gray-400">
+                                    <div className="flex items-center justify-between text-xs text-[var(--text-faint)]">
                                         <span>
                                             Khoản khác
                                             {item.other_fee_note ? ` (${item.other_fee_note})` : ''}
@@ -179,29 +179,29 @@ export default function BillPage() {
                             </div>
                         ))}
                     </div>
-                    <div className="flex items-center justify-between px-4 py-3.5 bg-gray-50 border-t border-gray-100">
-                        <span className="text-sm font-bold text-gray-900">Tổng cộng</span>
-                        <span className="text-lg font-black text-emerald-600">{fmt(total)}</span>
+                    <div className="flex items-center justify-between px-4 py-3.5 bg-[var(--surface-muted)] border-t border-[var(--border)]">
+                        <span className="text-sm font-bold text-[var(--text)]">Tổng cộng</span>
+                        <span className="text-lg font-black text-[var(--success)]">{fmt(total)}</span>
                     </div>
                 </div>
 
                 {isInstant && walletBalance !== null && (
                     <div
                         className={`mt-4 flex items-center gap-3 rounded-2xl px-4 py-3.5 border ${walletBalance < 0
-                            ? 'bg-red-50/60 border-red-100'
-                            : 'bg-emerald-50/60 border-emerald-100'
+                            ? 'bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]'
+                            : 'bg-[var(--success-soft)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]'
                             }`}
                     >
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                            <Wallet className={`w-5 h-5 ${walletBalance < 0 ? 'text-red-600' : 'text-emerald-600'}`} />
+                        <div className="w-10 h-10 rounded-full bg-[var(--surface)] flex items-center justify-center flex-shrink-0">
+                            <Wallet className={`w-5 h-5 ${walletBalance < 0 ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`} />
                         </div>
                         <div className="flex-1">
-                            <p className="text-xs text-gray-500">Số dư ví hiện tại</p>
-                            <p className={`text-lg font-black ${walletBalance < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                            <p className="text-xs text-[var(--text-muted)]">Số dư ví hiện tại</p>
+                            <p className={`text-lg font-black ${walletBalance < 0 ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
                                 {fmt(walletBalance)}
                             </p>
                             {walletBalance < 0 && (
-                                <p className="text-xs text-red-500 mt-0.5">
+                                <p className="text-xs text-[var(--danger)] mt-0.5">
                                     Ví đang âm, bạn cần nạp thêm tiền để tiếp tục sử dụng dịch vụ
                                 </p>
                             )}
@@ -229,7 +229,7 @@ export default function BillPage() {
                     </button>
                     <button
                         onClick={() => router.push('/')}
-                        className="w-full text-center text-sm font-medium text-emerald-600 hover:text-emerald-700"
+                        className="w-full text-center text-sm font-medium text-[var(--success)] hover:text-[var(--success)]"
                     >
                         Quay về trang chủ
                     </button>

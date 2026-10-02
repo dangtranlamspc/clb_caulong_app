@@ -43,32 +43,32 @@ export default function ClubDrinkStockPage() {
         <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6">
             <div className="min-w-0">
                 <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Kho nước CLB</h1>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
                     Số lượng nước thành viên đã gửi trả về kho chung của CLB.
                 </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <p className="text-xs text-slate-400">Tổng số lượng</p>
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+                    <p className="text-xs text-[var(--text-muted)]">Tổng số lượng</p>
                     <p className="mt-0.5 text-lg font-black text-slate-900">{totalQuantity}</p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <p className="text-xs text-slate-400">Tổng giá trị</p>
-                    <p className="mt-0.5 text-lg font-black text-emerald-600">{formatVND(totalValue)}</p>
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+                    <p className="text-xs text-[var(--text-muted)]">Tổng giá trị</p>
+                    <p className="mt-0.5 text-lg font-black text-[var(--success)]">{formatVND(totalValue)}</p>
                 </div>
             </div>
 
             {loading && (
-                <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-400">
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--text-muted)]">
                     Đang tải...
                 </div>
             )}
 
             {!loading && stock.length === 0 && (
-                <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white py-10 text-center">
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-10 text-center">
                     <GlassWater className="h-8 w-8 text-slate-300" />
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-[var(--text-muted)]">
                         Chưa có nước nào được gửi về kho CLB.
                     </p>
                 </div>
@@ -81,9 +81,9 @@ export default function ClubDrinkStockPage() {
                         {stock.map((item) => (
                             <div
                                 key={item.drink_id}
-                                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3"
+                                className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3"
                             >
-                                <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                                <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--surface-muted)]">
                                     {item.drinks.image_url ? (
                                         <img
                                             src={item.drinks.image_url}
@@ -98,10 +98,10 @@ export default function ClubDrinkStockPage() {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-semibold text-slate-800">{item.drinks.name}</p>
-                                    <p className="text-xs text-slate-400">{formatVND(item.drinks.price)}</p>
+                                    <p className="text-xs text-[var(--text-muted)]">{formatVND(item.drinks.price)}</p>
                                 </div>
                                 <div className="flex-shrink-0 text-right">
-                                    <p className="text-xs text-slate-400">Tồn kho</p>
+                                    <p className="text-xs text-[var(--text-muted)]">Tồn kho</p>
                                     <p className="text-base font-black text-slate-900">{item.quantity}</p>
                                 </div>
                                 <button
@@ -115,9 +115,9 @@ export default function ClubDrinkStockPage() {
                     </div>
 
                     {/* Desktop: table */}
-                    <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white sm:block">
+                    <div className="hidden overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] sm:block">
                         <table className="w-full text-left text-sm">
-                            <thead className="border-b border-slate-200 bg-slate-50 text-slate-500">
+                            <thead className="border-b border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)]">
                                 <tr>
                                     <th className="px-4 py-3 font-medium">Nước</th>
                                     <th className="px-4 py-3 font-medium">Giá</th>
@@ -126,12 +126,12 @@ export default function ClubDrinkStockPage() {
                                     <th className="px-4 py-3"></th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-[var(--border)]">
                                 {stock.map((item) => (
                                     <tr key={item.drink_id}>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                                                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--surface-muted)]">
                                                     {item.drinks.image_url ? (
                                                         <img
                                                             src={item.drinks.image_url}
@@ -147,11 +147,11 @@ export default function ClubDrinkStockPage() {
                                                 <span className="font-medium text-slate-800">{item.drinks.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-slate-600">{formatVND(item.drinks.price)}</td>
+                                        <td className="px-4 py-3 text-[var(--text-muted)]">{formatVND(item.drinks.price)}</td>
                                         <td className="px-4 py-3">
                                             <span className="font-semibold text-slate-800">{item.quantity}</span>
                                         </td>
-                                        <td className="px-4 py-3 text-xs text-slate-400">
+                                        <td className="px-4 py-3 text-xs text-[var(--text-muted)]">
                                             {new Date(item.updated_at).toLocaleString("vi-VN")}
                                         </td>
                                         <td className="px-4 py-3 text-right">
@@ -224,20 +224,20 @@ function AdjustClubStockModal({
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="relative w-full max-w-md rounded-2xl bg-[var(--surface)] p-5 shadow-2xl">
                 <div className="mb-4 flex items-center justify-between">
-                    <h3 className="font-bold text-gray-900">Điều chỉnh — {item.drinks.name}</h3>
+                    <h3 className="font-bold text-[var(--text)]">Điều chỉnh — {item.drinks.name}</h3>
                     <button
                         onClick={onClose}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--text-faint)]"
                     >
                         <X className="h-4 w-4" />
                     </button>
                 </div>
 
                 <div className="space-y-3.5">
-                    <p className="text-xs text-gray-400">
-                        Tồn kho CLB hiện tại: <span className="font-semibold text-gray-700">{item.quantity}</span>
+                    <p className="text-xs text-[var(--text-faint)]">
+                        Tồn kho CLB hiện tại: <span className="font-semibold text-[var(--text)]">{item.quantity}</span>
                     </p>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -245,7 +245,7 @@ function AdjustClubStockModal({
                             onClick={() => setAction("restock")}
                             className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-semibold ${action === "restock"
                                 ? "border-emerald-500 bg-emerald-500 text-white"
-                                : "border-gray-200 text-gray-600"
+                                : "border-[var(--border)] text-[var(--text-muted)]"
                                 }`}
                         >
                             <PackagePlus className="h-4 w-4" /> Nhập kho
@@ -254,7 +254,7 @@ function AdjustClubStockModal({
                             onClick={() => setAction("consume")}
                             className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-semibold ${action === "consume"
                                 ? "border-red-500 bg-red-500 text-white"
-                                : "border-gray-200 text-gray-600"
+                                : "border-[var(--border)] text-[var(--text-muted)]"
                                 }`}
                         >
                             <PackageMinus className="h-4 w-4" /> Xuất kho
@@ -262,27 +262,27 @@ function AdjustClubStockModal({
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold text-gray-500">Số lượng</label>
+                        <label className="text-xs font-semibold text-[var(--text-muted)]">Số lượng</label>
                         <input
                             type="number"
                             min={1}
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
-                            className={`mt-1 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none ${invalidConsume ? "border-red-300 focus:border-red-400" : "border-gray-200 focus:border-sky-400"
+                            className={`mt-1 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none ${invalidConsume ? "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] focus:border-[var(--danger)]" : "border-[var(--border)] focus:border-[var(--primary)]"
                                 }`}
                             placeholder="Nhập số lượng"
                         />
                         {invalidConsume && (
-                            <p className="mt-1 text-xs text-red-500">Vượt quá tồn kho CLB hiện có</p>
+                            <p className="mt-1 text-xs text-[var(--danger)]">Vượt quá tồn kho CLB hiện có</p>
                         )}
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold text-gray-500">Ghi chú (tuỳ chọn)</label>
+                        <label className="text-xs font-semibold text-[var(--text-muted)]">Ghi chú (tuỳ chọn)</label>
                         <input
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+                            className="mt-1 w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm"
                             placeholder="VD: Mua bổ sung, dùng cho sự kiện..."
                         />
                     </div>

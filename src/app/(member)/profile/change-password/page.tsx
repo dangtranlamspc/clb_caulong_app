@@ -32,21 +32,21 @@ export default function ChangePasswordPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Link href="/profile" className="p-2 -ml-2 text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-100">
+        <Link href="/profile" className="p-2 -ml-2 text-[var(--text-muted)] hover:text-[var(--text)] rounded-xl hover:bg-[var(--surface-hover)]">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">Đổi mật khẩu</h1>
+        <h1 className="text-xl font-bold text-[var(--text)]">Đổi mật khẩu</h1>
       </div>
 
       <div className="card">
-        <div className="flex items-center gap-3 mb-6 p-3 bg-amber-50 rounded-xl border border-amber-100">
-          <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
-          <p className="text-sm text-amber-800">Mật khẩu mới phải có ít nhất 8 ký tự</p>
+        <div className="flex items-center gap-3 mb-6 p-3 bg-[var(--warning-soft)] rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
+          <Lock className="w-5 h-5 text-[var(--warning)] flex-shrink-0" />
+          <p className="text-sm text-[var(--warning)]">Mật khẩu mới phải có ít nhất 8 ký tự</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mật khẩu hiện tại *</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Mật khẩu hiện tại *</label>
             <div className="relative">
               <input
                 {...register('current_password', {
@@ -60,18 +60,18 @@ export default function ChangePasswordPage() {
               <button
                 type="button"
                 onClick={() => setShowCurrentPw(!showCurrentPw)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 p-1"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-faint)] p-1"
               >
                 {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
             {errors.current_password && (
-              <p className="text-red-500 text-xs mt-1">{errors.current_password.message as string}</p>
+              <p className="text-[var(--danger)] text-xs mt-1">{errors.current_password.message as string}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mật khẩu mới *</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Mật khẩu mới *</label>
             <div className="relative">
               <input
                 {...register('new_password', {
@@ -87,18 +87,18 @@ export default function ChangePasswordPage() {
               <button
                 type="button"
                 onClick={() => setShowPw(!showPw)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 p-1"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-faint)] p-1"
               >
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
             {errors.new_password && (
-              <p className="text-red-500 text-xs mt-1">{errors.new_password.message as string}</p>
+              <p className="text-[var(--danger)] text-xs mt-1">{errors.new_password.message as string}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Xác nhận mật khẩu mới *</label>
+            <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Xác nhận mật khẩu mới *</label>
             <input
               {...register('confirm_password', {
                 required: 'Vui lòng xác nhận mật khẩu',
@@ -110,7 +110,7 @@ export default function ChangePasswordPage() {
               autoComplete="new-password"
             />
             {errors.confirm_password && (
-              <p className="text-red-500 text-xs mt-1">{errors.confirm_password.message as string}</p>
+              <p className="text-[var(--danger)] text-xs mt-1">{errors.confirm_password.message as string}</p>
             )}
           </div>
 

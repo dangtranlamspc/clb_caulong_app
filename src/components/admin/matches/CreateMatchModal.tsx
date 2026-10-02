@@ -70,7 +70,7 @@ export function CreateMatchModal({
         <div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4"
             style={{
-                background: "rgba(0,0,0,0.4)",
+                background: "var(--overlay)",
                 backdropFilter: "blur(2px)",
                 opacity: visible ? 1 : 0,
                 transition: "opacity 200ms ease-out",
@@ -78,7 +78,7 @@ export function CreateMatchModal({
             onClick={handleClose}
         >
             <div
-                className="bg-white rounded-2xl w-full max-w-2xl shadow-xl flex flex-col"
+                className="bg-[var(--surface)] rounded-2xl w-full max-w-2xl shadow-xl flex flex-col"
                 style={{
                     maxHeight: "calc(100dvh - 2rem)",
                     transform: visible
@@ -90,20 +90,20 @@ export function CreateMatchModal({
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-                    <h3 className="font-bold text-gray-900">Tạo trận đấu hộ member</h3>
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
+                    <h3 className="font-bold text-[var(--text)]">Tạo trận đấu hộ member</h3>
                     <button
                         onClick={handleClose}
-                        className="p-1 text-gray-400 hover:text-gray-600"
+                        className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                     >
                         <XCircle className="w-5 h-5" />
                     </button>
                 </div>
 
                 <div className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
-                    <div className="relative flex gap-1 bg-gray-50 rounded-lg p-1 max-w-sm">
+                    <div className="relative flex gap-1 bg-[var(--surface-muted)] rounded-lg p-1 max-w-sm">
                         <div
-                            className="absolute top-1 bottom-1 left-1 rounded-lg bg-blue-50 transition-transform duration-200 ease-out"
+                            className="absolute top-1 bottom-1 left-1 rounded-lg bg-[var(--primary-soft)] transition-transform duration-200 ease-out"
                             style={{
                                 width: "calc(33.333% - 5.33px)",
                                 transform:
@@ -120,7 +120,7 @@ export function CreateMatchModal({
                             <button
                                 key={val}
                                 onClick={() => setMatchType(val as any)}
-                                className={`relative z-10 flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${matchType === val ? "text-blue-600" : "text-gray-400"}`}
+                                className={`relative z-10 flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${matchType === val ? "text-[var(--primary)]" : "text-[var(--text-faint)]"}`}
                             >
                                 {lbl}
                             </button>
@@ -129,7 +129,7 @@ export function CreateMatchModal({
 
                     <div className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
                         <div className="space-y-3">
-                            <p className="text-xs font-semibold text-gray-500 uppercase">
+                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase">
                                 Đội A
                             </p>
                             <PlayerPickerField
@@ -173,7 +173,7 @@ export function CreateMatchModal({
                         </div>
 
                         <div className="space-y-3">
-                            <p className="text-xs font-semibold text-gray-500 uppercase">
+                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase">
                                 Đội B
                             </p>
                             <PlayerPickerField
@@ -218,7 +218,7 @@ export function CreateMatchModal({
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                             Ghi chú (tuỳ chọn)
                         </label>
                         <input
@@ -229,16 +229,16 @@ export function CreateMatchModal({
                         />
                     </div>
 
-                    <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+                    <p className="text-xs text-[var(--primary)] bg-[var(--primary-soft)] rounded-lg px-3 py-2">
                         ⓘ Trận sẽ vào thẳng trạng thái "Chờ kết quả" — người chơi A1 sẽ
                         nhận quyền nhập tỉ số, không ai cần xác nhận tham gia.
                     </p>
                 </div>
 
-                <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100 flex-shrink-0">
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)] flex-shrink-0">
                     <button
                         onClick={handleClose}
-                        className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0"
+                        className="px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors flex-shrink-0"
                     >
                         Hủy
                     </button>

@@ -44,9 +44,9 @@ export function ShirtOrderPaymentModal({
     const total = registrations.reduce((s, r) => s + priceOf(r), 0);
 
     const OPTIONS = [
-        { value: "wallet" as const, label: "Ví BNB", desc: "Trừ ngay vào ví", icon: Wallet, cls: "text-blue-600 bg-blue-50" },
-        { value: "transfer" as const, label: "Chuyển khoản", desc: "Quét QR, admin xác nhận sau", icon: Landmark, cls: "text-sky-600 bg-sky-50" },
-        { value: "cash" as const, label: "Tiền mặt", desc: "Đưa tiền trực tiếp, admin xác nhận sau", icon: Banknote, cls: "text-emerald-600 bg-emerald-50" },
+        { value: "wallet" as const, label: "Ví BNB", desc: "Trừ ngay vào ví", icon: Wallet, cls: "text-[var(--primary)] bg-[var(--primary-soft)]" },
+        { value: "transfer" as const, label: "Chuyển khoản", desc: "Quét QR, admin xác nhận sau", icon: Landmark, cls: "text-[var(--primary)] bg-[var(--primary-soft)]" },
+        { value: "cash" as const, label: "Tiền mặt", desc: "Đưa tiền trực tiếp, admin xác nhận sau", icon: Banknote, cls: "text-[var(--success)] bg-[var(--success-soft)]" },
     ];
 
     const goNext = () => {
@@ -67,23 +67,23 @@ export function ShirtOrderPaymentModal({
     };
 
     const OrderDetailList = () => (
-        <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 max-h-52 overflow-y-auto scrollbar-hide">
+        <div className="bg-[var(--surface-muted)] rounded-xl divide-y divide-[var(--border)] max-h-52 overflow-y-auto scrollbar-hide">
             {registrations.map((r: any) => {
                 const t = shirtTypes.find((x: any) => x.id === r.shirt_type_id);
                 return (
                     <div key={r.id} className="flex items-center justify-between gap-2 px-3 py-2.5 text-xs">
                         <div className="min-w-0">
-                            <p className="font-semibold text-gray-900 truncate">
+                            <p className="font-semibold text-[var(--text)] truncate">
                                 {t?.name ?? "—"}
                                 {r.color_name ? ` · ${r.color_name}` : ""}
                             </p>
-                            <p className="text-gray-400 mt-0.5">
+                            <p className="text-[var(--text-faint)] mt-0.5">
                                 {r.gender === "nu" ? "Nữ" : "Nam"} · Size {r.size} × {r.quantity ?? 1}
                                 {r.jersey_number ? ` · Số ${r.jersey_number}` : ""}
                                 {r.print_name ? ` · Tên "${r.print_name}"` : ""}
                             </p>
                         </div>
-                        <span className="font-semibold text-gray-700 flex-shrink-0">
+                        <span className="font-semibold text-[var(--text)] flex-shrink-0">
                             {fmt(priceOf(r))}
                         </span>
                     </div>
@@ -116,32 +116,32 @@ export function ShirtOrderPaymentModal({
                 .scrollbar-hide::-webkit-scrollbar { display: none; }
                 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
-            <div className="bg-white rounded-t-2xl md:rounded-2xl w-full max-w-sm flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="bg-[var(--surface)] rounded-t-2xl md:rounded-2xl w-full max-w-sm flex flex-col max-h-[90vh] overflow-hidden">
                 {/* Header cố định, không scroll */}
-                <div className="flex items-center justify-between px-5 py-4 flex-shrink-0 border-b border-gray-50">
+                <div className="flex items-center justify-between px-5 py-4 flex-shrink-0 border-b border-[var(--border)]">
                     <div className="flex items-center gap-2">
                         {step === "detail" && (
                             <button
                                 onClick={backToChoose}
-                                className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0"
+                                className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center flex-shrink-0"
                             >
-                                <ArrowLeft className="w-4 h-4 text-gray-500" />
+                                <ArrowLeft className="w-4 h-4 text-[var(--text-muted)]" />
                             </button>
                         )}
-                        <h2 className="font-bold text-gray-900">
+                        <h2 className="font-bold text-[var(--text)]">
                             {step === "choose" ? "Chọn phương thức thanh toán" : "Chi tiết đơn hàng"}
                         </h2>
                     </div>
-                    <button onClick={onClose} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <X className="w-4 h-4 text-gray-500" />
+                    <button onClick={onClose} className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center flex-shrink-0">
+                        <X className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                 </div>
 
                 {/* Nội dung scroll, ẩn scrollbar */}
                 <div className="flex-1 overflow-y-auto scrollbar-hide px-5 py-4 space-y-4">
-                    <div className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2.5">
-                        <span className="text-xs text-gray-500">Tổng thanh toán</span>
-                        <span className="text-base font-bold text-gray-900">{fmt(total)}</span>
+                    <div className="flex items-center justify-between bg-[var(--surface-muted)] rounded-xl px-3 py-2.5">
+                        <span className="text-xs text-[var(--text-muted)]">Tổng thanh toán</span>
+                        <span className="text-base font-bold text-[var(--text)]">{fmt(total)}</span>
                     </div>
 
                     {step === "choose" && (
@@ -151,15 +151,15 @@ export function ShirtOrderPaymentModal({
                                     <button
                                         key={opt.value}
                                         onClick={() => setMethod(opt.value)}
-                                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border text-left transition-colors ${method === opt.value ? "border-blue-500 bg-blue-50/50" : "border-gray-200 hover:bg-gray-50"
+                                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border text-left transition-colors ${method === opt.value ? "border-blue-500 bg-[var(--primary-soft)]" : "border-[var(--border)] hover:bg-[var(--surface-hover)]"
                                             }`}
                                     >
                                         <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${opt.cls}`}>
                                             <opt.icon className="w-4 h-4" />
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-gray-900">{opt.label}</p>
-                                            <p className="text-xs text-gray-400">{opt.desc}</p>
+                                            <p className="text-sm font-semibold text-[var(--text)]">{opt.label}</p>
+                                            <p className="text-xs text-[var(--text-faint)]">{opt.desc}</p>
                                         </div>
                                     </button>
                                 ))}
@@ -178,11 +178,11 @@ export function ShirtOrderPaymentModal({
                     {step === "detail" && method === "wallet" && (
                         <div className="space-y-4">
                             <OrderDetailList />
-                            <div className="bg-blue-50 rounded-xl p-4">
-                                <p className="text-sm font-semibold text-blue-800 mb-1 flex items-center gap-2">
+                            <div className="bg-[var(--primary-soft)] rounded-xl p-4">
+                                <p className="text-sm font-semibold text-[var(--primary)] mb-1 flex items-center gap-2">
                                     <Wallet className="w-4 h-4" /> Thanh toán bằng Ví BNB
                                 </p>
-                                <p className="text-xs text-blue-600">
+                                <p className="text-xs text-[var(--primary)]">
                                     Số dư ví sẽ bị trừ ngay {fmt(total)} cho {registrations.length} sản phẩm.
                                 </p>
                             </div>
@@ -211,27 +211,27 @@ export function ShirtOrderPaymentModal({
                             <div className="space-y-4">
                                 <OrderDetailList />
 
-                                <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
-                                    <p className="text-xs text-gray-400">Quét mã QR để chuyển khoản</p>
+                                <div className="bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl p-4 flex flex-col items-center gap-2">
+                                    <p className="text-xs text-[var(--text-faint)]">Quét mã QR để chuyển khoản</p>
                                     <img src={qr} alt="VietQR" className="w-48 h-48 object-contain" />
                                 </div>
 
-                                <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
+                                <div className="bg-[var(--surface-muted)] rounded-xl divide-y divide-[var(--border)] text-sm overflow-hidden">
                                     <div className="flex justify-between px-4 py-2.5">
-                                        <span className="text-gray-500">Ngân hàng</span>
-                                        <span className="font-semibold text-gray-900">{bankDisplayName}</span>
+                                        <span className="text-[var(--text-muted)]">Ngân hàng</span>
+                                        <span className="font-semibold text-[var(--text)]">{bankDisplayName}</span>
                                     </div>
                                     <div className="flex justify-between px-4 py-2.5">
-                                        <span className="text-gray-500">Số tài khoản</span>
-                                        <span className="font-semibold text-gray-900">{bankAccount}</span>
+                                        <span className="text-[var(--text-muted)]">Số tài khoản</span>
+                                        <span className="font-semibold text-[var(--text)]">{bankAccount}</span>
                                     </div>
                                     <div className="flex justify-between px-4 py-2.5">
-                                        <span className="text-gray-500">Số tiền</span>
-                                        <span className="font-bold text-red-600">{fmt(total)}</span>
+                                        <span className="text-[var(--text-muted)]">Số tiền</span>
+                                        <span className="font-bold text-[var(--danger)]">{fmt(total)}</span>
                                     </div>
                                     <div className="px-4 py-2.5 flex justify-between">
-                                        <span className="text-gray-500">Nội dung CK</span>
-                                        <span className="font-mono font-semibold text-gray-900">{ref}</span>
+                                        <span className="text-[var(--text-muted)]">Nội dung CK</span>
+                                        <span className="font-mono font-semibold text-[var(--text)]">{ref}</span>
                                     </div>
                                 </div>
 
@@ -240,7 +240,7 @@ export function ShirtOrderPaymentModal({
                                         navigator.clipboard.writeText(ref);
                                         toast.success("Đã copy nội dung chuyển khoản");
                                     }}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:bg-[var(--surface-hover)]"
                                 >
                                     <Copy className="w-3.5 h-3.5" /> Sao chép nội dung
                                 </button>
@@ -260,9 +260,9 @@ export function ShirtOrderPaymentModal({
                     {step === "detail" && method === "cash" && (
                         <div className="space-y-4">
                             <OrderDetailList />
-                            <div className="bg-green-50 rounded-xl p-4">
-                                <p className="text-sm font-semibold text-green-800 mb-1">💵 Thanh toán tiền mặt</p>
-                                <p className="text-xs text-green-600">
+                            <div className="bg-[var(--success-soft)] rounded-xl p-4">
+                                <p className="text-sm font-semibold text-[var(--success)] mb-1">💵 Thanh toán tiền mặt</p>
+                                <p className="text-xs text-[var(--success)]">
                                     Admin sẽ xác nhận sau khi nhận đủ {fmt(total)} tiền mặt cho {registrations.length} sản phẩm.
                                 </p>
                             </div>

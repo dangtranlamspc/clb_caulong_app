@@ -81,7 +81,7 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
         <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full text-xs font-medium text-gray-700 border border-gray-200 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className="w-full text-xs font-medium text-[var(--text)] border border-[var(--border)] rounded-xl px-2.5 py-2 bg-[var(--surface)] focus:outline-none focus:ring-1 focus:ring-blue-400"
         >
             {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -103,7 +103,7 @@ function Avatar({ user, sizeClass = 'w-10 h-10 text-sm' }: { user: any; sizeClas
         );
     }
     return (
-        <div className={`rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold flex-shrink-0 ${sizeClass}`}>
+        <div className={`rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center font-semibold flex-shrink-0 ${sizeClass}`}>
             {initial}
         </div>
     );
@@ -112,7 +112,7 @@ function Avatar({ user, sizeClass = 'w-10 h-10 text-sm' }: { user: any; sizeClas
 function ApprovalBadge({ user }: { user: any }) {
     if (user.email_verified === false) {
         return (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit bg-sky-50 text-sky-700">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit bg-[var(--primary-soft)] text-[var(--primary)]">
                 ✉️ Chưa xác thực email
             </span>
         );
@@ -120,7 +120,7 @@ function ApprovalBadge({ user }: { user: any }) {
     if (!user.approval_status || user.approval_status === 'approved') return null;
     const isPending = user.approval_status === 'pending';
     return (
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit ${isPending ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-600'
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit ${isPending ? 'bg-[var(--warning-soft)] text-[var(--warning)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'
             }`}>
             {isPending ? '⏳ Chờ duyệt' : '✕ Đã từ chối'}
         </span>
@@ -132,10 +132,10 @@ function MemberTypeBadge({ user }: { user: any }) {
         const isVip = user.member_subtype === 'vip';
         return (
             <div className="flex flex-col gap-1">
-                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 w-fit">
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--primary-soft)] text-[var(--primary)] w-fit">
                     Thành viên
                 </span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium w-fit ${isVip ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium w-fit ${isVip ? 'bg-[var(--warning-soft)] text-[var(--warning)]' : 'bg-[var(--surface-muted)] text-[var(--text-muted)]'}`}>
                     {isVip ? '⭐ VIP' : 'Thường'}
                 </span>
             </div>
@@ -144,10 +144,10 @@ function MemberTypeBadge({ user }: { user: any }) {
     const isQuen = user.vang_lai_status === 'khach_quen';
     return (
         <div className="flex flex-col gap-1">
-            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 w-fit">
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--surface-muted)] text-[var(--text-muted)] w-fit">
                 Vãng lai
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium w-fit ${isQuen ? 'bg-emerald-50 text-emerald-700' : 'bg-orange-50 text-orange-600'}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium w-fit ${isQuen ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--warning-soft)] text-[var(--warning)]'}`}>
                 {user.vang_lai_label ?? (isQuen ? 'Khách quen' : 'Khách mới')}
                 {typeof user.attendance_count === 'number' && <span className="opacity-60"> · {user.attendance_count}</span>}
             </span>
@@ -233,7 +233,7 @@ function RowActions({
                     <button
                         onClick={() => onApprove(user.id)}
                         disabled={busy}
-                        className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                        className="p-1.5 text-[var(--text-faint)] hover:text-[var(--success)] hover:bg-[var(--success-soft)] rounded-lg transition-colors"
                         title="Duyệt"
                     >
                         <Check className="w-4 h-4" />
@@ -241,7 +241,7 @@ function RowActions({
                     <button
                         onClick={() => onReject(user.id, user.full_name)}
                         disabled={busy}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-lg transition-colors"
                         title="Từ chối"
                     >
                         <X className="w-4 h-4" />
@@ -250,7 +250,7 @@ function RowActions({
             )}
             <button
                 onClick={() => onEdit(user.id)}
-                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="p-1.5 text-[var(--text-faint)] hover:text-[var(--primary)] hover:bg-[var(--primary-soft)] rounded-lg transition-colors"
                 title="Xem / Sửa"
             >
                 <Eye className="w-4 h-4" />
@@ -258,7 +258,7 @@ function RowActions({
             <button
                 onClick={() => onToggleActive(user.id)}
                 disabled={busy}
-                className={`p-1.5 rounded-lg transition-colors ${user.is_active ? 'text-gray-400 hover:text-amber-600 hover:bg-amber-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                className={`p-1.5 rounded-lg transition-colors ${user.is_active ? 'text-[var(--text-faint)] hover:text-[var(--warning)] hover:bg-[var(--warning-soft)]' : 'text-[var(--text-faint)] hover:text-[var(--success)] hover:bg-[var(--success-soft)]'
                     }`}
                 title={user.is_active ? 'Tạm ẩn' : 'Kích hoạt'}
             >
@@ -267,7 +267,7 @@ function RowActions({
             <button
                 onClick={() => onDelete(user.id, user.full_name)}
                 disabled={busy}
-                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-1.5 text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-lg transition-colors"
                 title="Xóa"
             >
                 <Trash2 className="w-4 h-4" />
@@ -447,14 +447,14 @@ export default function AdminMembersPage() {
         <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Quản lý thành viên</h1>
-                    <p className="text-gray-500 text-sm mt-0.5">{meta.total ?? 0} người dùng</p>
+                    <h1 className="text-2xl font-bold text-[var(--text)]">Quản lý thành viên</h1>
+                    <p className="text-[var(--text-muted)] text-sm mt-0.5">{meta.total ?? 0} người dùng</p>
                 </div>
                 <div className="flex-1" />
                 <GradientBorderButton
                     onClick={handleExport}
                     disabled={exporting}
-                    className="relative z-10 flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                    className="relative z-10 flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)] text-sm font-medium disabled:opacity-50 hover:bg-[var(--surface-hover)] transition-colors"
                 >
                     <Download className="w-4 h-4" />
                     <span className="hidden sm:inline">{exporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
@@ -467,20 +467,20 @@ export default function AdminMembersPage() {
                     <span className="hidden sm:inline">Thêm mới</span>
                 </GradientBorderButton>
             </div>
-            <div className="bg-white rounded-2xl p-4 border border-gray-100 space-y-3">
+            <div className="bg-[var(--surface)] rounded-2xl p-4 border border-[var(--border)] space-y-3">
                 <div className="flex gap-3">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-faint)]" />
                         <input
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="w-full text-sm border border-gray-200 rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                            className="w-full text-sm border border-[var(--border)] rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-400"
                             placeholder="Tìm kiếm tên, email, SĐT..."
                         />
                     </div>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-600' : 'border-gray-200 text-gray-500'}`}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters ? 'bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)]' : 'border-[var(--border)] text-[var(--text-muted)]'}`}
                     >
                         <Filter className="w-4 h-4" />
                         <span className="hidden sm:inline">Bộ lọc</span>
@@ -488,7 +488,7 @@ export default function AdminMembersPage() {
                 </div>
 
                 {showFilters && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-2 border-t border-gray-100">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-2 border-t border-[var(--border)]">
                         <Select value={query.role} onChange={(v) => setQuery((q) => ({ ...q, role: v, page: 1 }))} options={ROLE_OPTIONS} />
                         <Select value={query.gender} onChange={(v) => setQuery((q) => ({ ...q, gender: v, page: 1 }))} options={GENDER_OPTIONS} />
                         <Select value={query.shirt_size} onChange={(v) => setQuery((q) => ({ ...q, shirt_size: v, page: 1 }))} options={SHIRT_SIZE_OPTIONS} />
@@ -511,47 +511,47 @@ export default function AdminMembersPage() {
                 )}
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                <div className="md:hidden bg-gray-50 p-3 space-y-3">
+            <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] overflow-hidden">
+                <div className="md:hidden bg-[var(--surface-muted)] p-3 space-y-3">
                     {loading ? (
                         [...Array(6)].map((_, i) => (
-                            <div key={i} className="p-4 space-y-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div key={i} className="p-4 space-y-3 bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse flex-shrink-0" />
+                                    <div className="w-10 h-10 rounded-full bg-[var(--surface-muted)] animate-pulse flex-shrink-0" />
                                     <div className="flex-1 space-y-2">
-                                        <div className="h-4 bg-gray-100 rounded animate-pulse w-2/3" />
-                                        <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
+                                        <div className="h-4 bg-[var(--surface-muted)] rounded animate-pulse w-2/3" />
+                                        <div className="h-3 bg-[var(--surface-muted)] rounded animate-pulse w-1/2" />
                                     </div>
                                 </div>
                             </div>
                         ))
                     ) : users.length === 0 ? (
-                        <div className="px-4 py-12 text-center text-gray-400 bg-white rounded-xl border border-gray-100">
+                        <div className="px-4 py-12 text-center text-[var(--text-faint)] bg-[var(--surface)] rounded-xl border border-[var(--border)]">
                             Không tìm thấy dữ liệu
                         </div>
                     ) : users.map((user) => (
-                        <div key={user.id} className="p-4 space-y-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                        <div key={user.id} className="p-4 space-y-3 bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm">
                             <div className="flex items-start justify-between gap-3">
                                 <div className="flex items-center gap-3 min-w-0">
                                     <Avatar user={user} sizeClass="w-10 h-10 text-sm" />
                                     <div className="min-w-0">
-                                        <p className="font-medium text-gray-900 truncate">{user.full_name}</p>
-                                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                                        {user.phone && <p className="text-xs text-gray-400">{user.phone}</p>}
+                                        <p className="font-medium text-[var(--text)] truncate">{user.full_name}</p>
+                                        <p className="text-xs text-[var(--text-faint)] truncate">{user.email}</p>
+                                        {user.phone && <p className="text-xs text-[var(--text-faint)]">{user.phone}</p>}
                                     </div>
                                 </div>
-                                <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
+                                <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.is_active ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'}`}>
                                     {user.is_active ? 'Hoạt động' : 'Vô hiệu hoá'}
                                 </span>
                             </div>
 
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.role === 'admin' ? 'bg-[var(--purple-soft)] text-[var(--purple)]' : 'bg-[var(--surface-muted)] text-[var(--text-muted)]'}`}>
                                         {user.role === 'admin' ? 'Admin' : 'Thành viên'}
                                     </span>
                                     {user.level && (
-                                        <span className="px-2 py-0.5 bg-violet-50 text-violet-700 rounded text-xs font-medium">
+                                        <span className="px-2 py-0.5 bg-[var(--purple-soft)] text-[var(--purple)] rounded text-xs font-medium">
                                             {LEVEL_LABEL[user.level] ?? user.level}
                                         </span>
                                     )}
@@ -561,7 +561,7 @@ export default function AdminMembersPage() {
 
                             </div>
 
-                            <div className="pt-2 border-t border-gray-100">
+                            <div className="pt-2 border-t border-[var(--border)]">
                                 <RowActions
                                     user={user}
                                     actionLoading={actionLoading}
@@ -579,59 +579,59 @@ export default function AdminMembersPage() {
 
                 <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-sm">
-                        <thead className="bg-gray-50 border-b border-gray-200">
+                        <thead className="bg-[var(--surface-muted)] border-b border-[var(--border)]">
                             <tr>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600">Họ và tên</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 hidden md:table-cell">Email</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 hidden sm:table-cell">SĐT</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 hidden lg:table-cell">Trình độ</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600">Vai trò</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 hidden sm:table-cell">Phân cấp</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600">Trạng thái</th>
-                                <th className="px-4 py-3 text-right font-medium text-gray-600">Thao tác</th>
+                                <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)]">Họ và tên</th>
+                                <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)] hidden md:table-cell">Email</th>
+                                <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)] hidden sm:table-cell">SĐT</th>
+                                <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)] hidden lg:table-cell">Trình độ</th>
+                                <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)]">Vai trò</th>
+                                <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)] hidden sm:table-cell">Phân cấp</th>
+                                <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)]">Trạng thái</th>
+                                <th className="px-4 py-3 text-right font-medium text-[var(--text-muted)]">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-[var(--border)]">
                             {loading ? (
                                 [...Array(8)].map((_, i) => (
                                     <tr key={i}>
                                         {[...Array(8)].map((_, j) => (
                                             <td key={j} className="px-4 py-3">
-                                                <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                                                <div className="h-4 bg-[var(--surface-muted)] rounded animate-pulse" />
                                             </td>
                                         ))}
                                     </tr>
                                 ))
                             ) : users.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
+                                    <td colSpan={8} className="px-4 py-12 text-center text-[var(--text-faint)]">
                                         Không tìm thấy dữ liệu
                                     </td>
                                 </tr>
                             ) : users.map((user) => (
-                                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                                <tr key={user.id} className="hover:bg-[var(--surface-hover)] transition-colors">
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-3">
                                             <Avatar user={user} sizeClass="w-9 h-9 text-sm" />
                                             <div className="min-w-0">
-                                                <p className="font-medium text-gray-900 truncate">{user.full_name}</p>
-                                                <p className="text-xs text-gray-400 md:hidden truncate">{user.email}</p>
+                                                <p className="font-medium text-[var(--text)] truncate">{user.full_name}</p>
+                                                <p className="text-xs text-[var(--text-faint)] md:hidden truncate">{user.email}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 text-gray-600 hidden md:table-cell">{user.email}</td>
-                                    <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{user.phone}</td>
+                                    <td className="px-4 py-3 text-[var(--text-muted)] hidden md:table-cell">{user.email}</td>
+                                    <td className="px-4 py-3 text-[var(--text-muted)] hidden sm:table-cell">{user.phone}</td>
                                     <td className="px-4 py-3 hidden lg:table-cell">
                                         {user.level ? (
-                                            <span className="px-2 py-0.5 bg-violet-50 text-violet-700 rounded text-xs font-medium">
+                                            <span className="px-2 py-0.5 bg-[var(--purple-soft)] text-[var(--purple)] rounded text-xs font-medium">
                                                 {LEVEL_LABEL[user.level] ?? user.level}
                                             </span>
                                         ) : (
-                                            <span className="text-xs text-gray-300">—</span>
+                                            <span className="text-xs text-[var(--text-faint)]">—</span>
                                         )}
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.role === 'admin' ? 'bg-[var(--purple-soft)] text-[var(--purple)]' : 'bg-[var(--surface-muted)] text-[var(--text-muted)]'}`}>
                                             {user.role === 'admin' ? 'Admin' : 'Thành viên'}
                                         </span>
                                     </td>
@@ -639,7 +639,7 @@ export default function AdminMembersPage() {
                                         <MemberTypeBadge user={user} />
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.is_active ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'}`}>
                                             {user.is_active ? 'Hoạt động' : 'Vô hiệu'}
                                         </span>
                                         <div className="mt-1"><ApprovalBadge user={user} /></div>
@@ -662,22 +662,22 @@ export default function AdminMembersPage() {
                 </div>
 
                 {meta.total_pages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-                        <p className="text-sm text-gray-500">
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
+                        <p className="text-sm text-[var(--text-muted)]">
                             Trang {meta.page} / {meta.total_pages} ({meta.total} kết quả)
                         </p>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setQuery((q) => ({ ...q, page: q.page - 1 }))}
                                 disabled={meta.page <= 1}
-                                className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+                                className="p-1.5 rounded-lg border border-[var(--border)] disabled:opacity-40 hover:bg-[var(--surface-hover)]"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => setQuery((q) => ({ ...q, page: q.page + 1 }))}
                                 disabled={meta.page >= meta.total_pages}
-                                className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+                                className="p-1.5 rounded-lg border border-[var(--border)] disabled:opacity-40 hover:bg-[var(--surface-hover)]"
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </button>
@@ -714,16 +714,16 @@ export default function AdminMembersPage() {
                     title="Từ chối đăng ký"
                 >
                     <div className="space-y-4">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-[var(--text-muted)]">
                             Từ chối yêu cầu đăng ký của{' '}
-                            <span className="font-semibold text-gray-900">{rejectConfirm?.name}</span>?
-                            Tài khoản sẽ chuyển sang trạng thái <span className="font-medium text-red-600">Đã từ chối</span> và
+                            <span className="font-semibold text-[var(--text)]">{rejectConfirm?.name}</span>?
+                            Tài khoản sẽ chuyển sang trạng thái <span className="font-medium text-[var(--danger)]">Đã từ chối</span> và
                             bị vô hiệu hóa, không thể đăng nhập.
                         </p>
                         <div className="flex justify-end gap-2 pt-2">
                             <button
                                 onClick={() => setRejectConfirm(null)}
-                                className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                                className="px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
                             >
                                 Hủy
                             </button>
@@ -747,15 +747,15 @@ export default function AdminMembersPage() {
                     title="Xóa thành viên"
                 >
                     <div className="space-y-4">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-[var(--text-muted)]">
                             Xóa thành viên{' '}
-                            <span className="font-semibold text-gray-900">{deleteConfirm?.name}</span>?
-                            Hành động này <span className="font-medium text-red-600">không thể hoàn tác</span>.
+                            <span className="font-semibold text-[var(--text)]">{deleteConfirm?.name}</span>?
+                            Hành động này <span className="font-medium text-[var(--danger)]">không thể hoàn tác</span>.
                         </p>
                         <div className="flex justify-end gap-2 pt-2">
                             <button
                                 onClick={() => setDeleteConfirm(null)}
-                                className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                                className="px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
                             >
                                 Hủy
                             </button>
@@ -779,17 +779,17 @@ export default function AdminMembersPage() {
                     title={toggleConfirm?.isActive ? 'Tạm vô hiệu hóa tài khoản' : 'Kích hoạt tài khoản'}
                 >
                     <div className="space-y-4">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-[var(--text-muted)]">
                             {toggleConfirm?.isActive ? (
                                 <>
                                     Tạm vô hiệu hóa tài khoản của{' '}
-                                    <span className="font-semibold text-gray-900">{toggleConfirm?.name}</span>?
-                                    Thành viên sẽ <span className="font-medium text-amber-600">không thể đăng nhập</span> cho đến khi được kích hoạt lại.
+                                    <span className="font-semibold text-[var(--text)]">{toggleConfirm?.name}</span>?
+                                    Thành viên sẽ <span className="font-medium text-[var(--warning)]">không thể đăng nhập</span> cho đến khi được kích hoạt lại.
                                 </>
                             ) : (
                                 <>
                                     Kích hoạt lại tài khoản của{' '}
-                                    <span className="font-semibold text-gray-900">{toggleConfirm?.name}</span>?
+                                    <span className="font-semibold text-[var(--text)]">{toggleConfirm?.name}</span>?
                                     Thành viên sẽ có thể đăng nhập và sử dụng hệ thống bình thường.
                                 </>
                             )}
@@ -797,7 +797,7 @@ export default function AdminMembersPage() {
                         <div className="flex justify-end gap-2 pt-2">
                             <button
                                 onClick={() => setToggleConfirm(null)}
-                                className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                                className="px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
                             >
                                 Hủy
                             </button>

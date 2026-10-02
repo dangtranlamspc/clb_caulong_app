@@ -33,15 +33,15 @@ const COLOR_THEMES = [
 function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
     return (
         <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                {label} {required && <span className="text-red-400">*</span>}
+            <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1.5">
+                {label} {required && <span className="text-[var(--danger)]">*</span>}
             </label>
             {children}
         </div>
     );
 }
 
-const inputClass = "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-blue-400";
+const inputClass = "w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm outline-none focus:border-[var(--primary)]";
 
 const MODE_TITLE: Record<HandbookPageMode, { create: string; edit: string }> = {
     cover: { create: "Tạo trang bìa", edit: "Sửa trang bìa" },
@@ -183,15 +183,15 @@ export function HandbookPageModal({
                 onClick={onClose}
             />
             <div
-                className={`relative w-full sm:max-w-lg max-h-[90vh] bg-[#F4F6FA] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col ${closing ? "animate-handbook-page-out" : "animate-handbook-page-in"
+                className={`relative w-full sm:max-w-lg max-h-[90vh] bg-[var(--bg)] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col ${closing ? "animate-handbook-page-out" : "animate-handbook-page-in"
                     }`}
             >
-                <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
+                <div className="sticky top-0 z-10 bg-[var(--surface)] border-b border-[var(--border)] px-4 py-3 flex items-center justify-between">
                     <div>
-                        <h2 className="font-bold text-gray-900 text-sm">{heading}</h2>
-                        {isChildPage && <p className="text-[11px] text-gray-400 mt-0.5">Nội dung con — sẽ mở khi bấm vào mục cha</p>}
+                        <h2 className="font-bold text-[var(--text)] text-sm">{heading}</h2>
+                        {isChildPage && <p className="text-[11px] text-[var(--text-faint)] mt-0.5">Nội dung con — sẽ mở khi bấm vào mục cha</p>}
                     </div>
-                    <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                    <button onClick={onClose} className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)]">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
@@ -219,8 +219,8 @@ export function HandbookPageModal({
 
                     <Field label="Icon trang">
                         <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <LucideIconByName name={form.icon} className="w-5 h-5 text-gray-500" />
+                            <div className="w-11 h-11 rounded-xl bg-[var(--surface-muted)] flex items-center justify-center flex-shrink-0">
+                                <LucideIconByName name={form.icon} className="w-5 h-5 text-[var(--text-muted)]" />
                             </div>
                             <div className="flex-1">
                                 <IconPicker value={form.icon} onChange={(name) => update({ icon: name })} />
@@ -232,10 +232,10 @@ export function HandbookPageModal({
                         <Field label="Ảnh nền">
                             <div className="space-y-2">
                                 {form.background_image_url && (
-                                    <img src={form.background_image_url} alt="background" className="w-full h-32 object-cover rounded-xl border border-gray-100" />
+                                    <img src={form.background_image_url} alt="background" className="w-full h-32 object-cover rounded-xl border border-[var(--border)]" />
                                 )}
                                 <label className="block">
-                                    <span className="inline-flex items-center justify-center w-full rounded-xl border-2 border-dashed border-gray-200 py-2.5 text-sm text-gray-400 cursor-pointer hover:border-blue-300 hover:text-blue-500">
+                                    <span className="inline-flex items-center justify-center w-full rounded-xl border-2 border-dashed border-[var(--border)] py-2.5 text-sm text-[var(--text-faint)] cursor-pointer hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:text-[var(--primary)]">
                                         {uploading ? "Đang tải lên..." : "Chọn ảnh nền"}
                                     </span>
                                     <input
@@ -281,7 +281,7 @@ export function HandbookPageModal({
                     )}
 
                     {mode === "toc" && (
-                        <p className="text-xs text-gray-400 bg-white rounded-xl border border-gray-100 p-3">
+                        <p className="text-xs text-[var(--text-faint)] bg-[var(--surface)] rounded-xl border border-[var(--border)] p-3">
                             Danh sách mục lục được lấy tự động từ các mục nội dung cấp 1 (xem ở màn hình quản lý).
                         </p>
                     )}
@@ -290,7 +290,7 @@ export function HandbookPageModal({
                         <button
                             type="button"
                             onClick={() => update({ is_active: !(form.is_active ?? true) })}
-                            className={`w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-left flex items-center justify-between border ${(form.is_active ?? true) ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-gray-50 border-gray-200 text-gray-400"
+                            className={`w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-left flex items-center justify-between border ${(form.is_active ?? true) ? "bg-[var(--success-soft)] border-[color-mix(in_srgb,var(--success)_30%,transparent)] text-[var(--success)]" : "bg-[var(--surface-muted)] border-[var(--border)] text-[var(--text-faint)]"
                                 }`}
                         >
                             {(form.is_active ?? true) ? "Đang hiển thị" : "Đang ẩn"}
@@ -299,8 +299,8 @@ export function HandbookPageModal({
                     </Field>
                 </div>
 
-                <div className="sticky bottom-0 bg-white border-t border-gray-100 p-3 flex gap-2">
-                    <button onClick={onClose} className="flex-1 rounded-xl py-2.5 text-sm font-semibold text-gray-500 bg-gray-50">
+                <div className="sticky bottom-0 bg-[var(--surface)] border-t border-[var(--border)] p-3 flex gap-2">
+                    <button onClick={onClose} className="flex-1 rounded-xl py-2.5 text-sm font-semibold text-[var(--text-muted)] bg-[var(--surface-muted)]">
                         Huỷ
                     </button>
                     <button onClick={handleSave} disabled={saving} className="flex-1 rounded-xl py-2.5 text-sm font-semibold text-white bg-blue-500 disabled:opacity-60">

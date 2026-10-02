@@ -25,7 +25,7 @@ export function CompactActionButton({
             className={`relative flex flex-col items-center justify-center gap-1 rounded-xl py-2.5 px-2 text-white transition-all duration-200 active:shadow-none active:translate-y-[5px] disabled:opacity-50 disabled:pointer-events-none ${colorClass}`}
         >
             {badge != null && badge > 0 && !loading && (
-                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-white/25 text-[10px] font-bold text-white flex items-center justify-center">
+                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[color-mix(in_srgb,var(--surface)_25%,transparent)] text-[10px] font-bold text-white flex items-center justify-center">
                     {badge}
                 </span>
             )}

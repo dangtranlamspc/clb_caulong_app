@@ -18,14 +18,14 @@ import { PushNotificationManager } from '@/components/PushNotificationManager';
 import { InstallAppButton } from '@/components/member/InstallAppButton';
 
 const LEVEL_CFG: Record<string, { emoji: string; cls: string; bg: string }> = {
-  'Người Mới Tham Gia': { emoji: '🥚', cls: 'text-gray-600', bg: 'bg-gray-50 border-gray-200' },
-  'Làm Quen Sân': { emoji: '🏸', cls: 'text-green-700', bg: 'bg-green-50 border-green-200' },
+  'Người Mới Tham Gia': { emoji: '🥚', cls: 'text-[var(--text-muted)]', bg: 'bg-[var(--surface-muted)] border-[var(--border)]' },
+  'Làm Quen Sân': { emoji: '🏸', cls: 'text-[var(--success)]', bg: 'bg-[var(--success-soft)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]' },
   'Bắt Nhịp': { emoji: '💪', cls: 'text-cyan-700', bg: 'bg-cyan-50 border-cyan-200' },
-  'Ổn Sân': { emoji: '⚡', cls: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
-  'Thành Thạo Sân': { emoji: '🔥', cls: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
-  'Gắn Bó CLB': { emoji: '⭐', cls: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
-  'Trụ Cột Sân': { emoji: '💎', cls: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200' },
-  'Lão Làng Sân Cầu': { emoji: '👑', cls: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
+  'Ổn Sân': { emoji: '⚡', cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]' },
+  'Thành Thạo Sân': { emoji: '🔥', cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]' },
+  'Gắn Bó CLB': { emoji: '⭐', cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]' },
+  'Trụ Cột Sân': { emoji: '💎', cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]' },
+  'Lão Làng Sân Cầu': { emoji: '👑', cls: 'text-[var(--purple)]', bg: 'bg-[var(--purple-soft)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)]' },
 };
 
 const ATTENDANCE_TIERS = [
@@ -177,10 +177,10 @@ export default function ProfilePage() {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl p-5 animate-pulse">
-            <div className="h-4 bg-gray-100 rounded w-32 mb-4" />
+          <div key={i} className="bg-[var(--surface)] rounded-2xl p-5 animate-pulse">
+            <div className="h-4 bg-[var(--surface-muted)] rounded w-32 mb-4" />
             <div className="space-y-3">
-              {[...Array(3)].map((_, j) => <div key={j} className="h-10 bg-gray-100 rounded-xl" />)}
+              {[...Array(3)].map((_, j) => <div key={j} className="h-10 bg-[var(--surface-muted)] rounded-xl" />)}
             </div>
           </div>
         ))}
@@ -192,8 +192,8 @@ export default function ProfilePage() {
     <div className="space-y-4">
 
       <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 rounded-3xl px-5 py-6 overflow-hidden">
-        <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10" />
-        <div className="absolute -bottom-10 -left-6 w-24 h-24 rounded-full bg-white/5" />
+        <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[color-mix(in_srgb,var(--surface)_10%,transparent)]" />
+        <div className="absolute -bottom-10 -left-6 w-24 h-24 rounded-full bg-[color-mix(in_srgb,var(--surface)_5%,transparent)]" />
 
         <div className="relative flex items-center gap-3">
           <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 130, height: 100 }}>
@@ -225,7 +225,7 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <span className="inline-flex items-center gap-1.5 w-fit text-xs font-semibold px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/25 text-white">
+            <span className="inline-flex items-center gap-1.5 w-fit text-xs font-semibold px-2.5 py-1 rounded-full bg-[color-mix(in_srgb,var(--surface)_15%,transparent)] backdrop-blur-sm border border-white/25 text-white">
               <span>{attendanceLevel.emoji}</span>
               <span>{attendanceLevel.label}</span>
             </span>
@@ -258,9 +258,9 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
-          <p className="text-xl font-black text-blue-600">{myStats?.badminton?.total_points}</p>
-          <p className="text-[10px] text-gray-400 mt-0.5 flex items-center justify-center gap-1">
+        <div className="bg-[var(--surface)] rounded-2xl p-3 text-center shadow-sm">
+          <p className="text-xl font-black text-[var(--primary)]">{myStats?.badminton?.total_points}</p>
+          <p className="text-[10px] text-[var(--text-faint)] mt-0.5 flex items-center justify-center gap-1">
             <img
               src="https://res.cloudinary.com/ds6mtnyyk/image/upload/v1782118304/cau-long-icon_qeymuc.png"
               alt="Cầu lông"
@@ -269,23 +269,23 @@ export default function ProfilePage() {
             Cầu lông
           </p>
         </div>
-        <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
-          <p className="text-xl font-black text-amber-600">{myStats?.sessions_this_month ?? 0}</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Buổi tháng này</p>
+        <div className="bg-[var(--surface)] rounded-2xl p-3 text-center shadow-sm">
+          <p className="text-xl font-black text-[var(--warning)]">{myStats?.sessions_this_month ?? 0}</p>
+          <p className="text-[10px] text-[var(--text-faint)] mt-0.5">Buổi tháng này</p>
         </div>
       </div>
 
-      <div className={`bg-white rounded-2xl flex items-center gap-3 p-4 shadow-sm border ${data?.is_active ? 'border-emerald-100' : 'border-red-100'
+      <div className={`bg-[var(--surface)] rounded-2xl flex items-center gap-3 p-4 shadow-sm border ${data?.is_active ? 'border-[color-mix(in_srgb,var(--success)_30%,transparent)]' : 'border-[color-mix(in_srgb,var(--danger)_30%,transparent)]'
         }`}>
         {data?.is_active
-          ? <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-          : <Clock className="w-5 h-5 text-red-400 flex-shrink-0" />
+          ? <CheckCircle2 className="w-5 h-5 text-[var(--success)] flex-shrink-0" />
+          : <Clock className="w-5 h-5 text-[var(--danger)] flex-shrink-0" />
         }
         <div>
-          <p className="text-sm font-semibold text-gray-800">
+          <p className="text-sm font-semibold text-[var(--text)]">
             {data?.is_active ? 'Tài khoản đang hoạt động' : 'Tài khoản bị vô hiệu hóa'}
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[var(--text-faint)]">
             Tham gia từ{' '}
             {data?.created_at
               ? format(new Date(data.created_at), 'dd MMMM yyyy', { locale: vi })
@@ -294,64 +294,64 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-[var(--surface)] rounded-2xl overflow-hidden shadow-sm">
         <Link
           href="/profile/settings"
-          className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-50"
+          className="flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border)]"
         >
-          <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-            <User className="w-4 h-4 text-blue-600" />
+          <div className="w-8 h-8 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+            <User className="w-4 h-4 text-[var(--primary)]" />
           </div>
-          <span className="flex-1 text-sm font-medium text-gray-700">Chỉnh sửa hồ sơ</span>
-          <ChevronRight className="w-4 h-4 text-gray-300" />
+          <span className="flex-1 text-sm font-medium text-[var(--text)]">Chỉnh sửa hồ sơ</span>
+          <ChevronRight className="w-4 h-4 text-[var(--text-faint)]" />
         </Link>
 
         <button
           onClick={() => setShowRankInfo(true)}
-          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-50 text-left"
+          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border)] text-left"
         >
           <div className="w-8 h-8 rounded-xl bg-cyan-50 flex items-center justify-center flex-shrink-0">
             <Trophy className="w-4 h-4 text-cyan-600" />
           </div>
-          <span className="flex-1 text-sm font-medium text-gray-700">Thông tin các rank</span>
-          <ChevronRight className="w-4 h-4 text-gray-300" />
+          <span className="flex-1 text-sm font-medium text-[var(--text)]">Thông tin các rank</span>
+          <ChevronRight className="w-4 h-4 text-[var(--text-faint)]" />
         </button>
 
         <Link
           href="/profile/change-password"
-          className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-50"
+          className="flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border)]"
         >
-          <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
-            <Lock className="w-4 h-4 text-amber-600" />
+          <div className="w-8 h-8 rounded-xl bg-[var(--warning-soft)] flex items-center justify-center flex-shrink-0">
+            <Lock className="w-4 h-4 text-[var(--warning)]" />
           </div>
-          <span className="flex-1 text-sm font-medium text-gray-700">Đổi mật khẩu</span>
-          <ChevronRight className="w-4 h-4 text-gray-300" />
+          <span className="flex-1 text-sm font-medium text-[var(--text)]">Đổi mật khẩu</span>
+          <ChevronRight className="w-4 h-4 text-[var(--text-faint)]" />
         </Link>
 
         <InstallAppButton />
 
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-50">
-          <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-            <Bell className="w-4 h-4 text-rose-600" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--border)]">
+          <div className="w-8 h-8 rounded-xl bg-[var(--pink-soft)] flex items-center justify-center flex-shrink-0">
+            <Bell className="w-4 h-4 text-[var(--pink)]" />
           </div>
           <div className="flex-1">
-            <span className="text-sm font-medium text-gray-700">Thông báo đẩy</span>
-            <p className="text-xs text-gray-400">Nhận thông báo ngay cả khi không mở app</p>
+            <span className="text-sm font-medium text-[var(--text)]">Thông báo đẩy</span>
+            <p className="text-xs text-[var(--text-faint)]">Nhận thông báo ngay cả khi không mở app</p>
           </div>
           <PushNotificationManager />
         </div>
         <Link
           href="/history"
-          className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-50"
+          className="flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border)]"
         >
-          <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-            <ClipboardList className="w-4 h-4 text-indigo-600" />
+          <div className="w-8 h-8 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+            <ClipboardList className="w-4 h-4 text-[var(--primary)]" />
           </div>
           <div className="flex-1">
-            <span className="text-sm font-medium text-gray-700">Lịch sử đăng ký</span>
-            <p className="text-xs text-gray-400">Các buổi đã tham gia</p>
+            <span className="text-sm font-medium text-[var(--text)]">Lịch sử đăng ký</span>
+            <p className="text-xs text-[var(--text-faint)]">Các buổi đã tham gia</p>
           </div>
-          <ChevronRight className="w-4 h-4 text-gray-300" />
+          <ChevronRight className="w-4 h-4 text-[var(--text-faint)]" />
         </Link>
       </div>
       {showRankInfo && <RankInfoModal onClose={() => setShowRankInfo(false)} />}

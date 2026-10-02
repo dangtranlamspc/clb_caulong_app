@@ -6,14 +6,14 @@ import { Shirt, PackageOpen, Plus, ArrowLeft, Receipt } from "lucide-react";
 import { fmt } from "@/utils/utils";
 
 const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-    confirmed: { label: "Đã thanh toán", cls: "bg-emerald-50 text-emerald-600" },
-    needs_payment: { label: "Chờ thanh toán", cls: "bg-orange-50 text-orange-600" },
+    confirmed: { label: "Đã thanh toán", cls: "bg-[var(--success-soft)] text-[var(--success)]" },
+    needs_payment: { label: "Chờ thanh toán", cls: "bg-[var(--warning-soft)] text-[var(--warning)]" },
     pending_review: {
         label: "Chờ admin xác nhận",
-        cls: "bg-orange-50 text-orange-600",
+        cls: "bg-[var(--warning-soft)] text-[var(--warning)]",
     },
-    unpaid: { label: "Chưa thanh toán", cls: "bg-gray-100 text-gray-500" },
-    rejected: { label: "Bị từ chối", cls: "bg-red-50 text-red-500" },
+    unpaid: { label: "Chưa thanh toán", cls: "bg-[var(--surface-muted)] text-[var(--text-muted)]" },
+    rejected: { label: "Bị từ chối", cls: "bg-[var(--danger-soft)] text-[var(--danger)]" },
 };
 
 function needsMemberPayment(r: any) {
@@ -97,7 +97,7 @@ export function ShirtOrderHistorySection({
 
 
     return (
-        <div className="min-h-screen bg-[#F4F6FA] md:bg-transparent">
+        <div className="min-h-screen bg-[var(--bg)] md:bg-transparent">
             {/* Header dính, giống EventsDetailPage */}
             <div
                 className="sticky top-0 z-30"
@@ -113,15 +113,15 @@ export function ShirtOrderHistorySection({
                     <button
                         onClick={handleBack}
                         aria-label="Quay lại"
-                        className="p-2 -ml-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                        className="p-2 -ml-2 hover:bg-[var(--surface-hover)] active:bg-[var(--border-strong)] rounded-lg transition-colors flex-shrink-0"
                     >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
                     </button>
                     <div className="min-w-0 flex-1">
-                        <h1 className="text-base font-bold text-gray-900 truncate leading-tight">
+                        <h1 className="text-base font-bold text-[var(--text)] truncate leading-tight">
                             Lịch sử mua hàng
                         </h1>
-                        <p className="text-[11px] text-gray-400 truncate leading-tight">
+                        <p className="text-[11px] text-[var(--text-faint)] truncate leading-tight">
                             {activity.title}
                         </p>
                     </div>
@@ -136,11 +136,11 @@ export function ShirtOrderHistorySection({
                 {/* Summary strip */}
                 {typeGroups.length > 0 && (
                     adminAddedTotal > 0 ? (
-                        <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3">
-                            <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                        <div className="flex items-center gap-3 bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] rounded-2xl px-4 py-3">
+                            <div className="w-9 h-9 rounded-full bg-[var(--surface)] flex items-center justify-center flex-shrink-0">
                                 <span className="text-base">🎁</span>
                             </div>
-                            <div className="text-xs text-amber-700">
+                            <div className="text-xs text-[var(--warning)]">
                                 Admin đã đặt giúp bạn{" "}
                                 <span className="font-semibold">{adminAddedTotal} sản phẩm</span>{" "}
                                 trong{" "}
@@ -154,13 +154,13 @@ export function ShirtOrderHistorySection({
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-3 bg-blue-50/70 border border-blue-100 rounded-2xl px-4 py-3">
-                            <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                                <Receipt className="w-4 h-4 text-blue-500" />
+                        <div className="flex items-center gap-3 bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] rounded-2xl px-4 py-3">
+                            <div className="w-9 h-9 rounded-full bg-[var(--surface)] flex items-center justify-center flex-shrink-0">
+                                <Receipt className="w-4 h-4 text-[var(--primary)]" />
                             </div>
-                            <div className="text-xs text-gray-600">
+                            <div className="text-xs text-[var(--text-muted)]">
                                 Bạn đã đặt{" "}
-                                <span className="font-semibold text-gray-900">
+                                <span className="font-semibold text-[var(--text)]">
                                     {totalItems} sản phẩm
                                 </span>{" "}
                                 trong {typeGroups.length} loại áo
@@ -170,14 +170,14 @@ export function ShirtOrderHistorySection({
                 )}
 
                 {/* Order list */}
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden md:border md:border-gray-100">
+                <div className="bg-[var(--surface)] rounded-2xl shadow-sm overflow-hidden md:border md:border-[var(--border)]">
                     {typeGroups.length === 0 ? (
                         <div className="py-16 text-center px-5">
-                            <PackageOpen className="w-10 h-10 mx-auto text-gray-200 mb-3" />
-                            <p className="text-gray-400 text-sm">Bạn chưa đặt sản phẩm nào</p>
+                            <PackageOpen className="w-10 h-10 mx-auto text-[var(--text-faint)] mb-3" />
+                            <p className="text-[var(--text-faint)] text-sm">Bạn chưa đặt sản phẩm nào</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-gray-50">
+                        <div className="divide-y divide-[var(--border)]">
                             {typeGroups.map(([shirtTypeId, variants]) => {
                                 const type = shirtTypes.find((t) => t.id === shirtTypeId);
                                 const images: string[] = (type?.colors ?? []).flatMap(
@@ -198,24 +198,24 @@ export function ShirtOrderHistorySection({
                                 return (
                                     <div
                                         key={shirtTypeId}
-                                        className="flex gap-3 px-5 py-4 md:hover:bg-gray-50/60 transition-colors"
+                                        className="flex gap-3 px-5 py-4 md:hover:bg-[var(--surface-hover)] transition-colors"
                                     >
-                                        <div className="w-16 h-16 rounded-xl bg-gray-50 overflow-hidden flex-shrink-0 flex items-center justify-center border border-gray-100">
+                                        <div className="w-16 h-16 rounded-xl bg-[var(--surface-muted)] overflow-hidden flex-shrink-0 flex items-center justify-center border border-[var(--border)]">
                                             {images[0] ? (
                                                 <img
                                                     src={images[0]}
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <Shirt className="w-6 h-6 text-gray-300" />
+                                                <Shirt className="w-6 h-6 text-[var(--text-faint)]" />
                                             )}
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center justify-between gap-2">
-                                                <p className="text-sm font-semibold text-gray-900 truncate">
+                                                <p className="text-sm font-semibold text-[var(--text)] truncate">
                                                     {type?.name ?? "—"}
                                                 </p>
-                                                <span className="text-xs text-gray-400 flex-shrink-0">
+                                                <span className="text-xs text-[var(--text-faint)] flex-shrink-0">
                                                     × {groupQuantity}
                                                 </span>
                                             </div>
@@ -231,7 +231,7 @@ export function ShirtOrderHistorySection({
                                                             className="flex items-center justify-between gap-2 text-xs"
                                                         >
                                                             <div className="flex flex-col gap-1 min-w-0">
-                                                                <span className="text-gray-400 truncate">
+                                                                <span className="text-[var(--text-faint)] truncate">
                                                                     {r.gender === "nu" ? "Nữ" : "Nam"} · Size {r.size} × {r.quantity}
                                                                     {r.color_name ? ` · ${r.color_name}` : ""}
                                                                 </span>
@@ -244,7 +244,7 @@ export function ShirtOrderHistorySection({
                                                             </div>
 
                                                             <div className="flex items-center gap-2 flex-shrink-0">
-                                                                <span className="text-gray-500 font-medium">
+                                                                <span className="text-[var(--text-muted)] font-medium">
                                                                     {fmt(priceOf(r))}
                                                                 </span>
 
@@ -259,11 +259,11 @@ export function ShirtOrderHistorySection({
                                                 })}
                                             </div>
 
-                                            <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-gray-50">
-                                                <span className="text-xs text-gray-400">
+                                            <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-[var(--border)]">
+                                                <span className="text-xs text-[var(--text-faint)]">
                                                     Tổng loại này
                                                 </span>
-                                                <span className="text-sm font-bold text-gray-900">
+                                                <span className="text-sm font-bold text-[var(--text)]">
                                                     {fmt(groupTotal)}
                                                 </span>
                                             </div>
@@ -275,11 +275,11 @@ export function ShirtOrderHistorySection({
                     )}
 
                     {typeGroups.length > 0 && (
-                        <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 bg-gray-50/50">
-                            <span className="text-sm font-semibold text-gray-700">
+                        <div className="flex items-center justify-between px-5 py-4 border-t border-[var(--border)] bg-[var(--surface-muted)]">
+                            <span className="text-sm font-semibold text-[var(--text)]">
                                 Tổng cộng
                             </span>
-                            <span className="text-lg font-black text-gray-900">
+                            <span className="text-lg font-black text-[var(--text)]">
                                 {fmt(grandTotal)}
                             </span>
                         </div>
@@ -298,7 +298,7 @@ export function ShirtOrderHistorySection({
                 {typeGroups.length > 0 && canModify && (
                     <button
                         onClick={onOpenCancel}
-                        className="hidden md:flex w-full py-3.5 rounded-xl border-2 border-red-100 bg-white hover:bg-red-50 active:scale-[0.99] text-red-600 font-bold text-sm items-center justify-center gap-2 transition-all"
+                        className="hidden md:flex w-full py-3.5 rounded-xl border-2 border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--surface)] hover:bg-[var(--danger-soft)] active:scale-[0.99] text-[var(--danger)] font-bold text-sm items-center justify-center gap-2 transition-all"
                     >
                         Huỷ đơn
                     </button>
@@ -317,7 +317,7 @@ export function ShirtOrderHistorySection({
                 )}
 
                 {!canModify && (
-                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-xs text-[var(--text-muted)]">
                         Hoạt động đã đóng đăng ký, không thể thêm hoặc hủy đơn đặt áo.
                     </div>
                 )}
@@ -326,7 +326,7 @@ export function ShirtOrderHistorySection({
 
             {(canModify || pendingPaymentRegs.length > 0) && (
                 <div
-                    className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-gray-100 px-4 pt-3"
+                    className="md:hidden fixed bottom-0 left-0 right-0 bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] backdrop-blur border-t border-[var(--border)] px-4 pt-3"
                     style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
                 >
                     {pendingPaymentRegs.length > 0 && (
@@ -341,7 +341,7 @@ export function ShirtOrderHistorySection({
                         {typeGroups.length > 0 && canModify && (
                             <button
                                 onClick={onOpenCancel}
-                                className="w-full mb-2 py-3.5 rounded-xl border-2 border-red-100 bg-white active:scale-[0.99] text-red-600 font-bold text-sm flex items-center justify-center gap-2"
+                                className="w-full mb-2 py-3.5 rounded-xl border-2 border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--surface)] active:scale-[0.99] text-[var(--danger)] font-bold text-sm flex items-center justify-center gap-2"
                             >
                                 Huỷ đơn
                             </button>
@@ -355,7 +355,7 @@ export function ShirtOrderHistorySection({
             )}
 
             {!canModify && (
-                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-gray-500">
+                <div className="flex items-center gap-2 bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-xs text-[var(--text-muted)]">
                     Hoạt động đã đóng đăng ký, không thể thêm hoặc hủy đơn đặt áo.
                 </div>
             )}

@@ -179,7 +179,7 @@ export function UpcomingEvents() {
                     <span
                       className={`inline-flex items-center gap-1.5 text-[11px] font-semibold text-white px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm ${cfg.cls}`}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-white/80" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[color-mix(in_srgb,var(--surface)_80%,transparent)]" />
                       {overrideLabel ?? cfg.label}
                     </span>
                     <ChevronRight className="w-4 h-4 text-[var(--text-faint)]" />

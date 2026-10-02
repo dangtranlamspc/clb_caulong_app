@@ -141,18 +141,18 @@ export default function SendDrinksPage() {
     return (
         <div className="mx-auto max-w-md space-y-5 p-4 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
             <div className="flex items-center gap-2">
-                <Link href="/drinks/my" className="rounded-lg p-2 hover:bg-gray-100 flex-shrink-0">
+                <Link href="/drinks/my" className="rounded-lg p-2 hover:bg-[var(--surface-hover)] flex-shrink-0">
                     <ArrowLeft className="h-5 w-5" />
                 </Link>
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900">Gửi nước</h1>
-                    <p className="text-sm text-gray-500">
+                    <h1 className="text-xl font-bold text-[var(--text)]">Gửi nước</h1>
+                    <p className="text-sm text-[var(--text-muted)]">
                         Gửi nước bạn đang sở hữu cho người khác hoặc trả về kho CLB.
                     </p>
                 </div>
             </div>
 
-            <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
+            <div className="flex gap-1 rounded-xl bg-[var(--surface-muted)] p-1">
                 {[
                     { v: "member", label: "Gửi đến người khác" },
                     { v: "club", label: "Gửi đến BnB" },
@@ -160,7 +160,7 @@ export default function SendDrinksPage() {
                     <button
                         key={t.v}
                         onClick={() => { setTab(t.v as any); resetForm(); }}
-                        className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${tab === t.v ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
+                        className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${tab === t.v ? "bg-[var(--surface)] shadow-sm text-[var(--text)]" : "text-[var(--text-muted)]"
                             }`}
                     >
                         {t.label}
@@ -169,18 +169,18 @@ export default function SendDrinksPage() {
             </div>
 
             {loading ? (
-                <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center text-sm text-gray-400">
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--text-faint)]">
                     Đang tải...
                 </div>
             ) : inventory.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-400">
+                <div className="rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--surface)] p-8 text-center text-sm text-[var(--text-faint)]">
                     Bạn chưa sở hữu loại nước nào để gửi.
                 </div>
             ) : (
-                <div className="space-y-3.5 rounded-2xl border border-gray-100 bg-white p-4">
+                <div className="space-y-3.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
                     {tab === "member" && (
                         <div>
-                            <label className="text-xs font-semibold text-gray-500">Người nhận</label>
+                            <label className="text-xs font-semibold text-[var(--text-muted)]">Người nhận</label>
                             {selectedUser ? (
                                 <div className="mt-1.5 flex items-center justify-between rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2.5">
                                     <div className="flex items-center gap-2.5">
@@ -192,8 +192,8 @@ export default function SendDrinksPage() {
                                             </div>
                                         )}
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900">{selectedUser.full_name}</p>
-                                            {selectedUser.phone && <p className="text-xs text-gray-400">{selectedUser.phone}</p>}
+                                            <p className="text-sm font-semibold text-[var(--text)]">{selectedUser.full_name}</p>
+                                            {selectedUser.phone && <p className="text-xs text-[var(--text-faint)]">{selectedUser.phone}</p>}
                                         </div>
                                     </div>
                                     <button onClick={() => { setSelectedUser(null); setQuery(""); }} className="text-xs font-semibold text-cyan-600 hover:underline">
@@ -202,24 +202,24 @@ export default function SendDrinksPage() {
                                 </div>
                             ) : (
                                 <div className="relative mt-1.5">
-                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-faint)]" />
                                     <input
                                         value={query}
                                         onChange={(e) => setQuery(e.target.value)}
                                         placeholder="Nhập tên hoặc SĐT thành viên..."
-                                        className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                                        className="w-full rounded-xl border border-[var(--border)] py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
                                     />
                                     {(searching || results.length > 0) && (
-                                        <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
-                                            {searching && <div className="px-3 py-2.5 text-xs text-gray-400">Đang tìm...</div>}
+                                        <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
+                                            {searching && <div className="px-3 py-2.5 text-xs text-[var(--text-faint)]">Đang tìm...</div>}
                                             {!searching && results.length === 0 && query.trim().length >= 2 && (
-                                                <div className="px-3 py-2.5 text-xs text-gray-400">Không tìm thấy thành viên</div>
+                                                <div className="px-3 py-2.5 text-xs text-[var(--text-faint)]">Không tìm thấy thành viên</div>
                                             )}
                                             {!searching && results.map((u) => (
                                                 <button
                                                     key={u.id}
                                                     onClick={() => { setSelectedUser(u); setResults([]); }}
-                                                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left hover:bg-gray-50"
+                                                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left hover:bg-[var(--surface-hover)]"
                                                 >
                                                     {u.avatar_url ? (
                                                         <img src={u.avatar_url} className="h-7 w-7 rounded-full object-cover" alt="" />
@@ -229,8 +229,8 @@ export default function SendDrinksPage() {
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <p className="text-sm font-semibold text-gray-900">{u.full_name}</p>
-                                                        {u.phone && <p className="text-xs text-gray-400">{u.phone}</p>}
+                                                        <p className="text-sm font-semibold text-[var(--text)]">{u.full_name}</p>
+                                                        {u.phone && <p className="text-xs text-[var(--text-faint)]">{u.phone}</p>}
                                                     </div>
                                                 </button>
                                             ))}
@@ -242,14 +242,14 @@ export default function SendDrinksPage() {
                     )}
 
                     {tab === "club" && (
-                        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
+                        <div className="flex items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] px-3 py-2.5 text-xs text-[var(--warning)]">
                             <Building2 className="h-4 w-4 flex-shrink-0" />
                             Nước sẽ được cộng thẳng vào kho chung của CLB, không hoàn lại.
                         </div>
                     )}
 
                     <div>
-                        <label className="text-xs font-semibold text-gray-500">Loại nước &amp; số lượng</label>
+                        <label className="text-xs font-semibold text-[var(--text-muted)]">Loại nước &amp; số lượng</label>
                         <div className="mt-1.5 space-y-2">
                             {inventory.map((item) => {
                                 const qty = Number(amounts[item.drink_id]) || 0;
@@ -257,21 +257,21 @@ export default function SendDrinksPage() {
                                 return (
                                     <div
                                         key={item.drink_id}
-                                        className={`flex items-center gap-3 rounded-xl border p-2.5 ${exceeds ? "border-red-300 bg-red-50" : "border-gray-100"
+                                        className={`flex items-center gap-3 rounded-xl border p-2.5 ${exceeds ? "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--danger-soft)]" : "border-[var(--border)]"
                                             }`}
                                     >
-                                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--surface-muted)]">
                                             {item.drinks.image_url ? (
                                                 <img src={item.drinks.image_url} alt={item.drinks.name} className="h-full w-full object-cover" />
                                             ) : (
                                                 <div className="flex h-full w-full items-center justify-center">
-                                                    <GlassWater className="h-4 w-4 text-gray-300" />
+                                                    <GlassWater className="h-4 w-4 text-[var(--text-faint)]" />
                                                 </div>
                                             )}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-medium text-gray-800">{item.drinks.name}</p>
-                                            <p className="text-[11px] text-gray-400">Đang sở hữu: {item.quantity}</p>
+                                            <p className="truncate text-sm font-medium text-[var(--text)]">{item.drinks.name}</p>
+                                            <p className="text-[11px] text-[var(--text-faint)]">Đang sở hữu: {item.quantity}</p>
                                         </div>
                                         <input
                                             type="number"
@@ -283,8 +283,8 @@ export default function SendDrinksPage() {
                                                 setAmounts((prev) => ({ ...prev, [item.drink_id]: e.target.value }))
                                             }
                                             className={`w-16 flex-shrink-0 rounded-lg border px-2 py-1.5 text-center text-sm focus:outline-none ${exceeds
-                                                ? "border-red-300 focus:border-red-400"
-                                                : "border-gray-200 focus:border-cyan-400"
+                                                ? "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] focus:border-[var(--danger)]"
+                                                : "border-[var(--border)] focus:border-cyan-400"
                                                 }`}
                                         />
                                     </div>
@@ -292,18 +292,18 @@ export default function SendDrinksPage() {
                             })}
                         </div>
                         {totalSelectedQuantity > 0 && (
-                            <p className="mt-1.5 text-xs text-gray-400">
-                                Tổng số lượng đã chọn: <span className="font-semibold text-gray-600">{totalSelectedQuantity}</span>
+                            <p className="mt-1.5 text-xs text-[var(--text-faint)]">
+                                Tổng số lượng đã chọn: <span className="font-semibold text-[var(--text-muted)]">{totalSelectedQuantity}</span>
                             </p>
                         )}
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold text-gray-500">Ghi chú (tuỳ chọn)</label>
+                        <label className="text-xs font-semibold text-[var(--text-muted)]">Ghi chú (tuỳ chọn)</label>
                         <input
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+                            className="mt-1 w-full rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm"
                             placeholder="VD: Cảm ơn bạn đã giúp đỡ"
                         />
                     </div>

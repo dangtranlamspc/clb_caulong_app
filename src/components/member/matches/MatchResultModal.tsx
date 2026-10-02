@@ -206,7 +206,7 @@ export function MatchResultModal({ result, onClose }: Props) {
         <div
             className="fixed inset-0 z-[9999] flex items-center sm:items-center justify-center px-4 pb-6 sm:pb-0"
             style={{
-                background: visible ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0)',
+                background: visible ? 'var(--overlay)' : 'rgba(0,0,0,0)',
                 backdropFilter: visible ? 'blur(3px)' : 'blur(0px)',
                 pointerEvents: visible ? 'auto' : 'none',
                 transition: 'background 0.3s ease, backdrop-filter 0.3s ease',

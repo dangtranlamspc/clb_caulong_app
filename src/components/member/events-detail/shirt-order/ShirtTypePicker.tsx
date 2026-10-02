@@ -29,8 +29,8 @@ export function ShirtTypePicker({
   openLightbox: (src: string) => void;
 }) {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-      <h3 className="font-bold text-gray-900">1. Chọn mẫu áo</h3>
+    <div className="bg-[var(--surface)] rounded-2xl p-5 shadow-sm space-y-4">
+      <h3 className="font-bold text-[var(--text)]">1. Chọn mẫu áo</h3>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {shirtTypes.map((type) => {
@@ -41,7 +41,7 @@ export function ShirtTypePicker({
               onClick={() => setSelectedTypeId(type.id)}
               className={`relative flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap tab-btn ${active
                 ? "bg-blue-600 text-white shadow-md shadow-blue-200 tab-btn-active"
-                : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                : "bg-[var(--surface-muted)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
                 }`}
             >
               {type.name}
@@ -54,15 +54,15 @@ export function ShirtTypePicker({
         <div className="flex flex-col-reverse sm:flex-row gap-5">
           <div className="flex-1 space-y-3">
             <div>
-              <p className="text-lg font-bold text-gray-900">{selectedType.name}</p>
+              <p className="text-lg font-bold text-[var(--text)]">{selectedType.name}</p>
               {(selectedType.price_per_shirt ?? 0) > 0 && (
-                <p className="text-blue-600 font-bold">{fmt(selectedType.price_per_shirt)}</p>
+                <p className="text-[var(--primary)] font-bold">{fmt(selectedType.price_per_shirt)}</p>
               )}
             </div>
 
             {(selectedType.colors ?? []).length > 0 && (
               <div>
-                <p className="text-[11px] font-medium text-gray-400 mb-2">Màu sắc</p>
+                <p className="text-[11px] font-medium text-[var(--text-faint)] mb-2">Màu sắc</p>
                 <div className="flex flex-wrap gap-3">
                   {(selectedType.colors ?? []).map((c: any) => {
                     const isActive = activeColor?.id === c.id;
@@ -80,7 +80,7 @@ export function ShirtTypePicker({
                         <span
                           className={`color-dot relative w-10 h-10 rounded-full border-2 flex items-center justify-center shadow-sm transition-colors ${isActive
                             ? "border-blue-500 ring-2 ring-blue-200 color-dot-pop"
-                            : "border-gray-200"
+                            : "border-[var(--border)]"
                             }`}
                           style={{
                             backgroundColor: swatch,
@@ -92,12 +92,12 @@ export function ShirtTypePicker({
                         >
                           {isActive && (
                             <CheckCircle2
-                              className={`w-4 h-4 ${isLightSwatch ? "text-gray-700" : "text-white"}`}
+                              className={`w-4 h-4 ${isLightSwatch ? "text-[var(--text)]" : "text-white"}`}
                             />
                           )}
                         </span>
                         <span
-                          className={`text-[10px] max-w-[64px] truncate ${isActive ? "text-blue-600 font-semibold" : "text-gray-500"
+                          className={`text-[10px] max-w-[64px] truncate ${isActive ? "text-[var(--primary)] font-semibold" : "text-[var(--text-muted)]"
                             }`}
                         >
                           {c.name}
@@ -113,7 +113,7 @@ export function ShirtTypePicker({
           <button
             type="button"
             onClick={() => activeColorImage && openLightbox(activeColorImage)}
-            className="w-full sm:w-[320px] aspect-[16/10] rounded-xl bg-gray-50 overflow-hidden flex items-center justify-center flex-shrink-0 cursor-zoom-in"
+            className="w-full sm:w-[320px] aspect-[16/10] rounded-xl bg-[var(--surface-muted)] overflow-hidden flex items-center justify-center flex-shrink-0 cursor-zoom-in"
           >
             {activeColorImage ? (
               <img
@@ -123,7 +123,7 @@ export function ShirtTypePicker({
                 alt=""
               />
             ) : (
-              <Shirt className="w-10 h-10 text-gray-300" />
+              <Shirt className="w-10 h-10 text-[var(--text-faint)]" />
             )}
           </button>
         </div>

@@ -225,14 +225,14 @@ export default function SessionFormModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
       style={{
-        background: "rgba(0,0,0,0.4)",
+        background: "var(--overlay)",
         backdropFilter: "blur(2px)",
         opacity: visible ? 1 : 0,
         transition: "opacity 200ms ease-out",
       }}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-xl shadow-xl my-8 max-h-[90vh] flex flex-col"
+        className="bg-[var(--surface)] rounded-2xl w-full max-w-xl shadow-xl my-8 max-h-[90vh] flex flex-col"
         style={{
           transform: visible
             ? "scale(1) translateY(0)"
@@ -244,16 +244,16 @@ export default function SessionFormModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
           <div className="flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-blue-600" />
-            <h3 className="font-bold text-gray-900">
+            <CalendarDays className="w-5 h-5 text-[var(--primary)]" />
+            <h3 className="font-bold text-[var(--text)]">
               {isEdit ? "Chỉnh sửa buổi đánh" : "Tạo buổi đánh mới"}
             </h3>
           </div>
           <button
             onClick={handleClose}
-            className="p-1 text-gray-400 hover:text-gray-600"
+            className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -266,7 +266,7 @@ export default function SessionFormModal({
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="h-10 bg-gray-100 rounded animate-pulse"
+                  className="h-10 bg-[var(--surface-muted)] rounded animate-pulse"
                 />
               ))}
             </div>
@@ -277,12 +277,12 @@ export default function SessionFormModal({
               className="space-y-4"
             >
               <div className="space-y-4">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <p className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide">
                   Thông tin buổi
                 </p>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[var(--text)] mb-1">
                     Tên buổi đánh *
                   </label>
                   <input
@@ -291,14 +291,14 @@ export default function SessionFormModal({
                     placeholder="VD: Buổi đánh thứ 2 tuần này"
                   />
                   {errors.title && (
-                    <p className="text-red-500 text-xs mt-1">
+                    <p className="text-[var(--danger)] text-xs mt-1">
                       {errors.title.message as string}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[var(--text)] mb-1">
                     Mô tả
                   </label>
                   <textarea
@@ -326,7 +326,7 @@ export default function SessionFormModal({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1">
                       Thời lượng (phút)
                     </label>
                     <input
@@ -336,7 +336,7 @@ export default function SessionFormModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1">
                       Số chỗ tối đa
                     </label>
                     <input
@@ -349,7 +349,7 @@ export default function SessionFormModal({
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-medium text-gray-700">Địa điểm</label>
+                    <label className="block text-sm font-medium text-[var(--text)]">Địa điểm</label>
                     <button
                       type="button"
                       onClick={() => setShowLocManager(true)}
@@ -373,22 +373,22 @@ export default function SessionFormModal({
                   />
                 </div>
 
-                <p className="text-xs text-gray-400 italic">
+                <p className="text-xs text-[var(--text-faint)] italic">
                   ℹ️ Giá tiền từng người sẽ được nhập riêng lúc "Kết thúc buổi"
                 </p>
               </div>
 
               {isCompleted && (
-                <div className="space-y-4 border border-blue-100 bg-blue-50/40 rounded-xl p-4">
+                <div className="space-y-4 border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] rounded-xl p-4">
                   <div className="flex items-center gap-2">
-                    <Calculator className="w-4 h-4 text-blue-600" />
-                    <p className="text-sm font-semibold text-blue-700">
+                    <Calculator className="w-4 h-4 text-[var(--primary)]" />
+                    <p className="text-sm font-semibold text-[var(--primary)]">
                       Chi phí thực tế buổi
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1">
                       🏟 Tiền sân (VNĐ)
                     </label>
                     <input
@@ -401,12 +401,12 @@ export default function SessionFormModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-2">
                       🏸 Cầu lông
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">
+                        <label className="block text-xs text-[var(--text-muted)] mb-1">
                           Số bông sử dụng
                         </label>
                         <input
@@ -417,7 +417,7 @@ export default function SessionFormModal({
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">
+                        <label className="block text-xs text-[var(--text-muted)] mb-1">
                           Giá 1 bông (VNĐ)
                         </label>
                         <input
@@ -432,20 +432,20 @@ export default function SessionFormModal({
                   </div>
 
                   {totalCost > 0 && (
-                    <div className="rounded-lg bg-white border border-blue-200 p-3 space-y-1.5 text-sm">
-                      <div className="flex justify-between text-gray-600">
+                    <div className="rounded-lg bg-[var(--surface)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] p-3 space-y-1.5 text-sm">
+                      <div className="flex justify-between text-[var(--text-muted)]">
                         <span>🏟 Tiền sân</span>
                         <span>{fmt(courtFee)}</span>
                       </div>
                       {shuttleCost > 0 && (
-                        <div className="flex justify-between text-gray-600">
+                        <div className="flex justify-between text-[var(--text-muted)]">
                           <span>
                             🏸 {shuttleCount} bông × {fmt(shuttlePrice)}
                           </span>
                           <span>{fmt(shuttleCost)}</span>
                         </div>
                       )}
-                      <div className="flex justify-between font-bold text-gray-900 border-t border-gray-100 pt-1.5">
+                      <div className="flex justify-between font-bold text-[var(--text)] border-t border-[var(--border)] pt-1.5">
                         <span>Tổng chi phí</span>
                         <span>{fmt(totalCost)}</span>
                       </div>
@@ -458,7 +458,7 @@ export default function SessionFormModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end items-center gap-3 px-5 py-4 border-t border-gray-100 flex-shrink-0">
+        <div className="flex justify-end items-center gap-3 px-5 py-4 border-t border-[var(--border)] flex-shrink-0">
           <button
             type="button"
             onClick={handleClose}
@@ -475,7 +475,7 @@ export default function SessionFormModal({
                 continueAfterSaveRef.current = true;
               }}
               disabled={loading || fetching}
-              className="flex items-center justify-center gap-2 text-sm flex-none w-auto px-4 py-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium disabled:opacity-50"
+              className="flex items-center justify-center gap-2 text-sm flex-none w-auto px-4 py-2 rounded-lg border border-blue-600 text-[var(--primary)] hover:bg-[var(--primary-soft)] font-medium disabled:opacity-50"
             >
               {loading && continueAfterSaveRef.current ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

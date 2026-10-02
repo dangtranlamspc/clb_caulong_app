@@ -41,19 +41,19 @@ const STATUS_TABS = [
 const ALERT_TAB_VALUES = new Set(["pending_approval", "pending_result"]);
 
 const STATUS_BADGE: Record<string, string> = {
-    pending_opponent: "bg-gray-50 text-gray-600 border-gray-200",
-    pending_result: "bg-blue-50 text-blue-600 border-blue-200",
-    pending_approval: "bg-amber-50 text-amber-700 border-amber-200",
-    approved: "bg-green-50 text-green-700 border-green-200",
-    rejected: "bg-red-50 text-red-600 border-red-200",
+    pending_opponent: "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]",
+    pending_result: "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]",
+    pending_approval: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
+    approved: "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]",
+    rejected: "bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]",
 };
 
 const STATUS_COUNT_BADGE: Record<string, string> = {
-    pending_approval: "bg-amber-100 text-amber-700",
-    approved: "bg-green-100 text-green-700",
-    rejected: "bg-red-100 text-red-700",
-    pending_result: "bg-blue-100 text-blue-700",
-    "": "bg-gray-200 text-gray-700",
+    pending_approval: "bg-[var(--warning-soft)] text-[var(--warning)]",
+    approved: "bg-[var(--success-soft)] text-[var(--success)]",
+    rejected: "bg-[var(--danger-soft)] text-[var(--danger)]",
+    pending_result: "bg-[var(--primary-soft)] text-[var(--primary)]",
+    "": "bg-[var(--border-strong)] text-[var(--text)]",
 };
 
 const STATUS_ACCENT: Record<string, string> = {
@@ -82,14 +82,14 @@ const LEVEL_LABEL: Record<string, string> = {
 };
 
 const TIER_STYLE: Record<string, string> = {
-    "Tân thủ": "bg-gray-100 text-gray-500",
-    "Phong trào": "bg-slate-100 text-slate-600",
-    "Cứng cựa": "bg-sky-50 text-sky-700",
-    "Chủ lực": "bg-blue-50 text-blue-700",
-    "Cao thủ": "bg-indigo-50 text-indigo-700",
-    "Kiện tướng": "bg-purple-50 text-purple-700",
+    "Tân thủ": "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+    "Phong trào": "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+    "Cứng cựa": "bg-[var(--primary-soft)] text-[var(--primary)]",
+    "Chủ lực": "bg-[var(--primary-soft)] text-[var(--primary)]",
+    "Cao thủ": "bg-[var(--primary-soft)] text-[var(--primary)]",
+    "Kiện tướng": "bg-[var(--purple-soft)] text-[var(--purple)]",
     "Đại Kiện Tướng": "bg-fuchsia-50 text-fuchsia-700",
-    "Huyền Thoại": "bg-amber-100 text-amber-700",
+    "Huyền Thoại": "bg-[var(--warning-soft)] text-[var(--warning)]",
 };
 
 const DEFAULT_TIER = "Tân thủ";
@@ -126,7 +126,7 @@ function PlayerRow({ p, position, align = "left" }: { p: any; position?: string;
     if (!p) return null;
     const level = LEVEL_LABEL[p.level] ?? p.level;
     const tier = getTier(p);
-    const tierCls = TIER_STYLE[tier] ?? "bg-gray-100 text-gray-500";
+    const tierCls = TIER_STYLE[tier] ?? "bg-[var(--surface-muted)] text-[var(--text-muted)]";
     const isRight = align === "right";
 
     return (
@@ -139,25 +139,25 @@ function PlayerRow({ p, position, align = "left" }: { p: any; position?: string;
                         className="w-8 h-8 rounded-full object-cover"
                     />
                 ) : (
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">
+                    <div className="w-8 h-8 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center text-xs font-bold">
                         {p.full_name?.[0]?.toUpperCase()}
                     </div>
                 )}
                 {position && (
                     <span
-                        className={`absolute -bottom-1 ${isRight ? "-left-1" : "-right-1"} w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center text-[8px] font-bold text-gray-500`}
+                        className={`absolute -bottom-1 ${isRight ? "-left-1" : "-right-1"} w-4 h-4 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[8px] font-bold text-[var(--text-muted)]`}
                     >
                         {position}
                     </span>
                 )}
             </div>
             <div className={`min-w-0 flex-1 ${isRight ? "text-right" : ""}`}>
-                <p className="text-sm font-medium text-gray-900 truncate">{p.full_name}</p>
+                <p className="text-sm font-medium text-[var(--text)] truncate">{p.full_name}</p>
                 <div
                     className={`flex flex-wrap items-center gap-1 mt-0.5 ${isRight ? "justify-end" : ""}`}
                 >
                     {level && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 leading-none whitespace-nowrap">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--purple-soft)] text-[var(--purple)] leading-none whitespace-nowrap">
                             {level}
                         </span>
                     )}
@@ -446,10 +446,10 @@ export default function MatchesAdminPage() {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Swords className="w-6 h-6 text-blue-600" /> Trận giao hữu
+                    <h1 className="text-2xl font-bold text-[var(--text)] flex items-center gap-2">
+                        <Swords className="w-6 h-6 text-[var(--primary)]" /> Trận giao hữu
                     </h1>
-                    <p className="text-gray-500 text-sm mt-0.5">Duyệt kết quả và tính điểm</p>
+                    <p className="text-[var(--text-muted)] text-sm mt-0.5">Duyệt kết quả và tính điểm</p>
                 </div>
                 <button
                     onClick={() => setShowCreateModal(true)}
@@ -475,7 +475,7 @@ export default function MatchesAdminPage() {
                                 className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium whitespace-nowrap transition-colors duration-200
                                     ${isActive
                                         ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-200"
-                                        : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                                        : "bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
                                     }
                                 `}
                             >
@@ -484,7 +484,7 @@ export default function MatchesAdminPage() {
                                 {shortLabel ?? label}
                                 {showCount && !needsAttention && (
                                     <span
-                                        className={`text-[10px] px-1.5 rounded-full transition-colors duration-200 ${isActive ? "bg-white/25 text-white" : "bg-gray-100 text-gray-600"
+                                        className={`text-[10px] px-1.5 rounded-full transition-colors duration-200 ${isActive ? "bg-[color-mix(in_srgb,var(--surface)_25%,transparent)] text-white" : "bg-[var(--surface-muted)] text-[var(--text-muted)]"
                                             }`}
                                     >
                                         {count}
@@ -497,7 +497,7 @@ export default function MatchesAdminPage() {
 
                 <button
                     onClick={openStatusModal}
-                    className="sm:hidden flex-1 flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700"
+                    className="sm:hidden flex-1 flex items-center justify-between px-4 py-2.5 bg-[var(--surface)] border border-[var(--border)] rounded-xl text-sm font-medium text-[var(--text)]"
                 >
                     <span className="relative flex items-center gap-2">
                         {ALERT_TAB_VALUES.has(activeTab) && (statusCounts[activeTab] ?? 0) > 0 && (
@@ -505,7 +505,7 @@ export default function MatchesAdminPage() {
                         )}
                         {STATUS_TABS.find((x) => x.value === activeTab)?.label}
                         {(statusCounts[activeTab] ?? 0) > 0 && !ALERT_TAB_VALUES.has(activeTab) && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)]">
                                 {statusCounts[activeTab]}
                             </span>
                         )}
@@ -513,16 +513,16 @@ export default function MatchesAdminPage() {
                     <ChevronDown className="w-4 h-4" />
                 </button>
 
-                <span className="text-sm text-gray-400 flex-shrink-0 ml-auto">{meta.total ?? 0} trận</span>
+                <span className="text-sm text-[var(--text-faint)] flex-shrink-0 ml-auto">{meta.total ?? 0} trận</span>
             </div>
 
             <div className="space-y-3">
                 {loading ? (
                     [...Array(4)].map((_, i) => (
-                        <div key={i} className="rounded-2xl h-32 animate-pulse bg-gray-100" />
+                        <div key={i} className="rounded-2xl h-32 animate-pulse bg-[var(--surface-muted)]" />
                     ))
                 ) : matches.length === 0 ? (
-                    <div className="rounded-2xl border border-gray-100 py-16 text-center text-gray-400">
+                    <div className="rounded-2xl border border-[var(--border)] py-16 text-center text-[var(--text-faint)]">
                         <Swords className="w-8 h-8 mx-auto mb-2 opacity-20" />
                         <p>Không có trận nào</p>
                     </div>
@@ -544,7 +544,7 @@ export default function MatchesAdminPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.96, height: 0, marginBottom: 0, transition: { duration: 0.25 } }}
                                     transition={{ duration: 0.25, ease: "easeOut" }}
-                                    className={`rounded-2xl bg-white border-l-4 ${accent} ${isHidden ? "opacity-60" : ""} overflow-hidden`}
+                                    className={`rounded-2xl bg-[var(--surface)] border-l-4 ${accent} ${isHidden ? "opacity-60" : ""} overflow-hidden`}
                                     style={{
                                         boxShadow:
                                             "0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.05)",
@@ -552,7 +552,7 @@ export default function MatchesAdminPage() {
                                 >
                                     <div className="p-4 space-y-4">
                                         {isHidden && (
-                                            <div className="flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 border border-dashed border-gray-200 rounded-lg px-2.5 py-1 w-fit">
+                                            <div className="flex items-center gap-1.5 text-xs text-[var(--text-faint)] bg-[var(--surface-muted)] border border-dashed border-[var(--border)] rounded-lg px-2.5 py-1 w-fit">
                                                 <EyeOff className="w-3 h-3" />
                                                 Đang ẩn với member
                                             </div>
@@ -560,7 +560,7 @@ export default function MatchesAdminPage() {
 
                                         <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3">
                                             <div className="flex-1 min-w-0 space-y-2.5">
-                                                <p className="text-[15px] font-semibold text-gray-400 tracking-wide">
+                                                <p className="text-[15px] font-semibold text-[var(--text-faint)] tracking-wide">
                                                     ĐỘI A
                                                 </p>
                                                 <PlayerRow p={m.player_a1} />
@@ -568,8 +568,8 @@ export default function MatchesAdminPage() {
                                                 {m.player_a3 && <PlayerRow p={m.player_a3} />}
                                             </div>
 
-                                            <div className="flex flex-col items-center justify-center gap-1.5 flex-shrink-0 py-2 sm:self-center border-y sm:border-y-0 border-gray-50 text-center">
-                                                <span className="flex items-center gap-1 text-[11px] font-medium text-gray-400">
+                                            <div className="flex flex-col items-center justify-center gap-1.5 flex-shrink-0 py-2 sm:self-center border-y sm:border-y-0 border-[var(--border)] text-center">
+                                                <span className="flex items-center gap-1 text-[11px] font-medium text-[var(--text-faint)]">
                                                     {m.match_type === "triples" ? (
                                                         <>
                                                             <Users className="w-3 h-3" /> 3v3
@@ -591,13 +591,13 @@ export default function MatchesAdminPage() {
                                                         return (
                                                             <div className="flex items-center gap-2">
                                                                 <span
-                                                                    className={`text-2xl sm:text-3xl font-black tabular-nums ${m.winner_team === "A" ? "text-green-600" : "text-gray-300"}`}
+                                                                    className={`text-2xl sm:text-3xl font-black tabular-nums ${m.winner_team === "A" ? "text-[var(--success)]" : "text-[var(--text-faint)]"}`}
                                                                 >
                                                                     {s.score_a}
                                                                 </span>
-                                                                <span className="text-gray-300 text-lg">–</span>
+                                                                <span className="text-[var(--text-faint)] text-lg">–</span>
                                                                 <span
-                                                                    className={`text-2xl sm:text-3xl font-black tabular-nums ${m.winner_team === "B" ? "text-green-600" : "text-gray-300"}`}
+                                                                    className={`text-2xl sm:text-3xl font-black tabular-nums ${m.winner_team === "B" ? "text-[var(--success)]" : "text-[var(--text-faint)]"}`}
                                                                 >
                                                                     {s.score_b}
                                                                 </span>
@@ -605,7 +605,7 @@ export default function MatchesAdminPage() {
                                                         );
                                                     })()
                                                 ) : (
-                                                    <span className="text-gray-300 text-sm font-medium">VS</span>
+                                                    <span className="text-[var(--text-faint)] text-sm font-medium">VS</span>
                                                 )}
 
                                                 <span
@@ -615,14 +615,14 @@ export default function MatchesAdminPage() {
                                                 </span>
 
                                                 {m.status === "approved" && (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border-2 border-green-500 bg-green-50 text-green-700 text-xs font-bold whitespace-nowrap">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border-2 border-green-500 bg-[var(--success-soft)] text-[var(--success)] text-xs font-bold whitespace-nowrap">
                                                         🏆 Đội {m.winner_team} thắng
                                                     </span>
                                                 )}
                                             </div>
 
                                             <div className="flex-1 min-w-0 space-y-2.5">
-                                                <p className="text-[15px] font-semibold text-gray-400 tracking-wide text-right">
+                                                <p className="text-[15px] font-semibold text-[var(--text-faint)] tracking-wide text-right">
                                                     ĐỘI B
                                                 </p>
                                                 <PlayerRow p={m.player_b1} align="right" />
@@ -632,7 +632,7 @@ export default function MatchesAdminPage() {
                                         </div>
 
                                         {/* Meta row */}
-                                        <div className="flex items-center gap-3 text-xs text-gray-400 border-t border-gray-50 pt-3">
+                                        <div className="flex items-center gap-3 text-xs text-[var(--text-faint)] border-t border-[var(--border)] pt-3">
                                             {m.played_at && (
                                                 <span className="flex items-center gap-1">
                                                     <Calendar className="w-3 h-3" />
@@ -640,14 +640,14 @@ export default function MatchesAdminPage() {
                                                 </span>
                                             )}
                                             {m.status === "rejected" && m.reject_reason && !m.reject_reason.includes("chưa") && (
-                                                <span className="text-red-500 ml-auto truncate max-w-[240px]">
+                                                <span className="text-[var(--danger)] ml-auto truncate max-w-[240px]">
                                                     {m.reject_reason}
                                                 </span>
                                             )}
                                         </div>
 
                                         {showScoreInput === m.id && (
-                                            <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-2.5">
+                                            <div className="flex items-center gap-2 bg-[var(--surface-muted)] rounded-xl p-2.5">
                                                 <input
                                                     type="number"
                                                     min={0}
@@ -662,7 +662,7 @@ export default function MatchesAdminPage() {
                                                     placeholder="Đội A"
                                                     autoFocus
                                                 />
-                                                <span className="text-gray-300">–</span>
+                                                <span className="text-[var(--text-faint)]">–</span>
                                                 <input
                                                     type="number"
                                                     min={0}
@@ -686,7 +686,7 @@ export default function MatchesAdminPage() {
                                                 />
                                                 <button
                                                     onClick={() => setShowScoreInput(null)}
-                                                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm rounded-lg"
+                                                    className="px-3 py-1.5 bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] text-[var(--text-muted)] text-sm rounded-lg"
                                                 >
                                                     Hủy
                                                 </button>
@@ -694,7 +694,7 @@ export default function MatchesAdminPage() {
                                         )}
 
                                         {showReject === m.id && (
-                                            <div className="flex gap-2 bg-gray-50 rounded-xl p-2.5">
+                                            <div className="flex gap-2 bg-[var(--surface-muted)] rounded-xl p-2.5">
                                                 <input
                                                     type="text"
                                                     value={rejectReason[m.id] ?? ""}
@@ -714,7 +714,7 @@ export default function MatchesAdminPage() {
                                                 </button>
                                                 <button
                                                     onClick={() => setShowReject(null)}
-                                                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm rounded-lg"
+                                                    className="px-3 py-1.5 bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] text-[var(--text-muted)] text-sm rounded-lg"
                                                 >
                                                     Hủy
                                                 </button>
@@ -722,8 +722,8 @@ export default function MatchesAdminPage() {
                                         )}
 
                                         {deleteId === m.id && (
-                                            <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl p-2.5">
-                                                <p className="text-xs text-red-600 flex-1">
+                                            <div className="flex items-center gap-2 bg-[var(--danger-soft)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] rounded-xl p-2.5">
+                                                <p className="text-xs text-[var(--danger)] flex-1">
                                                     Xóa vĩnh viễn trận này? Hành động không thể hoàn tác.
                                                 </p>
                                                 <MorphButtonMatches
@@ -736,7 +736,7 @@ export default function MatchesAdminPage() {
                                                 />
                                                 <button
                                                     onClick={() => setDeleteId(null)}
-                                                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs rounded-lg"
+                                                    className="px-3 py-1.5 bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] text-[var(--text-muted)] text-xs rounded-lg"
                                                 >
                                                     Hủy
                                                 </button>
@@ -744,14 +744,14 @@ export default function MatchesAdminPage() {
                                         )}
                                     </div>
 
-                                    <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-50 bg-gray-50/50 rounded-b-2xl">
+                                    <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-[var(--border)] bg-[var(--surface-muted)] rounded-b-2xl">
                                         <div className="flex items-center gap-2">
                                             {m.status === "rejected" && (
                                                 <MorphButtonMatches
                                                     phase={deletePhase[m.id] ?? "idle"}
                                                     idleIcon={<Trash2 className="w-3 h-3" />}
                                                     label="Xóa"
-                                                    idleClassName="border border-red-200 bg-white text-red-500 hover:bg-red-50"
+                                                    idleClassName="border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--surface)] text-[var(--danger)] hover:bg-[var(--danger-soft)]"
                                                     idleWidthClass="w-[5rem]"
                                                     onClick={() => setDeleteId(m.id)}
                                                     disabled={actionId === m.id}
@@ -764,7 +764,7 @@ export default function MatchesAdminPage() {
                                                         phase={rollbackPhase[m.id] ?? "idle"}
                                                         idleIcon={<Undo2 className="w-3 h-3" />}
                                                         label="Hoàn tác"
-                                                        idleClassName="border border-orange-200 bg-white text-orange-600 hover:bg-orange-50"
+                                                        idleClassName="border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--surface)] text-[var(--warning)] hover:bg-[var(--warning-soft)]"
                                                         idleWidthClass="w-[6.5rem]"
                                                         onClick={() => setRollbackId(m.id)}
                                                         disabled={actionId === m.id}
@@ -773,7 +773,7 @@ export default function MatchesAdminPage() {
                                                         phase={rollbackPhase[m.id] ?? "idle"}
                                                         idleIcon={<XCircle className="w-3 h-3" />}
                                                         label="Huỷ tỉ số"
-                                                        idleClassName="border border-red-200 bg-white text-red-500 hover:bg-red-50"
+                                                        idleClassName="border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--surface)] text-[var(--danger)] hover:bg-[var(--danger-soft)]"
                                                         idleWidthClass="w-[6.5rem]"
                                                         onClick={() => setRollbackId(m.id)}
                                                         disabled={actionId === m.id}
@@ -785,8 +785,8 @@ export default function MatchesAdminPage() {
                                                 <button
                                                     onClick={() => handleToggleHidden(m.id)}
                                                     className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg border transition-colors ${isHidden
-                                                        ? "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
-                                                        : "bg-white border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                                                        ? "bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] hover:bg-[var(--primary-soft)]"
+                                                        : "bg-[var(--surface)] border-[var(--border)] text-[var(--text-faint)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-muted)]"
                                                         }`}
                                                     title={isHidden ? "Hiện lại với member" : "Ẩn khỏi member"}
                                                 >
@@ -809,7 +809,7 @@ export default function MatchesAdminPage() {
                                                     <button
                                                         onClick={() => setShowReject(m.id)}
                                                         disabled={busy}
-                                                        className="flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium rounded-lg disabled:opacity-50 whitespace-nowrap"
+                                                        className="flex items-center gap-1 px-3 py-1.5 bg-[var(--danger-soft)] hover:bg-[var(--danger-soft)] text-[var(--danger)] text-xs font-medium rounded-lg disabled:opacity-50 whitespace-nowrap"
                                                     >
                                                         <XCircle className="w-3.5 h-3.5" /> Từ chối
                                                     </button>
@@ -878,21 +878,21 @@ export default function MatchesAdminPage() {
 
             {meta.total_pages > 1 && (
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-[var(--text-muted)]">
                         Trang {meta.page}/{meta.total_pages} ({meta.total} trận)
                     </p>
                     <div className="flex gap-2">
                         <button
                             onClick={() => setPage((p) => p - 1)}
                             disabled={page <= 1}
-                            className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+                            className="p-1.5 rounded-lg border border-[var(--border)] disabled:opacity-40 hover:bg-[var(--surface-hover)]"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setPage((p) => p + 1)}
                             disabled={page >= meta.total_pages}
-                            className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+                            className="p-1.5 rounded-lg border border-[var(--border)] disabled:opacity-40 hover:bg-[var(--surface-hover)]"
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
@@ -906,13 +906,13 @@ export default function MatchesAdminPage() {
                     <div
                         className="fixed inset-0 z-[999] flex items-end sm:hidden"
                         style={{
-                            background: statusModalVisible ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)",
+                            background: statusModalVisible ? "var(--overlay)" : "rgba(0,0,0,0)",
                             transition: "background 0.3s ease",
                         }}
                         onClick={closeStatusModal}
                     >
                         <div
-                            className="w-[92%] mx-auto bg-white rounded-t-3xl p-5 shadow-xl"
+                            className="w-[92%] mx-auto bg-[var(--surface)] rounded-t-3xl p-5 shadow-xl"
                             style={{
                                 transform: statusModalVisible ? "translateY(0)" : "translateY(100%)",
                                 opacity: statusModalVisible ? 1 : 0,
@@ -925,7 +925,7 @@ export default function MatchesAdminPage() {
                                 <h3 className="font-semibold text-lg">Lọc trạng thái</h3>
                                 <button
                                     onClick={closeStatusModal}   // 👈 đổi
-                                    className="p-2 rounded-full hover:bg-gray-100"
+                                    className="p-2 rounded-full hover:bg-[var(--surface-hover)]"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
@@ -944,7 +944,7 @@ export default function MatchesAdminPage() {
                                                 setTab(value);
                                                 closeStatusModal();
                                             }}
-                                            className={`relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium ${isActive ? "bg-blue-50 text-blue-600" : "hover:bg-gray-50 text-gray-700"
+                                            className={`relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium ${isActive ? "bg-[var(--primary-soft)] text-[var(--primary)]" : "hover:bg-[var(--surface-hover)] text-[var(--text)]"
                                                 }`}
                                         >
                                             <Icon className="w-5 h-5 flex-shrink-0" />
@@ -958,7 +958,7 @@ export default function MatchesAdminPage() {
 
                                             {count > 0 && !needsAttention && (
                                                 <span
-                                                    className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COUNT_BADGE[value] ?? "bg-gray-200 text-gray-700"}`}
+                                                    className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COUNT_BADGE[value] ?? "bg-[var(--border-strong)] text-[var(--text)]"}`}
                                                 >
                                                     {count}
                                                 </span>

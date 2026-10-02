@@ -5,8 +5,8 @@ import toast from 'react-hot-toast';
 import { membersAdminApi } from '@/lib/api';
 import Modal from '@/components/ui/Modal';
 
-const inputCls = 'w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400';
-const labelCls = 'block text-xs font-semibold text-gray-500 mb-1.5';
+const inputCls = 'w-full text-sm border border-[var(--border)] rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400';
+const labelCls = 'block text-xs font-semibold text-[var(--text-muted)] mb-1.5';
 
 type ChangePasswordModalProps = {
     isOpen: boolean;
@@ -57,11 +57,11 @@ export default function ChangePasswordModal({ isOpen, onClose, memberId }: Chang
                         className={inputCls}
                         placeholder="Tối thiểu 8 ký tự"
                     />
-                    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+                    {error && <p className="text-[var(--danger)] text-xs mt-1">{error}</p>}
                 </div>
 
-                <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-                    <button type="button" onClick={handleClose} className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-500 bg-gray-100">
+                <div className="flex justify-end gap-3 pt-2 border-t border-[var(--border)]">
+                    <button type="button" onClick={handleClose} className="px-4 py-2 rounded-xl text-sm font-semibold text-[var(--text-muted)] bg-[var(--surface-muted)]">
                         Quay lại
                     </button>
                     <button type="submit" disabled={saving} className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 flex items-center gap-2 disabled:opacity-60">

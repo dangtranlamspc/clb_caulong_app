@@ -32,7 +32,7 @@ export function TeamInviteModal({ invite, onClose }: Props) {
         <div
             className="fixed inset-0 z-[9997] flex items-center justify-center px-4"
             style={{
-                background: visible ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0)',
+                background: visible ? 'var(--overlay)' : 'rgba(0,0,0,0)',
                 backdropFilter: visible ? 'blur(4px)' : 'blur(0px)',
                 transition: 'background 0.3s ease, backdrop-filter 0.3s ease',
             }}

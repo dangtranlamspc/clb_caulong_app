@@ -52,7 +52,7 @@ export function SwipeableRow({
           if (open) snapTo(0);
         }}
       >
-        <div className="bg-white min-w-0" style={{ flex: "1 1 auto" }}>
+        <div className="bg-[var(--surface)] min-w-0" style={{ flex: "1 1 auto" }}>
           {children}
         </div>
         <div

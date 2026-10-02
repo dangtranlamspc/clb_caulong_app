@@ -28,7 +28,9 @@ export function MorphButton({
   const isMorphed = phase === "loading" || phase === "success";
 
   const resolvedIdleClass =
-    idleClassName ?? colorClass ?? "bg-blue-600 hover:bg-blue-700 text-white";
+    idleClassName ??
+    colorClass ??
+    "bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-200 dark:shadow-[0_6px_14px_-4px_rgba(0,0,0,0.7)]";
   const resolvedSuccessClass =
     successClassName ?? successColorClass ?? "bg-green-500 text-white";
 

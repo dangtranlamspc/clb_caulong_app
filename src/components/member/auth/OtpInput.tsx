@@ -90,10 +90,10 @@ export function OtpInput({ value, onChange, onComplete, hasError = false, shakeS
                         inputMode="numeric"
                         maxLength={1}
                         disabled={disabled}
-                        className={`w-11 h-12 sm:w-12 sm:h-14 text-center text-2xl font-bold rounded-xl border-2 outline-none transition-all disabled:opacity-50 disabled:bg-gray-50
+                        className={`w-11 h-12 sm:w-12 sm:h-14 text-center text-2xl font-bold rounded-xl border-2 outline-none transition-all disabled:opacity-50 disabled:bg-[var(--surface-muted)]
               ${hasError
-                                ? 'border-red-400 ring-2 ring-red-100 text-red-600'
-                                : 'border-gray-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100'}`}
+                                ? 'border-red-400 ring-2 ring-red-100 text-[var(--danger)]'
+                                : 'border-[var(--border)] focus:border-brand-500 focus:ring-2 focus:ring-brand-100'}`}
                     />
                 ))}
             </div>

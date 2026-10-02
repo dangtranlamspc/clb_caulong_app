@@ -671,8 +671,8 @@ function SessionPaymentModal({
                     return (
                       <div className="space-y-4 mt-4" key="transfer" style={{ animation: "fadeSlideUp .25s ease both" }}>
                         {/* QR luôn nằm trên nền trắng để máy quét đọc được ở dark mode */}
-                        <div className="bg-white border-2 border-[var(--border)] rounded-2xl p-4 flex flex-col items-center gap-2">
-                          <p className="text-xs text-gray-500">Quét mã QR để thanh toán</p>
+                        <div className="bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl p-4 flex flex-col items-center gap-2">
+                          <p className="text-xs text-[var(--text-muted)]">Quét mã QR để thanh toán</p>
                           <img src={qr} alt="VietQR" className="w-48 h-48 object-contain"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                         </div>

@@ -286,7 +286,7 @@ export function FeedbackWidget() {
                     >
                         <div
                             ref={sheetRef}
-                            className="w-full bg-white rounded-t-[28px] flex flex-col overflow-hidden"
+                            className="w-full bg-[var(--surface)] rounded-t-[28px] flex flex-col overflow-hidden"
                             style={{
                                 height: "84vh",
                                 maxWidth: 480,
@@ -303,15 +303,15 @@ export function FeedbackWidget() {
                                 className="flex-shrink-0 relative overflow-hidden"
                                 style={{ background: NAVY_GRADIENT }}
                             >
-                                <div className="absolute -top-6 -right-4 w-24 h-24 rounded-full bg-white/5" />
-                                <div className="absolute -bottom-8 left-10 w-20 h-20 rounded-full bg-white/5" />
+                                <div className="absolute -top-6 -right-4 w-24 h-24 rounded-full bg-[color-mix(in_srgb,var(--surface)_5%,transparent)]" />
+                                <div className="absolute -bottom-8 left-10 w-20 h-20 rounded-full bg-[color-mix(in_srgb,var(--surface)_5%,transparent)]" />
 
                                 <div className="flex justify-center pt-3 pb-1 relative">
-                                    <div className="w-9 h-1 rounded-full bg-white/25" />
+                                    <div className="w-9 h-1 rounded-full bg-[color-mix(in_srgb,var(--surface)_25%,transparent)]" />
                                 </div>
 
                                 <div className="flex items-center gap-3 px-5 pt-1 pb-4 relative">
-                                    <div className="w-10 h-10 rounded-2xl bg-white/12 flex items-center justify-center flex-shrink-0">
+                                    <div className="w-10 h-10 rounded-2xl bg-[color-mix(in_srgb,var(--surface)_12%,transparent)] flex items-center justify-center flex-shrink-0">
                                         <Sparkles className="w-4.5 h-4.5 text-white/90" />
                                     </div>
                                     <div className="min-w-0 flex-1">
@@ -320,7 +320,7 @@ export function FeedbackWidget() {
                                     </div>
                                     <button
                                         onClick={closeWidget}
-                                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors flex-shrink-0"
+                                        className="w-8 h-8 rounded-full bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] flex items-center justify-center transition-colors flex-shrink-0"
                                     >
                                         <X className="w-4 h-4 text-white/80" />
                                     </button>
@@ -328,8 +328,8 @@ export function FeedbackWidget() {
                             </div>
 
                             {/* Composer */}
-                            <div className="px-4 pt-4 pb-3.5 flex-shrink-0 bg-white">
-                                <div className="rounded-2xl border border-gray-150 bg-gray-50 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#183153]/12 focus-within:border-[#183153]/30 transition-all overflow-hidden">
+                            <div className="px-4 pt-4 pb-3.5 flex-shrink-0 bg-[var(--surface)]">
+                                <div className="rounded-2xl border border-gray-150 bg-[var(--surface-muted)] focus-within:bg-[var(--surface)] focus-within:ring-2 focus-within:ring-[#183153]/12 focus-within:border-[#183153]/30 transition-all overflow-hidden">
                                     <textarea
                                         ref={textareaRef}
                                         value={text}
@@ -337,11 +337,11 @@ export function FeedbackWidget() {
                                         onKeyDown={handleKeyDown}
                                         rows={3}
                                         placeholder="Nhập góp ý của bạn cho admin..."
-                                        className="w-full bg-transparent px-3.5 pt-3 pb-1.5 text-sm leading-relaxed outline-none resize-none placeholder:text-gray-400"
+                                        className="w-full bg-transparent px-3.5 pt-3 pb-1.5 text-sm leading-relaxed outline-none resize-none placeholder:text-[var(--text-faint)]"
                                     />
                                     <div className="flex items-center justify-between px-3.5 pb-2.5">
                                         <div className="flex items-center gap-1.5">
-                                            <div className="w-8 h-1 rounded-full bg-gray-200 overflow-hidden">
+                                            <div className="w-8 h-1 rounded-full bg-[var(--border-strong)] overflow-hidden">
                                                 <div
                                                     className="h-full rounded-full transition-all"
                                                     style={{
@@ -350,11 +350,11 @@ export function FeedbackWidget() {
                                                     }}
                                                 />
                                             </div>
-                                            <span className={`text-[10.5px] ${nearLimit ? "text-red-400 font-semibold" : "text-gray-300"}`}>
+                                            <span className={`text-[10.5px] ${nearLimit ? "text-[var(--danger)] font-semibold" : "text-[var(--text-faint)]"}`}>
                                                 {text.length}/{MAX_LEN}
                                             </span>
                                         </div>
-                                        <span className="text-[10px] text-gray-300">Enter để gửi</span>
+                                        <span className="text-[10px] text-[var(--text-faint)]">Enter để gửi</span>
                                     </div>
                                 </div>
 
@@ -370,7 +370,7 @@ export function FeedbackWidget() {
                                     <button
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="h-9 px-3 rounded-lg border border-gray-200 flex items-center gap-1.5 text-xs text-gray-500 active:scale-95 transition-transform"
+                                        className="h-9 px-3 rounded-lg border border-[var(--border)] flex items-center gap-1.5 text-xs text-[var(--text-muted)] active:scale-95 transition-transform"
                                     >
                                         <ImagePlus className="w-4 h-4" />
                                         Đính kèm ảnh
@@ -381,7 +381,7 @@ export function FeedbackWidget() {
                                             <img
                                                 src={imagePreview}
                                                 alt="preview"
-                                                className="h-9 w-9 object-cover rounded-lg border border-gray-200"
+                                                className="h-9 w-9 object-cover rounded-lg border border-[var(--border)]"
                                             />
                                             <button
                                                 type="button"
@@ -407,11 +407,11 @@ export function FeedbackWidget() {
                             </div>
 
                             <div className="px-5 pb-2.5 pt-1 flex-shrink-0 flex items-center gap-2">
-                                <div className="h-px flex-1 bg-gray-100" />
-                                <p className="text-[10.5px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                                <div className="h-px flex-1 bg-[var(--surface-muted)]" />
+                                <p className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wider whitespace-nowrap">
                                     Đã gửi trước đây
                                 </p>
-                                <div className="h-px flex-1 bg-gray-100" />
+                                <div className="h-px flex-1 bg-[var(--surface-muted)]" />
                             </div>
 
                             <div
@@ -421,25 +421,25 @@ export function FeedbackWidget() {
                             >
                                 {loading ? (
                                     <div className="py-14 flex flex-col items-center gap-2.5">
-                                        <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
-                                        <span className="text-xs text-gray-300">Đang tải...</span>
+                                        <Loader2 className="w-5 h-5 animate-spin text-[var(--text-faint)]" />
+                                        <span className="text-xs text-[var(--text-faint)]">Đang tải...</span>
                                     </div>
                                 ) : items.length === 0 ? (
                                     <div className="py-14 text-center">
                                         <div
-                                            className="w-16 h-16 rounded-3xl bg-white border border-gray-100 flex items-center justify-center mx-auto mb-3.5"
+                                            className="w-16 h-16 rounded-3xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3.5"
                                             style={{ boxShadow: "0 6px 18px -6px rgba(24,49,83,0.15)" }}
                                         >
-                                            <MessageCircle className="w-6.5 h-6.5 text-gray-300" strokeWidth={1.75} />
+                                            <MessageCircle className="w-6.5 h-6.5 text-[var(--text-faint)]" strokeWidth={1.75} />
                                         </div>
-                                        <p className="text-sm font-semibold text-gray-600">Chưa có góp ý nào</p>
-                                        <p className="text-xs text-gray-400 mt-1">Gửi góp ý đầu tiên cho admin nhé</p>
+                                        <p className="text-sm font-semibold text-[var(--text-muted)]">Chưa có góp ý nào</p>
+                                        <p className="text-xs text-[var(--text-faint)] mt-1">Gửi góp ý đầu tiên cho admin nhé</p>
                                     </div>
                                 ) : (
                                     items.map((f, idx) => (
                                         <div
                                             key={f.id}
-                                            className="bg-white rounded-2xl rounded-tr-md border border-gray-100 px-4 py-3.5"
+                                            className="bg-[var(--surface)] rounded-2xl rounded-tr-md border border-[var(--border)] px-4 py-3.5"
                                             style={{
                                                 boxShadow: "0 2px 10px -4px rgba(18,40,63,0.08)",
                                                 animation: `feedbackItemIn 0.28s cubic-bezier(.32,.72,0,1) ${idx * 0.03}s both`,
@@ -449,20 +449,20 @@ export function FeedbackWidget() {
                                                 <img
                                                     src={f.image_url}
                                                     alt="feedback"
-                                                    className="rounded-xl mb-2 max-h-48 w-full object-cover border border-gray-100"
+                                                    className="rounded-xl mb-2 max-h-48 w-full object-cover border border-[var(--border)]"
                                                 />
                                             )}
-                                            <p className="text-[13.5px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words">
+                                            <p className="text-[13.5px] text-[var(--text)] leading-relaxed whitespace-pre-wrap break-words">
                                                 {f.message}
                                             </p>
-                                            <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-gray-50">
-                                                <span className="text-[10.5px] text-gray-400 font-medium">
+                                            <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-[var(--border)]">
+                                                <span className="text-[10.5px] text-[var(--text-faint)] font-medium">
                                                     {format(new Date(f.created_at), "HH:mm · dd/MM/yyyy", { locale: vi })}
                                                 </span>
                                                 <span
                                                     className={`flex items-center gap-1 text-[10.5px] font-bold px-2 py-0.5 rounded-full ${f.is_read
-                                                        ? "text-emerald-600 bg-emerald-50"
-                                                        : "text-gray-400 bg-gray-50"
+                                                        ? "text-[var(--success)] bg-[var(--success-soft)]"
+                                                        : "text-[var(--text-faint)] bg-[var(--surface-muted)]"
                                                         }`}
                                                 >
                                                     {f.is_read ? (
