@@ -116,6 +116,7 @@ const B3D = {
   sky: "bg-sky-500 text-white shadow-[0_5px_0_0_#0369a1] hover:shadow-[0_3px_0_0_#0369a1]",
   amber: "bg-amber-500 text-white shadow-[0_5px_0_0_#b45309] hover:shadow-[0_3px_0_0_#b45309]",
 };
+const B3D_MORPH = `${B3D_MOTION} [transition:box-shadow_200ms,transform_200ms,background-color_200ms]`;
 
 
 type ActionPhase = "idle" | "loading" | "success";
@@ -1365,7 +1366,7 @@ export default function SessionDetailPage() {
             idleIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
             label="Duyệt"
             idleWidthClass="w-28"
-            colorClass={`${B3D.blueLight} ${B3D_MOTION}`}
+            colorClass={`${B3D.blueLight} ${B3D_MORPH}`}
             successClassName={B3D.blueLight}
             onClick={() => handleApproveRegistration(reg.id)}
             disabled={busy}
@@ -1375,7 +1376,7 @@ export default function SessionDetailPage() {
             idleIcon={<XCircle className="w-3.5 h-3.5" />}
             label="Từ chối"
             idleWidthClass="w-28"
-            colorClass={`${B3D.red} ${B3D_MOTION}`}
+            colorClass={`${B3D.red} ${B3D_MORPH}`}
             successClassName={B3D.red}
             onClick={() => handleRejectRegistration(reg.id, displayName)}
             disabled={busy}
@@ -1392,7 +1393,7 @@ export default function SessionDetailPage() {
             idleIcon={<UserCheck className="w-3.5 h-3.5" />}
             label="Có mặt"
             idleWidthClass="w-28"
-            colorClass={`${B3D.green} ${B3D_MOTION}`}
+            colorClass={`${B3D.green} ${B3D_MORPH}`}
             successClassName={B3D.green}
             onClick={() => handleCheckinPresent(reg.id)}
             disabled={busy}
@@ -1402,7 +1403,7 @@ export default function SessionDetailPage() {
             idleIcon={<UserX className="w-3.5 h-3.5" />}
             label="Vắng mặt"
             idleWidthClass="w-28"
-            colorClass={`${B3D.red} ${B3D_MOTION}`}
+            colorClass={`${B3D.red} ${B3D_MORPH}`}
             successClassName={B3D.red}
             onClick={() => handleCheckinAbsent(reg.id, displayName)}
             disabled={busy}
@@ -1418,7 +1419,7 @@ export default function SessionDetailPage() {
           idleIcon={<UserX className="w-3.5 h-3.5" />}
           label="Vắng mặt"
           idleWidthClass="w-28"
-          colorClass={`${B3D.red} ${B3D_MOTION}`}
+          colorClass={`${B3D.red} ${B3D_MORPH}`}
           successClassName={B3D.red}
           onClick={() => handleCheckinAbsent(reg.id, displayName)}
           disabled={busy}
@@ -1433,7 +1434,7 @@ export default function SessionDetailPage() {
           idleIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
           label="Xác nhận"
           idleWidthClass="w-28"
-          colorClass={`${B3D.green} ${B3D_MOTION}`}
+          colorClass={`${B3D.green} ${B3D_MORPH}`}
           successClassName={B3D.green}
           onClick={() => handleConfirm(reg.id)}
           disabled={busy}
@@ -2000,7 +2001,7 @@ export default function SessionDetailPage() {
                 idleIcon={<UserCheck className="w-4 h-4" />}
                 label={`All (${awaitingCheckin.length})`}
                 idleWidthClass="w-22"
-                colorClass={`${B3D.green} ${B3D_MOTION}`}
+                colorClass={`${B3D.green} ${B3D_MORPH}`}
                 successClassName={B3D.green}
                 onClick={handleCheckinAllPresent}
                 disabled={closingList}
@@ -2013,7 +2014,7 @@ export default function SessionDetailPage() {
                 idleIcon={<UserX className="w-4 h-4" />}
                 label={`Chốt (${awaitingCheckin.length} vắng)`}
                 idleWidthClass="w-36"
-                colorClass={`${B3D.red} ${B3D_MOTION}`}
+                colorClass={`${B3D.red} ${B3D_MORPH}`}
                 successClassName={B3D.red}
                 onClick={handleCloseList}
                 disabled={checkingInAll}
@@ -2116,7 +2117,7 @@ export default function SessionDetailPage() {
                 idleIcon={<CheckCircle2 className="w-4 h-4" />}
                 label="Hoàn thành"
                 idleWidthClass="w-32"
-                colorClass={`${B3D.emerald} ${B3D_MOTION}`}
+                colorClass={`${B3D.emerald} ${B3D_MORPH}`}
                 successClassName={B3D.emerald}
                 onClick={handleCompleteSession}
                 disabled={completingSession}
