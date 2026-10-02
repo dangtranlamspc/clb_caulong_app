@@ -24,6 +24,7 @@ import {
   Bell,
   Inbox,
   Check,
+  BellRing,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -122,18 +123,30 @@ function MemberMobileCard({
   m,
   active,
   onSelect,
+  onRemind,
+  reminding,
   delay,
 }: {
   m: any;
   active: boolean;
   onSelect: () => void;
+  onRemind: () => void;
+  reminding: boolean;
   delay: number;
 }) {
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       style={{ animationDelay: `${delay}ms` }}
-      className={`w-full flex items-start gap-3 px-4 py-3.5 text-left rounded-2xl bg-[var(--surface)] border transition-all duration-150 active:scale-[0.98] animate-row-fade ${active
+      className={`w-full flex items-start gap-3 px-4 py-3.5 text-left cursor-pointer rounded-2xl bg-[var(--surface)] border transition-all duration-150 active:scale-[0.98] animate-row-fade ${active
         ? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] ring-2 ring-blue-100 shadow-lg"
         : "border-[var(--border)] shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.1)]"
         }`}
@@ -170,11 +183,31 @@ function MemberMobileCard({
           <RankTag tier={m.tier} points={m.total_points} />
           <StatusBadge balance={m.balance} />
         </div>
-        <p className="text-[11px] text-[var(--text-faint)] mt-1.5">
-          Buổi gần nhất: {relativeDay(m.last_session_at)}
-        </p>
+        <div className="flex items-center justify-between gap-2 mt-1.5">
+          <p className="text-[11px] text-[var(--text-faint)]">
+            Buổi gần nhất: {relativeDay(m.last_session_at)}
+          </p>
+          {m.balance < 0 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemind();
+              }}
+              disabled={reminding}
+              className="flex items-center justify-center gap-1.5 min-h-[40px] px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white border border-red-800 text-sm font-semibold shadow-sm active:scale-95 disabled:opacity-50"
+            >
+              {reminding ? (
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <BellRing className="w-4 h-4 text-white" />
+              )}
+              Nhắc nợ
+            </button>
+          )}
+        </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -1266,6 +1299,8 @@ export default function WalletAdminSummaryPage() {
   const [pendingTopupCount, setPendingTopupCount] = useState(0);
   const [showTopupModal, setShowTopupModal] = useState(false);
 
+  const [remindingId, setRemindingId] = useState<string | null>(null);
+
   const fetchPendingTopupCount = useCallback(async () => {
     const { data } = await walletAdminApi.listTopupRequests({ status: "pending", limit: 1 });
     setPendingTopupCount(data.meta?.total ?? 0);
@@ -1303,6 +1338,18 @@ export default function WalletAdminSummaryPage() {
       setRefreshing(false);
     }
   }, [search, statusFilter, rankFilter, page, sortField, sortOrder]);
+
+  const handleRemindDebt = async (m: any) => {
+    if (remindingId) return;
+    setRemindingId(m.id);
+    try {
+      const { data } = await walletAdminApi.sendDebtReminder(m.id);
+      toast.success(data.message ?? "Đã gửi nhắc nợ");
+    } catch (err: any) {
+    } finally {
+      setRemindingId(null);
+    }
+  };
 
   useEffect(() => {
     fetchSummary();
@@ -1720,15 +1767,34 @@ export default function WalletAdminSummaryPage() {
                             {relativeDay(m.last_session_at)}
                           </td>
                           <td className="px-4 sm:px-5 py-3 text-right">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedMember(m);
-                              }}
-                              className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-transform duration-150 active:scale-95 whitespace-nowrap"
-                            >
-                              Chi tiết
-                            </button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              {m.balance < 0 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemindDebt(m);
+                                  }}
+                                  disabled={remindingId === m.id}
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white border border-red-800 text-xs font-medium shadow-sm transition-transform duration-150 active:scale-95 whitespace-nowrap disabled:opacity-50"
+                                >
+                                  {remindingId === m.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                                  ) : (
+                                    <BellRing className="w-3.5 h-3.5 text-white" />
+                                  )}
+                                  Nhắc nợ
+                                </button>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedMember(m);
+                                }}
+                                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-transform duration-150 active:scale-95 whitespace-nowrap"
+                              >
+                                Chi tiết
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -1755,10 +1821,10 @@ export default function WalletAdminSummaryPage() {
                       m={m}
                       active={selectedMember?.id === m.id}
                       delay={Math.min(i, 8) * 25}
+                      reminding={remindingId === m.id}
+                      onRemind={() => handleRemindDebt(m)}
                       onSelect={() =>
-                        setSelectedMember(
-                          selectedMember?.id === m.id ? null : m,
-                        )
+                        setSelectedMember(selectedMember?.id === m.id ? null : m)
                       }
                     />
                   ))

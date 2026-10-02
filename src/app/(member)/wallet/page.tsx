@@ -421,6 +421,12 @@ export default function WalletPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (searchParams.get("topup") !== "1") return;
+    setShowTopupModal(true);
+    router.replace("/wallet", { scroll: false });
+  }, [searchParams]);
+
+  useEffect(() => {
     walletApi
       .getTransactions({ type: txFilter || undefined })
       .then(({ data }) => setTransactions(data.data ?? []));

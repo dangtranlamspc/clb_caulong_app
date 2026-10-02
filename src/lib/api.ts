@@ -391,6 +391,7 @@ export const membersAdminApi = {
     api.get("/users/search/members", { params: { q } }),
   approve: (id: string) => api.patch(`/users/${id}/approve`),
   reject: (id: string) => api.patch(`/users/${id}/reject`),
+  toggleProfileLock: (id: string) => api.patch(`/users/${id}/toggle-profile-lock`),
 };
 
 export const sessionsAdminApi = {
@@ -488,6 +489,9 @@ export const walletAdminApi = {
     api.delete(`/wallet/admin/users/${userId}/transactions`, {
       data: { transaction_ids: transactionIds },
     }),
+
+  sendDebtReminder: (userId: string) =>
+    api.post(`/wallet/admin/users/${userId}/debt-reminder`),
 };
 
 export const eventsAdminApi = {

@@ -276,6 +276,23 @@ function RowActions({
     );
 }
 
+
+function LockSwitch({ locked, disabled, onClick }: { locked: boolean; disabled?: boolean; onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            role="switch"
+            aria-checked={locked}
+            disabled={disabled}
+            onClick={onClick}
+            title={locked ? 'Đang khóa: chỉ sửa được email, SĐT, mật khẩu' : 'Đã mở: được sửa tất cả thông tin'}
+            className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${locked ? 'bg-emerald-500' : 'bg-[var(--border)]'}`}
+        >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${locked ? 'translate-x-4' : 'translate-x-0.5'}`} />
+        </button>
+    );
+}
+
 export default function AdminMembersPage() {
     const searchParams = useSearchParams();
 
@@ -354,6 +371,19 @@ export default function AdminMembersPage() {
             toast.error(err?.response?.data?.message ?? 'Xuất Excel thất bại');
         } finally {
             setExporting(false);
+        }
+    };
+
+    const handleToggleProfileLock = async (id: string) => {
+        setActionLoading(id);
+        try {
+            const { data } = await membersAdminApi.toggleProfileLock(id);
+            setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, profile_locked: data.profile_locked } : u)));
+            toast.success(data.profile_locked ? 'Đã khóa chỉnh sửa hồ sơ' : 'Đã cho phép sửa toàn bộ hồ sơ');
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Thao tác thất bại');
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -561,6 +591,15 @@ export default function AdminMembersPage() {
 
                             </div>
 
+                            <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
+                                <span className="text-xs text-[var(--text-muted)]">Khóa chỉnh sửa hồ sơ</span>
+                                <LockSwitch
+                                    locked={user.profile_locked !== false}
+                                    disabled={actionLoading === user.id}
+                                    onClick={() => handleToggleProfileLock(user.id)}
+                                />
+                            </div>
+
                             <div className="pt-2 border-t border-[var(--border)]">
                                 <RowActions
                                     user={user}
@@ -588,6 +627,7 @@ export default function AdminMembersPage() {
                                 <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)]">Vai trò</th>
                                 <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)] hidden sm:table-cell">Phân cấp</th>
                                 <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)]">Trạng thái</th>
+                                <th className="px-4 py-3 text-center font-medium text-[var(--text-muted)]">Khóa hồ sơ</th>
                                 <th className="px-4 py-3 text-right font-medium text-[var(--text-muted)]">Thao tác</th>
                             </tr>
                         </thead>
@@ -643,6 +683,13 @@ export default function AdminMembersPage() {
                                             {user.is_active ? 'Hoạt động' : 'Vô hiệu'}
                                         </span>
                                         <div className="mt-1"><ApprovalBadge user={user} /></div>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <LockSwitch
+                                            locked={user.profile_locked !== false}
+                                            disabled={actionLoading === user.id}
+                                            onClick={() => handleToggleProfileLock(user.id)}
+                                        />
                                     </td>
                                     <td className="px-4 py-3">
                                         <RowActions

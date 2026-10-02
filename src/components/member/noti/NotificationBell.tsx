@@ -46,6 +46,9 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     drink_gift_received: { icon: GlassWater, cls: 'text-cyan-600', bg: 'bg-cyan-50' },
 
     birthday_wish_received: { icon: Cake, cls: 'text-[var(--pink)]', bg: 'bg-[var(--pink-soft)]' },
+
+
+    wallet_debt_reminder: { icon: AlertTriangle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
 };
 
 const BADGE = "inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full border text-xs font-semibold text-white shadow-sm";
@@ -140,6 +143,7 @@ function NotificationItem({
     onJoinSession,
     respondAction,
     onRespondAdded,
+    onNavigateWalletTopup,
 }: {
     n: any;
     onRead: (id: string) => void;
@@ -156,6 +160,7 @@ function NotificationItem({
     onJoinSession: (n: any) => void;
     respondAction: { id: string; action: 'accept' | 'decline' } | null;
     onRespondAdded: (n: any, action: 'accept' | 'decline') => void;
+    onNavigateWalletTopup: (n: any) => void;
 }) {
     const cfgKey =
         n.type === 'match_result_approved'
@@ -179,6 +184,8 @@ function NotificationItem({
     const addedOutcome = n.data?.outcome as 'accepted' | 'declined' | 'session_cancelled' | undefined;
 
     const hasWalletTx = Boolean(n.data?.wallet_reference_id);
+
+    const isDebtReminder = n.type === 'wallet_debt_reminder';
 
     const isShirtOrderNavigable =
         n.type === 'shirt_order_payment_request' ||
@@ -327,6 +334,18 @@ function NotificationItem({
                         <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                         Đã đăng ký
                     </span>
+                )}
+
+                {isDebtReminder && (
+                    <div className="mt-3" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => onNavigateWalletTopup(n)}
+                            className="inline-flex items-center justify-center gap-2 min-h-[38px] px-5 rounded-xl bg-blue-600 hover:bg-blue-700 border border-blue-800 text-white text-base font-semibold whitespace-nowrap shadow-sm active:scale-95 transition"
+                        >
+                            <Wallet className="w-5 h-5" />
+                            Nạp ngay
+                        </button>
+                    </div>
                 )}
 
                 {isPenaltyChoice && !penaltyResolved && (
@@ -742,6 +761,12 @@ export function NotificationBell() {
         router.push(`/wallet?tx_ref=${refId}`);
     };
 
+    const handleNavigateWalletTopup = (n: any) => {
+        if (!n.is_read) markRead(n.id);
+        setOpen(false);
+        router.push('/wallet?topup=1');
+    };
+
     return (
         <>
             <button
@@ -853,6 +878,7 @@ export function NotificationBell() {
                                             onJoinSession={handleJoinSession}
                                             respondAction={respondAction}
                                             onRespondAdded={handleRespondAdded}
+                                            onNavigateWalletTopup={handleNavigateWalletTopup}
                                         />
                                     ))}
                                 </ul>

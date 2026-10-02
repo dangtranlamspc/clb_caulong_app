@@ -257,49 +257,39 @@ export default function DrinksOverviewPage() {
                         <div className="text-center py-10 text-[var(--text-faint)] text-sm">Chưa có thành viên nào sở hữu nước</div>
                     )}
                     {members.map((m) => (
-                        <div key={m.user_id} className="p-4 space-y-3 rounded-2xl border border-[var(--border)] shadow-md bg-[var(--surface)]">
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                            key={m.user_id}
+                            className="rounded-2xl border border-[var(--border-strong)] bg-[var(--surface)] shadow-md overflow-hidden"
+                        >
+                            <div className="flex items-center justify-between gap-3 p-4 border-b border-[var(--border)]">
+                                <div className="flex items-center gap-3 min-w-0">
                                     {m.avatar_url ? (
-                                        <img src={m.avatar_url} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+                                        <img src={m.avatar_url} className="w-11 h-11 rounded-full object-cover flex-shrink-0" alt="" />
                                     ) : (
-                                        <div className="w-9 h-9 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold text-xs flex-shrink-0">
+                                        <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)] font-bold flex-shrink-0">
                                             {m.full_name?.[0]?.toUpperCase()}
                                         </div>
                                     )}
                                     <div className="min-w-0">
-                                        <p className="font-semibold text-[var(--text)] text-sm truncate">{m.full_name}</p>
-                                        {m.phone && <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>}
+                                        <p className="font-bold text-[var(--text)] truncate">{m.full_name}</p>
+                                        {m.phone && <p className="text-xs text-[var(--text-muted)]">{m.phone}</p>}
                                     </div>
                                 </div>
-                                <div className="text-right flex-shrink-0">
-                                    <p className="text-xs text-[var(--text-faint)]">Tổng SL</p>
-                                    <p className="font-bold text-[var(--primary)] text-lg">{formatNumber(m.total_quantity)}</p>
+                                <div className="flex-shrink-0 text-center px-3 py-1.5 rounded-xl bg-[var(--primary-soft)]">
+                                    <p className="text-[10px] font-medium text-[var(--text-muted)] leading-none">Tổng SL</p>
+                                    <p className="text-xl font-black text-[var(--primary)] leading-tight">{formatNumber(m.total_quantity)}</p>
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-2">
-                                {m.drinks.map((d) => (
-                                    <div key={d.drink_id} className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
-                                        <div className="w-14 h-18 rounded-lg bg-[var(--surface)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                            {d.image_url ? (
-                                                <img src={d.image_url} alt={d.name} className="w-full h-full object-contain p-0.5" />
-                                            ) : (
-                                                <GlassWater className="w-5 h-5 text-[var(--primary)]" />
-                                            )}
-                                        </div>
-                                        <div className="leading-tight">
-                                            <p className="text-xs font-semibold">{d.name}</p>
-                                            <p className="text-[11px] text-[var(--primary)]">SL: {d.quantity}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="flex justify-center">
+                            <div className="p-4 space-y-3">
+                                <div className="grid grid-cols-2 gap-2">
+                                    {m.drinks.map((d) => (
+                                        <DrinkChip key={d.drink_id} d={d} />
+                                    ))}
+                                </div>
                                 <button
                                     onClick={() => setAdjustTarget(m)}
-                                    className="px-8 py-3 rounded-xl bg-sky-500 text-white text-xs font-semibold hover:bg-sky-600"
+                                    className="w-full min-h-[44px] rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold shadow-sm active:scale-[0.98] transition"
                                 >
                                     Điều chỉnh
                                 </button>
@@ -345,19 +335,7 @@ export default function DrinksOverviewPage() {
                                     <td className="px-4 py-3">
                                         <div className="flex flex-nowrap gap-2">
                                             {m.drinks.map((d) => (
-                                                <div key={d.drink_id} className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl bg-[var(--primary-soft)] text-[var(--primary)] flex-shrink-0">
-                                                    <div className="w-14 h-20 rounded-lg bg-[var(--surface)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                                        {d.image_url ? (
-                                                            <img src={d.image_url} alt={d.name} className="w-full h-full object-contain p-0.5" />
-                                                        ) : (
-                                                            <GlassWater className="w-5 h-5 text-[var(--primary)]" />
-                                                        )}
-                                                    </div>
-                                                    <div className="leading-tight whitespace-nowrap">
-                                                        <p className="text-xs font-semibold">{d.name}</p>
-                                                        <p className="text-[11px] text-[var(--primary)]">SL: {d.quantity}</p>
-                                                    </div>
-                                                </div>
+                                                <DrinkChip key={d.drink_id} d={d} className="flex-shrink-0 whitespace-nowrap" />
                                             ))}
                                         </div>
                                     </td>
@@ -442,15 +420,14 @@ function StatCard({ icon: Icon, label, value, color, onClick }: { icon: any; lab
     return (
         <div
             onClick={onClick}
-            className={`bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-4 flex items-center gap-3 ${clickable ? "cursor-pointer hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:shadow-md transition-all" : ""
-                }`}
+            className={`bg-[var(--surface)] rounded-2xl border border-[var(--border-strong)] shadow-sm p-4 flex items-center gap-3 ${clickable ? "cursor-pointer hover:border-[var(--primary)] hover:shadow-md transition-all active:scale-[0.98]" : ""}`}
         >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
                 <Icon className="w-5 h-5 text-white" />
             </div>
             <div className="min-w-0">
-                <p className="text-xs text-[var(--text-faint)] truncate">{label}</p>
-                <p className="text-base font-bold text-[var(--text)] truncate">{value}</p>
+                <p className="text-xs font-medium text-[var(--text-muted)] truncate">{label}</p>
+                <p className="text-2xl font-black text-[var(--text)] leading-tight">{value}</p>
             </div>
         </div>
     );
@@ -460,21 +437,46 @@ function DrinkBreakdownCard({ drink, onClick }: { drink: DrinkBreakdown; onClick
     return (
         <button
             onClick={onClick}
-            className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-sm p-3 flex items-center gap-3 text-left hover:border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:shadow-md transition-all"
+            className="bg-[var(--surface)] rounded-2xl border border-[var(--border-strong)] shadow-sm p-3 flex items-center gap-3 text-left hover:border-[var(--primary)] hover:shadow-md transition-all active:scale-[0.98]"
         >
-            <div className="w-11 h-11 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <div className="w-12 h-14 rounded-lg bg-[var(--surface)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {drink.image_url ? (
-                    <img src={drink.image_url} alt={drink.name} className="w-full h-full object-contain p-1" />
+                    <img
+                        src={drink.image_url}
+                        alt={drink.name}
+                        className="w-full h-full object-contain p-0.5 scale-125"
+                    />
                 ) : (
                     <GlassWater className="w-5 h-5 text-[var(--primary)]" />
                 )}
             </div>
             <div className="min-w-0">
-                <p className="text-xs font-semibold text-[var(--text)] truncate">{drink.name}</p>
-                <p className="text-base font-bold text-[var(--primary)]">{formatNumber(drink.total_quantity)}</p>
-                <p className="text-[11px] text-[var(--text-faint)]">{formatNumber(drink.member_count)} thành viên</p>
+                <p className="text-sm font-semibold text-[var(--text)] truncate">{drink.name}</p>
+                <p className="text-xl font-black text-[var(--primary)] leading-tight">{formatNumber(drink.total_quantity)}</p>
+                <p className="text-[11px] text-[var(--text-muted)]">{formatNumber(drink.member_count)} thành viên</p>
             </div>
         </button>
+    );
+}
+
+
+function DrinkChip({ d, className = "" }: { d: MemberRow["drinks"][number]; className?: string }) {
+    return (
+        <div
+            className={`flex items-center gap-2.5 p-1.5 pr-3 rounded-xl bg-[var(--surface-muted)] border border-[var(--border)] min-w-0 ${className}`}
+        >
+            <div className="w-11 h-14 rounded-lg bg-[var(--surface)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {d.image_url ? (
+                    <img src={d.image_url} alt={d.name} className="w-full h-full object-contain p-0.5 scale-125" />
+                ) : (
+                    <GlassWater className="w-5 h-5 text-[var(--primary)]" />
+                )}
+            </div>
+            <div className="leading-tight min-w-0">
+                <p className="text-sm font-semibold text-[var(--text)] truncate">{d.name}</p>
+                <p className="text-sm font-bold text-[var(--primary)] mt-0.5">SL: {d.quantity}</p>
+            </div>
+        </div>
     );
 }
 
@@ -959,8 +961,7 @@ function GrantDrinkModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder="Nhập tên hoặc SĐT thành viên..."
-                                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
-                                />
+                                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text)] placeholder:text-[var(--text-faint)] text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
                                 {(searching || results.length > 0) && (
                                     <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto no-scrollbar rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
                                         {searching && (

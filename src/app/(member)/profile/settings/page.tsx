@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Save, Loader2, Camera } from 'lucide-react';
 import Link from 'next/link';
@@ -22,12 +22,15 @@ export default function SettingsPage() {
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const { register, handleSubmit, reset, watch, formState: { errors, isDirty } } = useForm();
+  const [locked, setLocked] = useState(true);
+  const baseRef = useRef<any>({});
+
+  const { register, handleSubmit, reset, watch, getValues, setValue, formState: { errors, isDirty } } = useForm();
 
   useEffect(() => {
     profileApi.getMe()
       .then(({ data }) => {
-        reset({
+        const initial = {
           full_name: data.full_name,
           email: data.email,
           phone: data.phone,
@@ -36,7 +39,10 @@ export default function SettingsPage() {
           shirt_size: data.shirt_size || '',
           member_type: data.member_type || 'vang_lai',
           level: data.level || '',
-        });
+        };
+        baseRef.current = initial;
+        reset(initial);
+        setLocked(data.profile_locked !== false);
         setCurrentAvatarUrl(data.avatar_url || null);
       })
       .finally(() => setFetching(false));
@@ -47,6 +53,52 @@ export default function SettingsPage() {
       if (avatarPreview) URL.revokeObjectURL(avatarPreview);
     };
   }, [avatarPreview]);
+
+
+  const lockedRef = useRef(true);
+  useEffect(() => { lockedRef.current = locked; }, [locked]);
+
+  const LOCKED_FIELDS = ['full_name', 'date_of_birth', 'gender', 'shirt_size', 'member_type', 'level'] as const;
+
+  const syncLock = useCallback(async () => {
+    try {
+      const { data } = await profileApi.getMe();
+      const nowLocked = data.profile_locked !== false;
+
+      if (nowLocked && !lockedRef.current) {
+        const server: Record<string, any> = {
+          full_name: data.full_name,
+          date_of_birth: data.date_of_birth?.split('T')[0] || '',
+          gender: data.gender || '',
+          shirt_size: data.shirt_size || '',
+          member_type: data.member_type || 'vang_lai',
+          level: data.level || '',
+        };
+        LOCKED_FIELDS.forEach((k) => {
+          setValue(k, server[k]);
+          baseRef.current[k] = server[k];
+        });
+        toast('Admin vừa khóa chỉnh sửa hồ sơ của bạn', { icon: '🔒' });
+      } else if (!nowLocked && lockedRef.current) {
+        toast('Admin đã cho phép bạn sửa toàn bộ hồ sơ', { icon: '🔓' });
+      }
+      setLocked(nowLocked);
+    } catch {
+    }
+  }, [setValue]);
+
+
+  useEffect(() => {
+    const interval = setInterval(syncLock, 15000);
+    const onVisible = () => { if (document.visibilityState === 'visible') syncLock(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', syncLock);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', syncLock);
+    };
+  }, [syncLock]);
 
   const handleFilePicked = (file: File) => {
     setRawImageSrc(URL.createObjectURL(file));
@@ -81,9 +133,13 @@ export default function SettingsPage() {
         newAvatarUrl = avatarData.avatar_url;
       }
 
+
       let updatedUser = null;
       if (isDirty) {
-        const { data } = await profileApi.updateMe(values);
+        const payload = locked
+          ? { email: values.email, phone: values.phone }
+          : values;
+        const { data } = await profileApi.updateMe(payload);
         updatedUser = data;
       }
 
@@ -101,10 +157,15 @@ export default function SettingsPage() {
       }
 
       toast.success('Cập nhật thông tin thành công!');
-      reset(values);
+      const next = locked
+        ? { ...baseRef.current, email: values.email, phone: values.phone }
+        : values;
+      baseRef.current = next;
+      reset(next);
     } catch (err: any) {
       const msg = err?.response?.data?.message;
       toast.error(Array.isArray(msg) ? msg[0] : msg || 'Cập nhật thất bại');
+      if (err?.response?.status === 403) syncLock();
     } finally {
       setLoading(false);
     }
@@ -125,6 +186,8 @@ export default function SettingsPage() {
     );
   }
 
+  const lockedCls = 'disabled:opacity-60 disabled:cursor-not-allowed';
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -133,6 +196,12 @@ export default function SettingsPage() {
         </Link>
         <h1 className="text-xl font-bold text-[var(--text)]">Chỉnh sửa hồ sơ</h1>
       </div>
+
+      {locked && (
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--warning-soft)] text-[var(--warning)] text-xs font-medium px-3 py-2.5">
+          🔒 Hồ sơ đang được khóa. Bạn chỉ có thể đổi email, số điện thoại và mật khẩu. Liên hệ admin nếu cần chỉnh sửa thông tin khác.
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="card flex flex-col items-center gap-3 py-6">
@@ -167,8 +236,8 @@ export default function SettingsPage() {
             <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Họ và tên *</label>
             <input
               {...register('full_name', { required: 'Vui lòng nhập họ tên' })}
-              className="input-field"
-              placeholder="Nguyễn Văn A"
+              disabled={locked}
+              className={`input-field ${lockedCls}`}
             />
             {errors.full_name && <p className="text-[var(--danger)] text-xs mt-1">{errors.full_name.message as string}</p>}
           </div>
@@ -208,11 +277,11 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Ngày sinh</label>
-              <input {...register('date_of_birth')} type="date" className="input-field" />
+              <input {...register('date_of_birth')} type="date" disabled={locked} className={`input-field ${lockedCls}`} />
             </div>
             <div>
               <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Giới tính</label>
-              <select {...register('gender')} className="input-field">
+              <select {...register('gender')} disabled={locked} className={`input-field ${lockedCls}`}>
                 <option value="">Chọn</option>
                 <option value="male">Nam</option>
                 <option value="female">Nữ</option>
@@ -225,8 +294,8 @@ export default function SettingsPage() {
             <label className="block text-sm font-semibold text-[var(--text)] mb-2">Size áo</label>
             <div className="flex flex-wrap gap-2">
               {SIZES.map(size => (
-                <label key={size} className="cursor-pointer">
-                  <input {...register('shirt_size')} type="radio" value={size} className="sr-only" />
+                <label key={size} className={locked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}>
+                  <input {...register('shirt_size')} type="radio" value={size} disabled={locked} className="sr-only" />
                   <span className={`block px-3 py-2 rounded-xl border text-sm font-semibold transition-all
                     ${selectedSize === size
                       ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
@@ -256,8 +325,8 @@ export default function SettingsPage() {
                     desc: 'Thành viên\ncâu lạc bộ',
                   },
                 ].map(opt => (
-                  <label key={opt.value} className="cursor-pointer">
-                    <input {...register('member_type')} type="radio" value={opt.value} className="sr-only peer" />
+                  <label key={opt.value} className={locked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}>
+                    <input {...register('member_type')} type="radio" value={opt.value} disabled={locked} className="sr-only peer" />
                     <div className="p-3 rounded-xl border-2 border-[var(--border)] peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all text-center">
                       <p className="text-sm font-semibold text-[var(--text)]">{opt.label}</p>
                       <p className="text-xs text-[var(--text-faint)] mt-0.5 whitespace-pre-line">{opt.desc}</p>
@@ -269,7 +338,7 @@ export default function SettingsPage() {
 
             <div>
               <label className="block text-sm font-semibold text-[var(--text)] mb-1.5">Trình độ</label>
-              <select {...register('level')} className="input-field">
+              <select {...register('level')} disabled={locked} className={`input-field ${lockedCls}`}>
                 <option value="">-- Chọn trình độ --</option>
                 <option value="yeu">Yếu</option>
                 <option value="tb_yeu">Trung bình yếu</option>

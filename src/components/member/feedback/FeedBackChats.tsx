@@ -251,13 +251,13 @@ export function FeedbackWidget() {
             <button
                 onClick={openWidget}
                 aria-label="Gửi góp ý"
-                className="fixed right-4 z-[999] rounded-full text-white flex items-center justify-center active:scale-90 transition-transform"
+                className="fixed right-4 z-[999] rounded-full text-white flex items-center justify-center active:scale-90 transition-transform border border-[rgba(255,255,255,0.15)]"
                 style={{
                     width: 54,
                     height: 54,
                     bottom: "calc(96px + env(safe-area-inset-bottom, 0px))",
                     background: NAVY_GRADIENT,
-                    boxShadow: "0 8px 24px -6px rgba(18,40,63,0.55), 0 0 0 1px rgba(255,255,255,0.08) inset",
+                    boxShadow: "0 8px 24px -6px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08) inset",
                 }}
             >
                 <span
@@ -303,24 +303,22 @@ export function FeedbackWidget() {
                                 className="flex-shrink-0 relative overflow-hidden"
                                 style={{ background: NAVY_GRADIENT }}
                             >
-                                <div className="absolute -top-6 -right-4 w-24 h-24 rounded-full bg-[color-mix(in_srgb,var(--surface)_5%,transparent)]" />
-                                <div className="absolute -bottom-8 left-10 w-20 h-20 rounded-full bg-[color-mix(in_srgb,var(--surface)_5%,transparent)]" />
-
                                 <div className="flex justify-center pt-3 pb-1 relative">
-                                    <div className="w-9 h-1 rounded-full bg-[color-mix(in_srgb,var(--surface)_25%,transparent)]" />
+                                    <div className="w-9 h-1 rounded-full bg-[rgba(255,255,255,0.3)]" />
                                 </div>
 
                                 <div className="flex items-center gap-3 px-5 pt-1 pb-4 relative">
-                                    <div className="w-10 h-10 rounded-2xl bg-[color-mix(in_srgb,var(--surface)_12%,transparent)] flex items-center justify-center flex-shrink-0">
+                                    <div className="w-10 h-10 rounded-2xl bg-[rgba(255,255,255,0.12)] flex items-center justify-center flex-shrink-0">
                                         <Sparkles className="w-4.5 h-4.5 text-white/90" />
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <p className="text-[15px] font-bold text-white tracking-tight">Gửi góp ý</p>
-                                        <p className="text-[11.5px] text-white/55 mt-0.5">Admin sẽ xem và phản hồi sớm nhất</p>
+                                        <p className="text-[11.5px] text-white/55 mt-0.5">Admin sẽ xem và phản hồi sớm
+                                            nhất</p>
                                     </div>
                                     <button
                                         onClick={closeWidget}
-                                        className="w-8 h-8 rounded-full bg-[color-mix(in_srgb,var(--surface)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] flex items-center justify-center transition-colors flex-shrink-0"
+                                        className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.2)] flex items-center justify-center transition-colors flex-shrink-0"
                                     >
                                         <X className="w-4 h-4 text-white/80" />
                                     </button>
@@ -329,7 +327,7 @@ export function FeedbackWidget() {
 
                             {/* Composer */}
                             <div className="px-4 pt-4 pb-3.5 flex-shrink-0 bg-[var(--surface)]">
-                                <div className="rounded-2xl border border-gray-150 bg-[var(--surface-muted)] focus-within:bg-[var(--surface)] focus-within:ring-2 focus-within:ring-[#183153]/12 focus-within:border-[#183153]/30 transition-all overflow-hidden">
+                                <div className="rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-muted)] focus-within:bg-[var(--surface)] focus-within:ring-2 focus-within:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)] focus-within:border-[var(--primary)] transition-all overflow-hidden">
                                     <textarea
                                         ref={textareaRef}
                                         value={text}
@@ -337,7 +335,7 @@ export function FeedbackWidget() {
                                         onKeyDown={handleKeyDown}
                                         rows={3}
                                         placeholder="Nhập góp ý của bạn cho admin..."
-                                        className="w-full bg-transparent px-3.5 pt-3 pb-1.5 text-sm leading-relaxed outline-none resize-none placeholder:text-[var(--text-faint)]"
+                                        className="w-full bg-transparent px-3.5 pt-3 pb-1.5 text-sm leading-relaxed text-[var(--text)] outline-none resize-none placeholder:text-[var(--text-faint)]"
                                     />
                                     <div className="flex items-center justify-between px-3.5 pb-2.5">
                                         <div className="flex items-center gap-1.5">
@@ -346,7 +344,7 @@ export function FeedbackWidget() {
                                                     className="h-full rounded-full transition-all"
                                                     style={{
                                                         width: `${charPct}%`,
-                                                        background: nearLimit ? "#ef4444" : "#183153",
+                                                        background: nearLimit ? "var(--danger)" : "var(--primary)",
                                                     }}
                                                 />
                                             </div>
@@ -370,7 +368,7 @@ export function FeedbackWidget() {
                                     <button
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="h-9 px-3 rounded-lg border border-[var(--border)] flex items-center gap-1.5 text-xs text-[var(--text-muted)] active:scale-95 transition-transform"
+                                        className="h-9 px-3 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] active:scale-95 transition"
                                     >
                                         <ImagePlus className="w-4 h-4" />
                                         Đính kèm ảnh
@@ -398,7 +396,7 @@ export function FeedbackWidget() {
                                     ref={sendBtnRef}
                                     onClick={handleSend}
                                     disabled={(!text.trim() && !imageFile) || sending}
-                                    className="mt-2.5 w-full h-11 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-35 active:scale-[0.99] transition-all shadow-sm shadow-[#183153]/20"
+                                    className="mt-2.5 w-full h-11 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 border border-[rgba(255,255,255,0.12)] disabled:opacity-35 active:scale-[0.99] transition-all shadow-sm"
                                     style={{ background: NAVY_GRADIENT }}
                                 >
                                     {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -407,17 +405,16 @@ export function FeedbackWidget() {
                             </div>
 
                             <div className="px-5 pb-2.5 pt-1 flex-shrink-0 flex items-center gap-2">
-                                <div className="h-px flex-1 bg-[var(--surface-muted)]" />
+                                <div className="h-px flex-1 bg-[var(--border)]" />
                                 <p className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wider whitespace-nowrap">
                                     Đã gửi trước đây
                                 </p>
-                                <div className="h-px flex-1 bg-[var(--surface-muted)]" />
+                                <div className="h-px flex-1 bg-[var(--border)]" />
                             </div>
 
                             <div
                                 ref={listRef}
-                                className="flex-1 min-h-0 overflow-y-auto px-4 pb-5 space-y-2.5"
-                                style={{ background: "linear-gradient(180deg,#F7F8FA,#F2F4F7)" }}
+                                className="flex-1 min-h-0 overflow-y-auto px-4 pb-5 pt-1 space-y-2.5 bg-[var(--surface-muted)]"
                             >
                                 {loading ? (
                                     <div className="py-14 flex flex-col items-center gap-2.5">
