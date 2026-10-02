@@ -14,16 +14,23 @@
     overflow-x: hidden;
     max-width: 100vw;
   }
+
+
   html::-webkit-scrollbar,
   body::-webkit-scrollbar {
     display: none;
   }
 
-  html,
-  body {
-    background-color: #10192f;
-    height: 100%;
-  }
+html {
+  background-color: #10192f; /* giữ navy: hiện ra khi kéo quá mép (overscroll) trên iOS */
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  height: 100%;
+}
 
   #__next {
     overflow-x: hidden;
@@ -55,16 +62,35 @@
 
 @layer components {
   .input-field {
-    @apply w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-gray-50 transition-all;
+    @apply w-full rounded-xl px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent;
+    background: var(--surface-muted);
+    color: var(--text);
+    border: 1px solid var(--border);
   }
+  .input-field::placeholder {
+    color: var(--text-faint);
+  }
+
   .btn-primary {
     @apply bg-brand-600 hover:bg-brand-700 active:bg-brand-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full text-center;
   }
+
   .btn-outline {
-    @apply border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold px-6 py-3 rounded-xl transition-colors w-full text-center;
+    @apply font-semibold px-6 py-3 rounded-xl transition-colors w-full text-center;
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
   }
+  .btn-outline:hover {
+    background: var(--surface-hover);
+  }
+
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+    @apply rounded-2xl p-6;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
   }
 
   .scrollbar-hide {
@@ -143,4 +169,24 @@
     opacity: 0.55;
     animation-play-state: running;
   }
+}
+
+
+/* Hiệu ứng lan theme: tắt animation mặc định, để JS điều khiển clip-path */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* Tránh các class transition-colors làm màu mới bị chụp giữa chừng
+   (trừ chính nút gạt để mặt trời/trăng vẫn trượt mượt) */
+html.theme-switching *:not(.bnb-switch):not(.bnb-switch *) {
+  transition: none !important;
 }

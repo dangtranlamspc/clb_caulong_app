@@ -25,6 +25,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth.store";
 import { sessionsApi, registrationsApi, usersApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
+import { c, alpha } from "@/lib/theme";
 
 const SKILL_OPTIONS = [
     { value: "yeu", label: "Yếu" },
@@ -35,84 +36,53 @@ const SKILL_OPTIONS = [
     { value: "chuyen_nghiep", label: "Chuyên nghiệp" },
 ];
 
+const mix = (v: string, p: number) => `color-mix(in_srgb,var(--${v})_${p}%,transparent)`;
+
+const TONE = {
+    primary: "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]",
+    success: "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]",
+    warning: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
+    danger: "bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]",
+    muted: "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]",
+};
+
+const SELECT_FIX =
+    "[&_*]:!text-[var(--text)] [&_button]:!bg-[var(--surface-muted)] [&_button]:!border-[var(--border)] [&_svg]:!text-[var(--text-muted)]";
+
+const INPUT =
+    "w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text)] placeholder:text-[var(--text-faint)] text-sm focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]";
+
 const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
-    pending_approval: {
-        label: "Chờ admin duyệt",
-        icon: Hourglass,
-        cls: "bg-orange-50 text-orange-600 border-orange-200",
-    },
-    awaiting_checkin: {
-        label: "Chờ điểm danh",
-        icon: Hourglass,
-        cls: "bg-slate-50 text-slate-600 border-slate-200",
-    },
-    awaiting_finish: {
-        label: "Chờ buổi đánh kết thúc",
-        icon: Hourglass,
-        cls: "bg-slate-50 text-slate-600 border-slate-200",
-    },
-    // pending: {
-    //     label: "Chờ thanh toán",
-    //     icon: Hourglass,
-    //     cls: "bg-amber-50 text-amber-700 border-amber-200",
-    // },
-    pending_review: {
-        label: "Chờ admin xác nhận",
-        icon: Clock3,
-        cls: "bg-blue-50 text-blue-700 border-blue-200",
-    },
-    confirmed: {
-        label: "Đã xác nhận thanh toán",
-        icon: CheckCircle2,
-        cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    },
-    rejected: {
-        label: "Thanh toán bị từ chối",
-        icon: AlertCircle,
-        cls: "bg-red-50 text-red-500 border-red-200",
-    },
+    pending_approval: { label: "Chờ admin duyệt", icon: Hourglass, cls: TONE.warning },
+    awaiting_checkin: { label: "Chờ điểm danh", icon: Hourglass, cls: TONE.muted },
+    awaiting_finish: { label: "Chờ buổi đánh kết thúc", icon: Hourglass, cls: TONE.muted },
+    pending_review: { label: "Chờ admin xác nhận", icon: Clock3, cls: TONE.primary },
+    confirmed: { label: "Đã xác nhận thanh toán", icon: CheckCircle2, cls: TONE.success },
+    rejected: { label: "Thanh toán bị từ chối", icon: AlertCircle, cls: TONE.danger },
 };
 
 function getSessionStatusBadge(s: any) {
     const myReg = s.my_registration;
-    const effectiveStatus = s.status;
-    const isAwaitingAdminFinish = s.status === "waiting_payment" && s.all_paid;
+    const st = s.status;
+    const isAwaitingAdminFinish = st === "waiting_payment" && s.all_paid;
 
-    const cls =
-        myReg && (effectiveStatus === "open" || effectiveStatus === "full")
-            ? "bg-blue-50 text-blue-700"
-            : effectiveStatus === "open"
-                ? "bg-emerald-50 text-emerald-700"
-                : effectiveStatus === "full"
-                    ? "bg-amber-50 text-amber-700"
-                    : isAwaitingAdminFinish
-                        ? "bg-blue-50 text-blue-700"
-                        : effectiveStatus === "waiting_payment"
-                            ? "bg-orange-50 text-orange-700"
-                            : effectiveStatus === "completed"
-                                ? "bg-gray-100 text-gray-500"
-                                : effectiveStatus === "cancelled"
-                                    ? "bg-red-50 text-red-600"
-                                    : "bg-gray-100 text-gray-500";
+    const BADGE = {
+        primary: "bg-[var(--primary-soft)] text-[var(--primary)]",
+        success: "bg-[var(--success-soft)] text-[var(--success)]",
+        warning: "bg-[var(--warning-soft)] text-[var(--warning)]",
+        danger: "bg-[var(--danger-soft)] text-[var(--danger)]",
+        muted: "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+    };
 
-    const label =
-        myReg && (effectiveStatus === "open" || effectiveStatus === "full")
-            ? "Bạn đã đăng ký"
-            : effectiveStatus === "open"
-                ? "Đang mở đăng ký"
-                : effectiveStatus === "full"
-                    ? "Đã đầy"
-                    : isAwaitingAdminFinish
-                        ? "Chờ admin hoàn thành"
-                        : effectiveStatus === "waiting_payment"
-                            ? "Chờ thanh toán"
-                            : effectiveStatus === "completed"
-                                ? "Hoàn thành"
-                                : effectiveStatus === "cancelled"
-                                    ? "Đã hủy"
-                                    : effectiveStatus;
-
-    return { label, cls };
+    if (myReg && (st === "open" || st === "full"))
+        return { label: "Bạn đã đăng ký", cls: BADGE.primary };
+    if (st === "open") return { label: "Đang mở đăng ký", cls: BADGE.success };
+    if (st === "full") return { label: "Đã đầy", cls: BADGE.warning };
+    if (isAwaitingAdminFinish) return { label: "Chờ admin hoàn thành", cls: BADGE.primary };
+    if (st === "waiting_payment") return { label: "Chờ thanh toán", cls: BADGE.warning };
+    if (st === "completed") return { label: "Hoàn thành", cls: BADGE.muted };
+    if (st === "cancelled") return { label: "Đã hủy", cls: BADGE.danger };
+    return { label: st, cls: BADGE.muted };
 }
 
 function AddCompanionModal({
@@ -156,6 +126,55 @@ function AddCompanionModal({
         }, 300);
         return () => clearTimeout(t);
     }, [memberSearch, tab]);
+
+
+    const accountPanelRef = useRef<HTMLDivElement>(null);
+    const guestPanelRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    const guestNameRef = useRef<HTMLInputElement>(null);
+    const firstRender = useRef(true);
+    const [heights, setHeights] = useState<{ account?: number; guest?: number }>({});
+    const [animating, setAnimating] = useState(false);
+
+    // Đo chiều cao từng trang (tự cập nhật khi danh sách tìm kiếm thay đổi)
+    useEffect(() => {
+        const a = accountPanelRef.current;
+        const g = guestPanelRef.current;
+        if (!a || !g) return;
+        const measure = () =>
+            setHeights({ account: a.offsetHeight, guest: g.offsetHeight });
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(a);
+        ro.observe(g);
+        return () => ro.disconnect();
+    }, []);
+
+    // Khi đổi tab: chờ animation xong rồi mới focus ô nhập
+    useEffect(() => {
+        const focusTab = () =>
+            (tab === "account" ? searchInputRef : guestNameRef).current?.focus({
+                preventScroll: true,
+            });
+
+        if (firstRender.current) {
+            firstRender.current = false;
+            const t = setTimeout(focusTab, 300);
+            return () => clearTimeout(t);
+        }
+        setAnimating(true);
+        const t = setTimeout(() => {
+            setAnimating(false);
+            focusTab();
+        }, 320);
+        return () => clearTimeout(t);
+    }, [tab]);
+
+    const panelStyle = (active: boolean): React.CSSProperties => ({
+        opacity: active ? 1 : 0,
+        visibility: active ? "visible" : "hidden",
+        transition: `opacity 250ms ease-out, visibility 0s linear ${active ? "0s" : "300ms"}`,
+    });
 
     const close = () => {
         setVisible(false);
@@ -211,112 +230,152 @@ function AddCompanionModal({
         <div
             className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4"
             style={{
-                background: visible ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)",
+                background: visible ? c.overlay : "rgba(0,0,0,0)",
                 transition: "background 250ms ease-out",
             }}
             onClick={(e) => e.target === e.currentTarget && close()}
         >
+            <style jsx global>{`
+                @keyframes companionTabRight {
+                    from { opacity: 0; transform: translateX(16px); }
+                    to { opacity: 1; transform: translateX(0); }
+                }
+                @keyframes companionTabLeft {
+                    from { opacity: 0; transform: translateX(-16px); }
+                    to { opacity: 1; transform: translateX(0); }
+                }
+                .companion-tab-right { animation: companionTabRight 280ms cubic-bezier(0.32,0.72,0,1) both; }
+                .companion-tab-left { animation: companionTabLeft 280ms cubic-bezier(0.32,0.72,0,1) both; }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .companion-tab-right, .companion-tab-left { animation: none; }
+                }
+            `}</style>
             <div
-                className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl"
+                className="w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text)]"
                 style={{
+                    boxShadow: c.shadowStrong,
                     transform: visible ? "translateY(0)" : "translateY(100%)",
                     opacity: visible ? 1 : 0,
-                    transition:
-                        "transform 280ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                    transition: "transform 280ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                    <h3 className="font-bold text-gray-900">Thêm người đi cùng</h3>
-                    <button onClick={close} className="p-1 text-gray-400 hover:text-gray-600">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                    <h3 className="font-bold text-[var(--text)]">Thêm người đi cùng</h3>
+                    <button onClick={close} className="p-1 text-[var(--text-faint)] hover:text-[var(--text)]">
                         <XIcon className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="flex gap-1 px-5 pt-3">
-                    {[
-                        ["account", "Có tài khoản"],
-                        ["guest", "Khách không tài khoản"],
-                    ].map(([val, lbl]) => (
-                        <button
-                            key={val}
-                            onClick={() => setTab(val as any)}
-                            className={`flex-1 py-1.5 rounded-lg text-sm font-medium ${tab === val ? "bg-blue-50 text-blue-600" : "text-gray-400"
-                                }`}
-                        >
-                            {lbl}
-                        </button>
-                    ))}
+                <div className="px-5 pt-3">
+                    <div className="relative flex p-1 rounded-xl bg-[var(--surface-muted)] border border-[var(--border)]">
+                        {/* Ô nền trượt giữa 2 tab */}
+                        <span
+                            aria-hidden
+                            className="absolute top-1 bottom-1 left-1 rounded-lg bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow)]"
+                            style={{
+                                width: "calc((100% - 0.5rem) / 2)",
+                                transform: `translateX(${tab === "account" ? 0 : 100}%)`,
+                                transition: "transform 300ms cubic-bezier(0.32,0.72,0,1)",
+                            }}
+                        />
+                        {[
+                            ["account", "Có tài khoản"],
+                            ["guest", "Khách không tài khoản"],
+                        ].map(([val, lbl]) => (
+                            <button
+                                key={val}
+                                onClick={() => setTab(val as any)}
+                                className="relative z-10 flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200"
+                                style={{ color: tab === val ? c.primary : c.textMuted }}
+                            >
+                                {lbl}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="p-5 space-y-3">
-                    {tab === "account" ? (
-                        <>
+                <div
+                    style={{
+                        height: heights[tab],
+                        transition: "height 300ms cubic-bezier(0.32,0.72,0,1)",
+                        overflowX: "clip",
+                        // chỉ cắt theo chiều dọc khi đang chuyển, để danh sách thả xuống không bị cắt
+                        overflowY: animating ? "hidden" : "visible",
+                    }}
+                >
+                    <div
+                        className="flex items-start w-[200%]"
+                        style={{
+                            transform: `translateX(${tab === "account" ? 0 : -50}%)`,
+                            transition: "transform 300ms cubic-bezier(0.32,0.72,0,1)",
+                        }}
+                    >
+                        {/* ───── Trang 1: Có tài khoản ───── */}
+                        <div
+                            ref={accountPanelRef}
+                            aria-hidden={tab !== "account"}
+                            className="w-1/2 p-5 space-y-3"
+                            style={panelStyle(tab === "account")}
+                        >
                             <input
-                                autoFocus
+                                ref={searchInputRef}
                                 value={memberSearch}
                                 onChange={(e) => {
                                     setMemberSearch(e.target.value);
                                     setSelectedCompanion(null);
                                 }}
-                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                className={INPUT}
                                 placeholder="Tìm theo tên hoặc số điện thoại..."
                             />
 
                             {selectedCompanion && (
-                                <div className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl bg-blue-50 border border-blue-200">
-                                    <span className="flex-1 text-sm font-medium text-blue-700 truncate">
+                                <div className={`flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl border ${TONE.primary}`}>
+                                    <span className="flex-1 text-sm font-medium truncate">
                                         {selectedCompanion.full_name}
                                     </span>
                                     <button
                                         onClick={() => setSelectedCompanion(null)}
-                                        className="w-5 h-5 rounded-full hover:bg-blue-200 flex items-center justify-center flex-shrink-0"
+                                        className="w-5 h-5 rounded-full hover:bg-black/10 flex items-center justify-center flex-shrink-0"
                                     >
-                                        <XIcon className="w-3.5 h-3.5 text-blue-600" />
+                                        <XIcon className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             )}
 
                             {!selectedCompanion && (
-                                <div className="max-h-60 overflow-y-auto -mx-1 border border-gray-100 rounded-xl">
+                                <div className="max-h-60 overflow-y-auto -mx-1 border border-[var(--border)] rounded-xl">
                                     {searchingMembers ? (
-                                        <p className="text-sm text-gray-400 text-center py-4">
-                                            Đang tìm...
-                                        </p>
+                                        <p className="text-sm text-[var(--text-faint)] text-center py-4">Đang tìm...</p>
                                     ) : memberSearchResults.length === 0 ? (
-                                        <p className="text-sm text-gray-400 text-center py-4">
+                                        <p className="text-sm text-[var(--text-faint)] text-center py-4">
                                             {memberSearch.trim()
                                                 ? "Không tìm thấy thành viên"
                                                 : "Nhập tên hoặc số điện thoại để tìm"}
                                         </p>
                                     ) : (
-                                        <ul className="divide-y divide-gray-50">
+                                        <ul className="divide-y divide-[var(--border)]">
                                             {memberSearchResults
                                                 .filter((m: any) => m.id !== user?.id)
                                                 .map((m: any) => (
                                                     <li key={m.id}>
                                                         <button
                                                             onClick={() => setSelectedCompanion(m)}
-                                                            className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                                                            className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[var(--surface-hover)] transition-colors"
                                                         >
-                                                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                            <div className="w-8 h-8 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                                                                 {m.avatar_url ? (
-                                                                    <img
-                                                                        src={m.avatar_url}
-                                                                        alt={m.full_name}
-                                                                        className="w-full h-full object-cover"
-                                                                    />
+                                                                    <img src={m.avatar_url} alt={m.full_name} className="w-full h-full object-cover" />
                                                                 ) : (
-                                                                    <span className="text-xs font-semibold text-blue-700">
+                                                                    <span className="text-xs font-semibold text-[var(--primary)]">
                                                                         {m.full_name?.[0]?.toUpperCase() ?? "?"}
                                                                     </span>
                                                                 )}
                                                             </div>
                                                             <div className="flex-1 min-w-0">
-                                                                <p className="text-sm font-medium text-gray-900 truncate">
-                                                                    {m.full_name}
-                                                                </p>
-                                                                <p className="text-xs text-gray-400">{m.phone}</p>
+                                                                <p className="text-sm font-medium text-[var(--text)] truncate">{m.full_name}</p>
+                                                                <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>
                                                             </div>
                                                         </button>
                                                     </li>
@@ -326,80 +385,127 @@ function AddCompanionModal({
                                 </div>
                             )}
 
-                            <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
-                                ⓘ {selectedCompanion?.full_name ?? "Thành viên"} sẽ nhận thông
-                                báo được thêm vào buổi. Tiền có thể gộp vào ví của bạn hoặc để
-                                họ tự thanh toán.
+                            <p className="text-xs text-[var(--primary)] bg-[var(--primary-soft)] rounded-lg px-3 py-2">
+                                ⓘ {selectedCompanion?.full_name ?? "Thành viên"} sẽ nhận thông báo được thêm vào buổi.
+                                Tiền có thể gộp vào ví của bạn hoặc để họ tự thanh toán.
                             </p>
-                        </>
-                    ) : (
-                        <>
+                        </div>
+
+                        {/* ───── Trang 2: Khách không tài khoản ───── */}
+                        <div
+                            ref={guestPanelRef}
+                            aria-hidden={tab !== "guest"}
+                            className="w-1/2 p-5 space-y-3"
+                            style={panelStyle(tab === "guest")}
+                        >
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Họ tên *
-                                </label>
+                                <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Họ tên *</label>
                                 <input
-                                    autoFocus
+                                    ref={guestNameRef}
                                     value={guestForm.full_name}
-                                    onChange={(e) =>
-                                        setGuestForm((f) => ({ ...f, full_name: e.target.value }))
-                                    }
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                    onChange={(e) => setGuestForm((f) => ({ ...f, full_name: e.target.value }))}
+                                    className={INPUT}
                                     placeholder="Tên khách đi cùng"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Giới tính
-                                    </label>
-                                    <CustomSelect
-                                        value={guestForm.gender}
-                                        onChange={(val) => setGuestForm((f) => ({ ...f, gender: val }))}
-                                        options={[
-                                            { value: "male", label: "Nam" },
-                                            { value: "female", label: "Nữ" },
-                                        ]}
-                                    />
+                                    <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Giới tính</label>
+                                    <div className={SELECT_FIX}>
+                                        <CustomSelect
+                                            value={guestForm.gender}
+                                            onChange={(val) => setGuestForm((f) => ({ ...f, gender: val }))}
+                                            options={[
+                                                { value: "male", label: "Nam" },
+                                                { value: "female", label: "Nữ" },
+                                            ]}
+                                        />
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Trình độ
-                                    </label>
-                                    <CustomSelect
-                                        value={guestForm.skill_level}
-                                        onChange={(val) =>
-                                            setGuestForm((f) => ({ ...f, skill_level: val }))
-                                        }
-                                        placeholder="-- Chọn --"
-                                        options={SKILL_OPTIONS}
-                                    />
+                                    <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Trình độ</label>
+                                    <div className={SELECT_FIX}>
+                                        <CustomSelect
+                                            value={guestForm.skill_level}
+                                            onChange={(val) => setGuestForm((f) => ({ ...f, skill_level: val }))}
+                                            placeholder="-- Chọn --"
+                                            options={SKILL_OPTIONS}
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                            <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
-                                ⓘ Tiền của khách đi cùng sẽ được gộp vào số tiền bạn cần thanh
-                                toán sau khi buổi kết thúc.
+                            <p className="text-xs text-[var(--primary)] bg-[var(--primary-soft)] rounded-lg px-3 py-2">
+                                ⓘ Tiền của khách đi cùng sẽ được gộp vào số tiền bạn cần thanh toán sau khi buổi kết thúc.
                             </p>
-                        </>
-                    )}
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100">
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
                     <button
                         onClick={close}
-                        className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl border border-gray-200 text-sm text-gray-500 hover:bg-gray-50"
+                        className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
                     >
                         Hủy
                     </button>
                     <button
                         onClick={handleAdd}
-                        disabled={
-                            adding ||
-                            (tab === "account" ? !selectedCompanion : !guestForm.full_name.trim())
-                        }
+                        disabled={adding || (tab === "account" ? !selectedCompanion : !guestForm.full_name.trim())}
                         className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-1.5"
                     >
                         {adding && <Loader2 className="w-4 h-4 animate-spin" />} Thêm vào buổi
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+}
+
+function ConfirmCancelModal({
+    session,
+    loading,
+    onClose,
+    onConfirm,
+}: {
+    session: any;
+    loading: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+}) {
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{ background: c.overlay }}
+            onClick={(e) => e.target === e.currentTarget && !loading && onClose()}
+        >
+            <div
+                className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 text-center"
+                style={{ boxShadow: c.shadowStrong }}
+            >
+                <div className="w-12 h-12 mx-auto rounded-full bg-[var(--danger-soft)] flex items-center justify-center mb-3">
+                    <XIcon className="w-6 h-6 text-[var(--danger)]" />
+                </div>
+                <h3 className="font-bold text-[var(--text)]">Huỷ đăng ký buổi này?</h3>
+                <p className="text-sm text-[var(--text-muted)] mt-1.5 leading-snug">
+                    Bạn sẽ không còn trong danh sách của buổi{" "}
+                    <span className="font-semibold text-[var(--text)]">{session.title}</span>.
+                    Người đi cùng (nếu có) cũng sẽ bị gỡ theo.
+                </p>
+                <div className="flex gap-3 mt-5">
+                    <button
+                        onClick={onClose}
+                        disabled={loading}
+                        className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] disabled:opacity-50"
+                    >
+                        Giữ lại
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        disabled={loading}
+                        className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    >
+                        {loading && <Loader2 className="w-4 h-4 animate-spin" />} Huỷ đăng ký
                     </button>
                 </div>
             </div>
@@ -423,6 +529,8 @@ export function UpcomingSessionsSection({
     const [localSessions, setLocalSessions] = useState<any[]>(upcoming);
     const [registeringId, setRegisteringId] = useState<string | null>(null);
     const [companionModalSession, setCompanionModalSession] = useState<any>(null);
+    const [cancelSession, setCancelSession] = useState<any>(null);
+    const [cancelling, setCancelling] = useState(false);
 
     useEffect(() => {
         setLocalSessions(upcoming);
@@ -484,7 +592,7 @@ export function UpcomingSessionsSection({
         );
 
         return () => {
-            channels.forEach((c) => supabase.removeChannel(c));
+            channels.forEach((ch) => supabase.removeChannel(ch));
         };
     }, [localSessions.map((s) => s.id).join(","), refetchSession]);
 
@@ -515,6 +623,30 @@ export function UpcomingSessionsSection({
         }
     };
 
+    const handleCancel = async () => {
+        const s = cancelSession;
+        const regId = s?.my_registration?.id;
+        if (!regId || cancelling) return;
+        setCancelling(true);
+        try {
+            await registrationsApi.cancel(regId);
+            toast.success("Đã huỷ đăng ký");
+            setLocalSessions((prev) =>
+                prev.map((x) =>
+                    x.id === s.id
+                        ? { ...x, my_registration: null, available_slots: x.available_slots + 1 }
+                        : x,
+                ),
+            );
+            setCancelSession(null);
+            refetchSession(s.id);
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? "Huỷ đăng ký thất bại");
+        } finally {
+            setCancelling(false);
+        }
+    };
+
     const displaySessions = localSessions
         .filter((s) => s.status !== "completed" && s.status !== "cancelled")
         .sort(
@@ -528,70 +660,51 @@ export function UpcomingSessionsSection({
         <section>
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-blue-300" />
-                    <h3 className="font-bold text-gray-600 text-sm">
-                        Buổi đánh gần đây
-                    </h3>
+                    <Zap className="w-4 h-4 text-[var(--primary)]" />
+                    <h3 className="font-bold text-[var(--text-muted)] text-sm">Buổi đánh gần đây</h3>
                 </div>
-                <Link
-                    href="/sessions"
-                    className="text-xs text-blue-600 font-semibold flex items-center gap-0.5"
-                >
+                <Link href="/sessions" className="text-xs text-[var(--primary)] font-semibold flex items-center gap-0.5">
                     Tất cả <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
             </div>
 
-            {(() => null)()}
-
             {loading ? (
                 <div className="space-y-2">
                     {[...Array(2)].map((_, i) => (
-                        <div key={i} className="bg-white rounded-2xl h-24 animate-pulse" />
+                        <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl h-24 animate-pulse" />
                     ))}
                 </div>
             ) : displaySessions.length === 0 ? (
-                <div className="bg-white rounded-2xl py-10 text-center border border-dashed border-gray-200">
-                    <CalendarDays className="w-8 h-8 mx-auto text-gray-200 mb-2" />
-                    <p className="text-gray-400 text-sm">Chưa có buổi đánh nào</p>
+                <div className="bg-[var(--surface)] rounded-2xl py-10 text-center border border-dashed border-[var(--border-strong)]">
+                    <CalendarDays className="w-8 h-8 mx-auto text-[var(--text-faint)] mb-2" />
+                    <p className="text-[var(--text-faint)] text-sm">Chưa có buổi đánh nào</p>
                 </div>
             ) : (
                 <div className="space-y-2.5">
-                    {displaySessions.map((s, index) => {
+                    {displaySessions.map((s) => {
                         const myReg = s.my_registration;
                         const isFull = s.available_slots <= 0;
 
                         const total = s.max_slots ?? s.total_slots ?? null;
                         const filled = total ? total - s.available_slots : null;
-                        const pct = total
-                            ? Math.min(100, Math.round((filled! / total) * 100))
-                            : 0;
+                        const pct = total ? Math.min(100, Math.round((filled! / total) * 100)) : 0;
 
-                        const slotStatus: "plenty" | "low" | "full" = isFull
-                            ? "full"
-                            : pct >= 80
-                                ? "low"
-                                : "plenty";
+                        const slotStatus: "plenty" | "low" | "full" = isFull ? "full" : pct >= 80 ? "low" : "plenty";
 
                         const STATUS_STYLE = {
                             plenty: {
-                                text: "text-emerald-600",
-                                barBg:
-                                    "bg-gradient-to-r from-blue-400 via-emerald-400 to-emerald-500",
+                                text: "text-[var(--success)]",
+                                barBg: "bg-gradient-to-r from-blue-400 via-emerald-400 to-emerald-500",
                             },
                             low: {
-                                text: "text-amber-600",
-                                barBg:
-                                    "bg-gradient-to-r from-amber-400 via-orange-400 to-orange-500",
+                                text: "text-[var(--warning)]",
+                                barBg: "bg-gradient-to-r from-amber-400 via-orange-400 to-orange-500",
                             },
-                            full: {
-                                text: "text-red-500",
-                                barBg: "bg-red-500",
-                            },
+                            full: { text: "text-[var(--danger)]", barBg: "bg-red-500" },
                         }[slotStatus];
 
                         const canRegister = s.status === "open" && !isFull && !myReg;
-                        const canAddCompanion =
-                            myReg && (s.status === "open" || s.status === "full");
+                        const canAddCompanion = myReg && (s.status === "open" || s.status === "full");
                         const canPay =
                             myReg &&
                             myReg.amount_override > 0 &&
@@ -606,48 +719,40 @@ export function UpcomingSessionsSection({
                                 ? "pending_approval"
                                 : myReg?.participation_status === "awaiting_checkin"
                                     ? "awaiting_checkin"
-                                    : myReg?.payment_status === "pending" &&
-                                        myReg?.amount_override == null
+                                    : myReg?.payment_status === "pending" && myReg?.amount_override == null
                                         ? "awaiting_finish"
-                                        : myReg?.payment_status === "pending" &&
-                                            myReg?.payment_reference
+                                        : myReg?.payment_status === "pending" && myReg?.payment_reference
                                             ? "pending_review"
                                             : myReg?.payment_status;
-                        const regCfg = effectiveStatus
-                            ? (REG_CFG[effectiveStatus] ?? REG_CFG.pending)
-                            : null;
+                        const regCfg = effectiveStatus ? (REG_CFG[effectiveStatus] ?? null) : null;
                         const RegIcon = regCfg?.icon;
 
                         return (
                             <div
                                 key={s.id}
+                                className="relative rounded-2xl p-5 border transition-all"
                                 style={{
-                                    boxShadow:
-                                        "0 8px 24px -4px rgba(30, 64, 175, 0.12), 0 4px 10px -2px rgba(0,0,0,0.06)",
+                                    background: c.surface,
+                                    borderColor: myReg ? alpha("primary", 40) : c.border,
+                                    boxShadow: c.shadow,
                                 }}
-                                className={`relative bg-white rounded-2xl p-5 border transition-all ${myReg ? "border-blue-200" : "border-gray-100"
-                                    }`}
                             >
                                 {isFull && (
-                                    <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-red-500 shadow-md shadow-red-200 flex items-center justify-center z-10"
+                                    <div
+                                        className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-red-500 shadow-md shadow-red-200 flex items-center justify-center z-10"
                                         title="Buổi đã đầy chỗ"
                                     >
                                         <Lock className="w-3.5 h-3.5 text-white" />
                                     </div>
-                                )
-                                }
+                                )}
                                 <Link href={`/sessions/${s.id}`}>
                                     <div className="flex items-start justify-between gap-3 active:scale-99 transition-transform">
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-gray-900 text-sm truncate">
-                                                {s.title}
-                                            </p>
-                                            <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2 text-xs text-gray-400">
+                                            <p className="font-semibold text-[var(--text)] text-sm truncate">{s.title}</p>
+                                            <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-2 text-xs text-[var(--text-muted)]">
                                                 <span className="flex items-center gap-1">
                                                     <CalendarDays className="w-3 h-3" />
-                                                    {format(new Date(s.scheduled_at), "EEE dd/MM HH:mm", {
-                                                        locale: vi,
-                                                    })}
+                                                    {format(new Date(s.scheduled_at), "EEE dd/MM HH:mm", { locale: vi })}
                                                 </span>
                                                 {s.location && (
                                                     <span className="flex items-center gap-1 min-w-0">
@@ -660,14 +765,14 @@ export function UpcomingSessionsSection({
                                             {total ? (
                                                 <div className="mt-3 w-full">
                                                     <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-[10px] font-semibold text-gray-400">
+                                                        <span className="text-[10px] font-semibold text-[var(--text-faint)]">
                                                             Đã đăng ký
                                                         </span>
                                                         <span className={`text-[10px] font-bold ${STATUS_STYLE.text}`}>
                                                             {filled}/{total}
                                                         </span>
                                                     </div>
-                                                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                    <div className="h-2 w-full bg-[var(--surface-muted)] rounded-full overflow-hidden">
                                                         <div
                                                             className={`h-full rounded-full ${STATUS_STYLE.barBg}`}
                                                             style={{ width: `${pct}%` }}
@@ -676,7 +781,7 @@ export function UpcomingSessionsSection({
                                                 </div>
                                             ) : (
                                                 <span
-                                                    className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${isFull ? "text-red-400" : "text-emerald-500"
+                                                    className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${isFull ? "text-[var(--danger)]" : "text-[var(--success)]"
                                                         }`}
                                                 >
                                                     <Users className="w-3 h-3" />
@@ -702,14 +807,18 @@ export function UpcomingSessionsSection({
                                                 e.stopPropagation();
                                                 onOpenParticipants(s.id, s.title);
                                             }}
-                                            className="h-9 pl-3 pr-3.5 rounded-full bg-blue-50 flex items-center gap-1.5 active:scale-90 transition-transform flex-shrink-0"
+                                            className="h-9 pl-3 pr-3.5 rounded-full bg-[var(--primary-soft)] flex items-center gap-1.5 active:scale-90 transition-transform flex-shrink-0"
                                         >
-                                            <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                                            <span className="text-xs font-bold text-blue-600">{filled ?? 0}</span>
+                                            <Users className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
+                                            <span className="text-xs font-bold text-[var(--primary)]">{filled ?? 0}</span>
                                             {(s.male_count > 0 || s.female_count > 0) && (
-                                                <span className="flex items-center gap-1 ml-1 pl-1.5 border-l border-blue-200">
-                                                    <span className="text-[11px] font-semibold text-blue-500">👨 {s.male_count ?? 0}</span>
-                                                    <span className="text-[11px] font-semibold text-pink-500">👩 {s.female_count ?? 0}</span>
+                                                <span className="flex items-center gap-1 ml-1 pl-1.5 border-l border-[color-mix(in_srgb,var(--primary)_30%,transparent)]">
+                                                    <span className="text-[11px] font-semibold text-[var(--primary)]">
+                                                        👨 {s.male_count ?? 0}
+                                                    </span>
+                                                    <span className="text-[11px] font-semibold text-[var(--pink)]">
+                                                        👩 {s.female_count ?? 0}
+                                                    </span>
                                                 </span>
                                             )}
                                         </button>
@@ -733,13 +842,11 @@ export function UpcomingSessionsSection({
                                                 handleRegister(s.id);
                                             }}
                                             disabled={isRegisteringThis}
-                                            className={`flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white bg-blue-600 shadow-sm shadow-blue-200 active:scale-95 transition-all duration-300 ease-out overflow-hidden ${isRegisteringThis
+                                            className={`flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white bg-blue-600 shadow-sm shadow-blue-200/30 active:scale-95 transition-all duration-300 ease-out overflow-hidden ${isRegisteringThis
                                                 ? "w-9 h-9 rounded-full gap-0 p-0"
                                                 : "w-auto h-9 gap-1.5 px-4 rounded-full"
                                                 }`}
-                                            style={{
-                                                transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
-                                            }}
+                                            style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" }}
                                         >
                                             {isRegisteringThis ? (
                                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -751,21 +858,39 @@ export function UpcomingSessionsSection({
                                         <Link
                                             href={`/sessions/${s.id}`}
                                             onClick={(e) => e.stopPropagation()}
-                                            className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 shadow-sm shadow-red-200 active:scale-95 transition-all px-4 h-9 rounded-full animate-pulse"
+                                            className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 shadow-sm shadow-red-200/30 active:scale-95 transition-all px-4 h-9 rounded-full animate-pulse"
                                         >
                                             <CreditCard className="w-3.5 h-3.5" /> Chi tiết thanh toán
                                         </Link>
                                     ) : canAddCompanion ? (
-                                        <button
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                setCompanionModalSession(s);
-                                            }}
-                                            className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-full transition-colors"
-                                        >
-                                            <UserPlus className="w-3.5 h-3.5" /> Thêm
-                                        </button>
+                                        <div className="flex-shrink-0 flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                title="Thêm người đi cùng"
+                                                aria-label="Thêm người đi cùng"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setCompanionModalSession(s);
+                                                }}
+                                                className="w-9 h-9 flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-200/30 active:scale-90 rounded-full transition"
+                                            >
+                                                <UserPlus className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                title="Huỷ đăng ký"
+                                                aria-label="Huỷ đăng ký"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setCancelSession(s);
+                                                }}
+                                                className="w-9 h-9 flex items-center justify-center text-white bg-red-500 hover:bg-red-600 shadow-sm shadow-red-200/30 active:scale-90 rounded-full transition"
+                                            >
+                                                <XIcon className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     ) : isFull && !myReg ? (
                                         <span className="flex-shrink-0 text-xs font-semibold text-white bg-red-500 px-4 py-2 rounded-full">
                                             Hết chỗ
@@ -776,18 +901,24 @@ export function UpcomingSessionsSection({
                         );
                     })}
                 </div>
-            )
-            }
+            )}
 
-            {
-                companionModalSession && (
-                    <AddCompanionModal
-                        session={companionModalSession}
-                        onClose={() => setCompanionModalSession(null)}
-                        onDone={() => refetchSession(companionModalSession.id)}
-                    />
-                )
-            }
-        </section >
+            {companionModalSession && (
+                <AddCompanionModal
+                    session={companionModalSession}
+                    onClose={() => setCompanionModalSession(null)}
+                    onDone={() => refetchSession(companionModalSession.id)}
+                />
+            )}
+
+            {cancelSession && (
+                <ConfirmCancelModal
+                    session={cancelSession}
+                    loading={cancelling}
+                    onClose={() => setCancelSession(null)}
+                    onConfirm={handleCancel}
+                />
+            )}
+        </section>
     );
 }

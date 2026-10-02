@@ -38,21 +38,25 @@ const THEME_STYLES: Record<string, { bg: string }> = {
     info: { bg: "from-blue-500 to-blue-600" },
 };
 
+const CARD =
+    "bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow)]";
+
 const THEME_ACCENT: Record<string, { badge: string; iconBorder: string; iconText: string }> = {
-    default: { badge: "bg-slate-600", iconBorder: "border-slate-200", iconText: "text-slate-500" },
-    success: { badge: "bg-emerald-500", iconBorder: "border-emerald-200", iconText: "text-emerald-500" },
-    danger: { badge: "bg-red-500", iconBorder: "border-red-200", iconText: "text-red-500" },
-    warning: { badge: "bg-amber-500", iconBorder: "border-amber-200", iconText: "text-amber-500" },
-    info: { badge: "bg-blue-500", iconBorder: "border-blue-200", iconText: "text-blue-500" },
+    default: { badge: "bg-slate-600", iconBorder: "border-[var(--border-strong)]", iconText: "text-[var(--text-muted)]" },
+    success: { badge: "bg-emerald-500", iconBorder: "border-[color-mix(in_srgb,var(--success)_35%,transparent)]", iconText: "text-[var(--success)]" },
+    danger: { badge: "bg-red-500", iconBorder: "border-[color-mix(in_srgb,var(--danger)_35%,transparent)]", iconText: "text-[var(--danger)]" },
+    warning: { badge: "bg-amber-500", iconBorder: "border-[color-mix(in_srgb,var(--warning)_35%,transparent)]", iconText: "text-[var(--warning)]" },
+    info: { badge: "bg-blue-500", iconBorder: "border-[color-mix(in_srgb,var(--primary)_35%,transparent)]", iconText: "text-[var(--primary)]" },
 };
 
 const ITEM_VARIANT_STYLES: Record<string, string> = {
-    default: "bg-gray-50 text-gray-600 border-gray-100",
-    success: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    danger: "bg-red-50 text-red-600 border-red-100",
-    warning: "bg-amber-50 text-amber-700 border-amber-100",
-    highlight: "bg-blue-50 text-blue-700 border-blue-100",
+    default: "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]",
+    success: "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_25%,transparent)]",
+    danger: "bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_25%,transparent)]",
+    warning: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_25%,transparent)]",
+    highlight: "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_25%,transparent)]",
 };
+
 
 type ViewState =
     | { screen: "cover" }
@@ -154,7 +158,7 @@ export function HandbookModal({ open, onClose }: { open: boolean; onClose: () =>
                 style={{ animation: closing ? undefined : "handbookFadeIn 0.25s ease-out" }}
             />
             <div
-                className={`relative w-[94%] sm:w-full sm:max-w-md mx-auto bg-[#F4F6FA] rounded-3xl overflow-hidden flex flex-col ${closing ? "animate-handbook-out" : "animate-handbook-in"
+                className={`relative w-[94%] sm:w-full sm:max-w-md mx-auto bg-[var(--bg)] border border-[var(--border)] rounded-3xl overflow-hidden flex flex-col ${closing ? "animate-handbook-out" : "animate-handbook-in"
                     }`}
                 style={{
                     height: "min(94dvh, 100%)",
@@ -339,6 +343,27 @@ function CoverScreen({ cover, onNext }: { cover: HandbookNode; onNext: () => voi
     );
 }
 
+function PageFooter({ pageIndex, totalPages }: { pageIndex: number; totalPages: number }) {
+    return (
+        <div className="flex items-center justify-between pt-4 mt-2 border-t border-[var(--border)] flex-shrink-0">
+            <span className="text-[10px] font-bold text-[var(--primary)] tracking-widest">TEAM BNB</span>
+            <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                        <span
+                            key={i}
+                            className={`h-1.5 rounded-full transition-all ${i === pageIndex ? "w-4 bg-emerald-500" : "w-1.5 bg-[var(--border-strong)]"}`}
+                        />
+                    ))}
+                </div>
+                <span className="text-[var(--text-faint)] text-[10px] font-semibold">
+                    Trang {pageIndex + 1}/{totalPages}
+                </span>
+            </div>
+        </div>
+    );
+}
+
 function TocScreen({
     tree,
     title,
@@ -353,31 +378,31 @@ function TocScreen({
 
     return (
         <div className="h-full flex flex-col p-4">
-            <div className="flex-1 min-h-0 rounded-3xl bg-white shadow-[0_6px_16px_-4px_rgba(0,0,0,0.15),0_2px_6px_-2px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 flex flex-col">
+            <div className={`flex-1 min-h-0 rounded-3xl ${CARD} p-5 flex flex-col`}>
                 <div className="flex items-center gap-3 mb-5 flex-shrink-0">
-                    <div className="w-12 h-12 rounded-2xl border-2 border-blue-900 flex items-center justify-center text-blue-900 flex-shrink-0">
+                    <div className="w-12 h-12 rounded-2xl border-2 border-[var(--primary)] flex items-center justify-center text-[var(--primary)] flex-shrink-0">
                         <BookOpen className="w-6 h-6" strokeWidth={2.2} />
                     </div>
-                    <h2 className="text-2xl font-black text-blue-950 tracking-tight truncate">{title}</h2>
+                    <h2 className="text-2xl font-black text-[var(--text)] tracking-tight truncate">{title}</h2>
                 </div>
 
                 <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar space-y-2.5 -mx-1 px-1">
                     {tree.sections.length === 0 ? (
-                        <div className="py-16 text-center text-sm text-gray-400">Chưa có mục nội dung nào</div>
+                        <div className="py-16 text-center text-sm text-[var(--text-faint)]">Chưa có mục nội dung nào</div>
                     ) : (
                         tree.sections.map((s, idx) => {
                             const isGreen = idx < 3;
-                            const badgeBg = isGreen ? "bg-emerald-500" : "bg-blue-900";
+                            const badgeBg = isGreen ? "bg-emerald-500" : "bg-blue-800";
                             const iconStyle = isGreen
-                                ? "text-emerald-500 border-emerald-200 bg-emerald-50"
-                                : "text-blue-900 border-blue-100 bg-blue-50";
+                                ? "text-[var(--success)] border-[var(--border)] bg-[var(--success-soft)]"
+                                : "text-[var(--primary)] border-[var(--border)] bg-[var(--primary-soft)]";
                             const code = s.page_code || String(idx + 1).padStart(2, "0");
 
                             return (
                                 <button
                                     key={s.id}
                                     onClick={() => onOpenSection(s)}
-                                    className="w-full rounded-2xl border border-gray-200/80 bg-white p-2.5 flex items-center gap-3 text-left shadow-[0_6px_16px_-4px_rgba(0,0,0,0.15),0_2px_6px_-2px_rgba(0,0,0,0.08)] active:scale-[0.98] active:shadow-sm transition-all"
+                                    className={`w-full rounded-2xl ${CARD} p-2.5 flex items-center gap-3 text-left active:scale-[0.98] transition-all`}
                                 >
                                     <span className={`w-9 h-9 rounded-xl ${badgeBg} text-white text-sm font-black flex items-center justify-center flex-shrink-0`}>
                                         {code}
@@ -385,30 +410,14 @@ function TocScreen({
                                     <span className={`w-9 h-9 rounded-full border flex items-center justify-center flex-shrink-0 ${iconStyle}`}>
                                         <LucideIconByName name={s.icon} className="w-4.5 h-4.5" />
                                     </span>
-                                    <span className="text-sm font-bold text-gray-800 truncate">{s.title}</span>
+                                    <span className="text-sm font-bold text-[var(--text)] truncate">{s.title}</span>
                                 </button>
                             );
                         })
                     )}
                 </div>
 
-                <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100 flex-shrink-0">
-                    <span className="text-[10px] font-bold text-blue-900 tracking-widest">TEAM BNB</span>
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: totalPages }).map((_, i) => (
-                                <span
-                                    key={i}
-                                    className={`h-1.5 rounded-full transition-all ${i === pageIndex ? "w-4 bg-emerald-500" : "w-1.5 bg-gray-200"
-                                        }`}
-                                />
-                            ))}
-                        </div>
-                        <span className="text-gray-400 text-[10px] font-semibold">
-                            Trang {pageIndex + 1}/{totalPages}
-                        </span>
-                    </div>
-                </div>
+                <PageFooter pageIndex={pageIndex} totalPages={totalPages} />
             </div>
         </div>
     );
@@ -425,9 +434,9 @@ function ProcessFlowDiagram() {
     ];
 
     return (
-        <div className="rounded-2xl border border-gray-200/80 bg-white p-4 mb-4">
-            <div className="text-center pb-3 mb-4 border-b border-gray-100">
-                <span className="text-sm font-black text-blue-900 tracking-wide">
+        <div className={`rounded-2xl ${CARD} p-4 mb-4`}>
+            <div className="text-center pb-3 mb-4 border-b border-[var(--border)]">
+                <span className="text-sm font-black text-[var(--primary)] tracking-wide">
                     QUY TRÌNH GIAO HỮU TÍNH ĐIỂM
                 </span>
             </div>
@@ -435,15 +444,15 @@ function ProcessFlowDiagram() {
                 {steps.map((step, i) => (
                     <div key={i} className="flex items-start flex-1 last:flex-none">
                         <div className="flex flex-col items-center gap-2 flex-shrink-0 w-16">
-                            <div className="w-11 h-11 rounded-full border-2 border-blue-200 bg-blue-50 flex items-center justify-center text-blue-600">
+                            <div className="w-11 h-11 rounded-full border-2 border-[var(--border-strong)] bg-[var(--primary-soft)] flex items-center justify-center text-[var(--primary)]">
                                 <step.icon className="w-5 h-5" strokeWidth={2} />
                             </div>
-                            <span className="text-[11px] font-semibold text-gray-600 text-center leading-tight whitespace-pre-line">
+                            <span className="text-[11px] font-semibold text-[var(--text-muted)] text-center leading-tight whitespace-pre-line">
                                 {step.label}
                             </span>
                         </div>
                         {i < steps.length - 1 && (
-                            <div className="flex-1 h-[2px] bg-blue-100 mt-[22px]" />
+                            <div className="flex-1 h-[2px] bg-[var(--border-strong)] mt-[22px]" />
                         )}
                     </div>
                 ))}
@@ -454,17 +463,17 @@ function ProcessFlowDiagram() {
 
 function DisputeResolutionCard({ node }: { node: HandbookNode }) {
     return (
-        <div className="rounded-2xl border-2 border-red-200 bg-red-50/60 p-4">
+        <div className="rounded-2xl border-2 border-[color-mix(in_srgb,var(--danger)_35%,transparent)] bg-[var(--danger-soft)] p-4">
             <div className="flex items-center gap-2.5 mb-3">
-                <span className="w-9 h-9 rounded-full bg-white border-2 border-red-200 flex items-center justify-center text-red-500 flex-shrink-0">
+                <span className="w-9 h-9 rounded-full bg-[var(--surface)] border-2 border-[color-mix(in_srgb,var(--danger)_35%,transparent)] flex items-center justify-center text-[var(--danger)] flex-shrink-0">
                     <LucideIconByName name={node.icon || "user"} className="w-4.5 h-4.5" />
                 </span>
-                <h3 className="text-base font-black text-red-600 tracking-tight uppercase">
+                <h3 className="text-base font-black text-[var(--danger)] tracking-tight uppercase">
                     Xử lý tranh chấp
                 </h3>
             </div>
 
-            <p className="text-sm text-gray-500 mb-3 leading-snug">
+            <p className="text-sm text-[var(--text-muted)] mb-3 leading-snug">
                 Trong trường hợp xử lý tranh chấp dẫn đến hủy kết quả trận đấu:
             </p>
 
@@ -472,12 +481,12 @@ function DisputeResolutionCard({ node }: { node: HandbookNode }) {
                 {node.items?.map((it) => (
                     <div key={it.id} className="flex items-center gap-3">
                         {it.icon && (
-                            <span className="w-6 h-6 flex items-center justify-center flex-shrink-0 text-red-400">
+                            <span className="w-6 h-6 flex items-center justify-center flex-shrink-0 text-[var(--danger)]">
                                 <LucideIconByName name={it.icon} className="w-5 h-5" strokeWidth={2} />
                             </span>
                         )}
                         <div
-                            className="text-sm text-gray-700 leading-snug [&_strong]:text-red-600 [&_strong]:font-extrabold [&_p]:m-0"
+                            className="text-sm text-[var(--text)] leading-snug [&_strong]:text-[var(--danger)] [&_strong]:font-extrabold [&_p]:m-0"
                             dangerouslySetInnerHTML={{ __html: it.text }}
                         />
                     </div>
@@ -504,12 +513,12 @@ function PageScreen({
 
     return (
         <div className="h-full flex flex-col p-4">
-            <div className="flex-1 min-h-0 rounded-3xl bg-white shadow-[0_6px_16px_-4px_rgba(0,0,0,0.15),0_2px_6px_-2px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 flex flex-col">
+            <div className={`flex-1 min-h-0 rounded-3xl ${CARD} p-5 flex flex-col`}>
                 <div className="flex items-center gap-3 mb-5 flex-shrink-0">
                     <span className={`w-11 h-11 rounded-2xl ${accent.badge} text-white text-base font-black flex items-center justify-center flex-shrink-0`}>
                         {code}
                     </span>
-                    <h2 className="flex-1 min-w-0 text-lg font-black text-gray-900 tracking-tight truncate uppercase">
+                    <h2 className="flex-1 min-w-0 text-lg font-black text-[var(--text)] tracking-tight truncate uppercase">
                         {node.title}
                     </h2>
                     <span className={`w-11 h-11 rounded-full border-2 ${accent.iconBorder} ${accent.iconText} flex items-center justify-center flex-shrink-0`}>
@@ -518,23 +527,22 @@ function PageScreen({
                 </div>
 
                 {node.subtitle && (
-                    <p className="text-xs text-gray-400 -mt-3 mb-4 flex-shrink-0">{node.subtitle}</p>
+                    <p className="text-xs text-[var(--text-faint)] -mt-3 mb-4 flex-shrink-0">{node.subtitle}</p>
                 )}
 
                 <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar -mx-1 px-1">
-
                     {node.id === DISPUTE_PAGE_ID ? (
                         <>
                             <ProcessFlowDiagram />
                             <DisputeResolutionCard node={node} />
                         </>
                     ) : !!node.children?.length ? (
-                        <div className="rounded-2xl bg-white border border-gray-200/80 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.12),0_2px_4px_-2px_rgba(0,0,0,0.06)] divide-y divide-gray-100 overflow-hidden">
+                        <div className={`rounded-2xl ${CARD} divide-y divide-[var(--border)] overflow-hidden`}>
                             {node.children.map((child) => (
                                 <button
                                     key={child.id}
                                     onClick={() => onOpenChild(child)}
-                                    className="w-full flex items-center gap-4 px-4 py-5 text-left active:bg-gray-50 transition-colors"
+                                    className="w-full flex items-center gap-4 px-4 py-5 text-left active:bg-[var(--surface-hover)] transition-colors"
                                 >
                                     <span className={`flex-shrink-0 ${accent.iconText}`}>
                                         <LucideIconByName name={child.icon} className="w-10 h-10" strokeWidth={1.75} />
@@ -544,7 +552,7 @@ function PageScreen({
                                             {child.page_code}
                                         </span>
                                     )}
-                                    <p className="text-lg font-bold text-blue-950 truncate flex-1 min-w-0">
+                                    <p className="text-lg font-bold text-[var(--text)] truncate flex-1 min-w-0">
                                         {child.title}
                                     </p>
                                 </button>
@@ -553,14 +561,15 @@ function PageScreen({
                     ) : !!node.items?.length ? (
                         <div className="space-y-2.5">
                             {node.items.map((it) => {
-                                const variantStyle = it.variant && it.variant !== "default"
-                                    ? ITEM_VARIANT_STYLES[it.variant]
-                                    : null;
+                                const variantStyle =
+                                    it.variant && it.variant !== "default"
+                                        ? ITEM_VARIANT_STYLES[it.variant]
+                                        : null;
 
                                 return (
                                     <div
                                         key={it.id}
-                                        className={`w-full rounded-xl border p-4 flex items-center gap-3 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.12),0_2px_4px_-2px_rgba(0,0,0,0.06)] ${variantStyle ?? "bg-white border-gray-200/80"
+                                        className={`w-full rounded-xl border p-4 flex items-center gap-3 shadow-[var(--shadow)] ${variantStyle ?? "bg-[var(--surface)] text-[var(--text)] border-[var(--border)]"
                                             }`}
                                     >
                                         {it.icon && (
@@ -577,27 +586,11 @@ function PageScreen({
                             })}
                         </div>
                     ) : (
-                        <p className="text-sm text-gray-400 text-center py-8">Chưa có nội dung</p>
+                        <p className="text-sm text-[var(--text-faint)] text-center py-8">Chưa có nội dung</p>
                     )}
                 </div>
 
-                <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100 flex-shrink-0">
-                    <span className="text-[10px] font-bold text-blue-900 tracking-widest">TEAM BNB</span>
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: totalPages }).map((_, i) => (
-                                <span
-                                    key={i}
-                                    className={`h-1.5 rounded-full transition-all ${i === pageIndex ? "w-4 bg-emerald-500" : "w-1.5 bg-gray-200"
-                                        }`}
-                                />
-                            ))}
-                        </div>
-                        <span className="text-gray-400 text-[10px] font-semibold">
-                            Trang {pageIndex + 1}/{totalPages}
-                        </span>
-                    </div>
-                </div>
+                <PageFooter pageIndex={pageIndex} totalPages={totalPages} />
             </div>
         </div>
     );

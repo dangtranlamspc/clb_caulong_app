@@ -44,15 +44,13 @@ type MainTab = "sessions" | "matches" | "events";
 
 const SCROLL_AREA =
   "scroll-fade flex-1 min-h-0 overflow-y-auto overscroll-contain -mx-2 px-2 pt-2 " +
-  "pb-[calc(8.5rem_+_env(safe-area-inset-bottom,0px))] " +   // chừa chỗ cho card cuối nằm trên thanh tab
+  "pb-[calc(8.5rem_+_env(safe-area-inset-bottom,0px))] " + // chừa chỗ cho card cuối nằm trên thanh tab
   "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
-// pb-24 của app-shell (96px) + pb-5 của <main> (20px) trong layout
 const SHELL_BOTTOM_SPACE = 116;
 
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-// Cho phần tử cao đúng từ vị trí của nó tới ĐÁY màn hình (danh sách sẽ trôi ra sau thanh tab)
 function useFillViewport() {
   const ref = useRef<HTMLDivElement | null>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
@@ -77,7 +75,6 @@ function useFillViewport() {
 
   return {
     ref,
-    // marginBottom âm để triệt tiêu padding-bottom của layout, tránh cả trang bị cuộn thêm
     style: height ? { height, marginBottom: -SHELL_BOTTOM_SPACE } : undefined,
   };
 }
@@ -89,32 +86,38 @@ const SESSION_STATUS_CFG: Record<
   open: {
     label: "Đang mở đăng ký",
     dotCls: "bg-emerald-400",
-    badgeCls: "bg-emerald-50 text-emerald-600 border-emerald-200",
+    badgeCls:
+      "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_35%,transparent)]",
   },
   full: {
     label: "Đã đầy",
     dotCls: "bg-amber-400",
-    badgeCls: "bg-amber-50 text-amber-600 border-amber-200",
+    badgeCls:
+      "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_35%,transparent)]",
   },
   waiting_payment: {
     label: "Chờ thanh toán",
     dotCls: "bg-blue-400",
-    badgeCls: "bg-blue-50 text-blue-600 border-blue-200",
+    badgeCls:
+      "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_35%,transparent)]",
   },
   waiting_admin_finish: {
     label: "Chờ admin hoàn thành",
     dotCls: "bg-purple-400",
-    badgeCls: "bg-purple-50 text-purple-600 border-purple-200",
+    badgeCls:
+      "bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_35%,transparent)]",
   },
   cancelled: {
     label: "Đã hủy",
     dotCls: "bg-red-400",
-    badgeCls: "bg-red-50 text-red-500 border-red-200",
+    badgeCls:
+      "bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_35%,transparent)]",
   },
   completed: {
     label: "Hoàn thành",
-    dotCls: "bg-gray-400",
-    badgeCls: "bg-gray-50 text-gray-500 border-gray-200",
+    dotCls: "bg-[var(--text-faint)]",
+    badgeCls:
+      "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]",
   },
 };
 
@@ -122,37 +125,37 @@ const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
   pending_approval: {
     label: "Chờ admin duyệt",
     icon: Hourglass,
-    cls: "bg-orange-50 text-orange-600 border-orange-200",
+    cls: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_35%,transparent)]",
   },
   awaiting_checkin: {
     label: "Chờ điểm danh",
     icon: Hourglass,
-    cls: "bg-slate-50 text-slate-600 border-slate-200",
+    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]",
   },
   awaiting_finish: {
     label: "Chờ buổi đánh kết thúc",
     icon: Hourglass,
-    cls: "bg-slate-50 text-slate-600 border-slate-200",
+    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]",
   },
   pending: {
     label: "Chờ thanh toán",
     icon: Hourglass,
-    cls: "bg-amber-50 text-amber-700 border-amber-200",
+    cls: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_35%,transparent)]",
   },
   pending_review: {
     label: "Chờ admin xác nhận",
     icon: Clock3,
-    cls: "bg-blue-50 text-blue-700 border-blue-200",
+    cls: "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_35%,transparent)]",
   },
   confirmed: {
     label: "Đã xác nhận thanh toán",
     icon: CheckCircle2,
-    cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    cls: "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_35%,transparent)]",
   },
   rejected: {
     label: "Thanh toán bị từ chối",
     icon: AlertCircle,
-    cls: "bg-red-50 text-red-500 border-red-200",
+    cls: "bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_35%,transparent)]",
   },
 };
 
@@ -166,7 +169,7 @@ const SESSION_FILTER_TABS = [
     label: "Chờ admin chốt thanh toán",
     dot: "bg-indigo-400",
   },
-  { value: "completed", label: "Xong", dot: "bg-gray-400" },
+  { value: "completed", label: "Xong", dot: "bg-[var(--text-faint)]" },
   { value: "cancelled", label: "Đã hủy", dot: "bg-red-400" },
 ];
 
@@ -177,38 +180,38 @@ const MATCH_STATUS_CFG: Record<
   pending_opponent: {
     label: "Chờ đối thủ",
     icon: Hourglass,
-    cls: "text-gray-500",
-    dot: "bg-gray-400",
+    cls: "text-[var(--text-muted)]",
+    dot: "bg-[var(--text-faint)]",
   },
   pending_result: {
     label: "Chờ kết quả",
     icon: Clock3,
-    cls: "text-blue-600",
+    cls: "text-[var(--primary)]",
     dot: "bg-blue-500",
   },
   pending_approval: {
     label: "Chờ admin duyệt",
     icon: Hourglass,
-    cls: "text-amber-600",
+    cls: "text-[var(--warning)]",
     dot: "bg-amber-400",
   },
   approved: {
     label: "Đã duyệt",
     icon: CheckCircle2,
-    cls: "text-emerald-600",
+    cls: "text-[var(--success)]",
     dot: "bg-emerald-500",
   },
   rejected: {
     label: "Từ chối",
     icon: X,
-    cls: "text-red-500",
+    cls: "text-[var(--danger)]",
     dot: "bg-red-400",
   },
 };
 
 const MATCH_FILTER_OPTS = [
-  { value: "", label: "Tất cả trận", dot: "bg-gray-400" },
-  { value: "pending_opponent", label: "Chờ đối thủ", dot: "bg-gray-400" },
+  { value: "", label: "Tất cả trận", dot: "bg-[var(--text-faint)]" },
+  { value: "pending_opponent", label: "Chờ đối thủ", dot: "bg-[var(--text-faint)]" },
   { value: "pending_result", label: "Đang diễn ra", dot: "bg-blue-500" },
   { value: "pending_approval", label: "Chờ admin duyệt", dot: "bg-amber-400" },
   { value: "approved", label: "Đã hoàn thành", dot: "bg-emerald-500" },
@@ -231,13 +234,34 @@ const EVENT_TYPE_TABS = [
 ];
 
 const EVENT_STATUS_CFG: Record<string, { label: string; cls: string }> = {
-  open: { label: "Mở đăng ký", cls: "bg-emerald-50 text-emerald-600" },
-  upcoming: { label: "Sắp diễn ra", cls: "bg-purple-50 text-purple-600" },
-  ongoing: { label: "Chuẩn bị", cls: "bg-blue-50 text-blue-600" },
-  draft: { label: "Sắp mở", cls: "bg-gray-50 text-gray-500" },
-  closed: { label: "Đã đóng", cls: "bg-slate-50 text-slate-500" },
-  completed: { label: "Đã kết thúc", cls: "bg-slate-50 text-slate-500" },
-  cancelled: { label: "Đã huỷ", cls: "bg-red-50 text-red-500" },
+  open: {
+    label: "Mở đăng ký",
+    cls: "bg-[var(--success-soft)] text-[var(--success)]",
+  },
+  upcoming: {
+    label: "Sắp diễn ra",
+    cls: "bg-[var(--purple-soft)] text-[var(--purple)]",
+  },
+  ongoing: {
+    label: "Chuẩn bị",
+    cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
+  },
+  draft: {
+    label: "Sắp mở",
+    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+  },
+  closed: {
+    label: "Đã đóng",
+    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+  },
+  completed: {
+    label: "Đã kết thúc",
+    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+  },
+  cancelled: {
+    label: "Đã huỷ",
+    cls: "bg-[var(--danger-soft)] text-[var(--danger)]",
+  },
 };
 
 const EVENT_TYPE_STATUS_OVERRIDE: Record<string, Record<string, string>> = {
@@ -308,7 +332,7 @@ function EnergyBar({
         : "linear-gradient(90deg, #4ade80, #22c55e, #4ade80)";
 
   return (
-    <div className="w-full h-3.5 rounded-full bg-gray-100 overflow-hidden">
+    <div className="w-full h-3.5 rounded-full bg-[var(--surface-muted)] overflow-hidden">
       <div
         className="h-full rounded-full relative overflow-hidden"
         style={{
@@ -354,10 +378,10 @@ function fmt(n: number) {
 }
 
 function energyTextCls(ratio: number, dimmed = false) {
-  if (dimmed) return "text-gray-400 font-medium";
-  if (ratio >= 1) return "text-red-500 font-medium";
-  if (ratio >= 0.6) return "text-amber-500 font-medium";
-  return "text-emerald-600";
+  if (dimmed) return "text-[var(--text-faint)] font-medium";
+  if (ratio >= 1) return "text-[var(--danger)] font-medium";
+  if (ratio >= 0.6) return "text-[var(--warning)] font-medium";
+  return "text-[var(--success)]";
 }
 
 function SessionPaymentModal({
@@ -430,14 +454,14 @@ function SessionPaymentModal({
       className="fixed inset-0 flex flex-col justify-end"
       style={{
         zIndex: 99999,
-        background: visible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+        background: visible ? "var(--overlay)" : "transparent",
         backdropFilter: visible ? "blur(2px)" : "none",
         transition: "background .3s, backdrop-filter .3s",
       }}
       onClick={(e) => e.target === e.currentTarget && close()}
     >
       <div
-        className="w-full bg-white rounded-t-2xl"
+        className="w-full bg-[var(--surface)] rounded-t-2xl"
         style={{
           maxHeight: "90vh",
           overflowY: "auto",
@@ -448,11 +472,11 @@ function SessionPaymentModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-9 h-1 rounded-full bg-gray-200" />
+          <div className="w-9 h-1 rounded-full bg-[var(--border-strong)]" />
         </div>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
           <div>
-            <p className="text-sm font-bold text-gray-900">
+            <p className="text-sm font-bold text-[var(--text)]">
               {!payType
                 ? "Chọn hình thức thanh toán"
                 : payMethod === "choose"
@@ -463,45 +487,45 @@ function SessionPaymentModal({
                       ? "Trừ ví BNB"
                       : "Tiền mặt"}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">{session.title}</p>
+            <p className="text-xs text-[var(--text-faint)] mt-0.5">{session.title}</p>
           </div>
-          <button onClick={close} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
-            <XIcon className="w-4 h-4 text-gray-500" />
+          <button onClick={close} className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center">
+            <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
           </button>
         </div>
 
         <div className="px-5 py-4 space-y-4">
           {loadingGuests ? (
             <div className="py-10 flex justify-center">
-              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+              <Loader2 className="w-5 h-5 animate-spin text-[var(--text-faint)]" />
             </div>
           ) : (
             <>
               {!payType && myGuests.length > 0 && (
                 <div className="space-y-3" style={{ animation: "fadeSlideUp .25s ease both" }}>
-                  <p className="text-xs text-gray-500 font-medium">Bạn muốn thanh toán:</p>
+                  <p className="text-xs text-[var(--text-muted)] font-medium">Bạn muốn thanh toán:</p>
                   <button
                     onClick={() => { setPayType("solo"); setPayMethod("choose"); }}
-                    className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors text-left"
                   >
-                    <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-xl">👤</div>
+                    <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-xl">👤</div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">Tiền của riêng tôi</p>
-                      <p className="text-lg font-black text-blue-600 mt-0.5">{fmt(soloAmount)}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-sm font-semibold text-[var(--text)]">Tiền của riêng tôi</p>
+                      <p className="text-lg font-black text-[var(--primary)] mt-0.5">{fmt(soloAmount)}</p>
+                      <p className="text-xs text-[var(--text-faint)]">
                         {companionLabel.charAt(0).toUpperCase() + companionLabel.slice(1)} ({myGuests.map(companionName).join(", ")}) tự thanh toán riêng
                       </p>
                     </div>
                   </button>
                   <button
                     onClick={() => { setPayType("grouped"); setPayMethod("choose"); }}
-                    className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-purple-400 hover:bg-purple-50 transition-colors text-left"
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--purple)] hover:bg-[var(--purple-soft)] transition-colors text-left"
                   >
-                    <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center text-xl">👥</div>
+                    <div className="w-11 h-11 rounded-full bg-[var(--purple-soft)] flex items-center justify-center text-xl">👥</div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">Gộp cả {companionLabel}</p>
-                      <p className="text-lg font-black text-purple-600 mt-0.5">{fmt(groupedAmount)}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-sm font-semibold text-[var(--text)]">Gộp cả {companionLabel}</p>
+                      <p className="text-lg font-black text-[var(--purple)] mt-0.5">{fmt(groupedAmount)}</p>
+                      <p className="text-xs text-[var(--text-faint)]">
                         Bao gồm: {myGuests.map((g: any) => `${companionName(g)} (${fmt(g.amount_override ?? 0)})`).join(", ")}
                       </p>
                     </div>
@@ -511,47 +535,47 @@ function SessionPaymentModal({
 
               {payType && (
                 <div key={payType} style={{ animation: "fadeSlideUp .25s ease both" }}>
-                  <div className="flex items-center justify-between bg-red-50 rounded-xl px-4 py-3">
-                    <span className="text-sm text-gray-600">Số tiền thanh toán</span>
-                    <span className="text-lg font-black text-red-600">{fmt(amt)}</span>
+                  <div className="flex items-center justify-between bg-[var(--danger-soft)] rounded-xl px-4 py-3">
+                    <span className="text-sm text-[var(--text-muted)]">Số tiền thanh toán</span>
+                    <span className="text-lg font-black text-[var(--danger)]">{fmt(amt)}</span>
                   </div>
 
                   {payMethod === "choose" && (
                     <div className="space-y-3 mt-4" key="choose" style={{ animation: "fadeSlideUp .25s ease both" }}>
                       <button
                         onClick={() => setPayMethod("wallet")}
-                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors text-left"
                       >
-                        <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                          <Wallet className="w-5 h-5 text-blue-600" />
+                        <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
+                          <Wallet className="w-5 h-5 text-[var(--primary)]" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">Ví BNB</p>
-                          <p className="text-xs text-gray-400 mt-0.5">Trừ thẳng vào số dư ví — xác nhận ngay lập tức</p>
+                          <p className="text-sm font-semibold text-[var(--text)]">Ví BNB</p>
+                          <p className="text-xs text-[var(--text-faint)] mt-0.5">Trừ thẳng vào số dư ví — xác nhận ngay lập tức</p>
                         </div>
                       </button>
                       <button
                         onClick={() => setPayMethod("transfer")}
-                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors text-left"
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors text-left"
                       >
-                        <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-xl">🏦</div>
+                        <div className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center text-xl">🏦</div>
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">Chuyển khoản</p>
-                          <p className="text-xs text-gray-400 mt-0.5">Quét QR VietQR, gửi ảnh bill xác nhận</p>
+                          <p className="text-sm font-semibold text-[var(--text)]">Chuyển khoản</p>
+                          <p className="text-xs text-[var(--text-faint)] mt-0.5">Quét QR VietQR, gửi ảnh bill xác nhận</p>
                         </div>
                       </button>
                       <button
                         onClick={() => setPayMethod("cash")}
-                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors text-left"
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[var(--border)] hover:border-[var(--success)] hover:bg-[var(--success-soft)] transition-colors text-left"
                       >
-                        <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center text-xl">💵</div>
+                        <div className="w-11 h-11 rounded-full bg-[var(--success-soft)] flex items-center justify-center text-xl">💵</div>
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">Tiền mặt</p>
-                          <p className="text-xs text-gray-400 mt-0.5">Thông báo admin, nộp tiền trực tiếp</p>
+                          <p className="text-sm font-semibold text-[var(--text)]">Tiền mặt</p>
+                          <p className="text-xs text-[var(--text-faint)] mt-0.5">Thông báo admin, nộp tiền trực tiếp</p>
                         </div>
                       </button>
                       {myGuests.length > 0 && (
-                        <button onClick={() => setPayType(null)} className="w-full py-2 text-xs text-gray-400 hover:text-gray-600">
+                        <button onClick={() => setPayType(null)} className="w-full py-2 text-xs text-[var(--text-faint)] hover:text-[var(--text-muted)]">
                           ← Quay lại chọn kiểu thanh toán
                         </button>
                       )}
@@ -560,14 +584,14 @@ function SessionPaymentModal({
 
                   {payMethod === "wallet" && (
                     <div className="space-y-4 mt-4" key="wallet" style={{ animation: "fadeSlideUp .25s ease both" }}>
-                      <div className="bg-blue-50 rounded-xl p-4">
-                        <p className="text-sm font-semibold text-blue-900 mb-1 flex items-center gap-2">
+                      <div className="bg-[var(--primary-soft)] rounded-xl p-4">
+                        <p className="text-sm font-semibold text-[var(--primary)] mb-1 flex items-center gap-2">
                           <Wallet className="w-4 h-4" /> Thanh toán bằng Ví BNB
                         </p>
-                        <p className="text-xs text-blue-600">Số dư ví sẽ bị trừ ngay lập tức. Admin không cần duyệt thêm.</p>
+                        <p className="text-xs text-[var(--text-muted)]">Số dư ví sẽ bị trừ ngay lập tức. Admin không cần duyệt thêm.</p>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => setPayMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                        <button onClick={() => setPayMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]">
                           Quay lại
                         </button>
                         <button
@@ -646,46 +670,47 @@ function SessionPaymentModal({
 
                     return (
                       <div className="space-y-4 mt-4" key="transfer" style={{ animation: "fadeSlideUp .25s ease both" }}>
-                        <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2">
-                          <p className="text-xs text-gray-400">Quét mã QR để thanh toán</p>
+                        {/* QR luôn nằm trên nền trắng để máy quét đọc được ở dark mode */}
+                        <div className="bg-white border-2 border-[var(--border)] rounded-2xl p-4 flex flex-col items-center gap-2">
+                          <p className="text-xs text-gray-500">Quét mã QR để thanh toán</p>
                           <img src={qr} alt="VietQR" className="w-48 h-48 object-contain"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                         </div>
-                        <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 text-sm overflow-hidden">
+                        <div className="bg-[var(--surface-muted)] rounded-xl divide-y divide-[var(--border)] text-sm overflow-hidden">
                           <div className="flex justify-between px-4 py-2.5">
-                            <span className="text-gray-500">Ngân hàng</span>
-                            <span className="font-semibold text-gray-900">{bankDisplayName}</span>
+                            <span className="text-[var(--text-muted)]">Ngân hàng</span>
+                            <span className="font-semibold text-[var(--text)]">{bankDisplayName}</span>
                           </div>
                           <div className="flex justify-between px-4 py-2.5">
-                            <span className="text-gray-500">Số tài khoản</span>
-                            <span className="font-semibold text-gray-900">{bankAccount}</span>
+                            <span className="text-[var(--text-muted)]">Số tài khoản</span>
+                            <span className="font-semibold text-[var(--text)]">{bankAccount}</span>
                           </div>
                           <div className="flex justify-between px-4 py-2.5">
-                            <span className="text-gray-500">Tên tài khoản</span>
-                            <span className="font-semibold text-gray-900">{bankAccountName}</span>
+                            <span className="text-[var(--text-muted)]">Tên tài khoản</span>
+                            <span className="font-semibold text-[var(--text)]">{bankAccountName}</span>
                           </div>
                           <div className="flex justify-between px-4 py-2.5">
-                            <span className="text-gray-500">Số tiền</span>
-                            <span className="font-bold text-red-600">{fmt(amt)}</span>
+                            <span className="text-[var(--text-muted)]">Số tiền</span>
+                            <span className="font-bold text-[var(--danger)]">{fmt(amt)}</span>
                           </div>
                           <div className="px-4 py-2.5">
                             <div className="flex justify-between">
-                              <span className="text-gray-500">Nội dung CK</span>
-                              <span className="font-mono font-semibold text-gray-900">{ref}</span>
+                              <span className="text-[var(--text-muted)]">Nội dung CK</span>
+                              <span className="font-mono font-semibold text-[var(--text)]">{ref}</span>
                             </div>
-                            <p className="text-[11px] text-gray-400 mt-1">Nội dung chuyển khoản là bắt buộc</p>
+                            <p className="text-[11px] text-[var(--text-faint)] mt-1">Nội dung chuyển khoản là bắt buộc</p>
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <button onClick={handleCopyContent} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                          <button onClick={handleCopyContent} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors">
                             <Copy className="w-3.5 h-3.5" /> Sao chép nội dung
                           </button>
-                          <button onClick={handleSaveQr} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                          <button onClick={handleSaveQr} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:bg-[var(--surface-hover)] transition-colors">
                             <Download className="w-3.5 h-3.5" /> Lưu QR
                           </button>
                         </div>
                         <div className="flex gap-2">
-                          <button onClick={() => setPayMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                          <button onClick={() => setPayMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]">
                             Quay lại
                           </button>
                           <button
@@ -702,12 +727,12 @@ function SessionPaymentModal({
 
                   {payMethod === "cash" && (
                     <div className="space-y-4 mt-4" key="cash" style={{ animation: "fadeSlideUp .25s ease both" }}>
-                      <div className="bg-green-50 rounded-xl p-4">
-                        <p className="text-sm font-semibold text-green-800 mb-1">💵 Thanh toán tiền mặt</p>
-                        <p className="text-xs text-green-600">Admin sẽ xác nhận sau khi nhận tiền trực tiếp.</p>
+                      <div className="bg-[var(--success-soft)] rounded-xl p-4">
+                        <p className="text-sm font-semibold text-[var(--success)] mb-1">💵 Thanh toán tiền mặt</p>
+                        <p className="text-xs text-[var(--text-muted)]">Admin sẽ xác nhận sau khi nhận tiền trực tiếp.</p>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => setPayMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500">
+                        <button onClick={() => setPayMethod("choose")} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)]">
                           Quay lại
                         </button>
                         <button
@@ -879,7 +904,6 @@ function SessionsTab({
     pendingBillsDebounceRef.current = setTimeout(fetchPendingBills, 300);
   }, [fetchPendingBills]);
 
-
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore || loading) return;
     setLoadingMore(true);
@@ -958,25 +982,25 @@ function SessionsTab({
       <button
         type="button"
         onClick={openSheet}
-        className="shrink-0 w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-2.5 hover:border-gray-300 active:bg-gray-50 transition-colors"
+        className="shrink-0 w-full flex items-center justify-between bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 hover:border-[var(--border-strong)] active:bg-[var(--surface-hover)] transition-colors"
       >
         <div className="flex items-center gap-2.5">
-          <SlidersHorizontal className="w-4 h-4 text-gray-400" />
+          <SlidersHorizontal className="w-4 h-4 text-[var(--text-faint)]" />
           {activeOpt.dot && (
             <span
               className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeOpt.dot}`}
             />
           )}
-          <span className="text-sm text-gray-700 font-medium">
+          <span className="text-sm text-[var(--text)] font-medium">
             {activeOpt.label}
           </span>
           {filter && (
-            <span className="text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-semibold bg-[var(--primary-soft)] text-[var(--primary)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] px-2 py-0.5 rounded-full">
               Đang lọc
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 text-xs text-gray-400">
+        <div className="flex items-center gap-1 text-xs text-[var(--text-faint)]">
           Lọc <ChevronDown className="w-3.5 h-3.5" />
         </div>
       </button>
@@ -988,21 +1012,21 @@ function SessionsTab({
             key={s.id}
             type="button"
             onClick={() => setPayModalSession({ session: s, reg: s.my_registration })}
-            className="w-full flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl px-4 py-3 active:bg-red-100 transition-colors text-left"
+            className="w-full flex items-center justify-between bg-[var(--danger-soft)] border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] rounded-2xl px-4 py-3 active:opacity-80 transition-colors text-left"
           >
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">
+              <p className="text-sm font-semibold text-[var(--text)] truncate">
                 {s.title}
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">
                 {format(new Date(s.scheduled_at), "EEE dd/MM", { locale: vi })}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-sm font-bold text-red-600">
+              <span className="text-sm font-bold text-[var(--danger)]">
                 {s.my_registration.amount_override.toLocaleString("vi-VN")}đ
               </span>
-              <ChevronRight className="w-4 h-4 text-red-400" />
+              <ChevronRight className="w-4 h-4 text-[var(--danger)]" />
             </div>
           </button>
         ))}
@@ -1015,11 +1039,11 @@ function SessionsTab({
             <SkeletonList count={4} Component={SessionSkeleton} />
           ) : sessions.length === 0 ? (
             <div
-              className="bg-white rounded-2xl py-14 text-center"
+              className="bg-[var(--surface)] rounded-2xl py-14 text-center"
               style={{ animation: "fadeSlideUp .3s ease both" }}
             >
-              <CalendarDays className="w-10 h-10 mx-auto text-gray-200 mb-3" />
-              <p className="text-gray-600 text-sm">Không có buổi đánh nào</p>
+              <CalendarDays className="w-10 h-10 mx-auto text-[var(--border-strong)] mb-3" />
+              <p className="text-[var(--text-muted)] text-sm">Không có buổi đánh nào</p>
             </div>
           ) : (
             sessions.map((s, idx) => {
@@ -1067,17 +1091,16 @@ function SessionsTab({
               return (
                 <Link key={s.id} href={`/sessions/${s.id}`} className="block">
                   <div
-                    className={`relative bg-white rounded-2xl p-4 border shadow-md transition-all active:scale-[0.99] ${myReg ? "border-blue-100" : "border-transparent"} ${s.status === "completed" ? "opacity-55 grayscale-[0.3]" : ""}`}
+                    className={`relative bg-[var(--surface)] rounded-2xl p-4 border shadow-md transition-all active:scale-[0.99] ${myReg ? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)]" : "border-transparent"} ${s.status === "completed" ? "opacity-55 grayscale-[0.3]" : ""}`}
                     style={{
-                      boxShadow:
-                        "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
+                      boxShadow: "var(--shadow)",
                       animation: "fadeSlideUp .35s ease both",
                       animationDelay: `${idx * 50}ms`,
                     }}
                   >
                     {s.status === "completed" ? (
                       <div
-                        className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gray-400 shadow-md shadow-gray-200 flex items-center justify-center z-10"
+                        className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[var(--text-faint)] shadow-md flex items-center justify-center z-10"
                         title="Buổi đã hoàn thành"
                       >
                         <Lock className="w-3.5 h-3.5 text-white" />
@@ -1094,12 +1117,12 @@ function SessionsTab({
                     )}
 
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <h3 className="font-semibold text-gray-900 leading-tight truncate flex-1 min-w-0">
+                      <h3 className="font-semibold text-[var(--text)] leading-tight truncate flex-1 min-w-0">
                         {s.title}
                       </h3>
                       <span
                         className={`flex-shrink-0 flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${showRegisteredBadge
-                          ? "bg-blue-50 text-blue-600 border-blue-200"
+                          ? "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_35%,transparent)]"
                           : cfg.badgeCls
                           }`}
                       >
@@ -1108,10 +1131,9 @@ function SessionsTab({
                             }`}
                         />
                         {cornerBadgeLabel}
-                        {s.status === "completed"}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mb-3">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--text-muted)] mb-3">
                       <span className="flex items-center gap-1">
                         <CalendarDays className="w-3.5 h-3.5" />
                         {format(new Date(s.scheduled_at), "EEE dd/MM, HH:mm", {
@@ -1134,7 +1156,7 @@ function SessionsTab({
                     {s.status !== "completed" && (
                       <div className="mb-3">
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <span className="flex items-center gap-1 text-xs text-[var(--text-faint)]">
                             <Zap className="w-3 h-3" />
                             Chỗ trống
                           </span>
@@ -1153,7 +1175,7 @@ function SessionsTab({
                         />
                       </div>
                     )}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-50 gap-2">
+                    <div className="flex items-center justify-between pt-3 border-t border-[var(--border)] gap-2">
                       <div className="flex items-center gap-2 min-w-0 flex-wrap">
                         {myReg
                           ? regCfg && (
@@ -1165,7 +1187,7 @@ function SessionsTab({
                             </span>
                           )
                           : isFull && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-[var(--text-faint)]">
                               Đã hết chỗ
                             </span>
                           )}
@@ -1175,14 +1197,14 @@ function SessionsTab({
                             e.stopPropagation();
                             setModalSession({ id: s.id, title: s.title });
                           }}
-                          className="flex items-center gap-1 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 active:bg-gray-100 transition-colors"
+                          className="flex items-center gap-1 text-xs text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg px-2 py-1 active:bg-[var(--surface-hover)] transition-colors"
                         >
                           <Users className="w-3.5 h-4.5" />
                           {filled} người
                           {(s.male_count > 0 || s.female_count > 0) && (
-                            <span className="flex items-center gap-1.5 ml-1.5 pl-1.5 border-l border-gray-200">
-                              <span className="text-blue-500 font-medium">👨 {s.male_count ?? 0}</span>
-                              <span className="text-pink-500 font-medium">👩 {s.female_count ?? 0}</span>
+                            <span className="flex items-center gap-1.5 ml-1.5 pl-1.5 border-l border-[var(--border)]">
+                              <span className="text-[var(--primary)] font-medium">👨 {s.male_count ?? 0}</span>
+                              <span className="text-[var(--pink)] font-medium">👩 {s.female_count ?? 0}</span>
                             </span>
                           )}
                         </button>
@@ -1227,7 +1249,7 @@ function SessionsTab({
                             }
                           }}
                           disabled={registeringId === s.id}
-                          className={`flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white bg-blue-600 shadow-sm shadow-blue-200 active:scale-95 transition-all duration-300 ease-out overflow-hidden ${registeringId === s.id
+                          className={`flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white bg-blue-600 shadow-sm active:scale-95 transition-all duration-300 ease-out overflow-hidden ${registeringId === s.id
                             ? "w-8 h-8 rounded-full gap-0 p-0"
                             : "w-[124px] h-8 gap-1 px-3 rounded-lg"
                             }`}
@@ -1244,7 +1266,7 @@ function SessionsTab({
                           )}
                         </button>
                       ) : (
-                        <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-[var(--text-faint)] flex-shrink-0" />
                       )}
                     </div>
                   </div>
@@ -1257,16 +1279,16 @@ function SessionsTab({
         {!loading && sessions.length > 0 && (
           <div ref={sentinelRef} className="flex justify-center py-4">
             {loadingMore ? (
-              <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
+              <Loader2 className="w-5 h-5 animate-spin text-[var(--text-faint)]" />
             ) : hasMore ? (
               <button
                 onClick={loadMore}
-                className="text-xs font-medium text-blue-600 bg-blue-50 px-4 py-2 rounded-full active:bg-blue-100"
+                className="text-xs font-medium text-[var(--primary)] bg-[var(--primary-soft)] px-4 py-2 rounded-full active:opacity-80"
               >
                 Xem thêm
               </button>
             ) : sessions.length > PAGE_SIZE ? (
-              <span className="text-xs text-gray-300">Đã hiển thị hết</span>
+              <span className="text-xs text-[var(--text-faint)]">Đã hiển thị hết</span>
             ) : null}
           </div>
         )}
@@ -1302,14 +1324,14 @@ function SessionsTab({
           <div
             className="fixed inset-0 z-[9999] flex flex-col justify-end"
             style={{
-              background: sheetVisible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+              background: sheetVisible ? "var(--overlay)" : "transparent",
               backdropFilter: sheetVisible ? "blur(2px)" : "none",
               transition: "background .3s, backdrop-filter .3s",
             }}
             onClick={(e) => e.target === e.currentTarget && closeSheet()}
           >
             <div
-              className="w-full bg-white rounded-t-2xl"
+              className="w-full bg-[var(--surface)] rounded-t-2xl"
               style={{
                 maxWidth: 480,
                 margin: "0 auto",
@@ -1320,17 +1342,17 @@ function SessionsTab({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-center pt-3 pb-1">
-                <div className="w-9 h-1 bg-gray-200 rounded-full" />
+                <div className="w-9 h-1 bg-[var(--border-strong)] rounded-full" />
               </div>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                <span className="text-sm font-semibold text-gray-900">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+                <span className="text-sm font-semibold text-[var(--text)]">
                   Lọc theo trạng thái
                 </span>
                 <button
                   onClick={closeSheet}
-                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                  className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
                 >
-                  <X className="w-3.5 h-3.5 text-gray-500" />
+                  <X className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                 </button>
               </div>
               <div className="py-2">
@@ -1344,7 +1366,7 @@ function SessionsTab({
                         setFilter(opt.value);
                         closeSheet();
                       }}
-                      className={`w-full flex items-center justify-between px-4 py-3 transition-colors text-left ${isActive ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                      className={`w-full flex items-center justify-between px-4 py-3 transition-colors text-left ${isActive ? "bg-[var(--primary-soft)]" : "hover:bg-[var(--surface-hover)]"}`}
                     >
                       <div className="flex items-center gap-3">
                         {opt.dot && (
@@ -1353,22 +1375,22 @@ function SessionsTab({
                           />
                         )}
                         <span
-                          className={`text-sm font-medium ${isActive ? "text-blue-700" : "text-gray-700"}`}
+                          className={`text-sm font-medium ${isActive ? "text-[var(--primary)]" : "text-[var(--text)]"}`}
                         >
                           {opt.label}
                         </span>
                       </div>
                       {isActive && (
-                        <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
                       )}
                     </button>
                   );
                 })}
               </div>
-              <div className="px-4 pt-3 pb-8 border-t border-gray-100">
+              <div className="px-4 pt-3 pb-8 border-t border-[var(--border)]">
                 <button
                   onClick={closeSheet}
-                  className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
+                  className="w-full py-2.5 rounded-xl bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)]"
                 >
                   Xong
                 </button>
@@ -1484,20 +1506,20 @@ function MatchesTab({
       <button
         type="button"
         onClick={openSheet}
-        className="shrink-0 w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-2.5 hover:border-gray-300 active:bg-gray-50 transition-colors"
+        className="shrink-0 w-full flex items-center justify-between bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 hover:border-[var(--border-strong)] active:bg-[var(--surface-hover)] transition-colors"
       >
         <div className="flex items-center gap-2.5">
-          <SlidersHorizontal className="w-4 h-4 text-gray-400" />
-          <span className="text-sm text-gray-700 font-medium">
+          <SlidersHorizontal className="w-4 h-4 text-[var(--text-faint)]" />
+          <span className="text-sm text-[var(--text)] font-medium">
             {activeOpt.label}
           </span>
           {filter && (
-            <span className="text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-semibold bg-[var(--primary-soft)] text-[var(--primary)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] px-2 py-0.5 rounded-full">
               Đang lọc
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 text-xs text-gray-400">
+        <div className="flex items-center gap-1 text-xs text-[var(--text-faint)]">
           Lọc <ChevronDown className="w-3.5 h-3.5" />
         </div>
       </button>
@@ -1506,22 +1528,22 @@ function MatchesTab({
         {activeMatch && (
           <Link href={`/matches/${activeMatch.id}`}>
             <div
-              className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 active:bg-amber-100 transition-colors"
+              className="flex items-center gap-3 bg-[var(--warning-soft)] border border-[color-mix(in_srgb,var(--warning)_35%,transparent)] rounded-2xl px-4 py-3 active:opacity-80 transition-colors"
               style={{ animation: "fadeSlideUp .3s ease both" }}
             >
-              <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <Clock3 className="w-4 h-4 text-amber-600" />
+              <div className="w-9 h-9 rounded-full bg-[color-mix(in_srgb,var(--warning)_20%,transparent)] flex items-center justify-center flex-shrink-0">
+                <Clock3 className="w-4 h-4 text-[var(--warning)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-amber-800">
+                <p className="text-sm font-semibold text-[var(--warning)]">
                   Có trận chưa hoàn thành
                 </p>
-                <p className="text-xs text-amber-600 mt-0.5">
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
                   {MATCH_STATUS_CFG[activeMatch.status]?.label} · Nhấp vào để thêm
                   tỉ số
                 </p>
               </div>
-              <ChevronRight className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <ChevronRight className="w-4 h-4 text-[var(--warning)] flex-shrink-0" />
             </div>
           </Link>
         )}
@@ -1534,13 +1556,13 @@ function MatchesTab({
             <SkeletonList count={4} Component={MatchSkeleton} />
           ) : matches.length === 0 ? (
             <div
-              className="bg-white rounded-2xl py-14 text-center border border-dashed border-gray-200"
+              className="bg-[var(--surface)] rounded-2xl py-14 text-center border border-dashed border-[var(--border)]"
               style={{ animation: "fadeSlideUp .3s ease both" }}
             >
-              <Swords className="w-10 h-10 mx-auto text-gray-200 mb-3" />
-              <p className="text-gray-400 text-sm">Chưa có trận nào</p>
+              <Swords className="w-10 h-10 mx-auto text-[var(--border-strong)] mb-3" />
+              <p className="text-[var(--text-faint)] text-sm">Chưa có trận nào</p>
               <Link href="/matches/create">
-                <span className="inline-block mt-3 text-xs text-blue-600 font-semibold bg-blue-50 px-4 py-2 rounded-full">
+                <span className="inline-block mt-3 text-xs text-[var(--primary)] font-semibold bg-[var(--primary-soft)] px-4 py-2 rounded-full">
                   Thách đấu ngay →
                 </span>
               </Link>
@@ -1574,9 +1596,9 @@ function MatchesTab({
               return (
                 <Link key={m.id} href={`/matches/${m.id}`} className="block mb-1">
                   <div
-                    className={`bg-white rounded-2xl p-4 shadow-md border transition-all active:scale-[0.99] ${isPendingMe ? "border-blue-200 border-[1.5px]" : "border-gray-100"}`}
+                    className={`bg-[var(--surface)] rounded-2xl p-4 shadow-md border transition-all active:scale-[0.99] ${isPendingMe ? "border-[color-mix(in_srgb,var(--primary)_45%,transparent)] border-[1.5px]" : "border-[var(--border)]"}`}
                     style={{
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
+                      boxShadow: "var(--shadow)",
                       animation: "fadeSlideUp .35s ease both",
                       animationDelay: `${idx * 50}ms`,
                     }}
@@ -1594,7 +1616,7 @@ function MatchesTab({
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
+                        <span className="text-[10px] text-[var(--text-muted)] bg-[var(--surface-muted)] px-2 py-0.5 rounded-full border border-[var(--border)]">
                           {m.match_type === "triples"
                             ? "👥 3v3"
                             : m.match_type === "doubles"
@@ -1603,12 +1625,12 @@ function MatchesTab({
                           · 1 set
                         </span>
                         {iWon && (
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] font-bold text-[var(--success)] bg-[var(--success-soft)] border border-[color-mix(in_srgb,var(--success)_35%,transparent)] px-2 py-0.5 rounded-full">
                             🏆 Thắng
                           </span>
                         )}
                         {iLost && (
-                          <span className="text-[10px] font-bold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] font-bold text-[var(--danger)] bg-[var(--danger-soft)] border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] px-2 py-0.5 rounded-full">
                             Thua
                           </span>
                         )}
@@ -1625,11 +1647,11 @@ function MatchesTab({
                                 className={`${avatarSizeCls} rounded-full object-cover flex-shrink-0 mb-2`}
                               />
                             ) : (
-                              <div className={`${avatarSizeCls} rounded-full bg-blue-100 flex items-center justify-center ${initialsTextCls} font-bold text-blue-700 flex-shrink-0 mb-2`}>
+                              <div className={`${avatarSizeCls} rounded-full bg-[var(--primary-soft)] flex items-center justify-center ${initialsTextCls} font-bold text-[var(--primary)] flex-shrink-0 mb-2`}>
                                 {p.full_name?.[0]?.toUpperCase()}
                               </div>
                             )}
-                            <span className="text-xs font-semibold text-gray-900 leading-tight break-words">
+                            <span className="text-xs font-semibold text-[var(--text)] leading-tight break-words">
                               {p.full_name}
                             </span>
                           </div>
@@ -1646,13 +1668,13 @@ function MatchesTab({
                             return (
                               <div className="flex items-center gap-1.5">
                                 <span
-                                  className={`text-xl font-black ${iWon ? "text-emerald-600" : "text-gray-400"}`}
+                                  className={`text-xl font-black ${iWon ? "text-[var(--success)]" : "text-[var(--text-faint)]"}`}
                                 >
                                   {myScore}
                                 </span>
-                                <span className="text-gray-300">–</span>
+                                <span className="text-[var(--text-faint)]">–</span>
                                 <span
-                                  className={`text-xl font-black ${iLost ? "text-emerald-600" : "text-gray-400"}`}
+                                  className={`text-xl font-black ${iLost ? "text-[var(--success)]" : "text-[var(--text-faint)]"}`}
                                 >
                                   {oppScore}
                                 </span>
@@ -1660,7 +1682,7 @@ function MatchesTab({
                             );
                           })()
                         ) : (
-                          <span className="text-gray-300 font-bold text-sm">
+                          <span className="text-[var(--text-faint)] font-bold text-sm">
                             VS
                           </span>
                         )}
@@ -1671,7 +1693,7 @@ function MatchesTab({
                             key={p.id}
                             className="flex items-center justify-end gap-1.5"
                           >
-                            <span className="text-xs font-semibold text-gray-900 leading-tight break-words text-right">
+                            <span className="text-xs font-semibold text-[var(--text)] leading-tight break-words text-right">
                               {p.full_name}
                             </span>
                             {p.avatar_url ? (
@@ -1681,7 +1703,7 @@ function MatchesTab({
                                 className={`${avatarSizeCls} rounded-full object-cover flex-shrink-0 mb-2`}
                               />
                             ) : (
-                              <div className={`${avatarSizeCls} rounded-full bg-red-100 flex items-center justify-center ${initialsTextCls} font-bold text-red-600 flex-shrink-0 mb-2`}>
+                              <div className={`${avatarSizeCls} rounded-full bg-[var(--danger-soft)] flex items-center justify-center ${initialsTextCls} font-bold text-[var(--danger)] flex-shrink-0 mb-2`}>
                                 {p.full_name?.[0]?.toUpperCase()}
                               </div>
                             )}
@@ -1689,8 +1711,8 @@ function MatchesTab({
                         ))}
                       </div>
                     </div>
-                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-50">
-                      <span className="text-[10px] text-gray-400">
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-[var(--border)]">
+                      <span className="text-[10px] text-[var(--text-faint)]">
                         {m.played_at
                           ? format(new Date(m.played_at), "EEE dd/MM/yyyy", { locale: vi })
                           : format(new Date(m.created_at), "dd/MM/yyyy", { locale: vi })}
@@ -1715,7 +1737,7 @@ function MatchesTab({
                             Huỷ trận
                           </button>
                         )}
-                        <ChevronRight className="w-4 h-4 text-gray-300" />
+                        <ChevronRight className="w-4 h-4 text-[var(--text-faint)]" />
                       </div>
                     </div>
                   </div>
@@ -1731,14 +1753,14 @@ function MatchesTab({
           <div
             className="fixed inset-0 z-[9999] flex flex-col justify-end"
             style={{
-              background: sheetVisible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+              background: sheetVisible ? "var(--overlay)" : "transparent",
               backdropFilter: sheetVisible ? "blur(2px)" : "none",
               transition: "background .3s, backdrop-filter .3s",
             }}
             onClick={(e) => e.target === e.currentTarget && closeSheet()}
           >
             <div
-              className="w-full bg-white rounded-t-2xl"
+              className="w-full bg-[var(--surface)] rounded-t-2xl"
               style={{
                 maxWidth: 480,
                 margin: "0 auto",
@@ -1749,17 +1771,17 @@ function MatchesTab({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-center pt-3 pb-1">
-                <div className="w-9 h-1 bg-gray-200 rounded-full" />
+                <div className="w-9 h-1 bg-[var(--border-strong)] rounded-full" />
               </div>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                <span className="text-sm font-semibold text-gray-900">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+                <span className="text-sm font-semibold text-[var(--text)]">
                   Lọc theo trạng thái
                 </span>
                 <button
                   onClick={closeSheet}
-                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                  className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
                 >
-                  <X className="w-3.5 h-3.5 text-gray-500" />
+                  <X className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                 </button>
               </div>
               <div className="py-2">
@@ -1773,29 +1795,29 @@ function MatchesTab({
                         setFilter(opt.value);
                         closeSheet();
                       }}
-                      className={`w-full flex items-center justify-between px-4 py-3 transition-colors text-left ${isActive ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                      className={`w-full flex items-center justify-between px-4 py-3 transition-colors text-left ${isActive ? "bg-[var(--primary-soft)]" : "hover:bg-[var(--surface-hover)]"}`}
                     >
                       <div className="flex items-center gap-3">
                         <span
                           className={`w-2 h-2 rounded-full flex-shrink-0 ${opt.dot}`}
                         />
                         <span
-                          className={`text-sm font-medium ${isActive ? "text-blue-700" : "text-gray-700"}`}
+                          className={`text-sm font-medium ${isActive ? "text-[var(--primary)]" : "text-[var(--text)]"}`}
                         >
                           {opt.label}
                         </span>
                       </div>
                       {isActive && (
-                        <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
                       )}
                     </button>
                   );
                 })}
               </div>
-              <div className="px-4 pt-3 pb-8 border-t border-gray-100">
+              <div className="px-4 pt-3 pb-8 border-t border-[var(--border)]">
                 <button
                   onClick={closeSheet}
-                  className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
+                  className="w-full py-2.5 rounded-xl bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)]"
                 >
                   Xong
                 </button>
@@ -1930,20 +1952,20 @@ function EventsTab({
       <button
         type="button"
         onClick={openSheet}
-        className="shrink-0 w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-2.5 hover:border-gray-300 active:bg-gray-50 transition-colors"
+        className="shrink-0 w-full flex items-center justify-between bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 hover:border-[var(--border-strong)] active:bg-[var(--surface-hover)] transition-colors"
       >
         <div className="flex items-center gap-2.5">
-          <SlidersHorizontal className="w-4 h-4 text-gray-400" />
-          <span className="text-sm text-gray-700 font-medium">
+          <SlidersHorizontal className="w-4 h-4 text-[var(--text-faint)]" />
+          <span className="text-sm text-[var(--text)] font-medium">
             {activeOpt.label}
           </span>
           {typeFilter && (
-            <span className="text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-semibold bg-[var(--primary-soft)] text-[var(--primary)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] px-2 py-0.5 rounded-full">
               Đang lọc
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 text-xs text-gray-400">
+        <div className="flex items-center gap-1 text-xs text-[var(--text-faint)]">
           Lọc <ChevronDown className="w-3.5 h-3.5" />
         </div>
       </button>
@@ -1956,11 +1978,11 @@ function EventsTab({
           <SkeletonList count={4} Component={EventSkeleton} />
         ) : items.length === 0 ? (
           <div
-            className="bg-white rounded-2xl py-14 text-center border border-dashed border-gray-200"
+            className="bg-[var(--surface)] rounded-2xl py-14 text-center border border-dashed border-[var(--border)]"
             style={{ animation: "fadeSlideUp .3s ease both" }}
           >
-            <Megaphone className="w-10 h-10 mx-auto text-gray-200 mb-3" />
-            <p className="text-gray-400 text-sm">Chưa có hoạt động nào</p>
+            <Megaphone className="w-10 h-10 mx-auto text-[var(--border-strong)] mb-3" />
+            <p className="text-[var(--text-faint)] text-sm">Chưa có hoạt động nào</p>
           </div>
         ) : (
           items.map((a, idx) => {
@@ -1991,23 +2013,22 @@ function EventsTab({
 
             const cardContent = (
               <div
-                className={`bg-white rounded-2xl p-4 border border-transparent shadow-md active:scale-[0.99] active:bg-gray-50 transition-all relative ${isChecking ? "opacity-60 pointer-events-none" : ""
+                className={`bg-[var(--surface)] rounded-2xl p-4 border border-transparent shadow-md active:scale-[0.99] active:bg-[var(--surface-hover)] transition-all relative ${isChecking ? "opacity-60 pointer-events-none" : ""
                   }`}
                 style={{
-                  boxShadow:
-                    "0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
+                  boxShadow: "var(--shadow)",
                   animation: "fadeSlideUp .35s ease both",
                   animationDelay: `${idx * 50}ms`,
                 }}
               >
                 {isChecking && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-2xl z-10">
-                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-[color-mix(in_srgb,var(--surface)_60%,transparent)] rounded-2xl z-10">
+                    <Loader2 className="w-5 h-5 text-[var(--primary)] animate-spin" />
                   </div>
                 )}
 
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                  <div className="w-12 h-12 rounded-xl bg-[var(--surface-muted)] flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
                     {a.cover_image_url ? (
                       <img
                         src={a.cover_image_url}
@@ -2021,7 +2042,7 @@ function EventsTab({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold text-gray-900 leading-snug break-words">
+                      <p className="text-sm font-semibold text-[var(--text)] leading-snug break-words">
                         {a.title}
                       </p>
                       <span
@@ -2030,7 +2051,7 @@ function EventsTab({
                         {overrideLabel ?? cfg.label}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                    <div className="flex items-center gap-1 mt-1 text-xs text-[var(--text-faint)]">
                       <CalendarDays className="w-3 h-3 flex-shrink-0" />
                       <span>
                         {isDeadline ? "Ngày chốt ds đăng kí: " : ""}
@@ -2047,16 +2068,16 @@ function EventsTab({
                 {hasCapacity ? (
                   <div className="mt-3">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="flex items-center gap-1 text-xs text-gray-400">
+                      <span className="flex items-center gap-1 text-xs text-[var(--text-faint)]">
                         <ParticipantIcon className="w-3 h-3" />
                         {getEventParticipantLabel(a.type, 0).replace(/^0\s*/, "")}
                       </span>
                       <span
                         className={`text-xs ${isFull
-                          ? "text-red-500 font-medium"
+                          ? "text-[var(--danger)] font-medium"
                           : ratio >= 0.6
-                            ? "text-amber-500 font-medium"
-                            : "text-emerald-600"
+                            ? "text-[var(--warning)] font-medium"
+                            : "text-[var(--success)]"
                           }`}
                       >
                         {isFull ? "Đã đầy" : `${participantCount} / ${maxCapacity}`}
@@ -2069,10 +2090,10 @@ function EventsTab({
                     />
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-50 text-xs text-gray-400">
+                  <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-[var(--border)] text-xs text-[var(--text-faint)]">
                     <ParticipantIcon className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>{getEventParticipantLabel(a.type, participantCount)}</span>
-                    <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
+                    <ChevronRight className="w-4 h-4 text-[var(--text-faint)] ml-auto" />
                   </div>
                 )}
               </div>
@@ -2109,14 +2130,14 @@ function EventsTab({
           <div
             className="fixed inset-0 z-[9999] flex flex-col justify-end"
             style={{
-              background: sheetVisible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+              background: sheetVisible ? "var(--overlay)" : "transparent",
               backdropFilter: sheetVisible ? "blur(2px)" : "none",
               transition: "background .3s, backdrop-filter .3s",
             }}
             onClick={(e) => e.target === e.currentTarget && closeSheet()}
           >
             <div
-              className="w-full bg-white rounded-t-2xl"
+              className="w-full bg-[var(--surface)] rounded-t-2xl"
               style={{
                 maxWidth: 480,
                 margin: "0 auto",
@@ -2127,17 +2148,17 @@ function EventsTab({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-center pt-3 pb-1">
-                <div className="w-9 h-1 bg-gray-200 rounded-full" />
+                <div className="w-9 h-1 bg-[var(--border-strong)] rounded-full" />
               </div>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                <span className="text-sm font-semibold text-gray-900">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+                <span className="text-sm font-semibold text-[var(--text)]">
                   Lọc theo loại hoạt động
                 </span>
                 <button
                   onClick={closeSheet}
-                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                  className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
                 >
-                  <X className="w-3.5 h-3.5 text-gray-500" />
+                  <X className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                 </button>
               </div>
               <div className="py-2">
@@ -2151,24 +2172,24 @@ function EventsTab({
                         setTypeFilter(opt.value);
                         closeSheet();
                       }}
-                      className={`w-full flex items-center justify-between px-4 py-3 transition-colors text-left ${isActive ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                      className={`w-full flex items-center justify-between px-4 py-3 transition-colors text-left ${isActive ? "bg-[var(--primary-soft)]" : "hover:bg-[var(--surface-hover)]"}`}
                     >
                       <span
-                        className={`text-sm font-medium ${isActive ? "text-blue-700" : "text-gray-700"}`}
+                        className={`text-sm font-medium ${isActive ? "text-[var(--primary)]" : "text-[var(--text)]"}`}
                       >
                         {opt.label}
                       </span>
                       {isActive && (
-                        <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
                       )}
                     </button>
                   );
                 })}
               </div>
-              <div className="px-4 pt-3 pb-8 border-t border-gray-100">
+              <div className="px-4 pt-3 pb-8 border-t border-[var(--border)]">
                 <button
                   onClick={closeSheet}
-                  className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
+                  className="w-full py-2.5 rounded-xl bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)]"
                 >
                   Xong
                 </button>
@@ -2335,14 +2356,12 @@ export default function ActivityPage() {
         <div className="shrink-0 flex items-center justify-between">
           <div style={{ transition: "opacity .2s", opacity: tabVisible ? 1 : 0 }}>
             <h1
-              className="text-xl font-bold text-dark-600"
-              style={{ textShadow: "0 1px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.8)" }}
+              className="text-xl font-bold text-[var(--text)]"
             >
               {TAB_META[tab].title}
             </h1>
             <p
-              className="text-sm text-dark mt-0.5"
-              style={{ textShadow: "0 1px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.7)" }}
+              className="text-sm text-[var(--text-muted)] mt-0.5"
             >
               {TAB_META[tab].subtitle}
             </p>
@@ -2357,14 +2376,14 @@ export default function ActivityPage() {
             }}
           >
             <Link href="/matches/create">
-              <div className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm shadow-blue-200 active:scale-95 transition-transform">
+              <div className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Tạo trận
               </div>
             </Link>
           </div>
         </div>
 
-        <div className="shrink-0 relative flex bg-gray-100 rounded-2xl p-1">
+        <div className="shrink-0 relative flex bg-[var(--surface-muted)] rounded-2xl p-1">
           <div
             className="absolute top-1 bottom-1 bg-blue-600 rounded-xl shadow-sm"
             style={{
@@ -2375,47 +2394,47 @@ export default function ActivityPage() {
           />
           <button
             onClick={() => switchTab("sessions")}
-            className={`relative flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "sessions" ? "text-white" : "text-gray-500"}`}
+            className={`relative flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "sessions" ? "text-white" : "text-[var(--text-muted)]"}`}
           >
             <span className="relative inline-block">
               Buổi đánh
               {hasPendingBills ? (
                 <span className="absolute -top-1.5 -right-2.5 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400 border border-white" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400 border border-[var(--surface)]" />
                 </span>
               ) : hasOpenSessions ? (
                 <span className="absolute -top-1.5 -right-2.5 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400 border border-white" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400 border border-[var(--surface)]" />
                 </span>
               ) : null}
             </span>
           </button>
           <button
             onClick={() => switchTab("matches")}
-            className={`relative flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "matches" ? "text-white" : "text-gray-500"}`}
+            className={`relative flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "matches" ? "text-white" : "text-[var(--text-muted)]"}`}
           >
             <span className="relative inline-block">
               Giao hữu
               {activeMatch && (
                 <span className="absolute -top-1.5 -right-2.5 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400 border border-white" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400 border border-[var(--surface)]" />
                 </span>
               )}
             </span>
           </button>
           <button
             onClick={() => switchTab("events")}
-            className={`relative flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "events" ? "text-white" : "text-gray-500"}`}
+            className={`relative flex-1 flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 z-10 ${tab === "events" ? "text-white" : "text-[var(--text-muted)]"}`}
           >
             <span className="relative inline-block">
               Hoạt động
               {hasOpenEvents && (
                 <span className="absolute -top-1.5 -right-2.5 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400 border border-white" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400 border border-[var(--surface)]" />
                 </span>
               )}
             </span>

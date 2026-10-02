@@ -24,6 +24,7 @@ import { UpcomingSessionsSection } from "@/components/member/home/UpcomingSessio
 import { ParticipantsModal } from "@/components/member/home/ParticipantsModal";
 import { supabase } from "@/lib/supabase";
 import { BirthdayModal } from "@/components/member/home/BirthdayModal";
+import { c, alpha, type ThemeTokens } from "@/lib/theme";
 
 const LEVEL_LABELS: Record<string, string> = {
   yeu: "Yếu",
@@ -33,6 +34,20 @@ const LEVEL_LABELS: Record<string, string> = {
   ban_chuyen: "Bán chuyên (BC)",
   chuyen_nghiep: "Chuyên nghiệp",
 };
+
+const QUICK_LINKS: {
+  href: string;
+  icon: typeof CalendarDays;
+  label: string;
+  tone: keyof ThemeTokens;
+  soft: keyof ThemeTokens;
+}[] = [
+    { href: "/activity", icon: CalendarDays, label: "Hoạt động", tone: "primary", soft: "primarySoft" },
+    { href: "/history", icon: ClipboardList, label: "Lịch sử\ncủa tôi", tone: "warning", soft: "warningSoft" },
+    { href: "/drinks/my", icon: GlassWater, label: "Nước", tone: "purple", soft: "purpleSoft" },
+    { href: "/fund", icon: Wallet2, label: "Quỹ\nchung", tone: "success", soft: "successSoft" },
+  ];
+
 
 const VANG_LAI_THRESHOLD = 5;
 
@@ -191,9 +206,13 @@ export default function HomePage() {
   return (
     <>
       <div className="space-y-5">
-        <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 rounded-3xl p-5 overflow-hidden">
-          <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10" />
-          <div className="absolute -bottom-8 -left-4 w-24 h-24 rounded-full bg-white/5" />
+        <div
+          className="relative rounded-3xl p-5 overflow-hidden"
+          style={{
+            background: c.heroGradient,
+            boxShadow: c.shadow,
+          }}
+        >
           <div className="relative">
             <div className="flex items-center gap-3 mb-1">
               {user?.avatar_url ? (
@@ -208,7 +227,7 @@ export default function HomePage() {
                 </div>
               )}
               <div>
-                <p className="text-blue-200 text-sm">{greeting()},</p>
+                <p className="text-blue-100 text-sm">{greeting()},</p>
                 <h2 className="text-white text-xl font-black mt-0.5">
                   {user?.full_name} 👋
                 </h2>
@@ -223,10 +242,7 @@ export default function HomePage() {
                   <div className="bg-white/15 rounded-2xl px-3 py-2 flex items-center gap-2 flex-1">
                     <span className="text-2xl">{levelBadge.emoji}</span>
                     <div className="text-white mt-0.5 leading-tight">
-                      <p className="text-[13px] font-bold">
-                        {levelBadge.line1}
-                      </p>
-
+                      <p className="text-[13px] font-bold">{levelBadge.line1}</p>
                       {levelBadge.line2 && (
                         <p className="text-[15px] text-yellow-200 font-medium">
                           {levelBadge.line2}
@@ -234,32 +250,26 @@ export default function HomePage() {
                       )}
                     </div>
                   </div>
+
                   <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
-                    <p className="text-white/60 text-[10px] leading-none">
-                      W / L
-                    </p>
-
+                    <p className="text-white/75 text-[10px] leading-none">W / L</p>
                     <p className="text-white font-black text-lg mt-0.5">
-                      {myStats?.revice?.wins ?? 0} /{" "}
-                      {myStats?.revice?.losses ?? 0}
+                      {myStats?.revice?.wins ?? 0} / {myStats?.revice?.losses ?? 0}
                     </p>
-
-                    <p className="text-[14px] text-white/50 mt-0.5">
+                    <p className="text-[14px] text-white/75 mt-0.5">
                       {myRank?.tier ?? "Tân thủ"}
                     </p>
-
                     <p className="text-yellow-300 font-bold text-sm">
                       {myRank?.total_points ?? 0} điểm
                     </p>
                   </div>
+
                   <div className="bg-white/15 rounded-2xl px-4 py-2 text-center">
-                    <p className="text-white/60 text-[10px] leading-none">
-                      Tháng này
-                    </p>
+                    <p className="text-white/75 text-[10px] leading-none">Tháng này</p>
                     <p className="text-white font-black text-xl mt-0.5">
                       {myStats?.sessions_this_month ?? 0}
                     </p>
-                    <p className="text-white/50 text-[10px]">buổi</p>
+                    <p className="text-white/75 text-[10px]">buổi</p>
                   </div>
                 </>
               )}
@@ -268,58 +278,37 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-4 gap-2.5">
-          {[
-            {
-              href: "/activity",
-              icon: CalendarDays,
-              label: "Hoạt động",
-              bg: "bg-blue-50",
-              ic: "text-blue-600",
-              ring: "ring-blue-100",
-            },
-            {
-              href: "/history",
-              icon: ClipboardList,
-              label: "Lịch sử\ncủa tôi",
-              bg: "bg-amber-50",
-              ic: "text-amber-600",
-              ring: "ring-amber-100",
-            },
-            {
-              href: "/drinks/my",
-              icon: GlassWater,
-              label: "Nước",
-              bg: "bg-purple-50",
-              ic: "text-purple-600",
-              ring: "ring-purple-100",
-            },
-            {
-              href: "/fund",
-              icon: Wallet2,
-              label: "Quỹ\nchung",
-              bg: "bg-emerald-50",
-              ic: "text-emerald-600",
-              ring: "ring-emerald-100",
-            },
-          ].map(({ href, icon: Icon, label, bg, ic, ring }) => (
+          {QUICK_LINKS.map(({ href, icon: Icon, label, tone, soft }) => (
             <Link key={href} href={href}>
               <div
-                className={`${bg} rounded-2xl p-2.5 flex flex-col items-center gap-2 text-center shadow-lg shadow-black/10 active:scale-95 transition-transform`}
+                className="rounded-2xl p-2.5 flex flex-col items-center gap-2 text-center active:scale-95 transition-transform"
+                style={{
+                  background: `linear-gradient(180deg, ${alpha(tone, 10)} 0%, transparent 65%), ${c.surface}`,
+                  border: `1px solid ${c.border}`,
+                  boxShadow: c.shadow,
+                }}
               >
                 <div
-                  className={`w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm ring-1 ${ring}`}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: c[soft] }}
                 >
-                  <Icon className={`w-4.5 h-4.5 ${ic}`} />
+                  <Icon className="w-[18px] h-[18px]" style={{ color: c[tone] }} />
                 </div>
+
                 {href === "/fund" ? (
                   <div className="h-8 flex flex-col items-center justify-center leading-tight">
-                    <p className="text-[10px] font-semibold text-gray-500">Quỹ chung</p>
-                    <p className="text-[12px] font-black text-emerald-700">
+                    <p className="text-[10px] font-semibold" style={{ color: c.textMuted }}>
+                      Quỹ chung
+                    </p>
+                    <p className="text-[12px] font-black" style={{ color: c.success }}>
                       {fundBalance === null ? "..." : fmtCompact(fundBalance)}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-[11px] font-semibold text-gray-700 leading-tight whitespace-pre-line h-8 flex items-center justify-center">
+                  <p
+                    className="text-[11px] font-semibold leading-tight whitespace-pre-line h-8 flex items-center justify-center"
+                    style={{ color: c.text }}
+                  >
                     {label}
                   </p>
                 )}
@@ -347,13 +336,13 @@ export default function HomePage() {
                 >
                   🎂
                 </div>
-                <h3 className="font-bold text-gray-600 text-sm">
+                <h3 className="font-bold text-sm" style={{ color: c.textMuted }}>
                   Sinh nhật tháng {currentMonth + 1}
                 </h3>
               </div>
               <span
                 className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: "#fce7f3", color: "#be185d" }}
+                style={{ background: c.pinkSoft, color: c.pink }}
               >
                 {birthdays.length} người
               </span>
@@ -364,12 +353,9 @@ export default function HomePage() {
                 const dob = new Date(m.date_of_birth);
                 const day = dob.getDate();
                 const isToday =
-                  dob.getDate() === currentDay &&
-                  dob.getMonth() === currentMonth;
+                  dob.getDate() === currentDay && dob.getMonth() === currentMonth;
                 const isUpcoming =
-                  !isToday &&
-                  Math.abs(day - currentDay) <= 4 &&
-                  day >= currentDay;
+                  !isToday && Math.abs(day - currentDay) <= 4 && day >= currentDay;
                 const initials =
                   m.full_name
                     ?.split(" ")
@@ -379,73 +365,72 @@ export default function HomePage() {
                     .toUpperCase() ?? "?";
                 const firstName = m.full_name?.split(" ").pop() ?? m.full_name;
 
+                const enter = `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both`;
+
+                const cardStyle = isToday
+                  ? {
+                    background: `linear-gradient(160deg, ${c.pinkSoft} 0%, ${alpha("pink", 25)} 100%), ${c.surface}`,
+                    border: `1.5px solid ${alpha("pink", 55)}`,
+                    boxShadow: "0 4px 16px rgba(248,87,166,0.18)",
+                    animation: `${enter}, todayPulse 3s ease-in-out 0.5s infinite`,
+                  }
+                  : isUpcoming
+                    ? {
+                      background: `linear-gradient(160deg, ${c.warningSoft} 0%, ${alpha("warning", 18)} 100%), ${c.surface}`,
+                      border: `1px solid ${alpha("warning", 40)}`,
+                      animation: enter,
+                    }
+                    : {
+                      background: c.surface,
+                      border: `1px solid ${c.border}`,
+                      boxShadow: c.shadow,
+                      animation: enter,
+                    };
+
+                const avatarStyle = isToday
+                  ? {
+                    background: m.avatar_url
+                      ? "transparent"
+                      : "linear-gradient(135deg, #f857a6, #ec4899)",
+                    color: "white",
+                    fontSize: "18px",
+                    boxShadow: "0 3px 10px rgba(248,87,166,0.45)",
+                  }
+                  : isUpcoming
+                    ? {
+                      background: m.avatar_url ? "transparent" : c.warningSoft,
+                      color: c.warning,
+                    }
+                    : {
+                      background: m.avatar_url ? "transparent" : c.primarySoft,
+                      color: c.primary,
+                    };
+
+                const dateChipStyle = isToday
+                  ? { background: "linear-gradient(135deg, #f857a6, #ec4899)", color: "white" }
+                  : isUpcoming
+                    ? { background: c.warningSoft, color: c.warning }
+                    : { background: c.surfaceMuted, color: c.textMuted };
+
                 return (
                   <div
+                    key={m.id ?? idx}
                     onClick={() => setSelectedBirthdayMember(m)}
                     className="flex flex-col items-center gap-1.5 py-3 px-1.5 rounded-2xl relative overflow-hidden active:scale-95 transition-transform cursor-pointer"
-                    style={{
-                      ...(isToday
-                        ? {
-                          background:
-                            "linear-gradient(160deg, #fff0f8, #fce7f3)",
-                          border: "1.5px solid #f9a8d4",
-                          boxShadow: "0 4px 16px rgba(248,87,166,0.18)",
-                          animation: `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both, todayPulse 3s ease-in-out 0.5s infinite`,
-                        }
-                        : isUpcoming
-                          ? {
-                            background:
-                              "linear-gradient(160deg, #fff7ed, #ffedd5)",
-                            border: "1px solid #fed7aa",
-                            animation: `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both`,
-                          }
-                          : {
-                            background: "white",
-                            border: "1px solid #f3f4f6",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                            animation: `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both`,
-                          }),
-                    }}
+                    style={cardStyle}
                   >
                     {isToday && (
                       <span
                         className="absolute top-1.5 right-1.5 text-[7px] font-black px-1.5 py-0.5 rounded-full text-white uppercase tracking-wide"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, #f857a6, #ec4899)",
-                        }}
+                        style={{ background: "linear-gradient(135deg, #f857a6, #ec4899)" }}
                       >
                         Hôm nay
                       </span>
                     )}
 
-                    {/* Avatar */}
                     <div
                       className="w-11 h-11 rounded-full flex items-center justify-center font-black text-sm relative overflow-hidden"
-                      style={
-                        isToday
-                          ? {
-                            background: m.avatar_url
-                              ? "transparent"
-                              : "linear-gradient(135deg, #f857a6, #ec4899)",
-                            color: "white",
-                            fontSize: "18px",
-                            boxShadow: "0 3px 10px rgba(248,87,166,0.45)",
-                          }
-                          : isUpcoming
-                            ? {
-                              background: m.avatar_url
-                                ? "transparent"
-                                : "linear-gradient(135deg, #fed7aa, #fdba74)",
-                              color: "#9a3412",
-                            }
-                            : {
-                              background: m.avatar_url
-                                ? "transparent"
-                                : "linear-gradient(135deg, #dbeafe, #bfdbfe)",
-                              color: "#1d4ed8",
-                            }
-                      }
+                      style={avatarStyle}
                     >
                       {m.avatar_url ? (
                         <img
@@ -462,39 +447,21 @@ export default function HomePage() {
                       {isToday && (
                         <span
                           className="absolute inset-0 rounded-full border-2 border-pink-400"
-                          style={{
-                            animation: "ringOut 1.8s ease-out infinite",
-                          }}
+                          style={{ animation: "ringOut 1.8s ease-out infinite" }}
                         />
                       )}
                     </div>
 
                     <p
                       className="text-[10px] font-bold text-center leading-tight w-full px-0.5 truncate"
-                      style={{ color: isToday ? "#9d174d" : "#374151" }}
+                      style={{ color: isToday ? c.pink : c.text }}
                     >
                       {firstName}
                     </p>
 
                     <span
                       className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
-                      style={
-                        isToday
-                          ? {
-                            background:
-                              "linear-gradient(135deg, #f857a6, #ec4899)",
-                            color: "white",
-                          }
-                          : isUpcoming
-                            ? {
-                              background: "#fed7aa",
-                              color: "#9a3412",
-                            }
-                            : {
-                              background: "#f3f4f6",
-                              color: "#6b7280",
-                            }
-                      }
+                      style={dateChipStyle}
                     >
                       🎂 {day}/{currentMonth + 1}
                     </span>
@@ -504,54 +471,26 @@ export default function HomePage() {
             </div>
 
             <style jsx>{`
-              @keyframes cardIn {
-                from {
-                  opacity: 0;
-                  transform: scale(0.75) translateY(10px);
-                }
-                to {
-                  opacity: 1;
-                  transform: scale(1) translateY(0);
-                }
-              }
-              @keyframes todayPulse {
-                0%,
-                100% {
-                  box-shadow: 0 4px 16px rgba(248, 87, 166, 0.18);
-                }
-                50% {
-                  box-shadow: 0 6px 24px rgba(248, 87, 166, 0.32);
-                }
-              }
-              @keyframes ringOut {
-                0% {
-                  transform: scale(1);
-                  opacity: 0.8;
-                }
-                100% {
-                  transform: scale(1.65);
-                  opacity: 0;
-                }
-              }
-              @keyframes cakeWiggle {
-                0%,
-                100% {
-                  transform: rotate(0deg);
-                }
-                20% {
-                  transform: rotate(-12deg);
-                }
-                40% {
-                  transform: rotate(12deg);
-                }
-                60% {
-                  transform: rotate(-6deg);
-                }
-                80% {
-                  transform: rotate(6deg);
-                }
-              }
-            `}</style>
+      @keyframes cardIn {
+        from { opacity: 0; transform: scale(0.75) translateY(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+      }
+      @keyframes todayPulse {
+        0%, 100% { box-shadow: 0 4px 16px rgba(248, 87, 166, 0.18); }
+        50% { box-shadow: 0 6px 24px rgba(248, 87, 166, 0.32); }
+      }
+      @keyframes ringOut {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(1.65); opacity: 0; }
+      }
+      @keyframes cakeWiggle {
+        0%, 100% { transform: rotate(0deg); }
+        20% { transform: rotate(-12deg); }
+        40% { transform: rotate(12deg); }
+        60% { transform: rotate(-6deg); }
+        80% { transform: rotate(6deg); }
+      }
+    `}</style>
           </section>
         )}
 

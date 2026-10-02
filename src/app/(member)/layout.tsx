@@ -31,6 +31,7 @@ import { AdminMenuDrawer } from "@/components/admin/AdminMenuDrawer";
 import { supabase } from "@/lib/supabase";
 import { FeedbackWidget } from "@/components/member/feedback/FeedBackChats";
 import { NavLoadingOverlay } from "@/components/common/NavLoadingOverlay";
+import { ThemeSwitch } from "@/components/common/ThemeSwitch";
 
 const NAV_ITEMS = [
     { href: "/home", icon: Home, label: "Trang chủ" },
@@ -329,7 +330,7 @@ export default function MemberLayout({
 
             <div
                 className="fixed inset-0 -z-10"
-                style={{ backgroundColor: "#f4f6fa" }}
+                style={{ backgroundColor: "var(--bg)" }}
             />
             <BirthdayModal
                 userName={user?.full_name ?? ""}
@@ -361,19 +362,18 @@ export default function MemberLayout({
                 <div
                     className="relative w-full max-w-lg overflow-hidden"
                     style={{
-                        background:
-                            "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
+                        background: "var(--header-bg)",
                         borderBottomLeftRadius: 24,
                         borderBottomRightRadius: 24,
                         paddingTop: "env(safe-area-inset-top, 0px)",
+                        boxShadow: "var(--shadow)",
                     }}
                 >
                     <div
                         className="relative max-w-lg mx-auto px-4 flex items-center justify-between"
                         style={{
                             height: 64,
-                            background: "rgba(255,255,255,.02)",
-                            borderBottom: "1px solid rgba(255,255,255,.08)",
+                            borderBottom: "1px solid var(--header-border)",
                         }}
                     >
                         <div className="flex items-center gap-2.5">
@@ -383,22 +383,22 @@ export default function MemberLayout({
                                     title="Menu quản trị"
                                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
                                     style={{
-                                        background: "rgba(255,255,255,0.07)",
-                                        border: "0.5px solid rgba(255,255,255,0.12)",
-                                        color: "rgba(255,255,255,0.75)",
+                                        background: "var(--header-btn-bg)",
+                                        border: "0.5px solid var(--header-btn-border)",
+                                        color: "var(--header-btn-text)",
                                     }}
                                 >
                                     <Menu className="w-4.5 h-4.5" />
                                 </button>
                             )}
 
-                            <div className="flex-shrink-0 pt-3">
-                                <BadmintonLogo size={85} />
+                            <div className="flex-shrink-0 pt-3" style={{ objectFit: "contain", filter: "var(--logo-filter)" }}>
+                                <BadmintonLogo size={68} />
                             </div>
                             <div>
                                 <p
-                                    className="font-bold text-white leading-none"
-                                    style={{ fontSize: 16, letterSpacing: "-0.01em" }}
+                                    className="font-bold leading-none"
+                                    style={{ fontSize: 14, letterSpacing: "-0.01em", color: "var(--header-text)" }}
                                 >
                                     BNB BADMINTON CLUB
                                 </p>
@@ -409,9 +409,9 @@ export default function MemberLayout({
                                         padding: "2px 8px",
                                         fontSize: 9,
                                         borderRadius: 20,
-                                        background: "rgba(255,255,255,0.08)",
-                                        border: "0.5px solid rgba(255,255,255,0.14)",
-                                        color: "rgba(255,255,255,0.5)",
+                                        background: "var(--header-btn-bg)",
+                                        border: "0.5px solid var(--header-btn-border)",
+                                        color: "var(--header-text-muted)",
                                         letterSpacing: "0.03em",
                                     }}
                                 >
@@ -422,30 +422,7 @@ export default function MemberLayout({
 
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <NotificationBell />
-                            <button
-                                onClick={handleLogout}
-                                title="Đăng xuất"
-                                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                                style={{
-                                    background: "rgba(255,255,255,0.07)",
-                                    border: "0.5px solid rgba(255,255,255,0.12)",
-                                    color: "rgba(255,255,255,0.4)",
-                                }}
-                                onMouseEnter={(e) => {
-                                    const el = e.currentTarget as HTMLElement;
-                                    el.style.background = "rgba(239,68,68,0.2)";
-                                    el.style.borderColor = "rgba(239,68,68,0.35)";
-                                    el.style.color = "#fca5a5";
-                                }}
-                                onMouseLeave={(e) => {
-                                    const el = e.currentTarget as HTMLElement;
-                                    el.style.background = "rgba(255,255,255,0.07)";
-                                    el.style.borderColor = "rgba(255,255,255,0.12)";
-                                    el.style.color = "rgba(255,255,255,0.4)";
-                                }}
-                            >
-                                <LogOut className="w-4 h-4" />
-                            </button>
+                            <ThemeSwitch />
                         </div>
                     </div>
                 </div>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { GlobalNavLoading } from "@/components/common/GlobalNavLoading";
+import { THEME_CSS, THEME_INIT_SCRIPT, ThemeProvider } from "@/lib/theme";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1d4ed8",
+  themeColor: "#183153",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -39,18 +40,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi">
-      <body className={`${nunito.className} bg-gray-50 min-h-screen`}>
-        <Toaster
-          position="top-center"
-          toastOptions={{ duration: 3000 }}
-          containerStyle={{
-            top: "calc(env(safe-area-inset-top, 0px) + 60px)",
-            zIndex: 999999,
-          }}
-        />
-        <GlobalNavLoading />
-        {children}
+    <html lang="vi" suppressHydrationWarning>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: THEME_CSS }} />
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className={`${nunito.className} min-h-screen`}>
+        <ThemeProvider>
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: "var(--surface)",
+                color: "var(--text)",
+                border: "1px solid var(--border)",
+                boxShadow: "var(--shadow)",
+              },
+            }}
+            containerStyle={{
+              top: "calc(env(safe-area-inset-top, 0px) + 60px)",
+              zIndex: 999999,
+            }}
+          />
+          <GlobalNavLoading />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

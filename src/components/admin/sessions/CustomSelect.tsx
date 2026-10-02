@@ -10,6 +10,11 @@ export interface CustomSelectOption {
   imageUrl?: string | null;
 }
 
+const DEFAULT_TRIGGER =
+  "w-full flex items-center justify-between text-left rounded-xl px-4 py-3 text-sm transition-all " +
+  "border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text)] " +
+  "focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent";
+
 export function CustomSelect({
   value,
   onChange,
@@ -92,10 +97,7 @@ export function CustomSelect({
         ref={btnRef}
         type="button"
         onClick={handleToggle}
-        className={
-          triggerClassName ??
-          "input-field w-full flex items-center justify-between text-left"
-        }
+        className={triggerClassName ?? DEFAULT_TRIGGER}
       >
         <span className="flex items-center gap-1.5 min-w-0">
           {current?.imageUrl && (
@@ -106,13 +108,15 @@ export function CustomSelect({
             />
           )}
           <span
-            className={`truncate ${current ? "text-gray-900" : "text-gray-400"}`}
+            className={`truncate ${current ? "text-[var(--text)]" : "text-[var(--text-faint)]"
+              }`}
           >
             {current?.label ?? placeholder}
           </span>
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-[var(--text-faint)] flex-shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -125,8 +129,9 @@ export function CustomSelect({
               top: pos.top,
               left: pos.left,
               width: pos.width,
+              boxShadow: "var(--shadow-strong)",
             }}
-            className={`max-h-56 overflow-y-auto hide-scrollbar bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] py-1 origin-top transition-[opacity,transform] duration-150 ease-out ${open
+            className={`max-h-56 overflow-y-auto hide-scrollbar bg-[var(--surface)] border border-[var(--border)] rounded-xl z-[9999] py-1 origin-top transition-[opacity,transform] duration-150 ease-out ${open
               ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
               : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
               }`}
@@ -142,20 +147,20 @@ export function CustomSelect({
                     setOpen(false);
                   }}
                   className={`w-full flex items-center gap-2 text-left px-3 py-2 text-sm transition-colors duration-150 ${isActive
-                    ? "bg-blue-50 text-blue-600 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
+                    ? "bg-[var(--primary-soft)] text-[var(--primary)] font-medium"
+                    : "text-[var(--text)] hover:bg-[var(--surface-hover)]"
                     }`}
                 >
                   {opt.imageUrl && (
                     <img
                       src={opt.imageUrl}
                       alt=""
-                      className="w-8 h-8 rounded-md object-cover flex-shrink-0 border border-gray-100"
+                      className="w-8 h-8 rounded-md object-cover flex-shrink-0 border border-[var(--border)]"
                     />
                   )}
                   <span className="flex-1 min-w-0 truncate">{opt.label}</span>
                   {opt.subLabel && (
-                    <span className="flex-shrink-0 text-xs text-gray-400">
+                    <span className="flex-shrink-0 text-xs text-[var(--text-faint)]">
                       {opt.subLabel}
                     </span>
                   )}

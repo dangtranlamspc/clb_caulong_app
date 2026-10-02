@@ -32,32 +32,32 @@ const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
   pending_approval: {
     label: "Chờ admin duyệt",
     icon: Hourglass,
-    cls: "bg-orange-50 text-orange-600 border-orange-200",
+    cls: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
   },
   awaiting_checkin: {
     label: "Chờ điểm danh",
     icon: Hourglass,
-    cls: "bg-slate-50 text-slate-600 border-slate-200",
+    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]",
   },
   pending: {
     label: "Chờ thanh toán",
     icon: Hourglass,
-    cls: "bg-amber-50 text-amber-700 border-amber-200",
+    cls: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
   },
   pending_review: {
     label: "Chờ admin xác nhận",
     icon: Clock3,
-    cls: "bg-blue-50 text-blue-700 border-blue-200",
+    cls: "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]",
   },
   confirmed: {
     label: "Đã xác nhận thanh toán",
     icon: CheckCircle2,
-    cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    cls: "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]",
   },
   rejected: {
     label: "Thanh toán bị từ chối",
     icon: AlertCircle,
-    cls: "bg-red-50 text-red-500 border-red-200",
+    cls: "bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]",
   },
 };
 
@@ -136,7 +136,7 @@ export function MembersModal({
         style={{ opacity: 0, animation: `fadeIn .2s ease forwards` }}
       >
         {opts?.nested && (
-          <span className="w-3 h-px bg-gray-200 flex-shrink-0 -ml-3 mr-[-2px]" />
+          <span className="w-3 h-px bg-[var(--border-strong)] flex-shrink-0 -ml-3 mr-[-2px]" />
         )}
         {u?.avatar_url ? (
           <img
@@ -146,26 +146,29 @@ export function MembersModal({
           />
         ) : (
           <div
-            className={`rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${opts?.nested ? "w-7 h-7 text-[10px] bg-purple-100 text-purple-700" : "w-9 h-9 text-xs bg-blue-100 text-blue-700"}`}
+            className={`rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${opts?.nested
+              ? "w-7 h-7 text-[10px] bg-[var(--purple-soft)] text-[var(--purple)]"
+              : "w-9 h-9 text-xs bg-[var(--primary-soft)] text-[var(--primary)]"
+              }`}
           >
             {initials}
           </div>
         )}
         <div className="flex-1 min-w-0">
           <p
-            className={`font-medium text-gray-900 truncate ${opts?.nested ? "text-xs" : "text-sm"}`}
+            className={`font-medium text-[var(--text)] truncate ${opts?.nested ? "text-xs" : "text-sm"}`}
           >
             {fullName}
             {m.is_guest && (
-              <span className="text-xs text-gray-400 ml-1">(khách)</span>
+              <span className="text-xs text-[var(--text-faint)] ml-1">(khách)</span>
             )}
           </p>
-          <p className="text-xs text-gray-400 mb-1">
+          <p className="text-xs text-[var(--text-faint)] mb-1">
             {gender === "male" ? "Nam" : gender === "female" ? "Nữ" : ""}
           </p>
           <div className="flex items-center gap-1 flex-wrap">
             {(skillLevel || u?.level) && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] border border-[color-mix(in_srgb,var(--primary)_25%,transparent)]">
                 🎯{" "}
                 {skillLevel
                   ? (GUEST_SKILL_LABEL[skillLevel] ?? skillLevel)
@@ -174,11 +177,11 @@ export function MembersModal({
             )}
             {!m.is_guest &&
               (m.tier ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--purple-soft)] text-[var(--purple)] border border-[color-mix(in_srgb,var(--purple)_25%,transparent)]">
                   💎 {m.tier} · {m.total_points ?? 0}đ
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-50 text-gray-400 border border-gray-100">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-faint)] border border-[var(--border)]">
                   Chưa có rank
                 </span>
               ))}
@@ -198,14 +201,14 @@ export function MembersModal({
     <div
       className="fixed inset-0 z-[9999] flex flex-col justify-end"
       style={{
-        background: visible ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)",
+        background: visible ? "var(--overlay)" : "rgba(0,0,0,0)",
         backdropFilter: visible ? "blur(2px)" : "none",
         transition: "background .3s, backdrop-filter .3s",
       }}
       onClick={(e) => e.target === e.currentTarget && close()}
     >
       <div
-        className="w-full bg-white rounded-t-2xl"
+        className="w-full rounded-t-2xl bg-[var(--surface)] border-t border-[var(--border)] text-[var(--text)]"
         style={{
           transform: visible ? "translateY(0)" : "translateY(100%)",
           transition: "transform .3s cubic-bezier(0.32,0.72,0,1)",
@@ -214,29 +217,31 @@ export function MembersModal({
           display: "flex",
           flexDirection: "column",
           willChange: "transform",
+          boxShadow: "var(--shadow-strong)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle bar */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-9 h-1 rounded-full bg-gray-200" />
+          <div className="w-9 h-1 rounded-full bg-[var(--border-strong)]" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] flex-shrink-0">
           <div>
-            <p className="text-sm font-semibold text-gray-900">
+            <p className="text-sm font-semibold text-[var(--text)]">
               Thành viên đăng ký
             </p>
-            <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[240px]">
+            <p className="text-xs text-[var(--text-faint)] mt-0.5 truncate max-w-[240px]">
               {sessionTitle}
             </p>
           </div>
           <button
             onClick={close}
-            className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+            aria-label="Đóng"
+            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] hover:bg-[var(--surface-hover)] flex items-center justify-center transition-colors"
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-[var(--text-muted)]" />
           </button>
         </div>
 
@@ -246,37 +251,30 @@ export function MembersModal({
             <div className="space-y-3 pt-4">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="flex items-center gap-3 animate-pulse">
-                  <div className="w-9 h-9 rounded-full bg-gray-100" />
+                  <div className="w-9 h-9 rounded-full bg-[var(--surface-muted)]" />
                   <div className="flex-1 space-y-1.5">
-                    <div className="h-3 bg-gray-100 rounded w-2/3" />
-                    <div className="h-2.5 bg-gray-100 rounded w-1/3" />
+                    <div className="h-3 bg-[var(--surface-muted)] rounded w-2/3" />
+                    <div className="h-2.5 bg-[var(--surface-muted)] rounded w-1/3" />
                   </div>
                 </div>
               ))}
             </div>
           ) : approvedMembers.length === 0 ? (
             <div className="py-12 text-center">
-              <Users className="w-8 h-8 mx-auto text-gray-200 mb-2" />
-              <p className="text-sm text-gray-400">Chưa có thành viên nào</p>
+              <Users className="w-8 h-8 mx-auto text-[var(--text-faint)] mb-2" />
+              <p className="text-sm text-[var(--text-faint)]">Chưa có thành viên nào</p>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-50 pt-1">
-              {roots.map((root: any) => {
-                const guests = guestsOf(root.id);
-                return (
-                  <div key={root.id}>
-                    {renderPerson(root)}
-                    {guests.length > 0 && (
-                      <ul>
-                        {guests.map((g: any) =>
-                          renderPerson(g, { nested: true }),
-                        )}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
-            </ul>
+            <div className="divide-y divide-[var(--border)] pt-1">
+              {roots.map((root: any) => (
+                <ul key={root.id}>
+                  {renderPerson(root)}
+                  {guestsOf(root.id).map((g: any) =>
+                    renderPerson(g, { nested: true }),
+                  )}
+                </ul>
+              ))}
+            </div>
           )}
         </div>
       </div>
