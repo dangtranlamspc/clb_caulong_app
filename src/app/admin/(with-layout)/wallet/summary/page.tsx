@@ -498,7 +498,6 @@ function MemberPanel({
           </button>
         </div>
 
-        {/* Hàng 2: Chia sẻ / Xoá (trượt ra mượt, căn phải) */}
         <div
           aria-hidden={!hasSelection}
           className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${hasSelection

@@ -89,73 +89,83 @@ export default function AdminLayout({
 
     const headerTitle = currentPage?.label ?? "Quản trị";
 
-    const handleLogout = async () => {
-        try {
-            await authApi.logout();
-        } finally {
-            sessionStorage.removeItem("admin_landed");
-            useAuthStore.getState().logout();
-            window.location.href = "/auth/login";
-        }
-    };
-
     return (
         <div className="fixed inset-0 flex flex-col bg-[var(--bg)] overflow-hidden">
-            <header className="relative z-30 overflow-hidden bg-transparent flex-shrink-0">
+            <header className="relative z-30 flex-shrink-0">
                 <div
-                    className="absolute inset-0 -z-10"
+                    className="relative w-full overflow-hidden"
                     style={{
-                        background:
-                            "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
-                    }}
-                />
-                <div
-                    className="relative flex items-center justify-between px-4"
-                    style={{
-                        minHeight: 64,
+                        background: "var(--header-bg)",
+                        borderBottomLeftRadius: 24,
+                        borderBottomRightRadius: 24,
                         paddingTop: "env(safe-area-inset-top, 0px)",
-                        background: "rgba(255,255,255,.04)",
-                        backdropFilter: "blur(6px)",
-                        WebkitBackdropFilter: "blur(6px)",
-                        borderBottom: "1px solid rgba(255,255,255,.10)",
+                        boxShadow: "var(--shadow)",
                     }}
                 >
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setMenuOpen(true)}
-                            title="Menu quản trị"
-                            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                            style={{
-                                background: "rgba(255,255,255,.08)",
-                                border: "1px solid rgba(255,255,255,.10)",
-                                color: "#fff",
-                            }}
-                        >
-                            <Menu className="w-4.5 h-4.5" />
-                        </button>
+                    <div
+                        className="relative px-4 flex items-center justify-between"
+                        style={{
+                            height: 64,
+                            borderBottom: "1px solid var(--header-border)",
+                        }}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <button
+                                onClick={() => setMenuOpen(true)}
+                                title="Menu quản trị"
+                                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+                                style={{
+                                    background: "var(--header-btn-bg)",
+                                    border: "0.5px solid var(--header-btn-border)",
+                                    color: "var(--header-btn-text)",
+                                }}
+                            >
+                                <Menu className="w-4.5 h-4.5" />
+                            </button>
 
-                        <div className="flex-shrink-0 pt-2">
-                            <BadmintonLogo size={72} />
+                            <div
+                                className="flex-shrink-0 pt-3"
+                                style={{ objectFit: "contain", filter: "var(--logo-filter)" }}
+                            >
+                                <BadmintonLogo size={68} />
+                            </div>
+
+                            <div className="min-w-0">
+                                <p
+                                    className="font-bold leading-none truncate"
+                                    style={{
+                                        fontSize: 14,
+                                        letterSpacing: "-0.01em",
+                                        color: "var(--header-text)",
+                                    }}
+                                >
+                                    {headerTitle}
+                                </p>
+                                <span
+                                    className="inline-flex items-center gap-1 font-semibold"
+                                    style={{
+                                        marginTop: 4,
+                                        padding: "2px 8px",
+                                        fontSize: 9,
+                                        borderRadius: 20,
+                                        background: "var(--header-btn-bg)",
+                                        border: "0.5px solid var(--header-btn-border)",
+                                        color: "var(--header-text-muted)",
+                                        letterSpacing: "0.03em",
+                                    }}
+                                >
+                                    🏸 BNB Administration
+                                </span>
+                            </div>
                         </div>
 
-                        <div className="flex flex-col">
-                            <span className="font-bold text-white" style={{ fontSize: 16, letterSpacing: "-0.01em" }}>
-                                {headerTitle}
-                            </span>
-                            <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)" }}>
-                                BNB Administration
-                            </span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <AdminNotificationBell />
+                            <ThemeSwitch />
                         </div>
-                    </div>
-
-
-                    <div className="flex items-center gap-2">
-                        <AdminNotificationBell />
-
-                        <ThemeSwitch />
                     </div>
                 </div>
-            </header >
+            </header>
 
             <main className="flex-1 min-h-0 w-full px-4 lg:px-8 py-5 overflow-y-auto hide-scrollbar">
                 {children}
