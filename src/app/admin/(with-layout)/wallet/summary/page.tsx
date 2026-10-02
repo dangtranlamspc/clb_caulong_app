@@ -232,9 +232,13 @@ function MemberPanel({
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loadingTx, setLoadingTx] = useState(true);
 
-  // ── Chọn & xoá giao dịch ──
   const [selectedTxIds, setSelectedTxIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+
+  const lastCountRef = useRef(0);
+  if (selectedTxIds.size > 0) lastCountRef.current = selectedTxIds.size;
+  const shownCount = selectedTxIds.size || lastCountRef.current;
+  const hasSelection = selectedTxIds.size > 0;
 
   const toggleTxSelect = (id: string) => {
     setSelectedTxIds((prev) => {
@@ -268,7 +272,9 @@ function MemberPanel({
   };
 
   const receiptRef = useRef<HTMLDivElement>(null);
-  const [sharing, setSharing] = useState(false);
+  const [sharing, setSharing] = useState<null | "all" | "selected">(null);
+  const [receiptTxs, setReceiptTxs] = useState<any[] | null>(null);
+  const receiptList = receiptTxs ?? transactions; // null = chia sẻ tất cả
 
   const amount = parseThousands(amountDisplay);
   const formOpen = showTopup || showDeduct;
@@ -342,12 +348,23 @@ function MemberPanel({
   };
 
 
-  const handleShareImage = async () => {
+  const handleShareImage = async (kind: "all" | "selected") => {
     if (!receiptRef.current || sharing) return;
-    setSharing(true);
+    if (kind === "selected" && selectedTxIds.size === 0) return;
+
+    setSharing(kind);
+    setReceiptTxs(
+      kind === "selected"
+        ? transactions.filter((t: any) => selectedTxIds.has(t.id))
+        : null,
+    );
     try {
+      await new Promise<void>((r) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => r())),
+      );
+
       const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(receiptRef.current, {
+      const canvas = await html2canvas(receiptRef.current!, {
         scale: 2,
         backgroundColor: "#ffffff",
         useCORS: true,
@@ -358,17 +375,18 @@ function MemberPanel({
       );
       if (!blob) throw new Error("Không tạo được ảnh");
 
-      const fileName = `so-du-${member.full_name?.replace(/\s+/g, "-") ?? member.id}.png`;
+      const baseName = member.full_name?.replace(/\s+/g, "-") ?? member.id;
+      const fileName =
+        kind === "selected"
+          ? `giao-dich-${baseName}-${selectedTxIds.size}.png`
+          : `so-du-${baseName}.png`;
       const file = new File([blob], fileName, { type: "image/png" });
 
       if (
         typeof navigator !== "undefined" &&
         (navigator as any).canShare?.({ files: [file] })
       ) {
-        await (navigator as any).share({
-          files: [file],
-          title: "Sao kê ví — Ví BNB",
-        });
+        await (navigator as any).share({ files: [file], title: "Sao kê ví — Ví BNB" });
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -379,11 +397,10 @@ function MemberPanel({
         toast.success("Đã tải ảnh sao kê xuống");
       }
     } catch (err: any) {
-      if (err?.name !== "AbortError") {
-        toast.error("Tạo ảnh sao kê thất bại");
-      }
+      if (err?.name !== "AbortError") toast.error("Tạo ảnh sao kê thất bại");
     } finally {
-      setSharing(false);
+      setSharing(null);
+      setReceiptTxs(null);
     }
   };
 
@@ -428,12 +445,12 @@ function MemberPanel({
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
-            onClick={handleShareImage}
-            disabled={sharing}
+            onClick={() => handleShareImage("all")}
+            disabled={!!sharing}
             className="flex items-center gap-1.5 px-3 h-7 rounded-full bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition-transform duration-150 active:scale-95 disabled:opacity-50"
             title="Chia sẻ ảnh sao kê"
           >
-            {sharing ? (
+            {sharing === "all" ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <Share2 className="w-3.5 h-3.5" />
@@ -458,45 +475,70 @@ function MemberPanel({
         </p>
       </div>
 
-      <div className="px-4 sm:px-5 py-3 border-b border-[var(--border)] flex items-center gap-2 flex-shrink-0">
-        <button
-          onClick={() => {
-            setShowTopup(true);
-            setShowDeduct(false);
-          }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-transform duration-150 active:scale-95 text-white text-xs sm:text-sm font-semibold flex-shrink-0"
-        >
-          <Plus className="w-3.5 h-3.5" /> Nạp tiền
-        </button>
-        <button
-          onClick={() => {
-            setShowDeduct(true);
-            setShowTopup(false);
-          }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] hover:bg-[var(--danger-soft)] transition-transform duration-150 active:scale-95 text-[var(--danger)] text-xs sm:text-sm font-medium flex-shrink-0"
-        >
-          <Minus className="w-3.5 h-3.5" /> Trừ tiền
-        </button>
+      <div className="border-b border-[var(--border)] flex-shrink-0">
+        {/* Hàng 1: Nạp tiền / Trừ tiền */}
+        <div className="px-4 sm:px-5 py-3 flex items-center gap-2">
+          <button
+            onClick={() => {
+              setShowTopup(true);
+              setShowDeduct(false);
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-transform duration-150 active:scale-95 text-white text-xs sm:text-sm font-semibold flex-shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" /> Nạp tiền
+          </button>
+          <button
+            onClick={() => {
+              setShowDeduct(true);
+              setShowTopup(false);
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] hover:bg-[var(--danger-soft)] transition-transform duration-150 active:scale-95 text-[var(--danger)] text-xs sm:text-sm font-medium flex-shrink-0"
+          >
+            <Minus className="w-3.5 h-3.5" /> Trừ tiền
+          </button>
+        </div>
 
+        {/* Hàng 2: Chia sẻ / Xoá (trượt ra mượt, căn phải) */}
         <div
-          className={`grid transition-[grid-template-columns,opacity] duration-250 ease-[cubic-bezier(0.32,0.72,0,1)] ${selectedTxIds.size > 0
-            ? "grid-cols-[1fr] opacity-100"
-            : "grid-cols-[0fr] opacity-0"
+          aria-hidden={!hasSelection}
+          className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${hasSelection
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0 pointer-events-none"
             }`}
         >
           <div className="overflow-hidden">
-            <button
-              onClick={handleDeleteSelected}
-              disabled={deleting}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition-transform duration-150 active:scale-95 text-white text-xs sm:text-sm font-semibold disabled:opacity-50 whitespace-nowrap"
+            <div
+              className={`px-4 sm:px-5 pb-3 flex items-center justify-end gap-2 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${hasSelection ? "translate-y-0" : "-translate-y-2"
+                }`}
             >
-              {deleting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <X className="w-3.5 h-3.5" />
-              )}
-              Xoá ({selectedTxIds.size})
-            </button>
+              <button
+                onClick={() => handleShareImage("selected")}
+                disabled={!!sharing || !hasSelection}
+                tabIndex={hasSelection ? 0 : -1}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-transform duration-150 active:scale-95 text-white text-xs sm:text-sm font-semibold disabled:opacity-50 whitespace-nowrap"
+              >
+                {sharing === "selected" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Share2 className="w-3.5 h-3.5" />
+                )}
+                Chia sẻ ({shownCount})
+              </button>
+
+              <button
+                onClick={handleDeleteSelected}
+                disabled={deleting || !hasSelection}
+                tabIndex={hasSelection ? 0 : -1}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition-transform duration-150 active:scale-95 text-white text-xs sm:text-sm font-semibold disabled:opacity-50 whitespace-nowrap"
+              >
+                {deleting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <X className="w-3.5 h-3.5" />
+                )}
+                Xoá ({shownCount})
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -662,7 +704,9 @@ function MemberPanel({
             <p style={{ fontSize: 13, fontWeight: 700, color: "#2563eb", letterSpacing: 0.5 }}>
               VÍ BNB — CLB CẦU LÔNG
             </p>
-            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>Sao kê ví thành viên</p>
+            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>
+              {receiptTxs ? `Sao kê ${receiptTxs.length} giao dịch đã chọn` : "Sao kê ví thành viên"}
+            </p>
           </div>
 
           <div style={{ textAlign: "center", marginBottom: 20 }}>
@@ -700,12 +744,12 @@ function MemberPanel({
               <span>Giao dịch</span>
               <span>Số dư sau</span>
             </div>
-            {transactions.length === 0 ? (
+            {receiptList.length === 0 ? (
               <div style={{ padding: "16px", textAlign: "center", fontSize: 12, color: "#9ca3af" }}>
                 Chưa có giao dịch nào
               </div>
             ) : (
-              transactions.map((tx: any, idx: number) => {
+              receiptList.map((tx: any, idx: number) => {
                 const label =
                   (tx.type === "manual_expense" || tx.type === "manual_credit") && tx.description
                     ? tx.description
@@ -1752,8 +1796,8 @@ export default function WalletAdminSummaryPage() {
                       onClick={() => setPage(item)}
                       aria-current={page === item ? "page" : undefined}
                       className={`w-7 h-7 rounded-md text-xs font-medium transition-transform duration-150 active:scale-90 ${page === item
-                          ? "bg-blue-600 text-white"
-                          : "border border-[var(--border)] hover:bg-[var(--surface-hover)] text-[var(--text-muted)]"
+                        ? "bg-blue-600 text-white"
+                        : "border border-[var(--border)] hover:bg-[var(--surface-hover)] text-[var(--text-muted)]"
                         }`}
                     >
                       {item}

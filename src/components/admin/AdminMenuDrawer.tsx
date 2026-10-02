@@ -6,7 +6,10 @@ import {
     Swords,
     BookOpen,
     GlassWater,
+    LogOut,
 } from 'lucide-react';
+import { authApi } from '@/lib/api';
+import { useAuthStore } from '@/store/auth.store';
 
 type AdminMenuChild = { href: string; label: string };
 type AdminMenuItem = {
@@ -93,6 +96,17 @@ export function AdminMenuDrawer({
 
     if (!mounted) return null;
 
+    const handleLogout = async () => {
+        onClose();
+        try {
+            await authApi.logout();
+        } finally {
+            sessionStorage.removeItem('admin_landed');
+            useAuthStore.getState().logout();
+            window.location.href = '/auth/login';
+        }
+    };
+
     const go = (href: string) => {
         onClose();
         if (href === pathname) return;
@@ -125,12 +139,23 @@ export function AdminMenuDrawer({
                     style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
                 >
                     <h2 className="font-bold text-[var(--text)] text-sm">⚙️ Khu vực quản trị</h2>
-                    <button
-                        onClick={onClose}
-                        className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)] flex-shrink-0"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                            onClick={handleLogout}
+                            title="Đăng xuất"
+                            aria-label="Đăng xuất"
+                            className="w-8 h-8 rounded-full bg-[var(--danger-soft)] text-[var(--danger)] flex items-center justify-center active:scale-95 transition-transform"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={onClose}
+                            aria-label="Đóng menu"
+                            className="w-8 h-8 rounded-full bg-[var(--surface-muted)] flex items-center justify-center text-[var(--text-faint)]"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="p-4 space-y-2.5">
