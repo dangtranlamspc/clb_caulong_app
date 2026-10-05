@@ -134,6 +134,8 @@ function MemberMobileCard({
   reminding: boolean;
   delay: number;
 }) {
+  const isNegative = m.balance < 0;
+
   return (
     <div
       role="button"
@@ -146,66 +148,72 @@ function MemberMobileCard({
         }
       }}
       style={{ animationDelay: `${delay}ms` }}
-      className={`w-full flex items-start gap-3 px-4 py-3.5 text-left cursor-pointer rounded-2xl bg-[var(--surface)] border transition-all duration-150 active:scale-[0.98] animate-row-fade ${active
+      className={`w-full flex flex-col text-left cursor-pointer rounded-2xl bg-[var(--surface)] border transition-all duration-150 active:scale-[0.98] animate-row-fade overflow-hidden ${active
         ? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] ring-2 ring-blue-100 shadow-lg"
         : "border-[var(--border)] shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.1)]"
         }`}
     >
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 overflow-hidden">
-        {m.avatar_url ? (
-          <img
-            src={m.avatar_url}
-            alt={m.full_name}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
-          />
-        ) : (
-          m.full_name[0]
-        )}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="font-semibold text-[var(--text)] truncate text-sm">
-              {m.full_name}
-            </p>
-            <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>
-          </div>
-          <span
-            className={`text-sm font-bold whitespace-nowrap flex-shrink-0 ${m.balance < 0 ? "text-[var(--danger)]" : "text-[var(--text)]"}`}
-          >
-            {fmt(m.balance)}
-          </span>
-        </div>
-        <div className="flex items-center flex-wrap gap-1.5 mt-1.5">
-          <RankTag tier={m.tier} points={m.total_points} />
-          <StatusBadge balance={m.balance} />
-        </div>
-        <div className="flex items-center justify-between gap-2 mt-1.5">
-          <p className="text-[11px] text-[var(--text-faint)]">
-            Buổi gần nhất: {relativeDay(m.last_session_at)}
-          </p>
-          {m.balance < 0 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemind();
+      <div className="flex items-center gap-3 px-4 pt-3.5 pb-2.5">
+        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 overflow-hidden">
+          {m.avatar_url ? (
+            <img
+              src={m.avatar_url}
+              alt={m.full_name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
-              disabled={reminding}
-              className="flex items-center justify-center gap-1.5 min-h-[40px] px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white border border-red-800 text-sm font-semibold shadow-sm active:scale-95 disabled:opacity-50"
-            >
-              {reminding ? (
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
-              ) : (
-                <BellRing className="w-4 h-4 text-white" />
-              )}
-              Nhắc nợ
-            </button>
+            />
+          ) : (
+            m.full_name[0]
           )}
         </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-[var(--text)] truncate text-sm leading-tight">
+            {m.full_name}
+          </p>
+          <p className="text-xs text-[var(--text-faint)] mt-0.5 truncate">{m.phone}</p>
+        </div>
+
+        <span
+          className={`text-base font-bold whitespace-nowrap flex-shrink-0 ${isNegative ? "text-[var(--danger)]" : "text-[var(--text)]"}`}
+        >
+          {fmt(m.balance)}
+        </span>
+      </div>
+
+      <div className="flex items-center flex-wrap gap-1.5 px-4 pb-3">
+        {m.tier && <RankTag tier={m.tier} points={m.total_points} />}
+        <StatusBadge balance={m.balance} />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-[var(--border)] bg-[var(--surface-muted)]/40 min-h-[52px]">
+        <p className="min-w-0 flex-1 text-[11px] leading-snug text-[var(--text-faint)] truncate">
+          Buổi gần nhất:{" "}
+          <span className="text-[var(--text-muted)] font-medium">
+            {relativeDay(m.last_session_at)}
+          </span>
+        </p>
+
+        {isNegative && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemind();
+            }}
+            disabled={reminding}
+            className="shrink-0 whitespace-nowrap flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold shadow-sm active:scale-95 disabled:opacity-50 transition-transform duration-150"
+          >
+            {reminding ? (
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <BellRing className="w-4 h-4 text-white" />
+            )}
+            Nhắc nợ
+          </button>
+        )}
       </div>
     </div>
   );
@@ -870,7 +878,7 @@ function StatMembersModal({
         page,
         limit: perPage,
         sort_by: "balance",
-        sort_order: "desc",
+        sort_order: status === "negative" ? "asc" : "desc",
       })
       .then(({ data }) => {
         if (cancelled) return;
@@ -1452,6 +1460,14 @@ export default function WalletAdminSummaryPage() {
     setPage(1);
   };
 
+  const handleStatusFilterChange = (val: string) => {
+    setStatusFilter(val);
+    setSortField("balance");
+    // Âm ví: nợ nhiều nhất lên đầu (balance nhỏ nhất = asc). Còn lại: nhiều tiền nhất lên đầu.
+    setSortOrder(val === "negative" ? "asc" : "desc");
+    setPage(1);
+  };
+
   const handleExportReport = async () => {
     setExporting(true);
     try {
@@ -1616,10 +1632,7 @@ export default function WalletAdminSummaryPage() {
                 <div className="flex-1 sm:flex-none sm:w-40">
                   <CustomSelect
                     value={statusFilter}
-                    onChange={(val) => {
-                      setStatusFilter(val);
-                      setPage(1);
-                    }}
+                    onChange={handleStatusFilterChange}
                     placeholder="Tất cả trạng thái"
                     options={[
                       { value: '', label: 'Tất cả trạng thái' },

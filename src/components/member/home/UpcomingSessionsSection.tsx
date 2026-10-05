@@ -136,7 +136,6 @@ function AddCompanionModal({
     const [heights, setHeights] = useState<{ account?: number; guest?: number }>({});
     const [animating, setAnimating] = useState(false);
 
-    // Đo chiều cao từng trang (tự cập nhật khi danh sách tìm kiếm thay đổi)
     useEffect(() => {
         const a = accountPanelRef.current;
         const g = guestPanelRef.current;
@@ -150,7 +149,6 @@ function AddCompanionModal({
         return () => ro.disconnect();
     }, []);
 
-    // Khi đổi tab: chờ animation xong rồi mới focus ô nhập
     useEffect(() => {
         const focusTab = () =>
             (tab === "account" ? searchInputRef : guestNameRef).current?.focus({
@@ -301,7 +299,6 @@ function AddCompanionModal({
                         height: heights[tab],
                         transition: "height 300ms cubic-bezier(0.32,0.72,0,1)",
                         overflowX: "clip",
-                        // chỉ cắt theo chiều dọc khi đang chuyển, để danh sách thả xuống không bị cắt
                         overflowY: animating ? "hidden" : "visible",
                     }}
                 >
@@ -312,7 +309,6 @@ function AddCompanionModal({
                             transition: "transform 300ms cubic-bezier(0.32,0.72,0,1)",
                         }}
                     >
-                        {/* ───── Trang 1: Có tài khoản ───── */}
                         <div
                             ref={accountPanelRef}
                             aria-hidden={tab !== "account"}
@@ -391,7 +387,6 @@ function AddCompanionModal({
                             </p>
                         </div>
 
-                        {/* ───── Trang 2: Khách không tài khoản ───── */}
                         <div
                             ref={guestPanelRef}
                             aria-hidden={tab !== "guest"}
@@ -810,7 +805,7 @@ export function UpcomingSessionsSection({
                                             className="h-9 pl-3 pr-3.5 rounded-full bg-[var(--primary-soft)] flex items-center gap-1.5 active:scale-90 transition-transform flex-shrink-0"
                                         >
                                             <Users className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
-                                            <span className="text-xs font-bold text-[var(--primary)]">{filled ?? 0}</span>
+                                            <span className="text-xs font-bold text-[var(--primary)]">{s.approved_count ?? filled ?? 0}</span>
                                             {(s.male_count > 0 || s.female_count > 0) && (
                                                 <span className="flex items-center gap-1 ml-1 pl-1.5 border-l border-[color-mix(in_srgb,var(--primary)_30%,transparent)]">
                                                     <span className="text-[11px] font-semibold text-[var(--primary)]">
