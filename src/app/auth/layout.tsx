@@ -5,13 +5,13 @@ import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 const BG_URL =
-  'https://xuiwrhrnmxuhrzonofwa.supabase.co/storage/v1/object/public/background/background-auth.png';
+  '/bg/background-auth.webp';
 
 const BG_URL_MOBILE =
-  'https://xuiwrhrnmxuhrzonofwa.supabase.co/storage/v1/object/public/background/background-auth-mobile.png';
+  '/bg/background-auth-mobile.webp';
 
 const LOGO_URL =
-  'https://res.cloudinary.com/ds6mtnyyk/image/upload/v1783494767/LOGO_TEAM_BNB_WHITE_hs59vg.png';
+  '/bg/logo_team.webp';
 
 const TABS = [
   { href: '/auth/login', label: 'Đăng nhập' },
@@ -25,7 +25,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="relative min-h-screen flex justify-center p-4 pt-12 sm:pt-16 overflow-y-auto">
-      {/* Nền cho desktop (>= sm) */}
       <div
         className="hidden sm:block fixed inset-0"
         style={{
@@ -35,7 +34,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         }}
       />
 
-      {/* Nền cho mobile (< sm) */}
       <div
         className="block sm:hidden fixed inset-0"
         style={{

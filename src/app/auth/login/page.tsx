@@ -22,7 +22,6 @@ export default function LoginPage() {
     defaultValues: { identifier: '', password: '', rememberMe: false },
   });
 
-  // ── Quên mật khẩu ──
   const [forgotStep, setForgotStep] = useState<ForgotStep>('closed');
   const [forgotEmail, setForgotEmail] = useState('');
   const [emailSubmitting, setEmailSubmitting] = useState(false);
@@ -78,7 +77,6 @@ export default function LoginPage() {
     }
   };
 
-  // ── Bước 1: nhập email ──
   const onSubmitForgotEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!/^\S+@\S+\.\S+$/.test(forgotEmail)) {
@@ -98,7 +96,6 @@ export default function LoginPage() {
     }
   };
 
-  // ── Bước 2: xác thực mã ──
   const verifyResetCode = async (val: string) => {
     if (val.length !== 6 || verifyingRef.current) return;
     verifyingRef.current = true;
@@ -135,7 +132,6 @@ export default function LoginPage() {
     }
   };
 
-  // ── Bước 3: đặt mật khẩu mới ──
   const onSubmitNewPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPw.length < 8) {
@@ -158,7 +154,6 @@ export default function LoginPage() {
     }
   };
 
-  // ══════════════ RENDER: QUÊN MẬT KHẨU ══════════════
 
   if (forgotStep === 'email') {
     return (
@@ -320,8 +315,6 @@ export default function LoginPage() {
       </div>
     );
   }
-
-  // ══════════════ RENDER: ĐĂNG NHẬP (mặc định) ══════════════
 
   return (
     <div className="bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
