@@ -30,6 +30,7 @@ import { createPortal } from "react-dom";
 import { useNotificationsRealtimeStore } from "@/store/notifications-realtime.store";
 import { walletApi, sessionsApi, registrationsApi, usersApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
+import DebtWarningModal from "./DebtWarningModal";
 
 type ActionPhase = "idle" | "loading" | "success";
 
@@ -353,6 +354,8 @@ export default function SessionDetailPage() {
 
   const [respondPhase, setRespondPhase] = useState<"idle" | "accept" | "decline">("idle");
 
+  const [debtWarning, setDebtWarning] = useState<number | null>(null);
+
   const fetchCostDetail = async () => {
     try {
       const { data } = await sessionsApi.getCostDetail(id);
@@ -531,7 +534,12 @@ export default function SessionDetailPage() {
       }, 700);
     } catch (err: any) {
       setRegisterPhase("idle");
-      toast.error(err?.response?.data?.message ?? "Đăng ký thất bại");
+      const data = err?.response?.data;
+      if (data?.code === "WALLET_DEBT_BLOCK") {
+        setDebtWarning(Number(data.debt) || 0);
+      } else {
+        toast.error(data?.message ?? "Đăng ký thất bại");
+      }
     }
   };
 
@@ -2815,6 +2823,10 @@ export default function SessionDetailPage() {
                 fetchRegistrations();
               }}
             />
+          )}
+
+          {debtWarning !== null && (
+            <DebtWarningModal debt={debtWarning} onClose={() => setDebtWarning(null)} />
           )}
         </div>
       </div>

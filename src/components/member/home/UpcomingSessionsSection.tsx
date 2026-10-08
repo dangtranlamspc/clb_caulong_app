@@ -172,6 +172,7 @@ export function AddCompanionModal({
     const panelStyle = (active: boolean): React.CSSProperties => ({
         opacity: active ? 1 : 0,
         visibility: active ? "visible" : "hidden",
+        pointerEvents: active ? "auto" : "none",
         transition: `opacity 250ms ease-out, visibility 0s linear ${active ? "0s" : "300ms"}`,
     });
 
@@ -183,7 +184,15 @@ export function AddCompanionModal({
     const myRegId = session.my_registration?.id;
 
     const handleAdd = async () => {
-        if (!myRegId) return;
+        if (!myRegId) {
+            console.error("[AddCompanionModal] thiếu my_registration.id", session);
+            toast.error("Không tìm thấy đăng ký của bạn, vui lòng tải lại trang");
+            return;
+        }
+        if (String(myRegId).startsWith("temp-")) {
+            toast.error("Đăng ký đang được xử lý, thử lại sau giây lát");
+            return;
+        }
         if (tab === "account") {
             if (!selectedCompanion) {
                 toast.error("Vui lòng chọn thành viên đi cùng");
@@ -437,7 +446,7 @@ export function AddCompanionModal({
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
+                <div className="relative z-10 flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)] bg-[var(--surface)]">
                     <button
                         onClick={close}
                         className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl border border-[var(--border)] text-sm text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
