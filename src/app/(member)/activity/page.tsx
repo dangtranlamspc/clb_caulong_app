@@ -28,6 +28,7 @@ import {
   Download,
   Wallet,
   XIcon,
+  UserPlus,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { sessionsApi, matchesApi, activitiesApi, registrationsApi, walletApi } from "@/lib/api";
@@ -39,6 +40,9 @@ import { useRouter } from "next/navigation";
 import { EventSkeleton, MatchSkeleton, SessionSkeleton, SkeletonList } from "@/components/skeletons/Skeleton";
 import { buildTransferNote } from "@/hooks/payment-ref";
 import toast from "react-hot-toast";
+import DebtWarningModal from "@/components/member/sessions/DebtWarningModal";
+import { c } from "@/lib/theme";
+import { AddCompanionModal } from "@/components/member/home/UpcomingSessionsSection";
 
 type MainTab = "sessions" | "matches" | "events";
 
@@ -771,6 +775,100 @@ function SessionPaymentModal({
   );
 }
 
+function ConfirmCancelRegistrationModal({
+  session,
+  loading,
+  onClose,
+  onConfirm,
+}: {
+  session: any;
+  loading: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<boolean>;
+}) {
+  const [visible, setVisible] = useState(false);
+  const closingRef = useRef(false);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() =>
+      requestAnimationFrame(() => setVisible(true)),
+    );
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const close = useCallback(() => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    setVisible(false);
+    setTimeout(onClose, 250);
+  }, [onClose]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !loading) close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [close, loading]);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{
+        background: visible ? c.overlay : "rgba(0,0,0,0)",
+        backdropFilter: visible ? "blur(2px)" : "blur(0px)",
+        transition: "background 250ms ease-out, backdrop-filter 250ms ease-out",
+      }}
+      onClick={(e) => e.target === e.currentTarget && !loading && close()}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 text-center"
+        style={{
+          boxShadow: c.shadowStrong,
+          opacity: visible ? 1 : 0,
+          transform: visible
+            ? "scale(1) translateY(0)"
+            : "scale(0.92) translateY(12px)",
+          transition: visible
+            ? "transform 300ms cubic-bezier(0.34,1.4,0.64,1), opacity 200ms ease-out"
+            : "transform 220ms cubic-bezier(0.4,0,1,1), opacity 200ms ease-in",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-12 h-12 mx-auto rounded-full bg-[var(--danger-soft)] flex items-center justify-center mb-3">
+          <X className="w-6 h-6 text-[var(--danger)]" />
+        </div>
+        <h3 className="font-bold text-[var(--text)]">Huỷ đăng ký buổi này?</h3>
+        <p className="text-sm text-[var(--text-muted)] mt-1.5 leading-snug">
+          Bạn sẽ không còn trong danh sách của buổi{" "}
+          <span className="font-semibold text-[var(--text)]">{session.title}</span>.
+          Người đi cùng (nếu có) cũng sẽ bị gỡ theo.
+        </p>
+        <div className="flex gap-3 mt-5">
+          <button
+            onClick={close}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] active:scale-95 transition-all disabled:opacity-50"
+          >
+            Giữ lại
+          </button>
+          <button
+            onClick={async () => {
+              const ok = await onConfirm();
+              if (ok) close();
+            }}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+          >
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />} Huỷ đăng ký
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function SessionsTab({
   onPendingBillsChange,
   onOpenSessionsChange,
@@ -787,6 +885,10 @@ function SessionsTab({
   const [pendingBills, setPendingBills] = useState<any[]>([]);
   const [payModalSession, setPayModalSession] = useState<any>(null);
   const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [debtWarning, setDebtWarning] = useState<number | null>(null);
+  const [cancelSession, setCancelSession] = useState<any>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [companionSession, setCompanionSession] = useState<any>(null);
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -880,6 +982,42 @@ function SessionsTab({
       }),
     );
   }, []);
+
+
+  const applyOptimisticCancel = useCallback((sessionId: string) => {
+    setSessions((prev) =>
+      prev.map((sess) =>
+        sess.id !== sessionId
+          ? sess
+          : {
+            ...sess,
+            my_registration: null,
+            available_slots: (sess.available_slots ?? 0) + 1,
+            status: sess.status === "full" ? "open" : sess.status,
+          },
+      ),
+    );
+  }, []);
+
+  const handleCancelRegistration = async (): Promise<boolean> => {
+    const s = cancelSession;
+    const regId = s?.my_registration?.id;
+    if (!regId || cancelling) return false;
+    setCancelling(true);
+    try {
+      await registrationsApi.cancel(regId);
+      toast.success("Đã huỷ đăng ký");
+      applyOptimisticCancel(s.id);
+      fetchSessions({ silent: true });
+      scheduleFetchPendingBills();
+      return true;
+    } catch {
+      return false;
+    } finally {
+      setCancelling(false);
+    }
+  };
+
 
   const fetchPendingBills = useCallback(async () => {
     const mySeq = ++pendingBillsSeqRef.current;
@@ -1082,6 +1220,11 @@ function SessionsTab({
               const ratio = s.max_slots > 0 ? filled / s.max_slots : 0;
               const isFull = s.available_slots <= 0;
               const canRegister = s.status === "open" && !isFull && !myReg;
+              const canCancel =
+                !!myReg &&
+                (s.status === "open" || s.status === "full") &&
+                myReg.payment_status === "pending" &&
+                myReg.amount_override == null;
 
               const slotDimmed =
                 Boolean(myReg?.amount_override) ||
@@ -1175,12 +1318,21 @@ function SessionsTab({
                         />
                       </div>
                     )}
-                    <div className="flex items-center justify-between pt-3 border-t border-[var(--border)] gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                    <div
+                      className={`pt-3 border-t border-[var(--border)] ${canCancel
+                        ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                        : "flex items-center justify-between gap-2"
+                        }`}
+                    >
+                      <div
+                        className={`flex items-center gap-2 min-w-0 flex-wrap ${canCancel ? "w-full sm:w-auto justify-between sm:justify-start" : ""
+                          }`}
+                      >
                         {myReg
                           ? regCfg && (
                             <span
-                              className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${regCfg.cls}`}
+                              className={`flex items-center gap-1.5 text-xs font-medium px-2.5 rounded-full border ${canCancel ? "h-8" : "py-1"
+                                } ${regCfg.cls}`}
                             >
                               <RegIcon className="w-3.5 h-3.5" />
                               {regCfg.label}
@@ -1197,7 +1349,8 @@ function SessionsTab({
                             e.stopPropagation();
                             setModalSession({ id: s.id, title: s.title });
                           }}
-                          className="flex items-center gap-1 text-xs text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg px-2 py-1 active:bg-[var(--surface-hover)] transition-colors"
+                          className={`flex items-center gap-1 whitespace-nowrap text-xs text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg px-2.5 active:bg-[var(--surface-hover)] transition-colors ${canCancel ? "h-8" : "py-1"
+                            }`}
                         >
                           <Users className="w-3.5 h-4.5" />
                           {filled} người
@@ -1243,7 +1396,11 @@ function SessionsTab({
                               });
                               toast.success(data?.message ?? "Đăng ký thành công, vui lòng chờ admin duyệt");
                               fetchSessions({ silent: true });
-                            } catch {
+                            } catch (err: any) {
+                              const data = err?.response?.data;
+                              if (data?.code === "WALLET_DEBT_BLOCK") {
+                                setDebtWarning(Number(data.debt) || 0);
+                              }
                             } finally {
                               setRegisteringId(null);
                             }
@@ -1265,6 +1422,31 @@ function SessionsTab({
                             </>
                           )}
                         </button>
+                      ) : canCancel ? (
+                        <div className="w-full sm:w-auto grid grid-cols-2 sm:flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setCompanionSession(s);
+                            }}
+                            className="flex items-center justify-center gap-1.5 h-10 sm:h-8 px-4 rounded-xl sm:rounded-lg text-sm sm:text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-sm active:scale-95 transition-all"
+                          >
+                            <UserPlus className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Thêm người
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setCancelSession(s);
+                            }}
+                            className="flex items-center justify-center gap-1.5 h-10 sm:h-8 px-4 rounded-xl sm:rounded-lg text-sm sm:text-xs font-semibold text-[var(--danger)] bg-transparent border border-[color-mix(in_srgb,var(--danger)_55%,transparent)] hover:bg-[var(--danger-soft)] active:scale-95 transition-all"
+                          >
+                            <X className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Huỷ đăng ký
+                          </button>
+                        </div>
                       ) : (
                         <ChevronRight className="w-4 h-4 text-[var(--text-faint)] flex-shrink-0" />
                       )}
@@ -1317,6 +1499,30 @@ function SessionsTab({
             }, 300);
           }}
         />
+      )}
+
+      {cancelSession && (
+        <ConfirmCancelRegistrationModal
+          session={cancelSession}
+          loading={cancelling}
+          onClose={() => setCancelSession(null)}
+          onConfirm={handleCancelRegistration}
+        />
+      )}
+
+      {companionSession && (
+        <AddCompanionModal
+          session={companionSession}
+          onClose={() => setCompanionSession(null)}
+          onDone={() => {
+            fetchSessions({ silent: true });
+            scheduleFetchPendingBills();
+          }}
+        />
+      )}
+
+      {debtWarning !== null && (
+        <DebtWarningModal debt={debtWarning} onClose={() => setDebtWarning(null)} />
       )}
 
       {sheetOpen &&
