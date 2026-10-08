@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useTransition, useRef } from "react";
+import { useState, useEffect, useCallback, useTransition, useRef, useLayoutEffect } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -75,6 +75,36 @@ const STATUS_NEXT: Record<
   completed: [],
 };
 
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+function useFillViewport(bottomGap = 0, bleed = 0) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+
+  useIsoLayoutEffect(() => {
+    const calc = () => {
+      const el = ref.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      setHeight(Math.max(320, Math.floor(window.innerHeight - top - bottomGap + bleed)));
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    window.addEventListener("orientationchange", calc);
+    window.visualViewport?.addEventListener("resize", calc);
+    return () => {
+      window.removeEventListener("resize", calc);
+      window.removeEventListener("orientationchange", calc);
+      window.visualViewport?.removeEventListener("resize", calc);
+    };
+  }, [bottomGap]);
+
+  return {
+    ref,
+    style: height ? { height, marginBottom: -bleed } : undefined,
+  };
+}
+
 export default function SessionsPage() {
   const router = useRouter();
   const [sessions, setSessions] = useState<any[]>([]);
@@ -85,6 +115,8 @@ export default function SessionsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const { ref: pageRef, style: pageStyle } = useFillViewport(0);
   const [actionId, setActionId] = useState<string | null>(null);
   const [formTarget, setFormTarget] = useState<{ id?: string } | null>(null);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
@@ -196,7 +228,7 @@ export default function SessionsPage() {
           fetchSessions(page + 1, { append: true });
         }
       },
-      { rootMargin: "300px" },
+      { root: scrollRef.current, rootMargin: "300px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -565,15 +597,15 @@ export default function SessionsPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-3">
+    <div ref={pageRef} style={pageStyle} className="flex flex-col min-h-0 gap-4">
+      <div className="shrink-0 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 sm:p-4 space-y-3 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text)]">Buổi đánh cầu</h1>
           <p className="text-[var(--text-muted)] text-sm mt-0.5">{meta.total ?? 0} buổi</p>
         </div>
         <div className="flex items-center gap-2">
           <LayoutGroup>
-            <div className="flex-1 flex gap-1.5 bg-[var(--surface-muted)] rounded-xl p-1.5 overflow-x-auto scrollbar-hide relative">
+            <div className="flex-1 flex gap-1 bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl p-1 overflow-x-auto scrollbar-hide relative">
               {[
                 ["", "Tất cả"],
                 ["open", "Mở"],
@@ -597,7 +629,7 @@ export default function SessionsPage() {
                     {isActive && (
                       <motion.span
                         layoutId="session-status-pill"
-                        className="absolute inset-0 bg-blue-600 rounded-lg shadow-sm shadow-blue-200"
+                        className="absolute inset-0 bg-blue-600 rounded-lg"
                         transition={{
                           type: "spring",
                           stiffness: 500,
@@ -619,430 +651,434 @@ export default function SessionsPage() {
 
           <button
             onClick={() => setFormTarget({})}
-            className="flex items-center justify-center gap-1.5 w-11 h-11 md:w-auto md:h-[58px] px-0 md:px-4 rounded-xl bg-blue-600 shadow-[0_5px_0_0_#1e40af] hover:shadow-[0_3px_0_0_#1e40af] active:shadow-none active:translate-y-[5px] transition-all duration-200 text-white flex-shrink-0 whitespace-nowrap mb-1.5"
+            className="flex items-center justify-center gap-1.5 w-12 h-12 md:w-auto md:h-12 px-0 md:px-4 rounded-xl bg-blue-600 shadow-[0_4px_0_0_#1e40af] hover:shadow-[0_2px_0_0_#1e40af] active:shadow-none active:translate-y-[4px] transition-all duration-200 text-white flex-shrink-0 whitespace-nowrap"
           >
             <Plus className="w-4 h-4 shrink-0" />
             <span className="hidden md:inline text-sm font-semibold tracking-wide">Thêm buổi đánh</span>
           </button>
         </div>
       </div>
+      <div
+        ref={scrollRef}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain -mx-1 px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="card h-44 animate-pulse bg-[var(--surface-muted)]" />
+            ))}
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="card py-16 text-center text-[var(--text-faint)]">
+            <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p>Chưa có buổi đánh nào</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+            <AnimatePresence mode="popLayout" initial={false}>
+              {sessions.map((s) => {
+                const cfg =
+                  s.status === "waiting_payment"
+                    ? s.pending_action_count > 0
+                      ? STATUS_CONFIG.waiting_payment
+                      : { label: "Chờ chốt thanh toán", cls: "bg-[var(--primary-soft)] text-[var(--primary)]" }
+                    : (STATUS_CONFIG[s.status] ?? STATUS_CONFIG.open);
+                const nextActions = STATUS_NEXT[s.status] ?? [];
+                const busy = actionId === s.id;
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="card h-44 animate-pulse bg-[var(--surface-muted)]" />
-          ))}
-        </div>
-      ) : sessions.length === 0 ? (
-        <div className="card py-16 text-center text-[var(--text-faint)]">
-          <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p>Chưa có buổi đánh nào</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
-          <AnimatePresence mode="popLayout" initial={false}>
-            {sessions.map((s) => {
-              const cfg =
-                s.status === "waiting_payment"
-                  ? s.pending_action_count > 0
-                    ? STATUS_CONFIG.waiting_payment
-                    : { label: "Chờ chốt thanh toán", cls: "bg-[var(--primary-soft)] text-[var(--primary)]" }
-                  : (STATUS_CONFIG[s.status] ?? STATUS_CONFIG.open);
-              const nextActions = STATUS_NEXT[s.status] ?? [];
-              const busy = actionId === s.id;
-
-              return (
-                <motion.div
-                  key={s.id}
-                  layout
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.2 } }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
-                  className="card flex flex-col gap-3 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)]"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-[var(--text)] leading-tight">
-                      {s.title}
-                    </h3>
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${cfg.cls}`}
-                    >
-                      {cfg.label}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 text-sm text-[var(--text-muted)]">
-                    <div className="flex items-center gap-2">
-                      <CalendarDays className="w-3.5 h-3.5 flex-shrink-0 text-[var(--text-faint)]" />
-                      <span>
-                        {format(
-                          new Date(s.scheduled_at),
-                          "EEEE, dd/MM/yyyy HH:mm",
-                          { locale: vi },
-                        )}
-                      </span>
-                    </div>
-                    {s.location && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-[var(--text-faint)]" />
-                        <span className="truncate">{s.location}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1 flex-wrap">
-                        <Users className="w-3.5 h-3.5 text-[var(--text-faint)]" />
-                        <span
-                          className={
-                            s.available_slots <= 0
-                              ? "text-[var(--danger)] font-medium"
-                              : ""
-                          }
-                        >
-                          {s.available_slots <= 0
-                            ? "Hết chỗ"
-                            : `${s.available_slots ?? s.max_slots}/${s.max_slots} chỗ trống`}
-                        </span>
-                        {(s.male_count > 0 || s.female_count > 0) && (
-                          <span className="text-[var(--text-faint)] text-xs">
-                            · 👨 {s.male_count ?? 0} · 👩 {s.female_count ?? 0}
-                          </span>
-                        )}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-[var(--text-faint)]" />
-                        {s.duration_minutes} phút
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-[var(--border)] pt-2">
-                    <span className="text-xs text-[var(--text-faint)]">
-                      {s.confirmed_count ?? 0} đã xác nhận ·{" "}
-                      {s.pending_count ?? 0} chờ
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col gap-3.5 pt-1 pb-1.5">
-                    <div className="flex gap-2.5">
-                      <button
-                        onClick={() => {
-                          setNavigatingId(s.id);
-                          startNavLoading();
-                          startTransition(() => {
-                            router.push(`/admin/sessions/${s.id}`);
-                          });
-                        }}
-                        disabled={navigatingId === s.id}
-                        className={`${BTN_3D} ${BTN3D.gray}`}
+                return (
+                  <motion.div
+                    key={s.id}
+                    layout
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.2 } }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="card flex flex-col gap-3 shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)]"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-semibold text-[var(--text)] leading-tight">
+                        {s.title}
+                      </h3>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${cfg.cls}`}
                       >
-                        {navigatingId === s.id ? (
-                          <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-                        ) : (
-                          <Eye className="w-4 h-4 shrink-0" />
-                        )}
-                        Xem
-                      </button>
-
-                      {s.status !== "completed" && (
-                        <button
-                          onClick={() => setFormTarget({ id: s.id })}
-                          className={`${BTN_3D} ${BTN3D.blue}`}
-                        >
-                          <Pencil className="w-4 h-4" /> Sửa
-                        </button>
-                      )}
-
-                      {s.status === "cancelled" && (
-                        <button
-                          onClick={() => handleDelete(s.id, s.title)}
-                          disabled={busy}
-                          className={`${BTN_3D} ${BTN3D.red}`}
-                        >
-                          <Trash2 className="w-4 h-4 shrink-0" /> Xóa
-                        </button>
-                      )}
+                        {cfg.label}
+                      </span>
                     </div>
 
-                    {nextActions.length > 0 && (
+                    <div className="space-y-1.5 text-sm text-[var(--text-muted)]">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="w-3.5 h-3.5 flex-shrink-0 text-[var(--text-faint)]" />
+                        <span>
+                          {format(
+                            new Date(s.scheduled_at),
+                            "EEEE, dd/MM/yyyy HH:mm",
+                            { locale: vi },
+                          )}
+                        </span>
+                      </div>
+                      {s.location && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-[var(--text-faint)]" />
+                          <span className="truncate">{s.location}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1 flex-wrap">
+                          <Users className="w-3.5 h-3.5 text-[var(--text-faint)]" />
+                          <span
+                            className={
+                              s.available_slots <= 0
+                                ? "text-[var(--danger)] font-medium"
+                                : ""
+                            }
+                          >
+                            {s.available_slots <= 0
+                              ? "Hết chỗ"
+                              : `${s.available_slots ?? s.max_slots}/${s.max_slots} chỗ trống`}
+                          </span>
+                          {(s.male_count > 0 || s.female_count > 0) && (
+                            <span className="text-[var(--text-faint)] text-xs">
+                              · 👨 {s.male_count ?? 0} · 👩 {s.female_count ?? 0}
+                            </span>
+                          )}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-[var(--text-faint)]" />
+                          {s.duration_minutes} phút
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-[var(--border)] pt-2">
+                      <span className="text-xs text-[var(--text-faint)]">
+                        {s.confirmed_count ?? 0} đã xác nhận ·{" "}
+                        {s.pending_count ?? 0} chờ
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-3.5 pt-1 pb-1.5">
                       <div className="flex gap-2.5">
-                        {nextActions.map(({ label, next, to, action, cls }) =>
-                          to ? (
-                            <Link
-                              key={to}
-                              href={`/admin/sessions/${s.id}/${to}`}
-                              className={`${BTN_3D} ${cls}`}
-                            >
-                              {label}
-                            </Link>
-                          ) : action === "complete" ? (
-                            <button
-                              key="complete"
-                              onClick={() => openCompleteModal(s.id, s.title)}
-                              disabled={busy}
-                              className={`${BTN_3D} ${cls}`}
-                            >
-                              {label}
-                            </button>
+                        <button
+                          onClick={() => {
+                            setNavigatingId(s.id);
+                            startNavLoading();
+                            startTransition(() => {
+                              router.push(`/admin/sessions/${s.id}`);
+                            });
+                          }}
+                          disabled={navigatingId === s.id}
+                          className={`${BTN_3D} ${BTN3D.gray}`}
+                        >
+                          {navigatingId === s.id ? (
+                            <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
                           ) : (
-                            <button
-                              key={next}
-                              onClick={() =>
-                                next === "cancelled"
-                                  ? setCancelTarget({ id: s.id, title: s.title })
-                                  : handleStatusChange(s.id, next!)
-                              }
-                              disabled={busy}
-                              className={`${BTN_3D} ${cls}`}
-                            >
-                              {label}
-                            </button>
-                          ),
+                            <Eye className="w-4 h-4 shrink-0" />
+                          )}
+                          Xem
+                        </button>
+
+                        {s.status !== "completed" && (
+                          <button
+                            onClick={() => setFormTarget({ id: s.id })}
+                            className={`${BTN_3D} ${BTN3D.blue}`}
+                          >
+                            <Pencil className="w-4 h-4" /> Sửa
+                          </button>
+                        )}
+
+                        {s.status === "cancelled" && (
+                          <button
+                            onClick={() => handleDelete(s.id, s.title)}
+                            disabled={busy}
+                            className={`${BTN_3D} ${BTN3D.red}`}
+                          >
+                            <Trash2 className="w-4 h-4 shrink-0" /> Xóa
+                          </button>
                         )}
                       </div>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      )}
 
-      {hasMore && (
-        <div ref={sentinelRef} className="flex justify-center py-6">
-          {loadingMore && (
-            <div className="flex items-center gap-2 text-[var(--text-faint)] text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" /> Đang tải thêm...
-            </div>
-          )}
-        </div>
-      )}
+                      {nextActions.length > 0 && (
+                        <div className="flex gap-2.5">
+                          {nextActions.map(({ label, next, to, action, cls }) =>
+                            to ? (
+                              <Link
+                                key={to}
+                                href={`/admin/sessions/${s.id}/${to}`}
+                                className={`${BTN_3D} ${cls}`}
+                              >
+                                {label}
+                              </Link>
+                            ) : action === "complete" ? (
+                              <button
+                                key="complete"
+                                onClick={() => openCompleteModal(s.id, s.title)}
+                                disabled={busy}
+                                className={`${BTN_3D} ${cls}`}
+                              >
+                                {label}
+                              </button>
+                            ) : (
+                              <button
+                                key={next}
+                                onClick={() =>
+                                  next === "cancelled"
+                                    ? setCancelTarget({ id: s.id, title: s.title })
+                                    : handleStatusChange(s.id, next!)
+                                }
+                                disabled={busy}
+                                className={`${BTN_3D} ${cls}`}
+                              >
+                                {label}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
 
-      <SessionFormModal
-        target={formTarget}
-        onClose={() => setFormTarget(null)}
-        onSuccess={() => refreshLoaded()}
-      />
+        {hasMore && (
+          <div ref={sentinelRef} className="flex justify-center py-6">
+            {loadingMore && (
+              <div className="flex items-center gap-2 text-[var(--text-faint)] text-sm">
+                <Loader2 className="w-4 h-4 animate-spin" /> Đang tải thêm...
+              </div>
+            )}
+          </div>
+        )}
 
-      {deleteTarget &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{
-              background: "var(--overlay)",
-              backdropFilter: "blur(2px)",
-              opacity: deleteModalVisible ? 1 : 0,
-              transition: "opacity 200ms ease-out",
-            }}
-            onClick={closeDeleteModal}
-          >
+        <SessionFormModal
+          target={formTarget}
+          onClose={() => setFormTarget(null)}
+          onSuccess={() => refreshLoaded()}
+        />
+
+        {deleteTarget &&
+          typeof document !== "undefined" &&
+          createPortal(
             <div
-              className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
               style={{
-                transform: deleteModalVisible
-                  ? "scale(1) translateY(0)"
-                  : "scale(0.95) translateY(8px)",
+                background: "var(--overlay)",
+                backdropFilter: "blur(2px)",
                 opacity: deleteModalVisible ? 1 : 0,
-                transition:
-                  "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                transition: "opacity 200ms ease-out",
               }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={closeDeleteModal}
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
-                    <Trash2 className="w-4 h-4 text-[var(--danger)]" />
+              <div
+                className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl"
+                style={{
+                  transform: deleteModalVisible
+                    ? "scale(1) translateY(0)"
+                    : "scale(0.95) translateY(8px)",
+                  opacity: deleteModalVisible ? 1 : 0,
+                  transition:
+                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
+                      <Trash2 className="w-4 h-4 text-[var(--danger)]" />
+                    </div>
+                    <h3 className="font-bold text-[var(--text)]">Xóa buổi đánh?</h3>
                   </div>
-                  <h3 className="font-bold text-[var(--text)]">Xóa buổi đánh?</h3>
+                  <button
+                    onClick={closeDeleteModal}
+                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  onClick={closeDeleteModal}
-                  className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
-                >
-                  <XCircle className="w-5 h-5" />
-                </button>
-              </div>
 
-              <div className="p-5">
-                <p className="text-sm text-[var(--text-muted)]">
-                  Xóa buổi{" "}
-                  <strong className="text-[var(--text)]">
-                    "{deleteTarget.title}"
-                  </strong>
-                  ? Hành động này không thể hoàn tác.
-                </p>
-              </div>
+                <div className="p-5">
+                  <p className="text-sm text-[var(--text-muted)]">
+                    Xóa buổi{" "}
+                    <strong className="text-[var(--text)]">
+                      "{deleteTarget.title}"
+                    </strong>
+                    ? Hành động này không thể hoàn tác.
+                  </p>
+                </div>
 
-              <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
-                <button
-                  onClick={closeDeleteModal}
-                  className="btn-secondary text-sm"
-                >
-                  Hủy
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  disabled={actionId === deleteTarget.id}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  Xóa buổi
-                </button>
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
+                  <button
+                    onClick={closeDeleteModal}
+                    className="btn-secondary text-sm"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    disabled={actionId === deleteTarget.id}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    Xóa buổi
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+            </div>,
+            document.body,
+          )}
 
-      {cancelTarget &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{
-              background: "var(--overlay)",
-              backdropFilter: "blur(2px)",
-              opacity: cancelModalVisible ? 1 : 0,
-              transition: "opacity 200ms ease-out",
-            }}
-            onClick={closeCancelModal}
-          >
+        {cancelTarget &&
+          typeof document !== "undefined" &&
+          createPortal(
             <div
-              className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
               style={{
-                transform: cancelModalVisible
-                  ? "scale(1) translateY(0)"
-                  : "scale(0.95) translateY(8px)",
+                background: "var(--overlay)",
+                backdropFilter: "blur(2px)",
                 opacity: cancelModalVisible ? 1 : 0,
-                transition:
-                  "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                transition: "opacity 200ms ease-out",
               }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={closeCancelModal}
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
-                    <XCircle className="w-4 h-4 text-[var(--danger)]" />
+              <div
+                className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl"
+                style={{
+                  transform: cancelModalVisible
+                    ? "scale(1) translateY(0)"
+                    : "scale(0.95) translateY(8px)",
+                  opacity: cancelModalVisible ? 1 : 0,
+                  transition:
+                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
+                      <XCircle className="w-4 h-4 text-[var(--danger)]" />
+                    </div>
+                    <h3 className="font-bold text-[var(--text)]">Hủy buổi đánh?</h3>
                   </div>
-                  <h3 className="font-bold text-[var(--text)]">Hủy buổi đánh?</h3>
+                  <button
+                    onClick={closeCancelModal}
+                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  onClick={closeCancelModal}
-                  className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
-                >
-                  <XCircle className="w-5 h-5" />
-                </button>
-              </div>
 
-              <div className="p-5 space-y-2">
-                <p className="text-sm text-[var(--text-muted)]">
-                  Hủy buổi{" "}
-                  <strong className="text-[var(--text)]">
-                    "{cancelTarget.title}"
-                  </strong>
-                  ?
-                </p>
-                <p className="text-sm text-[var(--danger)]">
-                  Toàn bộ thành viên đã đăng ký buổi này sẽ bị{" "}
-                  <strong>xóa khỏi danh sách</strong>, kể cả người đã xác nhận
-                  thanh toán. Bạn có thể "Mở lại" buổi sau nhưng danh sách đăng
-                  ký sẽ không được khôi phục.
-                </p>
-              </div>
+                <div className="p-5 space-y-2">
+                  <p className="text-sm text-[var(--text-muted)]">
+                    Hủy buổi{" "}
+                    <strong className="text-[var(--text)]">
+                      "{cancelTarget.title}"
+                    </strong>
+                    ?
+                  </p>
+                  <p className="text-sm text-[var(--danger)]">
+                    Toàn bộ thành viên đã đăng ký buổi này sẽ bị{" "}
+                    <strong>xóa khỏi danh sách</strong>, kể cả người đã xác nhận
+                    thanh toán. Bạn có thể "Mở lại" buổi sau nhưng danh sách đăng
+                    ký sẽ không được khôi phục.
+                  </p>
+                </div>
 
-              <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
-                <button
-                  onClick={closeCancelModal}
-                  className="btn-secondary text-sm"
-                >
-                  Đóng
-                </button>
-                <button
-                  onClick={confirmCancelSession}
-                  disabled={actionId === cancelTarget.id}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  Xác nhận hủy buổi
-                </button>
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
+                  <button
+                    onClick={closeCancelModal}
+                    className="btn-secondary text-sm"
+                  >
+                    Đóng
+                  </button>
+                  <button
+                    onClick={confirmCancelSession}
+                    disabled={actionId === cancelTarget.id}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    Xác nhận hủy buổi
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+            </div>,
+            document.body,
+          )}
 
-      {completeTarget &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{
-              background: "var(--overlay)",
-              backdropFilter: "blur(2px)",
-              opacity: completeModalVisible ? 1 : 0,
-              transition: "opacity 200ms ease-out",
-            }}
-            onClick={closeCompleteModal}
-          >
+        {completeTarget &&
+          typeof document !== "undefined" &&
+          createPortal(
             <div
-              className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
               style={{
-                transform: completeModalVisible
-                  ? "scale(1) translateY(0)"
-                  : "scale(0.95) translateY(8px)",
+                background: "var(--overlay)",
+                backdropFilter: "blur(2px)",
                 opacity: completeModalVisible ? 1 : 0,
-                transition:
-                  "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                transition: "opacity 200ms ease-out",
               }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={closeCompleteModal}
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[var(--success-soft)] flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-4 h-4 text-[var(--success)]" />
+              <div
+                className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
+                style={{
+                  transform: completeModalVisible
+                    ? "scale(1) translateY(0)"
+                    : "scale(0.95) translateY(8px)",
+                  opacity: completeModalVisible ? 1 : 0,
+                  transition:
+                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[var(--success-soft)] flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-4 h-4 text-[var(--success)]" />
+                    </div>
+                    <h3 className="font-bold text-[var(--text)]">Hoàn thành buổi đánh?</h3>
                   </div>
-                  <h3 className="font-bold text-[var(--text)]">Hoàn thành buổi đánh?</h3>
+                  <button
+                    onClick={closeCompleteModal}
+                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  onClick={closeCompleteModal}
-                  className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
-                >
-                  <XCircle className="w-5 h-5" />
-                </button>
-              </div>
 
-              <div className="p-5 text-sm text-[var(--text-muted)]">
-                {loadingCompleteRegs ? (
-                  <div className="flex items-center justify-center py-6 gap-2 text-[var(--text-faint)]">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
-                  </div>
-                ) : completePending.length +
-                  completePendingReview.length +
-                  completeWalletPendingConfirm.length >
-                  0 ? (
-                  buildCompletePendingSummary()
-                ) : (
-                  "Xác nhận hoàn thành buổi đánh? Buổi sẽ bị khoá lại."
-                )}
-              </div>
+                <div className="p-5 text-sm text-[var(--text-muted)]">
+                  {loadingCompleteRegs ? (
+                    <div className="flex items-center justify-center py-6 gap-2 text-[var(--text-faint)]">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+                    </div>
+                  ) : completePending.length +
+                    completePendingReview.length +
+                    completeWalletPendingConfirm.length >
+                    0 ? (
+                    buildCompletePendingSummary()
+                  ) : (
+                    "Xác nhận hoàn thành buổi đánh? Buổi sẽ bị khoá lại."
+                  )}
+                </div>
 
-              <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
-                <button onClick={closeCompleteModal} className="btn-secondary text-sm">
-                  Hủy
-                </button>
-                <button
-                  onClick={confirmCompleteSession}
-                  disabled={completing || loadingCompleteRegs}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  {completing && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Xác nhận
-                </button>
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
+                  <button onClick={closeCompleteModal} className="btn-secondary text-sm">
+                    Hủy
+                  </button>
+                  <button
+                    onClick={confirmCompleteSession}
+                    disabled={completing || loadingCompleteRegs}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    {completing && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Xác nhận
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+            </div>,
+            document.body,
+          )}
+      </div>
     </div>
   );
 }
