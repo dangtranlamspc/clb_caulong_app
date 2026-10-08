@@ -223,7 +223,7 @@ export default function SessionFormModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       style={{
         background: "var(--overlay)",
         backdropFilter: "blur(2px)",
@@ -232,35 +232,36 @@ export default function SessionFormModal({
       }}
     >
       <div
-        className="bg-[var(--surface)] rounded-2xl w-full max-w-xl shadow-xl my-8 max-h-[90vh] flex flex-col"
+        className="bg-[var(--surface)] w-full sm:max-w-xl rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] sm:max-h-[90vh] flex flex-col"
         style={{
           transform: visible
-            ? "scale(1) translateY(0)"
-            : "scale(0.95) translateY(8px)",
+            ? "translateY(0) scale(1)"
+            : "translateY(24px) scale(0.97)",
           opacity: visible ? 1 : 0,
           transition:
-            "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+            "transform 240ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-[var(--primary)]" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[var(--primary-soft)] flex items-center justify-center">
+              <CalendarDays className="w-4 h-4 text-[var(--primary)]" />
+            </div>
             <h3 className="font-bold text-[var(--text)]">
               {isEdit ? "Chỉnh sửa buổi đánh" : "Tạo buổi đánh mới"}
             </h3>
           </div>
           <button
             onClick={handleClose}
-            className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="overflow-y-auto px-5 py-4">
+        <div className="overflow-y-auto px-5 py-5 flex-1 min-h-0">
           {fetching ? (
             <div className="space-y-4">
               {[...Array(6)].map((_, i) => (
@@ -324,39 +325,31 @@ export default function SessionFormModal({
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text)] mb-1">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
                       Thời lượng (phút)
                     </label>
-                    <input
-                      {...register("duration_minutes", { min: 30 })}
-                      type="number"
-                      className="input-field"
-                    />
+                    <input {...register("duration_minutes", { min: 30 })} type="number" className="input-field" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text)] mb-1">
+                    <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
                       Số chỗ tối đa
                     </label>
-                    <input
-                      {...register("max_slots", { min: 1 })}
-                      type="number"
-                      className="input-field"
-                    />
+                    <input {...register("max_slots", { min: 1 })} type="number" className="input-field" />
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between gap-2 mb-1.5 min-h-8">
                     <label className="block text-sm font-medium text-[var(--text)]">Địa điểm</label>
                     <button
                       type="button"
                       onClick={() => setShowLocManager(true)}
-                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-green-600 border border-green-700 rounded-lg hover:bg-green-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-lg text-[var(--primary)] bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] hover:brightness-110 active:scale-95 transition-all"
                     >
                       <MapPin className="w-3.5 h-3.5" />
-                      Quản lý địa điểm
+                      Quản lý
                     </button>
                   </div>
                   <Controller
@@ -373,9 +366,10 @@ export default function SessionFormModal({
                   />
                 </div>
 
-                <p className="text-xs text-[var(--text-faint)] italic">
-                  ℹ️ Giá tiền từng người sẽ được nhập riêng lúc "Kết thúc buổi"
-                </p>
+                <div className="flex items-start gap-2 rounded-xl bg-[var(--surface-muted)] border border-[var(--border)] px-3 py-2.5 text-xs text-[var(--text-muted)]">
+                  <span>ℹ️</span>
+                  <span>Giá tiền từng người sẽ được nhập riêng lúc "Kết thúc buổi"</span>
+                </div>
               </div>
 
               {isCompleted && (
@@ -458,50 +452,51 @@ export default function SessionFormModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end items-center gap-3 px-5 py-4 border-t border-[var(--border)] flex-shrink-0">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="btn-secondary text-sm flex-none w-auto"
-          >
-            Hủy
-          </button>
-
-          {!isEdit && (
+        <div
+          className="px-5 py-4 border-t border-[var(--border)] flex-shrink-0"
+          style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end sm:items-center sm:gap-3">
             <button
               type="submit"
               form="session-form"
-              onClick={() => {
-                continueAfterSaveRef.current = true;
-              }}
+              onClick={() => { continueAfterSaveRef.current = false; }}
               disabled={loading || fetching}
-              className="flex items-center justify-center gap-2 text-sm flex-none w-auto px-4 py-2 rounded-lg border border-blue-600 text-[var(--primary)] hover:bg-[var(--primary-soft)] font-medium disabled:opacity-50"
+              className="col-span-2 sm:order-3 h-11 sm:h-10 px-5 rounded-xl sm:rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all disabled:opacity-50"
             >
-              {loading && continueAfterSaveRef.current ? (
+              {loading && !continueAfterSaveRef.current ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              Lưu và tiếp tục
+              {isEdit ? "Lưu thay đổi" : "Tạo buổi"}
             </button>
-          )}
 
-          <button
-            type="submit"
-            form="session-form"
-            onClick={() => {
-              continueAfterSaveRef.current = false;
-            }}
-            disabled={loading || fetching}
-            className="btn-primary flex items-center justify-center gap-2 text-sm flex-none w-auto"
-          >
-            {loading && !continueAfterSaveRef.current ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
+            {!isEdit && (
+              <button
+                type="submit"
+                form="session-form"
+                onClick={() => { continueAfterSaveRef.current = true; }}
+                disabled={loading || fetching}
+                className="sm:order-2 h-11 sm:h-10 px-4 rounded-xl sm:rounded-lg border border-[color-mix(in_srgb,var(--primary)_55%,transparent)] text-[var(--primary)] hover:bg-[var(--primary-soft)] text-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {loading && continueAfterSaveRef.current ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Lưu và tiếp tục
+              </button>
             )}
-            {isEdit ? "Lưu thay đổi" : "Tạo buổi"}
-          </button>
+
+            <button
+              type="button"
+              onClick={handleClose}
+              className={`sm:order-1 h-11 sm:h-10 px-4 rounded-xl sm:rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] text-sm font-medium flex items-center justify-center active:scale-95 transition-all ${isEdit ? "col-span-2" : ""}`}
+            >
+              Hủy
+            </button>
+          </div>
         </div>
       </div>
       <LocationManagerModal

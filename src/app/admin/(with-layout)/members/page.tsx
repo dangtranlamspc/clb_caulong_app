@@ -76,6 +76,11 @@ const APPROVAL_STATUS_OPTIONS = [
     { value: 'rejected', label: 'Đã từ chối' },
 ];
 
+const BALANCE_SORT_OPTIONS = [
+    { value: 'asc', label: 'Số dư ví: Tăng dần (âm nhiều → ít)' },
+    { value: 'desc', label: 'Số dư ví: Giảm dần (dương nhiều → ít)' },
+];
+
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
     return (
         <select
@@ -276,6 +281,21 @@ function RowActions({
     );
 }
 
+const DEBT_THRESHOLD = 500_000;
+
+const fmtMoney = (n: number) => Math.round(n).toLocaleString('vi-VN') + 'đ';
+
+const isDebtEligible = (u: any) => Number(u.wallet_balance ?? 0) <= -DEBT_THRESHOLD;
+
+function BalanceText({ value }: { value: number }) {
+    const n = Number(value ?? 0);
+    const cls =
+        n < 0 ? 'text-[var(--danger)]'
+            : n === 0 ? 'text-[var(--text-faint)]'
+                : 'text-[var(--success)]';
+    return <span className={`font-semibold tabular-nums ${cls}`}>{fmtMoney(n)}</span>;
+}
+
 
 function LockSwitch({ locked, disabled, onClick }: { locked: boolean; disabled?: boolean; onClick: () => void }) {
     return (
@@ -301,7 +321,7 @@ function DebtSwitch({ active, disabled, onClick }: { active: boolean; disabled?:
             aria-checked={active}
             disabled={disabled}
             onClick={onClick}
-            title={active ? 'Đang bật: nợ ví > 500k sẽ không đăng ký được buổi' : 'Đang tắt: không kiểm tra nợ ví'}
+            title={active ? 'Đang bật: nợ ví từ 500k trở lên sẽ không đăng ký được buổi' : 'Đang tắt: không kiểm tra nợ ví'}
             className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${active ? 'bg-amber-500' : 'bg-[var(--border)]'}`}
         >
             <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${active ? 'translate-x-4' : 'translate-x-0.5'}`} />
@@ -325,6 +345,8 @@ export default function AdminMembersPage() {
         member_type: initialMemberType,
         member_subtype: initialMemberSubtype,
         level: '',
+        sort_by: 'wallet_balance',
+        sort_order: 'asc',
         page: 1, limit: 20,
     });
     const [showFilters, setShowFilters] = useState(!!initialMemberType);
@@ -522,7 +544,7 @@ export default function AdminMembersPage() {
                 </GradientBorderButton>
                 <GradientBorderButton
                     onClick={openCreateModal}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium shadow-sm shadow-blue-200 hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
                     <span className="hidden sm:inline">Thêm mới</span>
@@ -568,6 +590,11 @@ export default function AdminMembersPage() {
                         <Select value={query.level} onChange={(v) => setQuery((q) => ({ ...q, level: v, page: 1 }))} options={LEVEL_OPTIONS} />
                         <Select value={query.is_active} onChange={(v) => setQuery((q) => ({ ...q, is_active: v, page: 1 }))} options={STATUS_OPTIONS} />
                         <Select value={query.approval_status} onChange={(v) => setQuery((q) => ({ ...q, approval_status: v, page: 1 }))} options={APPROVAL_STATUS_OPTIONS} />
+                        <Select
+                            value={query.sort_order}
+                            onChange={(v) => setQuery((q) => ({ ...q, sort_by: 'wallet_balance', sort_order: v, page: 1 }))}
+                            options={BALANCE_SORT_OPTIONS}
+                        />
                     </div>
                 )}
             </div>
@@ -632,13 +659,20 @@ export default function AdminMembersPage() {
                             </div>
 
                             <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
-                                <span className="text-xs text-[var(--text-muted)]">Cảnh báo nợ ví (&gt; 500k)</span>
-                                <DebtSwitch
-                                    active={user.debt_block_enabled === true}
-                                    disabled={actionLoading === user.id}
-                                    onClick={() => handleToggleDebtBlock(user.id)}
-                                />
+                                <span className="text-xs text-[var(--text-muted)]">Số dư ví</span>
+                                <BalanceText value={user.wallet_balance} />
                             </div>
+
+                            {isDebtEligible(user) && (
+                                <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
+                                    <span className="text-xs text-[var(--text-muted)]">Cảnh báo nợ ví (≥ 500k)</span>
+                                    <DebtSwitch
+                                        active={user.debt_block_enabled === true}
+                                        disabled={actionLoading === user.id}
+                                        onClick={() => handleToggleDebtBlock(user.id)}
+                                    />
+                                </div>
+                            )}
 
                             <div className="pt-2 border-t border-[var(--border)]">
                                 <RowActions
@@ -667,6 +701,7 @@ export default function AdminMembersPage() {
                                 <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)]">Vai trò</th>
                                 <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)] hidden sm:table-cell">Phân cấp</th>
                                 <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)]">Trạng thái</th>
+                                <th className="px-4 py-3 text-right font-medium text-[var(--text-muted)]">Số dư ví</th>
                                 <th className="px-4 py-3 text-center font-medium text-[var(--text-muted)]">Khóa hồ sơ</th>
                                 <th className="px-4 py-3 text-center font-medium text-[var(--text-muted)]">Cảnh báo nợ</th>
                                 <th className="px-4 py-3 text-right font-medium text-[var(--text-muted)]">Thao tác</th>
@@ -676,7 +711,7 @@ export default function AdminMembersPage() {
                             {loading ? (
                                 [...Array(9)].map((_, i) => (
                                     <tr key={i}>
-                                        {[...Array(8)].map((_, j) => (
+                                        {[...Array(10)].map((_, j) => (
                                             <td key={j} className="px-4 py-3">
                                                 <div className="h-4 bg-[var(--surface-muted)] rounded animate-pulse" />
                                             </td>
@@ -685,7 +720,7 @@ export default function AdminMembersPage() {
                                 ))
                             ) : users.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-4 py-12 text-center text-[var(--text-faint)]">
+                                    <td colSpan={10} className="px-4 py-12 text-center text-[var(--text-faint)]">
                                         Không tìm thấy dữ liệu
                                     </td>
                                 </tr>
@@ -725,6 +760,9 @@ export default function AdminMembersPage() {
                                         </span>
                                         <div className="mt-1"><ApprovalBadge user={user} /></div>
                                     </td>
+                                    <td className="px-4 py-3 text-right">
+                                        <BalanceText value={user.wallet_balance} />
+                                    </td>
                                     <td className="px-4 py-3 text-center">
                                         <LockSwitch
                                             locked={user.profile_locked !== false}
@@ -733,11 +771,15 @@ export default function AdminMembersPage() {
                                         />
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <DebtSwitch
-                                            active={user.debt_block_enabled === true}
-                                            disabled={actionLoading === user.id}
-                                            onClick={() => handleToggleDebtBlock(user.id)}
-                                        />
+                                        {isDebtEligible(user) ? (
+                                            <DebtSwitch
+                                                active={user.debt_block_enabled === true}
+                                                disabled={actionLoading === user.id}
+                                                onClick={() => handleToggleDebtBlock(user.id)}
+                                            />
+                                        ) : (
+                                            <span className="text-xs text-[var(--text-faint)]">—</span>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3">
                                         <RowActions
