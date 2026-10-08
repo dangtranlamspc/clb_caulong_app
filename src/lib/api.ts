@@ -45,6 +45,7 @@ api.interceptors.response.use(
     const original = error.config;
     const url: string = original?.url ?? "";
     const status: number | undefined = error.response?.status;
+    const isDebtBlock = error.response?.data?.code === "WALLET_DEBT_BLOCK";
 
     const isAuthEndpoint = [
       "/auth/login",
@@ -80,7 +81,7 @@ api.interceptors.response.use(
       }
     }
 
-    if (!isAuthEndpoint && status !== 401 && !original?.skipErrorToast) {
+    if (!isAuthEndpoint && status !== 401 && !isDebtBlock && !original?.skipErrorToast) {
       const msg = error.response?.data?.message;
       const text = Array.isArray(msg) ? msg[0] : msg;
       if (text) toast.error(text);
@@ -177,6 +178,7 @@ export const registrationsApi = {
   getDetail: (id: string) => api.get(`/registrations/${id}`, { skipErrorToast: true } as any),
   respond: (id: string, action: "accept" | "decline") =>
     api.patch(`/registrations/${id}/respond`, { action }),
+
 };
 
 export const rankingsApi = {
@@ -392,6 +394,7 @@ export const membersAdminApi = {
   approve: (id: string) => api.patch(`/users/${id}/approve`),
   reject: (id: string) => api.patch(`/users/${id}/reject`),
   toggleProfileLock: (id: string) => api.patch(`/users/${id}/toggle-profile-lock`),
+  toggleDebtBlock: (id: string) => api.patch(`/users/${id}/toggle-debt-block`),
 };
 
 export const sessionsAdminApi = {

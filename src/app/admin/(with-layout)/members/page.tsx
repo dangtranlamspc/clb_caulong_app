@@ -293,6 +293,22 @@ function LockSwitch({ locked, disabled, onClick }: { locked: boolean; disabled?:
     );
 }
 
+function DebtSwitch({ active, disabled, onClick }: { active: boolean; disabled?: boolean; onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            role="switch"
+            aria-checked={active}
+            disabled={disabled}
+            onClick={onClick}
+            title={active ? 'Đang bật: nợ ví > 500k sẽ không đăng ký được buổi' : 'Đang tắt: không kiểm tra nợ ví'}
+            className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${active ? 'bg-amber-500' : 'bg-[var(--border)]'}`}
+        >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${active ? 'translate-x-4' : 'translate-x-0.5'}`} />
+        </button>
+    );
+}
+
 export default function AdminMembersPage() {
     const searchParams = useSearchParams();
 
@@ -380,6 +396,21 @@ export default function AdminMembersPage() {
             const { data } = await membersAdminApi.toggleProfileLock(id);
             setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, profile_locked: data.profile_locked } : u)));
             toast.success(data.profile_locked ? 'Đã khóa chỉnh sửa hồ sơ' : 'Đã cho phép sửa toàn bộ hồ sơ');
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Thao tác thất bại');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+
+
+    const handleToggleDebtBlock = async (id: string) => {
+        setActionLoading(id);
+        try {
+            const { data } = await membersAdminApi.toggleDebtBlock(id);
+            setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, debt_block_enabled: data.debt_block_enabled } : u)));
+            toast.success(data.debt_block_enabled ? 'Đã bật cảnh báo nợ ví' : 'Đã tắt cảnh báo nợ ví');
         } catch (err: any) {
             toast.error(err?.response?.data?.message ?? 'Thao tác thất bại');
         } finally {
@@ -600,6 +631,15 @@ export default function AdminMembersPage() {
                                 />
                             </div>
 
+                            <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
+                                <span className="text-xs text-[var(--text-muted)]">Cảnh báo nợ ví (&gt; 500k)</span>
+                                <DebtSwitch
+                                    active={user.debt_block_enabled === true}
+                                    disabled={actionLoading === user.id}
+                                    onClick={() => handleToggleDebtBlock(user.id)}
+                                />
+                            </div>
+
                             <div className="pt-2 border-t border-[var(--border)]">
                                 <RowActions
                                     user={user}
@@ -628,12 +668,13 @@ export default function AdminMembersPage() {
                                 <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)] hidden sm:table-cell">Phân cấp</th>
                                 <th className="px-4 py-3 text-left font-medium text-[var(--text-muted)]">Trạng thái</th>
                                 <th className="px-4 py-3 text-center font-medium text-[var(--text-muted)]">Khóa hồ sơ</th>
+                                <th className="px-4 py-3 text-center font-medium text-[var(--text-muted)]">Cảnh báo nợ</th>
                                 <th className="px-4 py-3 text-right font-medium text-[var(--text-muted)]">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border)]">
                             {loading ? (
-                                [...Array(8)].map((_, i) => (
+                                [...Array(9)].map((_, i) => (
                                     <tr key={i}>
                                         {[...Array(8)].map((_, j) => (
                                             <td key={j} className="px-4 py-3">
@@ -689,6 +730,13 @@ export default function AdminMembersPage() {
                                             locked={user.profile_locked !== false}
                                             disabled={actionLoading === user.id}
                                             onClick={() => handleToggleProfileLock(user.id)}
+                                        />
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <DebtSwitch
+                                            active={user.debt_block_enabled === true}
+                                            disabled={actionLoading === user.id}
+                                            onClick={() => handleToggleDebtBlock(user.id)}
                                         />
                                     </td>
                                     <td className="px-4 py-3">

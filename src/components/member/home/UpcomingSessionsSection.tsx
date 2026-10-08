@@ -26,6 +26,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { sessionsApi, registrationsApi, usersApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import { c, alpha } from "@/lib/theme";
+import DebtWarningModal from "../sessions/DebtWarningModal";
 
 const SKILL_OPTIONS = [
     { value: "yeu", label: "Yếu" },
@@ -85,7 +86,7 @@ function getSessionStatusBadge(s: any) {
     return { label: st, cls: BADGE.muted };
 }
 
-function AddCompanionModal({
+export function AddCompanionModal({
     session,
     onClose,
     onDone,
@@ -526,6 +527,7 @@ export function UpcomingSessionsSection({
     const [companionModalSession, setCompanionModalSession] = useState<any>(null);
     const [cancelSession, setCancelSession] = useState<any>(null);
     const [cancelling, setCancelling] = useState(false);
+    const [debtWarning, setDebtWarning] = useState<number | null>(null);
 
     useEffect(() => {
         setLocalSessions(upcoming);
@@ -612,7 +614,12 @@ export function UpcomingSessionsSection({
             );
             refetchSession(sessionId);
         } catch (err: any) {
-            toast.error(err?.response?.data?.message ?? "Đăng ký thất bại");
+            const data = err?.response?.data;
+            if (data?.code === "WALLET_DEBT_BLOCK") {
+                setDebtWarning(Number(data.debt) || 0);
+            } else {
+                toast.error(data?.message ?? "Đăng ký thất bại");
+            }
         } finally {
             setTimeout(() => setRegisteringId(null), 500);
         }
@@ -913,6 +920,10 @@ export function UpcomingSessionsSection({
                     onClose={() => setCancelSession(null)}
                     onConfirm={handleCancel}
                 />
+            )}
+
+            {debtWarning !== null && (
+                <DebtWarningModal debt={debtWarning} onClose={() => setDebtWarning(null)} />
             )}
         </section>
     );
