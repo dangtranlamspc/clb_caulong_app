@@ -44,6 +44,22 @@ export const lightTokens = {
     headerBtnText: "#374151",
     logoFilter: "brightness(0)",
 
+    navBg: "#ffffff",
+    navBorder: "#e5e7eb",
+    navShadow: "0 8px 24px rgba(16,25,47,0.14)",
+    navIcon: "#9ca3af",
+    navIconActive: "#2563eb",
+    navIconActiveBg: "#dbeafe",
+    navLabel: "#9ca3af",
+    navLabelActive: "#2563eb",
+    navDotBorder: "#ffffff",
+
+    fabBg: "#ffffff",
+    fabBorder: "#e5e7eb",
+    fabText: "#2563eb",
+    fabShadow: "0 8px 24px -6px rgba(16,25,47,0.28)",
+    fabPulse: "radial-gradient(circle,rgba(37,99,235,0.14),transparent 65%)",
+
     brandGradient:
         "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
     heroGradient: "linear-gradient(135deg,#2563eb 0%,#1d4ed8 50%,#0d9488 100%)",
@@ -93,6 +109,22 @@ export const darkTokens: ThemeTokens = {
     headerBtnBorder: "rgba(255,255,255,0.12)",
     headerBtnText: "rgba(255,255,255,0.75)",
     logoFilter: "none",
+
+    navBg: "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
+    navBorder: "rgba(255,255,255,0.08)",
+    navShadow: "0 10px 24px rgba(0,0,0,0.6)",
+    navIcon: "rgba(255,255,255,0.5)",
+    navIconActive: "#ffffff",
+    navIconActiveBg: "rgba(255,255,255,0.16)",
+    navLabel: "rgba(255,255,255,0.4)",
+    navLabelActive: "#ffffff",
+    navDotBorder: "#10192f",
+
+    fabBg: "linear-gradient(135deg,#1d3a5f,#12283f)",
+    fabBorder: "rgba(255,255,255,0.15)",
+    fabText: "#ffffff",
+    fabShadow: "0 8px 24px -6px rgba(0,0,0,0.5)",
+    fabPulse: "radial-gradient(circle,rgba(255,255,255,0.18),transparent 65%)",
 
     brandGradient:
         "linear-gradient(135deg,#101f38 0%,#0a1a30 40%,#080f1f 70%,#120b26 100%)",

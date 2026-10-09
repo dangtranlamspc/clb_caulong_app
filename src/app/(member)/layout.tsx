@@ -116,9 +116,9 @@ function BottomNav({
                 style={{
                     height: 64,
                     borderRadius: 22,
-                    background:
-                        "linear-gradient(135deg,#183153 0%,#102744 40%,#10192f 70%,#1a1035 100%)",
-                    boxShadow: "0 10px 24px rgba(16,25,47,0.35)",
+                    background: "var(--nav-bg)",
+                    border: "1px solid var(--nav-border)",
+                    boxShadow: "var(--nav-shadow)",
                 }}
             >
                 {NAV_ITEMS.map(({ href, icon: Icon, label }, i) => {
@@ -137,14 +137,14 @@ function BottomNav({
                                     width: 36,
                                     height: 36,
                                     borderRadius: "50%",
-                                    background: isActive ? "rgba(255,255,255,0.16)" : "transparent",
+                                    background: isActive ? "var(--nav-icon-active-bg)" : "transparent",
                                 }}
                             >
                                 <Icon
                                     style={{
                                         width: 20,
                                         height: 20,
-                                        color: isActive ? "#ffffff" : "rgba(255,255,255,0.5)",
+                                        color: isActive ? "var(--nav-icon-active)" : "var(--nav-icon)",
                                         strokeWidth: isActive ? 2.2 : 1.8,
                                         transition: "color 0.2s ease",
                                     }}
@@ -157,7 +157,7 @@ function BottomNav({
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
                                         <span
                                             className="relative inline-flex rounded-full bg-red-500"
-                                            style={{ width: 10, height: 10, border: "2px solid #10192f" }}
+                                            style={{ width: 10, height: 10, border: "2px solid var(--nav-dot-border)" }}
                                         />
                                     </span>
                                 )}
@@ -167,7 +167,7 @@ function BottomNav({
                                 style={{
                                     fontSize: 10,
                                     fontWeight: isActive ? 600 : 400,
-                                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.4)",
+                                    color: isActive ? "var(--nav-label-active)" : "var(--nav-label)",
                                     letterSpacing: "-0.01em",
                                 }}
                             >
