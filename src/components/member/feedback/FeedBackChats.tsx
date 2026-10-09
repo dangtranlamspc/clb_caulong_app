@@ -251,19 +251,21 @@ export function FeedbackWidget() {
             <button
                 onClick={openWidget}
                 aria-label="Gửi góp ý"
-                className="fixed right-4 z-[999] rounded-full text-white flex items-center justify-center active:scale-90 transition-transform border border-[rgba(255,255,255,0.15)]"
+                className="fixed right-4 z-[999] rounded-full flex items-center justify-center active:scale-90 transition-transform"
                 style={{
                     width: 54,
                     height: 54,
                     bottom: "calc(96px + env(safe-area-inset-bottom, 0px))",
-                    background: NAVY_GRADIENT,
-                    boxShadow: "0 8px 24px -6px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08) inset",
+                    background: "var(--fab-bg)",
+                    color: "var(--fab-text)",
+                    border: "1px solid var(--fab-border)",
+                    boxShadow: "var(--fab-shadow)",
                 }}
             >
                 <span
                     className="absolute inset-0 rounded-full"
                     style={{
-                        background: "radial-gradient(circle,rgba(255,255,255,0.18),transparent 65%)",
+                        background: "var(--fab-pulse)",
                         animation: "feedbackPulse 2.6s ease-in-out infinite",
                     }}
                 />
