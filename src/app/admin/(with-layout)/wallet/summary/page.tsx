@@ -389,27 +389,398 @@ function MemberPanel({
   };
 
 
+  // ───────────────────────────────────────────────────────────────
+  // Chia sẻ sao kê ví — vẽ trực tiếp bằng Canvas 2D (cùng phong cách biên lai)
+  // Thay thế hàm handleShareImage cũ trong MemberPanel.
+  // ───────────────────────────────────────────────────────────────
   const handleShareImage = async (kind: "all" | "selected") => {
-    if (!receiptRef.current || sharing) return;
+    if (sharing) return;
     if (kind === "selected" && selectedTxIds.size === 0) return;
 
     setSharing(kind);
-    setReceiptTxs(
-      kind === "selected"
-        ? transactions.filter((t: any) => selectedTxIds.has(t.id))
-        : null,
-    );
     try {
-      await new Promise<void>((r) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => r())),
-      );
+      const list: any[] =
+        kind === "selected"
+          ? transactions.filter((t: any) => selectedTxIds.has(t.id))
+          : transactions;
 
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(receiptRef.current!, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-      });
+      // ───────────── Cấu hình ─────────────
+      const W = 390; // rộng bằng màn iPhone
+      const SVG_SCALE = 3; // độ nét icon
+      const PAD = 14;
+      const CW = W - PAD * 2;
+      const FONT =
+        "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+      const SCRIPT = "'Snell Roundhand','Brush Script MT','Segoe Script',cursive";
+
+      const LOGO_SRC = "/bg/logo_team.webp";
+      const LOGO_CROP = { top: 0.055, bottom: 0.125, left: 0.17, right: 0.16 };
+      const LOGO_H = 68;
+      const FOOTER_LOGO_H = 38;
+      const HEADER_H = 80;
+
+      const CARD_GRAD: [number, string][] = [
+        [0, "rgba(255,255,255,0.90)"],
+        [1, "rgba(214,231,255,0.84)"],
+      ];
+      const INNER_GRAD: [number, string][] = [
+        [0, "#eef4ff"],
+        [1, "#d3e3ff"],
+      ];
+      const INNER_SOFT: [number, string][] = [
+        [0, "#f5f9ff"],
+        [1, "#e1ecff"],
+      ];
+      const CARD_BORDER = "rgba(255,255,255,0.6)";
+      const ROW_LINE = "rgba(110,150,220,0.22)";
+
+      const MAX_CANVAS_PX = 14_000_000; // giới hạn an toàn cho Safari iOS
+      const MAX_HEIGHT = 30000; // px logic
+
+      const exportedAt = `Xuất lúc ${format(new Date(), "HH:mm, dd/MM/yyyy", { locale: vi })}`;
+      const txLabel = (tx: any) =>
+        (tx.type === "manual_expense" || tx.type === "manual_credit") && tx.description
+          ? tx.description
+          : tx.title ?? "";
+
+      // ───────────── Ảnh / icon ─────────────
+      const loadImg = (src: string, cors = false) =>
+        new Promise<HTMLImageElement | null>((resolve) => {
+          const img = new Image();
+          if (cors) img.crossOrigin = "anonymous";
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+          img.src = src;
+        });
+
+      const svgImg = (inner: string, color: string, size: number) => {
+        const px = size * SVG_SCALE;
+        const s = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+        return loadImg("data:image/svg+xml;charset=utf-8," + encodeURIComponent(s));
+      };
+
+      const P = {
+        wallet: `<path d="M3 7h15a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3M17 14h.01"/>`,
+        doc: `<path d="M6 3h10l3 3v15H6z"/><path d="M9 9h7M9 13h7M9 17h5"/>`,
+        sigma: `<path d="M18 5H6l7 7-7 7h12"/>`,
+        calendar: `<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>`,
+      };
+
+      const [icWallet, icDoc, icSigma, icCalWhite, logoImg, avatarImg] = await Promise.all([
+        svgImg(P.wallet, "#ffffff", 20),
+        svgImg(P.doc, "#14306e", 20),
+        svgImg(P.sigma, "#1d4ed8", 22),
+        svgImg(P.calendar, "#ffffff", 14),
+        loadImg(LOGO_SRC, true),
+        member.avatar_url ? loadImg(member.avatar_url, true) : Promise.resolve(null),
+      ]);
+
+      // ───────────── Hàm vẽ (trả về tổng chiều cao) ─────────────
+      const render = (ctx: CanvasRenderingContext2D, H: number): number => {
+        const fontStr = (size: number, weight = 500, italic = false, family = FONT) =>
+          `${italic ? "italic " : ""}${weight} ${size}px ${family}`;
+
+        type TOpt = {
+          size?: number; weight?: number; color?: string; align?: "left" | "center" | "right";
+          italic?: boolean; family?: string; spacing?: number;
+        };
+
+        const measure = (s: string, o: TOpt = {}) => {
+          const { size = 13, weight = 500, italic = false, family = FONT, spacing = 0 } = o;
+          ctx.font = fontStr(size, weight, italic, family);
+          return ctx.measureText(s).width + spacing * Math.max(0, [...s].length - 1);
+        };
+
+        // `cy` là tâm theo chiều dọc của dòng
+        const text = (s: string, x: number, cy: number, o: TOpt = {}) => {
+          const { size = 13, weight = 500, color = "#0f1f46", align = "left", italic = false, family = FONT, spacing = 0 } = o;
+          ctx.font = fontStr(size, weight, italic, family);
+          ctx.fillStyle = color;
+          ctx.textBaseline = "alphabetic";
+          const by = cy + size * 0.35;
+          if (!spacing) {
+            ctx.textAlign = align;
+            ctx.fillText(s, x, by);
+            return;
+          }
+          const total = measure(s, o);
+          let sx = x;
+          if (align === "center") sx = x - total / 2;
+          else if (align === "right") sx = x - total;
+          ctx.textAlign = "left";
+          for (const ch of [...s]) {
+            ctx.fillText(ch, sx, by);
+            sx += ctx.measureText(ch).width + spacing;
+          }
+        };
+
+        const wrap = (s: string, maxW: number, o: TOpt = {}) => {
+          const words = String(s).split(/\s+/);
+          const lines: string[] = [];
+          let cur = "";
+          for (const w of words) {
+            const t = cur ? cur + " " + w : w;
+            if (measure(t, o) <= maxW || !cur) cur = t;
+            else { lines.push(cur); cur = w; }
+          }
+          if (cur) lines.push(cur);
+          return lines.length ? lines : [""];
+        };
+
+        const fit = (s: string, maxW: number, o: TOpt = {}) => {
+          if (measure(s, o) <= maxW) return s;
+          let t = s;
+          while (t.length > 1 && measure(t + "…", o) > maxW) t = t.slice(0, -1);
+          return t + "…";
+        };
+
+        const rr = (x: number, y: number, w: number, h: number, r: number) => {
+          ctx.beginPath();
+          ctx.moveTo(x + r, y);
+          ctx.arcTo(x + w, y, x + w, y + h, r);
+          ctx.arcTo(x + w, y + h, x, y + h, r);
+          ctx.arcTo(x, y + h, x, y, r);
+          ctx.arcTo(x, y, x + w, y, r);
+          ctx.closePath();
+        };
+
+        const box = (
+          x: number, y: number, w: number, h: number, r: number,
+          fill: string | CanvasGradient,
+          shadow?: { c: string; b: number; y: number },
+          stroke?: string,
+        ) => {
+          ctx.save();
+          if (shadow) {
+            ctx.shadowColor = shadow.c;
+            ctx.shadowBlur = shadow.b;
+            ctx.shadowOffsetY = shadow.y;
+          }
+          ctx.fillStyle = fill;
+          rr(x, y, w, h, r);
+          ctx.fill();
+          ctx.restore();
+          if (stroke) {
+            ctx.save();
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = 1;
+            rr(x + 0.5, y + 0.5, w - 1, h - 1, r);
+            ctx.stroke();
+            ctx.restore();
+          }
+        };
+
+        const lg = (x0: number, y0: number, x1: number, y1: number, stops: [number, string][]) => {
+          const g = ctx.createLinearGradient(x0, y0, x1, y1);
+          stops.forEach(([o, c]) => g.addColorStop(o, c));
+          return g;
+        };
+
+        const hline = (x1: number, x2: number, y: number, color = ROW_LINE) => {
+          ctx.fillStyle = color;
+          ctx.fillRect(x1, y, x2 - x1, 1);
+        };
+
+        const icon = (img: HTMLImageElement | null, x: number, cy: number, w: number, h = w) => {
+          if (img) ctx.drawImage(img, x, cy - h / 2, w, h);
+        };
+
+        const drawLogo = (x: number, cy: number, dh: number) => {
+          if (!logoImg) return 0;
+          const sx = logoImg.naturalWidth * LOGO_CROP.left;
+          const sy = logoImg.naturalHeight * LOGO_CROP.top;
+          const sw = logoImg.naturalWidth * (1 - LOGO_CROP.left - LOGO_CROP.right);
+          const sh = logoImg.naturalHeight * (1 - LOGO_CROP.top - LOGO_CROP.bottom);
+          const dw = dh * (sw / sh);
+          ctx.drawImage(logoImg, sx, sy, sw, sh, x, cy - dh / 2, dw, dh);
+          return dw;
+        };
+
+        // --- nền ---
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, "#071a4a");
+        bg.addColorStop(Math.min(0.18, 160 / H), "#0e2a70");
+        bg.addColorStop(Math.min(0.32, 280 / H), "#2a56b8");
+        bg.addColorStop(Math.min(0.52, 480 / H), "#bcd3f5");
+        bg.addColorStop(Math.min(0.78, 700 / H), "#e6eefc");
+        bg.addColorStop(1, "#f3f7ff");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+        const glow = ctx.createRadialGradient(W * 0.88, 10, 0, W * 0.88, 10, 100);
+        glow.addColorStop(0, "rgba(147,197,253,0.45)");
+        glow.addColorStop(1, "rgba(147,197,253,0)");
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, W, 140);
+
+        // --- header ---
+        if (logoImg) drawLogo(PAD, HEADER_H / 2 - 2, LOGO_H);
+        text("More Than", W - PAD, 24, { size: 19, italic: true, color: "#93c5fd", align: "right", family: SCRIPT });
+        text("Badminton", W - PAD, 46, { size: 19, italic: true, color: "#93c5fd", align: "right", family: SCRIPT });
+        text("PLAY • FRIENDS • GOOD VIBES", W - PAD, HEADER_H - 12, { size: 8, color: "rgba(255,255,255,0.6)", align: "right", spacing: 3 });
+
+        const ix = PAD + 12;
+        const iw = CW - 24;
+
+        // ───────── CARD 1: thành viên + số dư ─────────
+        const c1Top = HEADER_H;
+        const memberCy = c1Top + 74;
+        const pillY = c1Top + 100;
+        const chipY = pillY + 52 + 6;
+        const c1H = chipY + 22 + 10 - c1Top;
+
+        box(PAD, c1Top, CW, c1H, 20, lg(0, c1Top, 0, c1Top + c1H, CARD_GRAD), { c: "rgba(7,26,74,0.18)", b: 24, y: 8 }, CARD_BORDER);
+
+        text("SAO KÊ VÍ", W / 2, c1Top + 20, { size: 17, weight: 800, color: "#0f2a63", align: "center", spacing: 0.5 });
+        text(
+          kind === "selected" ? `${list.length} giao dịch đã chọn` : "Toàn bộ lịch sử giao dịch",
+          W / 2, c1Top + 38, { size: 10, color: "#5b6b8c", align: "center" },
+        );
+
+        // avatar
+        const AV = 20;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ix + AV, memberCy, AV, 0, Math.PI * 2);
+        ctx.closePath();
+        if (avatarImg) {
+          ctx.clip();
+          const k = Math.max((AV * 2) / avatarImg.naturalWidth, (AV * 2) / avatarImg.naturalHeight);
+          const dw = avatarImg.naturalWidth * k;
+          const dh = avatarImg.naturalHeight * k;
+          ctx.drawImage(avatarImg, ix + AV - dw / 2, memberCy - dh / 2, dw, dh);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = lg(ix, memberCy - AV, ix + AV * 2, memberCy + AV, [[0, "#60a5fa"], [1, "#2563eb"]]);
+          ctx.fill();
+          ctx.restore();
+          text(String(member.full_name?.[0] ?? "?").toUpperCase(), ix + AV, memberCy, { size: 17, weight: 800, color: "#ffffff", align: "center" });
+        }
+
+        // rank chip (bên phải)
+        let chipLeft = ix + iw;
+        if (member.tier) {
+          const t = TIER_STYLE[member.tier];
+          const rt = `${t?.dot ?? "•"} ${member.tier}`;
+          const rw = measure(rt, { size: 11, weight: 700 }) + 20;
+          box(ix + iw - rw, memberCy - 11, rw, 22, 11, lg(ix + iw - rw, 0, ix + iw, 0, INNER_GRAD));
+          text(rt, ix + iw - rw / 2, memberCy, { size: 11, weight: 700, color: "#1e3a8a", align: "center" });
+          chipLeft = ix + iw - rw - 8;
+        }
+        const nameX = ix + AV * 2 + 10;
+        text(fit(member.full_name ?? "", chipLeft - nameX, { size: 15, weight: 700 }), nameX, memberCy - 8, { size: 15, weight: 700 });
+        text(member.phone ?? "", nameX, memberCy + 10, { size: 12, color: "#8a97b2" });
+
+        // pill số dư
+        const negative = member.balance < 0;
+        box(ix, pillY, iw, 52, 26, lg(ix, 0, ix + iw, 0, INNER_GRAD));
+        ctx.fillStyle = "#0f2a63";
+        ctx.beginPath();
+        ctx.arc(ix + 26, pillY + 26, 18, 0, Math.PI * 2);
+        ctx.fill();
+        icon(icWallet, ix + 16, pillY + 26, 20);
+        text(fmt(member.balance), ix + iw / 2, pillY + 26, {
+          size: 32, weight: 900, color: negative ? "#dc2626" : "#1d4ed8", align: "center",
+        });
+
+        const lbl = "Số dư hiện tại";
+        const lblW = measure(lbl, { size: 12 }) + 28;
+        box(W / 2 - lblW / 2, chipY, lblW, 22, 11, lg(W / 2 - lblW / 2, 0, W / 2 + lblW / 2, 0, INNER_GRAD));
+        text(lbl, W / 2, chipY + 11, { size: 12, color: "#1e3a8a", align: "center" });
+
+        // ───────── CARD 2: lịch sử giao dịch ─────────
+        const DATE_W = 46;
+        const AMT_W = 96;
+        const LABEL_W = iw - DATE_W - AMT_W;
+
+        const rows = list.map((tx) => {
+          const lines = wrap(txLabel(tx), LABEL_W, { size: 12.5 });
+          return { tx, lines, h: Math.max(42, lines.length * 16 + 18) };
+        });
+        const emptyH = 44;
+        const rowsH = rows.length ? rows.reduce((s, r) => s + r.h, 0) : emptyH;
+
+        const c2Top = c1Top + c1H + 8;
+        const rowsTop = c2Top + 32;
+        const showTotal = kind === "selected" && list.length > 0;
+        const totalY = rowsTop + rowsH + 6;
+        const c2H = (showTotal ? totalY + 38 : rowsTop + rowsH) + 8 - c2Top;
+
+        box(PAD, c2Top, CW, c2H, 20, lg(0, c2Top, 0, c2Top + c2H, CARD_GRAD), { c: "rgba(7,26,74,0.12)", b: 24, y: 8 }, CARD_BORDER);
+        icon(icDoc, ix, c2Top + 18, 20);
+        text("LỊCH SỬ GIAO DỊCH", ix + 28, c2Top + 18, { size: 14, weight: 800, color: "#0f2a63", spacing: 0.3 });
+        text(`${list.length} giao dịch`, ix + iw, c2Top + 18, { size: 11, color: "#5b6b8c", align: "right" });
+
+        if (rows.length === 0) {
+          hline(ix, ix + iw, rowsTop);
+          text("Chưa có giao dịch nào", W / 2, rowsTop + emptyH / 2, { size: 12, color: "#8a97b2", align: "center" });
+        } else {
+          let py = rowsTop;
+          rows.forEach(({ tx, lines, h }) => {
+            hline(ix, ix + iw, py);
+            const cy = py + h / 2;
+            const d = new Date(tx.created_at);
+            text(format(d, "dd/MM", { locale: vi }), ix, cy - 6, { size: 12, weight: 700 });
+            text(format(d, "yyyy", { locale: vi }), ix, cy + 8, { size: 10, color: "#8a97b2" });
+
+            lines.forEach((ln, i) => {
+              text(ln, ix + DATE_W, cy + (i - (lines.length - 1) / 2) * 16, { size: 12.5 });
+            });
+
+            const pos = tx.amount > 0;
+            text(`${pos ? "+" : ""}${fmt(tx.amount)}`, ix + iw, cy - 6, {
+              size: 13, weight: 800, align: "right", color: pos ? "#059669" : "#dc2626",
+            });
+            text(`Dư ${fmt(tx.balance_after)}`, ix + iw, cy + 9, { size: 10, align: "right", color: "#8a97b2" });
+            py += h;
+          });
+        }
+
+        if (showTotal) {
+          const sum = list.reduce((s, t) => s + Number(t.amount ?? 0), 0);
+          box(ix, totalY, iw, 38, 12, lg(ix, 0, ix + iw, 0, INNER_GRAD));
+          icon(icSigma, ix + 12, totalY + 19, 22);
+          text("Tổng đã chọn", ix + 44, totalY + 19, { size: 15, weight: 800 });
+          text(`${sum > 0 ? "+" : ""}${fmt(sum)}`, ix + iw - 12, totalY + 19, {
+            size: 17, weight: 900, align: "right", color: sum >= 0 ? "#059669" : "#dc2626",
+          });
+        }
+
+        // ───────── Footer ─────────
+        const fTop = c2Top + c2H + 8;
+        const fH = 50;
+        const fCy = fTop + fH / 2;
+        box(PAD, fTop, CW, fH, 18, "#0f2a63", { c: "rgba(7,26,74,0.2)", b: 14, y: 4 });
+        if (logoImg) drawLogo(PAD + 14, fCy, FOOTER_LOGO_H);
+        else text("BNB BADMINTON CLUB", PAD + 14, fCy, { size: 10, weight: 800, color: "#ffffff", spacing: 0.4 });
+
+        const eW = measure(exportedAt, { size: 10 });
+        text(exportedAt, W - PAD - 14, fCy, { size: 10, color: "#ffffff", align: "right" });
+        icon(icCalWhite, W - PAD - 14 - eW - 6 - 14, fCy, 14);
+
+        return fTop + fH + 10;
+      };
+
+      // Pass 1: đo chiều cao
+      const scratch = document.createElement("canvas");
+      scratch.width = 2;
+      scratch.height = 2;
+      const totalH = Math.ceil(render(scratch.getContext("2d")!, 2000));
+
+      if (totalH > MAX_HEIGHT) {
+        toast.error("Quá nhiều giao dịch để tạo 1 ảnh, hãy chọn bớt rồi chia sẻ");
+        return;
+      }
+
+      // Giảm độ nét khi ảnh dài để không vượt giới hạn canvas
+      const scale = Math.max(1, Math.min(3, Math.sqrt(MAX_CANVAS_PX / (W * totalH))));
+
+      // Pass 2: vẽ thật
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(W * scale);
+      canvas.height = Math.round(totalH * scale);
+      const ctx = canvas.getContext("2d")!;
+      ctx.scale(scale, scale);
+      render(ctx, totalH);
 
       const blob: Blob | null = await new Promise((resolve) =>
         canvas.toBlob((b) => resolve(b), "image/png"),
@@ -438,10 +809,12 @@ function MemberPanel({
         toast.success("Đã tải ảnh sao kê xuống");
       }
     } catch (err: any) {
-      if (err?.name !== "AbortError") toast.error("Tạo ảnh sao kê thất bại");
+      if (err?.name !== "AbortError") {
+        console.error("[handleShareImage]", err);
+        toast.error("Tạo ảnh sao kê thất bại");
+      }
     } finally {
       setSharing(null);
-      setReceiptTxs(null);
     }
   };
 
