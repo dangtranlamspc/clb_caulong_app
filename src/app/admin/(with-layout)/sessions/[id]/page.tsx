@@ -327,20 +327,51 @@ export default function SessionDetailPage() {
     if (sharingReceiptId) return;
     setSharingReceiptId(reg.id);
     try {
-      const html2canvas = (await import("html2canvas")).default;
+      const W = 390;
+      const SCALE = 3;
+      const PAD = 14;
+      const CW = W - PAD * 2;
+      const FONT =
+        "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+      const SCRIPT = "'Snell Roundhand','Brush Script MT','Segoe Script',cursive";
 
-      const displayName = reg.users?.full_name ?? reg.guest_full_name ?? "?";
+      const QR_CROP = { top: 0.17, bottom: 0, left: 0, right: 0 };
+      const QR_SRC = "/qr/qr-ng-ngoi.png";
+
+      const LOGO_SRC = "/bg/logo_team.webp";
+      const LOGO_CROP = { top: 0.055, bottom: 0.125, left: 0.17, right: 0.16 };
+      const LOGO_H = 68;
+      const FOOTER_LOGO_H = 38;
+      const HEADER_H = 80;
+
+      const CARD_GRAD: [number, string][] = [
+        [0, "rgba(255,255,255,0.90)"],
+        [1, "rgba(214,231,255,0.84)"],
+      ];
+
+      const INNER_GRAD: [number, string][] = [
+        [0, "#eef4ff"],
+        [1, "#d3e3ff"],
+      ];
+      const INNER_SOFT: [number, string][] = [
+        [0, "#f5f9ff"],
+        [1, "#e1ecff"],
+      ];
+      const CARD_BORDER = "rgba(255,255,255,0.6)";
+      const ROW_LINE = "rgba(110,150,220,0.22)";
+
+      const displayName: string = reg.users?.full_name ?? reg.guest_full_name ?? "?";
       const hostAmount = reg.amount_override ?? 0;
       const hostBaseAmount = reg.base_amount ?? hostAmount;
       const hostOtherFeeAmount = reg.other_fee_amount ?? 0;
-      const hostOtherFeeNote = reg.other_fee_note;
+      const hostOtherFeeNote: string | undefined = reg.other_fee_note;
       const isGroupedGuest = Boolean(reg.host_registration_id);
 
       const guestsList = (groupedGuests ?? []).map((g) => ({
-        name: g.users?.full_name ?? g.guest_full_name ?? "?",
+        name: (g.users?.full_name ?? g.guest_full_name ?? "?") as string,
         baseAmount: g.base_amount ?? g.amount_override ?? 0,
         otherFeeAmount: g.other_fee_amount ?? 0,
-        otherFeeNote: g.other_fee_note,
+        otherFeeNote: g.other_fee_note as string | undefined,
       }));
       const guestsTotal = guestsList.reduce(
         (s, g) => s + g.baseAmount + (g.otherFeeAmount ?? 0),
@@ -348,91 +379,412 @@ export default function SessionDetailPage() {
       );
       const totalAmount = hostAmount + guestsTotal;
 
-      const container = document.createElement("div");
-      container.style.position = "fixed";
-      container.style.left = "-9999px";
-      container.style.top = "0";
-      container.style.width = "420px";
-      document.body.appendChild(container);
+      const lastName = displayName.trim().split(/\s+/).pop() ?? "";
+      const noDiacritics = lastName
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D");
+      const transferNote = `BNB ${noDiacritics} ${format(new Date(session.scheduled_at), "ddMMyyyy")}`;
+      const sessionTime = format(new Date(session.scheduled_at), "HH:mm dd/MM/yyyy", { locale: vi });
+      const exportedAt = `Xuất lúc ${format(new Date(), "HH:mm, dd/MM/yyyy", { locale: vi })}`;
 
-      const row = (label: string, value: string, opts?: { bold?: boolean; amber?: boolean; shaded?: boolean; note?: string }) => {
-        const noteHtml = opts?.note
-          ? opts.note
-            .split("\n")
-            .map((l) => l.trim())
-            .filter(Boolean)
-            .join("<br/>")
-          : "";
+      const loadImg = (src: string, cors = false) =>
+        new Promise<HTMLImageElement | null>((resolve) => {
+          const img = new Image();
+          if (cors) img.crossOrigin = "anonymous";
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+          img.src = src;
+        });
 
-        return `
-          <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:13px;background:${opts?.shaded ? "#f9fafb" : "transparent"};border-top:1px solid #f3f4f6;">
-            <span style="color:#9ca3af;">${label}</span>
-            <div style="text-align:right;">
-              <span style="font-weight:${opts?.bold ? 700 : 500};color:${opts?.amber ? "#d97706" : "#111827"};">${value}</span>
-              ${noteHtml ? `<p style="font-size:11px;color:#9ca3af;font-style:italic;margin:0;">${noteHtml}</p>` : ""}
-            </div>
-          </div>
-        `;
+      const svgImg = (inner: string, color: string, size: number, vb = "0 0 24 24", h?: number) => {
+        const px = size * SCALE;
+        const py = (h ?? size) * SCALE;
+        const s = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${py}" viewBox="${vb}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+        return loadImg("data:image/svg+xml;charset=utf-8," + encodeURIComponent(s));
       };
 
-      const guestRowsHtml = guestsList
-        .map(
-          (g) => `
-            <div style="padding:10px 16px 2px;font-size:13px;border-top:1px solid #f3f4f6;">
-              <span style="color:#9ca3af;">+ </span>${g.name}
-              <span style="color:#9ca3af;font-size:12px;"> (đi cùng)</span>
-            </div>
-            ${row("Tiền sân + cầu", formatVnd(g.baseAmount))}
-            ${g.otherFeeAmount > 0 ? row("Khoản khác", formatVnd(g.otherFeeAmount), { amber: true, note: g.otherFeeNote }) : ""}
-          `,
-        )
-        .join("");
+      const P = {
+        user: `<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>`,
+        calendar: `<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>`,
+        clock: `<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
+        users: `<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-5.5 6-5.5s6 2 6 5.5"/><path d="M16 5a3.2 3.2 0 0 1 0 6M18 14.8c1.8.7 3 2.3 3 5.2"/>`,
+        card: `<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/>`,
+        bank: `<path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>`,
+        chat: `<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/>`,
+        coins: `<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>`,
+        doc: `<path d="M6 3h10l3 3v15H6z"/><path d="M9 9h7M9 13h7M9 17h5"/>`,
+        sigma: `<path d="M18 5H6l7 7-7 7h12"/>`,
+        plus: `<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>`,
+      };
 
-      container.innerHTML = `
-      <div style="width:420px;background:#ffffff;padding:28px;font-family:inherit;">
-        <div style="text-align:center;margin-bottom:20px;">
-          <p style="font-size:13px;font-weight:700;color:#2563eb;letter-spacing:0.5px;">BNB BADMINTON CLUB</p>
-          <p style="font-size:12px;color:#9ca3af;margin-top:2px;">Biên lai thanh toán</p>
-        </div>
-        <div style="text-align:center;margin-bottom:20px;">
-          <p style="font-size:30px;font-weight:900;color:#ef4444;margin:0;line-height:1.3;">${formatVnd(totalAmount)}</p>
-          <span style="display:inline-block;margin-top:10px;font-size:11px;color:#9ca3af;background:#f9fafb;padding:4px 10px;border-radius:999px;">
-            💵 Tiền mặt${isGroupedGuest ? " (tự thanh toán)" : ""}
-          </span>
-        </div>
-        <div style="background:#f9fafb;border-radius:12px;overflow:hidden;margin-bottom:16px;">
-          ${row("Người thanh toán", displayName)}
-          ${row("Buổi đánh", session.title)}
-          ${row("Thời gian buổi", format(new Date(session.scheduled_at), "HH:mm dd/MM/yyyy", { locale: vi }))}
-          ${isGroupedGuest && hostName ? row("Đi cùng", hostName, { note: "thanh toán riêng, không gộp ví" }) : ""}
-        </div>
-        <div style="border:1px solid #f3f4f6;border-radius:12px;overflow:hidden;">
-          ${row("Tiền sân + cầu", formatVnd(hostBaseAmount))}
-          ${hostOtherFeeAmount > 0 ? row("Khoản khác", formatVnd(hostOtherFeeAmount), { amber: true, note: hostOtherFeeNote }) : ""}
-          ${guestRowsHtml}
-          ${row("Tổng cộng", formatVnd(totalAmount), { bold: true, shaded: true })}
-        </div>
+      const [
+        icUser, icCalendar, icClock, icUsersGray, icUsersBlue, icCard, icBank, icChat,
+        icCoins, icDoc, icSigma, icCalWhite, icPlus, icCourt, icShuttle, qrImg, logoImg, icUsersAccent,
+      ] = await Promise.all([
+        svgImg(P.user, "#8a97b2", 18),
+        svgImg(P.calendar, "#8a97b2", 18),
+        svgImg(P.clock, "#8a97b2", 18),
+        svgImg(P.users, "#8a97b2", 13),
+        svgImg(P.users, "#8a97b2", 18),
+        svgImg(P.card, "#8a97b2", 18),
+        svgImg(P.bank, "#8a97b2", 18),
+        svgImg(P.chat, "#8a97b2", 18),
+        svgImg(P.coins, "#ffffff", 20),
+        svgImg(P.doc, "#14306e", 20),
+        svgImg(P.sigma, "#1d4ed8", 22),
+        svgImg(P.calendar, "#ffffff", 14),
+        svgImg(P.plus, "#d97706", 22),
+        svgImg(
+          `<rect x="1" y="1" width="42" height="28" rx="4" fill="#16a34a" stroke="none"/><rect x="5" y="5" width="34" height="20" stroke="#bbf7d0" stroke-width="1.5"/><path d="M22 5v20M5 15h34" stroke="#bbf7d0" stroke-width="1.5"/>`,
+          "none", 34, "0 0 44 30", 23,
+        ),
+        svgImg(
+          `<path d="M20 8 L4 30 M20 8 L12 32 M20 8 L22 33 M20 8 L32 30 M20 8 L36 22" stroke="#ffffff" stroke-width="3"/><ellipse cx="14" cy="38" rx="11" ry="6" fill="#ffffff" stroke="none"/>`,
+          "none", 26, "0 0 40 46", 30,
+        ),
+        loadImg(QR_SRC, true),
+        loadImg(LOGO_SRC, true),
+        svgImg(P.users, "#2563eb", 14),
+      ]);
 
-        <div style="margin-top:20px;padding-top:16px;border-top:1px dashed #e5e7eb;text-align:center;">
-          <p style="font-size:11px;color:#6b7280;margin-bottom:10px;font-weight:600;">Quét mã để chuyển khoản</p>
-          <img
-            src="/qr/qr-ng-ngoi.png"
-            crossorigin="anonymous"
-            style="width:160px;height:auto;margin:0 auto;display:block;border-radius:8px;"
-          />
-        </div>
-        <p style="text-align:center;font-size:10px;color:#d1d5db;margin-top:20px;">
-          Xuất lúc ${format(new Date(), "HH:mm, dd/MM/yyyy", { locale: vi })}
-        </p>
-      </div>
-    `;
+      const render = (ctx: CanvasRenderingContext2D, H: number): number => {
+        // --- helpers ---
+        const fontStr = (size: number, weight = 500, italic = false, family = FONT) =>
+          `${italic ? "italic " : ""}${weight} ${size}px ${family}`;
 
-      const canvas = await html2canvas(container.firstElementChild as HTMLElement, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-      });
-      document.body.removeChild(container);
+        type TOpt = {
+          size?: number; weight?: number; color?: string; align?: "left" | "center" | "right";
+          italic?: boolean; family?: string; spacing?: number;
+        };
+
+        const measure = (s: string, o: TOpt = {}) => {
+          const { size = 13, weight = 500, italic = false, family = FONT, spacing = 0 } = o;
+          ctx.font = fontStr(size, weight, italic, family);
+          const base = ctx.measureText(s).width;
+          return base + spacing * Math.max(0, [...s].length - 1);
+        };
+
+        // Vẽ chữ, `cy` là TÂM theo chiều dọc của dòng → luôn thẳng hàng với icon/khung
+        const text = (s: string, x: number, cy: number, o: TOpt = {}) => {
+          const { size = 13, weight = 500, color = "#0f1f46", align = "left", italic = false, family = FONT, spacing = 0 } = o;
+          ctx.font = fontStr(size, weight, italic, family);
+          ctx.fillStyle = color;
+          ctx.textBaseline = "alphabetic";
+          const by = cy + size * 0.35;
+          if (!spacing) {
+            ctx.textAlign = align;
+            ctx.fillText(s, x, by);
+            return;
+          }
+          const total = measure(s, o);
+          let sx = x;
+          if (align === "center") sx = x - total / 2;
+          else if (align === "right") sx = x - total;
+          ctx.textAlign = "left";
+          for (const ch of [...s]) {
+            ctx.fillText(ch, sx, by);
+            sx += ctx.measureText(ch).width + spacing;
+          }
+        };
+
+        const wrap = (s: string, maxW: number, o: TOpt = {}) => {
+          const words = s.split(/\s+/);
+          const lines: string[] = [];
+          let cur = "";
+          for (const w of words) {
+            const t = cur ? cur + " " + w : w;
+            if (measure(t, o) <= maxW || !cur) cur = t;
+            else { lines.push(cur); cur = w; }
+          }
+          if (cur) lines.push(cur);
+          return lines;
+        };
+
+        const rr = (x: number, y: number, w: number, h: number, r: number) => {
+          ctx.beginPath();
+          ctx.moveTo(x + r, y);
+          ctx.arcTo(x + w, y, x + w, y + h, r);
+          ctx.arcTo(x + w, y + h, x, y + h, r);
+          ctx.arcTo(x, y + h, x, y, r);
+          ctx.arcTo(x, y, x + w, y, r);
+          ctx.closePath();
+        };
+
+        const box = (x: number, y: number, w: number, h: number, r: number, fill: string | CanvasGradient, shadow?: { c: string; b: number; y: number }, stroke?: string) => {
+          ctx.save();
+          if (shadow) {
+            ctx.shadowColor = shadow.c;
+            ctx.shadowBlur = shadow.b;
+            ctx.shadowOffsetY = shadow.y;
+          }
+          ctx.fillStyle = fill;
+          rr(x, y, w, h, r);
+          ctx.fill();
+          ctx.restore();
+          if (stroke) {
+            ctx.save();
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = 1;
+            rr(x + 0.5, y + 0.5, w - 1, h - 1, r);
+            ctx.stroke();
+            ctx.restore();
+          }
+        };
+
+        const lg = (x0: number, y0: number, x1: number, y1: number, stops: [number, string][]) => {
+          const g = ctx.createLinearGradient(x0, y0, x1, y1);
+          stops.forEach(([o, c]) => g.addColorStop(o, c));
+          return g;
+        };
+
+        const hline = (x1: number, x2: number, y: number, color = ROW_LINE) => {
+          ctx.fillStyle = color;
+          ctx.fillRect(x1, y, x2 - x1, 1);
+        };
+
+        const icon = (img: HTMLImageElement | null, x: number, cy: number, w: number, h = w) => {
+          if (img) ctx.drawImage(img, x, cy - h / 2, w, h);
+        };
+
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, "#071a4a");
+        bg.addColorStop(0.18, "#0e2a70");
+        bg.addColorStop(0.32, "#2a56b8");
+        bg.addColorStop(0.52, "#bcd3f5");
+        bg.addColorStop(0.78, "#e6eefc");
+        bg.addColorStop(1, "#f3f7ff");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+        const glow = ctx.createRadialGradient(W * 0.88, 10, 0, W * 0.88, 10, 100);
+        glow.addColorStop(0, "rgba(147,197,253,0.45)");
+        glow.addColorStop(1, "rgba(147,197,253,0)");
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, W, 140);
+
+        if (logoImg) {
+          const sx = logoImg.naturalWidth * LOGO_CROP.left;
+          const sy = logoImg.naturalHeight * LOGO_CROP.top;
+          const sw = logoImg.naturalWidth * (1 - LOGO_CROP.left - LOGO_CROP.right);
+          const sh = logoImg.naturalHeight * (1 - LOGO_CROP.top - LOGO_CROP.bottom);
+          const dh = LOGO_H;
+          const dw = dh * (sw / sh);
+          ctx.drawImage(logoImg, sx, sy, sw, sh, PAD, (HEADER_H - dh) / 2 - 2, dw, dh);
+        } else {
+          icon(icShuttle, PAD, 30, 26, 30);
+          text("BNB", PAD + 32, 26, { size: 26, weight: 900, italic: true, color: "#ffffff" });
+        }
+        text("More Than", W - PAD, 24, { size: 19, italic: true, color: "#93c5fd", align: "right", family: SCRIPT });
+        text("Badminton", W - PAD, 46, { size: 19, italic: true, color: "#93c5fd", align: "right", family: SCRIPT });
+        text("PLAY • FRIENDS • GOOD VIBES", W - PAD, HEADER_H - 12, { size: 8, color: "rgba(255,255,255,0.6)", align: "right", spacing: 3 });
+
+        const c1Top = HEADER_H;
+        const ix = PAD + 12;
+        const iw = CW - 24;
+
+        const infoRows: { icon: HTMLImageElement | null; label: string; value: string }[] = [
+          { icon: icUser, label: "Người thanh toán", value: displayName },
+          { icon: icCalendar, label: "Buổi đánh", value: session.title },
+          { icon: icClock, label: "Thời gian buổi", value: sessionTime },
+        ];
+        if (isGroupedGuest && hostName) infoRows.push({ icon: icUsersBlue, label: "Đi cùng", value: hostName });
+
+        const VAL_W = iw - 24 - 26 - 96;
+        const infoLayout = infoRows.map((r) => {
+          const lines = wrap(r.value, VAL_W, { size: 13, weight: 700 });
+          return { ...r, lines, h: Math.max(34, lines.length * 17 + 12) };
+        });
+        const infoH = infoLayout.reduce((s, r) => s + r.h, 0);
+
+        const pillY = c1Top + 36;
+        const chipY = pillY + 52 + 6;
+        const infoY = chipY + 22 + 6;
+        const c1H = infoY + infoH + 8 - c1Top;
+
+        box(PAD, c1Top, CW, c1H, 20, lg(0, c1Top, 0, c1Top + c1H, CARD_GRAD), { c: "rgba(7,26,74,0.18)", b: 24, y: 8 }, CARD_BORDER);
+
+        text("BIÊN LAI THANH TOÁN", W / 2, c1Top + 20, { size: 17, weight: 800, color: "#0f2a63", align: "center", spacing: 0.5 });
+
+        box(ix, pillY, iw, 52, 26, lg(ix, 0, ix + iw, 0, INNER_GRAD));
+        ctx.fillStyle = "#0f2a63";
+        ctx.beginPath();
+        ctx.arc(ix + 26, pillY + 26, 18, 0, Math.PI * 2);
+        ctx.fill();
+        icon(icCoins, ix + 16, pillY + 26, 20);
+        text(formatVnd(totalAmount), ix + iw / 2, pillY + 26, { size: 32, weight: 900, color: "#1d4ed8", align: "center" });
+
+        const chipTxt = `💵 Tiền mặt${isGroupedGuest ? " (tự thanh toán)" : ""}`;
+        const chipW = measure(chipTxt, { size: 12 }) + 28;
+        box(W / 2 - chipW / 2, chipY, chipW, 22, 11, lg(W / 2 - chipW / 2, 0, W / 2 + chipW / 2, 0, INNER_GRAD));
+        text(chipTxt, W / 2, chipY + 11, { size: 12, color: "#1e3a8a", align: "center" });
+
+        box(ix, infoY, iw, infoH, 14, lg(ix, 0, ix + iw, 0, INNER_SOFT));
+        let ry = infoY;
+        infoLayout.forEach((r, i) => {
+          const cy = ry + r.h / 2;
+          if (i > 0) hline(ix + 12, ix + iw - 12, ry);
+          icon(r.icon, ix + 12, cy, 18);
+          text(r.label, ix + 12 + 26, cy, { size: 12, color: "#8a97b2" });
+          r.lines.forEach((ln, li) => {
+            text(ln, ix + iw - 12, cy + (li - (r.lines.length - 1) / 2) * 17, { size: 13, weight: 700, align: "right" });
+          });
+          ry += r.h;
+        });
+
+        type PayRow = { amount: number; label: string; sub?: string; subTag?: string; amber?: boolean; note?: string };
+        const payRows: PayRow[] = [{ amount: hostBaseAmount, label: "Tiền sân + cầu" }];
+        if (hostOtherFeeAmount > 0)
+          payRows.push({ amount: hostOtherFeeAmount, label: "Khoản khác", amber: true, note: hostOtherFeeNote });
+        guestsList.forEach((g) => {
+          payRows.push({ amount: g.baseAmount, label: "Tiền sân + cầu", sub: `+ ${g.name}`, subTag: "(đi cùng)" });
+          if (g.otherFeeAmount > 0)
+            payRows.push({ amount: g.otherFeeAmount, label: "Khoản khác", sub: `+ ${g.name}`, amber: true, note: g.otherFeeNote });
+        });
+
+        const payLayout = payRows.map((r) => {
+          const noteLines = r.note
+            ? r.note.split("\n").map((l) => l.trim()).filter(Boolean)
+            : [];
+          const blockH = 20 + (r.sub ? 22 : 0) + noteLines.length * 14;
+          return { ...r, noteLines, blockH, h: Math.max(36, blockH + 8) };
+        });
+
+        const c2Top = c1Top + c1H + 8;
+        const rowsTop = c2Top + 32;
+        const rowsH = payLayout.reduce((s, r) => s + r.h, 0);
+        const totalY = rowsTop + rowsH + 6;
+        const c2H = totalY + 38 + 8 - c2Top;
+
+        box(PAD, c2Top, CW, c2H, 20, lg(0, c2Top, 0, c2Top + c2H, CARD_GRAD), { c: "rgba(7,26,74,0.12)", b: 24, y: 8 }, CARD_BORDER);
+        icon(icDoc, ix, c2Top + 18, 20);
+        text("CHI TIẾT THANH TOÁN", ix + 28, c2Top + 18, { size: 14, weight: 800, color: "#0f2a63", spacing: 0.3 });
+
+        let py = rowsTop;
+        payLayout.forEach((r) => {
+          hline(ix, ix + iw, py);
+          const cy = py + r.h / 2;
+          icon(r.amber ? icPlus : icCourt, ix, cy, r.amber ? 22 : 34, r.amber ? 22 : 23);
+          const top = cy - r.blockH / 2;
+          text(r.label, ix + 46, top + 10, { size: 15, weight: 600 });
+          let yy = top + 20;
+          if (r.sub) {
+            const nameW = measure(r.sub, { size: 12, weight: 700 });
+            const tagW = r.subTag ? measure(r.subTag, { size: 11 }) + 4 : 0;
+            const pw = 8 + 14 + 5 + nameW + tagW + 10;
+            const px0 = ix + 46;
+            box(px0, yy + 2, pw, 20, 10, lg(px0, 0, px0 + pw, 0, [[0, "#dbeafe"], [1, "#c3d9ff"]]), undefined, "rgba(59,130,246,0.4)");
+            icon(icUsersAccent, px0 + 8, yy + 12, 14);
+            text(r.sub, px0 + 8 + 14 + 5, yy + 12, { size: 12, weight: 700, color: "#1d4ed8" });
+            if (r.subTag) text(r.subTag, px0 + 8 + 14 + 5 + nameW + 4, yy + 12, { size: 11, color: "#5b6b8c" });
+            yy += 22;
+          }
+          r.noteLines.forEach((ln) => {
+            text(ln, ix + 46, yy + 7, { size: 11, italic: true, color: "#8a97b2" });
+            yy += 14;
+          });
+          text(formatVnd(r.amount), ix + iw, cy, {
+            size: 15, weight: 700, align: "right", color: r.amber ? "#d97706" : "#0f1f46",
+          });
+          py += r.h;
+        });
+
+        box(ix, totalY, iw, 38, 12, lg(ix, 0, ix + iw, 0, INNER_GRAD));
+        icon(icSigma, ix + 12, totalY + 19, 22);
+        text("Tổng cộng", ix + 44, totalY + 19, { size: 16, weight: 800 });
+        text(formatVnd(totalAmount), ix + iw - 12, totalY + 19, { size: 18, weight: 900, color: "#1d4ed8", align: "right" });
+
+        const qTop = c2Top + c2H + 8;
+        const qTitle = "QUÉT MÃ ĐỂ CHUYỂN KHOẢN";
+        const qTitleW = measure(qTitle, { size: 12, weight: 800, spacing: 0.5 });
+        text(qTitle, W / 2, qTop + 9, { size: 12, weight: 800, color: "#0f2a63", align: "center", spacing: 0.5 });
+        ctx.fillStyle = "#0f2a63";
+        ctx.fillRect(W / 2 - qTitleW / 2 - 10 - 28, qTop + 9, 28, 1);
+        ctx.fillRect(W / 2 + qTitleW / 2 + 10, qTop + 9, 28, 1);
+
+        const bY = qTop + 22;
+        const bH = 168;
+        const LEFT_W = 150;
+        box(PAD, bY, CW, bH, 18, lg(0, bY, 0, bY + bH, CARD_GRAD), { c: "rgba(7,26,74,0.12)", b: 18, y: 6 });
+
+        ctx.save();
+        rr(PAD, bY, CW, bH, 18);
+        ctx.clip();
+        ctx.fillStyle = lg(PAD + LEFT_W, 0, PAD + CW, 0, INNER_SOFT);
+        ctx.fillRect(PAD + LEFT_W, bY, CW - LEFT_W, bH);
+
+        if (qrImg) {
+          const sx = qrImg.naturalWidth * QR_CROP.left;
+          const sy = qrImg.naturalHeight * QR_CROP.top;
+          const sw = qrImg.naturalWidth * (1 - QR_CROP.left - QR_CROP.right);
+          const sh = qrImg.naturalHeight * (1 - QR_CROP.top - QR_CROP.bottom);
+          const areaW = LEFT_W - 20;
+          const areaH = bH - 20;
+          const k = Math.min(areaW / sw, areaH / sh);
+          const dw = sw * k;
+          const dh = sh * k;
+          ctx.drawImage(qrImg, sx, sy, sw, sh, PAD + 10 + (areaW - dw) / 2, bY + 10 + (areaH - dh) / 2, dw, dh);
+        }
+        ctx.restore();
+
+        const rx = PAD + LEFT_W + 10;
+        const tx = rx + 26;
+        const bankItems: [HTMLImageElement | null, string, string][] = [
+          [icUser, "Chủ tài khoản", "NGO VAN NGOI"],
+          [icCard, "Số tài khoản", "9961 0600 42"],
+          [icBank, "Ngân hàng", "Techcombank"],
+        ];
+        bankItems.forEach(([ic, label, val], i) => {
+          const t = bY + 12 + i * 38;
+          icon(ic, rx, t + 15, 18);
+          text(label, tx, t + 6, { size: 10, color: "#8a97b2" });
+          text(val, tx, t + 24, { size: 13, weight: 700 });
+        });
+        const nt = bY + 12 + 3 * 38;
+        icon(icChat, rx, nt + 15, 18);
+        text("Nội dung (tuỳ chọn)", tx, nt + 6, { size: 10, color: "#8a97b2" });
+        const nW = measure(transferNote, { size: 11, weight: 700 }) + 18;
+        box(tx, nt + 14, nW, 22, 11, lg(tx, 0, tx + nW, 0, INNER_GRAD));
+        text(transferNote, tx + nW / 2, nt + 25, { size: 11, weight: 700, color: "#1e3a8a", align: "center" });
+
+        const fTop = bY + bH + 8;
+        const fH = 50;
+        const fCy = fTop + fH / 2;
+        box(PAD, fTop, CW, fH, 18, "#0f2a63", { c: "rgba(7,26,74,0.2)", b: 14, y: 4 });
+
+        if (logoImg) {
+          const sx = logoImg.naturalWidth * LOGO_CROP.left;
+          const sy = logoImg.naturalHeight * LOGO_CROP.top;
+          const sw = logoImg.naturalWidth * (1 - LOGO_CROP.left - LOGO_CROP.right);
+          const sh = logoImg.naturalHeight * (1 - LOGO_CROP.top - LOGO_CROP.bottom);
+          const dh = FOOTER_LOGO_H;
+          const dw = dh * (sw / sh);
+          ctx.drawImage(logoImg, sx, sy, sw, sh, PAD + 14, fCy - dh / 2, dw, dh);
+        } else {
+          icon(icShuttle, PAD + 14, fCy, 22, 26);
+          text("BNB BADMINTON CLUB", PAD + 42, fCy, { size: 10, weight: 800, color: "#ffffff", spacing: 0.4 });
+        }
+
+        const eW = measure(exportedAt, { size: 10 });
+        text(exportedAt, W - PAD - 14, fCy, { size: 10, color: "#ffffff", align: "right" });
+        icon(icCalWhite, W - PAD - 14 - eW - 6 - 14, fCy, 14);
+
+        return fTop + fH + 10;
+      };
+
+      const scratch = document.createElement("canvas");
+      scratch.width = W * SCALE;
+      scratch.height = 3000 * SCALE;
+      const sctx = scratch.getContext("2d")!;
+      sctx.scale(SCALE, SCALE);
+      const totalH = Math.ceil(render(sctx, 2000));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = W * SCALE;
+      canvas.height = totalH * SCALE;
+      const ctx = canvas.getContext("2d")!;
+      ctx.scale(SCALE, SCALE);
+      render(ctx, totalH);
 
       const blob: Blob | null = await new Promise((resolve) =>
         canvas.toBlob((b) => resolve(b), "image/png"),
@@ -461,6 +813,7 @@ export default function SessionDetailPage() {
       }
     } catch (err: any) {
       if (err?.name !== "AbortError") {
+        console.error("[handleShareGuestReceipt]", err);
         toast.error("Tạo ảnh biên lai thất bại");
       }
     } finally {
