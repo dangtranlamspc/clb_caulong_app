@@ -27,7 +27,6 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     { href: '/admin/members', icon: Users, label: 'Quản lý thành viên', desc: 'Danh sách, phân loại, VIP', iconBg: 'bg-emerald-500' },
     { href: '/admin/sessions', icon: CalendarDays, label: 'Buổi đánh', desc: 'Lịch, đăng ký, điểm danh', iconBg: 'bg-violet-500' },
     { href: '/admin/matches', icon: Swords, label: 'Trận giao hữu', desc: 'Duyệt kết quả, tính điểm rank', iconBg: 'bg-orange-500' },
-    { href: '/admin/rankings', icon: Swords, label: 'BXH', desc: 'Bảng xếp hạng', iconBg: 'bg-orange-500' },
     {
         icon: Wallet,
         label: 'Ví / Tài chính',
@@ -38,6 +37,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
             { href: '/admin/wallet/summary', label: 'Tổng hợp' },
         ],
     },
+    { href: '/admin/announcements', icon: Megaphone, label: 'Thông báo', desc: 'Thông báo', iconBg: 'bg-orange-500' },
     { href: '/admin/events', icon: Megaphone, label: 'Hoạt động', desc: 'Sự kiện, giải đấu, đặt áo', iconBg: 'bg-rose-500' },
     {
         icon: GlassWater,
@@ -50,9 +50,10 @@ export const ADMIN_MENU: AdminMenuItem[] = [
             { href: '/admin/drinks/overview', label: 'Tổng quan' },
         ],
     },
-    { href: '/admin/handbook', icon: BookOpen, label: 'Sổ tay CLB', desc: 'Quản lý các trang sổ tay', iconBg: 'bg-teal-500' },
+    { href: '/admin/rankings', icon: Swords, label: 'BXH', desc: 'Bảng xếp hạng', iconBg: 'bg-orange-500' },
     { href: '/admin/feedback', icon: BookOpen, label: 'Feedbacks', desc: 'Feedbacks', iconBg: 'bg-teal-500' },
     { href: '/admin/fund', icon: BookOpen, label: 'Quỹ', desc: 'Quỹ', iconBg: 'bg-teal-500' },
+    { href: '/admin/handbook', icon: BookOpen, label: 'Sổ tay CLB', desc: 'Quản lý các trang sổ tay', iconBg: 'bg-teal-500' },
 ];
 
 const ANIM_MS = 250;

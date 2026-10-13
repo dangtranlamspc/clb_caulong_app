@@ -1047,6 +1047,34 @@ export const locationsAdminApi = {
   delete: (id: string) => api.delete(`/locations/${id}`),
 };
 
+export const announcementsAdminApi = {
+  list: (params?: { status?: string; page?: number; limit?: number }) =>
+    api.get("/admin/announcements", { params }),
+  get: (id: string) => api.get(`/admin/announcements/${id}`),
+  create: (data: {
+    title: string;
+    message: string;
+    audience: "all" | "selected";
+    recipient_ids?: string[];
+    action: "draft" | "schedule" | "send_now";
+    scheduled_at?: string;
+  }) => api.post("/admin/announcements", data),
+  update: (
+    id: string,
+    data: {
+      title: string;
+      message: string;
+      audience: "all" | "selected";
+      recipient_ids?: string[];
+      action: "draft" | "schedule" | "send_now";
+      scheduled_at?: string;
+    },
+  ) => api.put(`/admin/announcements/${id}`, data),
+  sendNow: (id: string) => api.post(`/admin/announcements/${id}/send`),
+  unschedule: (id: string) => api.post(`/admin/announcements/${id}/unschedule`),
+  remove: (id: string) => api.delete(`/admin/announcements/${id}`),
+};
+
 
 
 
