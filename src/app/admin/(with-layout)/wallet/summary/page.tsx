@@ -252,6 +252,91 @@ function Checkbox({
   );
 }
 
+async function ensureReceiptFonts() {
+  try {
+    if (!document.querySelector("link[data-receipt-fonts]")) {
+      await new Promise<void>((resolve) => {
+        const l = document.createElement("link");
+        l.rel = "stylesheet";
+        l.setAttribute("data-receipt-fonts", "1");
+        l.href =
+          "https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600&family=Barlow+Condensed:wght@600;700&display=swap";
+        l.onload = () => resolve();
+        l.onerror = () => resolve();
+        document.head.appendChild(l);
+        setTimeout(resolve, 3000);
+      });
+    }
+    const sample = "Sao kê ví Số dư hiện tại ĐđẾỂỄ Lịch sử giao dịch Tổng đã chọn 0123456789.đ";
+    await Promise.race([
+      Promise.all([
+        document.fonts.load("500 20px 'Barlow'", sample),
+        document.fonts.load("600 20px 'Barlow'", sample),
+        document.fonts.load("500 18px 'Barlow Semi Condensed'", sample),
+        document.fonts.load("700 52px 'Barlow Condensed'", sample),
+      ]),
+      new Promise((r) => setTimeout(r, 3000)),
+    ]);
+  } catch {
+  }
+}
+
+function drawReceiptBackground(
+  ctx: CanvasRenderingContext2D,
+  bgImg: HTMLImageElement | null,
+  W: number,
+  H: number,
+) {
+  const base = ctx.createLinearGradient(0, 0, 0, H);
+  base.addColorStop(0, "#f6f8fb");
+  base.addColorStop(1, "#e7edf5");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, W, H);
+  if (!bgImg) return;
+
+  const iw = bgImg.naturalWidth;
+  const ih = bgImg.naturalHeight;
+  const k = W / iw;
+  const fullH = ih * k;
+  ctx.imageSmoothingQuality = "high";
+
+  if (H <= fullH) {
+    ctx.drawImage(bgImg, 0, 0, W, fullH);
+    return;
+  }
+
+  const A = 0.55;
+  const B = 0.68;
+  const topH = ih * A * k;
+  const botH = ih * (1 - B) * k;
+  const bandH = ih * (B - A) * k;
+  const midH = H - topH - botH;
+
+  if (midH <= bandH * 4) {
+    ctx.drawImage(bgImg, 0, ih * A, iw, ih * (B - A), 0, topH - 1, W, midH + 2);
+  } else {
+    let y = topH;
+    let flip = false;
+    while (y < topH + midH) {
+      const h = Math.min(bandH, topH + midH - y);
+      const srcH = h / k;
+      if (!flip) {
+        ctx.drawImage(bgImg, 0, ih * A, iw, srcH, 0, y - 0.5, W, h + 1);
+      } else {
+        ctx.save();
+        ctx.translate(0, y);
+        ctx.scale(1, -1);
+        ctx.drawImage(bgImg, 0, ih * B - srcH, iw, srcH, 0, -h - 0.5, W, h + 1);
+        ctx.restore();
+      }
+      y += h;
+      flip = !flip;
+    }
+  }
+  ctx.drawImage(bgImg, 0, 0, iw, ih * A, 0, 0, W, topH);
+  ctx.drawImage(bgImg, 0, ih * B, iw, ih * (1 - B), 0, H - botH, W, botH);
+}
+
 function MemberPanel({
   member,
   onClose,
@@ -389,10 +474,6 @@ function MemberPanel({
   };
 
 
-  // ───────────────────────────────────────────────────────────────
-  // Chia sẻ sao kê ví — vẽ trực tiếp bằng Canvas 2D (cùng phong cách biên lai)
-  // Thay thế hàm handleShareImage cũ trong MemberPanel.
-  // ───────────────────────────────────────────────────────────────
   const handleShareImage = async (kind: "all" | "selected") => {
     if (sharing) return;
     if (kind === "selected" && selectedTxIds.size === 0) return;
@@ -405,37 +486,30 @@ function MemberPanel({
           : transactions;
 
       // ───────────── Cấu hình ─────────────
-      const W = 390; // rộng bằng màn iPhone
-      const SVG_SCALE = 3; // độ nét icon
-      const PAD = 14;
+      const W = 390;
+      const SVG_SCALE = 3;
+      const PAD = 22;
       const CW = W - PAD * 2;
-      const FONT =
-        "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Helvetica,Arial,sans-serif";
-      const SCRIPT = "'Snell Roundhand','Brush Script MT','Segoe Script',cursive";
 
-      const LOGO_SRC = "/bg/logo_team.webp";
-      const LOGO_CROP = { top: 0.055, bottom: 0.125, left: 0.17, right: 0.16 };
-      const LOGO_H = 68;
-      const FOOTER_LOGO_H = 38;
-      const HEADER_H = 80;
+      const FALLBACK =
+        "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+      const SANS = `-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Helvetica,Arial,sans-serif`;
+      const HEAD = `'Barlow',${FALLBACK}`;
+      const ROWNUM = `'Barlow Semi Condensed','Barlow',${FALLBACK}`;
+      const AMOUNT = `'Barlow Condensed','Barlow',${FALLBACK}`;
 
-      const CARD_GRAD: [number, string][] = [
-        [0, "rgba(255,255,255,0.90)"],
-        [1, "rgba(214,231,255,0.84)"],
-      ];
-      const INNER_GRAD: [number, string][] = [
-        [0, "#eef4ff"],
-        [1, "#d3e3ff"],
-      ];
-      const INNER_SOFT: [number, string][] = [
-        [0, "#f5f9ff"],
-        [1, "#e1ecff"],
-      ];
-      const CARD_BORDER = "rgba(255,255,255,0.6)";
-      const ROW_LINE = "rgba(110,150,220,0.22)";
+      const NAVY = "#10294a";
+      const ICON = "#1e3a5f";
+      const MUTED = "#8a9bb5";
+      const SOFT = "#445a7a"; // chữ phụ đậm hơn để nổi trên nền
+      const LINE = "rgba(16,41,74,0.14)";
+      const GREEN = "#059669";
+      const RED = "#dc2626";
+
+      const BG_SRC = "/bg/receipt-bg.webp";
 
       const MAX_CANVAS_PX = 14_000_000; // giới hạn an toàn cho Safari iOS
-      const MAX_HEIGHT = 30000; // px logic
+      const MAX_HEIGHT = 30000;
 
       const exportedAt = `Xuất lúc ${format(new Date(), "HH:mm, dd/MM/yyyy", { locale: vi })}`;
       const txLabel = (tx: any) =>
@@ -455,29 +529,32 @@ function MemberPanel({
 
       const svgImg = (inner: string, color: string, size: number) => {
         const px = size * SVG_SCALE;
-        const s = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+        const s = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
         return loadImg("data:image/svg+xml;charset=utf-8," + encodeURIComponent(s));
       };
 
       const P = {
-        wallet: `<path d="M3 7h15a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3M17 14h.01"/>`,
+        user: `<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>`,
+        phone: `<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>`,
+        star: `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>`,
         doc: `<path d="M6 3h10l3 3v15H6z"/><path d="M9 9h7M9 13h7M9 17h5"/>`,
-        sigma: `<path d="M18 5H6l7 7-7 7h12"/>`,
-        calendar: `<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>`,
+        wallet: `<path d="M3 7h15a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3M17 14h.01"/>`,
       };
 
-      const [icWallet, icDoc, icSigma, icCalWhite, logoImg, avatarImg] = await Promise.all([
-        svgImg(P.wallet, "#ffffff", 20),
-        svgImg(P.doc, "#14306e", 20),
-        svgImg(P.sigma, "#1d4ed8", 22),
-        svgImg(P.calendar, "#ffffff", 14),
-        loadImg(LOGO_SRC, true),
-        member.avatar_url ? loadImg(member.avatar_url, true) : Promise.resolve(null),
+      const [icUser, icPhone, icStar, icDoc, icWallet, bgImg] = await Promise.all([
+        svgImg(P.user, ICON, 22),
+        svgImg(P.phone, ICON, 22),
+        svgImg(P.star, ICON, 22),
+        svgImg(P.doc, ICON, 22),
+        svgImg(P.wallet, ICON, 16),
+        loadImg(BG_SRC, true),
       ]);
+
+      await ensureReceiptFonts();
 
       // ───────────── Hàm vẽ (trả về tổng chiều cao) ─────────────
       const render = (ctx: CanvasRenderingContext2D, H: number): number => {
-        const fontStr = (size: number, weight = 500, italic = false, family = FONT) =>
+        const fontStr = (size: number, weight = 500, italic = false, family = SANS) =>
           `${italic ? "italic " : ""}${weight} ${size}px ${family}`;
 
         type TOpt = {
@@ -486,14 +563,14 @@ function MemberPanel({
         };
 
         const measure = (s: string, o: TOpt = {}) => {
-          const { size = 13, weight = 500, italic = false, family = FONT, spacing = 0 } = o;
+          const { size = 13, weight = 500, italic = false, family = SANS, spacing = 0 } = o;
           ctx.font = fontStr(size, weight, italic, family);
           return ctx.measureText(s).width + spacing * Math.max(0, [...s].length - 1);
         };
 
         // `cy` là tâm theo chiều dọc của dòng
         const text = (s: string, x: number, cy: number, o: TOpt = {}) => {
-          const { size = 13, weight = 500, color = "#0f1f46", align = "left", italic = false, family = FONT, spacing = 0 } = o;
+          const { size = 13, weight = 500, color = NAVY, align = "left", italic = false, family = SANS, spacing = 0 } = o;
           ctx.font = fontStr(size, weight, italic, family);
           ctx.fillStyle = color;
           ctx.textBaseline = "alphabetic";
@@ -527,13 +604,6 @@ function MemberPanel({
           return lines.length ? lines : [""];
         };
 
-        const fit = (s: string, maxW: number, o: TOpt = {}) => {
-          if (measure(s, o) <= maxW) return s;
-          let t = s;
-          while (t.length > 1 && measure(t + "…", o) > maxW) t = t.slice(0, -1);
-          return t + "…";
-        };
-
         const rr = (x: number, y: number, w: number, h: number, r: number) => {
           ctx.beginPath();
           ctx.moveTo(x + r, y);
@@ -544,220 +614,164 @@ function MemberPanel({
           ctx.closePath();
         };
 
-        const box = (
-          x: number, y: number, w: number, h: number, r: number,
-          fill: string | CanvasGradient,
-          shadow?: { c: string; b: number; y: number },
-          stroke?: string,
-        ) => {
-          ctx.save();
-          if (shadow) {
-            ctx.shadowColor = shadow.c;
-            ctx.shadowBlur = shadow.b;
-            ctx.shadowOffsetY = shadow.y;
-          }
+        const fillRR = (x: number, y: number, w: number, h: number, r: number, fill: string) => {
           ctx.fillStyle = fill;
           rr(x, y, w, h, r);
           ctx.fill();
-          ctx.restore();
-          if (stroke) {
-            ctx.save();
-            ctx.strokeStyle = stroke;
-            ctx.lineWidth = 1;
-            rr(x + 0.5, y + 0.5, w - 1, h - 1, r);
-            ctx.stroke();
-            ctx.restore();
-          }
         };
 
-        const lg = (x0: number, y0: number, x1: number, y1: number, stops: [number, string][]) => {
-          const g = ctx.createLinearGradient(x0, y0, x1, y1);
-          stops.forEach(([o, c]) => g.addColorStop(o, c));
-          return g;
-        };
-
-        const hline = (x1: number, x2: number, y: number, color = ROW_LINE) => {
+        const hline = (x1: number, x2: number, y: number, color = LINE) => {
           ctx.fillStyle = color;
           ctx.fillRect(x1, y, x2 - x1, 1);
+        };
+
+        const dline = (x1: number, x2: number, y: number) => {
+          ctx.save();
+          ctx.strokeStyle = LINE;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 3]);
+          ctx.beginPath();
+          ctx.moveTo(x1, y + 0.5);
+          ctx.lineTo(x2, y + 0.5);
+          ctx.stroke();
+          ctx.restore();
         };
 
         const icon = (img: HTMLImageElement | null, x: number, cy: number, w: number, h = w) => {
           if (img) ctx.drawImage(img, x, cy - h / 2, w, h);
         };
 
-        const drawLogo = (x: number, cy: number, dh: number) => {
-          if (!logoImg) return 0;
-          const sx = logoImg.naturalWidth * LOGO_CROP.left;
-          const sy = logoImg.naturalHeight * LOGO_CROP.top;
-          const sw = logoImg.naturalWidth * (1 - LOGO_CROP.left - LOGO_CROP.right);
-          const sh = logoImg.naturalHeight * (1 - LOGO_CROP.top - LOGO_CROP.bottom);
-          const dw = dh * (sw / sh);
-          ctx.drawImage(logoImg, sx, sy, sw, sh, x, cy - dh / 2, dw, dh);
-          return dw;
-        };
+        // ── nền ──
+        drawReceiptBackground(ctx, bgImg, W, H);
 
-        // --- nền ---
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, "#071a4a");
-        bg.addColorStop(Math.min(0.18, 160 / H), "#0e2a70");
-        bg.addColorStop(Math.min(0.32, 280 / H), "#2a56b8");
-        bg.addColorStop(Math.min(0.52, 480 / H), "#bcd3f5");
-        bg.addColorStop(Math.min(0.78, 700 / H), "#e6eefc");
-        bg.addColorStop(1, "#f3f7ff");
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, W, H);
-        const glow = ctx.createRadialGradient(W * 0.88, 10, 0, W * 0.88, 10, 100);
-        glow.addColorStop(0, "rgba(147,197,253,0.45)");
-        glow.addColorStop(1, "rgba(147,197,253,0)");
-        ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, W, 140);
-
-        // --- header ---
-        if (logoImg) drawLogo(PAD, HEADER_H / 2 - 2, LOGO_H);
-        text("More Than", W - PAD, 24, { size: 19, italic: true, color: "#93c5fd", align: "right", family: SCRIPT });
-        text("Badminton", W - PAD, 46, { size: 19, italic: true, color: "#93c5fd", align: "right", family: SCRIPT });
-        text("PLAY • FRIENDS • GOOD VIBES", W - PAD, HEADER_H - 12, { size: 8, color: "rgba(255,255,255,0.6)", align: "right", spacing: 3 });
-
-        const ix = PAD + 12;
-        const iw = CW - 24;
-
-        // ───────── CARD 1: thành viên + số dư ─────────
-        const c1Top = HEADER_H;
-        const memberCy = c1Top + 74;
-        const pillY = c1Top + 100;
-        const chipY = pillY + 52 + 6;
-        const c1H = chipY + 22 + 10 - c1Top;
-
-        box(PAD, c1Top, CW, c1H, 20, lg(0, c1Top, 0, c1Top + c1H, CARD_GRAD), { c: "rgba(7,26,74,0.18)", b: 24, y: 8 }, CARD_BORDER);
-
-        text("SAO KÊ VÍ", W / 2, c1Top + 20, { size: 17, weight: 800, color: "#0f2a63", align: "center", spacing: 0.5 });
-        text(
-          kind === "selected" ? `${list.length} giao dịch đã chọn` : "Toàn bộ lịch sử giao dịch",
-          W / 2, c1Top + 38, { size: 10, color: "#5b6b8c", align: "center" },
-        );
-
-        // avatar
-        const AV = 20;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(ix + AV, memberCy, AV, 0, Math.PI * 2);
-        ctx.closePath();
-        if (avatarImg) {
-          ctx.clip();
-          const k = Math.max((AV * 2) / avatarImg.naturalWidth, (AV * 2) / avatarImg.naturalHeight);
-          const dw = avatarImg.naturalWidth * k;
-          const dh = avatarImg.naturalHeight * k;
-          ctx.drawImage(avatarImg, ix + AV - dw / 2, memberCy - dh / 2, dw, dh);
-          ctx.restore();
-        } else {
-          ctx.fillStyle = lg(ix, memberCy - AV, ix + AV * 2, memberCy + AV, [[0, "#60a5fa"], [1, "#2563eb"]]);
-          ctx.fill();
-          ctx.restore();
-          text(String(member.full_name?.[0] ?? "?").toUpperCase(), ix + AV, memberCy, { size: 17, weight: 800, color: "#ffffff", align: "center" });
-        }
-
-        // rank chip (bên phải)
-        let chipLeft = ix + iw;
-        if (member.tier) {
-          const t = TIER_STYLE[member.tier];
-          const rt = `${t?.dot ?? "•"} ${member.tier}`;
-          const rw = measure(rt, { size: 11, weight: 700 }) + 20;
-          box(ix + iw - rw, memberCy - 11, rw, 22, 11, lg(ix + iw - rw, 0, ix + iw, 0, INNER_GRAD));
-          text(rt, ix + iw - rw / 2, memberCy, { size: 11, weight: 700, color: "#1e3a8a", align: "center" });
-          chipLeft = ix + iw - rw - 8;
-        }
-        const nameX = ix + AV * 2 + 10;
-        text(fit(member.full_name ?? "", chipLeft - nameX, { size: 15, weight: 700 }), nameX, memberCy - 8, { size: 15, weight: 700 });
-        text(member.phone ?? "", nameX, memberCy + 10, { size: 12, color: "#8a97b2" });
-
-        // pill số dư
-        const negative = member.balance < 0;
-        box(ix, pillY, iw, 52, 26, lg(ix, 0, ix + iw, 0, INNER_GRAD));
-        ctx.fillStyle = "#0f2a63";
-        ctx.beginPath();
-        ctx.arc(ix + 26, pillY + 26, 18, 0, Math.PI * 2);
-        ctx.fill();
-        icon(icWallet, ix + 16, pillY + 26, 20);
-        text(fmt(member.balance), ix + iw / 2, pillY + 26, {
-          size: 32, weight: 900, color: negative ? "#dc2626" : "#1d4ed8", align: "center",
+        // ── header ──
+        text("SAO KÊ VÍ", W / 2, 38, { size: 20, weight: 500, family: HEAD, align: "center", spacing: 3 });
+        text("BNB BADMINTON CLUB", W / 2, 62, { size: 9, weight: 500, family: HEAD, color: MUTED, align: "center", spacing: 4 });
+        hline(W / 2 - 22, W / 2 + 22, 74, "rgba(16,41,74,0.35)");
+        text("PLAY  •  FRIENDS  •  GOOD VIBES", W / 2, 92, {
+          size: 8, weight: 500, family: HEAD, color: "#42536e", align: "center", spacing: 3.5,
         });
 
-        const lbl = "Số dư hiện tại";
-        const lblW = measure(lbl, { size: 12 }) + 28;
-        box(W / 2 - lblW / 2, chipY, lblW, 22, 11, lg(W / 2 - lblW / 2, 0, W / 2 + lblW / 2, 0, INNER_GRAD));
-        text(lbl, W / 2, chipY + 11, { size: 12, color: "#1e3a8a", align: "center" });
+        // ── số dư ──
+        const negative = member.balance < 0;
+        text("SỐ DƯ HIỆN TẠI", W / 2, 128, { size: 9, weight: 500, family: HEAD, align: "center", spacing: 3 });
+        const balStr = fmt(member.balance);
+        let balSize = 62;
+        while (balSize > 28 && measure(balStr, { size: balSize, weight: 700, family: AMOUNT }) > CW) balSize -= 2;
+        text(balStr, W / 2, 166, {
+          size: balSize, weight: 700, family: AMOUNT, align: "center", color: negative ? RED : NAVY,
+        });
 
-        // ───────── CARD 2: lịch sử giao dịch ─────────
-        const DATE_W = 46;
-        const AMT_W = 96;
-        const LABEL_W = iw - DATE_W - AMT_W;
+        // chip trạng thái ví
+        const statusTxt =
+          member.balance < 0 ? "Âm ví" : member.balance === 0 ? "Hết tiền" : member.balance < 50000 ? "Sắp hết" : "Bình thường";
+        const statusColor =
+          member.balance < 0 ? RED : member.balance === 0 ? "#5b6b8c" : member.balance < 50000 ? "#b45309" : GREEN;
+        const chipW = measure(statusTxt, { size: 12, weight: 500 }) + 52;
+        const chipY = 200;
+        const chipX = W / 2 - chipW / 2;
+        fillRR(chipX, chipY, chipW, 26, 13, "rgba(205,218,236,0.75)");
+        icon(icWallet, chipX + 12, chipY + 13, 15);
+        text(statusTxt, chipX + 34, chipY + 13, { size: 12, weight: 500, color: statusColor });
 
+        // ── thông tin ──
+        const tierText = member.tier
+          ? `${TIER_STYLE[member.tier]?.dot ?? "•"} ${member.tier}${typeof member.total_points === "number" ? ` · ${member.total_points}/50` : ""}`
+          : "";
+        const infoRows: { icon: HTMLImageElement | null; label: string; value: string }[] = [
+          { icon: icUser, label: "Thành viên", value: member.full_name ?? "" },
+          { icon: icPhone, label: "Số điện thoại", value: member.phone ?? "—" },
+        ];
+        if (tierText) infoRows.push({ icon: icStar, label: "Hạng", value: tierText });
+        infoRows.push({
+          icon: icDoc,
+          label: "Phạm vi",
+          value: kind === "selected" ? `${list.length} giao dịch đã chọn` : "Toàn bộ lịch sử",
+        });
+
+        const LABEL_X = PAD + 40;
+        const VAL_W = CW - 40 - 100;
+        const infoLayout = infoRows.map((r) => {
+          const lines = wrap(r.value, VAL_W, { size: 13, weight: 600 });
+          return { ...r, lines, h: Math.max(42, lines.length * 17 + 16) };
+        });
+
+        const infoY = 244;
+        let ry = infoY;
+        infoLayout.forEach((r, i) => {
+          if (i > 0) hline(LABEL_X, W - PAD, ry);
+          const cy = ry + r.h / 2;
+          icon(r.icon, PAD, cy, 22);
+          text(r.label, LABEL_X, cy, { size: 13, color: SOFT });
+          r.lines.forEach((ln, li) => {
+            text(ln, W - PAD, cy + (li - (r.lines.length - 1) / 2) * 17, { size: 13, weight: 600, align: "right" });
+          });
+          ry += r.h;
+        });
+        hline(PAD, W - PAD, ry, "rgba(16,41,74,0.28)");
+
+        // ── lịch sử giao dịch ──
+        const secCy = ry + 28;
+        const secTitle = "LỊCH SỬ GIAO DỊCH";
+        const secW = measure(secTitle, { size: 12, weight: 500, family: HEAD, spacing: 3 });
+        text(secTitle, PAD, secCy, { size: 12, weight: 500, family: HEAD, spacing: 3 });
+        hline(PAD + secW + 14, PAD + secW + 14 + 40, secCy, "rgba(16,41,74,0.35)");
+        text(`${list.length} giao dịch`, W - PAD, secCy, { size: 11, color: SOFT, align: "right" });
+
+        const DATE_W = 54;
+        const AMT_W = 104;
+        const LABEL_W = CW - DATE_W - AMT_W;
         const rows = list.map((tx) => {
           const lines = wrap(txLabel(tx), LABEL_W, { size: 12.5 });
-          return { tx, lines, h: Math.max(42, lines.length * 16 + 18) };
+          return { tx, lines, h: Math.max(50, lines.length * 16 + 22) };
         });
-        const emptyH = 44;
-        const rowsH = rows.length ? rows.reduce((s, r) => s + r.h, 0) : emptyH;
 
-        const c2Top = c1Top + c1H + 8;
-        const rowsTop = c2Top + 32;
-        const showTotal = kind === "selected" && list.length > 0;
-        const totalY = rowsTop + rowsH + 6;
-        const c2H = (showTotal ? totalY + 38 : rowsTop + rowsH) + 8 - c2Top;
-
-        box(PAD, c2Top, CW, c2H, 20, lg(0, c2Top, 0, c2Top + c2H, CARD_GRAD), { c: "rgba(7,26,74,0.12)", b: 24, y: 8 }, CARD_BORDER);
-        icon(icDoc, ix, c2Top + 18, 20);
-        text("LỊCH SỬ GIAO DỊCH", ix + 28, c2Top + 18, { size: 14, weight: 800, color: "#0f2a63", spacing: 0.3 });
-        text(`${list.length} giao dịch`, ix + iw, c2Top + 18, { size: 11, color: "#5b6b8c", align: "right" });
-
+        const rowsTop = secCy + 16;
+        let py = rowsTop;
         if (rows.length === 0) {
-          hline(ix, ix + iw, rowsTop);
-          text("Chưa có giao dịch nào", W / 2, rowsTop + emptyH / 2, { size: 12, color: "#8a97b2", align: "center" });
+          text("Chưa có giao dịch nào", W / 2, py + 28, { size: 12, color: SOFT, align: "center" });
+          py += 56;
         } else {
-          let py = rowsTop;
-          rows.forEach(({ tx, lines, h }) => {
-            hline(ix, ix + iw, py);
+          rows.forEach(({ tx, lines, h }, i) => {
+            if (i > 0) dline(PAD, W - PAD, py);
             const cy = py + h / 2;
             const d = new Date(tx.created_at);
-            text(format(d, "dd/MM", { locale: vi }), ix, cy - 6, { size: 12, weight: 700 });
-            text(format(d, "yyyy", { locale: vi }), ix, cy + 8, { size: 10, color: "#8a97b2" });
+            text(format(d, "dd/MM", { locale: vi }), PAD, cy - 6, { size: 13, weight: 600 });
+            text(format(d, "yyyy", { locale: vi }), PAD, cy + 9, { size: 10, color: SOFT });
 
-            lines.forEach((ln, i) => {
-              text(ln, ix + DATE_W, cy + (i - (lines.length - 1) / 2) * 16, { size: 12.5 });
+            lines.forEach((ln, li) => {
+              text(ln, PAD + DATE_W, cy + (li - (lines.length - 1) / 2) * 16, { size: 12.5 });
             });
 
             const pos = tx.amount > 0;
-            text(`${pos ? "+" : ""}${fmt(tx.amount)}`, ix + iw, cy - 6, {
-              size: 13, weight: 800, align: "right", color: pos ? "#059669" : "#dc2626",
+            text(`${pos ? "+" : ""}${fmt(tx.amount)}`, W - PAD, cy - 6, {
+              size: 16, weight: 500, family: ROWNUM, align: "right", color: pos ? GREEN : RED,
             });
-            text(`Dư ${fmt(tx.balance_after)}`, ix + iw, cy + 9, { size: 10, align: "right", color: "#8a97b2" });
+            text(`Dư ${fmt(tx.balance_after)}`, W - PAD, cy + 10, { size: 10, color: SOFT, align: "right" });
             py += h;
           });
         }
 
-        if (showTotal) {
+        // ── tổng đã chọn ──
+        if (kind === "selected" && list.length > 0) {
           const sum = list.reduce((s, t) => s + Number(t.amount ?? 0), 0);
-          box(ix, totalY, iw, 38, 12, lg(ix, 0, ix + iw, 0, INNER_GRAD));
-          icon(icSigma, ix + 12, totalY + 19, 22);
-          text("Tổng đã chọn", ix + 44, totalY + 19, { size: 15, weight: 800 });
-          text(`${sum > 0 ? "+" : ""}${fmt(sum)}`, ix + iw - 12, totalY + 19, {
-            size: 17, weight: 900, align: "right", color: sum >= 0 ? "#059669" : "#dc2626",
+          const totalY = py + 2;
+          hline(PAD, W - PAD, totalY, "rgba(16,41,74,0.28)");
+          const totalCy = totalY + 32;
+          text("Tổng đã chọn", PAD, totalCy, { size: 15, weight: 500, family: HEAD, spacing: 4 });
+          text(`${sum > 0 ? "+" : ""}${fmt(sum)}`, W - PAD, totalCy, {
+            size: 30, weight: 700, family: AMOUNT, align: "right", color: sum >= 0 ? GREEN : RED,
           });
+          py = totalY + 64;
+        } else {
+          py += 8;
         }
 
-        // ───────── Footer ─────────
-        const fTop = c2Top + c2H + 8;
-        const fH = 50;
-        const fCy = fTop + fH / 2;
-        box(PAD, fTop, CW, fH, 18, "#0f2a63", { c: "rgba(7,26,74,0.2)", b: 14, y: 4 });
-        if (logoImg) drawLogo(PAD + 14, fCy, FOOTER_LOGO_H);
-        else text("BNB BADMINTON CLUB", PAD + 14, fCy, { size: 10, weight: 800, color: "#ffffff", spacing: 0.4 });
+        // ── chân trang ──
+        hline(W / 2 - 22, W / 2 + 22, py + 12, "rgba(16,41,74,0.3)");
+        text(exportedAt, W / 2, py + 30, { size: 10, color: SOFT, align: "center" });
 
-        const eW = measure(exportedAt, { size: 10 });
-        text(exportedAt, W - PAD - 14, fCy, { size: 10, color: "#ffffff", align: "right" });
-        icon(icCalWhite, W - PAD - 14 - eW - 6 - 14, fCy, 14);
-
-        return fTop + fH + 10;
+        return py + 56;
       };
 
       // Pass 1: đo chiều cao
@@ -817,8 +831,6 @@ function MemberPanel({
       setSharing(null);
     }
   };
-
-  const isNegativeAmount = amountDisplay.trim().startsWith("-");
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-[var(--surface)] lg:border-l border-[var(--border)]">
