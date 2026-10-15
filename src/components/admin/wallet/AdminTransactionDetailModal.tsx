@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { eventsAdminApi, registrationsAdminApi, walletAdminApi } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { drawReceiptBackground, ensureReceiptFonts } from '@/lib/receipt-canvas';
 
 function fmt(n: number) {
     return new Intl.NumberFormat('vi-VN').format(n) + 'đ';
@@ -168,34 +169,30 @@ export default function AdminTransactionDetailModal({
             // ───────────── Cấu hình ─────────────
             const W = 390;
             const SVG_SCALE = 3;
-            const PAD = 14;
+            const PAD = 22;
             const CW = W - PAD * 2;
-            const FONT =
+
+            const FALLBACK =
+                "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+            const SANS =
                 "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Helvetica,Arial,sans-serif";
-            const SCRIPT = "'Snell Roundhand','Brush Script MT','Segoe Script',cursive";
+            const HEAD = `'Barlow',${FALLBACK}`;
+            const ROWNUM = `'Barlow Semi Condensed','Barlow',${FALLBACK}`;
+            const AMOUNT = `'Barlow Condensed','Barlow',${FALLBACK}`;
 
-            const QR_SRC = '/qr/qr-ng-ngoi.png';
-            const QR_CROP = { top: 0.17, bottom: 0, left: 0, right: 0 };
-            const LOGO_SRC = '/bg/logo_team.webp';
-            const LOGO_CROP = { top: 0.055, bottom: 0.125, left: 0.17, right: 0.16 };
-            const LOGO_H = 68;
-            const FOOTER_LOGO_H = 38;
-            const HEADER_H = 80;
+            const NAVY = '#10294a';
+            const ICON = '#1e3a5f';
+            const MUTED = '#8a9bb5';
+            const SOFT = '#445a7a'; // chữ phụ đủ đậm để nổi trên nền
+            const LINE = 'rgba(16,41,74,0.14)';
+            const STRONG_LINE = 'rgba(16,41,74,0.28)';
+            const GREEN = '#059669';
+            const RED = '#dc2626';
+            const AMBER = '#b45309';
 
-            const CARD_GRAD: [number, string][] = [
-                [0, 'rgba(255,255,255,0.90)'],
-                [1, 'rgba(214,231,255,0.84)'],
-            ];
-            const INNER_GRAD: [number, string][] = [
-                [0, '#eef4ff'],
-                [1, '#d3e3ff'],
-            ];
-            const INNER_SOFT: [number, string][] = [
-                [0, '#f5f9ff'],
-                [1, '#e1ecff'],
-            ];
-            const CARD_BORDER = 'rgba(255,255,255,0.6)';
-            const ROW_LINE = 'rgba(110,150,220,0.22)';
+            const BG_SRC = '/bg/receipt-bg.webp';
+            const QR_SRC = '/qr/qr-ng-ngoi.webp';
+            const SHUTTLE_SRC = '/bg/cau-long-icon.webp';
 
             const MAX_CANVAS_PX = 14_000_000;
             const MAX_HEIGHT = 30000;
@@ -220,57 +217,50 @@ export default function AdminTransactionDetailModal({
             const svgImg = (inner: string, color: string, size: number, vb = '0 0 24 24', h?: number) => {
                 const px = size * SVG_SCALE;
                 const py = (h ?? size) * SVG_SCALE;
-                const s = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${py}" viewBox="${vb}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+                const s = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${py}" viewBox="${vb}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
                 return loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s));
             };
 
             const P = {
                 user: `<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>`,
+                users: `<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-5.5 6-5.5s6 2 6 5.5"/><path d="M16 5a3.2 3.2 0 0 1 0 6M18 14.8c1.8.7 3 2.3 3 5.2"/>`,
                 calendar: `<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>`,
                 clock: `<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
-                users: `<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-5.5 6-5.5s6 2 6 5.5"/><path d="M16 5a3.2 3.2 0 0 1 0 6M18 14.8c1.8.7 3 2.3 3 5.2"/>`,
-                card: `<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/>`,
-                bank: `<path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>`,
                 chat: `<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/>`,
                 wallet: `<path d="M3 7h15a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3M17 14h.01"/>`,
+                card: `<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/>`,
+                bank: `<path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>`,
                 doc: `<path d="M6 3h10l3 3v15H6z"/><path d="M9 9h7M9 13h7M9 17h5"/>`,
-                sigma: `<path d="M18 5H6l7 7-7 7h12"/>`,
                 plus: `<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>`,
-                shirt: `<path d="M8 3l-5 3 2 4 3-1v11h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z"/>`,
             };
-            const G = '#8a97b2';
 
             const [
-                icUserG, icCalG, icClockG, icChatG, icWalletG, icCardG, icBankG, icDocG,
-                icWalletW, icDoc, icSigma, icCalW, icPlus, icCourt, icShirt, icUsersAccent,
-                qrImg, logoImg,
+                icUser, icUsers, icCal, icClock, icChat, icWallet, icCard, icBank, icDoc, icPlus,
+                icCourt, qrImg, bgImg, shuttleImg,
             ] = await Promise.all([
-                svgImg(P.user, G, 18),
-                svgImg(P.calendar, G, 18),
-                svgImg(P.clock, G, 18),
-                svgImg(P.chat, G, 18),
-                svgImg(P.wallet, G, 18),
-                svgImg(P.card, G, 18),
-                svgImg(P.bank, G, 18),
-                svgImg(P.doc, G, 18),
-                svgImg(P.wallet, '#ffffff', 20),
-                svgImg(P.doc, '#14306e', 20),
-                svgImg(P.sigma, '#1d4ed8', 22),
-                svgImg(P.calendar, '#ffffff', 14),
+                svgImg(P.user, ICON, 22),
+                svgImg(P.users, ICON, 22),
+                svgImg(P.calendar, ICON, 22),
+                svgImg(P.clock, ICON, 22),
+                svgImg(P.chat, ICON, 22),
+                svgImg(P.wallet, ICON, 16),
+                svgImg(P.card, ICON, 22),
+                svgImg(P.bank, ICON, 22),
+                svgImg(P.doc, ICON, 22),
                 svgImg(P.plus, '#d97706', 22),
                 svgImg(
                     `<rect x="1" y="1" width="42" height="28" rx="4" fill="#16a34a" stroke="none"/><rect x="5" y="5" width="34" height="20" stroke="#bbf7d0" stroke-width="1.5"/><path d="M22 5v20M5 15h34" stroke="#bbf7d0" stroke-width="1.5"/>`,
-                    'none', 34, '0 0 44 30', 23,
+                    'none', 26, '0 0 44 30', 18,
                 ),
-                svgImg(P.shirt, '#2563eb', 24),
-                svgImg(P.users, '#2563eb', 14),
                 loadImg(QR_SRC, true),
-                loadImg(LOGO_SRC, true),
+                loadImg(BG_SRC, true),
+                loadImg(SHUTTLE_SRC, true),
             ]);
 
-            // ───────────── Hàm vẽ (trả về tổng chiều cao) ─────────────
+            await ensureReceiptFonts();
+
             const render = (ctx: CanvasRenderingContext2D, H: number): number => {
-                const fontStr = (size: number, weight = 500, italic = false, family = FONT) =>
+                const fontStr = (size: number, weight = 500, italic = false, family = SANS) =>
                     `${italic ? 'italic ' : ''}${weight} ${size}px ${family}`;
 
                 type TOpt = {
@@ -279,14 +269,13 @@ export default function AdminTransactionDetailModal({
                 };
 
                 const measure = (s: string, o: TOpt = {}) => {
-                    const { size = 13, weight = 500, italic = false, family = FONT, spacing = 0 } = o;
+                    const { size = 13, weight = 500, italic = false, family = SANS, spacing = 0 } = o;
                     ctx.font = fontStr(size, weight, italic, family);
                     return ctx.measureText(s).width + spacing * Math.max(0, [...s].length - 1);
                 };
 
-                // `cy` = tâm theo chiều dọc của dòng
                 const text = (s: string, x: number, cy: number, o: TOpt = {}) => {
-                    const { size = 13, weight = 500, color = '#0f1f46', align = 'left', italic = false, family = FONT, spacing = 0 } = o;
+                    const { size = 13, weight = 500, color = NAVY, align = 'left', italic = false, family = SANS, spacing = 0 } = o;
                     ctx.font = fontStr(size, weight, italic, family);
                     ctx.fillStyle = color;
                     ctx.textBaseline = 'alphabetic';
@@ -337,234 +326,175 @@ export default function AdminTransactionDetailModal({
                     ctx.closePath();
                 };
 
-                const box = (
-                    x: number, y: number, w: number, h: number, r: number,
-                    fill: string | CanvasGradient,
-                    shadow?: { c: string; b: number; y: number },
-                    stroke?: string,
-                ) => {
-                    ctx.save();
-                    if (shadow) {
-                        ctx.shadowColor = shadow.c;
-                        ctx.shadowBlur = shadow.b;
-                        ctx.shadowOffsetY = shadow.y;
-                    }
+                const fillRR = (x: number, y: number, w: number, h: number, r: number, fill: string) => {
                     ctx.fillStyle = fill;
                     rr(x, y, w, h, r);
                     ctx.fill();
-                    ctx.restore();
-                    if (stroke) {
-                        ctx.save();
-                        ctx.strokeStyle = stroke;
-                        ctx.lineWidth = 1;
-                        rr(x + 0.5, y + 0.5, w - 1, h - 1, r);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
                 };
 
-                const lg = (x0: number, y0: number, x1: number, y1: number, stops: [number, string][]) => {
-                    const g = ctx.createLinearGradient(x0, y0, x1, y1);
-                    stops.forEach(([o, c]) => g.addColorStop(o, c));
-                    return g;
-                };
-
-                const hline = (x1: number, x2: number, y: number, color = ROW_LINE) => {
+                const hline = (x1: number, x2: number, y: number, color = LINE) => {
                     ctx.fillStyle = color;
                     ctx.fillRect(x1, y, x2 - x1, 1);
+                };
+
+                const dline = (x1: number, x2: number, y: number) => {
+                    ctx.save();
+                    ctx.strokeStyle = LINE;
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([2, 3]);
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y + 0.5);
+                    ctx.lineTo(x2, y + 0.5);
+                    ctx.stroke();
+                    ctx.restore();
+                };
+
+                const vline = (x: number, y1: number, y2: number) => {
+                    ctx.save();
+                    ctx.strokeStyle = LINE;
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([2, 3]);
+                    ctx.beginPath();
+                    ctx.moveTo(x + 0.5, y1);
+                    ctx.lineTo(x + 0.5, y2);
+                    ctx.stroke();
+                    ctx.restore();
                 };
 
                 const icon = (img: HTMLImageElement | null, x: number, cy: number, w: number, h = w) => {
                     if (img) ctx.drawImage(img, x, cy - h / 2, w, h);
                 };
 
-                const drawLogo = (x: number, cy: number, dh: number) => {
-                    if (!logoImg) return;
-                    const sx = logoImg.naturalWidth * LOGO_CROP.left;
-                    const sy = logoImg.naturalHeight * LOGO_CROP.top;
-                    const sw = logoImg.naturalWidth * (1 - LOGO_CROP.left - LOGO_CROP.right);
-                    const sh = logoImg.naturalHeight * (1 - LOGO_CROP.top - LOGO_CROP.bottom);
-                    ctx.drawImage(logoImg, sx, sy, sw, sh, x, cy - dh / 2, dh * (sw / sh), dh);
-                };
+                drawReceiptBackground(ctx, bgImg, W, H);
 
-                // Pill nổi bật cho tên người
-                const namePill = (x: number, cy: number, name: string, tag?: string) => {
-                    const nameW = measure(name, { size: 12, weight: 700 });
-                    const tagW = tag ? measure(tag, { size: 11 }) + 4 : 0;
-                    const pw = 8 + 14 + 5 + nameW + tagW + 10;
-                    box(x, cy - 10, pw, 20, 10, lg(x, 0, x + pw, 0, [[0, '#dbeafe'], [1, '#c3d9ff']]), undefined, 'rgba(59,130,246,0.4)');
-                    icon(icUsersAccent, x + 8, cy, 14);
-                    text(name, x + 8 + 14 + 5, cy, { size: 12, weight: 700, color: '#1d4ed8' });
-                    if (tag) text(tag, x + 8 + 14 + 5 + nameW + 4, cy, { size: 11, color: '#5b6b8c' });
-                };
+                text('BIÊN LAI GIAO DỊCH', W / 2, 38, { size: 20, weight: 500, family: HEAD, align: 'center', spacing: 3 });
+                text('BNB BADMINTON CLUB', W / 2, 62, { size: 9, weight: 500, family: HEAD, color: MUTED, align: 'center', spacing: 4 });
+                hline(W / 2 - 22, W / 2 + 22, 74, 'rgba(16,41,74,0.35)');
+                text('PLAY  •  FRIENDS  •  GOOD VIBES', W / 2, 92, {
+                    size: 8, weight: 500, family: HEAD, color: '#42536e', align: 'center', spacing: 3.5,
+                });
 
-                // --- nền ---
-                const bg = ctx.createLinearGradient(0, 0, 0, H);
-                bg.addColorStop(0, '#071a4a');
-                bg.addColorStop(Math.min(0.18, 160 / H), '#0e2a70');
-                bg.addColorStop(Math.min(0.32, 280 / H), '#2a56b8');
-                bg.addColorStop(Math.min(0.52, 480 / H), '#bcd3f5');
-                bg.addColorStop(Math.min(0.78, 700 / H), '#e6eefc');
-                bg.addColorStop(1, '#f3f7ff');
-                ctx.fillStyle = bg;
-                ctx.fillRect(0, 0, W, H);
-                const glow = ctx.createRadialGradient(W * 0.88, 10, 0, W * 0.88, 10, 100);
-                glow.addColorStop(0, 'rgba(147,197,253,0.45)');
-                glow.addColorStop(1, 'rgba(147,197,253,0)');
-                ctx.fillStyle = glow;
-                ctx.fillRect(0, 0, W, 140);
+                text('SỐ TIỀN GIAO DỊCH', W / 2, 128, { size: 9, weight: 500, family: HEAD, align: 'center', spacing: 3 });
+                const amountStr = `${isPositive ? '+' : ''}${fmt(tx.amount)}`;
+                let amountSize = 62;
+                while (amountSize > 28 && measure(amountStr, { size: amountSize, weight: 700, family: AMOUNT }) > CW) amountSize -= 2;
+                text(amountStr, W / 2, 166, {
+                    size: amountSize, weight: 700, family: AMOUNT, align: 'center', color: isPositive ? GREEN : RED,
+                });
 
-                // --- header ---
-                drawLogo(PAD, HEADER_H / 2 - 2, LOGO_H);
-                text('More Than', W - PAD, 24, { size: 19, italic: true, color: '#93c5fd', align: 'right', family: SCRIPT });
-                text('Badminton', W - PAD, 46, { size: 19, italic: true, color: '#93c5fd', align: 'right', family: SCRIPT });
-                text('PLAY • FRIENDS • GOOD VIBES', W - PAD, HEADER_H - 12, { size: 8, color: 'rgba(255,255,255,0.6)', align: 'right', spacing: 3 });
+                const chipTxt = fit(typeLabel, CW - 70, { size: 12, weight: 500 });
+                const chipW = measure(chipTxt, { size: 12, weight: 500 }) + 52;
+                const chipY = 200;
+                const chipX = W / 2 - chipW / 2;
+                fillRR(chipX, chipY, chipW, 26, 13, 'rgba(205,218,236,0.75)');
+                icon(icWallet, chipX + 12, chipY + 13, 15);
+                text(chipTxt, chipX + 34, chipY + 13, { size: 12, weight: 500, color: ICON });
 
-                const ix = PAD + 12;
-                const iw = CW - 24;
-
-                // ───────── CARD 1: số tiền + thông tin chung ─────────
-                const c1Top = HEADER_H;
                 const infoRows: { icon: HTMLImageElement | null; label: string; value: string; bold?: boolean }[] = [
-                    { icon: icDocG, label: 'Tiêu đề', value: tx.title ?? '' },
+                    { icon: icDoc, label: 'Tiêu đề', value: tx.title ?? '' },
                 ];
                 if (tx.description && !badgeUsesDescription)
-                    infoRows.push({ icon: icChatG, label: 'Diễn giải', value: tx.description });
+                    infoRows.push({ icon: icChat, label: 'Diễn giải', value: tx.description });
+                if (isSessionPayment && displaySessionTitle)
+                    infoRows.push({ icon: icCal, label: 'Buổi đánh', value: displaySessionTitle });
                 infoRows.push({
-                    icon: icClockG, label: 'Thời gian',
+                    icon: icClock, label: 'Thời gian',
                     value: format(new Date(tx.created_at), 'HH:mm, dd/MM/yyyy', { locale: vi }),
                 });
-                infoRows.push({ icon: icWalletG, label: 'Số dư sau giao dịch', value: fmt(tx.balance_after), bold: true });
+                infoRows.push({ icon: icWallet, label: 'Số dư sau giao dịch', value: fmt(tx.balance_after), bold: true });
 
-                const LABEL_COL = 112;
-                const VAL_W = iw - 24 - 26 - LABEL_COL;
-                const infoLayout = infoRows.map((r) => {
-                    const lines = wrap(r.value, VAL_W, { size: 13, weight: 700 });
-                    return { ...r, lines, h: Math.max(34, lines.length * 17 + 12) };
+                const LABEL_X = PAD + 40;
+                const VAL_W = CW - 40 - 125;
+                let y = 244;
+                infoRows.forEach((r, i) => {
+                    const lines = wrap(r.value, VAL_W, { size: 13, weight: 600 });
+                    const h = Math.max(42, lines.length * 17 + 16);
+                    if (i > 0) hline(LABEL_X, W - PAD, y);
+                    const cy = y + h / 2;
+                    icon(r.icon, PAD, cy, 22);
+                    text(r.label, LABEL_X, cy, { size: 13, color: SOFT });
+                    lines.forEach((ln, li) =>
+                        text(ln, W - PAD, cy + (li - (lines.length - 1) / 2) * 17, {
+                            size: 13, weight: r.bold ? 700 : 600, align: 'right',
+                        }));
+                    y += h;
                 });
-                const infoH = infoLayout.reduce((s, r) => s + r.h, 0);
+                hline(PAD, W - PAD, y, STRONG_LINE);
 
-                const pillY = c1Top + 36;
-                const chipY = pillY + 52 + 6;
-                const infoY = chipY + 22 + 6;
-                const c1H = infoY + infoH + 8 - c1Top;
+                const section = (title: string) => {
+                    const cy = y + 28;
+                    const tw = measure(title, { size: 12, weight: 500, family: HEAD, spacing: 3 });
+                    text(title, PAD, cy, { size: 12, weight: 500, family: HEAD, spacing: 3 });
+                    hline(PAD + tw + 14, PAD + tw + 14 + 56, cy, 'rgba(16,41,74,0.35)');
+                    y = cy + 16;
+                };
 
-                box(PAD, c1Top, CW, c1H, 20, lg(0, c1Top, 0, c1Top + c1H, CARD_GRAD), { c: 'rgba(7,26,74,0.18)', b: 24, y: 8 }, CARD_BORDER);
-                text('BIÊN LAI GIAO DỊCH', W / 2, c1Top + 20, { size: 17, weight: 800, color: '#0f2a63', align: 'center', spacing: 0.5 });
-
-                box(ix, pillY, iw, 52, 26, lg(ix, 0, ix + iw, 0, INNER_GRAD));
-                ctx.fillStyle = '#0f2a63';
-                ctx.beginPath();
-                ctx.arc(ix + 26, pillY + 26, 18, 0, Math.PI * 2);
-                ctx.fill();
-                icon(icWalletW, ix + 16, pillY + 26, 20);
-                text(`${isPositive ? '+' : ''}${fmt(tx.amount)}`, ix + iw / 2, pillY + 26, {
-                    size: 32, weight: 900, color: isPositive ? '#059669' : '#dc2626', align: 'center',
-                });
-
-                const chipTxt = fit(typeLabel, iw - 40, { size: 12 });
-                const chipW = measure(chipTxt, { size: 12 }) + 28;
-                box(W / 2 - chipW / 2, chipY, chipW, 22, 11, lg(W / 2 - chipW / 2, 0, W / 2 + chipW / 2, 0, INNER_GRAD));
-                text(chipTxt, W / 2, chipY + 11, { size: 12, color: '#1e3a8a', align: 'center' });
-
-                box(ix, infoY, iw, infoH, 14, lg(ix, 0, ix + iw, 0, INNER_SOFT));
-                let ry = infoY;
-                infoLayout.forEach((r, i) => {
-                    const cy = ry + r.h / 2;
-                    if (i > 0) hline(ix + 12, ix + iw - 12, ry);
-                    icon(r.icon, ix + 12, cy, 18);
-                    text(r.label, ix + 12 + 26, cy, { size: 12, color: G });
-                    r.lines.forEach((ln, li) => {
-                        text(ln, ix + iw - 12, cy + (li - (r.lines.length - 1) / 2) * 17, {
-                            size: 13, weight: r.bold ? 800 : 700, align: 'right',
-                        });
-                    });
-                    ry += r.h;
-                });
-
-                let cursor = c1Top + c1H;
-
-                // ───────── CARD 2: chi tiết (thanh toán buổi đánh / đặt áo) ─────────
-                type Block = { h: number; draw: (y: number) => void };
-                const blocks: Block[] = [];
-                let c2Title = '';
+                const totalRow = (label: string, value: string, labelSpacing = 4) => {
+                    hline(PAD, W - PAD, y + 2, STRONG_LINE);
+                    const cy = y + 34;
+                    text(label, PAD, cy, { size: 15, weight: 500, family: HEAD, spacing: labelSpacing });
+                    text(value, W - PAD, cy, { size: 30, weight: 700, family: AMOUNT, align: 'right' });
+                    y += 68;
+                };
 
                 if (isSessionPayment) {
-                    c2Title = 'CHI TIẾT THANH TOÁN';
+                    section('CHI TIẾT THANH TOÁN');
 
-                    if (displaySessionTitle) {
-                        const lines = wrap(displaySessionTitle, iw - 24 - 26 - 70, { size: 13, weight: 700 });
-                        const bh = Math.max(34, lines.length * 17 + 12);
-                        blocks.push({
-                            h: bh + 6,
-                            draw: (y) => {
-                                box(ix, y + 2, iw, bh, 12, lg(ix, 0, ix + iw, 0, INNER_GRAD));
-                                const cy = y + 2 + bh / 2;
-                                icon(icCalG, ix + 12, cy, 18);
-                                text('Buổi đánh', ix + 12 + 26, cy, { size: 12, color: G });
-                                lines.forEach((ln, i) =>
-                                    text(ln, ix + iw - 12, cy + (i - (lines.length - 1) / 2) * 17, {
-                                        size: 13, weight: 700, color: '#1d4ed8', align: 'right',
-                                    }));
-                            },
-                        });
-                    }
-
-                    type PayRow = { amount: number; label: string; pill?: { name: string; tag?: string }; amber?: boolean; note?: string };
-                    const payRows: PayRow[] = [
-                        { amount: displayBase, label: 'Tiền sân + cầu', pill: displayHostName ? { name: displayHostName } : undefined },
-                    ];
-                    if (displayOtherFee > 0)
-                        payRows.push({ amount: displayOtherFee, label: 'Khoản khác', amber: true, note: displayOtherFeeNote });
+                    type PayRow = { amount: number; label: string; sub?: string; solo?: boolean; amber?: boolean; note?: string };
+                    const payRows: PayRow[] = [];
                     displayGuests.forEach((g: any) => {
                         const gName = nameOf(g) ?? '?';
-                        payRows.push({ amount: g.base_amount ?? 0, label: 'Tiền sân + cầu', pill: { name: `+ ${gName}`, tag: '(đi cùng)' } });
+                        payRows.push({ amount: g.base_amount ?? 0, label: 'Tiền sân + cầu', sub: `${gName} (đi cùng)` });
                         if ((g.other_fee_amount ?? 0) > 0)
-                            payRows.push({ amount: g.other_fee_amount, label: 'Khoản khác', pill: { name: `+ ${gName}` }, amber: true, note: g.other_fee_note });
+                            payRows.push({ amount: g.other_fee_amount, label: 'Khoản khác', sub: `${gName} (đi cùng)`, amber: true, note: g.other_fee_note });
                     });
+                    const hostSub = displayGuests.length > 0 ? (displayHostName ?? undefined) : undefined;
+                    payRows.push({ amount: displayBase, label: 'Tiền sân + cầu', sub: hostSub, solo: true });
+                    if (displayOtherFee > 0)
+                        payRows.push({ amount: displayOtherFee, label: 'Khoản khác', sub: hostSub, solo: true, amber: true, note: displayOtherFeeNote });
 
-                    payRows.forEach((r) => {
+                    payRows.forEach((r, i) => {
                         const noteLines = splitNote(r.note);
-                        const blockH = 20 + (r.pill ? 22 : 0) + noteLines.length * 14;
-                        const h = Math.max(36, blockH + 8);
-                        blocks.push({
-                            h,
-                            draw: (y) => {
-                                hline(ix, ix + iw, y);
-                                const cy = y + h / 2;
-                                icon(r.amber ? icPlus : icCourt, ix, cy, r.amber ? 22 : 34, r.amber ? 22 : 23);
-                                const top = cy - blockH / 2;
-                                text(r.label, ix + 46, top + 10, { size: 15, weight: 600 });
-                                let yy = top + 20;
-                                if (r.pill) {
-                                    namePill(ix + 46, yy + 12, r.pill.name, r.pill.tag);
-                                    yy += 22;
-                                }
-                                noteLines.forEach((ln) => {
-                                    text(ln, ix + 46, yy + 7, { size: 11, italic: true, color: G });
-                                    yy += 14;
-                                });
-                                text(fmt(r.amount), ix + iw, cy, {
-                                    size: 15, weight: 700, align: 'right', color: r.amber ? '#d97706' : '#0f1f46',
-                                });
-                            },
+                        const blockH = 22 + (r.sub ? 20 : 0) + noteLines.length * 14;
+                        const h = Math.max(60, blockH + 22);
+                        if (i > 0) dline(PAD, W - PAD, y);
+                        const cy = y + h / 2;
+                        const top = cy - blockH / 2;
+
+                        if (r.amber) {
+                            icon(icPlus, PAD + 18, cy, 22);
+                        } else {
+                            icon(icCourt, PAD, cy, 24, 17);
+                            text('+', PAD + 31, cy, { size: 16, weight: 900, align: 'center' });
+                            icon(shuttleImg, PAD + 40, cy, 26, 26);
+                        }
+                        vline(PAD + 74, top, top + blockH);
+
+                        const tx0 = PAD + 88;
+                        text(r.label, tx0, top + 11, { size: 15, weight: 500 });
+                        let yy = top + 22;
+                        if (r.sub) {
+                            icon(r.solo ? icUser : icUsers, tx0, yy + 10, 14);
+                            text(r.sub, tx0 + 20, yy + 10, { size: 12, color: SOFT });
+                            yy += 20;
+                        }
+                        noteLines.forEach((ln) => {
+                            text(ln, tx0, yy + 7, { size: 11, italic: true, color: SOFT });
+                            yy += 14;
                         });
+                        text(fmt(r.amount), W - PAD, cy, {
+                            size: 19, weight: 500, family: ROWNUM, align: 'right', color: r.amber ? AMBER : NAVY,
+                        });
+                        y += h;
                     });
 
-                    blocks.push({
-                        h: 6 + 38,
-                        draw: (y) => {
-                            const ty = y + 6;
-                            box(ix, ty, iw, 38, 12, lg(ix, 0, ix + iw, 0, INNER_GRAD));
-                            icon(icSigma, ix + 12, ty + 19, 22);
-                            text('Tổng đã trả', ix + 44, ty + 19, { size: 16, weight: 800 });
-                            text(fmt(displayTotal), ix + iw - 12, ty + 19, { size: 18, weight: 900, color: '#1d4ed8', align: 'right' });
-                        },
-                    });
-                } else if (isShirtOrder && shirtItems.length > 0) {
-                    c2Title = `CHI TIẾT ĐƠN ĐẶT ÁO${shirtItems.length > 1 ? ` (${shirtItems.length})` : ''}`;
+                    totalRow('Tổng đã trả', fmt(displayTotal));
+                }
 
-                    shirtItems.forEach((item: any) => {
+                else if (isShirtOrder && shirtItems.length > 0) {
+                    section(`CHI TIẾT ĐƠN ĐẶT ÁO${shirtItems.length > 1 ? ` (${shirtItems.length})` : ''}`);
+
+                    shirtItems.forEach((item: any, idx: number) => {
                         const kv: { label: string; value: string; hl?: boolean }[] = [
                             { label: 'Loại áo', value: String(item.shirt_type_name ?? '') },
                         ];
@@ -582,139 +512,125 @@ export default function AdminTransactionDetailModal({
                         kv.push({ label: 'Đơn giá', value: fmt(item.unit_price ?? 0) });
                         kv.push({ label: 'Thành tiền', value: fmt(item.total_amount ?? 0), hl: true });
 
-                        const VW = iw - 24 - 26 - 90;
-                        const lay = kv.map((r) => {
-                            const lines = wrap(r.value, VW, { size: 13, weight: 700 });
-                            return { ...r, lines, h: Math.max(28, lines.length * 17 + 8) };
-                        });
-                        const bh = lay.reduce((s, r) => s + r.h, 0);
-                        blocks.push({
-                            h: bh + 8,
-                            draw: (y) => {
-                                box(ix, y + 2, iw, bh + 4, 12, lg(ix, 0, ix + iw, 0, INNER_SOFT));
-                                let yy = y + 4;
-                                lay.forEach((r, i) => {
-                                    const cy = yy + r.h / 2;
-                                    if (i > 0) hline(ix + 12, ix + iw - 12, yy);
-                                    if (i === 0) icon(icShirt, ix + 10, cy, 18);
-                                    text(r.label, ix + 12 + 26, cy, { size: 12, color: r.hl ? '#1d4ed8' : G, weight: r.hl ? 700 : 500 });
-                                    r.lines.forEach((ln, li) =>
-                                        text(ln, ix + iw - 12, cy + (li - (r.lines.length - 1) / 2) * 17, {
-                                            size: r.hl ? 14 : 13, weight: r.hl ? 800 : 700, align: 'right', color: r.hl ? '#1d4ed8' : '#0f1f46',
-                                        }));
-                                    yy += r.h;
-                                });
-                            },
+                        if (idx > 0) {
+                            hline(PAD, W - PAD, y + 4, STRONG_LINE);
+                            y += 10;
+                        }
+                        const VW = CW - 110;
+                        kv.forEach((r, i) => {
+                            const lines = wrap(r.value, VW, { size: 13, weight: 600 });
+                            const h = Math.max(r.hl ? 40 : 32, lines.length * 17 + 14);
+                            if (i > 0) dline(PAD, W - PAD, y);
+                            const cy = y + h / 2;
+                            text(r.label, PAD, cy, { size: 13, color: SOFT, weight: r.hl ? 600 : 500 });
+                            if (r.hl) {
+                                text(r.value, W - PAD, cy, { size: 20, weight: 500, family: ROWNUM, align: 'right' });
+                            } else {
+                                lines.forEach((ln, li) =>
+                                    text(ln, W - PAD, cy + (li - (lines.length - 1) / 2) * 17, {
+                                        size: 13, weight: 600, align: 'right',
+                                    }));
+                            }
+                            y += h;
                         });
                     });
 
                     if (shirtItems.length > 1) {
                         const sum = shirtItems.reduce((s: number, it: any) => s + (it.total_amount ?? 0), 0);
-                        blocks.push({
-                            h: 38 + 4,
-                            draw: (y) => {
-                                box(ix, y, iw, 38, 12, lg(ix, 0, ix + iw, 0, INNER_GRAD));
-                                icon(icSigma, ix + 12, y + 19, 22);
-                                text(`Tổng cộng (${shirtItems.length} sản phẩm)`, ix + 44, y + 19, { size: 14, weight: 800 });
-                                text(fmt(sum), ix + iw - 12, y + 19, { size: 16, weight: 900, color: '#1d4ed8', align: 'right' });
-                            },
-                        });
+                        totalRow(`Tổng cộng (${shirtItems.length} sản phẩm)`, fmt(sum), 2);
+                    } else {
+                        y += 6;
                     }
 
                     const orderer = shirtItems[0]?.users?.full_name;
                     if (orderer) {
-                        blocks.push({
-                            h: 34 + 6,
-                            draw: (y) => {
-                                box(ix, y + 6, iw, 34, 12, lg(ix, 0, ix + iw, 0, INNER_GRAD));
-                                icon(icUserG, ix + 12, y + 6 + 17, 18);
-                                text('Người đặt', ix + 12 + 26, y + 6 + 17, { size: 12, color: G });
-                                text(fit(orderer, iw - 24 - 26 - 70, { size: 13, weight: 700 }), ix + iw - 12, y + 6 + 17, {
-                                    size: 13, weight: 700, color: '#1d4ed8', align: 'right',
-                                });
-                            },
-                        });
+                        const h = 42;
+                        hline(PAD, W - PAD, y, STRONG_LINE);
+                        const cy = y + h / 2;
+                        icon(icUser, PAD, cy, 22);
+                        text('Người đặt', LABEL_X, cy, { size: 13, color: SOFT });
+                        text(fit(orderer, CW - 40 - 90, { size: 13, weight: 600 }), W - PAD, cy, { size: 13, weight: 600, align: 'right' });
+                        y += h;
                     }
                 }
 
-                if (blocks.length > 0) {
-                    const c2Top = cursor + 8;
-                    const bodyTop = c2Top + 32;
-                    const bodyH = blocks.reduce((s, b) => s + b.h, 0);
-                    const c2H = 32 + bodyH + 8;
-                    box(PAD, c2Top, CW, c2H, 20, lg(0, c2Top, 0, c2Top + c2H, CARD_GRAD), { c: 'rgba(7,26,74,0.12)', b: 24, y: 8 }, CARD_BORDER);
-                    icon(icDoc, ix, c2Top + 18, 20);
-                    text(c2Title, ix + 28, c2Top + 18, { size: 14, weight: 800, color: '#0f2a63', spacing: 0.3 });
-                    let by = bodyTop;
-                    blocks.forEach((b) => {
-                        b.draw(by);
-                        by += b.h;
-                    });
-                    cursor = c2Top + c2H;
-                }
-
-                // ───────── QR chuyển khoản ─────────
-                const qTop = cursor + 8;
+                const qTop = y + 30;
                 const qTitle = 'QUÉT MÃ ĐỂ CHUYỂN KHOẢN';
-                const qTitleW = measure(qTitle, { size: 12, weight: 800, spacing: 0.5 });
-                text(qTitle, W / 2, qTop + 9, { size: 12, weight: 800, color: '#0f2a63', align: 'center', spacing: 0.5 });
-                ctx.fillStyle = '#0f2a63';
-                ctx.fillRect(W / 2 - qTitleW / 2 - 10 - 28, qTop + 9, 28, 1);
-                ctx.fillRect(W / 2 + qTitleW / 2 + 10, qTop + 9, 28, 1);
+                const qTitleW = measure(qTitle, { size: 11, weight: 500, family: HEAD, spacing: 2.5 });
+                text(qTitle, W / 2, qTop, { size: 11, weight: 500, family: HEAD, align: 'center', spacing: 2.5, color: '#2b3f63' });
+                hline(W / 2 - qTitleW / 2 - 14 - 38, W / 2 - qTitleW / 2 - 14, qTop, 'rgba(16,41,74,0.4)');
+                hline(W / 2 + qTitleW / 2 + 14, W / 2 + qTitleW / 2 + 14 + 38, qTop, 'rgba(16,41,74,0.4)');
 
-                const bY = qTop + 22;
-                const bH = 140;
-                const LEFT_W = 150;
-                box(PAD, bY, CW, bH, 18, lg(0, bY, 0, bY + bH, CARD_GRAD), { c: 'rgba(7,26,74,0.12)', b: 18, y: 6 }, CARD_BORDER);
+                const FR = 140;
+                const fx = PAD + 6;
+                const fy = qTop + 22;
 
                 ctx.save();
-                rr(PAD, bY, CW, bH, 18);
-                ctx.clip();
-                ctx.fillStyle = lg(PAD + LEFT_W, 0, PAD + CW, 0, INNER_SOFT);
-                ctx.fillRect(PAD + LEFT_W, bY, CW - LEFT_W, bH);
-                if (qrImg) {
-                    const sx = qrImg.naturalWidth * QR_CROP.left;
-                    const sy = qrImg.naturalHeight * QR_CROP.top;
-                    const sw = qrImg.naturalWidth * (1 - QR_CROP.left - QR_CROP.right);
-                    const sh = qrImg.naturalHeight * (1 - QR_CROP.top - QR_CROP.bottom);
-                    const areaW = LEFT_W - 20;
-                    const areaH = bH - 20;
-                    const k = Math.min(areaW / sw, areaH / sh);
-                    const dw = sw * k;
-                    const dh = sh * k;
-                    ctx.drawImage(qrImg, sx, sy, sw, sh, PAD + 10 + (areaW - dw) / 2, bY + 10 + (areaH - dh) / 2, dw, dh);
-                }
+                ctx.shadowColor = 'rgba(16,41,74,0.14)';
+                ctx.shadowBlur = 16;
+                ctx.shadowOffsetY = 4;
+                const panel = ctx.createLinearGradient(fx, fy, fx + FR, fy + FR);
+                panel.addColorStop(0, 'rgba(248,251,255,0.93)');
+                panel.addColorStop(1, 'rgba(222,233,248,0.93)');
+                ctx.fillStyle = panel;
+                rr(fx, fy, FR, FR, 12);
+                ctx.fill();
+                ctx.restore();
+                ctx.save();
+                ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+                ctx.lineWidth = 1;
+                rr(fx + 0.5, fy + 0.5, FR - 1, FR - 1, 12);
+                ctx.stroke();
                 ctx.restore();
 
-                const rx = PAD + LEFT_W + 10;
-                const textX = rx + 26;
+                if (qrImg) {
+                    const area = FR - 20;
+                    const k = Math.min(area / qrImg.naturalWidth, area / qrImg.naturalHeight);
+                    const dw = qrImg.naturalWidth * k;
+                    const dh = qrImg.naturalHeight * k;
+                    ctx.drawImage(qrImg, fx + 10 + (area - dw) / 2, fy + 10 + (area - dh) / 2, dw, dh);
+                }
+
+                ctx.save();
+                ctx.strokeStyle = NAVY;
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                const L = 20;
+                const corner = (x1: number, y1: number, x2: number, y2: number, x3: number, y3: number) => {
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.lineTo(x3, y3);
+                    ctx.stroke();
+                };
+                corner(fx, fy + L, fx, fy, fx + L, fy);
+                corner(fx + FR - L, fy, fx + FR, fy, fx + FR, fy + L);
+                corner(fx, fy + FR - L, fx, fy + FR, fx + L, fy + FR);
+                corner(fx + FR - L, fy + FR, fx + FR, fy + FR, fx + FR, fy + FR - L);
+                ctx.restore();
+
+                const rx = fx + FR + 20;
+                const bx = rx + 32;
                 const bankItems: [HTMLImageElement | null, string, string][] = [
-                    [icUserG, 'Chủ tài khoản', 'NGO VAN NGOI'],
-                    [icCardG, 'Số tài khoản', '9961 0600 42'],
-                    [icBankG, 'Ngân hàng', 'Techcombank'],
+                    [icUser, 'Chủ tài khoản', 'NGO VAN NGOI'],
+                    [icCard, 'Số tài khoản', '9961 0600 42'],
+                    [icBank, 'Ngân hàng', 'Techcombank'],
                 ];
                 bankItems.forEach(([ic, label, val], i) => {
-                    const t = bY + 14 + i * 40;
-                    icon(ic, rx, t + 15, 18);
-                    text(label, textX, t + 6, { size: 10, color: G });
-                    text(val, textX, t + 24, { size: 13, weight: 700 });
+                    const t = fy + 14 + i * 38;
+                    icon(ic, rx, t + 15, 20);
+                    text(label, bx, t + 6, { size: 10, color: SOFT });
+                    text(val, bx, t + 23, { size: 13, weight: 700 });
                 });
 
-                // ───────── Footer ─────────
-                const fTop = bY + bH + 8;
-                const fH = 50;
-                const fCy = fTop + fH / 2;
-                box(PAD, fTop, CW, fH, 18, '#0f2a63', { c: 'rgba(7,26,74,0.2)', b: 14, y: 4 });
-                if (logoImg) drawLogo(PAD + 14, fCy, FOOTER_LOGO_H);
-                else text('BNB BADMINTON CLUB', PAD + 14, fCy, { size: 10, weight: 800, color: '#ffffff', spacing: 0.4 });
-                const eW = measure(exportedAt, { size: 10 });
-                text(exportedAt, W - PAD - 14, fCy, { size: 10, color: '#ffffff', align: 'right' });
-                icon(icCalW, W - PAD - 14 - eW - 6 - 14, fCy, 14);
+                const fEnd = fy + FR + 26;
+                hline(W / 2 - 22, W / 2 + 22, fEnd, 'rgba(16,41,74,0.3)');
+                text(exportedAt, W / 2, fEnd + 18, { size: 10, color: SOFT, align: 'center' });
 
-                return fTop + fH + 10;
+                return fEnd + 44;
             };
 
-            // Pass 1: đo chiều cao
             const scratch = document.createElement('canvas');
             scratch.width = 2;
             scratch.height = 2;
@@ -727,7 +643,6 @@ export default function AdminTransactionDetailModal({
 
             const scale = Math.max(1, Math.min(3, Math.sqrt(MAX_CANVAS_PX / (W * totalH))));
 
-            // Pass 2: vẽ thật
             const canvas = document.createElement('canvas');
             canvas.width = Math.round(W * scale);
             canvas.height = Math.round(totalH * scale);
