@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { matchesApi } from '../lib/api';
 import toast from 'react-hot-toast';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 
 const SEEN_CHALLENGES_KEY = 'seen_challenge_invites';

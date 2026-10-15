@@ -7,7 +7,7 @@ import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import { notificationsApi, registrationsApi, walletApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@/lib/supabase';
 import { useNotificationsRealtimeStore } from '@/store/notifications-realtime.store';
 import { PenaltyPaymentModal } from '../payments/PenaltyPaymentModal';
 import Lottie, { LottieRefCurrentProps } from 'lottie-react';

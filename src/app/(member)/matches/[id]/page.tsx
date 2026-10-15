@@ -10,7 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import { matchesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 
 const WIN_POINTS = 5;

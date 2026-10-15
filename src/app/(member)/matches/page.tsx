@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { matchesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 
 const STATUS_CFG: Record<string, { label: string; icon: any; cls: string; dot: string }> = {

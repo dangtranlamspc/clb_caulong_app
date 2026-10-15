@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel } from '@/lib/supabase';
 
 type NotificationsRealtimeState = {
     lastNotification: any | null;
