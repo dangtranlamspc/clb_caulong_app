@@ -1532,17 +1532,17 @@ export default function SessionDetailPage() {
           </div>
 
           {hasBreakdown && (
-            <dl className="mt-3 space-y-1.5 rounded-xl bg-[var(--surface-muted)] px-3 py-2.5 text-xs">
+            <dl className="mt-3 space-y-2 rounded-xl bg-[var(--surface-muted)] px-3.5 py-3 text-sm">
               <div className="flex items-center justify-between gap-3">
                 <dt className="text-[var(--text-muted)]">Tiền sân + cầu</dt>
-                <dd className="font-medium tabular-nums text-[var(--text)]">
+                <dd className="text-base font-semibold tabular-nums text-[var(--text)]">
                   {formatVnd(reg.base_amount)}
                 </dd>
               </div>
               <div>
                 <div className="flex items-center justify-between gap-3">
                   <dt className="text-[var(--text-muted)]">Khoản khác</dt>
-                  <dd className="font-medium tabular-nums text-[var(--warning)]">
+                  <dd className="text-base font-semibold tabular-nums text-[var(--warning)]">
                     {formatVnd(reg.other_fee_amount)}
                   </dd>
                 </div>
@@ -1554,15 +1554,15 @@ export default function SessionDetailPage() {
                     .map((line: string, i: number) => (
                       <p
                         key={i}
-                        className="mt-0.5 text-[11px] italic text-[var(--text-faint)]"
+                        className="mt-0.5 text-xs italic text-[var(--text-faint)]"
                       >
                         {line}
                       </p>
                     ))}
               </div>
-              <div className="flex items-center justify-between gap-3 border-t border-dashed border-[var(--border-strong)] pt-2">
-                <dt className="text-sm font-semibold text-[var(--text)]">Tổng</dt>
-                <dd className="text-sm font-bold tabular-nums text-[var(--text)]">
+              <div className="flex items-center justify-between gap-3 border-t border-dashed border-[var(--border-strong)] pt-2.5">
+                <dt className="text-base font-bold text-[var(--text)]">Tổng</dt>
+                <dd className="text-base font-bold tabular-nums text-[var(--text)]">
                   {formatVnd(totalAmount)}
                 </dd>
               </div>
@@ -1576,7 +1576,6 @@ export default function SessionDetailPage() {
           )}
         </div>
 
-        {/* Cột số tiền: căn giữa theo cả dòng */}
         <div
           className={`flex shrink-0 flex-col items-end gap-1.5 text-right ${hasBreakdown ? "self-start" : "self-center"
             }`}
