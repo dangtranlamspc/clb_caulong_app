@@ -1432,89 +1432,47 @@ export default function SessionDetailPage() {
 
     return (
       <div
-        className={`relative flex gap-3 ${isNested ? "py-3 pl-5 pr-4" : "p-4"}`}
+        className={`relative flex items-center gap-3 ${isNested ? "py-3 pl-5 pr-4" : "p-4"}`}
       >
-        {/* <span
-          aria-hidden
-          className={`absolute inset-y-0 left-0 w-1 ${RAIL[cfg.tone]}`}
-        /> */}
         {isNested && (
-          <CornerDownRight className="mt-2 h-3.5 w-3.5 shrink-0 text-[var(--text-faint)]" />
+          <CornerDownRight className="mt-2 h-3.5 w-3.5 shrink-0 self-start text-[var(--text-faint)]" />
         )}
         <Avatar
           url={user?.avatar_url}
           name={displayName}
           size={isNested ? 32 : 44}
+          className="self-start"
         />
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p
-                className={`truncate font-semibold text-[var(--text)] ${isNested ? "text-sm" : "text-[15px]"}`}
-              >
-                {displayName}
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-1">
-                {user?.member_type && (
-                  <Chip
-                    tone={user.member_type === "co_dinh" ? "purple" : "neutral"}
-                  >
-                    {user.member_type === "co_dinh" ? "Thành viên" : "Vãng lai"}
-                  </Chip>
-                )}
-                {reg.is_guest && <Chip>Khách</Chip>}
-                {level && <Chip tone="purple">{level}</Chip>}
-                {displayGender && (
-                  <Chip>{displayGender === "male" ? "Nam" : "Nữ"}</Chip>
-                )}
-                {reg.is_guest && reg.guest_email && (
-                  <Chip
-                    tone="warning"
-                    className="max-w-[200px]"
-                    icon={<Mail className="h-3 w-3 shrink-0" />}
-                  >
-                    <span className="truncate">{reg.guest_email}</span>
-                  </Chip>
-                )}
-              </div>
-            </div>
-
-            <div className="shrink-0 text-right">
-              {canShare && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleShareGuestReceipt(
-                      reg,
-                      hostName,
-                      groupedGuestsForReceipt,
-                    );
-                  }}
-                  disabled={sharing}
-                  title="Chia sẻ biên lai"
-                  className="mt-1.5 inline-flex h-7 items-center gap-1 rounded-full bg-[var(--primary-soft)] px-2.5 text-[11px] font-semibold text-[var(--primary)] transition-colors hover:brightness-95 disabled:opacity-50"
+          <div className="min-w-0">
+            <p
+              className={`truncate font-semibold text-[var(--text)] ${isNested ? "text-sm" : "text-[15px]"}`}
+            >
+              {displayName}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+              {user?.member_type && (
+                <Chip
+                  tone={user.member_type === "co_dinh" ? "purple" : "neutral"}
                 >
-                  {sharing ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Share2 className="h-3 w-3" />
-                  )}
-                  Biên lai
-                </button>
+                  {user.member_type === "co_dinh" ? "Thành viên" : "Vãng lai"}
+                </Chip>
               )}
-              {!hasBreakdown && (
-                <p
-                  className={`tabular-nums ${isNested ? "text-sm" : "text-base"} ${totalAmount != null
-                    ? "font-bold text-[var(--text)]"
-                    : "font-normal italic text-[var(--text-faint)]"
-                    }`}
+              {reg.is_guest && <Chip>Khách</Chip>}
+              {level && <Chip tone="purple">{level}</Chip>}
+              {displayGender && (
+                <Chip>{displayGender === "male" ? "Nam" : "Nữ"}</Chip>
+              )}
+              {reg.is_guest && reg.guest_email && (
+                <Chip
+                  tone="warning"
+                  className="max-w-[200px]"
+                  icon={<Mail className="h-3 w-3 shrink-0" />}
                 >
-                  {totalAmount != null ? formatVnd(totalAmount) : "—"}
-                </p>
+                  <span className="truncate">{reg.guest_email}</span>
+                </Chip>
               )}
-
             </div>
           </div>
 
@@ -1615,6 +1573,42 @@ export default function SessionDetailPage() {
             <p className="mt-2 text-xs italic text-[var(--text-faint)]">
               {reg.notes}
             </p>
+          )}
+        </div>
+
+        {/* Cột số tiền: căn giữa theo cả dòng */}
+        <div
+          className={`flex shrink-0 flex-col items-end gap-1.5 text-right ${hasBreakdown ? "self-start" : "self-center"
+            }`}
+        >
+          {!hasBreakdown && (
+            <p
+              className={`tabular-nums ${isNested ? "text-sm" : "text-base"} ${totalAmount != null
+                ? "font-bold text-[var(--text)]"
+                : "font-normal italic text-[var(--text-faint)]"
+                }`}
+            >
+              {totalAmount != null ? formatVnd(totalAmount) : "—"}
+            </p>
+          )}
+          {canShare && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShareGuestReceipt(reg, hostName, groupedGuestsForReceipt);
+              }}
+              disabled={sharing}
+              title="Chia sẻ biên lai"
+              className="inline-flex h-7 items-center gap-1 rounded-full bg-[var(--primary-soft)] px-2.5 text-[11px] font-semibold text-[var(--primary)] transition-colors hover:brightness-95 disabled:opacity-50"
+            >
+              {sharing ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Share2 className="h-3 w-3" />
+              )}
+              Biên lai
+            </button>
           )}
         </div>
       </div>
@@ -1971,7 +1965,7 @@ export default function SessionDetailPage() {
         </div>
 
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:gap-6">
-          <aside className="flex flex-col gap-4 empty:hidden xl:order-2 xl:w-[380px] xl:shrink-0 2xl:w-[440px]">
+          <aside className="flex flex-col gap-4 empty:hidden xl:order-2 xl:mt-[86px] xl:w-[380px] xl:shrink-0 2xl:w-[440px]">
             {hasCostData && (
               <SessionCostCard
                 sessionId={id!}
