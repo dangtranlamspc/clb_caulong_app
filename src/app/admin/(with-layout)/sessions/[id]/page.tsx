@@ -3,14 +3,12 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft,
-  CalendarDays,
-  MapPin,
   Clock,
+  MapPin,
   Users,
   CheckCircle2,
   XCircle,
   Hourglass,
-  Phone,
   Mail,
   UserPlus,
   Search,
@@ -36,52 +34,64 @@ import {
   fundApi,
 } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
-import { createPortal } from "react-dom";
-import { MorphButton } from "@/components/effect-button/MorphButton";
+import { buildGuestReceipt } from "@/lib/guest-receipt";
 import SessionCostCard from "@/components/admin/sessions/SessionCostCard";
-import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
-import { SwipeableRow } from "@/components/admin/sessions/SwipeableRow";
-import { CompactActionButton } from "@/components/admin/sessions/CompactActionButton";
 import SessionPenaltiesCard from "@/components/admin/sessions/SessionPenaltiesCard";
+import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
+import {
+  Avatar,
+  CARD,
+  Chip,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalShell,
+  PhaseButton,
+  SESSION_UI_CSS,
+  Switch,
+  TONE_SOFT,
+  formatVnd,
+  type BtnTone,
+  type Tone,
+} from "@/components/admin/sessions/session-ui";
 import { useNavLoadingStore } from "@/store/nav-loading.store";
 
-const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: any }> =
-{
-  pendingApproval: {
-    label: "Chờ duyệt",
-    cls: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
-    icon: Hourglass,
-  },
-  pending: {
-    label: "Chờ thanh toán",
-    cls: "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
-    icon: Hourglass,
-  },
-  pendingReview: {
-    label: "Chờ chốt thanh toán",
-    cls: "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]",
-    icon: Eye,
-  },
+/* ───────────────────────── config ───────────────────────── */
+
+const STATUS_CONFIG: Record<string, { label: string; tone: Tone; icon: any }> = {
+  pendingApproval: { label: "Chờ duyệt", tone: "warning", icon: Hourglass },
+  pending: { label: "Chờ thanh toán", tone: "warning", icon: Hourglass },
+  pendingReview: { label: "Chờ chốt thanh toán", tone: "primary", icon: Eye },
   confirmed: {
     label: "Đã xác nhận thanh toán",
-    cls: "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]",
+    tone: "success",
     icon: CheckCircle2,
   },
-  rejected: {
-    label: "Thanh toán bị từ chối",
-    cls: "bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]",
-    icon: XCircle,
-  },
-  awaitingCheckin: {
-    label: "Chờ điểm danh",
-    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)]",
-    icon: Hourglass,
-  },
+  rejected: { label: "Thanh toán bị từ chối", tone: "danger", icon: XCircle },
+  awaitingCheckin: { label: "Chờ điểm danh", tone: "neutral", icon: Hourglass },
   awaitingFinish: {
     label: "Chờ buổi đánh kết thúc",
-    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)]",
+    tone: "neutral",
     icon: Hourglass,
   },
+};
+
+/** Vạch màu bên trái mỗi dòng đăng ký theo trạng thái */
+const RAIL: Record<Tone, string> = {
+  warning: "bg-amber-400",
+  primary: "bg-blue-500",
+  success: "bg-emerald-500",
+  danger: "bg-red-500",
+  purple: "bg-purple-500",
+  neutral: "bg-transparent",
+};
+
+const SESSION_STATUS: Record<string, { label: string; tone: Tone }> = {
+  open: { label: "Đang mở đăng ký", tone: "success" },
+  full: { label: "Đã đủ người", tone: "warning" },
+  waiting_payment: { label: "Chờ thanh toán", tone: "primary" },
+  completed: { label: "Đã hoàn thành", tone: "neutral" },
+  cancelled: { label: "Đã hủy", tone: "danger" },
 };
 
 const SKILL_LABEL: Record<string, string> = {
@@ -102,38 +112,22 @@ const LEVEL_LABELS: Record<string, string> = {
   chuyen_nghiep: "Chuyên nghiệp",
 };
 
-const B3D_MOTION = "active:shadow-none active:translate-y-[5px]";
-const B3D_BTN = `${B3D_MOTION} transition-all duration-200`;
-const B3D = {
-  green: "bg-green-700 text-white shadow-[0_5px_0_0_#14532d] hover:shadow-[0_3px_0_0_#14532d]",
-  red: "bg-red-500 text-white shadow-[0_5px_0_0_#b91c1c] hover:shadow-[0_3px_0_0_#b91c1c]",
-  emerald: "bg-emerald-500 text-white shadow-[0_5px_0_0_#047857] hover:shadow-[0_3px_0_0_#047857]",
-  blue: "bg-blue-600 text-white shadow-[0_5px_0_0_#1e40af] hover:shadow-[0_3px_0_0_#1e40af]",
-  blueLight: "bg-blue-500 text-white shadow-[0_5px_0_0_#1d4ed8] hover:shadow-[0_3px_0_0_#1d4ed8]",
-  teal: "bg-teal-500 text-white shadow-[0_5px_0_0_#0f766e] hover:shadow-[0_3px_0_0_#0f766e]",
-  rose: "bg-rose-500 text-white shadow-[0_5px_0_0_#be123c] hover:shadow-[0_3px_0_0_#be123c]",
-  orange: "bg-orange-500 text-white shadow-[0_5px_0_0_#c2410c] hover:shadow-[0_3px_0_0_#c2410c]",
-  sky: "bg-sky-500 text-white shadow-[0_5px_0_0_#0369a1] hover:shadow-[0_3px_0_0_#0369a1]",
-  amber: "bg-amber-500 text-white shadow-[0_5px_0_0_#b45309] hover:shadow-[0_3px_0_0_#b45309]",
-};
-const B3D_MORPH = `${B3D_MOTION} [transition:box-shadow_200ms,transform_200ms,background-color_200ms]`;
-
+const FIELD_LABEL = "mb-1.5 block text-sm font-medium text-[var(--text)]";
 
 type ActionPhase = "idle" | "loading" | "success";
 
-function useIsDesktop(breakpoint = 768) {
-  const [isDesktop, setIsDesktop] = useState(
-    typeof window !== "undefined" ? window.innerWidth >= breakpoint : false,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia(`(min-width: ${breakpoint}px)`);
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    setIsDesktop(mq.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, [breakpoint]);
-  return isDesktop;
-}
+type Act = {
+  key: string;
+  label: string;
+  short?: string;
+  icon: ReactNode;
+  tone: BtnTone;
+  onClick: () => void;
+  phase?: ActionPhase;
+  disabled?: boolean;
+  badge?: number;
+  primary?: boolean;
+};
 
 export default function SessionDetailPage() {
   const params = useParams<{ id: string }>();
@@ -142,6 +136,7 @@ export default function SessionDetailPage() {
   const [session, setSession] = useState<any>(null);
   const [registrations, setRegs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTick, setRefreshTick] = useState(0);
   const [actionId, setActionId] = useState<string | null>(null);
   const [actionPhase, setActionPhase] = useState<Record<string, ActionPhase>>(
     {},
@@ -149,19 +144,13 @@ export default function SessionDetailPage() {
   const [rejectNotes, setRejectNotes] = useState<Record<string, string>>({});
   const [showReject, setShowReject] = useState<string | null>(null);
 
-  const [viewingBillUrl, setViewingBillUrl] = useState<string | null>(null);
-
   const [showAddModal, setShowAddModal] = useState(false);
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
-  const [addConfirmNow, setAddConfirmNow] = useState(false);
   const [addNotes, setAddNotes] = useState("");
   const [adding, setAdding] = useState(false);
-
-  const [manualRefreshing, setManualRefreshing] = useState(false);
-
   const [addTab, setAddTab] = useState<"account" | "guest">("account");
   const [guestForm, setGuestForm] = useState({
     full_name: "",
@@ -174,76 +163,38 @@ export default function SessionDetailPage() {
   const [guestPaySeparately, setGuestPaySeparately] = useState(false);
   const [guestSendEmail, setGuestSendEmail] = useState(false);
 
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+
   const [checkingInAll, setCheckingInAll] = useState(false);
   const [closingList, setClosingList] = useState(false);
   const [completingSession, setCompletingSession] = useState(false);
-
   const [rollingBack, setRollingBack] = useState(false);
-
-  const [showRollbackModal, setShowRollbackModal] = useState(false);
-  const [rollbackEmailIds, setRollbackEmailIds] = useState<Set<string>>(new Set());
-
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [reopening, setReopening] = useState(false);
-
   const [finishing, setFinishing] = useState(false);
 
+  const [showRollbackModal, setShowRollbackModal] = useState(false);
+  const [rollbackEmailIds, setRollbackEmailIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     key: "checkinAll" | "closeList" | "completeSession";
     title: string;
     message: ReactNode;
   } | null>(null);
 
-  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-
-  const [rollbackModalVisible, setRollbackModalVisible] = useState(false);
-
-  const [addModalVisible, setAddModalVisible] = useState(false);
-
   const [expandedHosts, setExpandedHosts] = useState<Set<string>>(new Set());
 
   const [showPenaltyRefundModal, setShowPenaltyRefundModal] = useState(false);
-  const [penaltyRefundModalVisible, setPenaltyRefundModalVisible] = useState(false);
   const [penaltiesToRefund, setPenaltiesToRefund] = useState<any[]>([]);
   const [checkingPenalties, setCheckingPenalties] = useState(false);
 
   const [sharingReceiptId, setSharingReceiptId] = useState<string | null>(null);
 
-  const isDesktop = useIsDesktop();
+  const startNavLoading = useNavLoadingStore((s) => s.start);
 
-  useEffect(() => {
-    if (confirmModal) {
-      const raf = requestAnimationFrame(() => setConfirmModalVisible(true));
-      return () => cancelAnimationFrame(raf);
-    }
-  }, [confirmModal]);
-
-  useEffect(() => {
-    if (showCancelModal) {
-      const raf = requestAnimationFrame(() => setCancelModalVisible(true));
-      return () => cancelAnimationFrame(raf);
-    }
-  }, [showCancelModal]);
-
-
-  useEffect(() => {
-    if (showPenaltyRefundModal) {
-      const raf = requestAnimationFrame(() => setPenaltyRefundModalVisible(true));
-      return () => cancelAnimationFrame(raf);
-    }
-  }, [showPenaltyRefundModal]);
-
-  const closePenaltyRefundModal = () => {
-    setPenaltyRefundModalVisible(false);
-    setTimeout(() => setShowPenaltyRefundModal(false), 200);
-  };
-
-  const closeCancelModal = () => {
-    setCancelModalVisible(false);
-    setTimeout(() => setShowCancelModal(false), 200);
-  };
+  const closeConfirmModal = () => setConfirmModal(null);
 
   const toggleHostGuests = (hostId: string) => {
     setExpandedHosts((prev) => {
@@ -254,10 +205,6 @@ export default function SessionDetailPage() {
     });
   };
 
-  const closeConfirmModal = () => {
-    setConfirmModalVisible(false);
-    setTimeout(() => setConfirmModal(null), 200);
-  };
 
   const fetchAll = async () => {
     if (!id) return;
@@ -277,6 +224,195 @@ export default function SessionDetailPage() {
   useEffect(() => {
     fetchAll();
   }, [id]);
+
+  const refreshSeqRef = useRef(0);
+  const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const refreshSilently = async () => {
+    if (!id) return;
+    const mySeq = ++refreshSeqRef.current;
+    try {
+      const [{ data: s }, { data: r }] = await Promise.all([
+        sessionsAdminApi.get(id),
+        sessionsAdminApi.getRegistrations(id),
+      ]);
+      if (mySeq !== refreshSeqRef.current) return;
+      setSession(s);
+      setRegs(r);
+      setRefreshTick((t) => t + 1);
+    } catch (err) {
+      console.error("[refreshSilently] failed:", err);
+    }
+  };
+
+  const handleManualRefresh = async () => {
+    if (manualRefreshing) return;
+    setManualRefreshing(true);
+    try {
+      await refreshSilently();
+    } finally {
+      setManualRefreshing(false);
+    }
+  };
+
+  const scheduleRefresh = () => {
+    if (refreshDebounceRef.current) clearTimeout(refreshDebounceRef.current);
+    refreshDebounceRef.current = setTimeout(() => {
+      refreshSilently();
+    }, 250);
+  };
+
+  useEffect(() => {
+    if (!id) return;
+    const channel = supabase
+      .channel(`session:${id}`)
+      .on("broadcast", { event: "session_updated" }, () => scheduleRefresh())
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "registrations",
+          filter: `session_id=eq.${id}`,
+        },
+        () => scheduleRefresh(),
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "sessions",
+          filter: `id=eq.${id}`,
+        },
+        () => scheduleRefresh(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+      if (refreshDebounceRef.current) clearTimeout(refreshDebounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  useEffect(() => {
+    if (!showAddModal || addTab !== "account") return;
+    const t = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const { data } = await membersAdminApi.searchMembers(search.trim());
+        setSearchResults(data ?? []);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search, showAddModal, addTab]);
+
+  useEffect(() => {
+    if (showRollbackModal) setRollbackEmailIds(new Set());
+  }, [showRollbackModal]);
+
+  /* ───────── actions ───────── */
+
+  const getPhase = (key: string): ActionPhase => actionPhase[key] ?? "idle";
+
+  const runAction = (
+    key: string,
+    regId: string,
+    action: () => Promise<any>,
+    successMessage: string,
+    errorMessage: string,
+    afterDelay?: () => void,
+  ) => {
+    setActionId(regId);
+    setActionPhase((p) => ({ ...p, [key]: "loading" }));
+
+    action()
+      .then(() => {
+        setActionPhase((p) => ({ ...p, [key]: "success" }));
+        toast.success(successMessage);
+        setTimeout(async () => {
+          afterDelay?.();
+          await refreshSilently();
+          setActionPhase((p) => {
+            const next = { ...p };
+            delete next[key];
+            return next;
+          });
+          setActionId(null);
+        }, 700);
+      })
+      .catch((err: any) => {
+        setActionPhase((p) => {
+          const next = { ...p };
+          delete next[key];
+          return next;
+        });
+        setActionId(null);
+        toast.error(err?.response?.data?.message ?? errorMessage);
+      });
+  };
+
+  const handleApproveRegistration = (regId: string) =>
+    runAction(
+      `${regId}:approve`,
+      regId,
+      () => registrationsAdminApi.approveRegistration(regId),
+      "Đã duyệt đăng ký",
+      "Duyệt thất bại",
+    );
+
+  const handleRejectRegistration = (regId: string, displayName: string) => {
+    if (!confirm(`Từ chối đăng ký của ${displayName}?`)) return;
+    runAction(
+      `${regId}:rejectReg`,
+      regId,
+      () => registrationsAdminApi.rejectRegistrationRequest(regId),
+      "Đã từ chối đăng ký",
+      "Thao tác thất bại",
+    );
+  };
+
+  const handleConfirm = (regId: string) =>
+    runAction(
+      `${regId}:confirm`,
+      regId,
+      () => registrationsAdminApi.confirm(regId),
+      "Xác nhận thành công — đã cộng 1 cầu lông!",
+      "Xác nhận thất bại",
+    );
+
+  const handleReject = (regId: string) =>
+    runAction(
+      `${regId}:rejectConfirm`,
+      regId,
+      () => registrationsAdminApi.reject(regId, rejectNotes[regId]),
+      "Đã từ chối",
+      "Từ chối thất bại",
+      () => setShowReject(null),
+    );
+
+  const handleCheckinPresent = (regId: string) =>
+    runAction(
+      `${regId}:present`,
+      regId,
+      () => registrationsAdminApi.checkinPresent(regId),
+      "Đã điểm danh có mặt",
+      "Điểm danh thất bại",
+    );
+
+  const handleCheckinAbsent = (regId: string, displayName: string) => {
+    if (!confirm(`Đánh dấu vắng mặt và xoá ${displayName} khỏi buổi này?`))
+      return;
+    runAction(
+      `${regId}:absent`,
+      regId,
+      () => registrationsAdminApi.checkinAbsent(regId),
+      "Đã đánh dấu vắng mặt",
+      "Thao tác thất bại",
+    );
+  };
 
   const runCheckinAllPresent = async () => {
     closeConfirmModal();
@@ -315,559 +451,6 @@ export default function SessionDetailPage() {
       title: "Điểm danh tất cả có mặt?",
       message: `Điểm danh có mặt cho tất cả ${awaitingCheckin.length} người đang chờ điểm danh?`,
     });
-  };
-
-  const startNavLoading = useNavLoadingStore((s) => s.start);
-
-  const handleShareGuestReceipt = async (
-    reg: any,
-    hostName?: string,
-    groupedGuests?: any[],
-  ) => {
-    if (sharingReceiptId) return;
-    setSharingReceiptId(reg.id);
-    try {
-      const W = 390;
-      const SCALE = 3;
-      const PAD = 22;
-      const CW = W - PAD * 2;
-
-      const SANS =
-        "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Helvetica,Arial,sans-serif";
-      // Font theo mẫu: tiêu đề/nhãn = Barlow, số tiền = Barlow Condensed đậm
-      const FALLBACK = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
-      const HEAD = `'Barlow',${FALLBACK}`;
-      const ROWNUM = `'Barlow Semi Condensed','Barlow',${FALLBACK}`;
-      const AMOUNT = `'Barlow Condensed','Barlow',${FALLBACK}`;
-
-      const NAVY = "#10294a";
-      const ICON = "#1e3a5f";
-      const MUTED = "#8a9bb5";
-      const LINE = "rgba(16,41,74,0.14)";
-
-      const QR_CROP = { top: 0, bottom: 0, left: 0, right: 0 };
-      const QR_SRC = "/qr/qr-ng-ngoi.webp";
-      const BG_SRC = "/bg/receipt-bg.webp";
-      const SHUTTLE_SRC = "/bg/cau-long-icon.webp";
-
-      // ───────── dữ liệu ─────────
-      const displayName: string = reg.users?.full_name ?? reg.guest_full_name ?? "?";
-      const hostAmount = reg.amount_override ?? 0;
-      const hostBaseAmount = reg.base_amount ?? hostAmount;
-      const hostOtherFeeAmount = reg.other_fee_amount ?? 0;
-      const hostOtherFeeNote: string | undefined = reg.other_fee_note;
-      const isGroupedGuest = Boolean(reg.host_registration_id);
-
-      const guestsList = (groupedGuests ?? []).map((g) => ({
-        name: (g.users?.full_name ?? g.guest_full_name ?? "?") as string,
-        baseAmount: g.base_amount ?? g.amount_override ?? 0,
-        otherFeeAmount: g.other_fee_amount ?? 0,
-        otherFeeNote: g.other_fee_note as string | undefined,
-      }));
-      const guestsTotal = guestsList.reduce(
-        (s, g) => s + g.baseAmount + (g.otherFeeAmount ?? 0),
-        0,
-      );
-      const totalAmount = hostAmount + guestsTotal;
-
-      const lastName = displayName.trim().split(/\s+/).pop() ?? "";
-      const noDiacritics = lastName
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/Đ/g, "D");
-      const transferNote = `BNB ${noDiacritics} ${format(new Date(session.scheduled_at), "ddMMyyyy")}`;
-      const sessionTime = format(new Date(session.scheduled_at), "HH:mm dd/MM/yyyy", { locale: vi });
-
-      // ───────── ảnh / icon ─────────
-      const loadImg = (src: string, cors = false) =>
-        new Promise<HTMLImageElement | null>((resolve) => {
-          const img = new Image();
-          if (cors) img.crossOrigin = "anonymous";
-          img.onload = () => resolve(img);
-          img.onerror = () => resolve(null);
-          img.src = src;
-        });
-
-      const svgImg = (inner: string, color: string, size: number, vb = "0 0 24 24", h?: number) => {
-        const px = size * SCALE;
-        const py = (h ?? size) * SCALE;
-        const s = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${py}" viewBox="${vb}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
-        return loadImg("data:image/svg+xml;charset=utf-8," + encodeURIComponent(s));
-      };
-
-      const P = {
-        user: `<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>`,
-        calendar: `<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>`,
-        clock: `<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
-        users: `<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-5.5 6-5.5s6 2 6 5.5"/><path d="M16 5a3.2 3.2 0 0 1 0 6M18 14.8c1.8.7 3 2.3 3 5.2"/>`,
-        card: `<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/>`,
-        bank: `<path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>`,
-        chat: `<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/>`,
-        copy: `<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>`,
-      };
-
-      const [
-        icUser, icCalendar, icClock, icUsers, icCard, icBank, icChat, icCopy,
-        icCourt, qrImg, bgImg, shuttleImg,
-      ] = await Promise.all([
-        svgImg(P.user, ICON, 22),
-        svgImg(P.calendar, ICON, 22),
-        svgImg(P.clock, ICON, 22),
-        svgImg(P.users, ICON, 22),
-        svgImg(P.card, ICON, 22),
-        svgImg(P.bank, ICON, 22),
-        svgImg(P.chat, ICON, 22),
-        svgImg(P.copy, "#2563eb", 16),
-        svgImg(
-          // icon sân (xanh) như mẫu
-          `<rect x="1" y="1" width="42" height="28" rx="4" fill="#16a34a" stroke="none"/><rect x="5" y="5" width="34" height="20" stroke="#bbf7d0" stroke-width="1.5"/><path d="M22 5v20M5 15h34" stroke="#bbf7d0" stroke-width="1.5"/>`,
-          "none", 26, "0 0 44 30", 18,
-        ),
-        loadImg(QR_SRC, true),
-        loadImg(BG_SRC, true),
-        loadImg(SHUTTLE_SRC, true),
-      ]);
-
-      // nạp Google Fonts (có tiếng Việt) trước khi vẽ canvas
-      const ensureReceiptFonts = async () => {
-        try {
-          if (!document.querySelector("link[data-receipt-fonts]")) {
-            await new Promise<void>((resolve) => {
-              const l = document.createElement("link");
-              l.rel = "stylesheet";
-              l.setAttribute("data-receipt-fonts", "1");
-              l.href =
-                "https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600&family=Barlow+Condensed:wght@600;700&display=swap";
-              l.onload = () => resolve();
-              l.onerror = () => resolve();
-              document.head.appendChild(l);
-              setTimeout(resolve, 3000);
-            });
-          }
-          const sample = "Biên lai thanh toán ĐđẾỂỄ Tiền sân cầu Tổng cộng QUÉT MÃ 0123456789.đ";
-          await Promise.race([
-            Promise.all([
-              document.fonts.load("500 20px 'Barlow'", sample),
-              document.fonts.load("600 20px 'Barlow'", sample),
-              document.fonts.load("500 18px 'Barlow Semi Condensed'", sample),
-              document.fonts.load("700 52px 'Barlow Condensed'", sample),
-            ]),
-            new Promise((r) => setTimeout(r, 3000)),
-          ]);
-        } catch {
-          /* dùng font dự phòng */
-        }
-      };
-      await ensureReceiptFonts();
-
-      // ───────── vẽ ─────────
-      const render = (ctx: CanvasRenderingContext2D, H: number): number => {
-        const fontStr = (size: number, weight = 500, italic = false, family = SANS) =>
-          `${italic ? "italic " : ""}${weight} ${size}px ${family}`;
-
-        type TOpt = {
-          size?: number; weight?: number; color?: string; align?: "left" | "center" | "right";
-          italic?: boolean; family?: string; spacing?: number;
-        };
-
-        const measure = (s: string, o: TOpt = {}) => {
-          const { size = 13, weight = 500, italic = false, family = SANS, spacing = 0 } = o;
-          ctx.font = fontStr(size, weight, italic, family);
-          return ctx.measureText(s).width + spacing * Math.max(0, [...s].length - 1);
-        };
-
-        // `cy` là TÂM theo chiều dọc của dòng chữ
-        const text = (s: string, x: number, cy: number, o: TOpt = {}) => {
-          const { size = 13, weight = 500, color = NAVY, align = "left", italic = false, family = SANS, spacing = 0 } = o;
-          ctx.font = fontStr(size, weight, italic, family);
-          ctx.fillStyle = color;
-          ctx.textBaseline = "alphabetic";
-          const by = cy + size * 0.35;
-          if (!spacing) {
-            ctx.textAlign = align;
-            ctx.fillText(s, x, by);
-            return;
-          }
-          const total = measure(s, o);
-          let sx = x;
-          if (align === "center") sx = x - total / 2;
-          else if (align === "right") sx = x - total;
-          ctx.textAlign = "left";
-          for (const ch of [...s]) {
-            ctx.fillText(ch, sx, by);
-            sx += ctx.measureText(ch).width + spacing;
-          }
-        };
-
-        const wrap = (s: string, maxW: number, o: TOpt = {}) => {
-          const words = s.split(/\s+/);
-          const lines: string[] = [];
-          let cur = "";
-          for (const w of words) {
-            const t = cur ? cur + " " + w : w;
-            if (measure(t, o) <= maxW || !cur) cur = t;
-            else { lines.push(cur); cur = w; }
-          }
-          if (cur) lines.push(cur);
-          return lines;
-        };
-
-        const rr = (x: number, y: number, w: number, h: number, r: number) => {
-          ctx.beginPath();
-          ctx.moveTo(x + r, y);
-          ctx.arcTo(x + w, y, x + w, y + h, r);
-          ctx.arcTo(x + w, y + h, x, y + h, r);
-          ctx.arcTo(x, y + h, x, y, r);
-          ctx.arcTo(x, y, x + w, y, r);
-          ctx.closePath();
-        };
-
-        const fillRR = (x: number, y: number, w: number, h: number, r: number, fill: string) => {
-          ctx.fillStyle = fill;
-          rr(x, y, w, h, r);
-          ctx.fill();
-        };
-
-        const hline = (x1: number, x2: number, y: number, color = LINE) => {
-          ctx.fillStyle = color;
-          ctx.fillRect(x1, y, x2 - x1, 1);
-        };
-
-        const dline = (x1: number, x2: number, y: number) => {
-          ctx.save();
-          ctx.strokeStyle = LINE;
-          ctx.lineWidth = 1;
-          ctx.setLineDash([2, 3]);
-          ctx.beginPath();
-          ctx.moveTo(x1, y + 0.5);
-          ctx.lineTo(x2, y + 0.5);
-          ctx.stroke();
-          ctx.restore();
-        };
-
-        const vline = (x: number, y1: number, y2: number) => {
-          ctx.save();
-          ctx.strokeStyle = LINE;
-          ctx.lineWidth = 1;
-          ctx.setLineDash([2, 3]);
-          ctx.beginPath();
-          ctx.moveTo(x + 0.5, y1);
-          ctx.lineTo(x + 0.5, y2);
-          ctx.stroke();
-          ctx.restore();
-        };
-
-        const icon = (img: HTMLImageElement | null, x: number, cy: number, w: number, h = w) => {
-          if (img) ctx.drawImage(img, x, cy - h / 2, w, h);
-        };
-
-        // ── nền: ảnh mẫu (cover, canh trên) ──
-        const baseGrad = ctx.createLinearGradient(0, 0, 0, H);
-        baseGrad.addColorStop(0, "#f6f8fb");
-        baseGrad.addColorStop(1, "#e7edf5");
-        ctx.fillStyle = baseGrad;
-        ctx.fillRect(0, 0, W, H);
-
-        if (bgImg) {
-          const iw = bgImg.naturalWidth;
-          const ih = bgImg.naturalHeight;
-          const k = W / iw; // luôn khớp theo chiều rộng → thấy đủ quả cầu + trống đồng bên phải
-          const fullH = ih * k;
-          if (H <= fullH) {
-            ctx.drawImage(bgImg, 0, 0, W, fullH);
-          } else {
-            // Biên lai dài hơn ảnh: giữ nguyên phần trên (lá, quả cầu, trống đồng)
-            // và phần dưới (vợt, trống đồng), chỉ kéo giãn dải giữa.
-            const A = 0.55, B = 0.68;
-            const topH = ih * A * k;
-            const botH = ih * (1 - B) * k;
-            const midH = H - topH - botH;
-            ctx.imageSmoothingQuality = "high";
-            ctx.drawImage(bgImg, 0, ih * A, iw, ih * (B - A), 0, topH - 1, W, midH + 2);
-            ctx.drawImage(bgImg, 0, 0, iw, ih * A, 0, 0, W, topH);
-            ctx.drawImage(bgImg, 0, ih * B, iw, ih * (1 - B), 0, H - botH, W, botH);
-          }
-        }
-
-        // ── header ──
-        text("BIÊN LAI THANH TOÁN", W / 2, 38, {
-          size: 20, weight: 500, family: HEAD, align: "center", spacing: 3,
-        });
-        text("BNB BADMINTON CLUB", W / 2, 62, {
-          size: 9, weight: 500, family: HEAD, color: MUTED, align: "center", spacing: 4,
-        });
-        hline(W / 2 - 22, W / 2 + 22, 74, "rgba(16,41,74,0.35)");
-        text("PLAY  •  FRIENDS  •  GOOD VIBES", W / 2, 92, {
-          size: 8, weight: 500, family: HEAD, color: "#42536e", align: "center", spacing: 3.5,
-        });
-
-        // ── số tiền ──
-        text("SỐ TIỀN THANH TOÁN", W / 2, 128, {
-          size: 9, weight: 500, family: HEAD, align: "center", spacing: 3,
-        });
-        const amountStr = formatVnd(totalAmount);
-        let amountSize = 62;
-        while (amountSize > 28 && measure(amountStr, { size: amountSize, weight: 700, family: AMOUNT }) > CW) {
-          amountSize -= 2;
-        }
-        text(amountStr, W / 2, 166, {
-          size: amountSize, weight: 700, family: AMOUNT, align: "center",
-        });
-
-        // ── badge: CHUYỂN KHOẢN ──
-        const chipTxt = `Chuyển khoản${isGroupedGuest ? " (tự thanh toán)" : ""}`;
-        const chipW = measure(chipTxt, { size: 12, weight: 500 }) + 52;
-        const chipY = 200;
-        const chipX = W / 2 - chipW / 2;
-        fillRR(chipX, chipY, chipW, 26, 13, "rgba(205,218,236,0.75)");
-        icon(icBank, chipX + 12, chipY + 13, 15);
-        text(chipTxt, chipX + 34, chipY + 13, { size: 12, weight: 500, color: "#1e3a5f" });
-
-        // ── thông tin ──
-        const infoRows: { icon: HTMLImageElement | null; label: string; value: string }[] = [
-          { icon: icUser, label: "Người thanh toán", value: displayName },
-          { icon: icCalendar, label: "Buổi đánh", value: session.title },
-          { icon: icClock, label: "Thời gian buổi", value: sessionTime },
-        ];
-        if (isGroupedGuest && hostName) {
-          infoRows.push({ icon: icUsers, label: "Đi cùng", value: hostName });
-        }
-
-        const LABEL_X = PAD + 40;
-        const VAL_W = CW - 40 - 100;
-        const infoLayout = infoRows.map((r) => {
-          const lines = wrap(r.value, VAL_W, { size: 13, weight: 600 });
-          return { ...r, lines, h: Math.max(42, lines.length * 17 + 16) };
-        });
-
-        const infoY = 244;
-        let ry = infoY;
-        infoLayout.forEach((r, i) => {
-          if (i > 0) hline(LABEL_X, W - PAD, ry);
-          const cy = ry + r.h / 2;
-          icon(r.icon, PAD, cy, 22);
-          text(r.label, LABEL_X, cy, { size: 13, color: MUTED });
-          r.lines.forEach((ln, li) => {
-            text(ln, W - PAD, cy + (li - (r.lines.length - 1) / 2) * 17, {
-              size: 13, weight: 600, align: "right",
-            });
-          });
-          ry += r.h;
-        });
-        hline(PAD, W - PAD, ry, "rgba(16,41,74,0.28)");
-        const infoBottom = ry;
-
-        // ── chi tiết thanh toán ──
-        const secCy = infoBottom + 28;
-        const secTitle = "CHI TIẾT THANH TOÁN";
-        const secW = measure(secTitle, { size: 12, weight: 500, family: HEAD, spacing: 3 });
-        text(secTitle, PAD, secCy, { size: 12, weight: 500, family: HEAD, spacing: 3 });
-        hline(PAD + secW + 14, PAD + secW + 14 + 56, secCy, "rgba(16,41,74,0.35)");
-
-        type PayRow = { amount: number; label: string; sub?: string; solo?: boolean; amber?: boolean; note?: string };
-        const payRows: PayRow[] = [];
-        guestsList.forEach((g) => {
-          payRows.push({ amount: g.baseAmount, label: "Tiền sân + cầu", sub: `${g.name} (đi cùng)` });
-          if (g.otherFeeAmount > 0)
-            payRows.push({ amount: g.otherFeeAmount, label: "Khoản khác", sub: `${g.name} (đi cùng)`, amber: true, note: g.otherFeeNote });
-        });
-        const hostSub = guestsList.length > 0 ? displayName : undefined;
-        payRows.push({ amount: hostBaseAmount, label: "Tiền sân + cầu", sub: hostSub, solo: true });
-        if (hostOtherFeeAmount > 0)
-          payRows.push({ amount: hostOtherFeeAmount, label: "Khoản khác", sub: hostSub, solo: true, amber: true, note: hostOtherFeeNote });
-
-        const payLayout = payRows.map((r) => {
-          const noteLines = r.note
-            ? r.note.split("\n").map((l) => l.trim()).filter(Boolean)
-            : [];
-          const blockH = 22 + (r.sub ? 20 : 0) + noteLines.length * 14;
-          return { ...r, noteLines, blockH, h: Math.max(60, blockH + 22) };
-        });
-
-        const rowsTop = secCy + 16;
-        let py = rowsTop;
-        payLayout.forEach((r, i) => {
-          if (i > 0) dline(PAD, W - PAD, py);
-          const cy = py + r.h / 2;
-          const top = cy - r.blockH / 2;
-
-          icon(icCourt, PAD, cy, 24, 17);
-          text("+", PAD + 31, cy, { size: 16, weight: 900, color: NAVY, align: "center" });
-          icon(shuttleImg, PAD + 40, cy, 26, 26);
-          vline(PAD + 74, top, top + r.blockH);
-
-          const tx = PAD + 88;
-          text(r.label, tx, top + 11, { size: 15, weight: 500 });
-          let yy = top + 22;
-          if (r.sub) {
-            icon(r.solo ? icUser : icUsers, tx, yy + 10, 14);
-            text(r.sub, tx + 20, yy + 10, { size: 12, color: MUTED });
-            yy += 20;
-          }
-          r.noteLines.forEach((ln) => {
-            text(ln, tx, yy + 7, { size: 11, italic: true, color: MUTED });
-            yy += 14;
-          });
-
-          text(formatVnd(r.amount), W - PAD, cy, {
-            size: 19, weight: 500, family: ROWNUM, align: "right",
-            color: r.amber ? "#b45309" : NAVY,
-          });
-          py += r.h;
-        });
-
-        // ── tổng cộng ──
-        const totalY = py + 2;
-        hline(PAD, W - PAD, totalY, "rgba(16,41,74,0.28)");
-        const totalCy = totalY + 32;
-        text("Tổng cộng", PAD, totalCy, { size: 15, weight: 500, family: HEAD, spacing: 4 });
-        text(amountStr, W - PAD, totalCy, {
-          size: Math.min(34, amountSize), weight: 700, family: AMOUNT, align: "right",
-        });
-
-        // ── QR + tài khoản ──
-        const qTop = totalY + 64 + 14;
-        const qTitle = "QUÉT MÃ ĐỂ CHUYỂN KHOẢN";
-        const qTitleW = measure(qTitle, { size: 11, weight: 500, family: HEAD, spacing: 2.5 });
-        text(qTitle, W / 2, qTop, { size: 11, weight: 500, family: HEAD, align: "center", spacing: 2.5, color: "#2b3f63" });
-        hline(W / 2 - qTitleW / 2 - 14 - 38, W / 2 - qTitleW / 2 - 14, qTop, "rgba(16,41,74,0.4)");
-        hline(W / 2 + qTitleW / 2 + 14, W / 2 + qTitleW / 2 + 14 + 38, qTop, "rgba(16,41,74,0.4)");
-
-        const FR = 140;
-        const fx = PAD + 6;
-        const fy = qTop + 22;
-
-        // nền kính mờ xanh nhạt hoà với bg + QR (QR nền trong suốt nên ăn theo màu panel)
-        ctx.save();
-        ctx.shadowColor = "rgba(16,41,74,0.14)";
-        ctx.shadowBlur = 16;
-        ctx.shadowOffsetY = 4;
-        const panel = ctx.createLinearGradient(fx, fy, fx + FR, fy + FR);
-        panel.addColorStop(0, "rgba(248,251,255,0.93)");
-        panel.addColorStop(1, "rgba(222,233,248,0.93)");
-        ctx.fillStyle = panel;
-        rr(fx, fy, FR, FR, 12);
-        ctx.fill();
-        ctx.restore();
-        ctx.save();
-        ctx.strokeStyle = "rgba(255,255,255,0.75)";
-        ctx.lineWidth = 1;
-        rr(fx + 0.5, fy + 0.5, FR - 1, FR - 1, 12);
-        ctx.stroke();
-        ctx.restore();
-
-        if (qrImg) {
-          const sx = qrImg.naturalWidth * QR_CROP.left;
-          const sy = qrImg.naturalHeight * QR_CROP.top;
-          const sw = qrImg.naturalWidth * (1 - QR_CROP.left - QR_CROP.right);
-          const sh = qrImg.naturalHeight * (1 - QR_CROP.top - QR_CROP.bottom);
-          const area = FR - 20;
-          const k = Math.min(area / sw, area / sh);
-          const dw = sw * k;
-          const dh = sh * k;
-          ctx.drawImage(qrImg, sx, sy, sw, sh, fx + 10 + (area - dw) / 2, fy + 10 + (area - dh) / 2, dw, dh);
-        }
-
-        // 4 góc khung
-        ctx.save();
-        ctx.strokeStyle = NAVY;
-        ctx.lineWidth = 3;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        const L = 20;
-        const corner = (x1: number, y1: number, x2: number, y2: number, x3: number, y3: number) => {
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.lineTo(x3, y3);
-          ctx.stroke();
-        };
-        corner(fx, fy + L, fx, fy, fx + L, fy);
-        corner(fx + FR - L, fy, fx + FR, fy, fx + FR, fy + L);
-        corner(fx, fy + FR - L, fx, fy + FR, fx + L, fy + FR);
-        corner(fx + FR - L, fy + FR, fx + FR, fy + FR, fx + FR, fy + FR - L);
-        ctx.restore();
-
-        // thông tin ngân hàng
-        const rx = fx + FR + 20;
-        const tx = rx + 32;
-        const avail = W - PAD - tx;
-        const bankItems: [HTMLImageElement | null, string, string][] = [
-          [icUser, "Chủ tài khoản", "NGO VAN NGOI"],
-          [icCard, "Số tài khoản", "9961 0600 42"],
-          [icBank, "Ngân hàng", "Techcombank"],
-        ];
-        const STEP = 35;
-        bankItems.forEach(([ic, label, val], i) => {
-          const t = fy + 2 + i * STEP;
-          icon(ic, rx, t + 15, 20);
-          text(label, tx, t + 6, { size: 10, color: MUTED });
-          text(val, tx, t + 23, { size: 13, weight: 700 });
-        });
-
-        const nt = fy + 2 + 3 * STEP;
-        icon(icChat, rx, nt + 15, 20);
-        text("Nội dung (tuỳ chọn)", tx, nt + 6, { size: 10, color: MUTED });
-
-        let noteSize = 11;
-        while (noteSize > 8 && measure(transferNote, { size: noteSize, weight: 600 }) > avail - 40) noteSize--;
-        const nW = Math.min(avail, measure(transferNote, { size: noteSize, weight: 600 }) + 42);
-        fillRR(tx, nt + 14, nW, 24, 12, "rgba(205,218,236,0.75)");
-        text(transferNote, tx + 12, nt + 26, { size: noteSize, weight: 600, color: "#1e3a5f" });
-        icon(icCopy, tx + nW - 24, nt + 26, 14);
-
-        return fy + FR + 28;
-      };
-
-      // đo chiều cao thật rồi vẽ lại đúng khung
-      const scratch = document.createElement("canvas");
-      scratch.width = W * SCALE;
-      scratch.height = 3000 * SCALE;
-      const sctx = scratch.getContext("2d")!;
-      sctx.scale(SCALE, SCALE);
-      const totalH = Math.ceil(render(sctx, 2000));
-
-      const canvas = document.createElement("canvas");
-      canvas.width = W * SCALE;
-      canvas.height = totalH * SCALE;
-      const ctx = canvas.getContext("2d")!;
-      ctx.scale(SCALE, SCALE);
-      render(ctx, totalH);
-
-      const blob: Blob | null = await new Promise((resolve) =>
-        canvas.toBlob((b) => resolve(b), "image/png"),
-      );
-      if (!blob) throw new Error("Không tạo được ảnh");
-
-      const fileName = `bien-lai-${displayName.replace(/\s+/g, "-")}-${reg.id}.png`;
-      const file = new File([blob], fileName, { type: "image/png" });
-
-      if (
-        typeof navigator !== "undefined" &&
-        (navigator as any).canShare?.({ files: [file] })
-      ) {
-        await (navigator as any).share({
-          files: [file],
-          title: "Biên lai thanh toán — BNB Badminton",
-        });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success("Đã tải ảnh biên lai xuống");
-      }
-    } catch (err: any) {
-      if (err?.name !== "AbortError") {
-        console.error("[handleShareGuestReceipt]", err);
-        toast.error("Tạo ảnh biên lai thất bại");
-      }
-    } finally {
-      setSharingReceiptId(null);
-    }
   };
 
   const runCloseList = async () => {
@@ -942,6 +525,8 @@ export default function SessionDetailPage() {
     const pendingIds = new Set(pending.map((r) => r.id));
     const pendingReviewIds = new Set(pendingReview.map((r) => r.id));
     const walletPendingIds = new Set(walletPendingConfirm.map((r) => r.id));
+    const nameOf = (r: any) =>
+      r.is_guest ? r.guest_full_name : r.users?.full_name;
 
     const rows = hostRegs
       .map((host) => {
@@ -975,224 +560,157 @@ export default function SessionDetailPage() {
           nestedWalletPending,
         };
       })
-      .filter(Boolean) as {
-        host: any;
-        hostPending: boolean;
-        hostReview: boolean;
-        hostWalletPending: boolean;
-        nestedPending: any[];
-        nestedReview: any[];
-        nestedWalletPending: any[];
-      }[];
+      .filter(Boolean) as any[];
 
-    const getPaymentTag = (reg: any, hostName?: string) => {
+    const getPaymentTag = (
+      reg: any,
+      hostName?: string,
+    ): { label: string; tone: Tone } => {
       const isIndependentGuest = reg.is_guest && !reg.user_id;
-
-      if (isIndependentGuest && reg.payment_method === "cash") {
-        return { label: "💵 Tiền mặt", cls: "bg-[var(--success-soft)] text-[var(--success)]" };
-      }
+      if (isIndependentGuest && reg.payment_method === "cash")
+        return { label: "💵 Tiền mặt", tone: "success" };
       if (
         Boolean(reg.payment_reference) &&
         reg.payment_reference !== "TIEN_MAT"
       )
-        return {
-          label: "🏦 Chuyển khoản (đã nộp bill)",
-          cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
-        };
+        return { label: "🏦 Chuyển khoản (đã nộp bill)", tone: "primary" };
       if (reg.payment_method === "cash")
-        return {
-          label: "💵 Tiền mặt (tự yêu cầu)",
-          cls: "bg-[var(--success-soft)] text-[var(--success)]",
-        };
+        return { label: "💵 Tiền mặt (tự yêu cầu)", tone: "success" };
       if (reg.payment_method === "grouped_with_host")
-        return {
-          label: `👥 Gộp theo ${hostName ?? "host"}`,
-          cls: "bg-[var(--primary-soft)] text-[var(--primary)]",
-        };
-      return { label: "💵 Tiền mặt", cls: "bg-[var(--success-soft)] text-[var(--success)]" };
+        return { label: `👥 Gộp theo ${hostName ?? "host"}`, tone: "primary" };
+      return { label: "💵 Tiền mặt", tone: "success" };
     };
+
+    const MAX_NAMES_SHOWN = 2;
+    const buildGuestNamesLabel = (guests: any[]) => {
+      const names = guests.map(nameOf).filter(Boolean);
+      if (names.length === 0) return "";
+      if (names.length <= MAX_NAMES_SHOWN) return names.join(", ");
+      const shown = names.slice(0, MAX_NAMES_SHOWN).join(", ");
+      return `${shown},... (${names.length - MAX_NAMES_SHOWN} người khác)`;
+    };
+
+    const autoCount =
+      pending.length + pendingReview.length + walletPendingConfirm.length;
 
     return (
       <div className="space-y-4">
-        {(pending.length > 0 ||
-          pendingReview.length > 0 ||
-          walletPendingConfirm.length > 0) && (
-            <div className="space-y-3">
-              <p className="text-sm text-[var(--text-muted)]">
-                Có{" "}
-                <strong className="text-[var(--text)]">
-                  {pending.length +
-                    pendingReview.length +
-                    walletPendingConfirm.length}
-                </strong>{" "}
-                người sẽ được tự động xác nhận khi hoàn thành:
-              </p>
-              <ul className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
-                {rows.map(
-                  ({
-                    host,
-                    hostPending,
-                    hostReview,
-                    hostWalletPending,
-                    nestedPending,
-                    nestedReview,
-                    nestedWalletPending,
-                  }) => {
-                    const name = host.is_guest
-                      ? host.guest_full_name
-                      : host.users?.full_name;
-                    const isIndependentGuest = host.is_guest && !host.user_id;
-                    const isMember = Boolean(host.user_id) && !host.is_guest;
-                    const tag = hostReview ? getPaymentTag(host) : null;
+        {autoCount > 0 && (
+          <div className="space-y-3">
+            <p className="text-sm text-[var(--text-muted)]">
+              Có <strong className="text-[var(--text)]">{autoCount}</strong>{" "}
+              người sẽ được tự động xác nhận khi hoàn thành:
+            </p>
+            <ul className="max-h-64 space-y-3 overflow-y-auto pr-1">
+              {rows.map(
+                ({
+                  host,
+                  hostPending,
+                  hostReview,
+                  hostWalletPending,
+                  nestedPending,
+                  nestedReview,
+                  nestedWalletPending,
+                }: any) => {
+                  const name = nameOf(host);
+                  const isIndependentGuest = host.is_guest && !host.user_id;
+                  const isMember = Boolean(host.user_id) && !host.is_guest;
+                  const tag = hostReview ? getPaymentTag(host) : null;
 
-                    const MAX_NAMES_SHOWN = 2;
+                  const walletGuestNames =
+                    buildGuestNamesLabel(nestedWalletPending);
+                  const hostWalletLabel = walletGuestNames
+                    ? `⏳ Chưa chọn riêng hay gộp với ${walletGuestNames} → gộp ví BnB`
+                    : "⏳ Chưa chọn → gộp ví BnB";
 
-                    const buildGuestNamesLabel = (guests: any[]) => {
-                      const names = guests
-                        .map((g) =>
-                          g.is_guest ? g.guest_full_name : g.users?.full_name,
-                        )
-                        .filter(Boolean);
+                  const nestedWalletGuests = [
+                    ...nestedPending,
+                    ...nestedWalletPending,
+                  ];
 
-                      if (names.length === 0) return "";
-                      if (names.length <= MAX_NAMES_SHOWN)
-                        return names.join(", ");
+                  return (
+                    <li key={host.id} className="text-sm text-[var(--text)]">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="font-medium">{name}</span>
+                        {isIndependentGuest && hostPending && (
+                          <Chip tone="success">💵 Tiền mặt</Chip>
+                        )}
+                        {isMember && hostPending && (
+                          <Chip
+                            tone="primary"
+                            icon={<Wallet className="h-3 w-3" />}
+                          >
+                            Ví BNB
+                          </Chip>
+                        )}
+                        {hostWalletPending && (
+                          <Chip tone="warning" className="whitespace-normal">
+                            {hostWalletLabel}
+                          </Chip>
+                        )}
+                        {hostReview && tag && (
+                          <Chip tone={tag.tone}>{tag.label}</Chip>
+                        )}
+                      </div>
 
-                      const shown = names.slice(0, MAX_NAMES_SHOWN).join(", ");
-                      const remaining = names.length - MAX_NAMES_SHOWN;
-                      return `${shown},... (${remaining} người khác)`;
-                    };
-
-                    const walletPendingGuestNames =
-                      buildGuestNamesLabel(nestedWalletPending);
-                    const hostWalletLabel = walletPendingGuestNames
-                      ? `⏳ Chưa chọn riêng hay gộp với ${walletPendingGuestNames} → gộp ví BnB`
-                      : "⏳ Chưa chọn → gộp ví BnB";
-
-                    const nestedWalletGuests = [
-                      ...nestedPending,
-                      ...nestedWalletPending,
-                    ];
-
-                    return (
-                      <li key={host.id} className="text-sm text-[var(--text)]">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-medium text-[var(--text)]">
-                            {name}
-                          </span>
-
-                          {isIndependentGuest && hostPending && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--success-soft)] text-[var(--success)]">
-                              💵 Tiền mặt
-                            </span>
-                          )}
-
-                          {isMember && hostPending && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
-                              <Wallet className="w-2.5 h-2.5" /> Ví BNB
-                            </span>
-                          )}
-
-                          {hostWalletPending && (
-                            <span
-                              title={nestedWalletPending
-                                .map((g) =>
-                                  g.is_guest
-                                    ? g.guest_full_name
-                                    : g.users?.full_name,
-                                )
-                                .join(", ")}
-                              className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--warning-soft)] text-[var(--warning)]"
-                            >
-                              {hostWalletLabel}
-                            </span>
-                          )}
-
-                          {hostReview && tag && (
-                            <span
-                              className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tag.cls}`}
-                            >
-                              {tag.label}
-                            </span>
-                          )}
-                        </div>
-
-                        {(nestedWalletGuests.length > 0 ||
-                          nestedReview.length > 0) && (
-                            <ul className="mt-1 ml-1.5 pl-3 space-y-1 border-l border-[var(--border)]">
-                              {nestedWalletGuests.map((g) => (
+                      {(nestedWalletGuests.length > 0 ||
+                        nestedReview.length > 0) && (
+                          <ul className="ml-1.5 mt-1.5 space-y-1.5 border-l border-[var(--border)] pl-3">
+                            {nestedWalletGuests.map((g: any) => (
+                              <li
+                                key={g.id}
+                                className="flex flex-wrap items-center gap-1.5 text-xs text-[var(--text-muted)]"
+                              >
+                                <CornerDownRight className="h-3 w-3 shrink-0 text-[var(--text-faint)]" />
+                                <span>{nameOf(g)}</span>
+                                <Chip
+                                  tone="primary"
+                                  icon={<Wallet className="h-3 w-3" />}
+                                >
+                                  Ví BNB của {name}
+                                </Chip>
+                              </li>
+                            ))}
+                            {nestedReview.map((g: any) => {
+                              const gTag = getPaymentTag(g, name);
+                              return (
                                 <li
                                   key={g.id}
-                                  className="text-xs text-[var(--purple)] flex items-center gap-1.5 flex-wrap"
+                                  className="flex flex-wrap items-center gap-1.5 text-xs text-[var(--text-muted)]"
                                 >
-                                  <CornerDownRight className="w-3 h-3 text-[var(--text-faint)] flex-shrink-0" />
-                                  <span>
-                                    {g.is_guest
-                                      ? g.guest_full_name
-                                      : g.users?.full_name}
-                                  </span>
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
-                                    <Wallet className="w-2.5 h-2.5" /> Ví BNB của{" "}
-                                    {name}
-                                  </span>
+                                  <CornerDownRight className="h-3 w-3 shrink-0 text-[var(--text-faint)]" />
+                                  <span>{nameOf(g)}</span>
+                                  <Chip tone={gTag.tone}>{gTag.label}</Chip>
                                 </li>
-                              ))}
-                              {nestedReview.map((g) => {
-                                const gTag = getPaymentTag(g, name);
-                                return (
-                                  <li
-                                    key={g.id}
-                                    className="text-xs text-[var(--purple)] flex items-center gap-1.5 flex-wrap"
-                                  >
-                                    <CornerDownRight className="w-3 h-3 text-[var(--text-faint)] flex-shrink-0" />
-                                    <span>
-                                      {g.is_guest
-                                        ? g.guest_full_name
-                                        : g.users?.full_name}
-                                    </span>
-                                    <span
-                                      className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${gTag.cls}`}
-                                    >
-                                      {gTag.label}
-                                    </span>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          )}
-                      </li>
-                    );
-                  },
-                )}
-              </ul>
-            </div>
-          )}
+                              );
+                            })}
+                          </ul>
+                        )}
+                    </li>
+                  );
+                },
+              )}
+            </ul>
+          </div>
+        )}
 
         {rejected.length > 0 && (
-          <div className="rounded-xl border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--danger-soft)] p-3 space-y-2">
-            <p className="text-sm font-semibold text-[var(--danger)] flex items-center gap-1.5">
+          <div
+            className={`space-y-2 rounded-xl border p-3 ${TONE_SOFT.danger}`}
+          >
+            <p className="text-sm font-semibold">
               ⚠️ Sẽ KHÔNG được xử lý tự động
             </p>
-            <ul className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-              {rejected.map((r) => {
-                const name = r.is_guest
-                  ? r.guest_full_name
-                  : r.users?.full_name;
-                return (
-                  <li
-                    key={r.id}
-                    className="text-xs text-[var(--danger)] flex items-center gap-1.5"
-                  >
-                    <XCircle className="w-3 h-3 flex-shrink-0" />
-                    <span className="font-medium">{name}</span>
-                    <span className="text-[var(--danger)]">
-                      — thanh toán bị từ chối
-                    </span>
-                  </li>
-                );
-              })}
+            <ul className="max-h-32 space-y-1.5 overflow-y-auto pr-1">
+              {rejected.map((r) => (
+                <li key={r.id} className="flex items-center gap-1.5 text-xs">
+                  <XCircle className="h-3 w-3 shrink-0" />
+                  <span className="font-medium">{nameOf(r)}</span>
+                  <span>— thanh toán bị từ chối</span>
+                </li>
+              ))}
             </ul>
-            <p className="text-[11px] text-[var(--danger)]">
+            <p className="text-[11px]">
               Buổi vẫn sẽ hoàn thành, nhưng những người này giữ nguyên trạng
               thái — bạn cần xử lý thủ công sau.
             </p>
@@ -1208,13 +726,12 @@ export default function SessionDetailPage() {
       pendingReview.length > 0 ||
       walletPendingConfirm.length > 0 ||
       rejected.length > 0;
-    const msg = hasWarnings
-      ? buildPendingSummary()
-      : "Xác nhận hoàn thành buổi đánh? Buổi sẽ bị khoá lại.";
     setConfirmModal({
       key: "completeSession",
       title: "Hoàn thành buổi đánh?",
-      message: msg,
+      message: hasWarnings
+        ? buildPendingSummary()
+        : "Xác nhận hoàn thành buổi đánh? Buổi sẽ bị khoá lại.",
     });
   };
 
@@ -1291,12 +808,10 @@ export default function SessionDetailPage() {
   const getRollbackEmailCandidates = () => {
     return registrations.filter((r) => {
       if (!r.is_guest) return false;
-
       if (!r.host_registration_id) return true;
 
       const host = registrations.find((h) => h.id === r.host_registration_id);
       const hostIsGuest = Boolean(host?.is_guest);
-
       if (hostIsGuest) return true;
 
       const isGroupedWithHost =
@@ -1308,6 +823,15 @@ export default function SessionDetailPage() {
     });
   };
 
+  const toggleRollbackEmail = (registrationId: string) => {
+    setRollbackEmailIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(registrationId)) next.delete(registrationId);
+      else next.add(registrationId);
+      return next;
+    });
+  };
+
   const handleConfirmRollback = async () => {
     if (!id) return;
     setCheckingPenalties(true);
@@ -1315,10 +839,11 @@ export default function SessionDetailPage() {
       const { data } = await fundApi.getPenaltiesBySession(id);
       const walletConfirmedPenalties = (data?.data ?? []).filter(
         (p: any) =>
-          p.payment_status === "confirmed" && p.actual_payment_method === "wallet",
+          p.payment_status === "confirmed" &&
+          p.actual_payment_method === "wallet",
       );
 
-      closeRollbackModal();
+      setShowRollbackModal(false);
 
       if (walletConfirmedPenalties.length > 0) {
         setPenaltiesToRefund(walletConfirmedPenalties);
@@ -1328,7 +853,7 @@ export default function SessionDetailPage() {
       }
     } catch (err) {
       console.error("[handleConfirmRollback] Lỗi kiểm tra phạt:", err);
-      closeRollbackModal();
+      setShowRollbackModal(false);
       handleRollbackFinish(false);
     } finally {
       setCheckingPenalties(false);
@@ -1337,7 +862,7 @@ export default function SessionDetailPage() {
 
   const handleCancelSession = async () => {
     if (!id) return;
-    closeCancelModal();
+    setShowCancelModal(false);
     setCancelling(true);
     try {
       await sessionsAdminApi.updateStatus(id, { status: "cancelled" });
@@ -1363,238 +888,35 @@ export default function SessionDetailPage() {
     }
   };
 
-  const refreshSeqRef = useRef(0);
-  const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const refreshSilently = async () => {
-    if (!id) return;
-    const mySeq = ++refreshSeqRef.current;
-    try {
-      const [{ data: s }, { data: r }] = await Promise.all([
-        sessionsAdminApi.get(id),
-        sessionsAdminApi.getRegistrations(id),
-      ]);
-      if (mySeq !== refreshSeqRef.current) {
-        return;
+  const handleFinishSession = () => {
+    if (finishing) return;
+    setFinishing(true);
+    startNavLoading();
+    setTimeout(() => {
+      const go = () => router.push(`/admin/sessions/${id}/finish`);
+      if (
+        typeof document !== "undefined" &&
+        (document as any).startViewTransition
+      ) {
+        (document as any).startViewTransition(go);
+      } else {
+        go();
       }
-      setSession(s);
-      setRegs(r);
-    } catch (err) {
-      console.error("[refreshSilently] failed:", err);
-    }
-  };
-
-  const handleManualRefresh = async () => {
-    if (manualRefreshing) return;
-    setManualRefreshing(true);
-    try {
-      await refreshSilently();
-    } finally {
-      setManualRefreshing(false);
-    }
-  };
-
-  const scheduleRefresh = () => {
-    if (refreshDebounceRef.current) clearTimeout(refreshDebounceRef.current);
-    refreshDebounceRef.current = setTimeout(() => {
-      refreshSilently();
-    }, 250);
-  };
-
-  useEffect(() => {
-    if (!id) return;
-    const channel = supabase
-      .channel(`session:${id}`)
-      .on("broadcast", { event: "session_updated" }, () => {
-        scheduleRefresh();
-      })
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "registrations",
-          filter: `session_id=eq.${id}`,
-        },
-        (payload) => {
-          scheduleRefresh();
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "sessions",
-          filter: `id=eq.${id}`,
-        },
-        () => scheduleRefresh(),
-      )
-      .subscribe((status, err) => { });
-    return () => {
-      supabase.removeChannel(channel);
-      if (refreshDebounceRef.current) clearTimeout(refreshDebounceRef.current);
-    };
-  }, [id]);
-
-  useEffect(() => {
-    if (!showAddModal || addTab !== "account") return;
-    const t = setTimeout(async () => {
-      setSearching(true);
-      try {
-        const { data } = await membersAdminApi.searchMembers(search.trim());
-        setSearchResults(data ?? []);
-      } finally {
-        setSearching(false);
-      }
-    }, 300);
-    return () => clearTimeout(t);
-  }, [search, showAddModal, addTab]);
-
-  useEffect(() => {
-    if (showRollbackModal) {
-      setRollbackEmailIds(new Set());
-      const raf = requestAnimationFrame(() => setRollbackModalVisible(true));
-      return () => cancelAnimationFrame(raf);
-    }
-  }, [showRollbackModal]);
-
-  useEffect(() => {
-    if (showAddModal) {
-      const raf = requestAnimationFrame(() => setAddModalVisible(true));
-      return () => cancelAnimationFrame(raf);
-    }
-  }, [showAddModal]);
-
-  const closeRollbackModal = () => {
-    setRollbackModalVisible(false);
-    setTimeout(() => setShowRollbackModal(false), 200);
-  };
-
-  const toggleRollbackEmail = (registrationId: string) => {
-    setRollbackEmailIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(registrationId)) next.delete(registrationId);
-      else next.add(registrationId);
-      return next;
-    });
-  };
-
-  const handleApproveRegistration = (regId: string) =>
-    runAction(
-      `${regId}:approve`,
-      regId,
-      () => registrationsAdminApi.approveRegistration(regId),
-      "Đã duyệt đăng ký",
-      "Duyệt thất bại",
-    );
-
-  const handleRejectRegistration = (regId: string, displayName: string) => {
-    if (!confirm(`Từ chối đăng ký của ${displayName}?`)) return;
-    runAction(
-      `${regId}:rejectReg`,
-      regId,
-      () => registrationsAdminApi.rejectRegistrationRequest(regId),
-      "Đã từ chối đăng ký",
-      "Thao tác thất bại",
-    );
-  };
-
-  const handleConfirm = (regId: string) =>
-    runAction(
-      `${regId}:confirm`,
-      regId,
-      () => registrationsAdminApi.confirm(regId),
-      "Xác nhận thành công — đã cộng 1 cầu lông!",
-      "Xác nhận thất bại",
-    );
-
-  const handleReject = (regId: string) =>
-    runAction(
-      `${regId}:rejectConfirm`,
-      regId,
-      () => registrationsAdminApi.reject(regId, rejectNotes[regId]),
-      "Đã từ chối",
-      "Từ chối thất bại",
-      () => setShowReject(null),
-    );
-
-  const handleCheckinPresent = (regId: string) =>
-    runAction(
-      `${regId}:present`,
-      regId,
-      () => registrationsAdminApi.checkinPresent(regId),
-      "Đã điểm danh có mặt",
-      "Điểm danh thất bại",
-    );
-
-  const handleCheckinAbsent = (regId: string, displayName: string) => {
-    if (!confirm(`Đánh dấu vắng mặt và xoá ${displayName} khỏi buổi này?`))
-      return;
-    runAction(
-      `${regId}:absent`,
-      regId,
-      () => registrationsAdminApi.checkinAbsent(regId),
-      "Đã đánh dấu vắng mặt",
-      "Thao tác thất bại",
-    );
-  };
-
-  const getPhase = (key: string): ActionPhase => actionPhase[key] ?? "idle";
-
-  const runAction = (
-    key: string,
-    regId: string,
-    action: () => Promise<any>,
-    successMessage: string,
-    errorMessage: string,
-    afterDelay?: () => void,
-  ) => {
-    setActionId(regId);
-    setActionPhase((p) => ({ ...p, [key]: "loading" }));
-
-    action()
-      .then(() => {
-        setActionPhase((p) => ({ ...p, [key]: "success" }));
-        toast.success(successMessage);
-        setTimeout(async () => {
-          afterDelay?.();
-          await refreshSilently();
-          setActionPhase((p) => {
-            const next = { ...p };
-            delete next[key];
-            return next;
-          });
-          setActionId(null);
-        }, 700);
-      })
-      .catch((err: any) => {
-        setActionPhase((p) => {
-          const next = { ...p };
-          delete next[key];
-          return next;
-        });
-        setActionId(null);
-        toast.error(err?.response?.data?.message ?? errorMessage);
-      });
+    }, 400);
   };
 
   const closeAddModal = () => {
-    setAddModalVisible(false);
-    setTimeout(() => {
-      setShowAddModal(false);
-      setSearch("");
-      setSearchResults([]);
-      setSelectedMembers([]);
-      setAddConfirmNow(false);
-      setAddNotes("");
-      setAddTab("account");
-      setGuestForm({ full_name: "", gender: "male", skill_level: "", email: "" });
-      setHostRegId("");
-      setGuestPaidNow(false);
-      setGuestPaySeparately(false);
-      setGuestSendEmail(false);
-    }, 200);
+    setShowAddModal(false);
+    setSearch("");
+    setSearchResults([]);
+    setSelectedMembers([]);
+    setAddNotes("");
+    setAddTab("account");
+    setGuestForm({ full_name: "", gender: "male", skill_level: "", email: "" });
+    setHostRegId("");
+    setGuestPaidNow(false);
+    setGuestPaySeparately(false);
+    setGuestSendEmail(false);
   };
 
   const handleAddMember = async () => {
@@ -1649,8 +971,16 @@ export default function SessionDetailPage() {
           guest_skill_level: guestForm.skill_level || undefined,
           guest_email: guestForm.email.trim() || undefined,
           host_registration_id: hostRegId || undefined,
-          pay_type: hostRegId ? (guestPaySeparately ? "solo" : "grouped") : undefined,
-          payment_status: guestPaySeparately ? (guestPaidNow ? "confirmed" : "pending") : undefined,
+          pay_type: hostRegId
+            ? guestPaySeparately
+              ? "solo"
+              : "grouped"
+            : undefined,
+          payment_status: guestPaySeparately
+            ? guestPaidNow
+              ? "confirmed"
+              : "pending"
+            : undefined,
           notes: addNotes || undefined,
           send_email: guestSendEmail,
         });
@@ -1663,28 +993,82 @@ export default function SessionDetailPage() {
     }
   };
 
+  const handleShareGuestReceipt = async (
+    reg: any,
+    hostName?: string,
+    groupedGuests?: any[],
+  ) => {
+    if (sharingReceiptId) return;
+    setSharingReceiptId(reg.id);
+    try {
+      const { blob, fileName } = await buildGuestReceipt({
+        reg,
+        session,
+        hostName,
+        groupedGuests,
+      });
+      const file = new File([blob], fileName, { type: "image/png" });
 
+      if (
+        typeof navigator !== "undefined" &&
+        (navigator as any).canShare?.({ files: [file] })
+      ) {
+        await (navigator as any).share({
+          files: [file],
+          title: "Biên lai thanh toán — BNB Badminton",
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast.success("Đã tải ảnh biên lai xuống");
+      }
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        console.error("[handleShareGuestReceipt]", err);
+        toast.error("Tạo ảnh biên lai thất bại");
+      }
+    } finally {
+      setSharingReceiptId(null);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="space-y-4 max-w-3xl mx-auto">
-        <div className="h-8 bg-[var(--border-strong)] rounded w-64 animate-pulse" />
-        <div className="card h-32 animate-pulse bg-[var(--surface-muted)]" />
-        <div className="card h-64 animate-pulse bg-[var(--surface-muted)]" />
+      <div className="mx-auto max-w-3xl space-y-4 pb-28 md:pb-10 lg:max-w-4xl xl:max-w-7xl 2xl:max-w-[1440px]">
+        <div className={`${CARD} h-60 animate-pulse bg-[var(--surface-muted)]`} />
+
+        <div className="flex items-baseline justify-between px-1">
+          <div className="h-4 w-32 animate-pulse rounded bg-[var(--border-strong)]" />
+          <div className="h-3 w-12 animate-pulse rounded bg-[var(--border-strong)]" />
+        </div>
+
+        {[1, 2].map((i) => (
+          <div key={i} className={`${CARD} p-4`}>
+            <div className="flex items-start gap-3">
+              <div className="h-11 w-11 shrink-0 animate-pulse rounded-full bg-[var(--border-strong)]" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-1/3 animate-pulse rounded bg-[var(--border-strong)]" />
+                <div className="h-3 w-1/4 animate-pulse rounded bg-[var(--border-strong)]" />
+                <div className="mt-2 h-5 w-24 animate-pulse rounded-full bg-[var(--border-strong)]" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (!session) return null;
 
+
   const isAwaitingFinish = (reg: any) =>
     reg.payment_status === "pending" &&
     reg.participation_status === "confirmed" &&
     reg.amount_override == null;
-
-  const allPaid = registrations
-    .filter((r) => r.participation_status === "confirmed")
-    .every((r) => r.payment_status === "confirmed");
 
   const awaitingFinish = registrations.filter(
     (r) =>
@@ -1710,7 +1094,8 @@ export default function SessionDetailPage() {
       r.payment_status === "pending" &&
       (Boolean(r.payment_reference) ||
         (r.payment_method === "cash" && r.amount_override != null) ||
-        (r.payment_method === "grouped_with_host" && r.amount_override != null)),
+        (r.payment_method === "grouped_with_host" &&
+          r.amount_override != null)),
   );
 
   const walletPendingConfirm = registrations.filter(
@@ -1723,6 +1108,9 @@ export default function SessionDetailPage() {
   const confirmed = registrations.filter(
     (r) => r.payment_status === "confirmed",
   );
+  const allConfirmed =
+    registrations.length > 0 &&
+    registrations.every((r) => r.payment_status === "confirmed");
   const rejected = registrations.filter((r) => r.payment_status === "rejected");
   const pendingApproval = registrations.filter(
     (r) => r.participation_status === "pending_approval",
@@ -1739,149 +1127,184 @@ export default function SessionDetailPage() {
   const hostRegs = registrations.filter((r) => !r.host_registration_id);
   const guestsOf = (hostId: string) =>
     registrations.filter((r) => r.host_registration_id === hostId);
+
   const hasCostData =
     (session.status === "completed" || session.status === "waiting_payment") &&
     (Number(session.court_fee ?? 0) > 0 ||
       Number(session.shuttle_count ?? 0) > 0 ||
       Number(session.other_fee ?? 0) > 0);
 
-  const canAddMember =
-    (session.status === "open" || session.status === "full") &&
-    session.available_slots > 0;
+  const isOpenish = session.status === "open" || session.status === "full";
 
-  const canFinishSession =
-    (session.status === "open" || session.status === "full") &&
-    registrations.length > 0;
+  const canAddMember = isOpenish && session.available_slots > 0;
 
-  const formatVnd = (n: number) =>
-    Math.round(n ?? 0).toLocaleString("vi-VN") + "đ";
-
-  function DesktopRowActions({ reg }: { reg: any }) {
-    const displayName = reg.users?.full_name ?? reg.guest_full_name ?? "?";
-    const busy = actionId === reg.id;
-
-    if (reg.participation_status === "pending_approval") {
-      return (
-        <>
-          <MorphButton
-            phase={getPhase(`${reg.id}:approve`)}
-            idleIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
-            label="Duyệt"
-            idleWidthClass="w-28"
-            colorClass={`${B3D.blueLight} ${B3D_MORPH}`}
-            successClassName={B3D.blueLight}
-            onClick={() => handleApproveRegistration(reg.id)}
-            disabled={busy}
-          />
-          <MorphButton
-            phase={getPhase(`${reg.id}:rejectReg`)}
-            idleIcon={<XCircle className="w-3.5 h-3.5" />}
-            label="Từ chối"
-            idleWidthClass="w-28"
-            colorClass={`${B3D.red} ${B3D_MORPH}`}
-            successClassName={B3D.red}
-            onClick={() => handleRejectRegistration(reg.id, displayName)}
-            disabled={busy}
-          />
-        </>
-      );
-    }
-
-    if (reg.participation_status === "awaiting_checkin") {
-      return (
-        <>
-          <MorphButton
-            phase={getPhase(`${reg.id}:present`)}
-            idleIcon={<UserCheck className="w-3.5 h-3.5" />}
-            label="Có mặt"
-            idleWidthClass="w-28"
-            colorClass={`${B3D.green} ${B3D_MORPH}`}
-            successClassName={B3D.green}
-            onClick={() => handleCheckinPresent(reg.id)}
-            disabled={busy}
-          />
-          <MorphButton
-            phase={getPhase(`${reg.id}:absent`)}
-            idleIcon={<UserX className="w-3.5 h-3.5" />}
-            label="Vắng mặt"
-            idleWidthClass="w-28"
-            colorClass={`${B3D.red} ${B3D_MORPH}`}
-            successClassName={B3D.red}
-            onClick={() => handleCheckinAbsent(reg.id, displayName)}
-            disabled={busy}
-          />
-        </>
-      );
-    }
-
-    if (reg.participation_status === "confirmed" && isAwaitingFinish(reg)) {
-      return (
-        <MorphButton
-          phase={getPhase(`${reg.id}:absent`)}
-          idleIcon={<UserX className="w-3.5 h-3.5" />}
-          label="Vắng mặt"
-          idleWidthClass="w-28"
-          colorClass={`${B3D.red} ${B3D_MORPH}`}
-          successClassName={B3D.red}
-          onClick={() => handleCheckinAbsent(reg.id, displayName)}
-          disabled={busy}
-        />
-      );
-    }
-
-    return (
-      <>
-        <MorphButton
-          phase={getPhase(`${reg.id}:confirm`)}
-          idleIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
-          label="Xác nhận"
-          idleWidthClass="w-28"
-          colorClass={`${B3D.green} ${B3D_MORPH}`}
-          successClassName={B3D.green}
-          onClick={() => handleConfirm(reg.id)}
-          disabled={busy}
-        />
-        <button
-          onClick={() => setShowReject(reg.id)}
-          disabled={busy}
-          className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-semibold ${B3D.red} ${B3D_BTN} disabled:opacity-50`}
-        >
-          <XCircle className="w-3.5 h-3.5" /> Từ chối
-        </button>
-      </>
-    );
-  }
+  const canFinishSession = isOpenish && registrations.length > 0;
 
   const getCanReviewPayment = (reg: any) =>
     Boolean(reg.payment_reference) ||
     (reg.payment_method === "cash" && reg.amount_override != null);
 
-  function RowActions({ reg }: { reg: any }) {
+  const startAt = new Date(session.scheduled_at);
+  const endAt = new Date(
+    startAt.getTime() + (session.duration_minutes ?? 0) * 60000,
+  );
+  const maxSlots = session.max_slots ?? 0;
+  const takenSlots = Math.max(0, maxSlots - (session.available_slots ?? 0));
+  const fillPct =
+    maxSlots > 0 ? Math.min(100, Math.round((takenSlots / maxSlots) * 100)) : 0;
+  const statusMeta = SESSION_STATUS[session.status] ?? {
+    label: session.status,
+    tone: "neutral" as Tone,
+  };
+
+  const hintText = [
+    pendingApproval.length > 0 &&
+    `${pendingApproval.length} đăng ký chờ duyệt`,
+    awaitingCheckin.length > 0 &&
+    `${awaitingCheckin.length} người chưa điểm danh`,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const ic = "h-4 w-4";
+  const acts: Act[] = [];
+
+  if (awaitingCheckin.length > 0) {
+    acts.push({
+      key: "checkinAll",
+      label: "Điểm danh tất cả",
+      short: "Điểm danh",
+      icon: <UserCheck className={ic} />,
+      tone: "green",
+      badge: awaitingCheckin.length,
+      phase: getPhase("checkinAll"),
+      onClick: handleCheckinAllPresent,
+      disabled: closingList,
+      primary: true,
+    });
+    // acts.push({
+    //   key: "closeList",
+    //   label: "Chốt danh sách",
+    //   short: "Chốt",
+    //   icon: <UserX className={ic} />,
+    //   tone: "red",
+    //   badge: awaitingCheckin.length,
+    //   phase: getPhase("closeList"),
+    //   onClick: handleCloseList,
+    //   disabled: checkingInAll,
+    // });
+  }
+
+  if (
+    canFinishSession &&
+    awaitingCheckin.length === 0 &&
+    pendingApproval.length === 0
+  ) {
+    acts.push({
+      key: "finish",
+      label: "Kết thúc buổi",
+      short: "Kết thúc",
+      icon: <Calculator className={ic} />,
+      tone: "green",
+      phase: finishing ? "loading" : "idle",
+      onClick: handleFinishSession,
+      primary: true,
+    });
+  }
+
+  if (canComplete) {
+    acts.push({
+      key: "complete",
+      label: "Hoàn thành",
+      icon: <CheckCircle2 className={ic} />,
+      tone: "green",
+      phase: getPhase("completeSession"),
+      onClick: handleCompleteSession,
+      disabled: completingSession,
+      primary: true,
+    });
+  }
+
+  if (session.status === "cancelled") {
+    acts.push({
+      key: "reopen",
+      label: "Mở lại buổi",
+      short: "Mở lại",
+      icon: <RotateCcw className={ic} />,
+      tone: "sky",
+      phase: reopening ? "loading" : "idle",
+      onClick: handleReopenSession,
+      primary: true,
+    });
+  }
+
+  if (session.status === "waiting_payment" || session.status === "completed") {
+    acts.push({
+      key: "rollback",
+      label: "Hoàn tác",
+      icon: <RotateCcw className={ic} />,
+      tone: "amber",
+      phase: rollingBack ? "loading" : "idle",
+      onClick: () => setShowRollbackModal(true),
+      primary: !canComplete,
+    });
+  }
+
+  if (isOpenish) {
+    acts.push({
+      key: "cancel",
+      label: "Hủy buổi",
+      icon: <XCircle className={ic} />,
+      tone: "red",
+      phase: cancelling ? "loading" : "idle",
+      onClick: () => setShowCancelModal(true),
+    });
+  }
+
+  if (canAddMember) {
+    acts.push({
+      key: "add",
+      label: "Thêm thành viên",
+      short: "Thêm",
+      icon: <UserPlus className={ic} />,
+      tone: "blue",
+      onClick: () => setShowAddModal(true),
+    });
+  }
+
+  const lead =
+    acts.find((a) => a.primary) ?? acts.find((a) => a.key === "add") ?? acts[0];
+  const others = acts.filter((a) => a !== lead);
+
+  const renderRowActions = (reg: any) => {
     const displayName = reg.users?.full_name ?? reg.guest_full_name ?? "?";
+    const busy = actionId === reg.id;
+    const cls = "flex-1 md:min-w-[112px] md:flex-none";
 
     if (reg.participation_status === "pending_approval") {
       return (
         <>
-          <button
+          <PhaseButton
+            size="sm"
+            tone="blue"
+            className={cls}
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            label="Duyệt"
+            phase={getPhase(`${reg.id}:approve`)}
             onClick={() => handleApproveRegistration(reg.id)}
-            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors"
-          >
-            <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-[11px] font-medium text-[var(--text)]">Duyệt</span>
-          </button>
-          <button
+            disabled={busy}
+          />
+          <PhaseButton
+            size="sm"
+            tone="red"
+            variant="solid"
+            className={cls}
+            icon={<XCircle className="h-4 w-4" />}
+            label="Từ chối"
+            phase={getPhase(`${reg.id}:rejectReg`)}
             onClick={() => handleRejectRegistration(reg.id, displayName)}
-            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors rounded-r-2xl"
-          >
-            <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-[11px] font-medium text-[var(--text)]">
-              Từ chối
-            </span>
-          </button>
+            disabled={busy}
+          />
         </>
       );
     }
@@ -1889,80 +1312,85 @@ export default function SessionDetailPage() {
     if (reg.participation_status === "awaiting_checkin") {
       return (
         <>
-          <button
+          <PhaseButton
+            size="sm"
+            tone="green"
+            className={cls}
+            icon={<UserCheck className="h-4 w-4" />}
+            label="Có mặt"
+            phase={getPhase(`${reg.id}:present`)}
             onClick={() => handleCheckinPresent(reg.id)}
-            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors"
-          >
-            <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-[11px] font-medium text-[var(--text)]">
-              Có mặt
-            </span>
-          </button>
-          <button
+            disabled={busy}
+          />
+          <PhaseButton
+            size="sm"
+            tone="red"
+            variant="solid"
+            className={cls}
+            icon={<UserX className="h-4 w-4" />}
+            label="Vắng mặt"
+            phase={getPhase(`${reg.id}:absent`)}
             onClick={() => handleCheckinAbsent(reg.id, displayName)}
-            className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors rounded-r-2xl"
-          >
-            <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
-              <UserX className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-[11px] font-medium text-[var(--text)]">
-              Vắng mặt
-            </span>
-          </button>
+            disabled={busy}
+          />
         </>
       );
     }
 
     if (reg.participation_status === "confirmed" && isAwaitingFinish(reg)) {
       return (
-        <button
+        <PhaseButton
+          size="sm"
+          tone="red"
+          variant="solid"
+          className={cls}
+          icon={<UserX className="h-4 w-4" />}
+          label="Vắng mặt"
+          phase={getPhase(`${reg.id}:absent`)}
           onClick={() => handleCheckinAbsent(reg.id, displayName)}
-          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors rounded-r-2xl"
-        >
-          <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
-            <UserX className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-[11px] font-medium text-[var(--text)]">
-            Vắng mặt
-          </span>
-        </button>
+          disabled={busy}
+        />
       );
     }
 
     return (
       <>
-        <button
+        <PhaseButton
+          size="sm"
+          tone="green"
+          className={cls}
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          label="Xác nhận"
+          phase={getPhase(`${reg.id}:confirm`)}
           onClick={() => handleConfirm(reg.id)}
-          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors"
-        >
-          <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-[11px] font-medium text-[var(--text)]">
-            Xác nhận
-          </span>
-        </button>
-        <button
+          disabled={busy}
+        />
+        <PhaseButton
+          size="sm"
+          tone="red"
+          variant="solid"
+          className={cls}
+          icon={<XCircle className="h-4 w-4" />}
+          label="Từ chối"
           onClick={() => setShowReject(reg.id)}
-          className="flex-1 h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--surface-muted)] active:bg-[var(--border-strong)] transition-colors rounded-r-2xl"
-        >
-          <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
-            <XCircle className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-[11px] font-medium text-[var(--text)]">Từ chối</span>
-        </button>
+          disabled={busy}
+        />
       </>
     );
-  }
+  };
 
-  const renderRowContent = (reg: any, isNested = false, hostName?: string, groupedGuestsForReceipt?: any[],) => {
+  const renderRowContent = (
+    reg: any,
+    isNested = false,
+    hostName?: string,
+    groupedGuestsForReceipt?: any[],
+  ) => {
     const isPendingReview =
       reg.payment_status === "pending" &&
       (Boolean(reg.payment_reference) ||
         (reg.payment_method === "cash" && reg.amount_override != null) ||
-        (reg.payment_method === "grouped_with_host" && reg.amount_override != null));
+        (reg.payment_method === "grouped_with_host" &&
+          reg.amount_override != null));
 
     const isAwaitingFinishRow =
       reg.payment_status === "pending" &&
@@ -1981,10 +1409,15 @@ export default function SessionDetailPage() {
               ? STATUS_CONFIG.pendingReview
               : (STATUS_CONFIG[reg.payment_status] ?? STATUS_CONFIG.pending);
     const StatusIcon = cfg.icon;
-    const busy = actionId === reg.id;
+    const attention = cfg.tone === "warning" || cfg.tone === "primary";
+
     const user = reg.users;
     const displayName = user?.full_name ?? reg.guest_full_name ?? "?";
     const displayGender = user?.gender ?? reg.guest_gender;
+    const level = reg.is_guest
+      ? reg.guest_skill_level &&
+      (SKILL_LABEL[reg.guest_skill_level] ?? reg.guest_skill_level)
+      : user?.level && (LEVEL_LABELS[user.level] ?? user.level);
 
     const totalAmount = reg.amount_override;
     const hasBreakdown =
@@ -1993,1063 +1426,726 @@ export default function SessionDetailPage() {
       reg.other_fee_amount != null &&
       reg.other_fee_amount > 0;
 
-    const isPlainPending =
-      reg.participation_status !== "pending_approval" &&
-      reg.participation_status !== "awaiting_checkin" &&
-      !isAwaitingFinishRow &&
-      !isPendingReview &&
-      reg.payment_status === "pending";
-
-    const isConfirmedRow = reg.payment_status === "confirmed";
-
-    const pulseClass = !isDesktop
-      ? isPendingReview
-        ? "pending-review-row-pulse"
-        : isPlainPending
-          ? "pending-row-pulse"
-          : isConfirmedRow
-            ? "confirmed-row-tint"
-            : ""
-      : "";
+    const canShare =
+      reg.is_guest && reg.payment_method === "cash" && totalAmount != null;
+    const sharing = sharingReceiptId === reg.id;
 
     return (
       <div
-        className={`relative ${isNested ? "pl-4 pr-3 py-3" : "px-4 py-3.5"} ${pulseClass}`}
+        className={`relative flex gap-3 ${isNested ? "py-3 pl-5 pr-4" : "p-4"}`}
       >
-        <div className="flex items-start gap-3">
-          {isNested && (
-            <CornerDownRight className="w-3.5 h-3.5 text-[var(--text-faint)] mt-1 flex-shrink-0" />
-          )}
-          <div
-            className={`rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 overflow-hidden ${isNested ? "w-7 h-7" : "w-9 h-9"}`}
-          >
-            {user?.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={displayName}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                }}
-              />
-            ) : (
-              <span
-                className={`text-[var(--primary)] font-semibold ${isNested ? "text-xs" : "text-sm"}`}
-              >
-                {displayName?.[0]?.toUpperCase() ?? "?"}
-              </span>
-            )}
-          </div>
+        {/* <span
+          aria-hidden
+          className={`absolute inset-y-0 left-0 w-1 ${RAIL[cfg.tone]}`}
+        /> */}
+        {isNested && (
+          <CornerDownRight className="mt-2 h-3.5 w-3.5 shrink-0 text-[var(--text-faint)]" />
+        )}
+        <Avatar
+          url={user?.avatar_url}
+          name={displayName}
+          size={isNested ? 32 : 44}
+        />
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span
-                className={`font-semibold text-[var(--text)] ${isNested ? "text-sm" : "text-[15px]"}`}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p
+                className={`truncate font-semibold text-[var(--text)] ${isNested ? "text-sm" : "text-[15px]"}`}
               >
                 {displayName}
-              </span>
-              {user?.member_type && (
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${user.member_type === "co_dinh"
-                    ? "bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)]"
-                    : "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]"
+              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-1">
+                {user?.member_type && (
+                  <Chip
+                    tone={user.member_type === "co_dinh" ? "purple" : "neutral"}
+                  >
+                    {user.member_type === "co_dinh" ? "Thành viên" : "Vãng lai"}
+                  </Chip>
+                )}
+                {reg.is_guest && <Chip>Khách</Chip>}
+                {level && <Chip tone="purple">{level}</Chip>}
+                {displayGender && (
+                  <Chip>{displayGender === "male" ? "Nam" : "Nữ"}</Chip>
+                )}
+                {reg.is_guest && reg.guest_email && (
+                  <Chip
+                    tone="warning"
+                    className="max-w-[200px]"
+                    icon={<Mail className="h-3 w-3 shrink-0" />}
+                  >
+                    <span className="truncate">{reg.guest_email}</span>
+                  </Chip>
+                )}
+              </div>
+            </div>
+
+            <div className="shrink-0 text-right">
+              {canShare && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShareGuestReceipt(
+                      reg,
+                      hostName,
+                      groupedGuestsForReceipt,
+                    );
+                  }}
+                  disabled={sharing}
+                  title="Chia sẻ biên lai"
+                  className="mt-1.5 inline-flex h-7 items-center gap-1 rounded-full bg-[var(--primary-soft)] px-2.5 text-[11px] font-semibold text-[var(--primary)] transition-colors hover:brightness-95 disabled:opacity-50"
+                >
+                  {sharing ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Share2 className="h-3 w-3" />
+                  )}
+                  Biên lai
+                </button>
+              )}
+              {!hasBreakdown && (
+                <p
+                  className={`tabular-nums ${isNested ? "text-sm" : "text-base"} ${totalAmount != null
+                    ? "font-bold text-[var(--text)]"
+                    : "font-normal italic text-[var(--text-faint)]"
                     }`}
                 >
-                  {user.member_type === "co_dinh" ? "Thành viên" : "Vãng lai"}
-                </span>
+                  {totalAmount != null ? formatVnd(totalAmount) : "—"}
+                </p>
               )}
-              {reg.is_guest && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] font-medium">
-                  Khách
-                </span>
-              )}
-              {reg.is_guest
-                ? reg.guest_skill_level && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)] font-medium">
-                    {SKILL_LABEL[reg.guest_skill_level] ??
-                      reg.guest_skill_level}
-                  </span>
-                )
-                : user?.level && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)] font-medium">
-                    {LEVEL_LABELS[user.level] ?? user.level}
-                  </span>
-                )}
+
             </div>
+          </div>
 
-            <div className="flex flex-wrap items-center gap-1.5 mt-1">
-              {displayGender && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] font-medium">
-                  {displayGender === "male" ? "Nam" : "Nữ"}
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            <Chip
+              tone={cfg.tone}
+              className="relative"
+              icon={<StatusIcon className="h-3 w-3" />}
+            >
+              {cfg.label}
+              {attention && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-60 motion-reduce:animate-none" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-current" />
                 </span>
               )}
-              {reg.is_guest && reg.guest_email && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded-full border bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)] font-medium truncate max-w-[180px]">
-                  {reg.guest_email}
-                </span>
-              )}
-            </div>
+            </Chip>
 
-            <div className="flex items-center gap-1.5 flex-wrap mt-2">
-              <span
-                className={`text-[11px] px-2 py-0.5 rounded-full border flex items-center gap-1 font-medium whitespace-nowrap ${cfg.cls}`}
-              >
-                <StatusIcon className="w-3 h-3" />
-                {cfg.label}
-              </span>
-
-              {reg.payment_method === "cash" && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)] font-medium">
-                  💵 Tiền mặt
-                </span>
-              )}
-
-              {reg.payment_method === "bank_transfer" && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] font-medium">
-                  🏦 Chuyển khoản
-                </span>
-              )}
-              {reg.payment_method === "wallet_pending_confirm" &&
-                reg.host_registration_id && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)] flex items-center gap-1 font-medium">
-                    <Wallet className="w-3 h-3" />
-                    Chờ {hostName ?? "host"} quyết định
-                  </span>
-                )}
-
-              {reg.payment_method === "wallet_grouped" &&
-                reg.host_registration_id && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center gap-1 font-medium">
-                    <Wallet className="w-3 h-3" />
-                    Ví BNB của {hostName ?? "host"}
-                  </span>
-                )}
-
-              {reg.payment_method === "wallet" && reg.host_registration_id && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center gap-1 font-medium">
-                  <Wallet className="w-3 h-3" />
-                  Ví BNB của {displayName}
-                </span>
-              )}
-
-              {((reg.payment_method === "wallet" && !reg.host_registration_id) ||
-                (reg.payment_method === "wallet_grouped" && !reg.host_registration_id) ||
-                (reg.payment_method === "wallet_pending_confirm" && !reg.host_registration_id)) && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full border bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] flex items-center gap-1 font-medium">
-                    <Wallet className="w-3 h-3" />
-                    Ví BNB
-                    {reg.payment_method === "wallet_pending_confirm" ? " (chờ xác nhận)" : ""}
-                  </span>
-                )}
-
-              {reg.points_awarded && reg.payment_status === "confirmed" && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--purple-soft)] text-[var(--purple)] border border-[color-mix(in_srgb,var(--purple)_30%,transparent)] font-medium">
-                  🏸 Đã cộng điểm
-                </span>
-              )}
-
-              {!hasBreakdown && (
-                <span
-                  className={`ml-auto text-xs font-bold whitespace-nowrap ${totalAmount != null ? "text-[var(--text)]" : "text-[var(--text-faint)] italic font-normal"}`}
-                >
-                  {totalAmount != null ? formatVnd(totalAmount) : "-"}
-                </span>
-              )}
-
-              {reg.is_guest &&
-                reg.payment_method === "cash" &&
-                totalAmount != null && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleShareGuestReceipt(reg, hostName, groupedGuestsForReceipt);
-                    }}
-                    disabled={sharingReceiptId === reg.id}
-                    title="Chia sẻ biên lai"
-                    className="hidden md:flex flex-shrink-0 items-center gap-1 px-2.5 h-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50"
-                  >
-                    {sharingReceiptId === reg.id ? (
-                      <Loader2 className="w-3 h-3 text-white animate-spin" />
-                    ) : (
-                      <Share2 className="w-3 h-3 text-white" />
-                    )}
-                    <span className="text-[10px] font-semibold text-white whitespace-nowrap">
-                      Chia sẻ
-                    </span>
-                  </button>
-                )}
-            </div>
-
-            {hasBreakdown && (
-              <div className="mt-2 space-y-1.5 text-xs">
-                <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] px-2.5 py-1.5">
-                  <span className="text-[var(--text-muted)]">Tiền sân + cầu</span>
-                  <span className="font-medium text-[var(--text)]">
-                    {formatVnd(reg.base_amount)}
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <span className="text-[var(--text-muted)]">Khoản khác</span>
-                  {reg.other_fee_note ? (
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] px-2.5 py-1.5">
-                      <ul className="flex-1 min-w-0 space-y-0.5 list-none">
-                        {reg.other_fee_note
-                          .split("\n")
-                          .map((l: string) => l.trim())
-                          .filter(Boolean)
-                          .map((line: string, i: number) => (
-                            <li key={i} className="text-[11px] text-[var(--text-faint)] italic">
-                              — {line}
-                            </li>
-                          ))}
-                      </ul>
-                      <span className="font-medium text-[var(--warning)] flex-shrink-0">
-                        {formatVnd(reg.other_fee_amount)}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex justify-end">
-                      <span className="font-medium text-[var(--warning)]">
-                        {formatVnd(reg.other_fee_amount)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg bg-[var(--surface-muted)] px-2.5 py-2">
-                  <span className="text-sm font-semibold text-[var(--text)]">
-                    Tổng của {displayName}
-                  </span>
-                  <span className="text-sm font-bold text-[var(--text)]">
-                    {formatVnd(totalAmount)}
-                  </span>
-                </div>
-              </div>
+            {reg.payment_method === "cash" && (
+              <Chip tone="success">💵 Tiền mặt</Chip>
             )}
-
-            {reg.notes && (
-              <p className="text-xs text-[var(--text-faint)] mt-1 italic">{reg.notes}</p>
+            {reg.payment_method === "bank_transfer" && (
+              <Chip tone="primary">🏦 Chuyển khoản</Chip>
+            )}
+            {reg.payment_method === "wallet_pending_confirm" &&
+              reg.host_registration_id && (
+                <Chip tone="warning" icon={<Wallet className="h-3 w-3" />}>
+                  Chờ {hostName ?? "host"} quyết định
+                </Chip>
+              )}
+            {reg.payment_method === "wallet_grouped" &&
+              reg.host_registration_id && (
+                <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
+                  Ví BNB của {hostName ?? "host"}
+                </Chip>
+              )}
+            {reg.payment_method === "wallet" && reg.host_registration_id && (
+              <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
+                Ví BNB của {displayName}
+              </Chip>
+            )}
+            {((reg.payment_method === "wallet" && !reg.host_registration_id) ||
+              (reg.payment_method === "wallet_grouped" &&
+                !reg.host_registration_id) ||
+              (reg.payment_method === "wallet_pending_confirm" &&
+                !reg.host_registration_id)) && (
+                <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
+                  Ví BNB
+                  {reg.payment_method === "wallet_pending_confirm"
+                    ? " (chờ xác nhận)"
+                    : ""}
+                </Chip>
+              )}
+            {reg.points_awarded && reg.payment_status === "confirmed" && (
+              <Chip tone="purple">🏸 Đã cộng điểm</Chip>
             )}
           </div>
-        </div>
-        {reg.is_guest &&
-          reg.payment_method === "cash" &&
-          totalAmount != null && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleShareGuestReceipt(reg, hostName, groupedGuestsForReceipt);
-              }}
-              disabled={sharingReceiptId === reg.id}
-              title="Chia sẻ biên lai"
-              className={`flex md:hidden absolute ${isNested ? "top-2 right-2" : "top-3 right-3"} items-center gap-1 px-2.5 h-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 z-10`}
-            >
-              {sharingReceiptId === reg.id ? (
-                <Loader2 className="w-3 h-3 text-white animate-spin" />
-              ) : (
-                <Share2 className="w-3 h-3 text-white" />
-              )}
-              <span className="text-[10px] font-semibold text-white whitespace-nowrap">
-                Chia sẻ
-              </span>
-            </button>
+
+          {hasBreakdown && (
+            <dl className="mt-3 space-y-1.5 rounded-xl bg-[var(--surface-muted)] px-3 py-2.5 text-xs">
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-[var(--text-muted)]">Tiền sân + cầu</dt>
+                <dd className="font-medium tabular-nums text-[var(--text)]">
+                  {formatVnd(reg.base_amount)}
+                </dd>
+              </div>
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-[var(--text-muted)]">Khoản khác</dt>
+                  <dd className="font-medium tabular-nums text-[var(--warning)]">
+                    {formatVnd(reg.other_fee_amount)}
+                  </dd>
+                </div>
+                {reg.other_fee_note &&
+                  reg.other_fee_note
+                    .split("\n")
+                    .map((l: string) => l.trim())
+                    .filter(Boolean)
+                    .map((line: string, i: number) => (
+                      <p
+                        key={i}
+                        className="mt-0.5 text-[11px] italic text-[var(--text-faint)]"
+                      >
+                        {line}
+                      </p>
+                    ))}
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-dashed border-[var(--border-strong)] pt-2">
+                <dt className="text-sm font-semibold text-[var(--text)]">Tổng</dt>
+                <dd className="text-sm font-bold tabular-nums text-[var(--text)]">
+                  {formatVnd(totalAmount)}
+                </dd>
+              </div>
+            </dl>
           )}
+
+          {reg.notes && (
+            <p className="mt-2 text-xs italic text-[var(--text-faint)]">
+              {reg.notes}
+            </p>
+          )}
+        </div>
       </div>
     );
   };
 
-  const renderRow = (reg: any, isNested = false, hostName?: string) => {
-    const canReviewPayment = getCanReviewPayment(reg);
+  const renderRejectBox = (regId: string, isNested = false) =>
+    showReject === regId && (
+      <div
+        className={`flex flex-col gap-2 border-t border-[var(--border)] bg-[var(--surface-muted)] py-3 sm:flex-row sm:items-center ${isNested ? "pl-5 pr-4" : "px-4"
+          }`}
+      >
+        <input
+          type="text"
+          autoFocus
+          value={rejectNotes[regId] ?? ""}
+          onChange={(e) =>
+            setRejectNotes((n) => ({ ...n, [regId]: e.target.value }))
+          }
+          className="input-field flex-1 text-sm"
+          placeholder="Lý do từ chối (tuỳ chọn)"
+        />
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowReject(null)}
+            className="btn-secondary text-sm"
+          >
+            Hủy
+          </button>
+          <PhaseButton
+            size="md"
+            tone="red"
+            label="Xác nhận từ chối"
+            phase={getPhase(`${regId}:rejectConfirm`)}
+            onClick={() => handleReject(regId)}
+            disabled={actionId === regId}
+          />
+        </div>
+      </div>
+    );
+
+  const renderRow = (
+    reg: any,
+    isNested = false,
+    hostName?: string,
+    groupedGuestsForReceipt?: any[],
+  ) => {
     const showActions =
       reg.participation_status === "pending_approval" ||
       reg.participation_status === "awaiting_checkin" ||
       isAwaitingFinish(reg) ||
-      (reg.payment_status === "pending" && canReviewPayment);
+      (reg.payment_status === "pending" && getCanReviewPayment(reg));
 
     return (
       <div key={reg.id}>
-        {isDesktop ? (
-          <div>
-            {renderRowContent(reg, isNested, hostName)}
-            {showActions && (
-              <div
-                className={`flex justify-end gap-2 border-t border-[var(--border)] py-2.5 ${isNested ? "pl-9 pr-3" : "px-4"
-                  }`}
-              >
-                <DesktopRowActions reg={reg} />
-              </div>
-            )}
-          </div>
-        ) : (
-          <SwipeableRow
-            disabled={!showActions}
-            actions={<RowActions reg={reg} />}
+        {renderRowContent(reg, isNested, hostName, groupedGuestsForReceipt)}
+        {showActions && (
+          <div
+            className={`flex gap-2 border-t border-[var(--border)] bg-[var(--surface-muted)] py-2.5 md:justify-end ${isNested ? "pl-5 pr-4" : "px-4"
+              }`}
           >
-            {renderRowContent(reg, isNested, hostName)}
-          </SwipeableRow>
-        )}
-
-        {showReject === reg.id && (
-          <div className={`${isNested ? "pl-9 pr-4" : "px-4"} pb-3 flex gap-2`}>
-            <input
-              type="text"
-              value={rejectNotes[reg.id] ?? ""}
-              onChange={(e) =>
-                setRejectNotes((n) => ({ ...n, [reg.id]: e.target.value }))
-              }
-              className="input-field text-sm flex-1"
-              placeholder="Lý do từ chối (tuỳ chọn)"
-            />
-            <MorphButton
-              phase={getPhase(`${reg.id}:rejectConfirm`)}
-              idleIcon={null}
-              label="Xác nhận từ chối"
-              idleWidthClass="w-40"
-              colorClass="bg-red-500 hover:bg-red-600 text-white"
-              onClick={() => handleReject(reg.id)}
-              disabled={actionId === reg.id}
-            />
+            {renderRowActions(reg)}
           </div>
         )}
+        {renderRejectBox(reg.id, isNested)}
       </div>
     );
   };
 
-  return (
-    <>
-      <style>{`
-        @keyframes morphTickPop {
-            0%   { transform: scale(0); opacity: 0; }
-            60%  { transform: scale(1.25); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .morph-tick {
-            animation: morphTickPop 0.3s ease-out;
-        }
+  const renderHostCard = (host: any) => {
+    const guests = guestsOf(host.id);
+    const GROUPED_METHODS = [
+      "grouped_with_host",
+      "wallet_grouped",
+      "wallet_pending_confirm",
+    ];
 
-        @keyframes badgePop {
-            0%   { transform: scale(0.7) translateY(-4px); opacity: 0; }
-            60%  { transform: scale(1.05) translateY(0); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .badge-pop {
-            animation: badgePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        @keyframes pendingRowPulse {
-            0%, 100% { background-color: rgba(253, 224, 71, 0.05); }
-            50%      { background-color: rgba(253, 224, 71, 0.4); }
-        }
-        .pending-row-pulse {
-            animation: pendingRowPulse 1.6s ease-in-out infinite;
-        }
-        @keyframes pendingReviewRowPulse {
-            0%, 100% { background-color: rgba(59, 130, 246, 0.05); }
-            50%      { background-color: rgba(59, 130, 246, 0.35); }
-        }
-        .pending-review-row-pulse {
-            animation: pendingReviewRowPulse 1.6s ease-in-out infinite;
-        }
-        .confirmed-row-tint {
-            background-color: rgba(34, 197, 94, 0.12);
-        }
-      `}</style>
-      <div className="max-w-3xl mx-auto space-y-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
+    const groupedGuestsAll = guests.filter((g) =>
+      GROUPED_METHODS.includes(g.payment_method),
+    );
+    const soloGuestsAll = guests.filter(
+      (g) => !GROUPED_METHODS.includes(g.payment_method),
+    );
+
+    const groupedTotal =
+      (host.amount_override ?? 0) +
+      groupedGuestsAll.reduce((s, g) => s + (g.amount_override ?? 0), 0);
+    const soloTotal = soloGuestsAll.reduce(
+      (s, g) => s + (g.amount_override ?? 0),
+      0,
+    );
+
+    const hasGrouped = groupedGuestsAll.length > 0;
+    const hasSolo = soloGuestsAll.length > 0;
+    const billIssued =
+      host.amount_override != null &&
+      (session.status === "waiting_payment" ||
+        session.status === "completed");
+    const groupedGuestsForHost = guests.filter(
+      (g) => g.payment_method === "grouped_with_host",
+    );
+    const hostDisplayName =
+      host.users?.full_name ?? host.guest_full_name ?? "?";
+    const isExpanded = expandedHosts.has(host.id);
+
+    return (
+      <article key={host.id} className={`${CARD} overflow-hidden`}>
+        {renderRow(host, false, hostDisplayName, groupedGuestsForHost)}
+
+        {guests.length > 0 && (
+          <>
             <button
-              onClick={() => router.push("/admin/sessions")}
-              className="p-2 hover:bg-[var(--surface-hover)] rounded-lg transition-colors flex-shrink-0"
+              type="button"
+              onClick={() => toggleHostGuests(host.id)}
+              aria-expanded={isExpanded}
+              className="flex w-full items-center justify-between gap-2 border-t border-[var(--border)] px-4 py-3 text-left transition-colors hover:bg-[var(--surface-hover)]"
             >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-
-            <h1 className="text-lg sm:text-xl font-bold text-[var(--text)] truncate flex-1 min-w-0">
-              {session.title}
-            </h1>
-          </div>
-
-          <div className="flex items-center justify-end gap-2 flex-wrap">
-            <button
-              onClick={handleManualRefresh}
-              disabled={manualRefreshing}
-              title="Tải lại dữ liệu"
-              className="p-2 hover:bg-[var(--surface-hover)] rounded-lg transition-colors flex-shrink-0 disabled:opacity-50"
-            >
-              <RotateCcw
-                className={`w-5 h-5 text-[var(--text-muted)] ${manualRefreshing ? "animate-spin" : ""}`}
-              />
-            </button>
-
-            {canAddMember &&
-              (awaitingCheckin.length > 0 || pendingApproval.length > 0) && (
-                <span className="flex-shrink-0 whitespace-nowrap text-xs text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border)] px-2.5 py-1.5 rounded-lg">
-                  {pendingApproval.length > 0 &&
-                    `Còn ${pendingApproval.length} đăng ký chờ duyệt`}
-                  {pendingApproval.length > 0 &&
-                    awaitingCheckin.length > 0 &&
-                    ", "}
-                  {awaitingCheckin.length > 0 &&
-                    `${awaitingCheckin.length} người chưa điểm danh`}
+              <span className="flex items-center gap-2.5">
+                <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--primary-soft)] px-1.5 text-xs font-bold text-[var(--primary)]">
+                  {guests.length}
                 </span>
-              )}
-          </div>
-        </div>
-        {isDesktop ? (
-          <div className="flex items-center justify-end gap-3 overflow-x-auto pt-1 pb-2 scrollbar-hide">
-            {awaitingCheckin.length > 0 && (
-              <MorphButton
-                phase={getPhase("checkinAll")}
-                idleIcon={<UserCheck className="w-4 h-4" />}
-                label={`All (${awaitingCheckin.length})`}
-                idleWidthClass="w-22"
-                colorClass={`${B3D.green} ${B3D_MORPH}`}
-                successClassName={B3D.green}
-                onClick={handleCheckinAllPresent}
-                disabled={closingList}
+                <span className="text-sm font-medium text-[var(--text)]">
+                  {isExpanded ? "Ẩn" : "Hiện"} người đi cùng
+                </span>
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-[var(--text-muted)] transition-transform duration-300 ${isExpanded ? "rotate-180" : ""
+                  }`}
               />
-            )}
+            </button>
 
-            {awaitingCheckin.length > 0 && (
-              <MorphButton
-                phase={getPhase("closeList")}
-                idleIcon={<UserX className="w-4 h-4" />}
-                label={`Chốt (${awaitingCheckin.length} vắng)`}
-                idleWidthClass="w-36"
-                colorClass={`${B3D.red} ${B3D_MORPH}`}
-                successClassName={B3D.red}
-                onClick={handleCloseList}
-                disabled={checkingInAll}
-              />
-            )}
-
-            {canFinishSession &&
-              awaitingCheckin.length === 0 &&
-              pendingApproval.length === 0 &&
-              registrations.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (finishing) return;
-                    setFinishing(true);
-                    startNavLoading();
-                    setTimeout(() => {
-                      const doNavigate = () =>
-                        router.push(`/admin/sessions/${id}/finish`);
-                      if (
-                        typeof document !== "undefined" &&
-                        (document as any).startViewTransition
-                      ) {
-                        (document as any).startViewTransition(doNavigate);
-                      } else {
-                        doNavigate();
-                      }
-                    }, 750);
-                  }}
-                  disabled={finishing}
-                  className={`flex-shrink-0 flex items-center justify-center text-sm font-semibold text-white bg-green-500 hover:bg-green-600 shadow-sm active:scale-95 overflow-hidden ${finishing
-                    ? "w-9 h-9 rounded-full gap-0 p-0"
-                    : "w-auto h-9 gap-1.5 px-3 rounded-lg"
-                    }`}
-                  style={{
-                    transitionProperty: "width, height, border-radius, padding, gap",
-                    transitionDuration: "550ms",
-                    transitionTimingFunction: "cubic-bezier(0.65, 0, 0.35, 1)",
-                  }}
+            <div
+              className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+              style={{ gridTemplateRows: isExpanded ? "1fr" : "0fr" }}
+            >
+              <div className="overflow-hidden">
+                <div
+                  className="divide-y divide-[var(--border)] border-t border-[var(--border)] bg-[var(--surface-muted)] transition-opacity duration-300"
+                  style={{ opacity: isExpanded ? 1 : 0 }}
                 >
-                  {finishing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Calculator className="w-4 h-4" /> Kết thúc
-                    </>
-                  )}
-                </button>
-              )}
-
-            {(session.status === "open" || session.status === "full") && (
-              <button
-                onClick={() => setShowCancelModal(true)}
-                disabled={cancelling}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold flex-shrink-0 disabled:opacity-50 ${B3D.red} ${B3D_BTN}`}
-              >
-                {cancelling ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <XCircle className="w-4 h-4" />
-                )}
-                Hủy buổi
-              </button>
-            )}
-
-            {session.status === "cancelled" && (
-              <button
-                onClick={handleReopenSession}
-                disabled={reopening}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold flex-shrink-0 disabled:opacity-50 ${B3D.sky} ${B3D_BTN}`}
-              >
-                {reopening ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <RotateCcw className="w-4 h-4" />
-                )}
-                Mở lại
-              </button>
-            )}
-
-            {(session.status === "waiting_payment" ||
-              session.status === "completed") && (
-                <button
-                  onClick={() => setShowRollbackModal(true)}
-                  disabled={rollingBack}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold flex-shrink-0 disabled:opacity-50 ${B3D.amber} ${B3D_BTN}`}
-                >
-                  {rollingBack ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <RotateCcw className="w-4 h-4" />
-                  )}
-                  Hoàn tác
-                </button>
-              )}
-
-            {canComplete && (
-              <MorphButton
-                phase={getPhase("completeSession")}
-                idleIcon={<CheckCircle2 className="w-4 h-4" />}
-                label="Hoàn thành"
-                idleWidthClass="w-32"
-                colorClass={`${B3D.emerald} ${B3D_MORPH}`}
-                successClassName={B3D.emerald}
-                onClick={handleCompleteSession}
-                disabled={completingSession}
-              />
-            )}
-
-            {canAddMember && (
-              <button
-                onClick={() => setShowAddModal(true)}
-                className={`flex-shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold ${B3D.blue} ${B3D_BTN}`}
-              >
-                <UserPlus className="w-4 h-4" />
-                Thêm thành viên
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-4 px-6 pb-2">
-            {awaitingCheckin.length > 0 && (
-              <CompactActionButton
-                icon={<UserCheck className="w-4 h-4" />}
-                label="Điểm danh tất cả"
-                badge={awaitingCheckin.length}
-                colorClass={B3D.emerald}
-                onClick={handleCheckinAllPresent}
-                disabled={closingList || getPhase("checkinAll") === "loading"}
-                loading={getPhase("checkinAll") === "loading"}
-              />
-            )}
-
-            {awaitingCheckin.length > 0 && (
-              <CompactActionButton
-                icon={<UserX className="w-4 h-4" />}
-                label="Chốt danh sách"
-                badge={awaitingCheckin.length}
-                colorClass={B3D.rose}
-                onClick={handleCloseList}
-                disabled={checkingInAll || getPhase("closeList") === "loading"}
-                loading={getPhase("closeList") === "loading"}
-              />
-            )}
-
-            {canFinishSession &&
-              awaitingCheckin.length === 0 &&
-              pendingApproval.length === 0 &&
-              registrations.length > 0 && (
-                <CompactActionButton
-                  icon={<Calculator className="w-4 h-4" />}
-                  label="Kết thúc"
-                  colorClass={B3D.teal}
-                  onClick={() => {
-                    if (finishing) return;
-                    setFinishing(true);
-                    startNavLoading();
-                    setTimeout(() => {
-                      router.push(`/admin/sessions/${id}/finish`);
-                    }, 300);
-                  }}
-                  disabled={finishing}
-                  loading={finishing}
-                />
-              )}
-
-            {(session.status === "open" || session.status === "full") && (
-              <CompactActionButton
-                icon={<XCircle className="w-4 h-4" />}
-                label="Huỷ buổi"
-                colorClass={B3D.orange}
-                onClick={() => setShowCancelModal(true)}
-                disabled={cancelling}
-                loading={cancelling}
-              />
-            )}
-
-            {session.status === "cancelled" && (
-              <CompactActionButton
-                icon={<RotateCcw className="w-4 h-4" />}
-                label="Mở lại"
-                colorClass={B3D.sky}
-                onClick={handleReopenSession}
-                disabled={reopening}
-                loading={reopening}
-              />
-            )}
-
-            {(session.status === "waiting_payment" ||
-              session.status === "completed") && (
-                <CompactActionButton
-                  icon={<RotateCcw className="w-4 h-4" />}
-                  label="Hoàn tác"
-                  colorClass={B3D.amber}
-                  onClick={() => setShowRollbackModal(true)}
-                  disabled={rollingBack}
-                  loading={rollingBack}
-                />
-              )}
-
-            {canComplete && (
-              <CompactActionButton
-                icon={<CheckCircle2 className="w-4 h-4" />}
-                label="Hoàn thành"
-                colorClass={B3D.green}
-                onClick={handleCompleteSession}
-                disabled={completingSession}
-                loading={completingSession}
-              />
-            )}
-
-            {canAddMember && (
-              <CompactActionButton
-                icon={<UserPlus className="w-4 h-4" />}
-                label="Thêm thành viên"
-                colorClass={B3D.blue}
-                onClick={() => setShowAddModal(true)}
-              />
-            )}
-          </div>
+                  {guests.map((g) => renderRow(g, true, hostDisplayName))}
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
-        <div className="card grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-4 p-5 text-sm shadow-md">
-          <div className="flex flex-col gap-1">
-            <span className="text-[var(--text-faint)] text-xs">Thời gian</span>
-            <div className="flex items-center gap-1 font-medium text-[var(--text)]">
-              <CalendarDays className="w-3.5 h-3.5 text-[var(--primary)]" />
-              {format(new Date(session.scheduled_at), "dd/MM HH:mm", {
-                locale: vi,
-              })}
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[var(--text-faint)] text-xs">Thời lượng</span>
-            <div className="flex items-center gap-1 font-medium text-[var(--text)]">
-              <Clock className="w-3.5 h-3.5 text-[var(--text-faint)]" />
-              {session.duration_minutes} phút
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[var(--text-faint)] text-xs">Địa điểm</span>
-            <div className="flex items-center gap-1 font-medium text-[var(--text)] truncate">
-              <MapPin className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0" />
-              <span className="truncate">{session.location || "—"}</span>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[var(--text-faint)] text-xs">Chỗ trống</span>
-            <div className="flex items-center gap-1 font-medium">
-              <Users className="w-3.5 h-3.5 text-[var(--text-faint)]" />
-              <span
-                className={
-                  session.available_slots <= 0
-                    ? "text-[var(--danger)]"
-                    : "text-[var(--text)]"
-                }
-              >
-                {session.available_slots}/{session.max_slots}
+        {guests.length > 0 && billIssued && (
+          <div className="divide-y divide-[var(--border)] border-t border-[var(--border)] bg-[var(--surface-muted)]">
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span className="text-xs font-semibold text-[var(--text-muted)]">
+                {hasGrouped ? `Gộp ví ${hostDisplayName}` : hostDisplayName}
+                {hasGrouped && (
+                  <span className="font-normal text-[var(--text-faint)]">
+                    {" "}
+                    ({1 + groupedGuestsAll.length} người)
+                  </span>
+                )}
+              </span>
+              <span className="text-sm font-bold tabular-nums text-[var(--text)]">
+                {formatVnd(groupedTotal)}
               </span>
             </div>
-          </div>
-        </div>
 
-        {hasCostData && (
-          <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden">
-            <SessionCostCard sessionId={id!} />
+            {soloGuestsAll.map((g) => (
+              <div
+                key={g.id}
+                className="flex items-center justify-between gap-3 px-4 py-2.5"
+              >
+                <span className="text-xs font-semibold text-[var(--text-muted)]">
+                  Trả riêng: {g.users?.full_name ?? g.guest_full_name ?? "?"}
+                </span>
+                <span className="text-sm font-bold tabular-nums text-[var(--text)]">
+                  {formatVnd(g.amount_override ?? 0)}
+                </span>
+              </div>
+            ))}
+
+            {hasSolo && (
+              <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <span className="text-xs font-bold text-[var(--text)]">
+                  Tổng cả nhóm
+                </span>
+                <span className="text-sm font-bold tabular-nums text-[var(--text)]">
+                  {formatVnd(groupedTotal + soloTotal)}
+                </span>
+              </div>
+            )}
           </div>
         )}
+      </article>
+    );
+  };
 
+  const pipeline = [
+    { label: "Chờ duyệt", count: pendingApproval.length, tone: "warning" },
+    { label: "Chờ điểm danh", count: awaitingCheckin.length, tone: "neutral" },
+    {
+      label: "Chờ buổi đánh kết thúc",
+      count: awaitingFinish.length,
+      tone: "neutral",
+    },
+    { label: "Chờ thanh toán", count: pending.length, tone: "warning" },
+    {
+      label: "Chờ chốt thanh toán",
+      count: pendingReview.length + walletPendingConfirm.length,
+      tone: "primary",
+    },
+    {
+      label: "Đã xác nhận thanh toán",
+      count: confirmed.length,
+      tone: "success",
+    },
+    { label: "Thanh toán bị từ chối", count: rejected.length, tone: "danger" },
+  ].filter((p) => p.count > 0) as { label: string; count: number; tone: Tone }[];
 
-        <SessionPenaltiesCard sessionId={id!} />
+  return (
+    <>
+      <style>{SESSION_UI_CSS}</style>
 
-        {manualRefreshing ? (
-          <>
-            <div className="flex gap-3 flex-wrap">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-7 w-28 rounded-full bg-[var(--border-strong)] animate-pulse"
-                />
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden p-4"
+      <div className="mx-auto max-w-3xl space-y-4 pb-28 md:pb-10 lg:max-w-4xl xl:max-w-7xl xl:space-y-6 2xl:max-w-[1440px]">
+        <div className="xl:sticky xl:top-0 xl:z-20 xl:before:pointer-events-none xl:before:absolute xl:before:-inset-x-4 xl:before:-top-10 xl:before:bottom-1/2 xl:before:-z-10 xl:before:bg-[var(--bg)] xl:before:content-['']">
+          <section className={`${CARD} overflow-hidden`}>
+            <div className="hidden items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface-muted)] px-5 py-3 md:flex xl:px-6">
+              <button
+                type="button"
+                onClick={() => router.push("/admin/sessions")}
+                aria-label="Quay lại danh sách buổi đánh"
+                title="Quay lại"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-700 text-white transition-colors hover:bg-slate-800 active:scale-[0.97]"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div className="flex items-center gap-2">
+                {[...others, lead].filter(Boolean).map((a) => (
+                  <PhaseButton
+                    key={a.key}
+                    label={a.label}
+                    icon={a.icon}
+                    tone={a.tone}
+                    variant="solid"
+                    badge={a.badge}
+                    phase={a.phase}
+                    disabled={a.disabled}
+                    onClick={a.onClick}
+                  />
+                ))}
+                <button
+                  type="button"
+                  onClick={handleManualRefresh}
+                  disabled={manualRefreshing}
+                  aria-label="Tải lại dữ liệu"
+                  title="Tải lại dữ liệu"
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 active:scale-[0.97] disabled:opacity-50"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[var(--border-strong)] animate-pulse flex-shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 rounded bg-[var(--border-strong)] animate-pulse" />
-                      <div className="h-3 w-1/4 rounded bg-[var(--border-strong)] animate-pulse" />
-                      <div className="h-5 w-24 rounded-full bg-[var(--border-strong)] animate-pulse mt-2" />
-                    </div>
+                  <RotateCcw
+                    className={`h-4 w-4 ${manualRefreshing ? "animate-spin" : ""}`}
+                  />
+                  Tải lại
+                </button>
+              </div>
+            </div>
+            <div className="p-4 sm:p-5 xl:grid xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,260px)] xl:items-center xl:gap-8 xl:p-6">
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1 pt-1">
+                  <h1 className="text-xl font-bold leading-snug text-[var(--text)] sm:text-2xl xl:text-[26px]">
+                    {session.title}
+                  </h1>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <Chip tone={statusMeta.tone}>{statusMeta.label}</Chip>
+                    {canAddMember && hintText && (
+                      <Chip
+                        tone="warning"
+                        icon={<Hourglass className="h-3 w-3" />}
+                      >
+                        Còn {hintText}
+                      </Chip>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex gap-3 flex-wrap">
-              {[
-                {
-                  label: "Chờ duyệt",
-                  count: pendingApproval.length,
-                  cls: "bg-[var(--warning-soft)] text-[var(--warning)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
-                },
-                {
-                  label: "Chờ điểm danh",
-                  count: awaitingCheckin.length,
-                  cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)]",
-                },
-                {
-                  label: "Chờ buổi đánh kết thúc",
-                  count: awaitingFinish.length,
-                  cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)]",
-                },
-                {
-                  label: "Chờ thanh toán",
-                  count: pending.length,
-                  cls: "bg-[var(--warning-soft)] text-[var(--warning)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
-                },
-                {
-                  label: "Chờ chốt thanh toán",
-                  count: pendingReview.length + walletPendingConfirm.length,
-                  cls: "bg-[var(--primary-soft)] text-[var(--primary)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)]",
-                },
-                {
-                  label: "Đã xác nhận thanh toán",
-                  count: confirmed.length,
-                  cls: "bg-[var(--success-soft)] text-[var(--success)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)]",
-                },
-                {
-                  label: "Thanh toán bị từ chối",
-                  count: rejected.length,
-                  cls: "bg-[var(--danger-soft)] text-[var(--danger)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)]",
-                },
-              ]
-                .filter(({ count }) => count > 0)
-                .map(({ label, count, cls }) => (
-                  <span
-                    key={label}
-                    className={`badge-pop px-3 py-1 rounded-full text-sm font-medium ${cls}`}
-                  >
-                    {label}: {count}
-                  </span>
-                ))}
-            </div>
-
-            <div>
-              {registrations.length === 0 ? (
-                <div className="card py-12 text-center text-[var(--text-faint)] shadow-md">
-                  <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  <p>Chưa có ai đăng ký buổi này</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {hostRegs.map((host) => {
-                    const guests = guestsOf(host.id);
-                    const GROUPED_METHODS = ["grouped_with_host", "wallet_grouped", "wallet_pending_confirm"];
-
-                    const groupedGuestsAll = guests.filter((g) =>
-                      GROUPED_METHODS.includes(g.payment_method),
-                    );
-                    const soloGuestsAll = guests.filter(
-                      (g) => !GROUPED_METHODS.includes(g.payment_method),
-                    );
-
-                    const groupedTotal =
-                      (host.amount_override ?? 0) +
-                      groupedGuestsAll.reduce((s, g) => s + (g.amount_override ?? 0), 0);
-
-                    const soloTotal = soloGuestsAll.reduce(
-                      (s, g) => s + (g.amount_override ?? 0),
-                      0,
-                    );
-
-                    const hasGrouped = groupedGuestsAll.length > 0;
-                    const hasSolo = soloGuestsAll.length > 0;
-                    const billIssued =
-                      host.amount_override != null &&
-                      (session.status === "waiting_payment" || session.status === "completed");
-                    const groupedGuestsForHost = guests.filter(
-                      (g) => g.payment_method === "grouped_with_host",
-                    );
-                    const hostDisplayName =
-                      host.users?.full_name ?? host.guest_full_name ?? "?";
-                    const isExpanded = expandedHosts.has(host.id);
-                    const hostCanReview = getCanReviewPayment(host);
-                    const showHostActions =
-                      host.participation_status === "pending_approval" ||
-                      host.participation_status === "awaiting_checkin" ||
-                      isAwaitingFinish(host) ||
-                      (host.payment_status === "pending" && hostCanReview);
-
-                    const hostExtras = (
-                      <>
-                        {guests.length > 0 && (
-                          <>
-                            <button
-                              onClick={() => toggleHostGuests(host.id)}
-                              className="w-full flex items-center justify-between gap-2 px-4 py-3 border-t border-[var(--border)] bg-[var(--primary-soft)] hover:bg-[var(--primary-soft)] active:bg-[var(--primary-soft)] transition-colors group"
-                            >
-                              <span className="flex items-center gap-2">
-                                <span className="w-7 h-7 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                  {guests.length}
-                                </span>
-                                <span className="text-sm font-semibold text-[var(--primary)]">
-                                  {isExpanded ? "Ẩn" : "Hiện"} người đi cùng
-                                </span>
-                              </span>
-                              <ChevronDown
-                                className={`w-4 h-4 text-[var(--primary)] transition-transform duration-300 flex-shrink-0 ${isExpanded ? "rotate-180" : ""
-                                  }`}
-                              />
-                            </button>
-
-                            <div
-                              className="grid transition-[grid-template-rows] duration-300 ease-in-out"
-                              style={{
-                                gridTemplateRows: isExpanded ? "1fr" : "0fr",
-                              }}
-                            >
-                              <div className="overflow-hidden">
-                                <div
-                                  className="bg-[var(--surface-muted)] divide-y divide-[var(--border)] border-t border-[var(--border)] transition-opacity duration-300"
-                                  style={{ opacity: isExpanded ? 1 : 0 }}
-                                >
-                                  {guests.map((g) =>
-                                    renderRow(
-                                      g,
-                                      true,
-                                      host.users?.full_name ?? host.guest_full_name ?? "người đứng tên",
-                                    ),
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </>
-                        )}
-
-                        {guests.length > 0 && billIssued && (
-                          <div className="border-t border-[var(--border)] bg-[var(--surface-muted)] divide-y divide-[var(--border)]">
-                            <div className="flex items-center justify-between px-4 py-2.5">
-                              <span className="text-xs font-semibold text-[var(--text-muted)]">
-                                {hasGrouped ? `Gộp ví ${hostDisplayName}` : hostDisplayName}
-                                {hasGrouped && (
-                                  <span className="font-normal text-[var(--text-faint)]">
-                                    {" "}({1 + groupedGuestsAll.length} người)
-                                  </span>
-                                )}
-                              </span>
-                              <span className="text-sm font-bold text-[var(--text)]">
-                                {formatVnd(groupedTotal)}
-                              </span>
-                            </div>
-
-                            {soloGuestsAll.map((g) => (
-                              <div
-                                key={g.id}
-                                className="flex items-center justify-between px-4 py-2.5"
-                              >
-                                <span className="text-xs font-semibold text-[var(--text-muted)]">
-                                  Trả riêng: {g.users?.full_name ?? g.guest_full_name ?? "?"}
-                                </span>
-                                <span className="text-sm font-bold text-[var(--text)]">
-                                  {formatVnd(g.amount_override ?? 0)}
-                                </span>
-                              </div>
-                            ))}
-
-                            {hasSolo && (
-                              <div className="flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)]">
-                                <span className="text-xs font-bold text-[var(--text)]">Tổng cả nhóm</span>
-                                <span className="text-sm font-bold text-[var(--text)]">
-                                  {formatVnd(groupedTotal + soloTotal)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </>
-                    );
-
-                    return (
-                      <div
-                        key={host.id}
-                        className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-[0_2px_16px_rgba(0,0,0,0.08),0_12px_32px_-6px_rgba(0,0,0,0.12)] overflow-hidden"
-                      >
-                        {isDesktop ? (
-                          <div>
-                            {renderRowContent(host, false, hostDisplayName, groupedGuestsForHost)}
-                            {showHostActions && (
-                              <div className="flex justify-end gap-2 border-t border-[var(--border)] px-4 py-2.5">
-                                <DesktopRowActions reg={host} />
-                              </div>
-                            )}
-                            {hostExtras}
-                          </div>
-                        ) : (
-                          <SwipeableRow
-                            disabled={!showHostActions}
-                            actions={<RowActions reg={host} />}
-                          >
-                            <div>
-                              {renderRowContent(host, false, hostDisplayName, groupedGuestsForHost)}
-                              {hostExtras}
-                            </div>
-                          </SwipeableRow>
-                        )}
-
-                        {showReject === host.id && (
-                          <div className="px-4 pb-3 flex gap-2">
-                            <input
-                              type="text"
-                              value={rejectNotes[host.id] ?? ""}
-                              onChange={(e) =>
-                                setRejectNotes((n) => ({
-                                  ...n,
-                                  [host.id]: e.target.value,
-                                }))
-                              }
-                              className="input-field text-sm flex-1"
-                              placeholder="Lý do từ chối (tuỳ chọn)"
-                            />
-                            <MorphButton
-                              phase={getPhase(`${host.id}:rejectConfirm`)}
-                              idleIcon={null}
-                              label="Xác nhận từ chối"
-                              idleWidthClass="w-40"
-                              colorClass="bg-red-500 hover:bg-red-600 text-white"
-                              onClick={() => handleReject(host.id)}
-                              disabled={actionId === host.id}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {viewingBillUrl &&
-          typeof document !== "undefined" &&
-          createPortal(
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-              onClick={() => setViewingBillUrl(null)}
-            >
-              <div
-                className="relative max-w-lg w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={() => setViewingBillUrl(null)}
-                  className="absolute -top-10 right-0 text-white/80 hover:text-white transition-colors"
-                  title="Đóng"
-                >
-                  <XCircle className="w-7 h-7" />
-                </button>
-                <img
-                  src={viewingBillUrl}
-                  alt="Ảnh bill chuyển khoản"
-                  className="w-full max-h-[80vh] object-contain rounded-xl bg-[var(--surface)]"
-                />
               </div>
-            </div>,
-            document.body,
-          )}
 
-        {/* ── Add member modal ── */}
-        {showAddModal &&
-          typeof document !== "undefined" &&
-          createPortal(
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{
-                background: "var(--overlay)",
-                backdropFilter: "blur(2px)",
-                opacity: addModalVisible ? 1 : 0,
-                transition: "opacity 200ms ease-out",
-              }}
-            >
-              <div
-                className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
-                style={{
-                  transform: addModalVisible
-                    ? "scale(1) translateY(0)"
-                    : "scale(0.95) translateY(8px)",
-                  opacity: addModalVisible ? 1 : 0,
-                  transition:
-                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                  <h3 className="font-bold text-[var(--text)]">
-                    Thêm thành viên vào buổi
-                  </h3>
-                  <button
-                    onClick={closeAddModal}
-                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
-                  >
-                    <XCircle className="w-5 h-5" />
-                  </button>
+              <div className="mt-5 flex items-center gap-4 xl:mt-0">
+                <div className="flex w-[68px] shrink-0 flex-col items-center justify-center rounded-2xl bg-[var(--primary-soft)] py-2.5 text-[var(--primary)]">
+                  <span className="text-[11px] font-semibold leading-none">
+                    Thg {format(startAt, "M")}
+                  </span>
+                  <span className="my-1 text-3xl font-bold leading-none tabular-nums">
+                    {format(startAt, "dd")}
+                  </span>
+                  <span className="text-[10px] font-medium leading-none">
+                    {format(startAt, "EEEE", { locale: vi })}
+                  </span>
                 </div>
 
-                <div className="flex gap-1 px-5 pt-3">
-                  {[
-                    ["account", "Có tài khoản"],
-                    ["guest", "Khách không tài khoản"],
-                  ].map(([val, lbl]) => (
+                <div className="min-w-0 flex-1 space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-[var(--text)]">
+                    <Clock className="h-4 w-4 shrink-0 text-[var(--text-faint)]" />
+                    <span className="font-semibold tabular-nums">
+                      {format(startAt, "HH:mm")} – {format(endAt, "HH:mm")}
+                    </span>
+                    <span className="text-[var(--text-faint)]">
+                      ({session.duration_minutes} phút)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[var(--text)]">
+                    <MapPin className="h-4 w-4 shrink-0 text-[var(--text-faint)]" />
+                    <span className="truncate">{session.location || "—"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 xl:mt-0">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-1.5 text-[var(--text-muted)]">
+                    <Users className="h-4 w-4 text-[var(--text-faint)]" />
+                    Số người
+                  </span>
+                  <span
+                    className={`font-semibold tabular-nums ${session.available_slots <= 0
+                      ? "text-[var(--danger)]"
+                      : "text-[var(--text)]"
+                      }`}
+                  >
+                    {takenSlots}/{maxSlots}
+                  </span>
+                </div>
+                <div
+                  className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--surface-muted)]"
+                  role="progressbar"
+                  aria-valuenow={takenSlots}
+                  aria-valuemin={0}
+                  aria-valuemax={maxSlots}
+                  aria-label="Số người đã đăng ký"
+                >
+                  <div
+                    className={`h-full rounded-full transition-[width] duration-500 ${session.available_slots <= 0
+                      ? "bg-red-500"
+                      : "bg-[var(--primary)]"
+                      }`}
+                    style={{ width: `${fillPct}%` }}
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-[var(--text-faint)]">
+                  {session.available_slots <= 0
+                    ? "Đã đủ số lượng"
+                    : `Còn ${session.available_slots} chỗ trống`}
+                </p>
+              </div>
+            </div>
+
+          </section>
+        </div>
+
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:gap-6">
+          <aside className="flex flex-col gap-4 empty:hidden xl:order-2 xl:w-[380px] xl:shrink-0 2xl:w-[440px]">
+            {hasCostData && (
+              <SessionCostCard
+                sessionId={id!}
+                refreshKey={refreshTick}
+                allConfirmed={allConfirmed}
+              />
+            )}
+            <SessionPenaltiesCard sessionId={id!} />
+          </aside>
+
+          <div className="min-w-0 space-y-4 xl:order-1 xl:flex-1">
+            {manualRefreshing ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className={`${CARD} p-4`}>
+                    <div className="flex items-start gap-3">
+                      <div className="h-11 w-11 shrink-0 animate-pulse rounded-full bg-[var(--border-strong)]" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-1/3 animate-pulse rounded bg-[var(--border-strong)]" />
+                        <div className="h-3 w-1/4 animate-pulse rounded bg-[var(--border-strong)]" />
+                        <div className="mt-2 h-5 w-24 animate-pulse rounded-full bg-[var(--border-strong)]" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                {pipeline.length > 0 && (
+                  <div className="sd-noscroll flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+                    {pipeline.map((p) => (
+                      <span
+                        key={p.label}
+                        className={`inline-flex shrink-0 items-center gap-2 rounded-full border py-1 pl-3 pr-1 text-xs font-medium ${TONE_SOFT[p.tone]}`}
+                      >
+                        {p.label}
+                        <span className="min-w-[22px] rounded-full bg-[var(--surface)] px-1.5 py-0.5 text-center text-[11px] font-bold tabular-nums">
+                          {p.count}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-baseline justify-between px-1">
+                  <h2 className="text-sm font-semibold text-[var(--text)]">
+                    Danh sách tham gia
+                  </h2>
+                  <span className="text-xs text-[var(--text-faint)]">
+                    {registrations.length} người
+                  </span>
+                </div>
+
+                {registrations.length === 0 ? (
+                  <div className={`${CARD} px-6 py-12 text-center`}>
+                    <Users className="mx-auto mb-3 h-8 w-8 text-[var(--text-faint)] opacity-50" />
+                    <p className="text-sm font-medium text-[var(--text)]">
+                      Chưa có ai đăng ký buổi này
+                    </p>
+                    {canAddMember && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAddModal(true)}
+                        className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        Thêm thành viên
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">{hostRegs.map(renderHostCard)}</div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-3xl items-center gap-2">
+          <button
+            type="button"
+            onClick={() => router.push("/admin/sessions")}
+            className="inline-flex h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl bg-[var(--surface-muted)] px-1 text-[10px] font-semibold leading-none text-[var(--text-muted)] transition-all active:scale-[0.97]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Quay lại</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleManualRefresh}
+            disabled={manualRefreshing}
+            className="inline-flex h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl bg-[var(--surface-muted)] px-1 text-[10px] font-semibold leading-none text-[var(--text-muted)] transition-all active:scale-[0.97] disabled:opacity-50"
+          >
+            <RotateCcw
+              className={`h-4 w-4 ${manualRefreshing ? "animate-spin" : ""}`}
+            />
+            <span>Tải lại</span>
+          </button>
+
+          {others.map((a) => (
+            <PhaseButton
+              key={a.key}
+              stacked
+              variant="solid"
+              label={a.short ?? a.label}
+              icon={a.icon}
+              tone={a.tone}
+              badge={a.badge}
+              phase={a.phase}
+              disabled={a.disabled}
+              onClick={a.onClick}
+            />
+          ))}
+
+          {lead && (
+            <PhaseButton
+              stacked
+              variant="solid"
+              label={lead.short ?? lead.label}
+              icon={lead.icon}
+              tone={lead.tone}
+              badge={lead.badge}
+              phase={lead.phase}
+              disabled={lead.disabled}
+              onClick={lead.onClick}
+            />
+          )}
+        </div>
+      </div>
+
+      {showAddModal && (
+        <ModalShell onClose={closeAddModal} dismissible={false}>
+          {(close) => {
+            const slots = session.available_slots ?? 0;
+            const overSlots =
+              addTab === "account" && selectedMembers.length > slots;
+            return (
+              <>
+                <ModalHeader
+                  icon={<UserPlus className="h-4 w-4" />}
+                  tone="primary"
+                  title="Thêm thành viên vào buổi"
+                  onClose={close}
+                />
+
+                <div className="mx-5 mt-4 grid grid-cols-2 rounded-xl bg-[var(--surface-muted)] p-1">
+                  {(
+                    [
+                      ["account", "Có tài khoản"],
+                      ["guest", "Khách không tài khoản"],
+                    ] as const
+                  ).map(([val, lbl]) => (
                     <button
                       key={val}
-                      onClick={() => setAddTab(val as any)}
-                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium ${addTab === val ? "bg-[var(--primary-soft)] text-[var(--primary)]" : "text-[var(--text-faint)]"}`}
+                      type="button"
+                      onClick={() => setAddTab(val)}
+                      className={`rounded-lg py-2 text-sm font-medium transition-all ${addTab === val
+                        ? "bg-[var(--surface)] text-[var(--text)] shadow-sm"
+                        : "text-[var(--text-faint)]"
+                        }`}
                     >
                       {lbl}
                     </button>
                   ))}
                 </div>
 
-                <div className="p-5 space-y-4">
+                <ModalBody className="space-y-4">
                   {addTab === "account" ? (
                     <>
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-faint)]" />
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-faint)]" />
                         <input
                           autoFocus
                           value={search}
@@ -3064,31 +2160,33 @@ export default function SessionDetailPage() {
                           {selectedMembers.map((m) => (
                             <span
                               key={m.id}
-                              className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full bg-[var(--primary-soft)] border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] text-[var(--primary)] text-xs font-medium"
+                              className={`flex items-center gap-1 rounded-full border py-1 pl-2.5 pr-1.5 text-xs font-medium ${TONE_SOFT.primary}`}
                             >
                               {m.full_name}
                               <button
+                                type="button"
+                                aria-label={`Bỏ chọn ${m.full_name}`}
                                 onClick={() =>
                                   setSelectedMembers((prev) =>
                                     prev.filter((x) => x.id !== m.id),
                                   )
                                 }
-                                className="w-4 h-4 rounded-full hover:bg-blue-200 flex items-center justify-center"
+                                className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-black/10"
                               >
-                                <XCircle className="w-3 h-3" />
+                                <XCircle className="h-3 w-3" />
                               </button>
                             </span>
                           ))}
                         </div>
                       )}
 
-                      <div className="max-h-72 overflow-y-auto -mx-1 border border-[var(--border)] rounded-xl">
+                      <div className="max-h-64 overflow-y-auto rounded-xl border border-[var(--border)]">
                         {searching ? (
-                          <p className="text-sm text-[var(--text-faint)] text-center py-4">
+                          <p className="py-4 text-center text-sm text-[var(--text-faint)]">
                             Đang tìm...
                           </p>
                         ) : searchResults.length === 0 ? (
-                          <p className="text-sm text-[var(--text-faint)] text-center py-4">
+                          <p className="py-4 text-center text-sm text-[var(--text-faint)]">
                             Không tìm thấy thành viên
                           </p>
                         ) : (
@@ -3100,65 +2198,53 @@ export default function SessionDetailPage() {
                               return (
                                 <li key={m.id}>
                                   <button
-                                    onClick={() => {
+                                    type="button"
+                                    onClick={() =>
                                       setSelectedMembers((prev) =>
                                         isSelected
                                           ? prev.filter((x) => x.id !== m.id)
                                           : [...prev, m],
-                                      );
-                                    }}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isSelected
+                                      )
+                                    }
+                                    className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${isSelected
                                       ? "bg-[var(--primary-soft)]"
                                       : "hover:bg-[var(--surface-hover)]"
                                       }`}
                                   >
-                                    <div
-                                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${isSelected
-                                        ? "bg-blue-600 border-blue-600"
+                                    <span
+                                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 ${isSelected
+                                        ? "border-blue-600 bg-blue-600"
                                         : "border-[var(--border-strong)]"
                                         }`}
                                     >
                                       {isSelected && (
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-white" />
                                       )}
-                                    </div>
-                                    <div className="w-8 h-8 rounded-full bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                      {m.avatar_url ? (
-                                        <img
-                                          src={m.avatar_url}
-                                          alt={m.full_name}
-                                          className="w-full h-full object-cover"
-                                          onError={(e) => {
-                                            (
-                                              e.currentTarget as HTMLImageElement
-                                            ).style.display = "none";
-                                          }}
-                                        />
-                                      ) : (
-                                        <span className="text-xs font-semibold text-[var(--primary)]">
-                                          {m.full_name?.[0]?.toUpperCase() ??
-                                            "?"}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-[var(--text)] truncate">
+                                    </span>
+                                    <Avatar
+                                      url={m.avatar_url}
+                                      name={m.full_name}
+                                      size={32}
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-sm font-medium text-[var(--text)]">
                                         {m.full_name}
                                       </p>
                                       <p className="text-xs text-[var(--text-faint)]">
                                         {m.phone}
                                       </p>
                                     </div>
-                                    <span
-                                      className={`text-[10px] px-2 py-0.5 rounded-full border flex-shrink-0 ${m.member_type === "co_dinh"
-                                        ? "bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)]"
-                                        : "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]"
-                                        }`}
+                                    <Chip
+                                      tone={
+                                        m.member_type === "co_dinh"
+                                          ? "purple"
+                                          : "neutral"
+                                      }
                                     >
                                       {m.member_type === "co_dinh"
                                         ? "Thành viên"
                                         : "Vãng lai"}
-                                    </span>
+                                    </Chip>
                                   </button>
                                 </li>
                               );
@@ -3167,14 +2253,19 @@ export default function SessionDetailPage() {
                         )}
                       </div>
 
-                      <p className="text-xs text-[var(--primary)] bg-[var(--primary-soft)] rounded-lg px-3 py-2">
-                        ⓘ Đã chọn {selectedMembers.length} thành viên. Mỗi người
-                        sẽ nhận được thông báo đã được thêm vào buổi. Thanh toán
-                        sau khi buổi kết thúc.
+                      <p
+                        className={`rounded-lg px-3 py-2 text-xs ${overSlots
+                          ? "bg-[var(--danger-soft)] text-[var(--danger)]"
+                          : "bg-[var(--primary-soft)] text-[var(--primary)]"
+                          }`}
+                      >
+                        {overSlots
+                          ? `⚠️ Bạn đang chọn ${selectedMembers.length} người nhưng buổi chỉ còn ${slots} chỗ trống.`
+                          : `Đã chọn ${selectedMembers.length} thành viên. Mỗi người sẽ nhận được thông báo đã được thêm vào buổi. Thanh toán sau khi buổi kết thúc.`}
                       </p>
 
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text)] mb-1">
+                        <label className={FIELD_LABEL}>
                           Đi cùng (tuỳ chọn, để gộp tiền vào ví host)
                         </label>
                         <CustomSelect
@@ -3191,7 +2282,7 @@ export default function SessionDetailPage() {
                             }))}
                         />
                         {hostRegId && selectedMembers.length > 1 && (
-                          <p className="text-[11px] text-[var(--warning)] mt-1">
+                          <p className="mt-1.5 text-[11px] text-[var(--warning)]">
                             ⚠️ Bạn đang chọn nhiều thành viên cùng lúc + chọn
                             "đi cùng host" — tất cả {selectedMembers.length}{" "}
                             người sẽ được gắn vào cùng 1 host này.
@@ -3200,11 +2291,9 @@ export default function SessionDetailPage() {
                       </div>
                     </>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                          Họ tên *
-                        </label>
+                        <label className={FIELD_LABEL}>Họ tên *</label>
                         <input
                           value={guestForm.full_name}
                           onChange={(e) =>
@@ -3217,11 +2306,10 @@ export default function SessionDetailPage() {
                           placeholder="Tên khách"
                         />
                       </div>
+
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                            Giới tính
-                          </label>
+                          <label className={FIELD_LABEL}>Giới tính</label>
                           <CustomSelect
                             value={guestForm.gender}
                             onChange={(val) =>
@@ -3234,9 +2322,7 @@ export default function SessionDetailPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                            Trình độ
-                          </label>
+                          <label className={FIELD_LABEL}>Trình độ</label>
                           <CustomSelect
                             value={guestForm.skill_level}
                             onChange={(val) =>
@@ -3257,48 +2343,40 @@ export default function SessionDetailPage() {
                           />
                         </div>
                       </div>
+
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text)] mb-1">
+                        <label className={FIELD_LABEL}>
                           Email (không bắt buộc, để gửi hóa đơn)
                         </label>
                         <input
                           type="email"
                           value={guestForm.email}
                           onChange={(e) =>
-                            setGuestForm((f) => ({ ...f, email: e.target.value }))
+                            setGuestForm((f) => ({
+                              ...f,
+                              email: e.target.value,
+                            }))
                           }
                           className="input-field"
                           placeholder="vidu@email.com"
                         />
-
                         {guestForm.email.trim() && (
-                          <button
-                            type="button"
-                            onClick={() => setGuestSendEmail((v) => !v)}
-                            className="mt-2 w-full flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-hover)] transition-colors"
-                          >
+                          <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] px-3 py-2.5">
                             <span className="flex items-center gap-2 text-sm text-[var(--text)]">
-                              <Mail className="w-4 h-4 text-[var(--text-faint)]" />
+                              <Mail className="h-4 w-4 text-[var(--text-faint)]" />
                               Gửi email thông báo ngay
                             </span>
-                            <span
-                              className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${guestSendEmail ? "bg-emerald-500" : "bg-gray-300"
-                                }`}
-                            >
-                              <span
-                                className="inline-block h-4 w-4 rounded-full bg-[var(--surface)] shadow transition-transform duration-200"
-                                style={{
-                                  transform: guestSendEmail ? "translateX(18px)" : "translateX(2px)",
-                                }}
-                              />
-                            </span>
-                          </button>
+                            <Switch
+                              checked={guestSendEmail}
+                              onChange={setGuestSendEmail}
+                              label="Gửi email thông báo ngay"
+                            />
+                          </div>
                         )}
                       </div>
+
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                          Đi cùng (tuỳ chọn)
-                        </label>
+                        <label className={FIELD_LABEL}>Đi cùng (tuỳ chọn)</label>
                         <CustomSelect
                           value={hostRegId}
                           onChange={(val) => {
@@ -3310,22 +2388,25 @@ export default function SessionDetailPage() {
                             .filter((r) => !r.host_registration_id)
                             .map((r: any) => ({
                               value: r.id,
-                              label: r.users?.full_name ?? r.guest_full_name ?? "?",
+                              label:
+                                r.users?.full_name ?? r.guest_full_name ?? "?",
                             }))}
                         />
 
                         {hostRegId && (
                           <>
-                            <label className="flex items-center gap-2 mt-2 text-sm text-[var(--text-muted)]">
+                            <label className="mt-2.5 flex items-center gap-2 text-sm text-[var(--text-muted)]">
                               <input
                                 type="checkbox"
                                 checked={guestPaySeparately}
-                                onChange={(e) => setGuestPaySeparately(e.target.checked)}
+                                onChange={(e) =>
+                                  setGuestPaySeparately(e.target.checked)
+                                }
                                 className="rounded"
                               />
                               Thanh toán riêng (không gộp với người đi cùng)
                             </label>
-                            <p className="text-[11px] text-[var(--text-faint)] mt-1">
+                            <p className="mt-1 text-[11px] text-[var(--text-faint)]">
                               {guestPaySeparately
                                 ? "Khách này sẽ tự thanh toán tiền mặt riêng, nhận hóa đơn riêng qua email."
                                 : "Mặc định: người đi cùng trả hộ, hóa đơn sẽ gộp gửi về người đi cùng."}
@@ -3333,10 +2414,9 @@ export default function SessionDetailPage() {
                           </>
                         )}
                       </div>
+
                       <div>
-                        <label className="block text-sm font-medium text-[var(--text)] mb-1">
-                          Ghi chú (tuỳ chọn)
-                        </label>
+                        <label className={FIELD_LABEL}>Ghi chú (tuỳ chọn)</label>
                         <input
                           value={addNotes}
                           onChange={(e) => setAddNotes(e.target.value)}
@@ -3345,237 +2425,168 @@ export default function SessionDetailPage() {
                       </div>
                     </div>
                   )}
-                </div>
+                </ModalBody>
 
-                <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
+                <ModalFooter>
                   <button
-                    onClick={closeAddModal}
-                    className="px-4 py-2.5 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors flex-shrink-0"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    onClick={handleAddMember}
-                    disabled={
-                      adding ||
-                      (addTab === "account"
-                        ? selectedMembers.length === 0 ||
-                        selectedMembers.length > (session.available_slots ?? 0)
-                        : !guestForm.full_name.trim() || (session.available_slots ?? 0) < 1)
-                    }
-                    className="px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold
-                      flex items-center justify-center gap-2 flex-shrink-0
-                      disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {adding && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Thêm vào buổi
-                    {addTab === "account" && selectedMembers.length > 1
-                      ? ` (${selectedMembers.length})`
-                      : ""}
-                  </button>
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )}
-
-
-        {selectedMembers.length > (session.available_slots ?? 0) && (
-          <p className="text-[11px] text-[var(--danger)] mt-1">
-            ⚠️ Bạn đang chọn {selectedMembers.length} người nhưng buổi chỉ còn{" "}
-            {session.available_slots ?? 0} chỗ trống.
-          </p>
-        )}
-
-        {confirmModal &&
-          typeof document !== "undefined" &&
-          createPortal(
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{
-                background: "var(--overlay)",
-                backdropFilter: "blur(2px)",
-                opacity: confirmModalVisible ? 1 : 0,
-                transition: "opacity 200ms ease-out",
-              }}
-              onClick={closeConfirmModal}
-            >
-              <div
-                className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
-                style={{
-                  transform: confirmModalVisible
-                    ? "scale(1) translateY(0)"
-                    : "scale(0.95) translateY(8px)",
-                  opacity: confirmModalVisible ? 1 : 0,
-                  transition:
-                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${confirmModal.key === "closeList"
-                        ? "bg-[var(--danger-soft)]"
-                        : confirmModal.key === "completeSession"
-                          ? "bg-[var(--success-soft)]"
-                          : "bg-[var(--success-soft)]"
-                        }`}
-                    >
-                      {confirmModal.key === "closeList" ? (
-                        <UserX className="w-4 h-4 text-[var(--danger)]" />
-                      ) : confirmModal.key === "completeSession" ? (
-                        <CheckCircle2 className="w-4 h-4 text-[var(--success)]" />
-                      ) : (
-                        <UserCheck className="w-4 h-4 text-[var(--success)]" />
-                      )}
-                    </div>
-                    <h3 className="font-bold text-[var(--text)]">
-                      {confirmModal.title}
-                    </h3>
-                  </div>
-                  <button
-                    onClick={closeConfirmModal}
-                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
-                  >
-                    <XCircle className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="p-5 text-sm text-[var(--text-muted)]">
-                  {confirmModal.message}
-                </div>
-
-                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
-                  <button
-                    onClick={closeConfirmModal}
+                    type="button"
+                    onClick={close}
                     className="btn-secondary text-sm"
                   >
                     Hủy
                   </button>
                   <button
+                    type="button"
+                    onClick={handleAddMember}
+                    disabled={
+                      adding ||
+                      (addTab === "account"
+                        ? selectedMembers.length === 0 ||
+                        selectedMembers.length > slots
+                        : !guestForm.full_name.trim() || slots < 1)
+                    }
+                    className="flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {adding && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Thêm vào buổi
+                    {addTab === "account" && selectedMembers.length > 1
+                      ? ` (${selectedMembers.length})`
+                      : ""}
+                  </button>
+                </ModalFooter>
+              </>
+            );
+          }}
+        </ModalShell>
+      )}
+
+      {confirmModal && (
+        <ModalShell onClose={closeConfirmModal}>
+          {(close) => {
+            const k = confirmModal.key;
+            return (
+              <>
+                <ModalHeader
+                  icon={
+                    k === "closeList" ? (
+                      <UserX className="h-4 w-4" />
+                    ) : k === "completeSession" ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <UserCheck className="h-4 w-4" />
+                    )
+                  }
+                  tone={k === "closeList" ? "danger" : "success"}
+                  title={confirmModal.title}
+                  onClose={close}
+                />
+                <ModalBody className="text-sm text-[var(--text-muted)]">
+                  {confirmModal.message}
+                </ModalBody>
+                <ModalFooter>
+                  <button
+                    type="button"
+                    onClick={close}
+                    className="btn-secondary text-sm"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
                     onClick={() =>
-                      confirmModal.key === "closeList"
+                      k === "closeList"
                         ? runCloseList()
-                        : confirmModal.key === "completeSession"
+                        : k === "completeSession"
                           ? runCompleteSession()
                           : runCheckinAllPresent()
                     }
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${confirmModal.key === "closeList"
+                    className={`h-10 rounded-xl px-4 text-sm font-semibold text-white transition-colors ${k === "closeList"
                       ? "bg-red-500 hover:bg-red-600"
-                      : confirmModal.key === "completeSession"
-                        ? "bg-emerald-500 hover:bg-emerald-600"
-                        : "bg-green-500 hover:bg-green-600"
+                      : "bg-emerald-600 hover:bg-emerald-700"
                       }`}
                   >
                     Xác nhận
                   </button>
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )}
+                </ModalFooter>
+              </>
+            );
+          }}
+        </ModalShell>
+      )}
 
-        {showRollbackModal &&
-          typeof document !== "undefined" &&
-          createPortal(
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{
-                background: "var(--overlay)",
-                backdropFilter: "blur(2px)",
-                opacity: rollbackModalVisible ? 1 : 0,
-                transition: "opacity 200ms ease-out",
-              }}
-              onClick={closeRollbackModal}
-            >
-              <div
-                className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
-                style={{
-                  transform: rollbackModalVisible
-                    ? "scale(1) translateY(0)"
-                    : "scale(0.95) translateY(8px)",
-                  opacity: rollbackModalVisible ? 1 : 0,
-                  transition:
-                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[var(--warning-soft)] flex items-center justify-center flex-shrink-0">
-                      <RotateCcw className="w-4 h-4 text-[var(--warning)]" />
-                    </div>
-                    <h3 className="font-bold text-[var(--text)]">
-                      Hoàn tác hóa đơn?
-                    </h3>
-                  </div>
-                  <button
-                    onClick={closeRollbackModal}
-                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
-                  >
-                    <XCircle className="w-5 h-5" />
-                  </button>
-                </div>
+      {showRollbackModal && (
+        <ModalShell onClose={() => setShowRollbackModal(false)}>
+          {(close) => {
+            const preview = getRollbackRefundPreview();
+            const total = preview.reduce((s, p) => s + p.amount, 0);
+            const emailCandidates = getRollbackEmailCandidates();
+            return (
+              <>
+                <ModalHeader
+                  icon={<RotateCcw className="h-4 w-4" />}
+                  tone="warning"
+                  title="Hoàn tác hóa đơn?"
+                  onClose={close}
+                />
 
-                <div className="p-5 space-y-3">
+                <ModalBody className="space-y-4">
                   <p className="text-sm text-[var(--text-muted)]">
                     Hoàn tác hóa đơn đã gửi cho buổi{" "}
-                    <strong className="text-[var(--text)]">{session.title}</strong>?
+                    <strong className="text-[var(--text)]">
+                      {session.title}
+                    </strong>
+                    ?
                   </p>
 
-                  {(() => {
-                    const preview = getRollbackRefundPreview();
-                    if (preview.length === 0) return null;
-                    const total = preview.reduce((s, p) => s + p.amount, 0);
-                    return (
-                      <div className="rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)] p-3 space-y-2">
-                        <p className="text-xs font-semibold text-[var(--primary)]">
-                          Tiền sẽ hoàn về ví ({preview.length} người)
-                        </p>
-                        <ul className="space-y-1 max-h-40 overflow-y-auto pr-1">
-                          {preview.map((p) => (
-                            <li
-                              key={p.user_id}
-                              className="flex items-center justify-between text-xs text-[var(--text-muted)]"
-                            >
-                              <span>{p.full_name}</span>
-                              <span className="font-semibold text-[var(--primary)]">
-                                {formatVnd(p.amount)}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="flex items-center justify-between border-t border-[color-mix(in_srgb,var(--primary)_30%,transparent)] pt-1.5">
-                          <span className="text-xs font-semibold text-[var(--text)]">
-                            Tổng hoàn
-                          </span>
-                          <span className="text-sm font-bold text-[var(--primary)]">
-                            {formatVnd(total)}
-                          </span>
-                        </div>
+                  {preview.length > 0 && (
+                    <div
+                      className={`space-y-2 rounded-xl border p-3 ${TONE_SOFT.primary}`}
+                    >
+                      <p className="text-xs font-semibold">
+                        Tiền sẽ hoàn về ví ({preview.length} người)
+                      </p>
+                      <ul className="max-h-40 space-y-1 overflow-y-auto pr-1">
+                        {preview.map((p) => (
+                          <li
+                            key={p.user_id}
+                            className="flex items-center justify-between text-xs text-[var(--text-muted)]"
+                          >
+                            <span>{p.full_name}</span>
+                            <span className="font-semibold tabular-nums text-[var(--primary)]">
+                              {formatVnd(p.amount)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="flex items-center justify-between border-t border-[color-mix(in_srgb,var(--primary)_28%,transparent)] pt-2">
+                        <span className="text-xs font-semibold text-[var(--text)]">
+                          Tổng hoàn
+                        </span>
+                        <span className="text-sm font-bold tabular-nums">
+                          {formatVnd(total)}
+                        </span>
                       </div>
-                    );
-                  })()}
+                    </div>
+                  )}
 
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
-                      <Wallet className="w-4 h-4 text-[var(--primary)] flex-shrink-0 mt-0.5" />
+                  <ul className="space-y-2.5">
+                    <li className="flex items-start gap-2.5 text-sm text-[var(--text-muted)]">
+                      <Wallet className="mt-0.5 h-4 w-4 shrink-0 text-[var(--primary)]" />
                       <span>
                         Tiền đã trừ ví sẽ được <strong>hoàn lại</strong> và ghi
                         vào lịch sử ví.
                       </span>
                     </li>
-                    <li className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
-                      <XCircle className="w-4 h-4 text-[var(--danger)] flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5 text-sm text-[var(--text-muted)]">
+                      <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--danger)]" />
                       <span>
                         <strong>Tất cả</strong> xác nhận thanh toán (kể cả tiền
                         mặt/chuyển khoản admin đã xác nhận thủ công) sẽ bị huỷ,
                         member sẽ nhận thông báo.
                       </span>
                     </li>
-                    <li className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
-                      <Calculator className="w-4 h-4 text-[var(--success)] flex-shrink-0 mt-0.5" />
+                    <li className="flex items-start gap-2.5 text-sm text-[var(--text-muted)]">
+                      <Calculator className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" />
                       <span>
                         Buổi sẽ mở lại để bạn chỉnh sửa chi phí và gửi hóa đơn
                         mới.
@@ -3583,240 +2594,177 @@ export default function SessionDetailPage() {
                     </li>
                   </ul>
 
-                  {(() => {
-                    const emailCandidates = getRollbackEmailCandidates();
-                    if (emailCandidates.length === 0) return null;
-                    return (
-                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3 space-y-2">
-                        <p className="text-xs font-semibold text-[var(--text-muted)] flex items-center gap-1.5">
-                          <Mail className="w-3.5 h-3.5" />
-                          Gửi mail "hóa đơn bị huỷ" cho khách (mặc định: không gửi)
-                        </p>
-                        <ul className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                          {emailCandidates.map((g) => {
-                            const name = g.guest_full_name ?? "?";
-                            const checked = rollbackEmailIds.has(g.id);
-                            return (
-                              <li
-                                key={g.id}
-                                className="flex items-center justify-between gap-2"
-                              >
-                                <span className="text-sm text-[var(--text)] truncate">
-                                  {name}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => toggleRollbackEmail(g.id)}
-                                  className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${checked ? "bg-emerald-500" : "bg-gray-300"
-                                    }`}
-                                >
-                                  <span
-                                    className="inline-block h-4 w-4 rounded-full bg-[var(--surface)] shadow transition-transform duration-200"
-                                    style={{
-                                      transform: checked
-                                        ? "translateX(18px)"
-                                        : "translateX(2px)",
-                                    }}
-                                  />
-                                </button>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    );
-                  })()}
-                </div>
+                  {emailCandidates.length > 0 && (
+                    <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
+                      <p className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+                        <Mail className="h-3.5 w-3.5" />
+                        Gửi mail "hóa đơn bị huỷ" cho khách (mặc định: không
+                        gửi)
+                      </p>
+                      <ul className="max-h-40 space-y-2 overflow-y-auto pr-1">
+                        {emailCandidates.map((g) => {
+                          const name = g.guest_full_name ?? "?";
+                          return (
+                            <li
+                              key={g.id}
+                              className="flex items-center justify-between gap-3"
+                            >
+                              <span className="truncate text-sm text-[var(--text)]">
+                                {name}
+                              </span>
+                              <Switch
+                                checked={rollbackEmailIds.has(g.id)}
+                                onChange={() => toggleRollbackEmail(g.id)}
+                                label={`Gửi mail cho ${name}`}
+                              />
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </ModalBody>
 
-                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
+                <ModalFooter>
                   <button
-                    onClick={closeRollbackModal}
+                    type="button"
+                    onClick={close}
                     className="btn-secondary text-sm"
                   >
                     Hủy
                   </button>
                   <button
+                    type="button"
                     onClick={handleConfirmRollback}
                     disabled={rollingBack || checkingPenalties}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
+                    className="flex h-10 items-center gap-2 rounded-xl bg-orange-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
                   >
                     {(rollingBack || checkingPenalties) && (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     )}
                     Xác nhận hoàn tác
                   </button>
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )}
+                </ModalFooter>
+              </>
+            );
+          }}
+        </ModalShell>
+      )}
 
-        {showPenaltyRefundModal &&
-          typeof document !== "undefined" &&
-          createPortal(
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{
-                background: "var(--overlay)",
-                backdropFilter: "blur(2px)",
-                opacity: penaltyRefundModalVisible ? 1 : 0,
-                transition: "opacity 200ms ease-out",
-              }}
-              onClick={closePenaltyRefundModal}
-            >
-              <div
-                className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-xl"
-                style={{
-                  transform: penaltyRefundModalVisible
-                    ? "scale(1) translateY(0)"
-                    : "scale(0.95) translateY(8px)",
-                  opacity: penaltyRefundModalVisible ? 1 : 0,
-                  transition:
-                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
-                      <ShieldAlert className="w-4 h-4 text-[var(--danger)]" />
-                    </div>
-                    <h3 className="font-bold text-[var(--text)]">Hoàn luôn tiền phạt?</h3>
-                  </div>
-                  <button
-                    onClick={closePenaltyRefundModal}
-                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
-                  >
-                    <XCircle className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="p-5 space-y-3">
-                  <p className="text-sm text-[var(--text-muted)]">
-                    Buổi này có <strong>{penaltiesToRefund.length}</strong> khoản phạt
-                    đã được trừ thẳng vào ví. Bạn có muốn hoàn lại các khoản này luôn
-                    không?
-                  </p>
-                  <ul className="space-y-1.5 max-h-48 overflow-y-auto pr-1 rounded-xl border border-[var(--border)] p-2">
-                    {penaltiesToRefund.map((p: any) => (
-                      <li
-                        key={p.id}
-                        className="flex items-center justify-between text-xs text-[var(--text-muted)] px-1 py-1"
-                      >
-                        <span className="truncate">
-                          {p.users?.full_name}{" "}
-                          <span className="text-[var(--text-faint)]">— {p.reason}</span>
+      {showPenaltyRefundModal && (
+        <ModalShell onClose={() => setShowPenaltyRefundModal(false)}>
+          {(close) => (
+            <>
+              <ModalHeader
+                icon={<ShieldAlert className="h-4 w-4" />}
+                tone="danger"
+                title="Hoàn luôn tiền phạt?"
+                onClose={close}
+              />
+              <ModalBody className="space-y-3">
+                <p className="text-sm text-[var(--text-muted)]">
+                  Buổi này có <strong>{penaltiesToRefund.length}</strong> khoản
+                  phạt đã được trừ thẳng vào ví. Bạn có muốn hoàn lại các khoản
+                  này luôn không?
+                </p>
+                <ul className="max-h-48 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--border)] p-2 pr-1">
+                  {penaltiesToRefund.map((p: any) => (
+                    <li
+                      key={p.id}
+                      className="flex items-center justify-between px-1 py-1 text-xs text-[var(--text-muted)]"
+                    >
+                      <span className="truncate">
+                        {p.users?.full_name}{" "}
+                        <span className="text-[var(--text-faint)]">
+                          — {p.reason}
                         </span>
-                        <span className="font-semibold text-[var(--danger)] flex-shrink-0 ml-2">
-                          {formatVnd(p.amount)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs font-semibold text-[var(--text)]">
-                      Tổng cộng
-                    </span>
-                    <span className="text-sm font-bold text-[var(--danger)]">
-                      {formatVnd(
-                        penaltiesToRefund.reduce((s, p) => s + Number(p.amount), 0),
-                      )}
-                    </span>
-                  </div>
+                      </span>
+                      <span className="ml-2 shrink-0 font-semibold tabular-nums text-[var(--danger)]">
+                        {formatVnd(p.amount)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-xs font-semibold text-[var(--text)]">
+                    Tổng cộng
+                  </span>
+                  <span className="text-sm font-bold tabular-nums text-[var(--danger)]">
+                    {formatVnd(
+                      penaltiesToRefund.reduce(
+                        (s, p) => s + Number(p.amount),
+                        0,
+                      ),
+                    )}
+                  </span>
                 </div>
-
-                <div className="flex flex-col gap-2 px-5 py-4 border-t border-[var(--border)]">
-                  <button
-                    onClick={() => handleRollbackFinish(true)}
-                    disabled={rollingBack}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
-                  >
-                    {rollingBack && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Hoàn luôn tiền phạt
-                  </button>
-                  <button
-                    onClick={() => handleRollbackFinish(false)}
-                    disabled={rollingBack}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] text-[var(--text)] text-sm font-semibold transition-colors disabled:opacity-50"
-                  >
-                    Không hoàn tiền phạt
-                  </button>
-                </div>
-              </div>
-            </div>,
-            document.body,
+              </ModalBody>
+              <ModalFooter className="flex-col items-stretch">
+                <button
+                  type="button"
+                  onClick={() => handleRollbackFinish(true)}
+                  disabled={rollingBack}
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-500 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+                >
+                  {rollingBack && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Hoàn luôn tiền phạt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRollbackFinish(false)}
+                  disabled={rollingBack}
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)] transition-colors hover:bg-[var(--border-strong)] disabled:opacity-50"
+                >
+                  Không hoàn tiền phạt
+                </button>
+              </ModalFooter>
+            </>
           )}
+        </ModalShell>
+      )}
 
-        {showCancelModal &&
-          typeof document !== "undefined" &&
-          createPortal(
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{
-                background: "var(--overlay)",
-                backdropFilter: "blur(2px)",
-                opacity: cancelModalVisible ? 1 : 0,
-                transition: "opacity 200ms ease-out",
-              }}
-              onClick={closeCancelModal}
-            >
-              <div
-                className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl"
-                style={{
-                  transform: cancelModalVisible
-                    ? "scale(1) translateY(0)"
-                    : "scale(0.95) translateY(8px)",
-                  opacity: cancelModalVisible ? 1 : 0,
-                  transition:
-                    "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center flex-shrink-0">
-                      <XCircle className="w-4 h-4 text-[var(--danger)]" />
-                    </div>
-                    <h3 className="font-bold text-[var(--text)]">Hủy buổi đánh?</h3>
-                  </div>
-                  <button
-                    onClick={closeCancelModal}
-                    className="p-1 text-[var(--text-faint)] hover:text-[var(--text-muted)]"
-                  >
-                    <XCircle className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="p-5">
-                  <p className="text-sm text-[var(--text-muted)]">
-                    Hủy buổi{" "}
-                    <strong className="text-[var(--text)]">"{session.title}"</strong>
-                    ? Buổi chưa có ai đăng ký nên có thể hủy an toàn. Bạn có thể
-                    mở lại sau nếu cần.
-                  </p>
-                </div>
-
-                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--border)]">
-                  <button
-                    onClick={closeCancelModal}
-                    className="btn-secondary text-sm"
-                  >
-                    Đóng
-                  </button>
-                  <button
-                    onClick={handleCancelSession}
-                    disabled={cancelling}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
-                  >
-                    {cancelling && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Xác nhận hủy buổi
-                  </button>
-                </div>
-              </div>
-            </div>,
-            document.body,
+      {showCancelModal && (
+        <ModalShell size="sm" onClose={() => setShowCancelModal(false)}>
+          {(close) => (
+            <>
+              <ModalHeader
+                icon={<XCircle className="h-4 w-4" />}
+                tone="danger"
+                title="Hủy buổi đánh?"
+                onClose={close}
+              />
+              <ModalBody>
+                <p className="text-sm text-[var(--text-muted)]">
+                  Hủy buổi{" "}
+                  <strong className="text-[var(--text)]">
+                    "{session.title}"
+                  </strong>
+                  ? Buổi chưa có ai đăng ký nên có thể hủy an toàn. Bạn có thể
+                  mở lại sau nếu cần.
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <button
+                  type="button"
+                  onClick={close}
+                  className="btn-secondary text-sm"
+                >
+                  Đóng
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelSession}
+                  disabled={cancelling}
+                  className="flex h-10 items-center gap-2 rounded-xl bg-red-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+                >
+                  {cancelling && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Xác nhận hủy buổi
+                </button>
+              </ModalFooter>
+            </>
           )}
-      </div>
+        </ModalShell>
+      )}
     </>
   );
 }
