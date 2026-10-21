@@ -242,6 +242,20 @@ export function ModalShell({
     children: (close: () => void) => ReactNode;
 }) {
     const [visible, setVisible] = useState(false);
+    const [vv, setVv] = useState<{ top: number; height: number } | null>(null);
+
+    useEffect(() => {
+        const v = window.visualViewport;
+        if (!v) return;
+        const update = () => setVv({ top: v.offsetTop, height: v.height });
+        update();
+        v.addEventListener("resize", update);
+        v.addEventListener("scroll", update);
+        return () => {
+            v.removeEventListener("resize", update);
+            v.removeEventListener("scroll", update);
+        };
+    }, []);
 
     useEffect(() => {
         const raf = requestAnimationFrame(() => setVisible(true));
@@ -273,8 +287,10 @@ export function ModalShell({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-50 flex items-end justify-center transition-opacity duration-200 sm:items-center sm:p-4"
+            className="fixed inset-x-0 z-50 flex items-end justify-center transition-opacity duration-200 sm:items-center sm:p-4"
             style={{
+                top: vv ? vv.top : 0,
+                height: vv ? vv.height : "100%",
                 background: "var(--overlay)",
                 backdropFilter: "blur(2px)",
                 opacity: visible ? 1 : 0,
@@ -284,7 +300,7 @@ export function ModalShell({
             <div
                 role="dialog"
                 aria-modal="true"
-                className={`flex max-h-[92dvh] w-full flex-col rounded-t-3xl bg-[var(--surface)] shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] sm:rounded-2xl ${size === "sm" ? "sm:max-w-sm" : "sm:max-w-md"
+                className={`flex max-h-full sm:max-h-[92dvh] w-full flex-col rounded-t-3xl bg-[var(--surface)] shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] sm:rounded-2xl ${size === "sm" ? "sm:max-w-sm" : "sm:max-w-md"
                     } ${visible
                         ? "translate-y-0 opacity-100 sm:scale-100"
                         : "translate-y-full opacity-0 sm:translate-y-2 sm:scale-95"

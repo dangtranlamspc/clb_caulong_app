@@ -2140,10 +2140,10 @@ export default function SessionDetailPage() {
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-faint)]" />
                         <input
-                          autoFocus
+                          autoFocus={typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches}
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
-                          className="input-field pl-9"
+                          className="input-field pl-9 text-base md:text-sm"
                           placeholder="Tìm theo tên hoặc số điện thoại..."
                         />
                       </div>
