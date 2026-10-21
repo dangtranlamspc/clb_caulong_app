@@ -2116,8 +2116,8 @@ export default function SessionDetailPage() {
                 <div className="mx-5 mt-4 grid grid-cols-2 rounded-xl bg-[var(--surface-muted)] p-1">
                   {(
                     [
-                      ["account", "Có tài khoản"],
-                      ["guest", "Khách không tài khoản"],
+                      ["account", "Thành viên"],
+                      ["guest", "Khách"],
                     ] as const
                   ).map(([val, lbl]) => (
                     <button

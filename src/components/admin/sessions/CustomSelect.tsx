@@ -30,7 +30,13 @@ export function CustomSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const [pos, setPos] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+    maxH: 224,
+    up: false,
+  });
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -41,27 +47,56 @@ export function CustomSelect({
   const updatePosition = () => {
     if (!btnRef.current) return;
     const rect = btnRef.current.getBoundingClientRect();
+
     const MIN_LIST_WIDTH = 240;
+    const GAP = 6;
+    const EDGE = 8;
+    const DESIRED_MAX = 224; // = max-h-56
+
     const width = Math.max(rect.width, MIN_LIST_WIDTH);
-    const maxLeft = window.innerWidth - width - 8;
-    const left = Math.max(8, Math.min(rect.left, maxLeft));
+    const maxLeft = window.innerWidth - width - EDGE;
+    const left = Math.max(EDGE, Math.min(rect.left, maxLeft));
+
+    // Dùng visualViewport để tính đúng khi bàn phím mở / thanh địa chỉ co giãn
+    const vv = window.visualViewport;
+    const vTop = vv ? vv.offsetTop : 0;
+    const vBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+
+    const spaceBelow = vBottom - rect.bottom - GAP - EDGE;
+    const spaceAbove = rect.top - vTop - GAP - EDGE;
+
+    // Mở lên trên nếu phía dưới chật mà phía trên rộng hơn
+    const up = spaceBelow < 160 && spaceAbove > spaceBelow;
+    const room = up ? spaceAbove : spaceBelow;
+    const maxH = Math.max(96, Math.min(DESIRED_MAX, room));
+
     setPos({
-      top: rect.bottom + 6,
+      top: up ? rect.top - GAP : rect.bottom + GAP,
       left,
       width,
+      maxH,
+      up,
     });
   };
 
   useLayoutEffect(() => {
     if (!open) return;
-    const list = listRef.current;
-    const el = activeRef.current;
-    if (!list) return;
-    if (!el) {
-      list.scrollTop = 0;
-      return;
-    }
-    list.scrollTop = el.offsetTop - (list.clientHeight - el.offsetHeight) / 2;
+    updatePosition();
+    const onScroll = (e: Event) => {
+      if (listRef.current && listRef.current.contains(e.target as Node)) return;
+      updatePosition();
+    };
+    const onResize = () => updatePosition();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("scroll", onResize);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("scroll", onResize);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -132,51 +167,63 @@ export function CustomSelect({
       {mounted &&
         createPortal(
           <div
-            ref={listRef}
             style={{
               position: "fixed",
               top: pos.top,
               left: pos.left,
               width: pos.width,
-              boxShadow: "var(--shadow-strong)",
+              transform: pos.up ? "translateY(-100%)" : undefined,
+              zIndex: 9999,
+              pointerEvents: open ? "auto" : "none",
             }}
-            className={`max-h-56 overflow-y-auto hide-scrollbar bg-[var(--surface)] border border-[var(--border)] rounded-xl z-[9999] py-1 origin-top transition-[opacity,transform] duration-150 ease-out ${open
-              ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
-              }`}
           >
-            {options.map((opt) => {
-              const isActive = opt.value === value;
-              return (
-                <button
-                  key={opt.value}
-                  ref={isActive ? activeRef : undefined}
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.value);
-                    setOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-2 text-left px-3 py-2 text-sm transition-colors duration-150 ${isActive
-                    ? "bg-[var(--primary-soft)] text-[var(--primary)] font-medium"
-                    : "text-[var(--text)] hover:bg-[var(--surface-hover)]"
-                    }`}
-                >
-                  {opt.imageUrl && (
-                    <img
-                      src={opt.imageUrl}
-                      alt=""
-                      className="w-8 h-8 rounded-md object-cover flex-shrink-0 border border-[var(--border)]"
-                    />
-                  )}
-                  <span className="flex-1 min-w-0 truncate">{opt.label}</span>
-                  {opt.subLabel && (
-                    <span className="flex-shrink-0 text-xs text-[var(--text-faint)]">
-                      {opt.subLabel}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+            <div
+              ref={listRef}
+              style={{
+                maxHeight: pos.maxH,
+                boxShadow: "var(--shadow-strong)",
+                overscrollBehavior: "contain",
+                WebkitOverflowScrolling: "touch",
+              }}
+              className={`overflow-y-auto hide-scrollbar bg-[var(--surface)] border border-[var(--border)] rounded-xl py-1 transition-[opacity,transform] duration-150 ease-out ${pos.up ? "origin-bottom" : "origin-top"
+                } ${open
+                  ? "opacity-100 scale-100 translate-y-0"
+                  : `opacity-0 scale-95 ${pos.up ? "translate-y-1" : "-translate-y-1"}`
+                }`}
+            >
+              {options.map((opt) => {
+                const isActive = opt.value === value;
+                return (
+                  <button
+                    key={opt.value}
+                    ref={isActive ? activeRef : undefined}
+                    type="button"
+                    onClick={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2 text-left px-3 py-2.5 text-sm transition-colors duration-150 ${isActive
+                      ? "bg-[var(--primary-soft)] text-[var(--primary)] font-medium"
+                      : "text-[var(--text)] hover:bg-[var(--surface-hover)]"
+                      }`}
+                  >
+                    {opt.imageUrl && (
+                      <img
+                        src={opt.imageUrl}
+                        alt=""
+                        className="w-8 h-8 rounded-md object-cover flex-shrink-0 border border-[var(--border)]"
+                      />
+                    )}
+                    <span className="flex-1 min-w-0 truncate">{opt.label}</span>
+                    {opt.subLabel && (
+                      <span className="flex-shrink-0 text-xs text-[var(--text-faint)]">
+                        {opt.subLabel}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>,
           document.body,
         )}
