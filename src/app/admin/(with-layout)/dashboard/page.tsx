@@ -522,7 +522,7 @@ export default function AdminDashboardPage() {
         <div
             ref={rootRef}
             style={rootH ? { height: rootH } : undefined}
-            className="w-full flex flex-col gap-3 xl:overflow-hidden"
+            className="w-full flex flex-col gap-3 xl:overflow-hidden xl:p-1"
         >
             <div className="flex items-center justify-between gap-3 flex-wrap flex-shrink-0">
                 <div className="min-w-0">
@@ -537,7 +537,7 @@ export default function AdminDashboardPage() {
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <button
                                 onClick={() => router.push('/admin/members')}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-sm hover:bg-[var(--surface-hover)] transition-colors"
+                                className="flex h-[46px] items-center gap-1.5 px-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-sm hover:bg-[var(--surface-hover)] transition-colors"
                             >
                                 <Users className="w-3.5 h-3.5 text-[var(--primary)]" />
                                 <span className="text-[11px] text-[var(--text-faint)]">Thành viên</span>
@@ -548,7 +548,7 @@ export default function AdminDashboardPage() {
                                     key={label}
                                     onClick={() => router.push(href)}
                                     title={label}
-                                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-sm hover:bg-[var(--surface-hover)] transition-colors"
+                                    className="flex h-[46px] items-center gap-1.5 px-2.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-sm hover:bg-[var(--surface-hover)] transition-colors"
                                 >
                                     <span className={`w-5 h-5 rounded-md flex items-center justify-center ${bg}`}>
                                         <I className="w-3 h-3 text-white" />

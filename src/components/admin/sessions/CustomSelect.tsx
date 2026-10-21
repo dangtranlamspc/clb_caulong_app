@@ -51,13 +51,12 @@ export function CustomSelect({
     const MIN_LIST_WIDTH = 240;
     const GAP = 6;
     const EDGE = 8;
-    const DESIRED_MAX = 224; // = max-h-56
+    const DESIRED_MAX = 224;
 
     const width = Math.max(rect.width, MIN_LIST_WIDTH);
     const maxLeft = window.innerWidth - width - EDGE;
     const left = Math.max(EDGE, Math.min(rect.left, maxLeft));
 
-    // Dùng visualViewport để tính đúng khi bàn phím mở / thanh địa chỉ co giãn
     const vv = window.visualViewport;
     const vTop = vv ? vv.offsetTop : 0;
     const vBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
@@ -65,7 +64,6 @@ export function CustomSelect({
     const spaceBelow = vBottom - rect.bottom - GAP - EDGE;
     const spaceAbove = rect.top - vTop - GAP - EDGE;
 
-    // Mở lên trên nếu phía dưới chật mà phía trên rộng hơn
     const up = spaceBelow < 160 && spaceAbove > spaceBelow;
     const room = up ? spaceAbove : spaceBelow;
     const maxH = Math.max(96, Math.min(DESIRED_MAX, room));
@@ -79,6 +77,46 @@ export function CustomSelect({
     });
   };
 
+  // useLayoutEffect(() => {
+  //   if (!open) return;
+  //   updatePosition();
+  //   const onScroll = (e: Event) => {
+  //     if (listRef.current && listRef.current.contains(e.target as Node)) return;
+  //     updatePosition();
+  //   };
+  //   const onResize = () => updatePosition();
+  //   window.addEventListener("scroll", onScroll, true);
+  //   window.addEventListener("resize", onResize);
+  //   window.visualViewport?.addEventListener("resize", onResize);
+  //   window.visualViewport?.addEventListener("scroll", onResize);
+  //   return () => {
+  //     window.removeEventListener("scroll", onScroll, true);
+  //     window.removeEventListener("resize", onResize);
+  //     window.visualViewport?.removeEventListener("resize", onResize);
+  //     window.visualViewport?.removeEventListener("scroll", onResize);
+  //   };
+  // }, [open]);
+
+
+  // Cuộn tới mục đang chọn mỗi khi mở
+  useLayoutEffect(() => {
+    if (!open) return;
+    const scrollToActive = () => {
+      const list = listRef.current;
+      const el = activeRef.current;
+      if (!list) return;
+      if (!el) {
+        list.scrollTop = 0;
+        return;
+      }
+      list.scrollTop = el.offsetTop - (list.clientHeight - el.offsetHeight) / 2;
+    };
+    scrollToActive();
+    const raf = requestAnimationFrame(scrollToActive); // chạy lại sau khi maxHeight đã áp dụng
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
+
+  // Cập nhật vị trí khi cuộn trang / resize / bàn phím
   useLayoutEffect(() => {
     if (!open) return;
     updatePosition();
@@ -119,19 +157,6 @@ export function CustomSelect({
     if (!open) updatePosition();
     setOpen((o) => !o);
   };
-
-  useLayoutEffect(() => {
-    if (!open) return;
-    updatePosition();
-    const onScroll = () => updatePosition();
-    const onResize = () => updatePosition();
-    window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [open]);
 
   const current = options.find((o) => o.value === value);
 
@@ -185,7 +210,7 @@ export function CustomSelect({
                 overscrollBehavior: "contain",
                 WebkitOverflowScrolling: "touch",
               }}
-              className={`overflow-y-auto hide-scrollbar bg-[var(--surface)] border border-[var(--border)] rounded-xl py-1 transition-[opacity,transform] duration-150 ease-out ${pos.up ? "origin-bottom" : "origin-top"
+              className={`relative overflow-y-auto hide-scrollbar bg-[var(--surface)] border border-[var(--border)] rounded-xl py-1 transition-[opacity,transform] duration-150 ease-out ${pos.up ? "origin-bottom" : "origin-top"
                 } ${open
                   ? "opacity-100 scale-100 translate-y-0"
                   : `opacity-0 scale-95 ${pos.up ? "translate-y-1" : "-translate-y-1"}`
