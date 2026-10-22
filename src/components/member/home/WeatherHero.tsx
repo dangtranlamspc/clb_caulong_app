@@ -14,6 +14,8 @@ import { c } from "@/lib/theme";
  * Xem thử từng kiểu thời tiết mà không cần chờ trời thay đổi:
  *   /home?wx=rain            (clear | partly | cloudy | fog | rain | storm | snow)
  *   /home?wx=clear&night=1   (thêm night=1 để xem ban đêm)
+ *
+ * Gỡ lỗi: thêm ?wxdebug=1 để in dữ liệu thô của Open-Meteo ra console.
  */
 
 export type WeatherScene =
@@ -40,55 +42,85 @@ const SCENES: WeatherScene[] = [
 // (TP. Hồ Chí Minh). Đổi thành toạ độ sân của CLB nếu cần.
 const WEATHER_LAT = 10.78;
 const WEATHER_LON = 106.7;
-const REFRESH_MS = 15 * 60 * 1000;
-const CACHE_KEY = "home-weather-v1";
+const REFRESH_MS = 10 * 60 * 1000;
+const GEO_TIMEOUT_MS = 10 * 1000;
+// Đổi key khi đổi cấu trúc dữ liệu cache để bỏ cache cũ
+const CACHE_KEY = "home-weather-v3";
+// Endpoint NestJS (proxy tới WeatherAPI.com). Backend có setGlobalPrefix("api/v1").
+const WEATHER_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1/weather`;
 
 /* ───────────────────────── dữ liệu thời tiết ───────────────────────── */
 
-// Mã thời tiết WMO của Open-Meteo -> kiểu nền
-function wmoToScene(code: number): WeatherScene {
-    if (code === 0 || code === 1) return "clear";
-    if (code === 2) return "partly";
-    if (code === 3) return "cloudy";
-    if (code === 45 || code === 48) return "fog";
-    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return "rain";
-    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "snow";
-    if (code >= 95) return "storm";
-    return "cloudy";
-}
-
 type Weather = { scene: WeatherScene; isDay: boolean };
 type Coords = { lat: number; lon: number };
+type Cached = { t: number; scene: WeatherScene; isDay: boolean };
 
-// Hỏi vị trí người dùng; từ chối / lỗi / quá 8 giây thì dùng toạ độ dự phòng
+function readCache(): Cached | null {
+    try {
+        const raw = sessionStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const v = JSON.parse(raw) as Cached;
+        if (
+            typeof v?.t !== "number" ||
+            typeof v?.isDay !== "boolean" ||
+            !SCENES.includes(v?.scene)
+        ) {
+            return null;
+        }
+        return v;
+    } catch {
+        return null; // bỏ qua lỗi storage / JSON hỏng
+    }
+}
+
+function writeCache(v: Cached) {
+    try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(v));
+    } catch {
+        /* bỏ qua lỗi storage */
+    }
+}
+
+// Hỏi vị trí người dùng; từ chối / lỗi / quá GEO_TIMEOUT_MS thì dùng toạ độ dự phòng.
+// Lưu ý: option `timeout` của trình duyệt KHÔNG tính thời gian chờ người dùng bấm
+// popup xin quyền, nên phải tự đặt thêm một bộ đếm giờ để không bị treo mãi.
 function getCoords(): Promise<Coords> {
     const fallback: Coords = { lat: WEATHER_LAT, lon: WEATHER_LON };
     if (typeof navigator === "undefined" || !navigator.geolocation) {
         return Promise.resolve(fallback);
     }
     return new Promise((resolve) => {
+        let done = false;
+        const finish = (c: Coords) => {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            resolve(c);
+        };
+        const timer = setTimeout(() => finish(fallback), GEO_TIMEOUT_MS);
         navigator.geolocation.getCurrentPosition(
-            (pos) =>
-                resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-            () => resolve(fallback),
+            (pos) => finish({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+            () => finish(fallback),
             { enableHighAccuracy: false, timeout: 8000, maximumAge: 30 * 60 * 1000 },
         );
     });
 }
 
-function hourIsDay() {
-    const h = new Date().getHours();
-    return h >= 6 && h < 18;
-}
-
+/**
+ * Trả về null khi chưa có dữ liệu thật (đang tải / lỗi mạng).
+ * Khi đó thẻ hero dùng gradient mặc định thay vì giả vờ "trời nắng".
+ * Backend đã quy đổi dữ liệu Apple WeatherKit sang { scene, isDay }.
+ */
 function useWeather(): Weather | null {
     const [weather, setWeather] = useState<Weather | null>(null);
 
     useEffect(() => {
         let alive = true;
 
-        // Chế độ xem thử qua query ?wx=...
         const q = new URLSearchParams(window.location.search);
+        const debug = q.get("wxdebug") === "1";
+
+        // Chế độ xem thử qua query ?wx=...
         const forced = q.get("wx") as WeatherScene | null;
         if (forced && SCENES.includes(forced)) {
             setWeather({ scene: forced, isDay: q.get("night") !== "1" });
@@ -96,21 +128,12 @@ function useWeather(): Weather | null {
         }
 
         // Dùng kết quả đã lưu (nếu còn mới) để hiện ngay, không chờ mạng
-        let cachedFresh = false;
-        try {
-            const raw = sessionStorage.getItem(CACHE_KEY);
-            if (raw) {
-                const cached = JSON.parse(raw);
-                if (Date.now() - cached.t < REFRESH_MS) {
-                    setWeather({ scene: wmoToScene(cached.code), isDay: cached.isDay });
-                    cachedFresh = true;
-                }
-            }
-        } catch {
-            /* bỏ qua lỗi storage */
+        let lastFetch = 0;
+        const cached = readCache();
+        if (cached && Date.now() - cached.t < REFRESH_MS) {
+            setWeather({ scene: cached.scene, isDay: cached.isDay });
+            lastFetch = cached.t;
         }
-        // Trong lúc chờ: trời quang theo giờ ngày/đêm
-        if (!cachedFresh) setWeather({ scene: "clear", isDay: hourIsDay() });
 
         let coordsPromise: Promise<Coords> | null = null;
 
@@ -119,35 +142,47 @@ function useWeather(): Weather | null {
                 coordsPromise ??= getCoords();
                 const { lat, lon } = await coordsPromise;
                 if (!alive) return;
-                // Làm tròn 2 chữ số thập phân (~1 km) vì chỉ cần thời tiết khu vực, không gửi vị trí chính xác
-                const url =
-                    `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}` +
-                    `&longitude=${lon.toFixed(2)}&current=weather_code,is_day&timezone=auto`;
-                const res = await fetch(url);
-                if (!res.ok) return;
-                const json = await res.json();
-                const code = json?.current?.weather_code;
-                if (typeof code !== "number" || !alive) return;
-                const isDay = json.current.is_day === 1;
-                setWeather({ scene: wmoToScene(code), isDay });
-                try {
-                    sessionStorage.setItem(
-                        CACHE_KEY,
-                        JSON.stringify({ t: Date.now(), code, isDay }),
-                    );
-                } catch {
-                    /* bỏ qua lỗi storage */
+
+                // Làm tròn 2 chữ số thập phân (~1 km) vì chỉ cần thời tiết khu vực
+                const res = await fetch(
+                    `${WEATHER_ENDPOINT}?lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}`,
+                    { cache: "no-store" },
+                );
+                if (!res.ok) {
+                    console.warn("[WeatherHero] backend lỗi:", res.status);
+                    return;
                 }
-            } catch {
-                /* mất mạng: giữ nền hiện tại */
+                const json = await res.json();
+                if (debug) console.log("[WeatherHero] data:", json);
+
+                if (!alive || !SCENES.includes(json?.scene)) return;
+                const isDay = json.isDay !== false;
+
+                lastFetch = Date.now();
+                setWeather({ scene: json.scene, isDay });
+                writeCache({ t: lastFetch, scene: json.scene, isDay });
+            } catch (err) {
+                // mất mạng: giữ nền hiện tại
+                if (debug) console.warn("[WeatherHero] fetch thất bại:", err);
             }
         };
 
-        if (!cachedFresh) run();
+        if (!lastFetch) run();
         const id = setInterval(run, REFRESH_MS);
+
+        // Trên điện thoại / PWA, setInterval bị tạm dừng khi ẩn tab.
+        // Quay lại tab mà dữ liệu đã cũ thì tải lại ngay.
+        const onVisible = () => {
+            if (document.visibilityState === "visible" && Date.now() - lastFetch >= REFRESH_MS) {
+                run();
+            }
+        };
+        document.addEventListener("visibilitychange", onVisible);
+
         return () => {
             alive = false;
             clearInterval(id);
+            document.removeEventListener("visibilitychange", onVisible);
         };
     }, []);
 
@@ -340,7 +375,7 @@ function WeatherBackdrop({
                     <span className="wx-rays" />
                     <span
                         className="wx-sun"
-                        style={{ opacity: scene === "partly" ? 0.85 : 1 }}
+                        style={{ opacity: scene === "partly" ? 0.7 : 1 }}
                     />
                 </>
             )}
