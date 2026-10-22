@@ -24,6 +24,8 @@ import { ParticipantsModal } from "@/components/member/home/ParticipantsModal";
 import { supabase } from "@/lib/supabase";
 import { BirthdayModal } from "@/components/member/home/BirthdayModal";
 import { c, alpha, type ThemeTokens } from "@/lib/theme";
+import { WeatherHero } from "@/components/member/home/WeatherHero";
+import { BirthdaySection } from "@/components/member/home/BirthdaySection";
 
 const LEVEL_LABELS: Record<string, string> = {
   yeu: "Yếu",
@@ -198,20 +200,10 @@ export default function HomePage() {
       setParticipantsLoading(false);
     }
   };
-
-  const currentMonth = new Date().getMonth();
-  const currentDay = new Date().getDate();
-
   return (
     <>
       <div className="space-y-5">
-        <div
-          className="relative rounded-3xl p-5 overflow-hidden"
-          style={{
-            background: c.heroGradient,
-            boxShadow: c.shadow,
-          }}
-        >
+        <WeatherHero style={{ boxShadow: c.shadow }}>
           <div className="relative">
             <div className="flex items-center gap-3 mb-1">
               {user?.avatar_url ? (
@@ -274,7 +266,7 @@ export default function HomePage() {
               )}
             </div>
           </div>
-        </div>
+        </WeatherHero>
 
         <div className="grid grid-cols-4 gap-2.5">
           {QUICK_LINKS.map(({ href, icon: Icon, label, tone, soft }) => (
@@ -316,180 +308,12 @@ export default function HomePage() {
           ))}
         </div>
 
-        <HandbookEntryCard
-          onClick={() => setHandbookOpen(true)}
-          seen={!!user?.has_seen_handbook}
-        />
+        {!loading && user && !user.has_seen_handbook && (
+          <HandbookEntryCard onClick={() => setHandbookOpen(true)} seen={false} />
+        )}
 
         {!loading && birthdays.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
-                  style={{
-                    background: "linear-gradient(135deg, #f857a6, #ec4899)",
-                    boxShadow: "0 2px 8px rgba(248,87,166,0.35)",
-                  }}
-                >
-                  🎂
-                </div>
-                <h3 className="font-bold text-sm" style={{ color: c.textMuted }}>
-                  Sinh nhật tháng {currentMonth + 1}
-                </h3>
-              </div>
-              <span
-                className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: c.pinkSoft, color: c.pink }}
-              >
-                {birthdays.length} người
-              </span>
-            </div>
-
-            <div className="grid grid-cols-4 gap-2">
-              {birthdays.map((m, idx) => {
-                const dob = new Date(m.date_of_birth);
-                const day = dob.getDate();
-                const isToday =
-                  dob.getDate() === currentDay && dob.getMonth() === currentMonth;
-                const isUpcoming =
-                  !isToday && Math.abs(day - currentDay) <= 4 && day >= currentDay;
-                const initials =
-                  m.full_name
-                    ?.split(" ")
-                    .slice(-2)
-                    .map((w: string) => w[0])
-                    .join("")
-                    .toUpperCase() ?? "?";
-                const firstName = m.full_name?.split(" ").pop() ?? m.full_name;
-
-                const enter = `cardIn 0.4s cubic-bezier(.34,1.56,.64,1) ${idx * 0.07}s both`;
-
-                const cardStyle = isToday
-                  ? {
-                    background: `linear-gradient(160deg, ${c.pinkSoft} 0%, ${alpha("pink", 25)} 100%), ${c.surface}`,
-                    border: `1.5px solid ${alpha("pink", 55)}`,
-                    boxShadow: "0 4px 16px rgba(248,87,166,0.18)",
-                    animation: `${enter}, todayPulse 3s ease-in-out 0.5s infinite`,
-                  }
-                  : isUpcoming
-                    ? {
-                      background: `linear-gradient(160deg, ${c.warningSoft} 0%, ${alpha("warning", 18)} 100%), ${c.surface}`,
-                      border: `1px solid ${alpha("warning", 40)}`,
-                      animation: enter,
-                    }
-                    : {
-                      background: c.surface,
-                      border: `1px solid ${c.border}`,
-                      boxShadow: c.shadow,
-                      animation: enter,
-                    };
-
-                const avatarStyle = isToday
-                  ? {
-                    background: m.avatar_url
-                      ? "transparent"
-                      : "linear-gradient(135deg, #f857a6, #ec4899)",
-                    color: "white",
-                    fontSize: "18px",
-                    boxShadow: "0 3px 10px rgba(248,87,166,0.45)",
-                  }
-                  : isUpcoming
-                    ? {
-                      background: m.avatar_url ? "transparent" : c.warningSoft,
-                      color: c.warning,
-                    }
-                    : {
-                      background: m.avatar_url ? "transparent" : c.primarySoft,
-                      color: c.primary,
-                    };
-
-                const dateChipStyle = isToday
-                  ? { background: "linear-gradient(135deg, #f857a6, #ec4899)", color: "white" }
-                  : isUpcoming
-                    ? { background: c.warningSoft, color: c.warning }
-                    : { background: c.surfaceMuted, color: c.textMuted };
-
-                return (
-                  <div
-                    key={m.id ?? idx}
-                    onClick={() => setSelectedBirthdayMember(m)}
-                    className="flex flex-col items-center gap-1.5 py-3 px-1.5 rounded-2xl relative overflow-hidden active:scale-95 transition-transform cursor-pointer"
-                    style={cardStyle}
-                  >
-                    {isToday && (
-                      <span
-                        className="absolute top-1.5 right-1.5 text-[7px] font-black px-1.5 py-0.5 rounded-full text-white uppercase tracking-wide"
-                        style={{ background: "linear-gradient(135deg, #f857a6, #ec4899)" }}
-                      >
-                        Hôm nay
-                      </span>
-                    )}
-
-                    <div
-                      className="w-11 h-11 rounded-full flex items-center justify-center font-black text-sm relative overflow-hidden"
-                      style={avatarStyle}
-                    >
-                      {m.avatar_url ? (
-                        <img
-                          src={m.avatar_url}
-                          alt={m.full_name}
-                          className="w-full h-full object-cover rounded-full"
-                        />
-                      ) : isToday ? (
-                        "🎂"
-                      ) : (
-                        initials
-                      )}
-
-                      {isToday && (
-                        <span
-                          className="absolute inset-0 rounded-full border-2 border-pink-400"
-                          style={{ animation: "ringOut 1.8s ease-out infinite" }}
-                        />
-                      )}
-                    </div>
-
-                    <p
-                      className="text-[10px] font-bold text-center leading-tight w-full px-0.5 truncate"
-                      style={{ color: isToday ? c.pink : c.text }}
-                    >
-                      {firstName}
-                    </p>
-
-                    <span
-                      className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
-                      style={dateChipStyle}
-                    >
-                      🎂 {day}/{currentMonth + 1}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <style jsx>{`
-      @keyframes cardIn {
-        from { opacity: 0; transform: scale(0.75) translateY(10px); }
-        to { opacity: 1; transform: scale(1) translateY(0); }
-      }
-      @keyframes todayPulse {
-        0%, 100% { box-shadow: 0 4px 16px rgba(248, 87, 166, 0.18); }
-        50% { box-shadow: 0 6px 24px rgba(248, 87, 166, 0.32); }
-      }
-      @keyframes ringOut {
-        0% { transform: scale(1); opacity: 0.8; }
-        100% { transform: scale(1.65); opacity: 0; }
-      }
-      @keyframes cakeWiggle {
-        0%, 100% { transform: rotate(0deg); }
-        20% { transform: rotate(-12deg); }
-        40% { transform: rotate(12deg); }
-        60% { transform: rotate(-6deg); }
-        80% { transform: rotate(6deg); }
-      }
-    `}</style>
-          </section>
+          <BirthdaySection birthdays={birthdays} onSelect={setSelectedBirthdayMember} />
         )}
 
         <UpcomingSessionsSection
@@ -519,7 +343,7 @@ export default function HomePage() {
             await usersApi.sendBirthdayWish(memberId, { message });
           }}
         />
-      </div>
+      </div >
     </>
   );
 }

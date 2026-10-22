@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { sessionsApi } from "../../../lib/api";
-import { RefreshCw, Wallet, X, Loader2, Users, TrendingUp, TrendingDown } from "lucide-react";
+import { RefreshCw, Wallet, X, Loader2, Users, TrendingUp, TrendingDown, ChevronDown, CalendarDays, Scale } from "lucide-react";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 
 function fmt(n: number) {
@@ -60,6 +60,19 @@ function FadeIn({
 }
 
 
+/**
+ * Thay thế 2 component cũ: FeeRow và SessionCostDetailModal.
+ *
+ * 1) Cập nhật dòng import lucide-react:
+ *    import {
+ *      RefreshCw, Wallet, X, Loader2, Users, TrendingUp, TrendingDown,
+ *      ChevronDown, CalendarDays, Scale,
+ *    } from "lucide-react";
+ *
+ * 2) Dùng lại các thứ đã có sẵn trong file: useState, useEffect, createPortal,
+ *    sessionsApi, fmtFull. Props của modal không đổi.
+ */
+
 function FeeRow({
   name,
   amount,
@@ -75,12 +88,18 @@ function FeeRow({
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean);
+
   return (
-    <div className={nested ? "pl-3 border-l-2 border-[color-mix(in_srgb,var(--warning)_30%,transparent)]" : ""}>
+    <div
+      className={
+        nested
+          ? "ml-1 border-l-2 border-[color-mix(in_srgb,var(--warning)_30%,transparent)] pl-3"
+          : ""
+      }
+    >
       <div className="flex items-baseline gap-2">
         <span
-          className={`truncate text-sm ${nested ? "text-[var(--text)]" : "font-semibold text-[var(--text)]"
-            }`}
+          className={`min-w-0 truncate text-sm text-[var(--text)] ${nested ? "" : "font-semibold"}`}
         >
           {name}
           {nested && (
@@ -89,16 +108,15 @@ function FeeRow({
             </span>
           )}
         </span>
-        <span className="flex-1 min-w-4 border-b border-dotted border-[color-mix(in_srgb,var(--warning)_30%,transparent)] -translate-y-[3px]" />
+        <span className="min-w-4 flex-1 -translate-y-[3px] border-b border-dotted border-[color-mix(in_srgb,var(--warning)_30%,transparent)]" />
         <span
-          className={`flex-shrink-0 tabular-nums text-sm text-[var(--warning)] ${nested ? "font-medium" : "font-semibold"
-            }`}
+          className={`shrink-0 text-sm tabular-nums text-[var(--warning)] ${nested ? "font-medium" : "font-semibold"}`}
         >
           {fmtFull(amount)}
         </span>
       </div>
       {lines.map((l, i) => (
-        <p key={i} className="text-xs text-[var(--text-muted)] mt-0.5">
+        <p key={i} className="mt-0.5 text-xs italic text-[var(--text-muted)]">
           {l}
         </p>
       ))}
@@ -106,6 +124,33 @@ function FeeRow({
   );
 }
 
+function SummaryCell({
+  label,
+  value,
+  className = "",
+  valueClassName = "text-[var(--text)]",
+  icon,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+  valueClassName?: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className={`min-w-0 px-3 py-3 ${className}`}>
+      <p className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
+        {icon}
+        {label}
+      </p>
+      <p
+        className={`mt-1 truncate text-[15px] font-bold tabular-nums leading-tight ${valueClassName}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
 
 function SessionCostDetailModal({
   sessionId,
@@ -117,6 +162,7 @@ function SessionCostDetailModal({
   const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(false);
+  const [showFees, setShowFees] = useState(false);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setVisible(true));
@@ -128,6 +174,7 @@ function SessionCostDetailModal({
     sessionsApi
       .getCostDetail(sessionId)
       .then(({ data }) => setDetail(data))
+      .catch(() => setDetail(null))
       .finally(() => setLoading(false));
   }, [sessionId]);
 
@@ -136,11 +183,61 @@ function SessionCostDetailModal({
     setTimeout(onClose, 200);
   };
 
+  // Khoá cuộn nền + đóng bằng phím Esc
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (typeof document === "undefined") return null;
+
+  const chiPhi = detail?.chi_phi;
+  const paidList: any[] = detail?.paid_list ?? [];
+  const feeList: any[] = chiPhi?.other_fee_list ?? [];
+
+  const totalCost = detail?.summary?.total_cost ?? 0;
+  const totalPaid = detail?.summary?.total_paid ?? 0;
+  const profit = totalPaid - totalCost;
+  const isProfit = profit > 0;
+  const isBreakEven = profit === 0;
+
+  const tone = isBreakEven
+    ? { text: "text-[var(--primary)]", soft: "bg-[var(--primary-soft)]" }
+    : isProfit
+      ? { text: "text-[var(--success)]", soft: "bg-[var(--success-soft)]" }
+      : { text: "text-[var(--danger)]", soft: "bg-[var(--danger-soft)]" };
+  const resultLabel = isBreakEven ? "Hòa vốn" : isProfit ? "Lãi" : "Lỗ";
+  const ResultIcon = isBreakEven ? Scale : isProfit ? TrendingUp : TrendingDown;
+
+  const title: string = detail?.session?.title ?? "Chi tiết buổi đánh";
+  const sessionDate = detail ? new Date(detail.session.scheduled_at) : null;
+  const shortDate = sessionDate
+    ? `${String(sessionDate.getDate()).padStart(2, "0")}/${String(sessionDate.getMonth() + 1).padStart(2, "0")}`
+    : "";
+  // Tiêu đề buổi thường đã chứa ngày (vd "Thứ 5 (01/10)") -> không lặp lại dòng ngày
+  const dateLabel =
+    sessionDate && !title.includes(shortDate)
+      ? sessionDate.toLocaleDateString("vi-VN", {
+        weekday: "long",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      : null;
+  const paidPeople: number = detail?.summary?.total_members ?? 0;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex flex-col justify-end sm:items-center sm:justify-center"
+      className="fixed inset-0 z-[9999] flex flex-col justify-end sm:items-center sm:justify-center sm:p-4"
       style={{
         background: "var(--overlay)",
         backdropFilter: "blur(2px)",
@@ -150,249 +247,291 @@ function SessionCostDetailModal({
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
-        className="w-full sm:max-w-md bg-[var(--surface)] rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Chi tiết buổi đánh"
+        className="flex w-full flex-col overflow-hidden rounded-t-3xl bg-[var(--surface)] shadow-2xl sm:max-w-lg sm:rounded-2xl"
         style={{
-          maxHeight: "85vh",
+          maxHeight: "90dvh",
           transform: visible ? "translateY(0)" : "translateY(24px)",
           opacity: visible ? 1 : 0,
           transition:
-            "transform 220ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
+            "transform 260ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease-out",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
-          <p className="text-sm font-bold text-[var(--text)]">
-            Chi tiết chi phí buổi đánh
-          </p>
-          <button
-            onClick={handleClose}
-            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)]"
-          >
-            <X className="w-4 h-4 text-[var(--text-muted)]" />
-          </button>
+        <div className="flex justify-center pt-2 sm:hidden">
+          <span className="h-1 w-9 rounded-full bg-[var(--border-strong)]" />
         </div>
 
-        <div className="px-5 py-4 space-y-4 overflow-y-auto">
+        {/* Header + kết quả: luôn hiển thị, không cuộn theo nội dung */}
+        <div className="shrink-0 border-b border-[var(--border)]">
+          <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-3 sm:pt-5">
+            <div className="min-w-0">
+              <h2 className="text-base font-bold leading-snug text-[var(--text)]">
+                {title}
+              </h2>
+              {detail && (
+                <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-faint)]">
+                  {dateLabel && (
+                    <span className="flex items-center gap-1.5 capitalize">
+                      <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+                      {dateLabel}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 shrink-0" />
+                    {paidPeople} người đã thanh toán
+                  </span>
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Đóng"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] transition-colors hover:bg-[var(--border-strong)]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {detail && (
+            <div className="px-5 pb-4">
+              <section className="grid grid-cols-3 divide-x divide-[var(--border)] overflow-hidden rounded-2xl border border-[var(--border)]">
+                <SummaryCell label="Tổng thu" value={fmtFull(totalPaid)} />
+                <SummaryCell label="Tổng chi" value={fmtFull(totalCost)} />
+                <SummaryCell
+                  label={resultLabel}
+                  value={`${isProfit ? "+" : ""}${fmtFull(profit)}`}
+                  className={tone.soft}
+                  valueClassName={tone.text}
+                  icon={<ResultIcon className={`h-3.5 w-3.5 ${tone.text}`} />}
+                />
+              </section>
+            </div>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 [scrollbar-width:thin] [scrollbar-color:var(--border-strong)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--border-strong)] [&::-webkit-scrollbar-track]:bg-transparent">
           {loading ? (
-            <div className="flex items-center justify-center py-10 text-[var(--text-faint)] gap-2 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+            <div className="animate-pulse space-y-4" aria-busy="true">
+              <div className="h-14 rounded-2xl bg-[var(--surface-muted)]" />
+              <div className="h-36 rounded-2xl bg-[var(--surface-muted)]" />
+              <div className="h-44 rounded-2xl bg-[var(--surface-muted)]" />
             </div>
           ) : !detail ? (
-            <p className="text-sm text-[var(--text-faint)] text-center py-8">
-              Không tải được dữ liệu
+            <p className="py-10 text-center text-sm text-[var(--text-faint)]">
+              Không tải được dữ liệu. Đóng cửa sổ này và mở lại để thử lần nữa.
             </p>
           ) : (
             <>
-              <div>
-                <p className="font-bold text-[var(--text)]">
-                  {detail.session.title}
-                </p>
-                <p className="text-xs text-[var(--text-faint)] mt-0.5">
-                  {new Date(detail.session.scheduled_at).toLocaleDateString(
-                    "vi-VN",
-                    {
-                      weekday: "long",
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    },
-                  )}
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-[var(--surface-muted)] p-3 space-y-1.5">
-                <p className="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wider mb-1">
-                  Chi phí thực tế
-                </p>
-                <div className="flex justify-between text-sm">
-                  <span className="text-[var(--text-muted)]">🏟 Tiền sân</span>
-                  <span className="font-medium text-[var(--text)]">
-                    {fmtFull(detail.chi_phi.court_fee)}
-                  </span>
-                </div>
-                {detail.chi_phi.shuttle_count > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-[var(--text-muted)]">
-                      🏸 Tiền cầu
-                      <span className="text-[var(--text-faint)] text-xs ml-1">
-                        ({detail.chi_phi.shuttle_count} ×{" "}
-                        {fmtFull(detail.chi_phi.shuttle_price)})
-                      </span>
-                    </span>
-                    <span className="font-medium text-[var(--text)]">
-                      {fmtFull(detail.chi_phi.shuttle_cost)}
+              {/* Chi phí */}
+              <section>
+                <h3 className="mb-2 text-sm font-semibold text-[var(--text)]">
+                  Chi phí buổi đánh
+                </h3>
+                <div className="space-y-2 rounded-2xl bg-[var(--surface-muted)] px-4 py-3 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[var(--text-muted)]">🏟 Tiền sân</span>
+                    <span className="font-medium tabular-nums text-[var(--text)]">
+                      {fmtFull(chiPhi.court_fee)}
                     </span>
                   </div>
-                )}
-                <div className="flex justify-between text-sm pt-1.5 border-t border-[var(--border)] mt-1">
-                  <span className="font-semibold text-[var(--text)]">
-                    Tổng chi phí (sân + cầu)
-                  </span>
-                  <span className="font-black text-[var(--success)]">
-                    {fmtFull(
-                      detail.chi_phi.court_fee + detail.chi_phi.shuttle_cost,
-                    )}
-                  </span>
-                </div>
-              </div>
 
-              {detail.chi_phi.other_fee > 0 && (
-                <div className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] overflow-hidden">
-                  <div className="px-3.5 py-2.5 text-sm font-medium text-[var(--text-muted)] border-b border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
-                    💰 Khoản thu khác
-                    {detail.chi_phi.other_fee_note && (
-                      <span className="text-[var(--text-faint)] italic font-normal">
-                        {" "}({detail.chi_phi.other_fee_note})
+                  {chiPhi.shuttle_count > 0 && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[var(--text-muted)]">
+                        🏸 Tiền cầu
+                        <span className="ml-1.5 text-xs text-[var(--text-faint)]">
+                          {chiPhi.shuttle_count} × {fmtFull(chiPhi.shuttle_price)}
+                        </span>
                       </span>
-                    )}
-                  </div>
-
-                  {(detail.chi_phi.other_fee_list ?? []).length > 0 && (
-                    <div className="p-3 space-y-2.5">
-                      {detail.chi_phi.other_fee_list.map((item: any, i: number) => {
-                        const hasGuests = (item.guests?.length ?? 0) > 0;
-                        return (
-                          <div
-                            key={i}
-                            className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--surface)] overflow-hidden"
-                          >
-                            <div className="px-3 py-2.5 space-y-2">
-                              <FeeRow name={item.name} amount={item.amount} note={item.note} />
-                              {item.guests?.map((g: any, gi: number) => (
-                                <FeeRow
-                                  key={gi}
-                                  name={g.name}
-                                  amount={g.amount}
-                                  note={g.note}
-                                  nested
-                                />
-                              ))}
-                            </div>
-                            {hasGuests && (
-                              <div className="flex items-center justify-between px-3 py-2 bg-[var(--warning-soft)] border-t border-dashed border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
-                                <span className="text-xs font-medium text-[var(--warning)]">
-                                  Tổng nhóm
-                                </span>
-                                <span className="text-sm font-bold text-[var(--warning)] tabular-nums">
-                                  {fmtFull(item.total ?? item.amount)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                      <span className="font-medium tabular-nums text-[var(--text)]">
+                        {fmtFull(chiPhi.shuttle_cost)}
+                      </span>
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center px-3.5 py-2.5 bg-[var(--warning-soft)]">
-                    <span className="text-xs font-semibold text-[var(--warning)] uppercase tracking-wide">
-                      Tổng khoản thu khác
+                  {chiPhi.other_fee > 0 && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 text-[var(--text-muted)]">
+                        📌 Khoản khác
+                        {chiPhi.other_fee_note && (
+                          <span className="ml-1.5 text-xs italic text-[var(--text-faint)]">
+                            {chiPhi.other_fee_note}
+                          </span>
+                        )}
+                      </span>
+                      <span className="shrink-0 font-medium tabular-nums text-[var(--warning)]">
+                        {fmtFull(chiPhi.other_fee)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-3 border-t border-dashed border-[var(--border-strong)] pt-2.5">
+                    <span className="font-semibold text-[var(--text)]">
+                      Tổng chi
                     </span>
-                    <span className="text-base font-bold text-[var(--warning)] tabular-nums">
-                      {fmtFull(detail.chi_phi.other_fee)}
+                    <span className="font-bold tabular-nums text-[var(--text)]">
+                      {fmtFull(totalCost)}
                     </span>
                   </div>
                 </div>
+              </section>
+
+              {/* Khoản thu khác theo người (thu gọn mặc định) */}
+              {feeList.length > 0 && (
+                <section className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)]">
+                  <button
+                    type="button"
+                    onClick={() => setShowFees((v) => !v)}
+                    aria-expanded={showFees}
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                  >
+                    <span className="text-sm font-semibold text-[var(--text)]">
+                      Khoản khác theo người
+                      <span className="ml-1.5 text-xs font-normal text-[var(--text-muted)]">
+                        {feeList.length} mục
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span className="text-sm font-bold tabular-nums text-[var(--warning)]">
+                        {fmtFull(chiPhi.other_fee)}
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 text-[var(--text-muted)] transition-transform duration-300 ${showFees ? "rotate-180" : ""}`}
+                      />
+                    </span>
+                  </button>
+
+                  <div
+                    className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                    style={{ gridTemplateRows: showFees ? "1fr" : "0fr" }}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="space-y-2 border-t border-[color-mix(in_srgb,var(--warning)_30%,transparent)] p-3">
+                        {feeList.map((item: any, i: number) => {
+                          const hasGuests = (item.guests?.length ?? 0) > 0;
+                          return (
+                            <div
+                              key={i}
+                              className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--surface)]"
+                            >
+                              <div className="space-y-2 px-3 py-2.5">
+                                <FeeRow
+                                  name={item.name}
+                                  amount={item.amount}
+                                  note={item.note}
+                                />
+                                {item.guests?.map((g: any, gi: number) => (
+                                  <FeeRow
+                                    key={gi}
+                                    name={g.name}
+                                    amount={g.amount}
+                                    note={g.note}
+                                    nested
+                                  />
+                                ))}
+                              </div>
+                              {hasGuests && (
+                                <div className="flex items-center justify-between border-t border-dashed border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--warning-soft)] px-3 py-2">
+                                  <span className="text-xs font-medium text-[var(--warning)]">
+                                    Tổng nhóm
+                                  </span>
+                                  <span className="text-sm font-bold tabular-nums text-[var(--warning)]">
+                                    {fmtFull(item.total ?? item.amount)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </section>
               )}
 
-              <div>
-                <p className="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wider mb-2">
-                  Khoản từng người cần thanh toán (
-                  {detail.paid_list?.length ?? 0} người)
-                </p>
+              {/* Danh sách thu tiền */}
+              <section>
+                <div className="mb-2 flex items-baseline justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-[var(--text)]">
+                    Danh sách thu tiền
+                  </h3>
+                  <span className="flex items-center gap-1 text-xs text-[var(--text-faint)]">
+                    <Users className="h-3.5 w-3.5" />
+                    {paidList.length} khoản
+                  </span>
+                </div>
 
-                {(!detail.paid_list || detail.paid_list.length === 0) ? (
-                  <div className="rounded-xl border border-[var(--border)]">
-                    <p className="text-sm text-[var(--text-faint)] text-center py-4">
-                      Chưa có ai được chốt thanh toán
+                {paidList.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[var(--border-strong)] px-4 py-6 text-center">
+                    <p className="text-sm text-[var(--text-muted)]">
+                      Chưa có khoản nào được xác nhận thanh toán
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--text-faint)]">
+                      Tổng thu sẽ cập nhật khi admin xác nhận từng người.
                     </p>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden">
-                    {detail.paid_list.map((p: any) => {
-                      const grouped = p.guest_names?.length ?? 0;
+                  <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-2xl border border-[var(--border)]">
+                    {paidList.map((p: any) => {
+                      const groupedNames: string[] = p.guest_names ?? [];
+                      const initial =
+                        p.full_name?.trim()?.[0]?.toUpperCase() ?? "?";
                       return (
-                        <div key={p.registration_id} className="px-3.5 py-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="text-sm font-medium text-[var(--text)] truncate">
+                        <li
+                          key={p.registration_id}
+                          className="flex items-center gap-3 px-3.5 py-2.5"
+                        >
+                          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${p.is_guest ? "bg-[var(--surface-muted)] text-[var(--text-muted)]" : "bg-[var(--primary-soft)] text-[var(--primary)]"}`}>
+                            {initial}
+                          </span>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-[var(--text)]">
                               {p.full_name}
                               {p.is_guest && (
-                                <span className="text-[var(--text-faint)] text-xs ml-1">(khách)</span>
+                                <span className="ml-1.5 rounded-full bg-[var(--surface-muted)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
+                                  Khách
+                                </span>
                               )}
-                            </span>
-                            <span className="text-sm font-bold text-[var(--text)] tabular-nums flex-shrink-0">
-                              {fmtFull(p.total_amount)}
-                            </span>
+                            </p>
+
+                            {groupedNames.length > 0 && (
+                              <div className="mt-1 flex flex-wrap items-center gap-1">
+                                <span className="text-[11px] text-[var(--text-faint)]">
+                                  Gộp cùng
+                                </span>
+                                {groupedNames.map((n, i) => (
+                                  <span
+                                    key={i}
+                                    className="rounded-full bg-[var(--purple-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--purple)]"
+                                  >
+                                    {n}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {p.other_fee_amount > 0 && (
+                              <p className="mt-0.5 text-[11px] text-[var(--warning)]">
+                                Gồm khoản khác {fmtFull(p.other_fee_amount)}
+                              </p>
+                            )}
                           </div>
 
-                          {grouped > 0 && (
-                            <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                              <span className="text-[11px] text-[var(--text-faint)]">Gộp cùng</span>
-                              {p.guest_names.map((n: string, i: number) => (
-                                <span
-                                  key={i}
-                                  className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--purple-soft)] text-[var(--purple)] font-medium"
-                                >
-                                  {n}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                          <span className="shrink-0 text-sm font-bold tabular-nums text-[var(--text)]">
+                            {fmtFull(p.total_amount)}
+                          </span>
+                        </li>
                       );
                     })}
-                  </div>
+                  </ul>
                 )}
-              </div>
-              {(() => {
-                const totalCost = detail.summary.total_cost ?? 0;
-                const totalPaid = detail.summary.total_paid ?? 0;
-                const profit = totalPaid - totalCost;
-                const isProfit = profit > 0;
-                const isBreakEven = profit === 0;
-
-                const tone = isBreakEven
-                  ? "text-[var(--primary)] bg-[var(--primary-soft)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)]"
-                  : isProfit
-                    ? "text-[var(--success)] bg-[var(--success-soft)] border-[color-mix(in_srgb,var(--success)_30%,transparent)]"
-                    : "text-[var(--danger)] bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]";
-
-                return (
-                  <div className="mt-2 rounded-xl border border-[var(--border)] overflow-hidden">
-                    <div className="px-3.5 py-2.5 space-y-1.5 bg-[var(--surface-muted)]">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-[var(--text-muted)]">💰 Tổng chi</span>
-                        <span className="font-semibold text-[var(--text)] tabular-nums">
-                          {fmtFull(totalCost)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-[var(--text-muted)]">💵 Tổng thu</span>
-                        <span className="font-semibold text-[var(--text)] tabular-nums">
-                          {fmtFull(totalPaid)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div
-                      className={`flex items-center justify-between px-3.5 py-3 border-t ${tone}`}
-                    >
-                      <span className="text-sm font-semibold flex items-center gap-1.5">
-                        {isBreakEven ? null : isProfit ? (
-                          <TrendingUp className="w-4 h-4" />
-                        ) : (
-                          <TrendingDown className="w-4 h-4" />
-                        )}
-                        {isBreakEven ? "Hòa vốn" : isProfit ? "Lãi" : "Lỗ"}
-                      </span>
-                      <span className="text-base font-black tabular-nums">
-                        {isProfit ? "+" : ""}
-                        {fmtFull(profit)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })()}
+              </section>
             </>
           )}
         </div>
@@ -541,6 +680,28 @@ function SkeletonStats() {
   );
 }
 
+const INITIAL_VISIBLE = 2;
+const LOAD_STEP = 2;
+const LOAD_DELAY_MS = 350;
+
+function SessionCardSkeleton() {
+  return (
+    <div
+      className="animate-pulse rounded-2xl border-2 border-[var(--border)] bg-[var(--surface)] p-4"
+      aria-hidden="true"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="space-y-2">
+          <div className="h-4 w-28 rounded bg-[var(--surface-muted)]" />
+          <div className="h-3 w-40 rounded bg-[var(--surface-muted)]" />
+        </div>
+        <div className="h-6 w-20 rounded-full bg-[var(--surface-muted)]" />
+      </div>
+      <div className="mt-4 h-36 rounded-xl bg-[var(--surface-muted)]" />
+    </div>
+  );
+}
+
 export default function CostPage() {
   const [data, setData] = useState<{ sessions: any[]; summary: any } | null>(
     null,
@@ -554,6 +715,13 @@ export default function CostPage() {
   const now = new Date();
   const [month, setMonth] = useState<number | null>(null);
   const [year, setYear] = useState<number>(now.getFullYear());
+
+  // ----- Hiện dần danh sách khi cuộn -----
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [armed, setArmed] = useState(false); // chỉ tự tải thêm sau khi người dùng đã cuộn
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -574,11 +742,67 @@ export default function CostPage() {
     load();
   }, [month, year]);
 
+  // Đổi tháng/năm -> quay về 2 buổi đầu
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setLoadingMore(false);
+    setVisibleCount(INITIAL_VISIBLE);
+  }, [month, year]);
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
+
   const completedSessions = data
     ? data.sessions.filter((item: any) => item.session.status === "completed")
     : [];
 
-  const grouped = groupByMonth(completedSessions);
+  const total = completedSessions.length;
+  const hasMore = visibleCount < total;
+  const remaining = Math.max(0, total - visibleCount);
+  const visibleSessions = completedSessions.slice(0, visibleCount);
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    timerRef.current = setTimeout(() => {
+      setVisibleCount((c) => c + LOAD_STEP);
+      setLoadingMore(false);
+    }, LOAD_DELAY_MS);
+  }, [loadingMore, hasMore]);
+
+  // Đánh dấu người dùng đã bắt đầu cuộn (chuột, cảm ứng, hoặc cuộn trong bất kỳ vùng nào)
+  useEffect(() => {
+    if (armed) return;
+    const arm = () => setArmed(true);
+    window.addEventListener("scroll", arm, { capture: true, passive: true });
+    window.addEventListener("wheel", arm, { passive: true });
+    window.addEventListener("touchmove", arm, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", arm, true);
+      window.removeEventListener("wheel", arm);
+      window.removeEventListener("touchmove", arm);
+    };
+  }, [armed]);
+
+  // Khi cuộn gần tới đáy danh sách thì tải thêm (chạy cho cả cuộn trang lẫn vùng cuộn bên trong layout)
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !armed || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { rootMargin: "0px 0px 240px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [armed, hasMore, loadMore, visibleCount]);
+
+  const grouped = groupByMonth(visibleSessions);
   const s = data?.summary;
 
   const YEAR_OPTIONS = Array.from(
@@ -693,36 +917,64 @@ export default function CostPage() {
             </div>
           </FadeIn>
 
-          {grouped.map(({ month, items }, groupIdx) => (
-            <div key={month} className="space-y-3">
-              <FadeIn delay={220 + groupIdx * 40}>
+          {grouped.map(({ month: monthLabel, items }, groupIdx) => (
+            <div key={monthLabel} className="space-y-3">
+              <FadeIn delay={groupIdx === 0 ? 220 : 0}>
                 <div className="flex items-center gap-2 px-1">
                   <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--surface-muted)] px-2.5 py-1 rounded-full">
-                    {month}
+                    {monthLabel}
                   </span>
                   <div className="flex-1 h-px bg-[var(--surface-muted)]" />
                 </div>
               </FadeIn>
-              {items.map((item: any, idx: number) => (
-                <FadeIn
-                  key={item.session.id}
-                  delay={260 + groupIdx * 40 + idx * 80}
-                >
-                  <SessionCostCard
-                    item={item}
-                    onClick={() => setSelectedSessionId(item.session.id)}
-                  />
-                </FadeIn>
-              ))}
+              {items.map((item: any) => {
+                const absIdx = visibleSessions.indexOf(item);
+                // 2 buổi đầu hiện sau phần tổng quan; các đợt tải thêm hiện lần lượt trong cùng đợt
+                const delay =
+                  absIdx < INITIAL_VISIBLE
+                    ? 260 + absIdx * 80
+                    : ((absIdx - INITIAL_VISIBLE) % LOAD_STEP) * 90;
+                return (
+                  <FadeIn key={item.session.id} delay={delay}>
+                    <SessionCostCard
+                      item={item}
+                      onClick={() => setSelectedSessionId(item.session.id)}
+                    />
+                  </FadeIn>
+                );
+              })}
             </div>
           ))}
 
-          {completedSessions.length === 0 && (
+          {total === 0 && (
             <FadeIn delay={200}>
               <div className="bg-[var(--surface)] rounded-2xl py-14 text-center">
                 <p className="text-[var(--text-faint)] text-sm">Chưa có buổi đánh nào hoàn thành</p>
               </div>
             </FadeIn>
+          )}
+
+          {hasMore && (
+            <div ref={sentinelRef} className="pb-2">
+              {loadingMore ? (
+                <SessionCardSkeleton />
+              ) : (
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  className="mx-auto flex h-10 items-center gap-2 rounded-full bg-[var(--surface-muted)] px-4 text-sm font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--border-strong)] active:scale-[0.97]"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                  Xem thêm {remaining} buổi
+                </button>
+              )}
+            </div>
+          )}
+
+          {!hasMore && total > INITIAL_VISIBLE && (
+            <p className="pb-2 text-center text-xs text-[var(--text-faint)]">
+              Đã hiển thị hết {total} buổi
+            </p>
           )}
         </>
       )}

@@ -105,22 +105,45 @@ function BottomNav({
     const activeIndex = NAV_ITEMS.findIndex(({ href }) =>
         href === "/profile" ? pathname === "/profile" : pathname.startsWith(href),
     );
+    const count = NAV_ITEMS.length;
 
     return (
         <nav
+            aria-label="Điều hướng chính"
             className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4"
-            style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom, 0px))" }}
+            style={{
+                paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom, 0px))",
+            }}
         >
             <div
-                className="w-full max-w-lg flex items-stretch"
+                className="relative flex w-full max-w-lg items-stretch"
                 style={{
                     height: 64,
-                    borderRadius: 22,
+                    borderRadius: 24,
                     background: "var(--nav-bg)",
                     border: "1px solid var(--nav-border)",
                     boxShadow: "var(--nav-shadow)",
                 }}
             >
+                {/* Ô nền trượt theo tab đang chọn */}
+                <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute bottom-0 left-0 top-0 p-[6px] transition-[transform,opacity] duration-[380ms] ease-[cubic-bezier(0.34,1.4,0.64,1)] motion-reduce:transition-none"
+                    style={{
+                        width: `${100 / count}%`,
+                        transform: `translateX(${Math.max(activeIndex, 0) * 100}%)`,
+                        opacity: activeIndex < 0 ? 0 : 1,
+                    }}
+                >
+                    <span
+                        className="block h-full w-full"
+                        style={{
+                            borderRadius: 18,
+                            background: "var(--nav-icon-active-bg)",
+                        }}
+                    />
+                </span>
+
                 {NAV_ITEMS.map(({ href, icon: Icon, label }, i) => {
                     const isActive = i === activeIndex;
                     const showDot = href === "/activity" && showActivityDot;
@@ -129,22 +152,24 @@ function BottomNav({
                         <Link
                             key={href}
                             href={href}
-                            className="flex-1 flex flex-col items-center justify-center gap-1"
+                            aria-current={isActive ? "page" : undefined}
+                            className="relative z-10 flex flex-1 flex-col items-center justify-center gap-1 transition-transform duration-150 active:scale-95 motion-reduce:transition-none"
                         >
-                            <div
-                                className="relative flex items-center justify-center transition-colors duration-200"
+                            <span
+                                className="relative flex h-6 w-6 items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)] motion-reduce:transition-none"
                                 style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: "50%",
-                                    background: isActive ? "var(--nav-icon-active-bg)" : "transparent",
+                                    transform: isActive
+                                        ? "translateY(-1px) scale(1.1)"
+                                        : "none",
                                 }}
                             >
                                 <Icon
                                     style={{
-                                        width: 20,
-                                        height: 20,
-                                        color: isActive ? "var(--nav-icon-active)" : "var(--nav-icon)",
+                                        width: 21,
+                                        height: 21,
+                                        color: isActive
+                                            ? "var(--nav-icon-active)"
+                                            : "var(--nav-icon)",
                                         strokeWidth: isActive ? 2.2 : 1.8,
                                         transition: "color 0.2s ease",
                                     }}
@@ -152,22 +177,30 @@ function BottomNav({
                                 {showDot && (
                                     <span
                                         className="absolute flex"
-                                        style={{ top: -2, right: -2, width: 10, height: 10 }}
+                                        style={{ top: -3, right: -4, width: 10, height: 10 }}
                                     >
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75 motion-reduce:animate-none" />
                                         <span
                                             className="relative inline-flex rounded-full bg-red-500"
-                                            style={{ width: 10, height: 10, border: "2px solid var(--nav-dot-border)" }}
+                                            style={{
+                                                width: 10,
+                                                height: 10,
+                                                border: "2px solid var(--nav-dot-border)",
+                                            }}
                                         />
                                     </span>
                                 )}
-                            </div>
+                            </span>
+
                             <span
                                 className="transition-colors duration-200"
                                 style={{
                                     fontSize: 10,
-                                    fontWeight: isActive ? 600 : 400,
-                                    color: isActive ? "var(--nav-label-active)" : "var(--nav-label)",
+                                    lineHeight: 1,
+                                    fontWeight: isActive ? 700 : 500,
+                                    color: isActive
+                                        ? "var(--nav-label-active)"
+                                        : "var(--nav-label)",
                                     letterSpacing: "-0.01em",
                                 }}
                             >
