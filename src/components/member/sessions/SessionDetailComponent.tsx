@@ -31,6 +31,13 @@ import { useNotificationsRealtimeStore } from "@/store/notifications-realtime.st
 import { walletApi, sessionsApi, registrationsApi, usersApi } from "@/lib/api";
 import { CustomSelect } from "@/components/admin/sessions/CustomSelect";
 import DebtWarningModal from "./DebtWarningModal";
+import {
+  BADGE_BASE,
+  BADGE_TONE,
+  GENDER_META,
+  GenderCounts,
+  countGender,
+} from "@/components/member/badges";
 
 type ActionPhase = "idle" | "loading" | "success";
 
@@ -74,18 +81,6 @@ const BANK_DISPLAY_NAMES: Record<string, string> = {
   STB: "Sacombank",
   VPB: "VPBank",
   MSB: "MSB",
-};
-
-
-const TIER_BADGE_CLS: Record<string, string> = {
-  "Tân thủ": "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] dark:bg-zinc-500/15 dark:text-zinc-300 dark:border-zinc-500/30",
-  "Phong trào": "bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)] dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/30",
-  "Cứng cựa": "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)] dark:bg-slate-400/15 dark:text-slate-300 dark:border-slate-400/30",
-  "Chủ lực": "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-500/15 dark:text-yellow-300 dark:border-yellow-500/30",
-  "Cao thủ": "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30",
-  "Kiện tướng": "bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)] dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
-  "Đại Kiện Tướng": "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_30%,transparent)] dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30",
-  "Huyền Thoại": "bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_30%,transparent)] dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30",
 };
 
 function fmt(n: number) {
@@ -290,6 +285,39 @@ function WalletGuestConfirmModal({
       </div>
     </div>,
     document.body,
+  );
+}
+
+function InfoTile({
+  icon: Icon,
+  tone,
+  label,
+  className = "",
+  children,
+}: {
+  icon: any;
+  tone: "primary" | "purple" | "pink";
+  label: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)] px-3 py-2.5 ${className}`}
+    >
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{ background: `var(--${tone}-soft)` }}
+      >
+        <Icon className="w-4 h-4" style={{ color: `var(--${tone})` }} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-faint)]">
+          {label}
+        </p>
+        <p className="text-sm font-semibold text-[var(--text)] truncate">{children}</p>
+      </div>
+    </div>
   );
 }
 
@@ -836,272 +864,377 @@ export default function SessionDetailPage() {
   const regGuestsOf = (hostId: string) =>
     approvedRegistrations.filter((m: any) => m.host_registration_id === hostId);
 
+  const isCompleted = session.status === "completed";
+  const participantList = isCompleted
+    ? registrations.filter((r: any) => r.participation_status === "confirmed")
+    : approvedRegistrations;
+  const participantGender = countGender(participantList);
+  const registeredGender = countGender(approvedRegistrations);
+
   const renderRegPerson = (m: any, opts?: { nested?: boolean }) => {
+    const nested = opts?.nested;
     const u = m.users;
     const fullName = u?.full_name ?? m.guest_full_name ?? "?";
-    const gender = u?.gender ?? m.guest_gender;
-    const skillLevel = m.is_guest ? m.guest_skill_level : u?.level;
-    const skillLabel = m.is_guest
-      ? (SKILL_LABEL[skillLevel] ?? skillLevel)
-      : (LEVEL_LABELS[skillLevel] ?? skillLevel);
+    const gender = GENDER_META[u?.gender ?? m.guest_gender] ?? null;
+    const ringColor = gender?.color ?? "var(--border)";
+    const rawLevel = m.is_guest ? m.guest_skill_level : u?.level;
+    const levelText = rawLevel
+      ? ((m.is_guest ? SKILL_LABEL[rawLevel] : LEVEL_LABELS[rawLevel]) ?? rawLevel)
+      : null;
     const parts = fullName.trim().split(" ").filter(Boolean);
     const initials =
       parts.length >= 2
         ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
         : fullName.slice(0, 2).toUpperCase();
-    const tierCls = !m.is_guest && m.tier ? TIER_BADGE_CLS[m.tier] : null;
+    const avatarSize = nested ? "w-9 h-9" : "w-11 h-11";
 
     return (
       <li
         key={m.id}
-        className={`flex items-center gap-3 ${opts?.nested ? "py-2 pl-6" : "py-2.5"}`}
+        className={`relative ${nested ? "ml-6" : ""}`}
         style={{ animation: "fadeSlideUp .3s ease both" }}
       >
-        {opts?.nested && (
-          <span className="w-3 h-px bg-[var(--border-strong)] flex-shrink-0 -ml-3 mr-[-2px]" />
-        )}
-        {u?.avatar_url ? (
-          <img
-            src={u.avatar_url}
-            alt={fullName}
-            className={`rounded-full object-cover flex-shrink-0 ${opts?.nested ? "w-7 h-7" : "w-9 h-9"}`}
+        {nested && (
+          <span
+            aria-hidden
+            className="absolute -left-4 top-0 h-1/2 w-3 border-l-2 border-b-2 border-[var(--border-strong)] rounded-bl-lg"
           />
-        ) : (
-          <div
-            className={`rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${opts?.nested ? "w-7 h-7 text-[10px] bg-[var(--purple-soft)] text-[var(--purple)]" : "w-9 h-9 text-xs bg-[var(--primary-soft)] text-[var(--primary)]"}`}
-          >
-            {initials}
-          </div>
         )}
-        <div className="flex-1 min-w-0">
-          <p
-            className={`font-medium text-[var(--text)] truncate flex items-center gap-1 ${opts?.nested ? "text-xs" : "text-sm"}`}
-          >
-            {fullName}
-            {m.is_guest && (
-              <span className="text-xs text-[var(--text-faint)] ml-1">(khách)</span>
+
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)]">
+          {u?.avatar_url ? (
+            <img
+              src={u.avatar_url}
+              alt={fullName}
+              className={`${avatarSize} rounded-full object-cover flex-shrink-0`}
+              style={{ boxShadow: `0 0 0 2px ${ringColor}` }}
+            />
+          ) : (
+            <div
+              className={`${avatarSize} rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm bg-[var(--primary-soft)] text-[var(--primary)]`}
+              style={{ boxShadow: `0 0 0 2px ${ringColor}` }}
+            >
+              {initials}
+            </div>
+          )}
+
+          <div className="flex-1 min-w-0">
+            <p className={`font-bold text-[var(--text)] truncate ${nested ? "text-xs" : "text-sm"}`}>
+              {fullName}
+            </p>
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              {gender && (
+                <span className={`${BADGE_BASE} ${gender.tone}`}>
+                  {gender.icon} {gender.label}
+                </span>
+              )}
+              {levelText && (
+                <span className={`${BADGE_BASE} ${BADGE_TONE.primary}`}>🎯 {levelText}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-shrink-0 flex flex-col items-end gap-1 max-w-[42%] text-right">
+            {m.is_guest ? (
+              <span className={`${BADGE_BASE} ${BADGE_TONE.warning}`}>🙋 Khách</span>
+            ) : m.tier ? (
+              <>
+                <span className={`${BADGE_BASE} ${BADGE_TONE.purple} max-w-full`}>
+                  <span className="truncate">💎 {m.tier}</span>
+                </span>
+                <span className="text-[11px] font-semibold text-[var(--text-muted)]">
+                  {m.total_points ?? 0} điểm
+                </span>
+              </>
+            ) : (
+              <span className={`${BADGE_BASE} ${BADGE_TONE.muted}`}>Chưa có rank</span>
             )}
-            {tierCls && (
-              <span
-                className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 border ${tierCls}`}
-              >
-                {m.tier}
-              </span>
-            )}
-          </p>
-          <p className="text-xs text-[var(--text-faint)]">
-            {gender === "male" ? "Nam" : gender === "female" ? "Nữ" : ""}
-            {skillLevel && <span> · {skillLabel}</span>}
-          </p>
+          </div>
         </div>
       </li>
     );
   };
 
-  const renderPersonAmounts = () => (
-    <div className="space-y-2">
-      {registrations
-        .filter(
-          (r) =>
-            !r.host_registration_id && r.participation_status === "confirmed",
-        )
-        .map((r: any) => {
-          const guests = registrations.filter(
-            (g) =>
-              g.host_registration_id === r.id &&
-              g.participation_status === "confirmed",
-          );
-          const name = r.users?.full_name ?? r.guest_full_name ?? "?";
-          const isMe = r.id === myReg?.id;
-          const gender = r.users?.gender ?? r.guest_gender;
-          const defaultPrice =
-            gender === "female"
-              ? (session.price_female ?? session.price_per_slot ?? 0)
-              : (session.price_male ?? session.price_per_slot ?? 0);
+  const renderPersonAmounts = () => {
+    const GROUPED_PM = ["grouped_with_host", "wallet_grouped"];
 
-          const guestDefaultPrice = (g: any) => {
-            const gGender = g.guest_gender;
-            return gGender === "female"
-              ? (session.price_female ?? session.price_per_slot ?? 0)
-              : (session.price_male ?? session.price_per_slot ?? 0);
-          };
-          const GROUPED_PM = ["grouped_with_host", "wallet_grouped"];
-          const groupedWithHostGuests = guests.filter((g: any) =>
-            GROUPED_PM.includes(g.payment_method),
-          );
-          const soloGuests = guests.filter(
-            (g: any) => !GROUPED_PM.includes(g.payment_method),
-          );
-          const groupedWithHostTotal = groupedWithHostGuests.reduce(
-            (s: number, g: any) =>
-              s + (g.amount_override ?? guestDefaultPrice(g)),
-            0,
-          );
+    const nameOf = (x: any) => x.users?.full_name ?? x.guest_full_name ?? "?";
+    const priceFor = (gender?: string) =>
+      gender === "female" || gender === "nu"
+        ? (session.price_female ?? session.price_per_slot ?? 0)
+        : (session.price_male ?? session.price_per_slot ?? 0);
+    const amountOf = (x: any) =>
+      x.amount_override ?? priceFor(x.users?.gender ?? x.guest_gender);
 
-          const hostOwnAmount = r.amount_override ?? defaultPrice;
-          const amount = hostOwnAmount + groupedWithHostTotal;
+    const statusIcon = (ok: boolean) =>
+      ok ? (
+        <CheckCircle2 className="w-4 h-4 text-[var(--success)] flex-shrink-0" />
+      ) : (
+        <Hourglass className="w-4 h-4 text-[var(--warning)] flex-shrink-0" />
+      );
 
-          const combinedBaseAmount =
-            (r.base_amount ?? 0) +
-            groupedWithHostGuests.reduce(
-              (s: number, g: any) => s + (g.base_amount ?? 0),
-              0,
-            );
-          const combinedOtherFeeAmount =
-            (r.other_fee_amount ?? 0) +
-            groupedWithHostGuests.reduce(
-              (s: number, g: any) => s + (g.other_fee_amount ?? 0),
-              0,
-            );
-          const combinedOtherFeeNote = [
-            r.other_fee_note,
-            ...groupedWithHostGuests.map((g: any) => g.other_fee_note),
-          ]
-            .filter(Boolean)
-            .join(", ");
-          const hasBreakdown =
-            r.base_amount != null && combinedOtherFeeAmount > 0;
+    const feeBreakdown = (x: any, amount: number) => {
+      const fee = x.other_fee_amount ?? 0;
+      if (!(fee > 0)) return null;
+      const base = x.base_amount ?? Math.max(0, amount - fee);
+      const lines = noteLines(x.other_fee_note);
 
-          const allGuestsTotal = guests.reduce((s: number, g: any) => {
-            const gDefaultPrice = guestDefaultPrice(g);
-            const gAmount = g.amount_override ?? gDefaultPrice;
-            return s + gAmount;
-          }, 0);
-          const groupTotal = hostOwnAmount + allGuestsTotal;
+      return (
+        <div className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden text-[12px]">
+          <div className="flex items-center justify-between px-3 py-1.5">
+            <span className="text-[var(--text-muted)]">🏸 Sân + cầu</span>
+            <span className="font-semibold tabular-nums text-[var(--text)]">
+              {fmt(base)}
+            </span>
+          </div>
 
-          const nameOf = (x: any) => x.users?.full_name ?? x.guest_full_name ?? "?";
-          const amountOf = (x: any) => x.amount_override ?? guestDefaultPrice(x);
+          <div className="px-3 py-1.5 border-t border-dashed border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-[var(--warning-soft)]">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-[var(--warning)]">💰 Khoản khác</span>
+              <span className="font-bold tabular-nums text-[var(--warning)]">
+                +{fmt(fee)}
+              </span>
+            </div>
+            {lines.map((line, i) => (
+              <p
+                key={i}
+                className="text-[11px] italic text-[var(--text-muted)] mt-0.5 leading-snug"
+              >
+                • {line}
+              </p>
+            ))}
+          </div>
 
-          // Một dòng người + tiền, kèm breakdown gọn (nếu có)
-          const PersonLine = ({ x, label }: { x: any; label: string }) => {
-            const hasFee = x.base_amount != null && (x.other_fee_amount ?? 0) > 0;
-            return (
-              <div>
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm text-[var(--text)] truncate">{label}</span>
-                  <span className="text-sm font-semibold text-[var(--text)] tabular-nums flex-shrink-0">
-                    {fmt(x === r ? hostOwnAmount : amountOf(x))}
+          <div className="flex items-center justify-between px-3 py-1.5 border-t border-[var(--border)] bg-[var(--surface-muted)]">
+            <span className="font-semibold text-[var(--text-muted)]">Tổng</span>
+            <span className="font-bold tabular-nums text-[var(--text)]">
+              {fmt(amount)}
+            </span>
+          </div>
+        </div>
+      );
+    };
+
+    const renderBlock = (opts: {
+      key: string;
+      title: string;
+      isMe?: boolean;
+      tag?: string;
+      badge: ReturnType<typeof getPaymentMethodBadge>;
+      ok: boolean;
+      total: number;
+      members: any[];
+      memberAmounts: number[];
+      withTopBorder?: boolean;
+    }) => {
+      const { members, memberAmounts } = opts;
+      const isGroup = members.length > 1;
+      const hasFee = members.some((m: any) => (m.other_fee_amount ?? 0) > 0);
+
+      return (
+        <div
+          key={opts.key}
+          className={`px-3.5 py-3 ${opts.withTopBorder ? "border-t border-[var(--border)]" : ""}`}
+        >
+          {/* Tiêu đề: nhóm nhiều người thì chỉ hiện trạng thái, tổng nằm ở cuối */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-[var(--text)] truncate">
+                {opts.title}
+                {opts.isMe && (
+                  <span className="text-[var(--primary)] font-semibold"> (bạn)</span>
+                )}
+              </p>
+              <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                {opts.tag && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)]">
+                    {opts.tag}
                   </span>
-                </div>
+                )}
                 {hasFee && (
-                  <p className="text-[11px] text-[var(--text-faint)] mt-0.5">
-                    Sân + cầu {fmt(x.base_amount)} · Khoản khác{" "}
-                    <span className="text-[var(--warning)]">{fmt(x.other_fee_amount)}</span>
-                    {x.other_fee_note && (
-                      <span className="italic"> ({x.other_fee_note})</span>
-                    )}
-                  </p>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--warning-soft)] text-[var(--warning)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
+                    💰 Có khoản khác
+                  </span>
+                )}
+                {opts.badge && (
+                  <span
+                    className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${opts.badge.cls}`}
+                  >
+                    {opts.badge.icon} {opts.badge.label}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {statusIcon(opts.ok)}
+              {!isGroup && (
+                <span
+                  className={`text-base font-bold tabular-nums ${opts.isMe ? "text-[var(--primary)]" : "text-[var(--text)]"
+                    }`}
+                >
+                  {fmt(opts.total)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {isGroup ? (
+            <>
+              <div className="mt-3 space-y-2">
+                {members.map((x, i) => {
+                  const hasOwnFee = (x.other_fee_amount ?? 0) > 0;
+                  const isCompanion = i > 0;
+                  const isLast = i === members.length - 1;
+
+                  return (
+                    <div key={x.id} className={`relative ${isCompanion ? "ml-5" : ""}`}>
+                      {isCompanion && (
+                        <>
+                          <span
+                            aria-hidden
+                            className="absolute -left-3 -top-2 h-[calc(50%+0.5rem)] w-3 border-l-2 border-b-2 border-[var(--border-strong)] rounded-bl-lg"
+                          />
+                          {!isLast && (
+                            <span
+                              aria-hidden
+                              className="absolute -left-3 top-1/2 -bottom-2 border-l-2 border-[var(--border-strong)]"
+                            />
+                          )}
+                        </>
+                      )}
+
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-[13px] font-semibold text-[var(--text)] truncate">
+                            {nameOf(x)}
+                            {isCompanion && (
+                              <span className="ml-1.5 text-[11px] font-normal text-[var(--text-faint)]">
+                                đi cùng
+                              </span>
+                            )}
+                          </span>
+                          {!hasOwnFee && (
+                            <span className="text-[13px] font-semibold text-[var(--text)] tabular-nums flex-shrink-0">
+                              {fmt(memberAmounts[i])}
+                            </span>
+                          )}
+                        </div>
+                        {feeBreakdown(x, memberAmounts[i])}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div
+                className={`mt-3 flex items-center justify-between rounded-xl px-3 py-2 border border-[var(--border)] ${opts.isMe ? "bg-[var(--surface)]" : "bg-[var(--surface)]"
+                  }`}
+              >
+                <span className="text-xs font-semibold text-[var(--text-muted)]">
+                  Tổng {members.length} người
+                </span>
+                <span
+                  className={`text-base font-bold tabular-nums ${opts.isMe ? "text-[var(--primary)]" : "text-[var(--text)]"
+                    }`}
+                >
+                  {fmt(opts.total)}
+                </span>
+              </div>
+            </>
+          ) : (
+            feeBreakdown(members[0], opts.total)
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <div className="space-y-2.5">
+        {registrations
+          .filter(
+            (r) => !r.host_registration_id && r.participation_status === "confirmed",
+          )
+          .map((r: any) => {
+            const guests = registrations.filter(
+              (g) =>
+                g.host_registration_id === r.id &&
+                g.participation_status === "confirmed",
+            );
+            const groupedGuests = guests.filter((g: any) =>
+              GROUPED_PM.includes(g.payment_method),
+            );
+            const soloGuests = guests.filter(
+              (g: any) => !GROUPED_PM.includes(g.payment_method),
+            );
+
+            const isMe = r.id === myReg?.id;
+            const hostName = nameOf(r);
+
+            const hostAmount = amountOf(r);
+            const groupedMembers = [r, ...groupedGuests];
+            const groupedAmounts = [hostAmount, ...groupedGuests.map(amountOf)];
+            const groupedTotal = groupedAmounts.reduce((s, n) => s + n, 0);
+            const groupedPaid =
+              r.payment_status === "confirmed" &&
+              groupedGuests.every((g: any) => g.payment_status === "confirmed");
+
+            const groupTotal =
+              groupedTotal + soloGuests.reduce((s: number, g: any) => s + amountOf(g), 0);
+
+            return (
+              <div
+                key={r.id}
+                className={`rounded-2xl overflow-hidden border ${isMe
+                  ? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)]"
+                  : "border-[var(--border)] bg-[var(--surface-muted)]"
+                  }`}
+              >
+                {renderBlock({
+                  key: r.id,
+                  title: hostName,
+                  isMe,
+                  tag: groupedGuests.length > 0 ? `Gộp ${groupedMembers.length} người` : undefined,
+                  badge: getPaymentMethodBadge(r),
+                  ok: groupedPaid,
+                  total: groupedTotal,
+                  members: groupedMembers,
+                  memberAmounts: groupedAmounts,
+                })}
+
+                {soloGuests.map((g: any) =>
+                  renderBlock({
+                    key: g.id,
+                    title: nameOf(g),
+                    tag: "Trả riêng",
+                    badge: getPaymentMethodBadge(g, hostName, nameOf(g)),
+                    ok: g.payment_status === "confirmed",
+                    total: amountOf(g),
+                    members: [g],
+                    memberAmounts: [amountOf(g)],
+                    withTopBorder: true,
+                  }),
+                )}
+
+                {soloGuests.length > 0 && (
+                  <div className="flex items-center justify-between px-3.5 py-2.5 bg-[var(--surface)] border-t border-dashed border-[var(--border)]">
+                    <span className="text-xs font-semibold text-[var(--text-muted)]">
+                      Tổng cả nhóm
+                    </span>
+                    <span
+                      className={`text-sm font-bold tabular-nums ${isMe ? "text-[var(--primary)]" : "text-[var(--text)]"
+                        }`}
+                    >
+                      {fmt(groupTotal)}
+                    </span>
+                  </div>
                 )}
               </div>
             );
-          };
-
-          const statusIcon = (ok: boolean) =>
-            ok ? (
-              <CheckCircle2 className="w-4 h-4 text-[var(--success)] flex-shrink-0" />
-            ) : (
-              <Hourglass className="w-4 h-4 text-[var(--warning)] flex-shrink-0" />
-            );
-
-          const allGroupedPaid =
-            r.payment_status === "confirmed" &&
-            groupedWithHostGuests.every((g: any) => g.payment_status === "confirmed");
-
-          return (
-            <div
-              key={r.id}
-              className={`rounded-2xl overflow-hidden border ${isMe ? "border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[var(--primary-soft)]" : "border-[var(--border)] bg-[var(--surface-muted)]"
-                }`}
-            >
-              {/* Khối 1: gộp theo host */}
-              <div className="px-3.5 py-3">
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs font-semibold text-[var(--text-muted)] truncate">
-                      {groupedWithHostGuests.length > 0
-                        ? `Gộp ví ${name}`
-                        : name}
-                      {isMe && <span className="text-[var(--primary)]"> (bạn)</span>}
-                    </span>
-                    {(() => {
-                      const badge = getPaymentMethodBadge(r);
-                      return badge ? (
-                        <span
-                          className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 ${badge.cls}`}
-                        >
-                          {badge.icon} {badge.label}
-                        </span>
-                      ) : null;
-                    })()}
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {statusIcon(allGroupedPaid)}
-                    <span
-                      className={`text-base font-bold tabular-nums ${isMe ? "text-[var(--primary)]" : "text-[var(--text)]"
-                        }`}
-                    >
-                      {fmt(amount)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pl-2.5 border-l-2 border-[var(--border)]">
-                  <PersonLine x={r} label={name} />
-                  {groupedWithHostGuests.map((g: any) => (
-                    <PersonLine key={g.id} x={g} label={nameOf(g)} />
-                  ))}
-                </div>
-              </div>
-
-              {soloGuests.map((g: any) => {
-                const gBadge = getPaymentMethodBadge(g, name, nameOf(g));
-                return (
-                  <div key={g.id} className="px-3.5 py-3 border-t border-[var(--border)]">
-                    <div className="flex items-center justify-between gap-3 mb-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xs font-semibold text-[var(--text-muted)] truncate">
-                          {nameOf(g)} · trả riêng
-                        </span>
-                        {gBadge && (
-                          <span
-                            className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 ${gBadge.cls}`}
-                          >
-                            {gBadge.icon} {gBadge.label}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        {statusIcon(g.payment_status === "confirmed")}
-                        <span className="text-base font-bold tabular-nums text-[var(--text)]">
-                          {fmt(amountOf(g))}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="pl-2.5 border-l-2 border-[var(--border)]">
-                      <PersonLine x={g} label={nameOf(g)} />
-                    </div>
-                  </div>
-                );
-              })}
-
-              {soloGuests.length > 0 && (
-                <div className="flex items-center justify-between px-3.5 py-2.5 bg-[var(--surface-muted)] border-t border-[var(--border)]">
-                  <span className="text-xs font-semibold text-[var(--text-muted)]">
-                    Tổng cả nhóm
-                  </span>
-                  <span
-                    className={`text-sm font-bold tabular-nums ${isMe ? "text-[var(--primary)]" : "text-[var(--text)]"
-                      }`}
-                  >
-                    {fmt(groupTotal)}
-                  </span>
-                </div>
-              )}
-            </div>
-          );
-        })}
-    </div>
-  );
+          })}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -1173,111 +1306,82 @@ export default function SessionDetailPage() {
               viewTransitionName: `session-card-${String(id)}`,
             }}
           >
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <h1
-                className="text-xl font-bold text-[var(--text)] leading-tight"
-                style={{ viewTransitionName: `session-title-${String(id)}` }}
-              >
-                {session.title}
-              </h1>
-              <span
-                className={`flex-shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold ${statusPillCls}`}
-              >
+            <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
+              <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${statusPillCls}`}>
                 {statusPillLabel}
               </span>
-            </div>
-
-            {(myReg?.participation_status === "pending_approval" ||
-              (myReg?.participation_status === "awaiting_checkin" &&
-                myReg?.added_response !== "pending")) && (
-                <div className="flex items-center gap-1.5 mb-4 -mt-1">
-                  {myReg?.participation_status === "pending_approval" && (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-[var(--warning-soft)] text-[var(--warning)] flex items-center gap-1">
-                      <Hourglass className="w-3 h-3" /> Chờ admin duyệt
-                    </span>
-                  )}
-                  {myReg?.participation_status === "awaiting_checkin" &&
-                    myReg?.added_response !== "pending" && (
-                      <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-[var(--surface-muted)] text-[var(--text-muted)] flex items-center gap-1">
-                        <Hourglass className="w-3 h-3" /> Chờ admin điểm danh
-                      </span>
-                    )}
-                </div>
-              )}
-
-            <div className="space-y-3 text-sm text-[var(--text-muted)]">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
-                  <CalendarDays className="w-4 h-4 text-[var(--primary)]" />
-                </div>
-                <span className="font-medium text-[var(--text)]">
-                  {format(
-                    new Date(session.scheduled_at),
-                    "EEEE, dd/MM/yyyy — HH:mm",
-                    { locale: vi },
-                  )}
+              {myReg?.participation_status === "pending_approval" && (
+                <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-[var(--warning-soft)] text-[var(--warning)] flex items-center gap-1">
+                  <Hourglass className="w-3 h-3" /> Chờ admin duyệt
                 </span>
-              </div>
-              {session.location && (
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[var(--pink-soft)] flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-4 h-4 text-[var(--pink)]" />
-                  </div>
-                  <span>{session.location}</span>
-                </div>
               )}
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-[var(--purple-soft)] flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-4 h-4 text-[var(--purple)]" />
-                </div>
-                <span>{session.duration_minutes} phút</span>
-              </div>
+              {myReg?.participation_status === "awaiting_checkin" &&
+                myReg?.added_response !== "pending" && (
+                  <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-[var(--surface-muted)] text-[var(--text-muted)] flex items-center gap-1">
+                    <Hourglass className="w-3 h-3" /> Chờ admin điểm danh
+                  </span>
+                )}
             </div>
 
-            {session.status === "completed" ? (
-              <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[var(--primary-soft)] flex items-center justify-center flex-shrink-0">
-                    <Users className="w-4 h-4 text-[var(--primary)]" />
+            <h1
+              className="text-xl font-bold text-[var(--text)] leading-tight"
+              style={{ viewTransitionName: `session-title-${String(id)}` }}
+            >
+              {session.title}
+            </h1>
+
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
+              <InfoTile icon={CalendarDays} tone="primary" label="Ngày">
+                {format(new Date(session.scheduled_at), "EEE, dd/MM/yyyy", { locale: vi })}
+              </InfoTile>
+              <InfoTile icon={Clock} tone="purple" label="Giờ chơi">
+                {format(new Date(session.scheduled_at), "HH:mm")} · {session.duration_minutes} phút
+              </InfoTile>
+              {session.location && (
+                <InfoTile icon={MapPin} tone="pink" label="Địa điểm" className="col-span-2">
+                  {session.location}
+                </InfoTile>
+              )}
+            </div>
+
+            <div className="mt-3 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)] p-3.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
+                  <Users className="w-4 h-4 text-[var(--primary)]" />
+                  {participantList.length} người {isCompleted ? "đã tham gia" : "đăng ký"}
+                </span>
+                <GenderCounts male={participantGender.male} female={participantGender.female} />
+              </div>
+
+              {!isCompleted && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-[var(--text-faint)]">Chỗ trống</span>
+                    <span
+                      className={`text-xs font-semibold ${slotDimmed
+                        ? "text-[var(--text-faint)]"
+                        : isFull
+                          ? "text-[var(--danger)]"
+                          : slotRatio >= 0.6
+                            ? "text-[var(--warning)]"
+                            : "text-[var(--success)]"
+                        }`}
+                    >
+                      {isFull ? "Đã hết chỗ" : `Còn ${session.available_slots}/${session.max_slots}`}
+                    </span>
                   </div>
-                  <span className="font-medium text-[var(--text)]">
-                    {registrations.filter(r => r.participation_status === "confirmed").length} người đã tham gia
-                  </span>
+                  <div className="w-full h-2.5 rounded-full bg-[var(--surface)] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${slotPct}%`, background: slotBarColor }}
+                    />
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="flex items-center gap-1.5 text-xs text-[var(--text-faint)]">
-                    <Users className="w-3.5 h-3.5" />
-                    Chỗ trống
-                  </span>
-                  <span
-                    className={`text-xs font-semibold ${slotDimmed
-                      ? "text-[var(--text-faint)]"
-                      : isFull
-                        ? "text-[var(--danger)]"
-                        : slotRatio >= 0.6
-                          ? "text-[var(--warning)]"
-                          : "text-[var(--success)]"
-                      }`}
-                  >
-                    {isFull
-                      ? "Đã hết chỗ"
-                      : `Còn ${session.available_slots}/${session.max_slots}`}
-                  </span>
-                </div>
-                <div className="w-full h-2.5 rounded-full bg-[var(--surface-muted)] overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${slotPct}%`, background: slotBarColor }}
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {session.description && (
-              <p className="mt-4 pt-4 border-t border-[var(--border)] text-sm text-[var(--text-muted)] leading-relaxed">
+              <p className="mt-4 text-sm text-[var(--text-muted)] leading-relaxed">
                 {session.description}
               </p>
             )}
@@ -1714,10 +1818,13 @@ export default function SessionDetailPage() {
               animationDelay: "40ms",
             }}
           >
-            <h3 className="font-bold text-[var(--text)] mb-3 flex items-center gap-2">
-              <Users className="w-4 h-4 text-[var(--primary)]" />
-              Đã đăng ký ({approvedRegistrations.length})
-            </h3>
+            <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
+              <h3 className="font-bold text-[var(--text)] flex items-center gap-2">
+                <Users className="w-4 h-4 text-[var(--primary)]" />
+                Đã đăng ký ({approvedRegistrations.length})
+              </h3>
+              <GenderCounts male={registeredGender.male} female={registeredGender.female} />
+            </div>
             {loadingRegs ? (
               <div className="space-y-3">
                 {[...Array(3)].map((_, i) => (
@@ -1739,19 +1846,13 @@ export default function SessionDetailPage() {
               </p>
             ) : (
               <>
-                <ul className="divide-y divide-[var(--border)]">
+                <ul className="space-y-2">
                   {regRoots.slice(0, 3).map((root: any) => {
                     const guests = regGuestsOf(root.id);
                     return (
-                      <div key={root.id}>
+                      <div key={root.id} className="space-y-2">
                         {renderRegPerson(root)}
-                        {guests.length > 0 && (
-                          <ul>
-                            {guests.map((g: any) =>
-                              renderRegPerson(g, { nested: true }),
-                            )}
-                          </ul>
-                        )}
+                        {guests.map((g: any) => renderRegPerson(g, { nested: true }))}
                       </div>
                     );
                   })}
@@ -2767,10 +2868,15 @@ export default function SessionDetailPage() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
-                    <h3 className="font-bold text-[var(--text)] flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[var(--primary)]" />
-                      Đã đăng ký ({approvedRegistrations.length})
-                    </h3>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-[var(--text)] flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[var(--primary)]" />
+                        Đã đăng ký ({approvedRegistrations.length})
+                      </h3>
+                      <div className="mt-1.5">
+                        <GenderCounts male={registeredGender.male} female={registeredGender.female} />
+                      </div>
+                    </div>
                     <button
                       onClick={closeAllRegsModal}
                       className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
@@ -2778,20 +2884,14 @@ export default function SessionDetailPage() {
                       <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                   </div>
-                  <div className="px-5 py-2 overflow-y-auto scrollbar-hide">
-                    <ul className="divide-y divide-[var(--border)]">
+                  <div className="px-5 py-3 overflow-y-auto scrollbar-hide">
+                    <ul className="space-y-2">
                       {regRoots.map((root: any) => {
                         const guests = regGuestsOf(root.id);
                         return (
-                          <div key={root.id}>
+                          <div key={root.id} className="space-y-2">
                             {renderRegPerson(root)}
-                            {guests.length > 0 && (
-                              <ul>
-                                {guests.map((g: any) =>
-                                  renderRegPerson(g, { nested: true }),
-                                )}
-                              </ul>
-                            )}
+                            {guests.map((g: any) => renderRegPerson(g, { nested: true }))}
                           </div>
                         );
                       })}
