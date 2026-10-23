@@ -23,6 +23,7 @@ import {
   ChevronDown,
   ShieldAlert,
   Share2,
+  Pencil,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -55,6 +56,7 @@ import {
   type Tone,
 } from "@/components/admin/sessions/session-ui";
 import { useNavLoadingStore } from "@/store/nav-loading.store";
+import { BADGE_BASE, BADGE_TONE, GENDER_META } from "@/components/member/badges";
 
 /* ───────────────────────── config ───────────────────────── */
 
@@ -113,6 +115,40 @@ const LEVEL_LABELS: Record<string, string> = {
 };
 
 const FIELD_LABEL = "mb-1.5 block text-sm font-medium text-[var(--text)]";
+
+const GUEST_SKILL_OPTIONS = [
+  { value: "yeu", label: "Yếu" },
+  { value: "trung_binh_yeu", label: "TB Yếu" },
+  { value: "trung_binh", label: "Trung bình" },
+  { value: "trung_binh_cong", label: "TB+" },
+  { value: "ban_chuyen", label: "Bán chuyên" },
+  { value: "chuyen_nghiep", label: "Chuyên nghiệp" },
+];
+
+const META_BADGE_TONE = {
+  guest: "border-amber-500/30 bg-amber-500/10 text-amber-500",
+  member: "border-purple-500/30 bg-purple-500/10 text-purple-400",
+  casual: "border-slate-500/30 bg-slate-500/10 text-slate-400",
+  level: "border-blue-500/30 bg-blue-500/10 text-blue-400",
+  male: "border-sky-500/30 bg-sky-500/10 text-sky-400",
+  female: "border-pink-500/30 bg-pink-500/10 text-pink-400",
+} as const;
+
+function MetaBadge({
+  tone,
+  children,
+}: {
+  tone: keyof typeof META_BADGE_TONE;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-none ${META_BADGE_TONE[tone]}`}
+    >
+      {children}
+    </span>
+  );
+}
 
 type ActionPhase = "idle" | "loading" | "success";
 
@@ -191,6 +227,14 @@ export default function SessionDetailPage() {
   const [checkingPenalties, setCheckingPenalties] = useState(false);
 
   const [sharingReceiptId, setSharingReceiptId] = useState<string | null>(null);
+
+
+  const [editGuestReg, setEditGuestReg] = useState<any | null>(null);
+  const [editGuestForm, setEditGuestForm] = useState({
+    full_name: "",
+    skill_level: "",
+  });
+  const [savingGuest, setSavingGuest] = useState(false);
 
   const startNavLoading = useNavLoadingStore((s) => s.start);
 
@@ -1036,6 +1080,43 @@ export default function SessionDetailPage() {
     }
   };
 
+
+  const openEditGuest = (reg: any) => {
+    setEditGuestForm({
+      full_name: reg.guest_full_name ?? "",
+      skill_level: reg.guest_skill_level ?? "",
+    });
+    setEditGuestReg(reg);
+  };
+
+  const closeEditGuest = () => {
+    if (savingGuest) return;
+    setEditGuestReg(null);
+  };
+
+  const handleSaveEditGuest = async () => {
+    if (!editGuestReg) return;
+    const name = editGuestForm.full_name.trim();
+    if (!name) {
+      toast.error("Tên khách không được để trống");
+      return;
+    }
+    setSavingGuest(true);
+    try {
+      await registrationsAdminApi.updateGuest(editGuestReg.id, {
+        guest_full_name: name,
+        guest_skill_level: editGuestForm.skill_level || null,
+      });
+      toast.success("Đã cập nhật thông tin khách");
+      setEditGuestReg(null);
+      refreshSilently();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Cập nhật thất bại");
+    } finally {
+      setSavingGuest(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl space-y-4 pb-28 md:pb-10 lg:max-w-4xl xl:max-w-7xl 2xl:max-w-[1440px]">
@@ -1432,25 +1513,39 @@ export default function SessionDetailPage() {
       reg.is_guest && reg.payment_method === "cash" && totalAmount != null;
     const sharing = sharingReceiptId === reg.id;
 
-    const metaParts = [
-      reg.is_guest
-        ? "Khách"
-        : user?.member_type === "co_dinh"
-          ? "Thành viên"
-          : user?.member_type
-            ? "Vãng lai"
-            : null,
-      level || null,
-      displayGender ? (displayGender === "male" ? "Nam" : "Nữ") : null,
-    ].filter(Boolean) as string[];
+    const typeBadge = reg.is_guest
+      ? { label: "Khách", tone: BADGE_TONE.warning }
+      : user?.member_type === "co_dinh"
+        ? { label: "Thành viên", tone: BADGE_TONE.purple }
+        : user?.member_type
+          ? { label: "Vãng lai", tone: BADGE_TONE.muted }
+          : null;
+
+    const genderMeta = displayGender
+      ? GENDER_META[displayGender as string]
+      : undefined;
 
     return (
       <div>
-        {/* ───── Hàng flex: avatar | thông tin | số tiền + biên lai ───── */}
         <div
           className={`relative flex items-start gap-3 ${isNested ? "py-3 pl-5 pr-4" : "p-4"
             }`}
         >
+          {reg.is_guest && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                openEditGuest(reg);
+              }}
+              title="Sửa thông tin khách"
+              aria-label="Sửa thông tin khách"
+              className={`absolute inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] transition-colors hover:text-[var(--text)] hover:brightness-125 ${isNested ? "right-2 top-2" : "right-3 top-3"
+                }`}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          )}
           {isNested && (
             <CornerDownRight className="mt-2 h-3.5 w-3.5 shrink-0 self-start text-[var(--text-faint)]" />
           )}
@@ -1469,11 +1564,24 @@ export default function SessionDetailPage() {
               {displayName}
             </p>
 
-            {metaParts.length > 0 && (
-              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                {metaParts.join(" · ")}
-              </p>
+            {(typeBadge || level || genderMeta) && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                {typeBadge && (
+                  <span className={`${BADGE_BASE} ${typeBadge.tone}`}>
+                    {typeBadge.label}
+                  </span>
+                )}
+                {level && (
+                  <span className={`${BADGE_BASE} ${BADGE_TONE.primary}`}>{level}</span>
+                )}
+                {genderMeta && (
+                  <span className={`${BADGE_BASE} ${genderMeta.tone}`}>
+                    {genderMeta.icon} {genderMeta.label}
+                  </span>
+                )}
+              </div>
             )}
+
             {reg.is_guest && reg.guest_email && (
               <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-[var(--text-faint)]">
                 <Mail className="h-3 w-3 shrink-0" />
@@ -1546,10 +1654,9 @@ export default function SessionDetailPage() {
             )}
           </div>
 
-          {/* Cột phải: số tiền + nút biên lai */}
           <div
             className={`flex shrink-0 flex-col items-end gap-1.5 text-right ${hasBreakdown ? "self-start" : "self-center"
-              }`}
+              } ${hasBreakdown && reg.is_guest ? "pt-8" : ""}`}
           >
             {!hasBreakdown && (
               <p
@@ -2733,6 +2840,68 @@ export default function SessionDetailPage() {
                   className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)] transition-colors hover:bg-[var(--border-strong)] disabled:opacity-50"
                 >
                   Không hoàn tiền phạt
+                </button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalShell>
+      )}
+
+      {editGuestReg && (
+        <ModalShell size="sm" onClose={closeEditGuest} dismissible={false}>
+          {(close) => (
+            <>
+              <ModalHeader
+                icon={<Pencil className="h-4 w-4" />}
+                tone="primary"
+                title="Sửa thông tin khách"
+                onClose={close}
+              />
+              <ModalBody className="space-y-4">
+                <div>
+                  <label className={FIELD_LABEL}>Họ tên *</label>
+                  <input
+                    autoFocus={
+                      typeof window !== "undefined" &&
+                      window.matchMedia("(min-width: 768px)").matches
+                    }
+                    value={editGuestForm.full_name}
+                    onChange={(e) =>
+                      setEditGuestForm((f) => ({ ...f, full_name: e.target.value }))
+                    }
+                    className="input-field"
+                    placeholder="Tên khách"
+                  />
+                </div>
+                <div>
+                  <label className={FIELD_LABEL}>Trình độ</label>
+                  <CustomSelect
+                    value={editGuestForm.skill_level}
+                    onChange={(val) =>
+                      setEditGuestForm((f) => ({ ...f, skill_level: val }))
+                    }
+                    placeholder="-- Chọn --"
+                    options={GUEST_SKILL_OPTIONS}
+                  />
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <button
+                  type="button"
+                  onClick={close}
+                  disabled={savingGuest}
+                  className="btn-secondary text-sm"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEditGuest}
+                  disabled={savingGuest || !editGuestForm.full_name.trim()}
+                  className="flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {savingGuest && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Lưu
                 </button>
               </ModalFooter>
             </>

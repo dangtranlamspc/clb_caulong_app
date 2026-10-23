@@ -437,6 +437,10 @@ export const registrationsAdminApi = {
   getAdminDetail: (id: string) => api.get(`/registrations/${id}/admin-detail`, { skipErrorToast: true } as any),
   getCheckedInSessions: (userId: string) =>
     api.get("/registrations/checked-in-sessions", { params: { user_id: userId } }),
+  updateGuest: (
+    id: string,
+    data: { guest_full_name?: string; guest_skill_level?: string | null },
+  ) => api.patch(`/registrations/${id}/guest`, data),
 };
 
 export const matchesAdminApi = {
