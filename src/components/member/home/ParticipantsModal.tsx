@@ -20,6 +20,27 @@ const GUEST_SKILL_LABELS: Record<string, string> = {
     chuyen_nghiep: "Chuyên nghiệp",
 };
 
+const BADGE_BASE =
+    "inline-flex items-center gap-1 flex-shrink-0 text-[10px] font-semibold leading-none px-2 py-1 rounded-full text-white whitespace-nowrap";
+
+const BADGE_TONE = {
+    primary: "bg-[color-mix(in_srgb,var(--primary)_70%,black)]",
+    pink: "bg-[color-mix(in_srgb,var(--pink)_70%,black)]",
+    warning: "bg-[color-mix(in_srgb,var(--warning)_65%,black)]",
+    purple: "bg-[color-mix(in_srgb,var(--purple)_70%,black)]",
+    muted: "bg-[color-mix(in_srgb,var(--text-faint)_70%,black)]",
+};
+
+const GENDER_META: Record<
+    string,
+    { icon: string; label: string; tone: string; color: string }
+> = {
+    male: { icon: "♂", label: "Nam", tone: BADGE_TONE.primary, color: "var(--primary)" },
+    female: { icon: "♀", label: "Nữ", tone: BADGE_TONE.pink, color: "var(--pink)" },
+};
+GENDER_META.nam = GENDER_META.male;
+GENDER_META.nu = GENDER_META.female;
+
 interface ParticipantsModalProps {
     open: boolean;
     sessionTitle?: string;
@@ -57,26 +78,37 @@ export function ParticipantsModal({
                 style={{ boxShadow: c.shadowStrong }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                    <div>
-                        <p className="text-xs text-[var(--text-faint)]">Người tham gia</p>
-                        <p className="font-bold text-[var(--text)] text-sm">{sessionTitle}</p>
+                {/* Header */}
+                <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[var(--border)]">
+                    <div className="min-w-0">
+                        <p className="text-xs text-[var(--text-faint)] flex items-center gap-1.5">
+                            Người tham gia
+                            {!loading && participants.length > 0 && (
+                                <span className="px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] text-[10px] font-bold leading-none">
+                                    {participants.length}
+                                </span>
+                            )}
+                        </p>
+                        <p className="font-bold text-[var(--text)] text-sm truncate mt-0.5">
+                            {sessionTitle}
+                        </p>
                     </div>
                     <button
                         onClick={onClose}
                         aria-label="Đóng"
-                        className="w-8 h-8 rounded-full bg-[var(--surface-muted)] hover:bg-[var(--surface-hover)] flex items-center justify-center text-[var(--text-muted)] transition-colors"
+                        className="w-8 h-8 flex-shrink-0 rounded-full bg-[var(--surface-muted)] hover:bg-[var(--surface-hover)] flex items-center justify-center text-[var(--text-muted)] transition-colors"
                     >
                         ✕
                     </button>
                 </div>
 
-                <div className="no-scrollbar overflow-y-auto px-5 py-3 space-y-2">
+                {/* List */}
+                <div className="no-scrollbar overflow-y-auto px-4 py-3 space-y-2">
                     {loading ? (
                         [...Array(4)].map((_, i) => (
                             <div
                                 key={i}
-                                className="h-14 bg-[var(--surface-muted)] rounded-2xl animate-pulse"
+                                className="h-16 bg-[var(--surface-muted)] rounded-2xl animate-pulse"
                             />
                         ))
                     ) : participants.length === 0 ? (
@@ -84,54 +116,82 @@ export function ParticipantsModal({
                             Chưa có ai đăng ký
                         </p>
                     ) : (
-                        participants.map((p) => (
-                            <div
-                                key={p.id}
-                                className="flex items-center gap-3 py-2 border-b border-[var(--border)] last:border-0"
-                            >
-                                {p.avatar_url ? (
-                                    <img
-                                        src={p.avatar_url}
-                                        alt={p.full_name}
-                                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                                    />
-                                ) : (
-                                    <div className="w-10 h-10 rounded-full bg-[var(--primary-soft)] flex items-center justify-center font-bold text-[var(--primary)] text-sm flex-shrink-0">
-                                        {p.full_name?.[0]?.toUpperCase() ?? "?"}
+                        participants.map((p) => {
+                            const gender = p.gender ? GENDER_META[p.gender] : null;
+                            const ringColor = gender?.color ?? "var(--border)";
+                            const levelText = p.level_label
+                                ? (LEVEL_LABELS[p.level_label] ??
+                                    GUEST_SKILL_LABELS[p.level_label] ??
+                                    p.level_label)
+                                : null;
+
+                            return (
+                                <div
+                                    key={p.id}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)]"
+                                >
+                                    {/* Avatar */}
+                                    {p.avatar_url ? (
+                                        <img
+                                            src={p.avatar_url}
+                                            alt={p.full_name}
+                                            className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+                                            style={{ boxShadow: `0 0 0 2px ${ringColor}` }}
+                                        />
+                                    ) : (
+                                        <div
+                                            className="w-11 h-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center font-bold text-[var(--primary)] text-base flex-shrink-0"
+                                            style={{ boxShadow: `0 0 0 2px ${ringColor}` }}
+                                        >
+                                            {p.full_name?.[0]?.toUpperCase() ?? "?"}
+                                        </div>
+                                    )}
+
+                                    {/* Tên + giới tính + trình độ */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-[var(--text)] truncate">
+                                            {p.full_name}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                            {gender && (
+                                                <span className={`${BADGE_BASE} ${gender.tone}`}>
+                                                    {gender.icon} {gender.label}
+                                                </span>
+                                            )}
+                                            {levelText && (
+                                                <span className={`${BADGE_BASE} ${BADGE_TONE.primary}`}>
+                                                    🎯 {levelText}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-[var(--text)] truncate">
-                                        {p.full_name}
-                                        {p.is_guest && (
-                                            <span className="ml-1.5 text-[10px] text-[var(--text-faint)] font-normal">
-                                                (khách)
+
+                                    {/* Cột phải: rank hoặc Khách */}
+                                    <div className="flex-shrink-0 flex flex-col items-end gap-1 max-w-[42%] text-right">
+                                        {p.is_guest ? (
+                                            <span className={`${BADGE_BASE} ${BADGE_TONE.warning}`}>
+                                                🙋 Khách
+                                            </span>
+                                        ) : p.tier ? (
+                                            <>
+                                                <span
+                                                    className={`${BADGE_BASE} ${BADGE_TONE.purple} max-w-full`}
+                                                >
+                                                    <span className="truncate">💎 {p.tier}</span>
+                                                </span>
+                                                <span className="text-[11px] font-semibold text-[var(--text-muted)]">
+                                                    {p.total_points ?? 0} điểm
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span className={`${BADGE_BASE} ${BADGE_TONE.muted}`}>
+                                                Chưa có rank
                                             </span>
                                         )}
-                                    </p>
-                                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                                        {p.level_label && (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] border border-[color-mix(in_srgb,var(--primary)_25%,transparent)]">
-                                                🎯{" "}
-                                                {LEVEL_LABELS[p.level_label] ??
-                                                    GUEST_SKILL_LABELS[p.level_label] ??
-                                                    p.level_label}
-                                            </span>
-                                        )}
-                                        {!p.is_guest &&
-                                            (p.tier ? (
-                                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--purple-soft)] text-[var(--purple)] border border-[color-mix(in_srgb,var(--purple)_25%,transparent)]">
-                                                    💎 {p.tier} · {p.total_points ?? 0}đ
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-faint)] border border-[var(--border)]">
-                                                    Chưa có rank
-                                                </span>
-                                            ))}
                                     </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
             </div>

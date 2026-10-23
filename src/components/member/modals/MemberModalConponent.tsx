@@ -28,6 +28,27 @@ const LEVEL_LABELS: Record<string, string> = {
   chuyen_nghiep: "Chuyên nghiệp",
 };
 
+const BADGE_BASE =
+  "inline-flex items-center gap-1 flex-shrink-0 text-[10px] font-semibold leading-none px-2 py-1 rounded-full text-white whitespace-nowrap";
+
+const BADGE_TONE = {
+  primary: "bg-[color-mix(in_srgb,var(--primary)_70%,black)]",
+  pink: "bg-[color-mix(in_srgb,var(--pink)_70%,black)]",
+  warning: "bg-[color-mix(in_srgb,var(--warning)_65%,black)]",
+  purple: "bg-[color-mix(in_srgb,var(--purple)_70%,black)]",
+  muted: "bg-[color-mix(in_srgb,var(--text-faint)_70%,black)]",
+};
+
+const GENDER_META: Record<
+  string,
+  { icon: string; label: string; tone: string; color: string }
+> = {
+  male: { icon: "♂", label: "Nam", tone: BADGE_TONE.primary, color: "var(--primary)" },
+  female: { icon: "♀", label: "Nữ", tone: BADGE_TONE.pink, color: "var(--pink)" },
+};
+GENDER_META.nam = GENDER_META.male;
+GENDER_META.nu = GENDER_META.female;
+
 const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
   pending_approval: {
     label: "Chờ admin duyệt",
@@ -37,7 +58,7 @@ const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
   awaiting_checkin: {
     label: "Chờ điểm danh",
     icon: Hourglass,
-    cls: "bg-[var(--surface-muted)] text-[var(--text-muted)] border-[var(--border)]",
+    cls: "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]",
   },
   pending: {
     label: "Chờ thanh toán",
@@ -109,15 +130,24 @@ export function MembersModal({
     approvedMembers.filter((m: any) => m.host_registration_id === hostId);
 
   const renderPerson = (m: any, opts?: { nested?: boolean }) => {
+    const nested = opts?.nested;
     const u = m.users;
     const fullName = u?.full_name ?? m.guest_full_name ?? "?";
-    const gender = u?.gender ?? m.guest_gender;
+    const gender = GENDER_META[u?.gender ?? m.guest_gender] ?? null;
+    const ringColor = gender?.color ?? "var(--border)";
     const skillLevel = m.is_guest ? m.guest_skill_level : null;
+    const levelText = skillLevel
+      ? (GUEST_SKILL_LABEL[skillLevel] ?? skillLevel)
+      : u?.level
+        ? (LEVEL_LABELS[u.level] ?? u.level)
+        : null;
+
     const parts = fullName.trim().split(" ").filter(Boolean);
     const initials =
       parts.length >= 2
         ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
         : fullName.slice(0, 2).toUpperCase();
+
     const effectiveStatus =
       m.participation_status === "pending_approval"
         ? "pending_approval"
@@ -129,70 +159,94 @@ export function MembersModal({
     const regCfg = REG_CFG[effectiveStatus] ?? REG_CFG.pending;
     const RegIcon = regCfg.icon;
 
+    const avatarSize = nested ? "w-9 h-9" : "w-11 h-11";
+
     return (
       <li
         key={m.id}
-        className={`flex items-center gap-3 ${opts?.nested ? "py-2 pl-6" : "py-3"}`}
+        className={`relative ${nested ? "ml-6" : ""}`}
         style={{ opacity: 0, animation: `fadeIn .2s ease forwards` }}
       >
-        {opts?.nested && (
-          <span className="w-3 h-px bg-[var(--border-strong)] flex-shrink-0 -ml-3 mr-[-2px]" />
-        )}
-        {u?.avatar_url ? (
-          <img
-            src={u.avatar_url}
-            alt={fullName}
-            className={`rounded-full object-cover flex-shrink-0 ${opts?.nested ? "w-7 h-7" : "w-9 h-9"}`}
+        {nested && (
+          <span
+            aria-hidden
+            className="absolute -left-4 top-0 h-1/2 w-3 border-l-2 border-b-2 border-[var(--border-strong)] rounded-bl-lg"
           />
-        ) : (
-          <div
-            className={`rounded-full flex items-center justify-center flex-shrink-0 font-semibold ${opts?.nested
-              ? "w-7 h-7 text-[10px] bg-[var(--purple-soft)] text-[var(--purple)]"
-              : "w-9 h-9 text-xs bg-[var(--primary-soft)] text-[var(--primary)]"
-              }`}
-          >
-            {initials}
-          </div>
         )}
-        <div className="flex-1 min-w-0">
-          <p
-            className={`font-medium text-[var(--text)] truncate ${opts?.nested ? "text-xs" : "text-sm"}`}
-          >
-            {fullName}
-            {m.is_guest && (
-              <span className="text-xs text-[var(--text-faint)] ml-1">(khách)</span>
+
+        <div className="px-3 py-2.5 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)]">
+          <div className="flex items-center gap-3">
+            {/* Avatar */}
+            {u?.avatar_url ? (
+              <img
+                src={u.avatar_url}
+                alt={fullName}
+                className={`${avatarSize} rounded-full object-cover flex-shrink-0`}
+                style={{ boxShadow: `0 0 0 2px ${ringColor}` }}
+              />
+            ) : (
+              <div
+                className={`${avatarSize} rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm bg-[var(--primary-soft)] text-[var(--primary)]`}
+                style={{ boxShadow: `0 0 0 2px ${ringColor}` }}
+              >
+                {initials}
+              </div>
             )}
-          </p>
-          <p className="text-xs text-[var(--text-faint)] mb-1">
-            {gender === "male" ? "Nam" : gender === "female" ? "Nữ" : ""}
-          </p>
-          <div className="flex items-center gap-1 flex-wrap">
-            {(skillLevel || u?.level) && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] border border-[color-mix(in_srgb,var(--primary)_25%,transparent)]">
-                🎯{" "}
-                {skillLevel
-                  ? (GUEST_SKILL_LABEL[skillLevel] ?? skillLevel)
-                  : (LEVEL_LABELS[u?.level] ?? u?.level)}
-              </span>
-            )}
-            {!m.is_guest &&
-              (m.tier ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--purple-soft)] text-[var(--purple)] border border-[color-mix(in_srgb,var(--purple)_25%,transparent)]">
-                  💎 {m.tier} · {m.total_points ?? 0}đ
+
+            {/* Tên + giới tính + trình độ */}
+            <div className="flex-1 min-w-0">
+              <p
+                className={`font-bold text-[var(--text)] truncate ${nested ? "text-xs" : "text-sm"}`}
+              >
+                {fullName}
+              </p>
+              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                {gender && (
+                  <span className={`${BADGE_BASE} ${gender.tone}`}>
+                    {gender.icon} {gender.label}
+                  </span>
+                )}
+                {levelText && (
+                  <span className={`${BADGE_BASE} ${BADGE_TONE.primary}`}>
+                    🎯 {levelText}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Cột phải: rank hoặc Khách */}
+            <div className="flex-shrink-0 flex flex-col items-end gap-1 max-w-[42%] text-right">
+              {m.is_guest ? (
+                <span className={`${BADGE_BASE} ${BADGE_TONE.warning}`}>
+                  🙋 Khách
                 </span>
+              ) : m.tier ? (
+                <>
+                  <span className={`${BADGE_BASE} ${BADGE_TONE.purple} max-w-full`}>
+                    <span className="truncate">💎 {m.tier}</span>
+                  </span>
+                  <span className="text-[11px] font-semibold text-[var(--text-muted)]">
+                    {m.total_points ?? 0} điểm
+                  </span>
+                </>
               ) : (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[var(--surface-muted)] text-[var(--text-faint)] border border-[var(--border)]">
+                <span className={`${BADGE_BASE} ${BADGE_TONE.muted}`}>
                   Chưa có rank
                 </span>
-              ))}
+              )}
+            </div>
+          </div>
+
+          {/* Trạng thái thanh toán: hàng riêng, thẳng với cột tên */}
+          <div className={nested ? "pl-12" : "pl-14"}>
+            <span
+              className={`mt-2 inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border ${regCfg.cls}`}
+            >
+              <RegIcon className="w-3 h-3" />
+              {regCfg.label}
+            </span>
           </div>
         </div>
-        <span
-          className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border flex-shrink-0 self-start ${regCfg.cls}`}
-        >
-          <RegIcon className="w-3 h-3" />
-          {regCfg.label}
-        </span>
       </li>
     );
   };
@@ -227,10 +281,15 @@ export function MembersModal({
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] flex-shrink-0">
-          <div>
-            <p className="text-sm font-semibold text-[var(--text)]">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--border)] flex-shrink-0">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--text)] flex items-center gap-1.5">
               Thành viên đăng ký
+              {!loading && approvedMembers.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] text-[10px] font-bold leading-none">
+                  {approvedMembers.length}
+                </span>
+              )}
             </p>
             <p className="text-xs text-[var(--text-faint)] mt-0.5 truncate max-w-[240px]">
               {sessionTitle}
@@ -239,24 +298,21 @@ export function MembersModal({
           <button
             onClick={close}
             aria-label="Đóng"
-            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] hover:bg-[var(--surface-hover)] flex items-center justify-center transition-colors"
+            className="w-7 h-7 flex-shrink-0 rounded-full bg-[var(--surface-muted)] hover:bg-[var(--surface-hover)] flex items-center justify-center transition-colors"
           >
             <X className="w-4 h-4 text-[var(--text-muted)]" />
           </button>
         </div>
 
         {/* Scrollable list */}
-        <div className="overflow-y-auto flex-1 px-4 pb-6">
+        <div className="overflow-y-auto flex-1 px-4 pt-3 pb-6">
           {loading ? (
-            <div className="space-y-3 pt-4">
+            <div className="space-y-2">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center gap-3 animate-pulse">
-                  <div className="w-9 h-9 rounded-full bg-[var(--surface-muted)]" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-3 bg-[var(--surface-muted)] rounded w-2/3" />
-                    <div className="h-2.5 bg-[var(--surface-muted)] rounded w-1/3" />
-                  </div>
-                </div>
+                <div
+                  key={i}
+                  className="h-20 bg-[var(--surface-muted)] rounded-2xl animate-pulse"
+                />
               ))}
             </div>
           ) : approvedMembers.length === 0 ? (
@@ -265,9 +321,9 @@ export function MembersModal({
               <p className="text-sm text-[var(--text-faint)]">Chưa có thành viên nào</p>
             </div>
           ) : (
-            <div className="divide-y divide-[var(--border)] pt-1">
+            <div className="space-y-2">
               {roots.map((root: any) => (
-                <ul key={root.id}>
+                <ul key={root.id} className="space-y-2">
                   {renderPerson(root)}
                   {guestsOf(root.id).map((g: any) =>
                     renderPerson(g, { nested: true }),
