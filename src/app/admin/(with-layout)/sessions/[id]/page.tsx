@@ -1379,6 +1379,12 @@ export default function SessionDetailPage() {
     );
   };
 
+  const hasBreakdownOf = (reg: any) =>
+    reg.amount_override != null &&
+    reg.base_amount != null &&
+    reg.other_fee_amount != null &&
+    reg.other_fee_amount > 0;
+
   const renderRowContent = (
     reg: any,
     isNested = false,
@@ -1420,119 +1426,166 @@ export default function SessionDetailPage() {
       : user?.level && (LEVEL_LABELS[user.level] ?? user.level);
 
     const totalAmount = reg.amount_override;
-    const hasBreakdown =
-      totalAmount != null &&
-      reg.base_amount != null &&
-      reg.other_fee_amount != null &&
-      reg.other_fee_amount > 0;
+    const hasBreakdown = hasBreakdownOf(reg);
 
     const canShare =
       reg.is_guest && reg.payment_method === "cash" && totalAmount != null;
     const sharing = sharingReceiptId === reg.id;
 
-    return (
-      <div
-        className={`relative flex items-center gap-3 ${isNested ? "py-3 pl-5 pr-4" : "p-4"}`}
-      >
-        {isNested && (
-          <CornerDownRight className="mt-2 h-3.5 w-3.5 shrink-0 self-start text-[var(--text-faint)]" />
-        )}
-        <Avatar
-          url={user?.avatar_url}
-          name={displayName}
-          size={isNested ? 32 : 44}
-          className="self-start"
-        />
+    const metaParts = [
+      reg.is_guest
+        ? "Khách"
+        : user?.member_type === "co_dinh"
+          ? "Thành viên"
+          : user?.member_type
+            ? "Vãng lai"
+            : null,
+      level || null,
+      displayGender ? (displayGender === "male" ? "Nam" : "Nữ") : null,
+    ].filter(Boolean) as string[];
 
-        <div className="min-w-0 flex-1">
-          <div className="min-w-0">
+    return (
+      <div>
+        {/* ───── Hàng flex: avatar | thông tin | số tiền + biên lai ───── */}
+        <div
+          className={`relative flex items-start gap-3 ${isNested ? "py-3 pl-5 pr-4" : "p-4"
+            }`}
+        >
+          {isNested && (
+            <CornerDownRight className="mt-2 h-3.5 w-3.5 shrink-0 self-start text-[var(--text-faint)]" />
+          )}
+          <Avatar
+            url={user?.avatar_url}
+            name={displayName}
+            size={isNested ? 32 : 44}
+            className="self-start"
+          />
+
+          <div className="min-w-0 flex-1">
             <p
-              className={`truncate font-semibold text-[var(--text)] ${isNested ? "text-sm" : "text-[15px]"}`}
+              className={`truncate font-semibold text-[var(--text)] ${isNested ? "text-sm" : "text-[15px]"
+                }`}
             >
               {displayName}
             </p>
-            <div className="mt-1 flex flex-wrap items-center gap-1">
-              {user?.member_type && (
-                <Chip
-                  tone={user.member_type === "co_dinh" ? "purple" : "neutral"}
-                >
-                  {user.member_type === "co_dinh" ? "Thành viên" : "Vãng lai"}
-                </Chip>
-              )}
-              {reg.is_guest && <Chip>Khách</Chip>}
-              {level && <Chip tone="purple">{level}</Chip>}
-              {displayGender && (
-                <Chip>{displayGender === "male" ? "Nam" : "Nữ"}</Chip>
-              )}
-              {reg.is_guest && reg.guest_email && (
-                <Chip
-                  tone="warning"
-                  className="max-w-[200px]"
-                  icon={<Mail className="h-3 w-3 shrink-0" />}
-                >
-                  <span className="truncate">{reg.guest_email}</span>
-                </Chip>
-              )}
-            </div>
-          </div>
 
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-            <Chip
-              tone={cfg.tone}
-              className="relative"
-              icon={<StatusIcon className="h-3 w-3" />}
-            >
-              {cfg.label}
-              {attention && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-60 motion-reduce:animate-none" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-current" />
+            {metaParts.length > 0 && (
+              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                {metaParts.join(" · ")}
+              </p>
+            )}
+            {reg.is_guest && reg.guest_email && (
+              <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-[var(--text-faint)]">
+                <Mail className="h-3 w-3 shrink-0" />
+                <span className="truncate">{reg.guest_email}</span>
+              </p>
+            )}
+
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <Chip
+                tone={cfg.tone}
+                className="relative"
+                icon={<StatusIcon className="h-3 w-3" />}
+              >
+                {cfg.label}
+                {attention && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-60 motion-reduce:animate-none" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-current" />
+                  </span>
+                )}
+              </Chip>
+
+              {reg.payment_method === "cash" && (
+                <Chip tone="success">💵 Tiền mặt</Chip>
+              )}
+              {reg.payment_method === "bank_transfer" && (
+                <Chip tone="primary">🏦 Chuyển khoản</Chip>
+              )}
+              {reg.payment_method === "wallet_pending_confirm" &&
+                reg.host_registration_id && (
+                  <Chip tone="warning" icon={<Wallet className="h-3 w-3" />}>
+                    Chờ {hostName ?? "host"} quyết định
+                  </Chip>
+                )}
+              {reg.payment_method === "wallet_grouped" &&
+                reg.host_registration_id && (
+                  <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
+                    Ví BNB của {hostName ?? "host"}
+                  </Chip>
+                )}
+              {reg.payment_method === "wallet" && reg.host_registration_id && (
+                <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
+                  Ví BNB của {displayName}
+                </Chip>
+              )}
+              {((reg.payment_method === "wallet" && !reg.host_registration_id) ||
+                (reg.payment_method === "wallet_grouped" &&
+                  !reg.host_registration_id) ||
+                (reg.payment_method === "wallet_pending_confirm" &&
+                  !reg.host_registration_id)) && (
+                  <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
+                    Ví BNB
+                    {reg.payment_method === "wallet_pending_confirm"
+                      ? " (chờ xác nhận)"
+                      : ""}
+                  </Chip>
+                )}
+
+              {reg.points_awarded && reg.payment_status === "confirmed" && (
+                <span className="text-[11px] font-medium text-[var(--text-faint)]">
+                  🏸 +1 điểm
                 </span>
               )}
-            </Chip>
+            </div>
 
-            {reg.payment_method === "cash" && (
-              <Chip tone="success">💵 Tiền mặt</Chip>
-            )}
-            {reg.payment_method === "bank_transfer" && (
-              <Chip tone="primary">🏦 Chuyển khoản</Chip>
-            )}
-            {reg.payment_method === "wallet_pending_confirm" &&
-              reg.host_registration_id && (
-                <Chip tone="warning" icon={<Wallet className="h-3 w-3" />}>
-                  Chờ {hostName ?? "host"} quyết định
-                </Chip>
-              )}
-            {reg.payment_method === "wallet_grouped" &&
-              reg.host_registration_id && (
-                <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
-                  Ví BNB của {hostName ?? "host"}
-                </Chip>
-              )}
-            {reg.payment_method === "wallet" && reg.host_registration_id && (
-              <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
-                Ví BNB của {displayName}
-              </Chip>
-            )}
-            {((reg.payment_method === "wallet" && !reg.host_registration_id) ||
-              (reg.payment_method === "wallet_grouped" &&
-                !reg.host_registration_id) ||
-              (reg.payment_method === "wallet_pending_confirm" &&
-                !reg.host_registration_id)) && (
-                <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
-                  Ví BNB
-                  {reg.payment_method === "wallet_pending_confirm"
-                    ? " (chờ xác nhận)"
-                    : ""}
-                </Chip>
-              )}
-            {reg.points_awarded && reg.payment_status === "confirmed" && (
-              <Chip tone="purple">🏸 Đã cộng điểm</Chip>
+            {reg.notes && (
+              <p className="mt-2 text-xs italic text-[var(--text-faint)]">
+                {reg.notes}
+              </p>
             )}
           </div>
 
-          {hasBreakdown && (
-            <dl className="mt-3 space-y-2 rounded-xl bg-[var(--surface-muted)] px-3.5 py-3 text-sm">
+          {/* Cột phải: số tiền + nút biên lai */}
+          <div
+            className={`flex shrink-0 flex-col items-end gap-1.5 text-right ${hasBreakdown ? "self-start" : "self-center"
+              }`}
+          >
+            {!hasBreakdown && (
+              <p
+                className={`tabular-nums ${isNested ? "text-sm" : "text-base"} ${totalAmount != null
+                  ? "font-bold text-[var(--text)]"
+                  : "font-normal italic text-[var(--text-faint)]"
+                  }`}
+              >
+                {totalAmount != null ? formatVnd(totalAmount) : "—"}
+              </p>
+            )}
+            {canShare && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleShareGuestReceipt(reg, hostName, groupedGuestsForReceipt);
+                }}
+                disabled={sharing}
+                title="Chia sẻ biên lai"
+                className="inline-flex h-7 items-center gap-1 rounded-full bg-[var(--primary-soft)] px-2.5 text-[11px] font-semibold text-[var(--primary)] transition-colors hover:brightness-95 disabled:opacity-50"
+              >
+                {sharing ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Share2 className="h-3 w-3" />
+                )}
+                Biên lai
+              </button>
+            )}
+          </div>
+        </div>
+
+        {hasBreakdown && (
+          <div className={isNested ? "px-3 pb-3" : "px-4 pb-4"}>
+            <dl className="space-y-2 rounded-xl bg-[var(--surface-muted)] px-3.5 py-3 text-sm">
               <div className="flex items-center justify-between gap-3">
                 <dt className="text-[var(--text-muted)]">Tiền sân + cầu</dt>
                 <dd className="text-base font-semibold tabular-nums text-[var(--text)]">
@@ -1567,49 +1620,8 @@ export default function SessionDetailPage() {
                 </dd>
               </div>
             </dl>
-          )}
-
-          {reg.notes && (
-            <p className="mt-2 text-xs italic text-[var(--text-faint)]">
-              {reg.notes}
-            </p>
-          )}
-        </div>
-
-        <div
-          className={`flex shrink-0 flex-col items-end gap-1.5 text-right ${hasBreakdown ? "self-start" : "self-center"
-            }`}
-        >
-          {!hasBreakdown && (
-            <p
-              className={`tabular-nums ${isNested ? "text-sm" : "text-base"} ${totalAmount != null
-                ? "font-bold text-[var(--text)]"
-                : "font-normal italic text-[var(--text-faint)]"
-                }`}
-            >
-              {totalAmount != null ? formatVnd(totalAmount) : "—"}
-            </p>
-          )}
-          {canShare && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleShareGuestReceipt(reg, hostName, groupedGuestsForReceipt);
-              }}
-              disabled={sharing}
-              title="Chia sẻ biên lai"
-              className="inline-flex h-7 items-center gap-1 rounded-full bg-[var(--primary-soft)] px-2.5 text-[11px] font-semibold text-[var(--primary)] transition-colors hover:brightness-95 disabled:opacity-50"
-            >
-              {sharing ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Share2 className="h-3 w-3" />
-              )}
-              Biên lai
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -1663,7 +1675,14 @@ export default function SessionDetailPage() {
       (reg.payment_status === "pending" && getCanReviewPayment(reg));
 
     return (
-      <div key={reg.id}>
+      <div
+        key={reg.id}
+        className={
+          isNested
+            ? "overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] shadow-md shadow-black/20"
+            : undefined
+        }
+      >
         {renderRowContent(reg, isNested, hostName, groupedGuestsForReceipt)}
         {showActions && (
           <div
@@ -1712,6 +1731,7 @@ export default function SessionDetailPage() {
     );
     const hostDisplayName =
       host.users?.full_name ?? host.guest_full_name ?? "?";
+    const isHostMember = Boolean(host.user_id) && !host.is_guest;
     const isExpanded = expandedHosts.has(host.id);
 
     return (
@@ -1746,7 +1766,7 @@ export default function SessionDetailPage() {
             >
               <div className="overflow-hidden">
                 <div
-                  className="divide-y divide-[var(--border)] border-t border-[var(--border)] bg-[var(--surface-muted)] transition-opacity duration-300"
+                  className="flex flex-col gap-2 border-t border-[var(--border)] bg-[var(--surface-muted)] p-2.5 transition-opacity duration-300"
                   style={{ opacity: isExpanded ? 1 : 0 }}
                 >
                   {guests.map((g) => renderRow(g, true, hostDisplayName))}
@@ -1760,7 +1780,11 @@ export default function SessionDetailPage() {
           <div className="divide-y divide-[var(--border)] border-t border-[var(--border)] bg-[var(--surface-muted)]">
             <div className="flex items-center justify-between gap-3 px-4 py-2.5">
               <span className="text-xs font-semibold text-[var(--text-muted)]">
-                {hasGrouped ? `Gộp ví ${hostDisplayName}` : hostDisplayName}
+                {hasGrouped
+                  ? isHostMember
+                    ? `Gộp ví ${hostDisplayName}`
+                    : `Gộp chung ${hostDisplayName}`
+                  : hostDisplayName}
                 {hasGrouped && (
                   <span className="font-normal text-[var(--text-faint)]">
                     {" "}
