@@ -5,7 +5,8 @@ import {
   CalendarDays,
   ClipboardList,
   Wallet2,
-  GlassWater
+  GlassWater,
+  UtensilsCrossed
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import {
@@ -43,7 +44,7 @@ const QUICK_LINKS: {
   tone: keyof ThemeTokens;
   soft: keyof ThemeTokens;
 }[] = [
-    { href: "/activity", icon: CalendarDays, label: "Hoạt động", tone: "primary", soft: "primarySoft" },
+    { href: "/dining", icon: UtensilsCrossed, label: "Ăn uống", tone: "primary", soft: "primarySoft" },
     { href: "/history", icon: ClipboardList, label: "Lịch sử\ncủa tôi", tone: "warning", soft: "warningSoft" },
     { href: "/drinks/my", icon: GlassWater, label: "Nước", tone: "purple", soft: "purpleSoft" },
     { href: "/fund", icon: Wallet2, label: "Quỹ\nchung", tone: "success", soft: "successSoft" },

@@ -9,6 +9,8 @@ interface BuildArgs {
     session: any;
     hostName?: string;
     groupedGuests?: any[];
+    /** "session" (mặc định): buổi đánh. "dining": buổi ăn uống. */
+    variant?: "session" | "dining";
 }
 
 /** Vẽ biên lai ra canvas và trả về file PNG. */
@@ -17,7 +19,12 @@ export async function buildGuestReceipt({
     session,
     hostName,
     groupedGuests,
+    variant = "session",
 }: BuildArgs): Promise<{ blob: Blob; fileName: string }> {
+    const isDining = variant === "dining";
+    // dining: chỉ hiện QR + thông tin ngân hàng khi khách chọn chuyển khoản
+    const showQr = !isDining || reg.payment_method === "bank_transfer";
+
     const W = 390;
     const SCALE = 3;
     const PAD = 22;
@@ -69,7 +76,7 @@ export async function buildGuestReceipt({
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/đ/g, "d")
         .replace(/Đ/g, "D");
-    const transferNote = `BNB ${noDiacritics} ${format(new Date(session.scheduled_at), "ddMMyyyy")}`;
+    const transferNote = `${isDining ? "BNB AN UONG" : "BNB"} ${noDiacritics} ${format(new Date(session.scheduled_at), "ddMMyyyy")}`;
     const sessionTime = format(
         new Date(session.scheduled_at),
         "HH:mm dd/MM/yyyy",
@@ -108,6 +115,7 @@ export async function buildGuestReceipt({
         bank: `<path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>`,
         chat: `<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/>`,
         copy: `<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>`,
+        utensils: `<path d="M6 3v7a2 2 0 0 0 2 2v9M10 3v7a2 2 0 0 1-2 2M18 3c-2 1.5-3 4-3 7 0 1.5 1 2 3 2v9"/>`,
     };
 
     const [
@@ -119,6 +127,7 @@ export async function buildGuestReceipt({
         icBank,
         icChat,
         icCopy,
+        icUtensils,
         icCourt,
         qrImg,
         bgImg,
@@ -132,6 +141,7 @@ export async function buildGuestReceipt({
         svgImg(P.bank, ICON, 22),
         svgImg(P.chat, ICON, 22),
         svgImg(P.copy, "#2563eb", 16),
+        svgImg(P.utensils, ICON, 28),
         svgImg(
             // icon sân (xanh) như mẫu
             `<rect x="1" y="1" width="42" height="28" rx="4" fill="#16a34a" stroke="none"/><rect x="5" y="5" width="34" height="20" stroke="#bbf7d0" stroke-width="1.5"/><path d="M22 5v20M5 15h34" stroke="#bbf7d0" stroke-width="1.5"/>`,
@@ -140,9 +150,9 @@ export async function buildGuestReceipt({
             "0 0 44 30",
             18,
         ),
-        loadImg(QR_SRC, true),
+        showQr ? loadImg(QR_SRC, true) : Promise.resolve(null),
         loadImg(BG_SRC, true),
-        loadImg(SHUTTLE_SRC, true),
+        isDining ? Promise.resolve(null) : loadImg(SHUTTLE_SRC, true),
     ]);
 
     // nạp Google Fonts (có tiếng Việt) trước khi vẽ canvas
@@ -417,13 +427,18 @@ export async function buildGuestReceipt({
             align: "center",
         });
 
-        // ── badge: CHUYỂN KHOẢN ──
-        const chipTxt = `Chuyển khoản${isGroupedGuest ? " (tự thanh toán)" : ""}`;
+        // ── badge: phương thức ──
+        const isBank = reg.payment_method === "bank_transfer";
+        const chipTxt = isDining
+            ? isBank
+                ? "Chuyển khoản"
+                : "Tiền mặt"
+            : `Chuyển khoản${isGroupedGuest ? " (tự thanh toán)" : ""}`;
         const chipW = measure(chipTxt, { size: 12, weight: 500 }) + 52;
         const chipY = 200;
         const chipX = W / 2 - chipW / 2;
         fillRR(chipX, chipY, chipW, 26, 13, "rgba(205,218,236,0.75)");
-        icon(icBank, chipX + 12, chipY + 13, 15);
+        icon(isDining && !isBank ? icCard : icBank, chipX + 12, chipY + 13, 15);
         text(chipTxt, chipX + 34, chipY + 13, {
             size: 12,
             weight: 500,
@@ -437,7 +452,11 @@ export async function buildGuestReceipt({
             value: string;
         }[] = [
                 { icon: icUser, label: "Người thanh toán", value: displayName },
-                { icon: icCalendar, label: "Buổi đánh", value: session.title },
+                {
+                    icon: icCalendar,
+                    label: isDining ? "Buổi ăn uống" : "Buổi đánh",
+                    value: session.title,
+                },
                 { icon: icClock, label: "Thời gian buổi", value: sessionTime },
             ];
         if (isGroupedGuest && hostName) {
@@ -447,7 +466,7 @@ export async function buildGuestReceipt({
         const LABEL_X = PAD + 40;
         const VAL_W = CW - 40 - 100;
         const infoLayout = infoRows.map((r) => {
-            const lines = wrap(r.value, VAL_W, { size: 13, weight: 600 });
+            const lines = wrap(r.value, VAL_W, { size: 14, weight: 700 });
             return { ...r, lines, h: Math.max(42, lines.length * 17 + 16) };
         });
 
@@ -457,11 +476,11 @@ export async function buildGuestReceipt({
             if (i > 0) hline(LABEL_X, W - PAD, ry);
             const cy = ry + r.h / 2;
             icon(r.icon, PAD, cy, 22);
-            text(r.label, LABEL_X, cy, { size: 13, color: MUTED });
+            text(r.label, LABEL_X, cy, { size: 14, weight: 600, color: "#4a5f80" });
             r.lines.forEach((ln, li) => {
                 text(ln, W - PAD, cy + (li - (r.lines.length - 1) / 2) * 17, {
-                    size: 13,
-                    weight: 600,
+                    size: 14,
+                    weight: 700,
                     align: "right",
                 });
             });
@@ -528,6 +547,12 @@ export async function buildGuestReceipt({
                 note: hostOtherFeeNote,
             });
 
+        // dining: chỉ 1 dòng "Tiền ăn uống"
+        if (isDining) {
+            payRows.length = 0;
+            payRows.push({ amount: totalAmount, label: "Tiền ăn uống" });
+        }
+
         const payLayout = payRows.map((r) => {
             const noteLines = r.note
                 ? r.note
@@ -546,14 +571,18 @@ export async function buildGuestReceipt({
             const cy = py + r.h / 2;
             const top = cy - r.blockH / 2;
 
-            icon(icCourt, PAD, cy, 24, 17);
-            text("+", PAD + 31, cy, {
-                size: 16,
-                weight: 900,
-                color: NAVY,
-                align: "center",
-            });
-            icon(shuttleImg, PAD + 40, cy, 26, 26);
+            if (isDining) {
+                icon(icUtensils, PAD + 23, cy, 28);
+            } else {
+                icon(icCourt, PAD, cy, 24, 17);
+                text("+", PAD + 31, cy, {
+                    size: 16,
+                    weight: 900,
+                    color: NAVY,
+                    align: "center",
+                });
+                icon(shuttleImg, PAD + 40, cy, 26, 26);
+            }
             vline(PAD + 74, top, top + r.blockH);
 
             const tx = PAD + 88;
@@ -595,6 +624,9 @@ export async function buildGuestReceipt({
             family: AMOUNT,
             align: "right",
         });
+
+        // dining + tiền mặt: không vẽ QR / thông tin ngân hàng
+        if (!showQr) return totalY + 64;
 
         // ── QR + tài khoản ──
         const qTop = totalY + 64 + 14;

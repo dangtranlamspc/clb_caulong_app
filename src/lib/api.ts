@@ -1080,6 +1080,38 @@ export const announcementsAdminApi = {
 };
 
 
+export const diningApi = {
+  my: () => api.get("/dining/my"),
+  get: (id: string) => api.get(`/dining/${id}`),
+  payWallet: (pid: string) => api.post(`/dining/participants/${pid}/pay-wallet`),
+  submitPayment: (
+    pid: string,
+    data: { method: "bank_transfer" | "cash"; payment_reference?: string },
+  ) => api.patch(`/dining/participants/${pid}/submit-payment`, data),
+};
+
+export const diningAdminApi = {
+  list: () => api.get("/dining"),
+  create: (data: any) => api.post("/dining", data),
+  get: (id: string) => api.get(`/dining/${id}`),
+  update: (id: string, data: any) => api.put(`/dining/${id}`, data),
+  delete: (id: string) => api.delete(`/dining/${id}`),
+  addParticipants: (id: string, data: { user_ids?: string[]; guest_full_name?: string }) =>
+    api.post(`/dining/${id}/participants`, data),
+  removeParticipant: (pid: string) => api.delete(`/dining/participants/${pid}`),
+  split: (id: string) => api.patch(`/dining/${id}/split`),
+  reopen: (id: string) => api.patch(`/dining/${id}/reopen`),
+  settle: (pid: string, method: "wallet" | "bank_transfer" | "cash") =>
+    api.patch(`/dining/participants/${pid}/settle`, { method }),
+  rejectSubmission: (pid: string) => api.patch(`/dining/participants/${pid}/reject-submission`),
+  issueBill: (id: string, data: {
+    total_bill: number;
+    amounts: { participant_id: string; amount: number; settle_method?: "wallet" | "bank_transfer" | "cash" }[];
+  }) => api.patch(`/dining/${id}/issue-bill`, data),
+  receipt: (pid: string) => api.get(`/dining/participants/${pid}/receipt`),
+};
+
+
 
 
 // Hàm send() theo thời gian thực đang tự động chuyển sang sử dụng REST API. Cơ chế này sẽ bị loại bỏ trong tương lai. Vui lòng sử dụng trực tiếp httpSend() để gửi dữ liệu qua REST.

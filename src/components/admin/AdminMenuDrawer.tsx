@@ -7,6 +7,7 @@ import {
     BookOpen,
     GlassWater,
     LogOut,
+    UtensilsCrossed,
 } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
@@ -50,9 +51,10 @@ export const ADMIN_MENU: AdminMenuItem[] = [
             { href: '/admin/drinks/overview', label: 'Tổng quan' },
         ],
     },
-    { href: '/admin/rankings', icon: Swords, label: 'BXH', desc: 'Bảng xếp hạng', iconBg: 'bg-orange-500' },
-    { href: '/admin/feedback', icon: BookOpen, label: 'Feedbacks', desc: 'Feedbacks', iconBg: 'bg-teal-500' },
+    { href: '/admin/dining', icon: UtensilsCrossed, label: 'Ăn - Uống', desc: 'Chia bill ăn uống, thu tiền', iconBg: 'bg-pink-500' },
     { href: '/admin/fund', icon: BookOpen, label: 'Quỹ', desc: 'Quỹ', iconBg: 'bg-teal-500' },
+    { href: '/admin/feedback', icon: BookOpen, label: 'Feedbacks', desc: 'Feedbacks', iconBg: 'bg-teal-500' },
+    { href: '/admin/rankings', icon: Swords, label: 'BXH', desc: 'Bảng xếp hạng', iconBg: 'bg-orange-500' },
     { href: '/admin/handbook', icon: BookOpen, label: 'Sổ tay CLB', desc: 'Quản lý các trang sổ tay', iconBg: 'bg-teal-500' },
 ];
 
