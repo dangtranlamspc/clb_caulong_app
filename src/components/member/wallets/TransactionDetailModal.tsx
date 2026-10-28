@@ -59,6 +59,16 @@ export function TransactionDetailModal({
   const isTournamentPayment =
     tx.reference_type === "tournament_registration" && tx.reference_id;
 
+
+  const isDiningPayment =
+    tx.reference_type === "dining_participant" && tx.reference_id;
+
+  const diningLabel = isDiningPayment
+    ? tx.amount > 0
+      ? "Hoàn tiền ăn uống"
+      : "Ăn uống"
+    : null;
+
   const shirtOrderLabel = isShirtOrder
     ? tx.amount > 0
       ? "Hoàn tiền đặt áo"
@@ -441,7 +451,7 @@ export function TransactionDetailModal({
                 {smt(tx.amount)}
               </p>
               <span className="text-xs font-medium text-[var(--text-faint)] bg-[var(--surface-muted)] px-2.5 py-1 rounded-full">
-                {shirtOrderLabel ?? tournamentLabel ?? TX_TYPE_LABEL[tx.type] ?? tx.type}
+                {shirtOrderLabel ?? tournamentLabel ?? diningLabel ?? TX_TYPE_LABEL[tx.type] ?? tx.type}
               </span>
             </div>
 

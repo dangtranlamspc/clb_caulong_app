@@ -63,6 +63,7 @@ export default function AdminDiningDetailPage() {
     const [selected, setSelected] = useState<any[]>([]);
     const [guestName, setGuestName] = useState("");
     const [showDelete, setShowDelete] = useState(false);
+    const [showReopen, setShowReopen] = useState(false);
 
     const handleDeleteEvent = async () => {
         setBusy("delete");
@@ -73,6 +74,18 @@ export default function AdminDiningDetailPage() {
         } catch {
             setBusy(null);
             setShowDelete(false);
+        }
+    };
+
+    const handleReopen = async () => {
+        setBusy("reopen");
+        try {
+            const { data } = await diningAdminApi.reopen(id);
+            toast.success(data?.message ?? "Đã mở lại");
+            await load();
+        } catch { } finally {
+            setBusy(null);
+            setShowReopen(false);
         }
     };
 
@@ -160,11 +173,14 @@ export default function AdminDiningDetailPage() {
     );
     const walletPaidTotal = walletPaid.reduce((s, p) => s + Number(p.amount ?? 0), 0);
 
+    const paidCount = parts.filter((p) => p.payment_status === "confirmed").length;
+    const otherPaidCount = paidCount - walletPaid.length;
+
+
     const sumAmounts = parts.reduce((s, p) => s + (amounts[p.id] ?? 0), 0);
     const diff = total - sumAmounts;
     const canSend = isOpen && n > 0 && total > 0 && diff === 0;
 
-    /* ── chia đều: dư dồn mỗi người +1 (giống trang finish session) ── */
     const handleSplitEqually = () => {
         if (n === 0) return toast.error("Chưa có ai tham gia để chia tiền");
         if (total <= 0) return toast.error("Hãy nhập tổng bill trước khi chia");
@@ -340,25 +356,19 @@ export default function AdminDiningDetailPage() {
                 </button>
             </section>
 
-            {/* ───────── Buổi đã chia tiền: tóm tắt thu + mở lại (đặt trên danh sách) ───────── */}
             {!isOpen && (
                 <section className={`${CARD} space-y-3 p-5`}>
                     <div className="flex items-center justify-between">
                         <span className="text-sm text-[var(--text-muted)]">
                             Đã thu <strong className="text-[var(--text)]">{formatVnd(collected)}</strong> / {formatVnd(Number(ev.total_bill))}
                         </span>
-                        <Btn k="reopen" tone="gray" onClick={() => {
-                            if (confirm("Mở lại buổi? Số tiền đã chia sẽ bị xóa.")) {
-                                run("reopen", () => diningAdminApi.reopen(id), "Đã mở lại");
-                            }
-                        }}>
+                        <Btn k="reopen" tone="gray" onClick={() => setShowReopen(true)}>
                             <RotateCcw className="h-3 w-3" /> Mở lại
                         </Btn>
                     </div>
                 </section>
             )}
 
-            {/* ───────── BƯỚC 1: Người tham gia ───────── */}
             <section className="space-y-2">
                 <div className="flex items-center justify-between px-1">
                     <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
@@ -380,7 +390,6 @@ export default function AdminDiningDetailPage() {
                     </div>
                 )}
 
-                {/* Đang mở: danh sách gọn */}
                 {isOpen && n > 0 && (
                     <div className={`${CARD} divide-y divide-[var(--border)]`}>
                         {parts.map((p) => (
@@ -753,6 +762,54 @@ export default function AdminDiningDetailPage() {
                                     className="flex h-10 items-center gap-2 rounded-xl bg-red-500 px-4 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50"
                                 >
                                     {busy === "delete" && <Loader2 className="h-4 w-4 animate-spin" />} Xác nhận xóa
+                                </button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalShell>
+            )}
+
+            {showReopen && (
+                <ModalShell size="sm" onClose={() => setShowReopen(false)}>
+                    {(close) => (
+                        <>
+                            <ModalHeader
+                                icon={<RotateCcw className="h-4 w-4" />}
+                                tone="primary"
+                                title="Mở lại buổi?"
+                                onClose={close}
+                            />
+                            <ModalBody className="space-y-3">
+                                <p className="text-sm text-[var(--text-muted)]">
+                                    Số tiền đã chia cho{" "}
+                                    <strong className="text-[var(--text)]">{n} người</strong> sẽ bị xóa
+                                    để bạn chia lại từ đầu.
+                                </p>
+
+                                {walletPaid.length > 0 && (
+                                    <p className="rounded-lg bg-[var(--primary-soft)] px-3 py-2 text-xs text-[var(--primary)]">
+                                        {walletPaid.length} thành viên đã trả bằng ví BNB sẽ được hoàn lại tổng{" "}
+                                        <strong>{formatVnd(walletPaidTotal)}</strong>.
+                                    </p>
+                                )}
+
+                                {otherPaidCount > 0 && (
+                                    <p className="rounded-lg bg-[var(--warning-soft)] px-3 py-2 text-xs text-[var(--warning)]">
+                                        {otherPaidCount} người đã trả chuyển khoản/tiền mặt sẽ bị đặt lại về
+                                        chưa thanh toán. Hệ thống không hoàn tiền cho các khoản này, bạn tự xử lý
+                                        ngoài đời.
+                                    </p>
+                                )}
+                            </ModalBody>
+                            <ModalFooter>
+                                <button onClick={close} className="btn-secondary text-sm">Hủy</button>
+                                <button
+                                    onClick={handleReopen}
+                                    disabled={busy === "reopen"}
+                                    className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {busy === "reopen" && <Loader2 className="h-4 w-4 animate-spin" />}
+                                    Xác nhận mở lại
                                 </button>
                             </ModalFooter>
                         </>
