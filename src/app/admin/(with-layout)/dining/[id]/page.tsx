@@ -7,6 +7,8 @@ import {
     Landmark,
     Receipt,
     Share2,
+    LockOpen,
+    Lock
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -184,39 +186,44 @@ export default function AdminDiningDetailPage() {
     const handleSplitEqually = () => {
         if (n === 0) return toast.error("Chưa có ai tham gia để chia tiền");
         if (total <= 0) return toast.error("Hãy nhập tổng bill trước khi chia");
-        const base = Math.floor(total / n);
-        let remainder = total - base * n;
-        const next: Record<string, number> = {};
-        parts.forEach((p) => {
-            const extra = remainder > 0 ? 1 : 0;
-            if (remainder > 0) remainder -= 1;
-            next[p.id] = base + extra;
-        });
-        setAmounts(next);
-        setLockedIds(new Set());
+        const empty = new Set<string>();
+        setLockedIds(empty);
+        setAmounts(redistribute(empty, {}));
         toast.success(`Đã chia đều ${formatVnd(total)} cho ${n} người`);
     };
 
-    /* ── sửa tay 1 người: khóa người đó, phần còn lại chia đều cho người chưa khóa ── */
-    const handleAmountChange = (pid: string, value: number) => {
-        const newLocked = new Set(lockedIds);
-        newLocked.add(pid);
-        const next = { ...amounts, [pid]: value };
-
-        const lockedSum = parts.reduce((s, p) => (newLocked.has(p.id) ? s + (next[p.id] ?? 0) : s), 0);
-        const unlocked = parts.filter((p) => !newLocked.has(p.id));
+    /* chia phần còn lại cho những người chưa khóa */
+    const redistribute = (locked: Set<string>, base: Record<string, number>) => {
+        const next = { ...base };
+        const lockedSum = parts.reduce((s, p) => (locked.has(p.id) ? s + (next[p.id] ?? 0) : s), 0);
+        const unlocked = parts.filter((p) => !locked.has(p.id));
         if (unlocked.length > 0) {
             const remaining = Math.max(0, total - lockedSum);
-            const base = Math.floor(remaining / unlocked.length);
-            let rem = remaining - base * unlocked.length;
+            const each = Math.floor(remaining / unlocked.length);
+            let rem = remaining - each * unlocked.length;
             unlocked.forEach((p) => {
                 const extra = rem > 0 ? 1 : 0;
                 if (rem > 0) rem -= 1;
-                next[p.id] = base + extra;
+                next[p.id] = each + extra;
             });
         }
+        return next;
+    };
+
+    /* sửa tay 1 người: khóa người đó, chia lại phần còn lại */
+    const handleAmountChange = (pid: string, value: number) => {
+        const newLocked = new Set(lockedIds);
+        newLocked.add(pid);
         setLockedIds(newLocked);
-        setAmounts(next);
+        setAmounts(redistribute(newLocked, { ...amounts, [pid]: value }));
+    };
+
+    /* mở khóa 1 người: số của họ sẽ được tính lại theo phần còn lại */
+    const handleUnlock = (pid: string) => {
+        const newLocked = new Set(lockedIds);
+        newLocked.delete(pid);
+        setLockedIds(newLocked);
+        setAmounts(redistribute(newLocked, amounts));
     };
 
     const toggleMode = (pid: string, m: SettleMode, isGuest: boolean) =>
@@ -562,6 +569,19 @@ export default function AdminDiningDetailPage() {
                                                     placeholder="0"
                                                 />
                                                 <span className="text-xs text-[var(--text-faint)]">đ</span>
+                                                <button
+                                                    type="button"
+                                                    disabled={!locked}
+                                                    onClick={() => handleUnlock(p.id)}
+                                                    aria-label={locked ? "Bỏ khóa, tính lại số tiền" : "Số tiền tự động chia đều"}
+                                                    title={locked ? "Đã sửa tay, bấm để tự chia lại" : "Đang tự chia đều"}
+                                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors ${locked
+                                                        ? "border-amber-500/40 bg-[var(--warning-soft)] text-[var(--warning)]"
+                                                        : "border-[var(--border)] text-[var(--text-faint)] opacity-60"
+                                                        }`}
+                                                >
+                                                    {locked ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
+                                                </button>
                                             </div>
 
                                             <div className="flex flex-wrap items-center gap-2">
@@ -584,7 +604,7 @@ export default function AdminDiningDetailPage() {
                                                     );
                                                 })}
                                             </div>
-                                            <p className="text-[11px] text-[var(--text-faint)]">
+                                            {/* <p className="text-[11px] text-[var(--text-faint)]">
                                                 {mode === "wallet"
                                                     ? "Trừ thẳng ví khi gửi hóa đơn"
                                                     : mode
@@ -592,7 +612,7 @@ export default function AdminDiningDetailPage() {
                                                             ? "Gửi biên lai cho khách, xác nhận sau"
                                                             : "Gửi thông báo cho member, xác nhận sau"
                                                         : "Chỉ gửi thông báo, member tự thanh toán"}
-                                            </p>
+                                            </p> */}
                                         </div>
                                     );
                                 })}

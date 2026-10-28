@@ -58,7 +58,6 @@ import {
 import { useNavLoadingStore } from "@/store/nav-loading.store";
 import { BADGE_BASE, BADGE_TONE, GENDER_META } from "@/components/member/badges";
 
-/* ───────────────────────── config ───────────────────────── */
 
 const STATUS_CONFIG: Record<string, { label: string; tone: Tone; icon: any }> = {
   pendingApproval: { label: "Chờ duyệt", tone: "warning", icon: Hourglass },
@@ -78,7 +77,6 @@ const STATUS_CONFIG: Record<string, { label: string; tone: Tone; icon: any }> = 
   },
 };
 
-/** Vạch màu bên trái mỗi dòng đăng ký theo trạng thái */
 const RAIL: Record<Tone, string> = {
   warning: "bg-amber-400",
   primary: "bg-blue-500",
@@ -1532,19 +1530,42 @@ export default function SessionDetailPage() {
             }`}
         >
           {reg.is_guest && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                openEditGuest(reg);
-              }}
-              title="Sửa thông tin khách"
-              aria-label="Sửa thông tin khách"
-              className={`absolute inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] transition-colors hover:text-[var(--text)] hover:brightness-125 ${isNested ? "right-2 top-2" : "right-3 top-3"
+            <div
+              className={`absolute z-10 flex items-center gap-1.5 ${isNested ? "right-2 top-2" : "right-3 top-3"
                 }`}
             >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
+              {canShare && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShareGuestReceipt(reg, hostName, groupedGuestsForReceipt);
+                  }}
+                  disabled={sharing}
+                  title="Chia sẻ biên lai"
+                  className="inline-flex h-7 items-center gap-1 rounded-full bg-[var(--primary-soft)] px-2.5 text-[11px] font-semibold text-[var(--primary)] transition-colors hover:brightness-95 disabled:opacity-50"
+                >
+                  {sharing ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Share2 className="h-3 w-3" />
+                  )}
+                  Biên lai
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEditGuest(reg);
+                }}
+                title="Sửa thông tin khách"
+                aria-label="Sửa thông tin khách"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] transition-colors hover:text-[var(--text)] hover:brightness-125"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
           {isNested && (
             <CornerDownRight className="mt-2 h-3.5 w-3.5 shrink-0 self-start text-[var(--text-faint)]" />
@@ -1667,25 +1688,6 @@ export default function SessionDetailPage() {
               >
                 {totalAmount != null ? formatVnd(totalAmount) : "—"}
               </p>
-            )}
-            {canShare && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleShareGuestReceipt(reg, hostName, groupedGuestsForReceipt);
-                }}
-                disabled={sharing}
-                title="Chia sẻ biên lai"
-                className="inline-flex h-7 items-center gap-1 rounded-full bg-[var(--primary-soft)] px-2.5 text-[11px] font-semibold text-[var(--primary)] transition-colors hover:brightness-95 disabled:opacity-50"
-              >
-                {sharing ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Share2 className="h-3 w-3" />
-                )}
-                Biên lai
-              </button>
             )}
           </div>
         </div>
