@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, UtensilsCrossed, CalendarDays, MapPin, Users, Loader2, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, UtensilsCrossed, CalendarDays, MapPin, Users, Loader2, Trash2, ArrowLeft, Pencil } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -19,15 +19,24 @@ export default function AdminDiningPage() {
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [form, setForm] = useState({
+    const defaultForm = () => ({
         title: "",
         event_date: `${new Date().toISOString().slice(0, 10)}T19:00`,
         location: "",
         note: "",
         allow_registration: true,
     });
+
+    const [form, setForm] = useState(defaultForm());
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [toDelete, setToDelete] = useState<any>(null);
     const [deleting, setDeleting] = useState(false);
+
+    const openCreate = () => {
+        setEditingId(null);
+        setForm(defaultForm());
+        setShowCreate(true);
+    };
 
     const handleDelete = async () => {
         if (!toDelete) return;
@@ -52,22 +61,49 @@ export default function AdminDiningPage() {
     };
     useEffect(() => { load(); }, []);
 
-    const handleCreate = async () => {
+    const openEdit = (e: any) => {
+        setEditingId(e.id);
+        setForm({
+            title: e.title ?? "",
+            event_date: format(new Date(e.event_date), "yyyy-MM-dd'T'HH:mm"),
+            location: e.location ?? "",
+            note: e.note ?? "",
+            allow_registration: !!e.allow_registration,
+        });
+        setShowCreate(true);
+    };
+
+    const handleSave = async () => {
         if (!form.title.trim() || !form.event_date) {
             toast.error("Nhập tên buổi và thời gian");
             return;
         }
         setSaving(true);
         try {
-            const { data } = await diningAdminApi.create({
-                title: form.title.trim(),
-                event_date: new Date(form.event_date).toISOString(),
-                location: form.location.trim() || undefined,
-                note: form.note.trim() || undefined,
-                allow_registration: form.allow_registration,
-            });
-            toast.success("Đã tạo buổi ăn uống");
-            router.push(`/admin/dining/${data.id}`);
+            if (editingId) {
+                // null để cho phép xóa trống địa điểm / ghi chú (IsOptional bỏ qua null)
+                await diningAdminApi.update(editingId, {
+                    title: form.title.trim(),
+                    event_date: new Date(form.event_date).toISOString(),
+                    location: form.location.trim() || null,
+                    note: form.note.trim() || null,
+                    allow_registration: form.allow_registration,
+                });
+                toast.success("Đã cập nhật buổi ăn uống");
+                setShowCreate(false);
+                setEditingId(null);
+                await load();
+            } else {
+                const { data } = await diningAdminApi.create({
+                    title: form.title.trim(),
+                    event_date: new Date(form.event_date).toISOString(),
+                    location: form.location.trim() || undefined,
+                    note: form.note.trim() || undefined,
+                    allow_registration: form.allow_registration,
+                });
+                toast.success("Đã tạo buổi ăn uống");
+                router.push(`/admin/dining/${data.id}`);
+            }
         } catch { } finally {
             setSaving(false);
         }
@@ -128,14 +164,24 @@ export default function AdminDiningPage() {
                                     </p>
                                 </button>
 
-                                <button
-                                    type="button"
-                                    aria-label="Xóa buổi"
-                                    onClick={() => setToDelete(e)}
-                                    className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--danger-soft)] text-[var(--danger)] active:scale-95"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
+                                <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        aria-label="Chỉnh sửa buổi"
+                                        onClick={() => openEdit(e)}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10 text-blue-600 active:scale-95"
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-label="Xóa buổi"
+                                        onClick={() => setToDelete(e)}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--danger-soft)] text-[var(--danger)] active:scale-95"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                </div>
                             </div>
                         );
                     })}
@@ -143,13 +189,13 @@ export default function AdminDiningPage() {
             )}
 
             {showCreate && (
-                <ModalShell onClose={() => setShowCreate(false)} dismissible={false}>
+                <ModalShell onClose={() => { setShowCreate(false); setEditingId(null); }} dismissible={false}>
                     {(close) => (
                         <>
                             <ModalHeader
-                                icon={<UtensilsCrossed className="h-4 w-4" />}
+                                icon={editingId ? <Pencil className="h-4 w-4" /> : <UtensilsCrossed className="h-4 w-4" />}
                                 tone="primary"
-                                title="Tạo buổi ăn uống"
+                                title={editingId ? "Chỉnh sửa buổi ăn uống" : "Tạo buổi ăn uống"}
                                 onClose={close}
                             />
                             <ModalBody className="space-y-3">
@@ -181,10 +227,10 @@ export default function AdminDiningPage() {
                             <ModalFooter>
                                 <button onClick={close} className="btn-secondary text-sm">Hủy</button>
                                 <button
-                                    onClick={handleCreate} disabled={saving}
+                                    onClick={handleSave} disabled={saving}
                                     className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                                 >
-                                    {saving && <Loader2 className="h-4 w-4 animate-spin" />} Tạo
+                                    {saving && <Loader2 className="h-4 w-4 animate-spin" />} {editingId ? "Lưu" : "Tạo"}
                                 </button>
                             </ModalFooter>
                         </>
