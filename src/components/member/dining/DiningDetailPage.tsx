@@ -65,11 +65,25 @@ export default function MemberDiningDetailPage() {
 
     const st = DINING_STATUS[ev.status] ?? DINING_STATUS.open;
     const ps = PAY_STATUS[mine.payment_status] ?? PAY_STATUS.pending;
-    const parts: any[] = ev.participants ?? [];
+    const parts: any[] = (ev.participants ?? []).filter(
+        (p: any) => (p.approval_status ?? "approved") === "approved",
+    );
     const billed = ev.status === "billed";
     const canPay = billed && (mine.payment_status === "pending" || mine.payment_status === "submitted");
     const submitted = mine.payment_status === "submitted";
     const amount = Number(mine.amount ?? 0);
+
+    const approval = mine.approval_status ?? "approved";
+
+    const handleCancelRegistration = async () => {
+        if (!confirm("Hủy đăng ký buổi này?")) return;
+        setBusy(true);
+        try {
+            await diningApi.cancelRegistration(id);
+            toast.success("Đã hủy đăng ký");
+            router.replace("/dining");
+        } catch { } finally { setBusy(false); }
+    };
 
     const handlePay = async () => {
         if (!method) return toast.error("Chọn phương thức thanh toán");
@@ -126,13 +140,42 @@ export default function MemberDiningDetailPage() {
             <section className={`${CARD} space-y-4 p-5`}>
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-[var(--text)]">Phần của bạn</h2>
-                    {ev.status !== "open" && <Chip tone={ps.tone}>{ps.label}</Chip>}
+                    {approval === "approved" && ev.status !== "open" && <Chip tone={ps.tone}>{ps.label}</Chip>}
+                    {approval === "pending" && <Chip tone="warning">Chờ duyệt</Chip>}
+                    {approval === "rejected" && <Chip tone="danger">Bị từ chối</Chip>}
                 </div>
 
-                {ev.status === "open" ? (
-                    <p className="rounded-xl bg-[var(--surface-muted)] px-4 py-5 text-center text-sm text-[var(--text-faint)]">
-                        Admin chưa chia tiền. Bạn sẽ nhận thông báo khi có hóa đơn.
+                {approval === "pending" ? (
+                    <>
+                        <p className="rounded-xl bg-[var(--warning-soft)] px-4 py-5 text-center text-sm text-[var(--warning)]">
+                            Yêu cầu của bạn đang chờ admin duyệt.
+                        </p>
+                        <button
+                            disabled={busy}
+                            onClick={handleCancelRegistration}
+                            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)] disabled:opacity-50"
+                        >
+                            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                            Hủy đăng ký
+                        </button>
+                    </>
+                ) : approval === "rejected" ? (
+                    <p className="rounded-xl bg-[var(--danger-soft)] px-4 py-5 text-center text-sm text-[var(--danger)]">
+                        Yêu cầu tham gia của bạn đã bị từ chối.
                     </p>
+                ) : ev.status === "open" ? (
+                    <>
+                        <p className="rounded-xl bg-[var(--surface-muted)] px-4 py-5 text-center text-sm text-[var(--text-faint)]">
+                            Admin chưa chia tiền. Bạn sẽ nhận thông báo khi có hóa đơn.
+                        </p>
+                        <button
+                            disabled={busy}
+                            onClick={handleCancelRegistration}
+                            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text-muted)] disabled:opacity-50"
+                        >
+                            Hủy tham gia
+                        </button>
+                    </>
                 ) : (
                     <>
                         <div className="flex items-end justify-between">
@@ -229,7 +272,8 @@ export default function MemberDiningDetailPage() {
                                     {pName(p)}
                                     {p.id === mine.id && <span className="ml-1 text-xs text-[var(--text-faint)]">(bạn)</span>}
                                 </p>
-                                {ev.status !== "open" && <Chip tone={s.tone}>{s.label}</Chip>}
+                                {ev.status !== "open" && p.approval_status !== "pending" && <Chip tone={s.tone}>{s.label}</Chip>}
+                                {p.approval_status === "pending" && <Chip tone="warning">Chờ duyệt</Chip>}
                             </div>
                         );
                     })}

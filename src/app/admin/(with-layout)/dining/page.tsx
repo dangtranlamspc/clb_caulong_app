@@ -9,6 +9,7 @@ import { diningAdminApi } from "@/lib/api";
 import { DINING_STATUS } from "@/lib/dining";
 import {
     CARD, Chip, ModalShell, ModalHeader, ModalBody, ModalFooter, formatVnd,
+    Switch,
 } from "@/components/admin/sessions/session-ui";
 import { DateTimeField } from "@/components/admin/dining/fields";
 
@@ -23,6 +24,7 @@ export default function AdminDiningPage() {
         event_date: `${new Date().toISOString().slice(0, 10)}T19:00`,
         location: "",
         note: "",
+        allow_registration: true,
     });
     const [toDelete, setToDelete] = useState<any>(null);
     const [deleting, setDeleting] = useState(false);
@@ -62,6 +64,7 @@ export default function AdminDiningPage() {
                 event_date: new Date(form.event_date).toISOString(),
                 location: form.location.trim() || undefined,
                 note: form.note.trim() || undefined,
+                allow_registration: form.allow_registration,
             });
             toast.success("Đã tạo buổi ăn uống");
             router.push(`/admin/dining/${data.id}`);
@@ -115,6 +118,7 @@ export default function AdminDiningPage() {
                                                 <MapPin className="h-3.5 w-3.5" /> {e.location}
                                             </span>
                                         )}
+                                        {e.pending_count > 0 && <Chip tone="warning">{e.pending_count} chờ duyệt</Chip>}
                                         <span className="flex items-center gap-1">
                                             <Users className="h-3.5 w-3.5" /> {e.paid_count}/{e.participant_count} đã trả
                                         </span>
@@ -165,6 +169,14 @@ export default function AdminDiningPage() {
                                     className="input-field" placeholder="Ghi chú (tuỳ chọn)"
                                     value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
                                 />
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] px-3 py-2.5">
+                                    <span className="text-sm text-[var(--text)]">Cho phép member tự đăng ký</span>
+                                    <Switch
+                                        checked={form.allow_registration}
+                                        onChange={(v) => setForm((f) => ({ ...f, allow_registration: v }))}
+                                        label="Cho phép member tự đăng ký"
+                                    />
+                                </div>
                             </ModalBody>
                             <ModalFooter>
                                 <button onClick={close} className="btn-secondary text-sm">Hủy</button>

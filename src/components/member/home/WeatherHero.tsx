@@ -7,17 +7,6 @@ import {
 } from "react";
 import { c } from "@/lib/theme";
 
-/**
- * Thẻ hero ở trang chủ với nền động theo thời tiết hiện tại.
- * Đặt file này ở: components/member/home/WeatherHero.tsx
- *
- * Xem thử từng kiểu thời tiết mà không cần chờ trời thay đổi:
- *   /home?wx=rain            (clear | partly | cloudy | fog | rain | storm | snow)
- *   /home?wx=clear&night=1   (thêm night=1 để xem ban đêm)
- *
- * Gỡ lỗi: thêm ?wxdebug=1 để in dữ liệu thô của Open-Meteo ra console.
- */
-
 export type WeatherScene =
     | "clear"
     | "partly"
@@ -37,19 +26,13 @@ const SCENES: WeatherScene[] = [
     "snow",
 ];
 
-// Mặc định lấy vị trí hiện tại của người mở web (trình duyệt sẽ hỏi quyền vị trí).
-// Nếu người dùng từ chối hoặc thiết bị không có định vị thì dùng toạ độ dự phòng này
-// (TP. Hồ Chí Minh). Đổi thành toạ độ sân của CLB nếu cần.
+
 const WEATHER_LAT = 10.78;
 const WEATHER_LON = 106.7;
 const REFRESH_MS = 10 * 60 * 1000;
-const GEO_TIMEOUT_MS = 10 * 1000;
-// Đổi key khi đổi cấu trúc dữ liệu cache để bỏ cache cũ
 const CACHE_KEY = "home-weather-v3";
-// Endpoint NestJS (proxy tới WeatherAPI.com). Backend có setGlobalPrefix("api/v1").
 const WEATHER_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1/weather`;
 
-/* ───────────────────────── dữ liệu thời tiết ───────────────────────── */
 
 type Weather = { scene: WeatherScene; isDay: boolean };
 type Coords = { lat: number; lon: number };
@@ -69,7 +52,7 @@ function readCache(): Cached | null {
         }
         return v;
     } catch {
-        return null; // bỏ qua lỗi storage / JSON hỏng
+        return null;
     }
 }
 
@@ -77,40 +60,87 @@ function writeCache(v: Cached) {
     try {
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(v));
     } catch {
-        /* bỏ qua lỗi storage */
     }
 }
 
-// Hỏi vị trí người dùng; từ chối / lỗi / quá GEO_TIMEOUT_MS thì dùng toạ độ dự phòng.
-// Lưu ý: option `timeout` của trình duyệt KHÔNG tính thời gian chờ người dùng bấm
-// popup xin quyền, nên phải tự đặt thêm một bộ đếm giờ để không bị treo mãi.
-function getCoords(): Promise<Coords> {
-    const fallback: Coords = { lat: WEATHER_LAT, lon: WEATHER_LON };
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-        return Promise.resolve(fallback);
+const COORDS_KEY = "home-geo-v1";
+const COORDS_FRESH_MS = 6 * 60 * 60 * 1000;
+
+type StoredCoords = Coords & { t: number };
+
+function readCoords(): StoredCoords | null {
+    try {
+        const raw = localStorage.getItem(COORDS_KEY);
+        if (!raw) return null;
+        const v = JSON.parse(raw) as StoredCoords;
+        if (!Number.isFinite(v?.lat) || !Number.isFinite(v?.lon) || typeof v?.t !== "number") {
+            return null;
+        }
+        return v;
+    } catch {
+        return null;
     }
+}
+
+function writeCoords(c: Coords) {
+    try {
+        localStorage.setItem(COORDS_KEY, JSON.stringify({ ...c, t: Date.now() }));
+    } catch { }
+}
+
+async function getPermission(): Promise<PermissionState | "unsupported"> {
+    try {
+        if (!navigator.permissions?.query) return "unsupported";
+        const s = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+        return s.state;
+    } catch {
+        return "unsupported";
+    }
+}
+
+function requestPosition(): Promise<Coords | null> {
     return new Promise((resolve) => {
-        let done = false;
-        const finish = (c: Coords) => {
-            if (done) return;
-            done = true;
-            clearTimeout(timer);
-            resolve(c);
-        };
-        const timer = setTimeout(() => finish(fallback), GEO_TIMEOUT_MS);
         navigator.geolocation.getCurrentPosition(
-            (pos) => finish({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-            () => finish(fallback),
+            (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+            () => resolve(null),
             { enableHighAccuracy: false, timeout: 8000, maximumAge: 30 * 60 * 1000 },
         );
     });
 }
 
-/**
- * Trả về null khi chưa có dữ liệu thật (đang tải / lỗi mạng).
- * Khi đó thẻ hero dùng gradient mặc định thay vì giả vờ "trời nắng".
- * Backend đã quy đổi dữ liệu Apple WeatherKit sang { scene, isDay }.
- */
+async function getCoords(): Promise<Coords> {
+    const fallback: Coords = { lat: WEATHER_LAT, lon: WEATHER_LON };
+    const stored = readCoords();
+
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+        return stored ?? fallback;
+    }
+
+    if (stored && Date.now() - stored.t < COORDS_FRESH_MS) return stored;
+
+    const perm = await getPermission();
+
+    if (perm === "denied") return stored ?? fallback;
+
+    if (perm === "granted") {
+        const pos = await requestPosition();
+        if (pos) {
+            writeCoords(pos);
+            return pos;
+        }
+        return stored ?? fallback;
+    }
+
+    if (stored) return stored;
+
+    const pos = await requestPosition();
+    if (pos) {
+        writeCoords(pos);
+        return pos;
+    }
+    return fallback;
+}
+
 function useWeather(): Weather | null {
     const [weather, setWeather] = useState<Weather | null>(null);
 
@@ -120,14 +150,12 @@ function useWeather(): Weather | null {
         const q = new URLSearchParams(window.location.search);
         const debug = q.get("wxdebug") === "1";
 
-        // Chế độ xem thử qua query ?wx=...
         const forced = q.get("wx") as WeatherScene | null;
         if (forced && SCENES.includes(forced)) {
             setWeather({ scene: forced, isDay: q.get("night") !== "1" });
             return;
         }
 
-        // Dùng kết quả đã lưu (nếu còn mới) để hiện ngay, không chờ mạng
         let lastFetch = 0;
         const cached = readCache();
         if (cached && Date.now() - cached.t < REFRESH_MS) {
@@ -143,7 +171,6 @@ function useWeather(): Weather | null {
                 const { lat, lon } = await coordsPromise;
                 if (!alive) return;
 
-                // Làm tròn 2 chữ số thập phân (~1 km) vì chỉ cần thời tiết khu vực
                 const res = await fetch(
                     `${WEATHER_ENDPOINT}?lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}`,
                     { cache: "no-store" },
@@ -170,8 +197,6 @@ function useWeather(): Weather | null {
         if (!lastFetch) run();
         const id = setInterval(run, REFRESH_MS);
 
-        // Trên điện thoại / PWA, setInterval bị tạm dừng khi ẩn tab.
-        // Quay lại tab mà dữ liệu đã cũ thì tải lại ngay.
         const onVisible = () => {
             if (document.visibilityState === "visible" && Date.now() - lastFetch >= REFRESH_MS) {
                 run();
@@ -188,8 +213,6 @@ function useWeather(): Weather | null {
 
     return weather;
 }
-
-/* ───────────────────────── hạt chuyển động (cố định, tránh lệch hydration) ───────────────────────── */
 
 function rng(seed: number) {
     return () => {
@@ -246,9 +269,6 @@ const CLOUD_POOL = Array.from({ length: 6 }, (_, i) => {
     };
 });
 
-/* ───────────────────────── bảng màu / cấu hình theo kiểu thời tiết ───────────────────────── */
-
-// [ngày, đêm]. Màu đủ tối để chữ trắng của thẻ vẫn dễ đọc.
 const GRADIENTS: Record<WeatherScene, [string, string]> = {
     clear: [
         "linear-gradient(160deg,#0284c7 0%,#1e40af 100%)",
@@ -337,7 +357,6 @@ const WX_CSS = `
 }
 `;
 
-/* ───────────────────────── nền động ───────────────────────── */
 
 function WeatherBackdrop({
     scene,

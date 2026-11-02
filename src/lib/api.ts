@@ -1082,6 +1082,9 @@ export const announcementsAdminApi = {
 
 export const diningApi = {
   my: () => api.get("/dining/my"),
+  open: () => api.get("/dining/open"),
+  register: (id: string) => api.post(`/dining/${id}/register`),
+  cancelRegistration: (id: string) => api.delete(`/dining/${id}/register`),
   get: (id: string) => api.get(`/dining/${id}`),
   payWallet: (pid: string) => api.post(`/dining/participants/${pid}/pay-wallet`),
   submitPayment: (
@@ -1109,6 +1112,8 @@ export const diningAdminApi = {
     amounts: { participant_id: string; amount: number; settle_method?: "wallet" | "bank_transfer" | "cash" }[];
   }) => api.patch(`/dining/${id}/issue-bill`, data),
   receipt: (pid: string) => api.get(`/dining/participants/${pid}/receipt`),
+  approveRegistration: (pid: string) => api.patch(`/dining/participants/${pid}/approve`),
+  rejectRegistration: (pid: string) => api.patch(`/dining/participants/${pid}/reject-registration`),
 };
 
 

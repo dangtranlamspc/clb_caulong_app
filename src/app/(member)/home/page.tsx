@@ -27,6 +27,7 @@ import { BirthdayModal } from "@/components/member/home/BirthdayModal";
 import { c, alpha, type ThemeTokens } from "@/lib/theme";
 import { WeatherHero } from "@/components/member/home/WeatherHero";
 import { BirthdaySection } from "@/components/member/home/BirthdaySection";
+import { UpcomingDining } from "@/components/member/home/UpcomingDining";
 
 const LEVEL_LABELS: Record<string, string> = {
   yeu: "Yếu",
@@ -324,6 +325,8 @@ export default function HomePage() {
         />
 
         <UpcomingEvents />
+
+        <UpcomingDining />
 
         <HandbookModal open={handbookOpen} onClose={() => setHandbookOpen(false)} />
 

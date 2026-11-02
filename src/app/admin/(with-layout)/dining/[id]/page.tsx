@@ -52,7 +52,6 @@ export default function AdminDiningDetailPage() {
     const billInit = useRef(false);
     const [busy, setBusy] = useState<string | null>(null);
 
-    // ── state "gửi hóa đơn" (chỉ dùng khi buổi đang open) ──
     const [amounts, setAmounts] = useState<Record<string, number>>({});
     const [lockedIds, setLockedIds] = useState<Set<string>>(new Set());
     const [modes, setModes] = useState<Record<string, SettleMode | undefined>>({});
@@ -107,7 +106,7 @@ export default function AdminDiningDetailPage() {
 
     useEffect(() => {
         if (!ev) return;
-        const list: any[] = ev.participants ?? [];
+        const list: any[] = (ev.participants ?? []).filter((p: any) => (p.approval_status ?? "approved") === "approved");
         const idSet = new Set(list.map((p) => p.id));
         setAmounts((prev) => Object.fromEntries(list.map((p) => [p.id, prev[p.id] ?? 0])));
         setLockedIds((prev) => new Set([...prev].filter((i) => idSet.has(i))));
@@ -162,12 +161,14 @@ export default function AdminDiningDetailPage() {
     if (loading) return <div className={`${CARD} mx-auto h-48 max-w-3xl animate-pulse bg-[var(--surface-muted)]`} />;
     if (!ev) return null;
 
-    const parts: any[] = ev.participants ?? [];
+    const all: any[] = ev.participants ?? [];
+    const parts = all.filter((p) => (p.approval_status ?? "approved") === "approved");
+    const requests = all.filter((p) => p.approval_status === "pending");
     const n = parts.length;
+    const existingIds = new Set(all.map((p) => p.user_id).filter(Boolean));
     const st = DINING_STATUS[ev.status] ?? DINING_STATUS.open;
     const isOpen = ev.status === "open";
     const total = Number(bill) || 0;
-    const existingIds = new Set(parts.map((p) => p.user_id).filter(Boolean));
     const collected = parts.filter((p) => p.payment_status === "confirmed")
         .reduce((s, p) => s + Number(p.amount ?? 0), 0);
     const walletPaid = parts.filter(
@@ -192,7 +193,6 @@ export default function AdminDiningDetailPage() {
         toast.success(`Đã chia đều ${formatVnd(total)} cho ${n} người`);
     };
 
-    /* chia phần còn lại cho những người chưa khóa */
     const redistribute = (locked: Set<string>, base: Record<string, number>) => {
         const next = { ...base };
         const lockedSum = parts.reduce((s, p) => (locked.has(p.id) ? s + (next[p.id] ?? 0) : s), 0);
@@ -338,11 +338,13 @@ export default function AdminDiningDetailPage() {
                 <ArrowLeft className="h-4 w-4" /> Quay lại
             </button>
 
-            {/* Thông tin */}
             <section className={`${CARD} p-5`}>
                 <div className="flex items-start justify-between gap-3">
                     <h1 className="text-xl font-bold text-[var(--text)]">{ev.title}</h1>
-                    <Chip tone={st.tone}>{st.label}</Chip>
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                        {isOpen && ev.allow_registration && <Chip tone="success">Đang mở đăng ký</Chip>}
+                        <Chip tone={st.tone}>{st.label}</Chip>
+                    </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-[var(--text-muted)]">
                     <span className="flex items-center gap-1.5">
@@ -354,13 +356,33 @@ export default function AdminDiningDetailPage() {
                     )}
                 </div>
                 {ev.note && <p className="mt-2 text-sm italic text-[var(--text-faint)]">{ev.note}</p>}
-                <button
-                    type="button"
-                    onClick={() => setShowDelete(true)}
-                    className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-xl bg-[var(--danger-soft)] px-3 text-xs font-semibold text-[var(--danger)]"
-                >
-                    <Trash2 className="h-4 w-4" /> Xóa buổi
-                </button>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setShowDelete(true)}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[var(--danger-soft)] px-3 text-xs font-semibold text-[var(--danger)]"
+                    >
+                        <Trash2 className="h-4 w-4" /> Xóa buổi
+                    </button>
+
+                    {isOpen && (
+                        <button
+                            type="button"
+                            disabled={busy !== null}
+                            onClick={() =>
+                                run(
+                                    "toggle-reg",
+                                    () => diningAdminApi.update(id, { allow_registration: !ev.allow_registration }),
+                                    ev.allow_registration ? "Đã đóng đăng ký" : "Đã mở đăng ký",
+                                )
+                            }
+                            className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[var(--surface-muted)] px-3 text-xs font-semibold text-[var(--text)] disabled:opacity-50"
+                        >
+                            {busy === "toggle-reg" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                            {ev.allow_registration ? "Đóng đăng ký" : "Mở đăng ký"}
+                        </button>
+                    )}
+                </div>
             </section>
 
             {!isOpen && (
@@ -372,6 +394,33 @@ export default function AdminDiningDetailPage() {
                         <Btn k="reopen" tone="gray" onClick={() => setShowReopen(true)}>
                             <RotateCcw className="h-3 w-3" /> Mở lại
                         </Btn>
+                    </div>
+                </section>
+            )}
+
+            {isOpen && requests.length > 0 && (
+                <section className="space-y-2">
+                    <h2 className="flex items-center gap-2 px-1 text-sm font-semibold text-[var(--text)]">
+                        <UserPlus className="h-4 w-4" /> Yêu cầu đăng ký ({requests.length})
+                    </h2>
+                    <div className={`${CARD} divide-y divide-[var(--border)]`}>
+                        {requests.map((p) => (
+                            <div key={p.id} className="flex items-center gap-3 px-4 py-3">
+                                <Avatar url={p.users?.avatar_url} name={pName(p)} size={32} />
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-semibold text-[var(--text)]">{pName(p)}</p>
+                                    <p className="text-xs text-[var(--text-muted)]">{p.users?.phone}</p>
+                                </div>
+                                <Btn k={`rr:${p.id}`} tone="red"
+                                    onClick={() => run(`rr:${p.id}`, () => diningAdminApi.rejectRegistration(p.id), "Đã từ chối")}>
+                                    Từ chối
+                                </Btn>
+                                <Btn k={`ap:${p.id}`} tone="green"
+                                    onClick={() => run(`ap:${p.id}`, () => diningAdminApi.approveRegistration(p.id), "Đã duyệt")}>
+                                    Duyệt
+                                </Btn>
+                            </div>
+                        ))}
                     </div>
                 </section>
             )}
