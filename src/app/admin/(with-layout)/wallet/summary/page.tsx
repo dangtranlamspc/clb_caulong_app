@@ -485,7 +485,6 @@ function MemberPanel({
           ? transactions.filter((t: any) => selectedTxIds.has(t.id))
           : transactions;
 
-      // ───────────── Cấu hình ─────────────
       const W = 390;
       const SVG_SCALE = 3;
       const PAD = 22;
@@ -501,14 +500,24 @@ function MemberPanel({
       const NAVY = "#10294a";
       const ICON = "#1e3a5f";
       const MUTED = "#8a9bb5";
-      const SOFT = "#445a7a"; // chữ phụ đậm hơn để nổi trên nền
+      const SOFT = "#445a7a";
       const LINE = "rgba(16,41,74,0.14)";
       const GREEN = "#059669";
       const RED = "#dc2626";
 
       const BG_SRC = "/bg/receipt-bg.webp";
+      const QR_SRC = "/qr/qr-ng-ngoi.webp";
+      const SHOW_QR = true;
 
-      const MAX_CANVAS_PX = 14_000_000; // giới hạn an toàn cho Safari iOS
+      const lastName = (member.full_name ?? "").trim().split(/\s+/).pop() ?? "";
+      const noDiacritics = lastName
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D");
+      const transferNote = `BNB NAP VI ${noDiacritics}`.trim();
+
+      const MAX_CANVAS_PX = 14_000_000;
       const MAX_HEIGHT = 30000;
 
       const exportedAt = `Xuất lúc ${format(new Date(), "HH:mm, dd/MM/yyyy", { locale: vi })}`;
@@ -517,7 +526,6 @@ function MemberPanel({
           ? tx.description
           : tx.title ?? "";
 
-      // ───────────── Ảnh / icon ─────────────
       const loadImg = (src: string, cors = false) =>
         new Promise<HTMLImageElement | null>((resolve) => {
           const img = new Image();
@@ -539,20 +547,29 @@ function MemberPanel({
         star: `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>`,
         doc: `<path d="M6 3h10l3 3v15H6z"/><path d="M9 9h7M9 13h7M9 17h5"/>`,
         wallet: `<path d="M3 7h15a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3M17 14h.01"/>`,
+        card: `<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/>`,
+        bank: `<path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>`,
+        chat: `<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/>`,
+        copy: `<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>`,
       };
 
-      const [icUser, icPhone, icStar, icDoc, icWallet, bgImg] = await Promise.all([
-        svgImg(P.user, ICON, 22),
-        svgImg(P.phone, ICON, 22),
-        svgImg(P.star, ICON, 22),
-        svgImg(P.doc, ICON, 22),
-        svgImg(P.wallet, ICON, 16),
-        loadImg(BG_SRC, true),
-      ]);
+      const [icUser, icPhone, icStar, icDoc, icWallet, icCard, icBank, icChat, icCopy, bgImg, qrImg] =
+        await Promise.all([
+          svgImg(P.user, ICON, 22),
+          svgImg(P.phone, ICON, 22),
+          svgImg(P.star, ICON, 22),
+          svgImg(P.doc, ICON, 22),
+          svgImg(P.wallet, ICON, 16),
+          svgImg(P.card, ICON, 22),
+          svgImg(P.bank, ICON, 22),
+          svgImg(P.chat, ICON, 22),
+          svgImg(P.copy, "#2563eb", 16),
+          loadImg(BG_SRC, true),
+          SHOW_QR ? loadImg(QR_SRC, true) : Promise.resolve(null),
+        ]);
 
       await ensureReceiptFonts();
 
-      // ───────────── Hàm vẽ (trả về tổng chiều cao) ─────────────
       const render = (ctx: CanvasRenderingContext2D, H: number): number => {
         const fontStr = (size: number, weight = 500, italic = false, family = SANS) =>
           `${italic ? "italic " : ""}${weight} ${size}px ${family}`;
@@ -568,7 +585,6 @@ function MemberPanel({
           return ctx.measureText(s).width + spacing * Math.max(0, [...s].length - 1);
         };
 
-        // `cy` là tâm theo chiều dọc của dòng
         const text = (s: string, x: number, cy: number, o: TOpt = {}) => {
           const { size = 13, weight = 500, color = NAVY, align = "left", italic = false, family = SANS, spacing = 0 } = o;
           ctx.font = fontStr(size, weight, italic, family);
@@ -765,6 +781,99 @@ function MemberPanel({
           py = totalY + 64;
         } else {
           py += 8;
+        }
+
+        // ── QR + tài khoản ──
+        if (SHOW_QR) {
+          const qTop = py + 14;
+          const qTitle = "QUÉT MÃ ĐỂ CHUYỂN KHOẢN";
+          const qTitleW = measure(qTitle, { size: 11, weight: 500, family: HEAD, spacing: 2.5 });
+          text(qTitle, W / 2, qTop, {
+            size: 11, weight: 500, family: HEAD, align: "center", spacing: 2.5, color: "#2b3f63",
+          });
+          hline(W / 2 - qTitleW / 2 - 14 - 38, W / 2 - qTitleW / 2 - 14, qTop, "rgba(16,41,74,0.4)");
+          hline(W / 2 + qTitleW / 2 + 14, W / 2 + qTitleW / 2 + 14 + 38, qTop, "rgba(16,41,74,0.4)");
+
+          const FR = 140;
+          const fx = PAD + 6;
+          const fy = qTop + 22;
+
+          // nền kính mờ
+          ctx.save();
+          ctx.shadowColor = "rgba(16,41,74,0.14)";
+          ctx.shadowBlur = 16;
+          ctx.shadowOffsetY = 4;
+          const panel = ctx.createLinearGradient(fx, fy, fx + FR, fy + FR);
+          panel.addColorStop(0, "rgba(248,251,255,0.93)");
+          panel.addColorStop(1, "rgba(222,233,248,0.93)");
+          ctx.fillStyle = panel;
+          rr(fx, fy, FR, FR, 12);
+          ctx.fill();
+          ctx.restore();
+          ctx.save();
+          ctx.strokeStyle = "rgba(255,255,255,0.75)";
+          ctx.lineWidth = 1;
+          rr(fx + 0.5, fy + 0.5, FR - 1, FR - 1, 12);
+          ctx.stroke();
+          ctx.restore();
+
+          if (qrImg) {
+            const area = FR - 20;
+            const k = Math.min(area / qrImg.naturalWidth, area / qrImg.naturalHeight);
+            const dw = qrImg.naturalWidth * k;
+            const dh = qrImg.naturalHeight * k;
+            ctx.drawImage(qrImg, fx + 10 + (area - dw) / 2, fy + 10 + (area - dh) / 2, dw, dh);
+          }
+
+          // 4 góc khung
+          ctx.save();
+          ctx.strokeStyle = NAVY;
+          ctx.lineWidth = 3;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          const L = 20;
+          const corner = (x1: number, y1: number, x2: number, y2: number, x3: number, y3: number) => {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x3, y3);
+            ctx.stroke();
+          };
+          corner(fx, fy + L, fx, fy, fx + L, fy);
+          corner(fx + FR - L, fy, fx + FR, fy, fx + FR, fy + L);
+          corner(fx, fy + FR - L, fx, fy + FR, fx + L, fy + FR);
+          corner(fx + FR - L, fy + FR, fx + FR, fy + FR, fx + FR, fy + FR - L);
+          ctx.restore();
+
+          // thông tin ngân hàng
+          const rx = fx + FR + 20;
+          const tx = rx + 32;
+          const avail = W - PAD - tx;
+          const bankItems: [HTMLImageElement | null, string, string][] = [
+            [icUser, "Chủ tài khoản", "NGO VAN NGOI"],
+            [icCard, "Số tài khoản", "9961 0600 42"],
+            [icBank, "Ngân hàng", "Techcombank"],
+          ];
+          const STEP = 35;
+          bankItems.forEach(([ic, label, val], i) => {
+            const t = fy + 2 + i * STEP;
+            icon(ic, rx, t + 15, 20);
+            text(label, tx, t + 6, { size: 10, color: MUTED });
+            text(val, tx, t + 23, { size: 13, weight: 700 });
+          });
+
+          const nt = fy + 2 + 3 * STEP;
+          icon(icChat, rx, nt + 15, 20);
+          text("Nội dung (tuỳ chọn)", tx, nt + 6, { size: 10, color: MUTED });
+
+          let noteSize = 11;
+          while (noteSize > 8 && measure(transferNote, { size: noteSize, weight: 600 }) > avail - 40) noteSize--;
+          const nW = Math.min(avail, measure(transferNote, { size: noteSize, weight: 600 }) + 42);
+          fillRR(tx, nt + 14, nW, 24, 12, "rgba(205,218,236,0.75)");
+          text(transferNote, tx + 12, nt + 26, { size: noteSize, weight: 600, color: "#1e3a5f" });
+          icon(icCopy, tx + nW - 24, nt + 26, 14);
+
+          py = fy + FR + 14; // chân trang sẽ vẽ tiếp từ đây
         }
 
         // ── chân trang ──

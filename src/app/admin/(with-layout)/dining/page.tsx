@@ -81,7 +81,6 @@ export default function AdminDiningPage() {
         setSaving(true);
         try {
             if (editingId) {
-                // null để cho phép xóa trống địa điểm / ghi chú (IsOptional bỏ qua null)
                 await diningAdminApi.update(editingId, {
                     title: form.title.trim(),
                     event_date: new Date(form.event_date).toISOString(),
