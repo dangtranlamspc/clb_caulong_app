@@ -22,7 +22,7 @@ self.addEventListener("push", (event) => {
         body: payload.body || "",
         icon: ICON_URL,
         badge: ICON_URL,
-        tag: payload.data?.type || payload.data?.session_id || undefined,
+        tag: payload.data?.registration_id || payload.data?.type || payload.data?.session_id || undefined,
         renotify: true,
         vibrate: [100, 50, 100],
         data: payload.data || {},

@@ -686,7 +686,6 @@ export default function SessionFinishPage() {
     ...drinks.map((d) => ({
       value: d.id,
       label: d.name,
-      subLabel: `Còn ${d.quantity}`,
       imageUrl: d.image_url ?? null,
     })),
   ];

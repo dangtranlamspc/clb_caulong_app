@@ -178,6 +178,8 @@ export const registrationsApi = {
   getDetail: (id: string) => api.get(`/registrations/${id}`, { skipErrorToast: true } as any),
   respond: (id: string, action: "accept" | "decline") =>
     api.patch(`/registrations/${id}/respond`, { action }),
+  setPayFor: (id: string, ids: string[]) =>
+    api.patch(`/registrations/${id}/pay-for`, { target_registration_ids: ids }),
 
 };
 
@@ -253,6 +255,8 @@ export const walletApi = {
       `/wallet/registrations/${hostRegistrationId}/confirm-guest-payment`,
       { mode },
     ),
+  transfer: (data: { to_user_id: string; amount: number; note?: string }) =>
+    api.post("/wallet/transfer", data),
 };
 
 export const activitiesApi = {
@@ -499,6 +503,11 @@ export const walletAdminApi = {
 
   sendDebtReminder: (userId: string) =>
     api.post(`/wallet/admin/users/${userId}/debt-reminder`),
+
+  payOnBehalf: (
+    toUserId: string,
+    data: { from_user_id: string; amount: number; note?: string },
+  ) => api.post(`/wallet/admin/users/${toUserId}/pay-on-behalf`, data),
 };
 
 export const eventsAdminApi = {

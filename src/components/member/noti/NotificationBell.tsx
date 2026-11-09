@@ -1,7 +1,11 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2, AlertTriangle, Swords, Trophy, XCircle, RotateCcw, GlassWater, Cake, ChevronLeft } from 'lucide-react';
+import {
+    Bell, CheckCircle2, AlertCircle, Wallet, X, CalendarDays, Loader2, Trash2,
+    AlertTriangle, Swords, Trophy, XCircle, RotateCcw, GlassWater, Cake, ChevronLeft,
+    Receipt, HandCoins, UserCheck, UserX, UserPlus, Ban, Users, Banknote, ClipboardCheck,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -21,7 +25,6 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
     shirt_order_registered_by_admin: { icon: Wallet, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
     payment_confirmed: { icon: CheckCircle2, cls: 'text-[var(--success)]', bg: 'bg-[var(--success-soft)]' },
     payment_rejected: { icon: AlertCircle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
-    bill_issued: { icon: Wallet, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
     added_to_session: { icon: CalendarDays, cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)]' },
     wallet_guest_confirm: { icon: Wallet, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
     shirt_order_payment_rejected: { icon: AlertCircle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
@@ -49,6 +52,27 @@ const TYPE_CFG: Record<string, { icon: any; cls: string; bg: string }> = {
 
 
     wallet_debt_reminder: { icon: AlertTriangle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+
+    // Hóa đơn / thanh toán hộ
+    bill_issued: { icon: Receipt, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
+    bill_revoked: { icon: RotateCcw, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+    pay_on_behalf: { icon: HandCoins, cls: 'text-[var(--purple)]', bg: 'bg-[var(--purple-soft)]' },
+    pay_on_behalf_cancelled: { icon: Ban, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+
+    // Đăng ký / điểm danh
+    registration_approved: { icon: ClipboardCheck, cls: 'text-[var(--success)]', bg: 'bg-[var(--success-soft)]' },
+    registration_rejected: { icon: UserX, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+    checked_in: { icon: UserCheck, cls: 'text-[var(--success)]', bg: 'bg-[var(--success-soft)]' },
+    checked_in_absent: { icon: UserX, cls: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
+    session_cancelled: { icon: Ban, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+    member_interested_not_joining: { icon: Users, cls: 'text-[var(--pink)]', bg: 'bg-[var(--pink-soft)]' },
+
+    // Ví
+    wallet_balance_changed: { icon: Banknote, cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)]' },
+    wallet_topup_approved: { icon: CheckCircle2, cls: 'text-[var(--success)]', bg: 'bg-[var(--success-soft)]' },
+    wallet_topup_rejected: { icon: AlertCircle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
+    wallet_manual_transaction: { icon: Wallet, cls: 'text-[var(--primary)]', bg: 'bg-[var(--primary-soft)]' },
+    penalty_issued: { icon: AlertTriangle, cls: 'text-[var(--danger)]', bg: 'bg-[var(--danger-soft)]' },
 };
 
 const BADGE = "inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full border text-xs font-semibold text-white shadow-sm";
@@ -127,6 +151,21 @@ function ConfirmDeleteAllModal({
     );
 }
 
+
+function resolveCfgKey(n: any): string {
+    if (n.type === 'match_result_approved') {
+        return n.data?.won ? 'match_result_approved_win' : 'match_result_approved_lose';
+    }
+    if (n.type === 'bill_issued') {
+        const t = (n.title ?? '').toLowerCase();
+        if (t.includes('thu hồi') || t.includes('bị huỷ') || t.includes('bị hủy')) return 'bill_revoked';
+        if (t.includes('thanh toán hộ')) {
+            return t.includes('huỷ') || t.includes('hủy') ? 'pay_on_behalf_cancelled' : 'pay_on_behalf';
+        }
+    }
+    return n.type;
+}
+
 function NotificationItem({
     n,
     onRead,
@@ -162,12 +201,9 @@ function NotificationItem({
     onRespondAdded: (n: any, action: 'accept' | 'decline') => void;
     onNavigateWalletTopup: (n: any) => void;
 }) {
-    const cfgKey =
-        n.type === 'match_result_approved'
-            ? (n.data?.won ? 'match_result_approved_win' : 'match_result_approved_lose')
-            : n.type;
-    const cfg = TYPE_CFG[cfgKey] ?? TYPE_CFG.payment_added;
-    const Icon = cfg.icon;
+    const FALLBACK_CFG = { icon: Bell, cls: 'text-[var(--text-muted)]', bg: 'bg-[var(--surface-muted)]' };
+    const cfg = TYPE_CFG[resolveCfgKey(n)] ?? FALLBACK_CFG;
+    const Icon = cfg.icon; 9
     const isGuestConfirm = n.type === 'wallet_guest_confirm' || n.data?.type === 'wallet_guest_confirm';
     const alreadyHandled = guestHandled.has(n.id);
 

@@ -14,11 +14,13 @@ import {
   Copy,
   Users,
   AlertCircle,
+  Send,
+  Search,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { walletApi } from "@/lib/api";
+import { usersApi, walletApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth.store";
 import { TransactionDetailModal } from "@/components/member/wallets/TransactionDetailModal";
@@ -32,6 +34,8 @@ const TX_FILTER_OPTS = [
   { value: "topup", label: "Nạp tiền" },
   { value: "session_payment", label: "Thanh toán buổi" },
   { value: "manual_expense", label: "Chi tiêu khác" },
+  { value: "transfer_out", label: "Chuyển đi" },
+  { value: "transfer_in", label: "Nhận tiền" },
   { value: "manual_credit", label: "Cộng tiền khác" },
   { value: "refund", label: "Hoàn tiền" },
 ];
@@ -371,6 +375,266 @@ function TopupModal({
   );
 }
 
+function TransferModal({
+  balance,
+  onClose,
+  onSuccess,
+}: {
+  balance: number;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { user } = useAuthStore();
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [recipient, setRecipient] = useState<any | null>(null);
+  const [amountDisplay, setAmountDisplay] = useState("");
+  const [amount, setAmount] = useState(0);
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const notEnough = amount > balance;
+  const canSubmit = Boolean(recipient) && amount >= 1000 && !notEnough && !submitting;
+
+  useEffect(() => {
+    if (recipient) return;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const { data } = await usersApi.searchMembers(search.trim());
+        if (!cancelled)
+          setResults((data ?? []).filter((m: any) => m.id !== user?.id));
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [search, recipient, user?.id]);
+
+  const handleAmountChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    const num = digits ? parseInt(digits, 10) : 0;
+    setAmount(num);
+    setAmountDisplay(num ? num.toLocaleString("vi-VN") : "");
+  };
+
+  const handleSubmit = async () => {
+    if (!canSubmit || !recipient) return;
+    setSubmitting(true);
+    try {
+      const { data } = await walletApi.transfer({
+        to_user_id: recipient.id,
+        amount,
+        note: note.trim() || undefined,
+      });
+      toast.success(data.message ?? "Đã chuyển tiền");
+      onSuccess();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Chuyển tiền thất bại");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex flex-col justify-end"
+      style={{ background: "var(--overlay)", backdropFilter: "blur(2px)" }}
+      onClick={(e) => e.target === e.currentTarget && !submitting && onClose()}
+    >
+      <div
+        className="w-full bg-[var(--surface)] rounded-t-2xl"
+        style={{
+          maxHeight: "90vh",
+          overflowY: "auto",
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-9 h-1 rounded-full bg-[var(--border-strong)]" />
+        </div>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
+          <div>
+            <p className="text-sm font-bold text-[var(--text)]">Chuyển tiền</p>
+            <p className="text-xs text-[var(--text-faint)] mt-0.5">
+              Số dư khả dụng: {smt(Math.max(balance, 0))}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={submitting}
+            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center"
+          >
+            <XIcon className="w-4 h-4 text-[var(--text-muted)]" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-4">
+          {/* Người nhận */}
+          <div>
+            <p className="text-xs font-semibold text-[var(--text-muted)] mb-1.5">Người nhận</p>
+            {recipient ? (
+              <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2.5">
+                <div className="w-9 h-9 rounded-full bg-[var(--primary-soft)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {recipient.avatar_url ? (
+                    <img src={recipient.avatar_url} alt={recipient.full_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-semibold text-[var(--primary)]">
+                      {recipient.full_name?.[0]?.toUpperCase() ?? "?"}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[var(--text)] truncate">{recipient.full_name}</p>
+                  <p className="text-xs text-[var(--text-faint)]">{recipient.phone}</p>
+                </div>
+                <button
+                  onClick={() => setRecipient(null)}
+                  disabled={submitting}
+                  className="w-6 h-6 rounded-full bg-[var(--surface)] flex items-center justify-center"
+                  aria-label="Chọn lại"
+                >
+                  <XIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-[var(--border)] overflow-hidden">
+                <div className="relative border-b border-[var(--border)]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-faint)]" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Tìm theo tên hoặc số điện thoại..."
+                    className="w-full pl-8 pr-3 py-2.5 text-base sm:text-sm bg-[var(--surface)] text-[var(--text)] focus:outline-none"
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto overscroll-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                  {searching ? (
+                    <p className="py-4 text-center text-xs text-[var(--text-faint)]">Đang tìm...</p>
+                  ) : results.length === 0 ? (
+                    <p className="py-4 text-center text-xs text-[var(--text-faint)]">
+                      {search.trim() ? "Không tìm thấy thành viên" : "Nhập tên hoặc số điện thoại để tìm"}
+                    </p>
+                  ) : (
+                    results.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setRecipient(m)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[var(--surface-hover)] border-b border-[var(--border)] last:border-b-0"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-[var(--primary-soft)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {m.avatar_url ? (
+                            <img src={m.avatar_url} alt={m.full_name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-xs font-semibold text-[var(--primary)]">
+                              {m.full_name?.[0]?.toUpperCase() ?? "?"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-[var(--text)] truncate">{m.full_name}</p>
+                          <p className="text-xs text-[var(--text-faint)]">{m.phone}</p>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Số tiền */}
+          <div>
+            <p className="text-xs font-semibold text-[var(--text-muted)] mb-1.5">Số tiền chuyển</p>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={amountDisplay}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              placeholder="0"
+              className={`w-full px-4 py-3 rounded-xl border text-lg font-bold text-center focus:outline-none ${notEnough
+                ? "border-[var(--danger)]"
+                : "border-[var(--border)] focus:border-[var(--primary)]"
+                }`}
+            />
+            {notEnough && (
+              <p className="mt-1 text-[11px] text-[var(--danger)]">
+                Số dư ví không đủ để chuyển {smt(amount)}.
+              </p>
+            )}
+            <div className="grid grid-cols-4 gap-2 mt-2">
+              {[50000, 100000, 200000, 500000].map((v) => (
+                <QuickAmountBtn
+                  key={v}
+                  value={v}
+                  active={amount === v}
+                  onClick={() => handleAmountChange(String(v))}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Lời nhắn */}
+          <div>
+            <p className="text-xs font-semibold text-[var(--text-muted)] mb-1.5">Lời nhắn (tuỳ chọn)</p>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={200}
+              placeholder="Ví dụ: Trả tiền cầu buổi 08/11"
+              className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-base sm:text-sm text-[var(--text)] focus:outline-none focus:border-[var(--primary)]"
+            />
+          </div>
+
+          {/* Tóm tắt */}
+          {recipient && amount >= 1000 && !notEnough && (
+            <div className="rounded-xl bg-[var(--surface-muted)] border border-[var(--border)] px-3.5 py-3 text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Ví của bạn</span>
+                <span className="font-semibold tabular-nums text-[var(--text)]">
+                  {smt(balance)} → {smt(balance - amount)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Người nhận</span>
+                <span className="font-semibold text-[var(--text)] truncate ml-3">{recipient.full_name}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              disabled={submitting}
+              className="flex-1 py-3 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--text-muted)] disabled:opacity-50"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className="flex-[2] py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-50"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Xác nhận chuyển
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export default function WalletPage() {
   const { user } = useAuthStore();
   const searchParams = useSearchParams();
@@ -383,6 +647,7 @@ export default function WalletPage() {
   const [showTopupModal, setShowTopupModal] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any>(null);
   const [loadingTxRef, setLoadingTxRef] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   const fetchAll = async () => {
     const [{ data: s }, { data: t }] = await Promise.all([
@@ -556,12 +821,12 @@ export default function WalletPage() {
         >
           <PlusCircle className="w-4 h-4" /> Nạp thêm
         </button>
-        <a
-          href="#history"
+        <button
+          onClick={() => setShowTransferModal(true)}
           className="flex items-center justify-center gap-2 py-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--text)] font-semibold text-sm transition-colors"
         >
-          <History className="w-4 h-4" /> Lịch sử giao dịch
-        </a>
+          <Send className="w-4 h-4" /> Chuyển tiền
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -706,6 +971,17 @@ export default function WalletPage() {
           onClose={() => setShowTopupModal(false)}
           onSuccess={() => {
             setShowTopupModal(false);
+            fetchAll();
+          }}
+        />
+      )}
+
+      {showTransferModal && (
+        <TransferModal
+          balance={wallet.balance}
+          onClose={() => setShowTransferModal(false)}
+          onSuccess={() => {
+            setShowTransferModal(false);
             fetchAll();
           }}
         />

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Clock,
@@ -355,7 +355,35 @@ export default function SessionDetailPage() {
     if (showRollbackModal) setRollbackEmailIds(new Set());
   }, [showRollbackModal]);
 
-  /* ───────── actions ───────── */
+  const searchParams = useSearchParams();
+  const focusRegId = searchParams?.get("focus") ?? null;
+  const focusedRef = useRef<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!focusRegId || loading || focusedRef.current === focusRegId) return;
+    const target = registrations.find((r) => r.id === focusRegId);
+    if (!target) return;
+
+    // Nếu là người đi cùng thì mở host chứa nó trước
+    if (target.host_registration_id) {
+      setExpandedHosts((prev) =>
+        new Set(prev).add(target.host_registration_id),
+      );
+    }
+
+    // Chờ animation mở rộng (300ms) xong rồi mới cuộn
+    const t = setTimeout(() => {
+      focusedRef.current = focusRegId;
+      document
+        .getElementById(`reg-${focusRegId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightId(focusRegId);
+      setTimeout(() => setHighlightId(null), 3000);
+    }, 350);
+
+    return () => clearTimeout(t);
+  }, [focusRegId, loading, registrations]);
 
   const getPhase = (key: string): ActionPhase => actionPhase[key] ?? "idle";
 
@@ -416,14 +444,20 @@ export default function SessionDetailPage() {
     );
   };
 
-  const handleConfirm = (regId: string) =>
-    runAction(
-      `${regId}:confirm`,
-      regId,
+  const handleConfirm = (regId: string) => {
+    const reg = registrations.find((r) => r.id === regId);
+    const behalf = onBehalfOf(regId);
+    if (behalf.length > 0) {
+      const names = behalf.map(nameOfReg).join(", ");
+      const total = (reg?.amount_override ?? 0) +
+        behalf.reduce((s, b) => s + (b.amount_override ?? 0), 0);
+      if (!confirm(`Xác nhận ${formatVnd(total)} cho ${nameOfReg(reg)} và thanh toán hộ ${names}?`)) return;
+    }
+    runAction(`${regId}:confirm`, regId,
       () => registrationsAdminApi.confirm(regId),
       "Xác nhận thành công — đã cộng 1 cầu lông!",
-      "Xác nhận thất bại",
-    );
+      "Xác nhận thất bại");
+  };
 
   const handleReject = (regId: string) =>
     runAction(
@@ -1161,11 +1195,16 @@ export default function SessionDetailPage() {
       r.payment_status === "pending" &&
       r.participation_status === "confirmed" &&
       r.amount_override != null &&
+      !r.paid_by_registration_id &&
       !r.payment_reference &&
       r.payment_method !== "cash" &&
       r.payment_method !== "grouped_with_host" &&
       r.payment_method !== "wallet_grouped" &&
       r.payment_method !== "wallet_pending_confirm",
+  );
+
+  const paidOnBehalf = registrations.filter(
+    (r) => r.paid_by_registration_id && r.payment_status === "pending",
   );
 
   const pendingReview = registrations.filter(
@@ -1206,6 +1245,20 @@ export default function SessionDetailPage() {
   const hostRegs = registrations.filter((r) => !r.host_registration_id);
   const guestsOf = (hostId: string) =>
     registrations.filter((r) => r.host_registration_id === hostId);
+
+  const nameOfReg = (r: any) => r.users?.full_name ?? r.guest_full_name ?? "?";
+
+  const payerOf = (reg: any) =>
+    reg.paid_by_registration_id
+      ? registrations.find((r) => r.id === reg.paid_by_registration_id)
+      : null;
+
+  const onBehalfOf = (payerId: string) =>
+    registrations.filter((r) => r.paid_by_registration_id === payerId);
+
+  const payerHasSubmitted = (p: any) =>
+    Boolean(p.payment_reference) ||
+    (p.payment_method === "cash" && Boolean(p.cash_requested_at));
 
   const hasCostData =
     (session.status === "completed" || session.status === "waiting_payment") &&
@@ -1483,18 +1536,34 @@ export default function SessionDetailPage() {
       reg.amount_override == null &&
       !isPendingReview;
 
+    const payer = payerOf(reg);
+    const behalfList = onBehalfOf(reg.id);
+
+    const hideWalletChip = Boolean(payer);
+
     const cfg =
       reg.participation_status === "pending_approval"
         ? STATUS_CONFIG.pendingApproval
         : reg.participation_status === "awaiting_checkin"
           ? STATUS_CONFIG.awaitingCheckin
-          : isAwaitingFinishRow
-            ? STATUS_CONFIG.awaitingFinish
-            : isPendingReview
-              ? STATUS_CONFIG.pendingReview
-              : (STATUS_CONFIG[reg.payment_status] ?? STATUS_CONFIG.pending);
+          : payer && reg.payment_status === "pending"
+            ? {
+              ...(payerHasSubmitted(payer)
+                ? STATUS_CONFIG.pendingReview
+                : STATUS_CONFIG.pending),
+              label: payerHasSubmitted(payer)
+                ? "Chờ chốt (qua người trả hộ)"
+                : "Chờ người trả hộ thanh toán",
+            }
+            : isAwaitingFinishRow
+              ? STATUS_CONFIG.awaitingFinish
+              : isPendingReview
+                ? STATUS_CONFIG.pendingReview
+                : (STATUS_CONFIG[reg.payment_status] ?? STATUS_CONFIG.pending);
     const StatusIcon = cfg.icon;
     const attention = cfg.tone === "warning" || cfg.tone === "primary";
+
+
 
     const user = reg.users;
     const displayName = user?.full_name ?? reg.guest_full_name ?? "?";
@@ -1523,6 +1592,58 @@ export default function SessionDetailPage() {
       ? GENDER_META[displayGender as string]
       : undefined;
 
+    const hasBehalf = behalfList.length > 0;
+
+    const toLine = (r: any, isSelf: boolean) => {
+      const amount = r.amount_override ?? 0;
+      const fee = r.other_fee_amount ?? 0;
+      return {
+        key: r.id,
+        isSelf,
+        name: isSelf ? displayName : nameOfReg(r),
+        amount,
+        fee,
+        base: r.base_amount ?? Math.max(0, amount - fee),
+        note: r.other_fee_note as string | null,
+      };
+    };
+
+    const personLines = hasBehalf
+      ? [toLine(reg, true), ...behalfList.map((b) => toLine(b, false))]
+      : [];
+
+    const sumBase = personLines.reduce((s, p) => s + p.base, 0);
+    const sumFee = personLines.reduce((s, p) => s + p.fee, 0);
+    const grandTotal = personLines.reduce((s, p) => s + p.amount, 0);
+
+    const noteLines = (note?: string | null): string[] =>
+      note ? note.split("\n").map((l) => l.trim()).filter(Boolean) : [];
+
+
+    const feeItems = (
+      note: string | null | undefined,
+      fee: number,
+    ): { label: string; amount: number | null }[] => {
+      const lines = noteLines(note);
+      const parsed = lines.map((l) => {
+        const m = l.match(/^\s*([\d.,]+)\s*đ?\s*[-–]\s*(.+)$/);
+        return m
+          ? { label: m[2].trim(), amount: Number(m[1].replace(/\D/g, "")) }
+          : null;
+      });
+
+      // Mọi dòng đều đúng format "số tiền - tên món" → hiện từng món
+      if (lines.length > 0 && parsed.every(Boolean)) {
+        return parsed as { label: string; amount: number }[];
+      }
+      // Fallback: ghi chú tự do → 1 dòng "Khoản khác" + tổng fee
+      return [
+        {
+          label: lines.length ? `Khoản khác (${lines.join("; ")})` : "Khoản khác",
+          amount: fee,
+        },
+      ];
+    };
     return (
       <div>
         <div
@@ -1631,33 +1752,47 @@ export default function SessionDetailPage() {
               {reg.payment_method === "bank_transfer" && (
                 <Chip tone="primary">🏦 Chuyển khoản</Chip>
               )}
-              {reg.payment_method === "wallet_pending_confirm" &&
+
+              {!hideWalletChip &&
+                reg.payment_method === "wallet_pending_confirm" &&
                 reg.host_registration_id && (
                   <Chip tone="warning" icon={<Wallet className="h-3 w-3" />}>
                     Chờ {hostName ?? "host"} quyết định
                   </Chip>
                 )}
-              {reg.payment_method === "wallet_grouped" &&
+              {!hideWalletChip &&
+                reg.payment_method === "wallet_grouped" &&
                 reg.host_registration_id && (
                   <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
                     Ví BNB của {hostName ?? "host"}
                   </Chip>
                 )}
-              {reg.payment_method === "wallet" && reg.host_registration_id && (
-                <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
-                  Ví BNB của {displayName}
+              {!hideWalletChip &&
+                reg.payment_method === "wallet" &&
+                reg.host_registration_id && (
+                  <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
+                    Ví BNB của {displayName}
+                  </Chip>
+                )}
+              {payer && (
+                <Chip tone="purple" icon={<Wallet className="h-3 w-3" />}>
+                  {nameOfReg(payer)} thanh toán hộ
                 </Chip>
               )}
-              {((reg.payment_method === "wallet" && !reg.host_registration_id) ||
-                (reg.payment_method === "wallet_grouped" &&
-                  !reg.host_registration_id) ||
-                (reg.payment_method === "wallet_pending_confirm" &&
-                  !reg.host_registration_id)) && (
+
+              {behalfList.length > 0 && (
+                <Chip tone="purple" icon={<Users className="h-3 w-3" />}>
+                  Trả hộ: {behalfList.map(nameOfReg).join(", ")}
+                </Chip>
+              )}
+              {!hideWalletChip &&
+                ((reg.payment_method === "wallet" && !reg.host_registration_id) ||
+                  (reg.payment_method === "wallet_grouped" && !reg.host_registration_id) ||
+                  (reg.payment_method === "wallet_pending_confirm" &&
+                    !reg.host_registration_id)) && (
                   <Chip tone="primary" icon={<Wallet className="h-3 w-3" />}>
                     Ví BNB
-                    {reg.payment_method === "wallet_pending_confirm"
-                      ? " (chờ xác nhận)"
-                      : ""}
+                    {reg.payment_method === "wallet_pending_confirm" ? " (chờ xác nhận)" : ""}
                   </Chip>
                 )}
 
@@ -1679,10 +1814,13 @@ export default function SessionDetailPage() {
             className={`flex shrink-0 flex-col items-end gap-1.5 text-right ${hasBreakdown ? "self-start" : "self-center"
               } ${hasBreakdown && reg.is_guest ? "pt-8" : ""}`}
           >
-            {!hasBreakdown && (
+
+            {!hasBreakdown && !hasBehalf && (
               <p
                 className={`tabular-nums ${isNested ? "text-sm" : "text-base"} ${totalAmount != null
-                  ? "font-bold text-[var(--text)]"
+                  ? payer
+                    ? "font-semibold text-[var(--text-muted)]"
+                    : "font-bold text-[var(--text)]"
                   : "font-normal italic text-[var(--text-faint)]"
                   }`}
               >
@@ -1692,7 +1830,66 @@ export default function SessionDetailPage() {
           </div>
         </div>
 
-        {hasBreakdown && (
+        {hasBehalf && (
+          <div className={isNested ? "px-3 pb-3" : "px-4 pb-4"}>
+            <div className="overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--surface-muted)] text-sm">
+              {personLines.map((p, idx) => (
+                <div
+                  key={p.key}
+                  className={`px-3.5 py-3 ${idx > 0 ? "border-t border-[var(--border-strong)]" : ""
+                    } ${p.isSelf ? "" : "border-l-2 border-l-[var(--purple)]"}`}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="flex min-w-0 items-baseline gap-1.5 font-semibold text-[var(--text)]">
+                      <span className="truncate">{p.name}</span>
+                      {!p.isSelf && (
+                        <span className="shrink-0 text-[12px] font-medium text-[var(--purple)]">
+                          · Trả hộ
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-bold tabular-nums text-[var(--text)]">
+                      {formatVnd(p.amount)}
+                    </span>
+                  </div>
+
+                  <dl className="mt-1.5 space-y-1 text-xs">
+                    <div className="flex items-center justify-between gap-3 text-[var(--text-muted)]">
+                      <dt>Sân + cầu</dt>
+                      <dd className="tabular-nums">{formatVnd(p.base)}</dd>
+                    </div>
+                    {p.fee > 0 &&
+                      feeItems(p.note, p.fee).map((it, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between gap-3 text-[var(--warning)]"
+                        >
+                          <dt className="min-w-0 truncate">{it.label}</dt>
+                          <dd className="shrink-0 tabular-nums">
+                            {it.amount != null ? formatVnd(it.amount) : ""}
+                          </dd>
+                        </div>
+                      ))}
+                  </dl>
+                </div>
+              ))}
+
+              <div className="flex items-center justify-between gap-3 bg-[var(--primary-soft)] px-3.5 py-3">
+                <span className="text-sm font-bold text-[var(--text)]">
+                  Tổng cần thu{" "}
+                  <span className="text-xs font-medium text-[var(--text-muted)]">
+                    ({personLines.length} người)
+                  </span>
+                </span>
+                <span className="text-lg font-black tabular-nums text-[var(--primary)]">
+                  {formatVnd(grandTotal)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {hasBreakdown && !hasBehalf && (
           <div className={isNested ? "px-3 pb-3" : "px-4 pb-4"}>
             <dl className="space-y-2 rounded-xl bg-[var(--surface-muted)] px-3.5 py-3 text-sm">
               <div className="flex items-center justify-between gap-3">
@@ -1780,17 +1977,22 @@ export default function SessionDetailPage() {
     const showActions =
       reg.participation_status === "pending_approval" ||
       reg.participation_status === "awaiting_checkin" ||
-      isAwaitingFinish(reg) ||
-      (reg.payment_status === "pending" && getCanReviewPayment(reg));
+      (isAwaitingFinish(reg) && !reg.paid_by_registration_id) ||
+      (reg.payment_status === "pending" &&
+        !reg.paid_by_registration_id &&
+        getCanReviewPayment(reg));
 
     return (
       <div
         key={reg.id}
-        className={
-          isNested
-            ? "overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] shadow-md shadow-black/20"
-            : undefined
-        }
+        id={`reg-${reg.id}`}
+        className={`transition-shadow duration-500 ${isNested
+          ? "overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] shadow-md shadow-black/20"
+          : ""
+          } ${highlightId === reg.id
+            ? "ring-2 ring-inset ring-[var(--primary)] bg-[var(--primary-soft)]"
+            : ""
+          }`}
       >
         {renderRowContent(reg, isNested, hostName, groupedGuestsForReceipt)}
         {showActions && (
@@ -1950,6 +2152,7 @@ export default function SessionDetailPage() {
       count: pendingReview.length + walletPendingConfirm.length,
       tone: "primary",
     },
+    { label: "Được trả hộ (chờ chốt)", count: paidOnBehalf.length, tone: "primary" },
     {
       label: "Đã xác nhận thanh toán",
       count: confirmed.length,

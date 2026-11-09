@@ -25,6 +25,9 @@ import {
   Inbox,
   Check,
   BellRing,
+  Send,
+  ArrowLeftRight,
+  Info,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -337,6 +340,322 @@ function drawReceiptBackground(
   ctx.drawImage(bgImg, 0, ih * B, iw, ih * (1 - B), 0, H - botH, W, botH);
 }
 
+
+function PayOnBehalfSheet({
+  member,
+  onClose,
+  onDone,
+}: {
+  member: any;
+  onClose: () => void;
+  onDone: (newBalance: number) => void;
+}) {
+  const debt = member.balance < 0 ? Math.abs(member.balance) : 0;
+
+  const [visible, setVisible] = useState(false);
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [payer, setPayer] = useState<any | null>(null);
+  const [amountDisplay, setAmountDisplay] = useState(
+    debt > 0 ? debt.toLocaleString("vi-VN") : "",
+  );
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const amount = parseThousands(amountDisplay);
+  const notEnough = payer ? amount > payer.balance : false;
+  const canSubmit = Boolean(payer) && amount >= 1000 && !notEnough && !submitting;
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const handleClose = () => {
+    if (submitting) return;
+    setVisible(false);
+    setTimeout(onClose, 250);
+  };
+
+  useEffect(() => {
+    if (payer) return;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const { data } = await walletAdminApi.listMembers({
+          search: search.trim() || undefined,
+          limit: 8,
+          page: 1,
+          sort_by: "balance",
+          sort_order: "desc",
+        });
+        if (!cancelled) {
+          setResults((data.data ?? []).filter((m: any) => m.id !== member.id));
+        }
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [search, payer, member.id]);
+
+  const handleSubmit = async () => {
+    if (!canSubmit || !payer) return;
+    setSubmitting(true);
+    try {
+      const { data } = await walletAdminApi.payOnBehalf(member.id, {
+        from_user_id: payer.id,
+        amount,
+        note: note.trim() || undefined,
+      });
+      toast.success(data.message ?? "Đã thanh toán hộ");
+      onDone(data.to_new_balance);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Thanh toán hộ thất bại");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="absolute inset-0 z-20 flex items-end">
+      <div
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
+        onClick={handleClose}
+      />
+      <div
+        className={`relative w-full max-h-[92%] overflow-y-auto overscroll-contain rounded-t-2xl bg-[var(--surface)] border-t border-[var(--border)] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${visible ? "translate-y-0" : "translate-y-full"}`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[var(--purple-soft)] text-[var(--purple)] flex items-center justify-center flex-shrink-0">
+              <ArrowLeftRight className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-[var(--text)] text-sm">Thanh toán hộ</p>
+              <p className="text-[11px] text-[var(--text-faint)] truncate">
+                Dùng ví người khác để thanh toán cho {member.full_name}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleClose}
+            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)] flex-shrink-0"
+          >
+            <X className="w-4 h-4 text-[var(--text-muted)]" />
+          </button>
+        </div>
+
+        <div className="px-4 pb-4 space-y-3">
+          <div>
+            <p className="text-xs text-[var(--text-muted)] mb-1.5">Thanh toán cho ví</p>
+            <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2.5">
+              <span className="text-sm font-semibold text-[var(--text)] truncate">
+                {member.full_name}
+              </span>
+              <span className="text-right flex-shrink-0 ml-3">
+                <span className="block text-[10px] text-[var(--text-faint)]">
+                  {debt > 0 ? "Dư nợ hiện tại" : "Số dư hiện tại"}
+                </span>
+                <span
+                  className={`text-sm font-bold tabular-nums ${debt > 0 ? "text-[var(--danger)]" : "text-[var(--text)]"}`}
+                >
+                  {debt > 0 ? fmt(debt) : fmt(member.balance)}
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-[var(--text-muted)] mb-1.5">Trả từ ví của</p>
+            {payer ? (
+              <div className="flex items-center justify-between rounded-xl border border-[color-mix(in_srgb,var(--purple)_40%,transparent)] bg-[var(--purple-soft)] px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[var(--text)] truncate">{payer.full_name}</p>
+                  <p className="text-[11px] text-[var(--text-faint)]">{payer.phone}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                  <div className="text-right">
+                    <span className="block text-[10px] text-[var(--text-faint)]">Số dư</span>
+                    <span className={`text-sm font-bold tabular-nums ${payer.balance < 0 ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>
+                      {fmt(payer.balance)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setPayer(null)}
+                    className="w-6 h-6 rounded-full bg-[var(--surface)] flex items-center justify-center hover:bg-[var(--border-strong)]"
+                    aria-label="Chọn lại"
+                  >
+                    <X className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-[var(--border)] overflow-hidden">
+                <div className="relative border-b border-[var(--border)]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-faint)]" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Tìm theo tên hoặc số điện thoại..."
+                    className="w-full pl-8 pr-3 py-2.5 text-base sm:text-sm bg-[var(--surface)] text-[var(--text)] focus:outline-none"
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto overscroll-contain scrollbar-hide">
+                  {searching ? (
+                    <p className="py-4 text-center text-xs text-[var(--text-faint)]">Đang tìm...</p>
+                  ) : results.length === 0 ? (
+                    <p className="py-4 text-center text-xs text-[var(--text-faint)]">Không tìm thấy thành viên</p>
+                  ) : (
+                    results.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setPayer(m)}
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-[var(--surface-hover)] border-b border-[var(--border)] last:border-b-0"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-[var(--text)] truncate">{m.full_name}</p>
+                          <p className="text-[11px] text-[var(--text-faint)]">{m.phone}</p>
+                        </div>
+                        <span className={`text-sm font-bold tabular-nums flex-shrink-0 ${m.balance < 0 ? "text-[var(--danger)]" : "text-[var(--text)]"}`}>
+                          {fmt(m.balance)}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-xs text-[var(--text-muted)]">Số tiền thanh toán</p>
+              {debt > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setAmountDisplay(debt.toLocaleString("vi-VN"))}
+                  className="text-[11px] font-semibold text-[var(--purple)] hover:underline"
+                >
+                  Trả đúng dư nợ ({fmt(debt)})
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={amountDisplay}
+                onChange={(e) => setAmountDisplay(formatThousands(e.target.value, false))}
+                placeholder="0"
+                className={`w-full pl-3 pr-8 py-2.5 text-base sm:text-sm font-semibold rounded-xl border bg-[var(--surface)] text-[var(--text)] focus:outline-none focus:ring-2 ${notEnough
+                  ? "border-[var(--danger)] focus:ring-red-100"
+                  : "border-[var(--border)] focus:border-[var(--purple)] focus:ring-[color-mix(in_srgb,var(--purple)_25%,transparent)]"
+                  }`}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[var(--text-faint)]">đ</span>
+            </div>
+            {notEnough && payer && (
+              <p className="mt-1 text-[11px] text-[var(--danger)]">
+                Ví {payer.full_name} chỉ còn {fmt(payer.balance)}, không đủ để trả {fmt(amount)}.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <p className="text-xs text-[var(--text-muted)] mb-1.5">Nội dung (tuỳ chọn)</p>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ví dụ: Thanh toán hộ phí buổi chơi 08/11"
+              className="w-full px-3 py-2.5 text-base sm:text-sm rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] focus:outline-none focus:border-[var(--purple)]"
+            />
+          </div>
+
+          {payer && amount >= 1000 && !notEnough && (
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] overflow-hidden">
+              {/* Ví bị trừ */}
+              <div className="flex items-center gap-3 px-3.5 py-3">
+                <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] text-[var(--danger)] flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  {payer.full_name?.[0]?.toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[var(--text)] truncate">{payer.full_name}</p>
+                  <p className="text-[11px] text-[var(--text-faint)]">Ví bị trừ</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-bold tabular-nums text-[var(--danger)]">−{fmt(amount)}</p>
+                  <p className="text-[11px] tabular-nums text-[var(--text-faint)]">
+                    {fmt(payer.balance)} → <span className="text-[var(--text-muted)] font-medium">{fmt(payer.balance - amount)}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Mũi tên nối */}
+              <div className="relative h-px bg-[var(--border)]">
+                <span className="absolute left-7 -translate-x-1/2 -top-2.5 w-5 h-5 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center">
+                  <ArrowDown className="w-3 h-3 text-[var(--text-faint)]" />
+                </span>
+              </div>
+
+              {/* Ví được cộng */}
+              <div className="flex items-center gap-3 px-3.5 py-3">
+                <div className="w-8 h-8 rounded-full bg-[var(--success-soft)] text-[var(--success)] flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  {member.full_name?.[0]?.toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[var(--text)] truncate">{member.full_name}</p>
+                  <p className="text-[11px] text-[var(--text-faint)]">Ví được cộng</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-bold tabular-nums text-[var(--success)]">+{fmt(amount)}</p>
+                  <p className="text-[11px] tabular-nums text-[var(--text-faint)]">
+                    {fmt(member.balance)} → <span className="text-[var(--text-muted)] font-medium">{fmt(member.balance + amount)}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Ghi chú */}
+              <div className="flex items-center gap-2 px-3.5 py-2 border-t border-[var(--border)] bg-[var(--surface)]">
+                <Info className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0" />
+                <p className="text-[11px] leading-snug text-[var(--text-muted)]">
+                  Cả hai thành viên sẽ nhận được thông báo sau khi xác nhận.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Nút */}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleClose}
+              disabled={submitting}
+              className="flex-1 min-h-[44px] rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] text-sm font-semibold active:scale-[0.98] disabled:opacity-50"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className="flex-[2] min-h-[44px] rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] disabled:opacity-50"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Xác nhận thanh toán hộ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MemberPanel({
   member,
   onClose,
@@ -352,6 +671,7 @@ function MemberPanel({
 }) {
   const [showTopup, setShowTopup] = useState(false);
   const [showDeduct, setShowDeduct] = useState(false);
+  const [showPayFor, setShowPayFor] = useState(false);
   const [amountDisplay, setAmountDisplay] = useState("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -942,7 +1262,7 @@ function MemberPanel({
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-[var(--surface)] lg:border-l border-[var(--border)]">
+    <div className="relative flex flex-col h-full min-h-0 bg-[var(--surface)] lg:border-l border-[var(--border)]">
       <style jsx>{`
         @media (max-width: 639px) {
           .hide-scrollbar-mobile {
@@ -1011,8 +1331,7 @@ function MemberPanel({
       </div>
 
       <div className="border-b border-[var(--border)] flex-shrink-0">
-        {/* Hàng 1: Nạp tiền / Trừ tiền */}
-        <div className="px-4 sm:px-5 py-3 flex items-center gap-2">
+        <div className="px-4 sm:px-5 py-3 flex flex-wrap items-center gap-2">
           <button
             onClick={() => {
               setShowTopup(true);
@@ -1030,6 +1349,12 @@ function MemberPanel({
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] hover:bg-[var(--danger-soft)] transition-transform duration-150 active:scale-95 text-[var(--danger)] text-xs sm:text-sm font-medium flex-shrink-0"
           >
             <Minus className="w-3.5 h-3.5" /> Trừ tiền
+          </button>
+          <button
+            onClick={() => setShowPayFor(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--purple)_40%,transparent)] bg-[var(--purple-soft)] hover:brightness-110 transition-transform duration-150 active:scale-95 text-[var(--purple)] text-xs sm:text-sm font-semibold flex-shrink-0"
+          >
+            <ArrowLeftRight className="w-3.5 h-3.5" /> Thanh toán hộ
           </button>
         </div>
 
@@ -1327,6 +1652,18 @@ function MemberPanel({
           </p>
         </div>
       </div>
+
+      {showPayFor && (
+        <PayOnBehalfSheet
+          member={member}
+          onClose={() => setShowPayFor(false)}
+          onDone={(newBalance) => {
+            setShowPayFor(false);
+            fetchTx();
+            onChanged(newBalance);
+          }}
+        />
+      )}
     </div>
   );
 }

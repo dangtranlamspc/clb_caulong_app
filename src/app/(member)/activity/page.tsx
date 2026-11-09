@@ -43,6 +43,7 @@ import toast from "react-hot-toast";
 import DebtWarningModal from "@/components/member/sessions/DebtWarningModal";
 import { c } from "@/lib/theme";
 import { AddCompanionModal } from "@/components/member/home/UpcomingSessionsSection";
+import { buildPayForPeople, PayForOthersModal, PayForPerson } from "@/components/member/sessions/PayForOthersModal";
 
 type MainTab = "sessions" | "matches" | "events";
 
@@ -150,6 +151,11 @@ const REG_CFG: Record<string, { label: string; icon: any; cls: string }> = {
     label: "Chờ admin xác nhận",
     icon: Clock3,
     cls: "bg-[var(--primary-soft)] text-[var(--primary)] border-[color-mix(in_srgb,var(--primary)_35%,transparent)]",
+  },
+  paid_by_other: {
+    label: "Chờ người khác thanh toán hộ",
+    icon: Hourglass,
+    cls: "bg-[var(--purple-soft)] text-[var(--purple)] border-[color-mix(in_srgb,var(--purple)_35%,transparent)]",
   },
   confirmed: {
     label: "Đã xác nhận thanh toán",
@@ -409,6 +415,7 @@ function SessionPaymentModal({
   const [payMethod, setPayMethod] = useState<"choose" | "transfer" | "cash" | "wallet">("choose");
   const [submittingPay, setSubmittingPay] = useState(false);
   const [sendingCash, setSendingCash] = useState(false);
+  const [onBehalfRegs, setOnBehalfRegs] = useState<any[]>([]);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setVisible(true));
@@ -420,10 +427,12 @@ function SessionPaymentModal({
     registrationsApi
       .listBySession(session.id)
       .then(({ data }) => {
-        const guests = (data.data ?? []).filter(
-          (r: any) => r.host_registration_id === reg.id,
+        const all = data.data ?? [];
+        const guests = all.filter(
+          (r: any) => r.host_registration_id === reg.id && !r.paid_by_registration_id,
         );
         setMyGuests(guests);
+        setOnBehalfRegs(all.filter((r: any) => r.paid_by_registration_id === reg.id));
         if (guests.length === 0) setPayType("solo");
       })
       .finally(() => setLoadingGuests(false));
@@ -438,8 +447,16 @@ function SessionPaymentModal({
     (sum: number, g: any) => sum + (g.amount_override ?? 0),
     0,
   );
-  const soloAmount = reg.amount_override ?? 0;
+  const onBehalfTotal = onBehalfRegs.reduce(
+    (sum: number, r: any) => sum + (r.amount_override ?? 0),
+    0,
+  );
+  const soloAmount = (reg.amount_override ?? 0) + onBehalfTotal;
   const groupedAmount = soloAmount + guestTotal;
+  const onBehalfNames = onBehalfRegs
+    .map((r: any) => r.users?.full_name ?? r.guest_full_name)
+    .filter(Boolean)
+    .join(", ");
 
   const companionName = (g: any) =>
     g.is_guest ? g.guest_full_name : g.users?.full_name;
@@ -543,6 +560,11 @@ function SessionPaymentModal({
                     <span className="text-sm text-[var(--text-muted)]">Số tiền thanh toán</span>
                     <span className="text-lg font-black text-[var(--danger)]">{fmt(amt)}</span>
                   </div>
+                  {onBehalfRegs.length > 0 && (
+                    <p className="text-xs text-[var(--text-muted)] mt-2">
+                      Gồm phần của bạn và trả hộ: {onBehalfNames}
+                    </p>
+                  )}
 
                   {payMethod === "choose" && (
                     <div className="space-y-3 mt-4" key="choose" style={{ animation: "fadeSlideUp .25s ease both" }}>
@@ -884,6 +906,14 @@ function SessionsTab({
   const fadeIn = useFadeIn(!loading);
   const [pendingBills, setPendingBills] = useState<any[]>([]);
   const [payModalSession, setPayModalSession] = useState<any>(null);
+  const [payForState, setPayForState] = useState<{
+    session: any;
+    reg: any;
+    people: PayForPerson[];
+    initialIds: string[];
+  } | null>(null);
+  const [savingPayFor, setSavingPayFor] = useState(false);
+  const [preparingPayId, setPreparingPayId] = useState<string | null>(null);
   const [registeringId, setRegisteringId] = useState<string | null>(null);
   const [debtWarning, setDebtWarning] = useState<number | null>(null);
   const [cancelSession, setCancelSession] = useState<any>(null);
@@ -1018,6 +1048,51 @@ function SessionsTab({
     }
   };
 
+  const handlePayClick = async (s: any, reg: any) => {
+    if (preparingPayId) return;
+    setPreparingPayId(s.id);
+    try {
+      const { data } = await registrationsApi.listBySession(s.id);
+      const regs = data.data ?? [];
+      const people = buildPayForPeople(reg, regs);
+      const initialIds = regs
+        .filter((r: any) => r.paid_by_registration_id === reg.id)
+        .map((r: any) => r.id);
+
+      if (people.length === 0 && initialIds.length === 0) {
+        setPayModalSession({ session: s, reg });
+        return;
+      }
+      setPayForState({ session: s, reg, people, initialIds });
+    } catch {
+      // lỗi tải danh sách -> vẫn cho thanh toán phần của mình
+      setPayModalSession({ session: s, reg });
+    } finally {
+      setPreparingPayId(null);
+    }
+  };
+
+  const savePayForAndContinue = async (ids: string[]) => {
+    if (!payForState) return;
+    const { session: s, reg, initialIds } = payForState;
+    const changed =
+      ids.length !== initialIds.length || ids.some((i) => !initialIds.includes(i));
+
+    if (changed) {
+      setSavingPayFor(true);
+      try {
+        await registrationsApi.setPayFor(reg.id, ids);
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message ?? "Không thể lưu lựa chọn");
+        setSavingPayFor(false);
+        return;
+      }
+      setSavingPayFor(false);
+    }
+    setPayForState(null);
+    setPayModalSession({ session: s, reg });
+  };
+
 
   const fetchPendingBills = useCallback(async () => {
     const mySeq = ++pendingBillsSeqRef.current;
@@ -1029,7 +1104,8 @@ function SessionsTab({
         (s: any) =>
           s.my_registration?.amount_override > 0 &&
           s.my_registration?.payment_status === "pending" &&
-          !s.my_registration?.payment_reference,
+          !s.my_registration?.payment_reference &&
+          !s.my_registration?.paid_by_registration_id,
       );
       setPendingBills(bills);
       onPendingBillsChange(bills.length);
@@ -1149,7 +1225,7 @@ function SessionsTab({
           <button
             key={s.id}
             type="button"
-            onClick={() => setPayModalSession({ session: s, reg: s.my_registration })}
+            onClick={() => handlePayClick(s, s.my_registration)}
             className="w-full flex items-center justify-between bg-[var(--danger-soft)] border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] rounded-2xl px-4 py-3 active:opacity-80 transition-colors text-left"
           >
             <div className="flex-1 min-w-0">
@@ -1197,18 +1273,24 @@ function SessionsTab({
                 : s.status === "waiting_payment" && !myReg && !s.all_paid
                   ? "Chờ admin chốt thanh toán"
                   : cfg.label;
+              const paidByOther =
+                Boolean(myReg?.paid_by_registration_id) &&
+                myReg?.payment_status === "pending" &&
+                myReg?.amount_override != null;
               const effectiveStatus =
                 myReg?.participation_status === "pending_approval"
                   ? "pending_approval"
                   : myReg?.participation_status === "awaiting_checkin"
                     ? "awaiting_checkin"
-                    : myReg?.payment_status === "pending" &&
-                      myReg?.amount_override == null
+                    : myReg?.payment_status === "pending" && myReg?.amount_override == null
                       ? "awaiting_finish"
-                      : myReg?.payment_status === "pending" &&
-                        myReg?.payment_reference
-                        ? "pending_review"
-                        : myReg?.payment_status;
+                      : paidByOther
+                        ? myReg.payer_submitted
+                          ? "pending_review"
+                          : "paid_by_other"
+                        : myReg?.payment_status === "pending" && myReg?.payment_reference
+                          ? "pending_review"
+                          : myReg?.payment_status;
               const regCfg = effectiveStatus
                 ? (REG_CFG[effectiveStatus] ?? REG_CFG.pending)
                 : null;
@@ -1320,22 +1402,22 @@ function SessionsTab({
                     )}
                     <div
                       className={`pt-3 border-t border-[var(--border)] ${canCancel
-                        ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                        ? "flex flex-col gap-3"
                         : "flex items-center justify-between gap-2"
                         }`}
                     >
-                      <div
-                        className={`flex items-center gap-2 min-w-0 flex-wrap ${canCancel ? "w-full sm:w-auto justify-between sm:justify-start" : ""
-                          }`}
-                      >
+                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
                         {myReg
                           ? regCfg && (
                             <span
-                              className={`flex items-center gap-1.5 text-xs font-medium px-2.5 rounded-full border ${canCancel ? "h-8" : "py-1"
-                                } ${regCfg.cls}`}
+                              className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${regCfg.cls}`}
                             >
                               <RegIcon className="w-3.5 h-3.5" />
-                              {regCfg.label}
+                              {paidByOther && myReg.payer_name
+                                ? myReg.payer_submitted
+                                  ? `${regCfg.label} (${myReg.payer_name} trả hộ)`
+                                  : `Chờ ${myReg.payer_name} thanh toán hộ`
+                                : regCfg.label}
                             </span>
                           )
                           : isFull && (
@@ -1343,42 +1425,54 @@ function SessionsTab({
                               Đã hết chỗ
                             </span>
                           )}
+
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             setModalSession({ id: s.id, title: s.title });
                           }}
-                          className={`flex items-center gap-1 whitespace-nowrap text-xs text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg px-2.5 active:bg-[var(--surface-hover)] transition-colors ${canCancel ? "h-8" : "py-1"
-                            }`}
+                          className="flex items-center gap-1 whitespace-nowrap text-xs text-[var(--text-muted)] bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg px-2.5 py-1 active:bg-[var(--surface-hover)] transition-colors"
                         >
                           <Users className="w-3.5 h-4.5" />
                           {filled} người
                           {(s.male_count > 0 || s.female_count > 0) && (
                             <span className="flex items-center gap-1.5 ml-1.5 pl-1.5 border-l border-[var(--border)]">
-                              <span className="text-[var(--primary)] font-medium">👨 {s.male_count ?? 0}</span>
-                              <span className="text-[var(--pink)] font-medium">👩 {s.female_count ?? 0}</span>
+                              <span className="text-[var(--primary)] font-medium">
+                                👨 {s.male_count ?? 0}
+                              </span>
+                              <span className="text-[var(--pink)] font-medium">
+                                👩 {s.female_count ?? 0}
+                              </span>
                             </span>
                           )}
                         </button>
+
                         {myReg &&
                           myReg.amount_override > 0 &&
                           myReg.payment_status === "pending" &&
                           !myReg.payment_reference &&
+                          !myReg.paid_by_registration_id &&
                           myReg.participation_status === "confirmed" && (
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                setPayModalSession({ session: s, reg: myReg });
+                                handlePayClick(s, myReg);
                               }}
-                              className="flex items-center gap-1 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 px-2.5 py-1 rounded-full animate-pulse"
+                              disabled={preparingPayId === s.id}
+                              className="flex items-center gap-1 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 px-2.5 py-1 rounded-full animate-pulse disabled:opacity-60"
                             >
-                              💳 Thanh toán{" "}
-                              {myReg.amount_override.toLocaleString("vi-VN")}đ
+                              {preparingPayId === s.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                "💳"
+                              )}{" "}
+                              Thanh toán {myReg.amount_override.toLocaleString("vi-VN")}đ
                             </button>
                           )}
                       </div>
+
                       {canRegister ? (
                         <button
                           type="button"
@@ -1388,13 +1482,20 @@ function SessionsTab({
                             if (registeringId) return;
                             setRegisteringId(s.id);
                             try {
-                              const { data } = await registrationsApi.register({ session_id: s.id });
-                              applyOptimisticRegister(s.id, data?.registration ?? {
-                                id: `temp-${Date.now()}`,
-                                payment_status: "pending",
-                                participation_status: "pending_approval",
+                              const { data } = await registrationsApi.register({
+                                session_id: s.id,
                               });
-                              toast.success(data?.message ?? "Đăng ký thành công, vui lòng chờ admin duyệt");
+                              applyOptimisticRegister(
+                                s.id,
+                                data?.registration ?? {
+                                  id: `temp-${Date.now()}`,
+                                  payment_status: "pending",
+                                  participation_status: "pending_approval",
+                                },
+                              );
+                              toast.success(
+                                data?.message ?? "Đăng ký thành công, vui lòng chờ admin duyệt",
+                              );
                               fetchSessions({ silent: true });
                             } catch (err: any) {
                               const data = err?.response?.data;
@@ -1423,7 +1524,7 @@ function SessionsTab({
                           )}
                         </button>
                       ) : canCancel ? (
-                        <div className="w-full sm:w-auto grid grid-cols-2 sm:flex items-center gap-2">
+                        <div className="grid grid-cols-2 gap-2 w-full">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1431,9 +1532,10 @@ function SessionsTab({
                               e.stopPropagation();
                               setCompanionSession(s);
                             }}
-                            className="flex items-center justify-center gap-1.5 h-10 sm:h-8 px-4 rounded-xl sm:rounded-lg text-sm sm:text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-sm active:scale-95 transition-all"
+                            className="flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl text-sm font-semibold whitespace-nowrap text-white bg-blue-600 hover:bg-blue-500 shadow-sm active:scale-95 transition-all"
                           >
-                            <UserPlus className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Thêm người
+                            <UserPlus className="w-4 h-4 shrink-0" />
+                            Thêm người
                           </button>
                           <button
                             type="button"
@@ -1442,9 +1544,10 @@ function SessionsTab({
                               e.stopPropagation();
                               setCancelSession(s);
                             }}
-                            className="flex items-center justify-center gap-1.5 h-10 sm:h-8 px-4 rounded-xl sm:rounded-lg text-sm sm:text-xs font-semibold text-[var(--danger)] bg-transparent border border-[color-mix(in_srgb,var(--danger)_55%,transparent)] hover:bg-[var(--danger-soft)] active:scale-95 transition-all"
+                            className="flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl text-sm font-semibold whitespace-nowrap text-[var(--danger)] bg-transparent border border-[color-mix(in_srgb,var(--danger)_55%,transparent)] hover:bg-[var(--danger-soft)] active:scale-95 transition-all"
                           >
-                            <X className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Huỷ đăng ký
+                            <X className="w-4 h-4 shrink-0" />
+                            Huỷ đăng ký
                           </button>
                         </div>
                       ) : (
@@ -1482,6 +1585,17 @@ function SessionsTab({
           sessionId={modalSession.id}
           sessionTitle={modalSession.title}
           onClose={() => setModalSession(null)}
+        />
+      )}
+
+      {payForState && (
+        <PayForOthersModal
+          people={payForState.people}
+          initialSelectedIds={payForState.initialIds}
+          saving={savingPayFor}
+          onSkip={() => savePayForAndContinue([])}
+          onContinue={savePayForAndContinue}
+          onClose={() => setPayForState(null)}
         />
       )}
 

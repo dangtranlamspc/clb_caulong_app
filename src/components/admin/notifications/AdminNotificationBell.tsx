@@ -511,6 +511,9 @@ export function AdminNotificationBell() {
     } | null>(null);
 
 
+    const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+    const [deletingAll, setDeletingAll] = useState(false);
+
     const [navigatingToEvents, setNavigatingToEvents] = useState(false);
 
     const hasUnread = unreadCount > 0;
@@ -603,8 +606,19 @@ export function AdminNotificationBell() {
 
     const handleDeleteAll = () => {
         if (notifications.length === 0) return;
-        if (!window.confirm("Xoá tất cả thông báo? Hành động này không thể hoàn tác.")) return;
-        deleteAll();
+        setShowDeleteAllModal(true);
+    };
+
+    const confirmDeleteAll = async () => {
+        setDeletingAll(true);
+        try {
+            await deleteAll();
+            setShowDeleteAllModal(false);
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Xoá thất bại, vui lòng thử lại");
+        } finally {
+            setDeletingAll(false);
+        }
     };
 
     const handleOpenShirtOrderPayment = (notifId: string, registrationIds: string[]) => {
@@ -910,6 +924,14 @@ export function AdminNotificationBell() {
                                     const isDrinkRequestPending = n.type === "drink_request_pending";
                                     const drinkRequestId = n.data?.request_id;
 
+                                    const isPaymentAdded = n.type === "payment_added";
+                                    const paymentTargetUrl: string | null =
+                                        isPaymentAdded && n.data?.session_id
+                                            ? (n.data.url ??
+                                                `/admin/sessions/${n.data.session_id}${n.data.registration_id ? `?focus=${n.data.registration_id}` : ""
+                                                }`)
+                                            : null;
+
                                     const isResolved = n.data?.resolved === true;
                                     const resolvedAction = n.data?.resolved_action as "approved" | "rejected" | undefined;
                                     const isProcessing = processingId === n.id;
@@ -926,7 +948,15 @@ export function AdminNotificationBell() {
                                         >
                                             <div className="flex-1 min-w-0">
                                                 <button
-                                                    onClick={() => !n.is_read && markRead(n.id)}
+                                                    onClick={() => {
+                                                        if (paymentTargetUrl) {
+                                                            markRead(n.id);
+                                                            setOpen(false);
+                                                            router.push(paymentTargetUrl);
+                                                            return;
+                                                        }
+                                                        if (!n.is_read) markRead(n.id);
+                                                    }}
                                                     className="text-left w-full"
                                                 >
                                                     <p className={`text-[15px] font-bold ${n.is_read ? "text-[var(--text-muted)]" : "text-[var(--text)]"}`}>
@@ -1141,6 +1171,21 @@ export function AdminNotificationBell() {
                                                     )
                                                 )}
 
+                                                {paymentTargetUrl && (
+                                                    <div className="flex justify-end mt-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                markRead(n.id);
+                                                                setOpen(false);
+                                                                router.push(paymentTargetUrl);
+                                                            }}
+                                                            className="inline-flex items-center justify-center rounded-lg border border-blue-800 bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
+                                                        >
+                                                            Xem & xác nhận
+                                                        </button>
+                                                    </div>
+                                                )}
+
                                             </div>
                                             <button
                                                 onClick={(e) => {
@@ -1188,6 +1233,61 @@ export function AdminNotificationBell() {
                         setShirtOrderCancelModal(null);
                     }}
                 />
+            )}
+
+            {showDeleteAllModal && typeof document !== "undefined" && createPortal(
+                <div
+                    className="fixed inset-0 z-[999999] bg-black/40 flex items-center justify-center p-4"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget && !deletingAll) setShowDeleteAllModal(false);
+                    }}
+                >
+                    <div className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl overflow-hidden">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] flex items-center justify-center">
+                                    <Trash2 className="w-4 h-4 text-[var(--danger)]" />
+                                </div>
+                                <p className="font-bold text-[var(--text)]">Xoá tất cả thông báo?</p>
+                            </div>
+                            <button
+                                onClick={() => setShowDeleteAllModal(false)}
+                                disabled={deletingAll}
+                                aria-label="Đóng"
+                                className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)] disabled:opacity-50"
+                            >
+                                <X className="w-4 h-4 text-[var(--text-muted)]" />
+                            </button>
+                        </div>
+
+                        <div className="px-5 py-4">
+                            <p className="text-sm text-[var(--text-muted)]">
+                                Bạn sắp xoá{" "}
+                                <strong className="text-[var(--text)]">{notifications.length}</strong>{" "}
+                                thông báo. Hành động này không thể hoàn tác.
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 px-5 py-4 border-t border-[var(--border)]">
+                            <button
+                                onClick={() => setShowDeleteAllModal(false)}
+                                disabled={deletingAll}
+                                className="flex-1 min-h-[44px] rounded-xl bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] text-[var(--text)] text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={confirmDeleteAll}
+                                disabled={deletingAll}
+                                className="flex-1 min-h-[44px] rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition active:scale-[0.98] disabled:opacity-50"
+                            >
+                                {deletingAll && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Xoá tất cả
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body,
             )}
 
             {navigatingToEvents && typeof document !== "undefined" && createPortal(
