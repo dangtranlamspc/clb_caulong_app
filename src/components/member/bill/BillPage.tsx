@@ -25,6 +25,8 @@ export default function BillPage() {
     const [session, setSession] = useState<any>(null);
     const [myReg, setMyReg] = useState<any>(null);
     const [groupedGuests, setGroupedGuests] = useState<any[]>([]);
+    const [onBehalf, setOnBehalf] = useState<any[]>([]);
+    const [paidBy, setPaidBy] = useState<{ name: string | null } | null>(null);
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -45,6 +47,8 @@ export default function BillPage() {
                 const detail = results[0].data;
                 setMyReg(detail.registration);
                 setGroupedGuests(detail.grouped_guests ?? []);
+                setOnBehalf(detail.on_behalf ?? []);
+                setPaidBy(detail.paid_by ?? null);
 
                 if (method === 'wallet') setWalletBalance(results[1]?.data?.wallet?.balance ?? 0);
             } finally {
@@ -66,35 +70,62 @@ export default function BillPage() {
 
     const isInstant = method === 'wallet';
     const paid = isInstant || myReg?.payment_status === 'confirmed';
+    const isPaidForMe = Boolean(myReg?.paid_by_registration_id);
+
+    const nameOf = (g: any) => (g.is_guest ? g.guest_full_name : g.users?.full_name);
+
+    const ownAmount = isPaidForMe ? 0 : (myReg?.amount_override ?? 0);
 
     const total =
-        (myReg?.amount_override ?? 0) +
-        groupedGuests.reduce((s: number, g: any) => s + (g.amount_override ?? 0), 0);
+        ownAmount +
+        groupedGuests.reduce((s: number, g: any) => s + (g.amount_override ?? 0), 0) +
+        onBehalf.reduce((s: number, g: any) => s + (g.amount_override ?? 0), 0);
 
     const lineItems = [
         {
             label: session.title,
-            sub: format(new Date(session.scheduled_at), 'dd/MM/yyyy', { locale: vi }),
+            sub: isPaidForMe
+                ? `${format(new Date(session.scheduled_at), 'dd/MM/yyyy', { locale: vi })} · ${paidBy?.name ?? 'Người khác'} đã thanh toán hộ`
+                : format(new Date(session.scheduled_at), 'dd/MM/yyyy', { locale: vi }),
             amount: myReg?.amount_override ?? 0,
+            covered: isPaidForMe,
             base_amount: myReg?.base_amount,
             other_fee_amount: myReg?.other_fee_amount,
             other_fee_note: myReg?.other_fee_note,
         },
         ...groupedGuests.map((g: any) => ({
-            label: `+ ${g.is_guest ? g.guest_full_name : g.users?.full_name}`,
+            label: `+ ${nameOf(g)}`,
             sub: g.is_guest ? 'Khách đi cùng' : 'Người đi cùng',
             amount: g.amount_override ?? 0,
+            covered: false,
+            base_amount: g.base_amount,
+            other_fee_amount: g.other_fee_amount,
+            other_fee_note: g.other_fee_note,
+        })),
+        ...onBehalf.map((g: any) => ({
+            label: `+ ${nameOf(g)}`,
+            sub: 'Thanh toán hộ',
+            amount: g.amount_override ?? 0,
+            covered: false,
             base_amount: g.base_amount,
             other_fee_amount: g.other_fee_amount,
             other_fee_note: g.other_fee_note,
         })),
     ];
 
-    const peopleCount = lineItems.length || 1;
-    const courtFeePerPerson = (session.court_fee ?? 0) / peopleCount;
     const shuttleCount = session.shuttle_count ?? 0;
     const shuttlePrice = session.shuttle_price ?? 0;
-    const shuttleFeePerPerson = (shuttleCount * shuttlePrice) / peopleCount;
+    const shuttleTotal = shuttleCount * shuttlePrice;
+    const courtTotal = session.court_fee ?? 0;
+
+    // Phần sân + cầu của 1 dòng = base_amount (hoặc amount trừ khoản khác)
+    // rồi chia theo tỉ lệ sân : cầu của buổi
+    const split = (item: { amount: number; base_amount?: number | null; other_fee_amount?: number | null }) => {
+        const base = item.base_amount ?? Math.max(0, item.amount - (item.other_fee_amount ?? 0));
+        const sum = courtTotal + shuttleTotal;
+        const courtShare = sum > 0 ? (base * courtTotal) / sum : base;
+        return { court: courtShare, shuttle: base - courtShare };
+    };
 
     return (
         <div className="max-w-sm mx-auto space-y-4" style={{ animation: 'fadeSlideUp .35s ease both' }}>
@@ -134,53 +165,72 @@ export default function BillPage() {
                     </div>
 
                     <h1 className={`text-lg font-bold mt-4 ${paid ? 'text-[var(--success)]' : 'text-[var(--warning)]'}`}>
-                        {paid ? 'Thanh toán thành công!' : 'Đã gửi yêu cầu thanh toán!'}
+                        {isPaidForMe
+                            ? 'Đã được thanh toán hộ'
+                            : paid
+                                ? 'Thanh toán thành công!'
+                                : 'Đã gửi yêu cầu thanh toán!'}
                     </h1>
                     <p className="text-sm text-[var(--text-faint)] mt-1.5 leading-relaxed">
-                        {paid
-                            ? 'Buổi đánh đã được thanh toán thành công. Cảm ơn bạn đã sử dụng dịch vụ của CLB.'
-                            : 'Admin sẽ xác nhận sau khi nhận được thanh toán của bạn.'}
+                        {isPaidForMe
+                            ? `${paidBy?.name ?? 'Một thành viên'} đã thanh toán phần của bạn cho buổi này.`
+                            : paid
+                                ? 'Buổi đánh đã được thanh toán thành công. Cảm ơn bạn đã sử dụng dịch vụ của CLB.'
+                                : 'Admin sẽ xác nhận sau khi nhận được thanh toán của bạn.'}
                     </p>
                 </div>
 
                 <div className="border border-[var(--border)] rounded-2xl overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)]">
                         <span className="text-sm font-bold text-[var(--text)]">Chi tiết thanh toán</span>
-                        <span className="text-sm font-bold text-[var(--success)]">{METHOD_LABEL[method] ?? 'Chuyển khoản'}</span>
+                        <span className="text-sm font-bold text-[var(--success)]">
+                            {isPaidForMe ? 'Thanh toán hộ' : (METHOD_LABEL[method] ?? 'Chuyển khoản')}
+                        </span>
                     </div>
                     <div className="divide-y divide-[var(--border)]">
-                        {lineItems.map((item, i) => (
-                            <div key={i} className="px-4 py-3">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-[var(--text)]">{item.label}</p>
-                                        <p className="text-xs text-[var(--text-faint)]">{item.sub}</p>
+                        {lineItems.map((item, i) => {
+                            const { court, shuttle } = split(item);
+                            return (
+                                <div key={i} className="px-4 py-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium text-[var(--text)] truncate">{item.label}</p>
+                                            <p className="text-xs text-[var(--text-faint)]">{item.sub}</p>
+                                        </div>
+                                        {item.covered ? (
+                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] flex-shrink-0">
+                                                Đã được trả hộ
+                                            </span>
+                                        ) : (
+                                            <span className="text-sm font-semibold text-[var(--text)] flex-shrink-0">{fmt(item.amount)}</span>
+                                        )}
                                     </div>
-                                    <span className="text-sm font-semibold text-[var(--text)]">{fmt(item.amount)}</span>
-                                </div>
 
-                                <div className="mt-2 pl-3 space-y-1 border-l-2 border-[var(--border)]">
-                                    <div className="flex items-center justify-between text-xs text-[var(--text-faint)]">
-                                        <span>Tiền sân</span>
-                                        <span>{fmt(courtFeePerPerson)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-xs text-[var(--text-faint)]">
-                                        <span>Cầu {shuttleCount} × {fmt(shuttlePrice)}</span>
-                                        <span>{fmt(shuttleFeePerPerson)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-xs text-[var(--text-faint)]">
-                                        <span>
-                                            Khoản khác
-                                            {item.other_fee_note ? ` (${item.other_fee_note})` : ''}
-                                        </span>
-                                        <span>{fmt(item.other_fee_amount ?? 0)}</span>
+                                    <div className="mt-2 pl-3 space-y-1 border-l-2 border-[var(--border)]">
+                                        <div className="flex items-center justify-between text-xs text-[var(--text-faint)]">
+                                            <span>Tiền sân</span>
+                                            <span>{fmt(court)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-[var(--text-faint)]">
+                                            <span>Cầu {shuttleCount} × {fmt(shuttlePrice)}</span>
+                                            <span>{fmt(shuttle)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-[var(--text-faint)]">
+                                            <span>
+                                                Khoản khác
+                                                {item.other_fee_note ? ` (${item.other_fee_note})` : ''}
+                                            </span>
+                                            <span>{fmt(item.other_fee_amount ?? 0)}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <div className="flex items-center justify-between px-4 py-3.5 bg-[var(--surface-muted)] border-t border-[var(--border)]">
-                        <span className="text-sm font-bold text-[var(--text)]">Tổng cộng</span>
+                        <span className="text-sm font-bold text-[var(--text)]">
+                            {onBehalf.length > 0 ? `Tổng cộng (gồm trả hộ ${onBehalf.length} người)` : 'Tổng cộng'}
+                        </span>
                         <span className="text-lg font-black text-[var(--success)]">{fmt(total)}</span>
                     </div>
                 </div>
