@@ -1,10 +1,12 @@
 "use client";
 import {
     useEffect,
+    useRef,
     useState,
     type CSSProperties,
     type ReactNode,
 } from "react";
+import toast from "react-hot-toast";
 import { c } from "@/lib/theme";
 
 export type WeatherScene =
@@ -26,16 +28,15 @@ const SCENES: WeatherScene[] = [
     "snow",
 ];
 
-
 const WEATHER_LAT = 10.78;
 const WEATHER_LON = 106.7;
 const REFRESH_MS = 10 * 60 * 1000;
 const CACHE_KEY = "home-weather-v3";
 const WEATHER_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1/weather`;
 
-
 type Weather = { scene: WeatherScene; isDay: boolean };
 type Coords = { lat: number; lon: number };
+type CoordsResult = Coords & { fallback: boolean };
 type Cached = { t: number; scene: WeatherScene; isDay: boolean };
 
 function readCache(): Cached | null {
@@ -82,9 +83,9 @@ function readCoords(): StoredCoords | null {
     }
 }
 
-function writeCoords(c: Coords) {
+function writeCoords(coords: Coords) {
     try {
-        localStorage.setItem(COORDS_KEY, JSON.stringify({ ...c, t: Date.now() }));
+        localStorage.setItem(COORDS_KEY, JSON.stringify({ ...coords, t: Date.now() }));
     } catch { }
 }
 
@@ -98,51 +99,59 @@ async function getPermission(): Promise<PermissionState | "unsupported"> {
     }
 }
 
-function requestPosition(): Promise<Coords | null> {
+type GeoResult = { coords: Coords | null; code?: number };
+
+function requestPosition(timeout = 15000): Promise<GeoResult> {
     return new Promise((resolve) => {
+        if (typeof navigator === "undefined" || !navigator.geolocation) {
+            resolve({ coords: null, code: 2 });
+            return;
+        }
         navigator.geolocation.getCurrentPosition(
-            (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-            () => resolve(null),
-            { enableHighAccuracy: false, timeout: 8000, maximumAge: 30 * 60 * 1000 },
+            (pos) =>
+                resolve({
+                    coords: { lat: pos.coords.latitude, lon: pos.coords.longitude },
+                }),
+            (err) => {
+                // 1 = bị từ chối, 2 = không lấy được vị trí, 3 = hết giờ
+                console.warn("[WeatherHero] geolocation lỗi:", err.code, err.message);
+                resolve({ coords: null, code: err.code });
+            },
+            { enableHighAccuracy: false, timeout, maximumAge: 30 * 60 * 1000 },
         );
     });
 }
 
-async function getCoords(): Promise<Coords> {
-    const fallback: Coords = { lat: WEATHER_LAT, lon: WEATHER_LON };
+async function getCoords(): Promise<CoordsResult> {
+    const fallback: CoordsResult = { lat: WEATHER_LAT, lon: WEATHER_LON, fallback: true };
     const stored = readCoords();
+    const storedResult: CoordsResult | null = stored
+        ? { lat: stored.lat, lon: stored.lon, fallback: false }
+        : null;
 
     if (typeof navigator === "undefined" || !navigator.geolocation) {
-        return stored ?? fallback;
+        return storedResult ?? fallback;
     }
 
-    if (stored && Date.now() - stored.t < COORDS_FRESH_MS) return stored;
-
-    const perm = await getPermission();
-
-    if (perm === "denied") return stored ?? fallback;
-
-    if (perm === "granted") {
-        const pos = await requestPosition();
-        if (pos) {
-            writeCoords(pos);
-            return pos;
-        }
-        return stored ?? fallback;
+    if (stored && storedResult && Date.now() - stored.t < COORDS_FRESH_MS) {
+        return storedResult;
     }
 
-    if (stored) return stored;
+    // Chỉ chặn khi thật sự bị từ chối. KHÔNG tin "prompt" trên iOS PWA.
+    if ((await getPermission()) === "denied") return storedResult ?? fallback;
 
-    const pos = await requestPosition();
-    if (pos) {
-        writeCoords(pos);
-        return pos;
+    const { coords } = await requestPosition();
+    if (coords) {
+        writeCoords(coords);
+        return { ...coords, fallback: false };
     }
-    return fallback;
+    return storedResult ?? fallback;
 }
 
-function useWeather(): Weather | null {
+function useWeather() {
     const [weather, setWeather] = useState<Weather | null>(null);
+    const [needsTap, setNeedsTap] = useState(false);
+    const runRef = useRef<() => void>(() => { });
 
     useEffect(() => {
         let alive = true;
@@ -161,15 +170,14 @@ function useWeather(): Weather | null {
         if (cached && Date.now() - cached.t < REFRESH_MS) {
             setWeather({ scene: cached.scene, isDay: cached.isDay });
             lastFetch = cached.t;
+            if (!readCoords()) setNeedsTap(true);
         }
-
-        let coordsPromise: Promise<Coords> | null = null;
 
         const run = async () => {
             try {
-                coordsPromise ??= getCoords();
-                const { lat, lon } = await coordsPromise;
+                const { lat, lon, fallback } = await getCoords();
                 if (!alive) return;
+                setNeedsTap(fallback);
 
                 const res = await fetch(
                     `${WEATHER_ENDPOINT}?lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}`,
@@ -180,7 +188,7 @@ function useWeather(): Weather | null {
                     return;
                 }
                 const json = await res.json();
-                if (debug) console.log("[WeatherHero] data:", json);
+                if (debug) console.log("[WeatherHero] data:", json, { lat, lon, fallback });
 
                 if (!alive || !SCENES.includes(json?.scene)) return;
                 const isDay = json.isDay !== false;
@@ -193,6 +201,7 @@ function useWeather(): Weather | null {
                 if (debug) console.warn("[WeatherHero] fetch thất bại:", err);
             }
         };
+        runRef.current = run;
 
         if (!lastFetch) run();
         const id = setInterval(run, REFRESH_MS);
@@ -211,7 +220,23 @@ function useWeather(): Weather | null {
         };
     }, []);
 
-    return weather;
+    // Xin quyền từ một cú chạm: iOS PWA đáng tin cậy nhất theo cách này
+    const locate = async () => {
+        const { coords, code } = await requestPosition(20000);
+        if (coords) {
+            writeCoords(coords);
+            setNeedsTap(false);
+            runRef.current();
+            return;
+        }
+        toast.error(
+            code === 1
+                ? "Vị trí đang bị chặn, vào Cài đặt iPhone để cho phép"
+                : "Không lấy được vị trí, kiểm tra Dịch vụ định vị của iPhone",
+        );
+    };
+
+    return { weather, needsTap, locate };
 }
 
 function rng(seed: number) {
@@ -357,7 +382,6 @@ const WX_CSS = `
 }
 `;
 
-
 function WeatherBackdrop({
     scene,
     isDay,
@@ -502,7 +526,7 @@ export function WeatherHero({
     children: ReactNode;
     style?: CSSProperties;
 }) {
-    const weather = useWeather();
+    const { weather, needsTap, locate } = useWeather();
 
     return (
         <div
@@ -517,6 +541,17 @@ export function WeatherHero({
                     isDay={weather.isDay}
                 />
             )}
+
+            {needsTap && (
+                <button
+                    type="button"
+                    onClick={locate}
+                    className="absolute right-3 top-3 z-20 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur active:scale-95"
+                >
+                    📍 Bật vị trí
+                </button>
+            )}
+
             <div className="relative z-10">{children}</div>
         </div>
     );
