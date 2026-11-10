@@ -508,6 +508,10 @@ export const walletAdminApi = {
     toUserId: string,
     data: { from_user_id: string; amount: number; note?: string },
   ) => api.post(`/wallet/admin/users/${toUserId}/pay-on-behalf`, data),
+  transfer: (
+    fromUserId: string,
+    body: { to_user_id: string; amount: number; note?: string },
+  ) => api.post(`/wallet/admin/users/${fromUserId}/transfer`, body),
 };
 
 export const eventsAdminApi = {

@@ -366,6 +366,7 @@ function PayOnBehalfSheet({
   const amount = parseThousands(amountDisplay);
   const notEnough = payer ? amount > payer.balance : false;
   const canSubmit = Boolean(payer) && amount >= 1000 && !notEnough && !submitting;
+  const hasQuery = search.trim().length > 0;
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setVisible(true));
@@ -380,12 +381,19 @@ function PayOnBehalfSheet({
 
   useEffect(() => {
     if (payer) return;
+
+    const q = search.trim();
+    if (!q) {
+      setSearching(false);
+      return; // không fetch khi chưa gõ gì (giữ results cũ để animation thu lại không bị giật)
+    }
+
     let cancelled = false;
+    setSearching(true); // báo "Đang tìm..." ngay, tránh nháy "Không tìm thấy"
     const t = setTimeout(async () => {
-      setSearching(true);
       try {
         const { data } = await walletAdminApi.listMembers({
-          search: search.trim() || undefined,
+          search: q,
           limit: 8,
           page: 1,
           sort_by: "balance",
@@ -398,6 +406,7 @@ function PayOnBehalfSheet({
         if (!cancelled) setSearching(false);
       }
     }, 300);
+
     return () => {
       cancelled = true;
       clearTimeout(t);
@@ -488,7 +497,10 @@ function PayOnBehalfSheet({
                     </span>
                   </div>
                   <button
-                    onClick={() => setPayer(null)}
+                    onClick={() => {
+                      setPayer(null);
+                      setSearch("");
+                    }}
                     className="w-6 h-6 rounded-full bg-[var(--surface)] flex items-center justify-center hover:bg-[var(--border-strong)]"
                     aria-label="Chọn lại"
                   >
@@ -497,39 +509,53 @@ function PayOnBehalfSheet({
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-[var(--border)] overflow-hidden">
-                <div className="relative border-b border-[var(--border)]">
+              <div className="rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
+                <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-faint)]" />
                   <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Tìm theo tên hoặc số điện thoại..."
+                    placeholder="Nhập tên hoặc số điện thoại để tìm..."
                     className="w-full pl-8 pr-3 py-2.5 text-base sm:text-sm bg-[var(--surface)] text-[var(--text)] focus:outline-none"
                   />
                 </div>
-                <div className="max-h-48 overflow-y-auto overscroll-contain scrollbar-hide">
-                  {searching ? (
-                    <p className="py-4 text-center text-xs text-[var(--text-faint)]">Đang tìm...</p>
-                  ) : results.length === 0 ? (
-                    <p className="py-4 text-center text-xs text-[var(--text-faint)]">Không tìm thấy thành viên</p>
-                  ) : (
-                    results.map((m) => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => setPayer(m)}
-                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-[var(--surface-hover)] border-b border-[var(--border)] last:border-b-0"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-[var(--text)] truncate">{m.full_name}</p>
-                          <p className="text-[11px] text-[var(--text-faint)]">{m.phone}</p>
-                        </div>
-                        <span className={`text-sm font-bold tabular-nums flex-shrink-0 ${m.balance < 0 ? "text-[var(--danger)]" : "text-[var(--text)]"}`}>
-                          {fmt(m.balance)}
-                        </span>
-                      </button>
-                    ))
-                  )}
+
+                {/* Danh sách: trượt xuống + fade khi bắt đầu gõ */}
+                <div
+                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${hasQuery ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                    }`}
+                  aria-hidden={!hasQuery}
+                >
+                  <div className="overflow-hidden">
+                    <div className="max-h-48 overflow-y-auto overscroll-contain scrollbar-hide border-t border-[var(--border)]">
+                      {searching ? (
+                        <p className="py-4 text-center text-xs text-[var(--text-faint)]">Đang tìm...</p>
+                      ) : results.length === 0 ? (
+                        <p className="py-4 text-center text-xs text-[var(--text-faint)]">Không tìm thấy thành viên</p>
+                      ) : (
+                        results.map((m, i) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => setPayer(m)}
+                            style={{ animationDelay: `${Math.min(i, 6) * 30}ms` }}
+                            className="animate-row-fade w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-[var(--surface-hover)] border-b border-[var(--border)] last:border-b-0 transition-colors duration-150"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-[var(--text)] truncate">{m.full_name}</p>
+                              <p className="text-[11px] text-[var(--text-faint)]">{m.phone}</p>
+                            </div>
+                            <span
+                              className={`text-sm font-bold tabular-nums flex-shrink-0 ${m.balance < 0 ? "text-[var(--danger)]" : "text-[var(--text)]"
+                                }`}
+                            >
+                              {fmt(m.balance)}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -556,8 +582,8 @@ function PayOnBehalfSheet({
                 onChange={(e) => setAmountDisplay(formatThousands(e.target.value, false))}
                 placeholder="0"
                 className={`w-full pl-3 pr-8 py-2.5 text-base sm:text-sm font-semibold rounded-xl border bg-[var(--surface)] text-[var(--text)] focus:outline-none focus:ring-2 ${notEnough
-                  ? "border-[var(--danger)] focus:ring-red-100"
-                  : "border-[var(--border)] focus:border-[var(--purple)] focus:ring-[color-mix(in_srgb,var(--purple)_25%,transparent)]"
+                    ? "border-[var(--danger)] focus:ring-red-100"
+                    : "border-[var(--border)] focus:border-[var(--purple)] focus:ring-[color-mix(in_srgb,var(--purple)_25%,transparent)]"
                   }`}
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[var(--text-faint)]">đ</span>
@@ -656,6 +682,336 @@ function PayOnBehalfSheet({
   );
 }
 
+function TransferSheet({
+  member,
+  onClose,
+  onDone,
+}: {
+  member: any; // ví đang chọn = người chuyển
+  onClose: () => void;
+  onDone: (newBalance: number) => void;
+}) {
+  const [visible, setVisible] = useState(false);
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [receiver, setReceiver] = useState<any | null>(null);
+  const [amountDisplay, setAmountDisplay] = useState("");
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const amount = parseThousands(amountDisplay);
+  const notEnough = amount > member.balance;
+  const canSubmit = Boolean(receiver) && amount >= 1000 && !notEnough && !submitting;
+  const hasQuery = search.trim().length > 0;
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const handleClose = () => {
+    if (submitting) return;
+    setVisible(false);
+    setTimeout(onClose, 250);
+  };
+
+  useEffect(() => {
+    if (receiver) return;
+
+    const q = search.trim();
+    if (!q) {
+      setSearching(false);
+      return; // không fetch khi chưa gõ gì (giữ results cũ để animation thu lại không bị giật)
+    }
+
+    let cancelled = false;
+    setSearching(true); // báo "Đang tìm..." ngay, tránh nháy "Không tìm thấy"
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await walletAdminApi.listMembers({
+          search: q,
+          limit: 8,
+          page: 1,
+          sort_by: "full_name",
+          sort_order: "asc",
+        });
+        if (!cancelled) {
+          setResults((data.data ?? []).filter((m: any) => m.id !== member.id));
+        }
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [search, receiver, member.id]);
+
+  const handleSubmit = async () => {
+    if (!canSubmit || !receiver) return;
+    setSubmitting(true);
+    try {
+      const { data } = await walletAdminApi.transfer(member.id, {
+        to_user_id: receiver.id,
+        amount,
+        note: note.trim() || undefined,
+      });
+      toast.success(data.message ?? "Đã chuyển tiền");
+      onDone(data.new_balance);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Chuyển tiền thất bại");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="absolute inset-0 z-20 flex items-end">
+      <div
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
+        onClick={handleClose}
+      />
+      <div
+        className={`relative w-full max-h-[92%] overflow-y-auto overscroll-contain rounded-t-2xl bg-[var(--surface)] border-t border-[var(--border)] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${visible ? "translate-y-0" : "translate-y-full"}`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[var(--primary-soft)] text-[var(--primary)] flex items-center justify-center flex-shrink-0">
+              <Send className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-[var(--text)] text-sm">Chuyển tiền</p>
+              <p className="text-[11px] text-[var(--text-faint)] truncate">
+                Chuyển từ ví của {member.full_name} sang ví thành viên khác
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleClose}
+            className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)] flex-shrink-0"
+          >
+            <X className="w-4 h-4 text-[var(--text-muted)]" />
+          </button>
+        </div>
+
+        <div className="px-4 pb-4 space-y-3">
+          {/* Người chuyển */}
+          <div>
+            <p className="text-xs text-[var(--text-muted)] mb-1.5">Chuyển từ ví</p>
+            <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2.5">
+              <span className="text-sm font-semibold text-[var(--text)] truncate">{member.full_name}</span>
+              <span className="text-right flex-shrink-0 ml-3">
+                <span className="block text-[10px] text-[var(--text-faint)]">Số dư hiện tại</span>
+                <span className="text-sm font-bold tabular-nums text-[var(--success)]">{fmt(member.balance)}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Người nhận */}
+          <div>
+            <p className="text-xs text-[var(--text-muted)] mb-1.5">Chuyển đến ví của</p>
+            {receiver ? (
+              <div className="flex items-center justify-between rounded-xl border border-[color-mix(in_srgb,var(--primary)_40%,transparent)] bg-[var(--primary-soft)] px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[var(--text)] truncate">{receiver.full_name}</p>
+                  <p className="text-[11px] text-[var(--text-faint)]">{receiver.phone}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                  <div className="text-right">
+                    <span className="block text-[10px] text-[var(--text-faint)]">Số dư</span>
+                    <span className={`text-sm font-bold tabular-nums ${receiver.balance < 0 ? "text-[var(--danger)]" : "text-[var(--text)]"}`}>
+                      {fmt(receiver.balance)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setReceiver(null);
+                      setSearch("");
+                    }}
+                    className="w-6 h-6 rounded-full bg-[var(--surface)] flex items-center justify-center hover:bg-[var(--border-strong)]"
+                    aria-label="Chọn lại"
+                  >
+                    <X className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-faint)]" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Nhập tên hoặc số điện thoại để tìm..."
+                    className="w-full pl-8 pr-3 py-2.5 text-base sm:text-sm bg-[var(--surface)] text-[var(--text)] focus:outline-none"
+                  />
+                </div>
+
+                {/* Danh sách: trượt xuống + fade khi bắt đầu gõ */}
+                <div
+                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${hasQuery ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                    }`}
+                  aria-hidden={!hasQuery}
+                >
+                  <div className="overflow-hidden">
+                    <div className="max-h-48 overflow-y-auto overscroll-contain scrollbar-hide border-t border-[var(--border)]">
+                      {searching ? (
+                        <p className="py-4 text-center text-xs text-[var(--text-faint)]">Đang tìm...</p>
+                      ) : results.length === 0 ? (
+                        <p className="py-4 text-center text-xs text-[var(--text-faint)]">Không tìm thấy thành viên</p>
+                      ) : (
+                        results.map((m, i) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => setReceiver(m)}
+                            style={{ animationDelay: `${Math.min(i, 6) * 30}ms` }}
+                            className="animate-row-fade w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-[var(--surface-hover)] border-b border-[var(--border)] last:border-b-0 transition-colors duration-150"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-[var(--text)] truncate">{m.full_name}</p>
+                              <p className="text-[11px] text-[var(--text-faint)]">{m.phone}</p>
+                            </div>
+                            <span
+                              className={`text-sm font-bold tabular-nums flex-shrink-0 ${m.balance < 0 ? "text-[var(--danger)]" : "text-[var(--text)]"
+                                }`}
+                            >
+                              {fmt(m.balance)}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Số tiền */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-xs text-[var(--text-muted)]">Số tiền chuyển</p>
+              <button
+                type="button"
+                onClick={() => setAmountDisplay(member.balance.toLocaleString("vi-VN"))}
+                className="text-[11px] font-semibold text-[var(--primary)] hover:underline"
+              >
+                Chuyển hết ({fmt(member.balance)})
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={amountDisplay}
+                onChange={(e) => setAmountDisplay(formatThousands(e.target.value, false))}
+                placeholder="0"
+                className={`w-full pl-3 pr-8 py-2.5 text-base sm:text-sm font-semibold rounded-xl border bg-[var(--surface)] text-[var(--text)] focus:outline-none focus:ring-2 ${notEnough
+                  ? "border-[var(--danger)] focus:ring-red-100"
+                  : "border-[var(--border)] focus:border-[var(--primary)] focus:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
+                  }`}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[var(--text-faint)]">đ</span>
+            </div>
+            {notEnough && (
+              <p className="mt-1 text-[11px] text-[var(--danger)]">
+                Ví {member.full_name} chỉ còn {fmt(member.balance)}, không đủ để chuyển {fmt(amount)}.
+              </p>
+            )}
+          </div>
+
+          {/* Nội dung */}
+          <div>
+            <p className="text-xs text-[var(--text-muted)] mb-1.5">Nội dung (tuỳ chọn)</p>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={200}
+              placeholder="Ví dụ: Chuyển tiền cầu buổi 08/11"
+              className="w-full px-3 py-2.5 text-base sm:text-sm rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] focus:outline-none focus:border-[var(--primary)]"
+            />
+          </div>
+
+          {/* Xem trước */}
+          {receiver && amount >= 1000 && !notEnough && (
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] overflow-hidden">
+              <div className="flex items-center gap-3 px-3.5 py-3">
+                <div className="w-8 h-8 rounded-full bg-[var(--danger-soft)] text-[var(--danger)] flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  {member.full_name?.[0]?.toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[var(--text)] truncate">{member.full_name}</p>
+                  <p className="text-[11px] text-[var(--text-faint)]">Người chuyển</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-bold tabular-nums text-[var(--danger)]">−{fmt(amount)}</p>
+                  <p className="text-[11px] tabular-nums text-[var(--text-faint)]">
+                    {fmt(member.balance)} → <span className="text-[var(--text-muted)] font-medium">{fmt(member.balance - amount)}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative h-px bg-[var(--border)]">
+                <span className="absolute left-7 -translate-x-1/2 -top-2.5 w-5 h-5 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center">
+                  <ArrowDown className="w-3 h-3 text-[var(--text-faint)]" />
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 px-3.5 py-3">
+                <div className="w-8 h-8 rounded-full bg-[var(--success-soft)] text-[var(--success)] flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  {receiver.full_name?.[0]?.toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[var(--text)] truncate">{receiver.full_name}</p>
+                  <p className="text-[11px] text-[var(--text-faint)]">Người nhận</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-bold tabular-nums text-[var(--success)]">+{fmt(amount)}</p>
+                  <p className="text-[11px] tabular-nums text-[var(--text-faint)]">
+                    {fmt(receiver.balance)} → <span className="text-[var(--text-muted)] font-medium">{fmt(receiver.balance + amount)}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 px-3.5 py-2 border-t border-[var(--border)] bg-[var(--surface)]">
+                <Info className="w-3.5 h-3.5 text-[var(--text-faint)] flex-shrink-0" />
+                <p className="text-[11px] leading-snug text-[var(--text-muted)]">
+                  Người chuyển và người nhận đều nhận được thông báo sau khi xác nhận.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Nút */}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleClose}
+              disabled={submitting}
+              className="flex-1 min-h-[44px] rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] text-sm font-semibold active:scale-[0.98] disabled:opacity-50"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className="flex-[2] min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] disabled:opacity-50"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Xác nhận chuyển tiền
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function MemberPanel({
   member,
   onClose,
@@ -672,6 +1028,7 @@ function MemberPanel({
   const [showTopup, setShowTopup] = useState(false);
   const [showDeduct, setShowDeduct] = useState(false);
   const [showPayFor, setShowPayFor] = useState(false);
+  const [showTransfer, setShowTransfer] = useState(false);
   const [amountDisplay, setAmountDisplay] = useState("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -1350,12 +1707,23 @@ function MemberPanel({
           >
             <Minus className="w-3.5 h-3.5" /> Trừ tiền
           </button>
-          <button
-            onClick={() => setShowPayFor(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--purple)_40%,transparent)] bg-[var(--purple-soft)] hover:brightness-110 transition-transform duration-150 active:scale-95 text-[var(--purple)] text-xs sm:text-sm font-semibold flex-shrink-0"
-          >
-            <ArrowLeftRight className="w-3.5 h-3.5" /> Thanh toán hộ
-          </button>
+          {member.balance < 0 && (
+            <button
+              onClick={() => setShowPayFor(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--purple)_40%,transparent)] bg-[var(--purple-soft)] hover:brightness-110 transition-transform duration-150 active:scale-95 text-[var(--purple)] text-xs sm:text-sm font-semibold flex-shrink-0"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" /> Thanh toán hộ
+            </button>
+          )}
+
+          {member.balance > 0 && (
+            <button
+              onClick={() => setShowTransfer(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--primary)_40%,transparent)] bg-[var(--primary-soft)] hover:brightness-110 transition-transform duration-150 active:scale-95 text-[var(--primary)] text-xs sm:text-sm font-semibold flex-shrink-0"
+            >
+              <Send className="w-3.5 h-3.5" /> Chuyển tiền
+            </button>
+          )}
         </div>
 
         <div
@@ -1659,6 +2027,18 @@ function MemberPanel({
           onClose={() => setShowPayFor(false)}
           onDone={(newBalance) => {
             setShowPayFor(false);
+            fetchTx();
+            onChanged(newBalance);
+          }}
+        />
+      )}
+
+      {showTransfer && (
+        <TransferSheet
+          member={member}
+          onClose={() => setShowTransfer(false)}
+          onDone={(newBalance) => {
+            setShowTransfer(false);
             fetchTx();
             onChanged(newBalance);
           }}
