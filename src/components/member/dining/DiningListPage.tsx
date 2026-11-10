@@ -55,11 +55,17 @@ export default function MemberDiningPage() {
     // Chỉ hiện ở khối đăng ký những buổi mình chưa có dòng nào
     const registrable = openEvents.filter((e) => !e.my_status);
 
+    const goBack = () => {
+        if (window.history.length > 1) router.back();
+        else router.push("/home");
+    };
+
+
     return (
         <div className="space-y-4 pb-24 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
             <div className="flex items-center gap-3">
                 <button
-                    onClick={() => router.push("/")}
+                    onClick={goBack}
                     aria-label="Quay lại"
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] active:scale-95"
                 >

@@ -57,7 +57,7 @@ export default function MyDrinksPage() {
         <div className="mx-auto max-w-md space-y-5 p-4 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
             <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                    <Link href="/" className="rounded-lg p-2 hover:bg-[var(--surface-hover)] flex-shrink-0">
+                    <Link href="/home" className="rounded-lg p-2 hover:bg-[var(--surface-hover)] flex-shrink-0">
                         <ArrowLeft className="h-5 w-5" />
                     </Link>
                     <div>

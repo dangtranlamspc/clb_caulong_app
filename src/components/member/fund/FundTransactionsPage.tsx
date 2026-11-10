@@ -77,7 +77,6 @@ export default function FundTransactionsPage() {
     const totalThu = txs.filter((t) => t.type === "thu").reduce((s, t) => s + Number(t.amount), 0);
     const totalChi = txs.filter((t) => t.type === "chi").reduce((s, t) => s + Number(t.amount), 0);
 
-    // Danh mục hiện ra tùy theo loại đang lọc
     const availableCategories =
         typeFilter === "thu" ? THU_CATEGORIES
             : typeFilter === "chi" ? CHI_CATEGORIES
@@ -143,7 +142,6 @@ export default function FundTransactionsPage() {
                     </div>
                 </div>
 
-                {/* Loại giao dịch */}
                 <div className="flex items-center gap-2">
                     {[
                         { val: "", label: "Tất cả" },

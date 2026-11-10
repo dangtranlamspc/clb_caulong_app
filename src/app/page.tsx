@@ -12,8 +12,8 @@ export default function RootPage() {
       router.replace('/auth/login');
       return;
     }
-
-    if (user?.role === 'admin') {
+    const landed = sessionStorage.getItem('admin_landed');
+    if (user?.role === 'admin' && !landed) {
       sessionStorage.setItem('admin_landed', '1');
       router.replace('/admin/dashboard');
     } else {

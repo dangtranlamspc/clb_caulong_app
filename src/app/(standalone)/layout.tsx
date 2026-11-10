@@ -8,8 +8,6 @@ export default function StandaloneLayout({ children }: { children: ReactNode }) 
     const { user } = useAuthStore();
     const [ready, setReady] = useState(false);
 
-    // Guard đăng nhập: copy đúng đoạn kiểm tra token/redirect đang dùng trong
-    // layout của (member) vào đây. Dưới đây chỉ là ví dụ.
     useEffect(() => {
         const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
         if (!token && !user) {

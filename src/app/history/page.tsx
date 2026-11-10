@@ -98,6 +98,11 @@ export default function HistoryPage() {
         }));
     }, [regs]);
 
+    const goBack = () => {
+        if (window.history.length > 1) router.back();
+        else router.push("/home");
+    };
+
     return (
         <div className="min-h-screen bg-[var(--bg)] pb-8">
             {/* Header */}
@@ -106,7 +111,7 @@ export default function HistoryPage() {
                 style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1.25rem)' }}
             >
                 <button
-                    onClick={() => router.back()}
+                    onClick={goBack}
                     className="w-9 h-9 rounded-full bg-[var(--surface)] border border-[var(--border)] shadow-sm flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
                 >
                     <ArrowLeft className="w-4 h-4 text-[var(--text-muted)]" />
