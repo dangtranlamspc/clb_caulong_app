@@ -390,7 +390,8 @@ export const membersAdminApi = {
   updatePassword: (id: string, data: any) =>
     api.patch(`/users/${id}/password`, data),
   toggleActive: (id: string) => api.patch(`/users/${id}/toggle-active`),
-  delete: (id: string) => api.delete(`/users/${id}`),
+  deletePreview: (id: string) => api.get(`/users/${id}/delete-preview`),
+  delete: (id: string, body?: any) => api.delete(`/users/${id}`, { data: body }),
   export: (params?: any) =>
     api.get("/users/export", { params, responseType: "blob" }),
   searchMembers: (q: string) =>
@@ -399,6 +400,7 @@ export const membersAdminApi = {
   reject: (id: string) => api.patch(`/users/${id}/reject`),
   toggleProfileLock: (id: string) => api.patch(`/users/${id}/toggle-profile-lock`),
   toggleDebtBlock: (id: string) => api.patch(`/users/${id}/toggle-debt-block`),
+
 };
 
 export const sessionsAdminApi = {
@@ -965,7 +967,8 @@ export const fundApi = {
     limit?: number;
   }) => api.get("/fund/penalties/me", { params }),
 
-  getPenaltyById: (id: string) => api.get(`/fund/penalties/${id}`),
+  getPenaltyById: (id: string) =>
+    api.get(`/fund/penalties/${id}`, { skipErrorToast: true } as any),
 
   submitPenaltyPayment: (
     id: string,

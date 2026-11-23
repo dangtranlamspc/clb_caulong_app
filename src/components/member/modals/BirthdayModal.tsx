@@ -286,287 +286,74 @@ function ConfettiCanvas() {
     );
 }
 
-/* ---------------- Gift box (swipe-to-open interaction) ---------------- */
+/* ---------------- Gift box ---------------- */
 
-type GiftPhase = 'box' | 'settling' | 'exploding' | 'revealed';
+type GiftPhase = 'box' | 'exploding' | 'revealed';
 
-const PULLS_NEEDED = 3;
-const DRAG_DISTANCE = 78;
-const COMMIT_THRESHOLD = 0.42;
-const FLING_VELOCITY = 2.4;
-const TILT_PER_PULL = 34;
-const LIFT_PER_PULL = 10;
-const SPRING_STIFFNESS = 260;
-const SPRING_DAMPING = 23;
-
-function paintLid(el: HTMLDivElement, progress: number, wobble = 0) {
-    const p = Math.max(-0.4, Math.min(PULLS_NEEDED + 0.2, progress));
-    const tilt = -p * TILT_PER_PULL;
-    const lift = -p * LIFT_PER_PULL;
-    const scale = 1 - Math.min(p, PULLS_NEEDED) * 0.014;
-    el.style.transform = `translateX(-50%) translateY(${lift}px) rotateX(${tilt}deg) rotateZ(${wobble}deg) scale(${scale})`;
-}
-
-interface Spark { id: number; dx: number; dy: number; rot: number; emoji: string }
-interface Trail { id: number; x: number; y: number }
-const SPARK_EMOJI = ['✨', '⭐', '💫'];
-
-function GiftBox({
-    phase,
-    pullCount,
-    onCommitPull,
-}: {
-    phase: GiftPhase;
-    pullCount: number;
-    onCommitPull: () => void;
-}) {
-    const wrapRef = useRef<HTMLDivElement>(null);
-    const bodyRef = useRef<HTMLDivElement>(null);
-    const lidRef = useRef<HTMLDivElement>(null);
-    const pullCountRef = useRef(0);
-    const [isDragging, setIsDragging] = useState(false);
-    const [sparks, setSparks] = useState<Spark[]>([]);
-    const sparkIdRef = useRef(0);
-    const [trail, setTrail] = useState<Trail[]>([]);
-    const trailIdRef = useRef(0);
-    const lastTrailTsRef = useRef(0);
-
-    const draggingRef = useRef(false);
-    const startYRef = useRef(0);
-    const posRef = useRef(0);
-    const samplesRef = useRef<{ t: number; y: number }[]>([]);
-
-    const rafRef = useRef<number | null>(null);
-    const velRef = useRef(0);
-    const lastTsRef = useRef<number | null>(null);
-
-    useEffect(() => { pullCountRef.current = pullCount; }, [pullCount]);
-
-    const setProgressVar = (v: number) => {
-        if (wrapRef.current) {
-            wrapRef.current.style.setProperty('--progress', String(Math.max(0, Math.min(1, v / PULLS_NEEDED))));
-        }
+// Tia sáng bắn ra khi bật nắp (bản CSS dự phòng)
+const SPARKS = Array.from({ length: 14 }, (_, i) => {
+    const rad = ((360 / 14) * i * Math.PI) / 180;
+    return {
+        id: i,
+        dx: Math.cos(rad) * (80 + (i % 3) * 18),
+        dy: Math.sin(rad) * (70 + (i % 3) * 14) - 50,
+        rot: (i % 2 ? 1 : -1) * (80 + i * 12),
+        delay: (i % 4) * 0.05,
+        emoji: ['✨', '⭐', '💫'][i % 3],
     };
+});
 
-    const stopSpring = () => {
-        if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-        lastTsRef.current = null;
-    };
+const GLITTERS = [
+    { l: 8, t: 18, d: 0, s: 12 },
+    { l: 88, t: 6, d: 0.6, s: 9 },
+    { l: 4, t: 62, d: 1.1, s: 8 },
+    { l: 92, t: 58, d: 1.7, s: 11 },
+];
 
-    const startSpring = (target: number) => {
-        stopSpring();
-        const step = (ts: number) => {
-            if (lastTsRef.current == null) lastTsRef.current = ts;
-            const dt = Math.min((ts - lastTsRef.current) / 1000, 1 / 30);
-            lastTsRef.current = ts;
-
-            const disp = posRef.current - target;
-            const acc = -SPRING_STIFFNESS * disp - SPRING_DAMPING * velRef.current;
-            velRef.current += acc * dt;
-            posRef.current += velRef.current * dt;
-
-            if (lidRef.current) paintLid(lidRef.current, posRef.current);
-            setProgressVar(posRef.current);
-
-            if (Math.abs(disp) < 0.004 && Math.abs(velRef.current) < 0.01) {
-                posRef.current = target;
-                velRef.current = 0;
-                if (lidRef.current) paintLid(lidRef.current, target);
-                setProgressVar(target);
-                rafRef.current = null;
-                lastTsRef.current = null;
-                return;
-            }
-            rafRef.current = requestAnimationFrame(step);
-        };
-        rafRef.current = requestAnimationFrame(step);
-    };
-
-    useEffect(() => {
-        if (draggingRef.current || rafRef.current != null) return;
-        if (phase !== 'box' && phase !== 'settling') return;
-        posRef.current = pullCount;
-        if (lidRef.current) paintLid(lidRef.current, pullCount);
-        setProgressVar(pullCount);
-    }, [pullCount, phase]);
-
-    useEffect(() => {
-        if (phase !== 'exploding' || !lidRef.current) return;
-        stopSpring();
-        const el = lidRef.current;
-        el.style.transition = 'transform .7s cubic-bezier(.34,1.15,.64,1), opacity .55s ease .12s';
-        el.style.transform = 'translateX(-50%) translateY(-190px) rotateX(-152deg) scale(0.86)';
-        el.style.opacity = '0';
-    }, [phase]);
-
-    useEffect(() => () => stopSpring(), []);
-
-    const spawnSparks = () => {
-        const n = 7;
-        const batch: Spark[] = Array.from({ length: n }, () => ({
-            id: sparkIdRef.current++,
-            dx: (Math.random() - 0.5) * 130,
-            dy: -44 - Math.random() * 64,
-            rot: (Math.random() - 0.5) * 220,
-            emoji: SPARK_EMOJI[Math.floor(Math.random() * SPARK_EMOJI.length)],
-        }));
-        setSparks(prev => [...prev, ...batch]);
-        setTimeout(() => setSparks(prev => prev.filter(s => !batch.includes(s))), 650);
-    };
-
-    // Squash-stretch "punch" trên thân hộp mỗi lần commit 1 pull
-    const punchBody = () => {
-        const el = bodyRef.current;
-        if (!el) return;
-        el.style.transition = 'transform .32s cubic-bezier(.34,1.9,.4,1)';
-        el.style.transform = 'translateX(-50%) scaleY(0.92) scaleX(1.04)';
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                if (bodyRef.current) bodyRef.current.style.transform = 'translateX(-50%) scale(1)';
-            });
-        });
-    };
-
-    const onPointerDown = (e: React.PointerEvent) => {
-        if (phase !== 'box') return;
-        stopSpring();
-        draggingRef.current = true;
-        setIsDragging(true);
-        startYRef.current = e.clientY;
-        posRef.current = pullCountRef.current;
-        velRef.current = 0;
-        samplesRef.current = [{ t: e.timeStamp, y: e.clientY }];
-        try { (e.target as Element).setPointerCapture(e.pointerId); } catch { }
-        if (lidRef.current) lidRef.current.style.transition = 'none';
-    };
-
-    const onPointerMove = (e: React.PointerEvent) => {
-        if (!draggingRef.current || phase !== 'box') return;
-
-        const deltaY = startYRef.current - e.clientY;
-        let add = deltaY / DRAG_DISTANCE;
-
-        if (add < 0) {
-            // easing bậc 2: cản nhẹ lúc đầu, cản mạnh dần khi kéo ngược sâu
-            const t = Math.min(1, -add);
-            add = -(t * t) * 0.35;
-        } else if (add > 1) {
-            // overshoot resistance thay vì clamp cứng
-            const over = add - 1;
-            add = 1 + Math.min(0.15, over * 0.4);
-        }
-
-        add = Math.max(-0.25, Math.min(1.15, add));
-        const total = pullCountRef.current + add;
-        posRef.current = total;
-
-        if (lidRef.current) {
-            const wobble = Math.max(-3.5, Math.min(3.5, add * 6));
-            if (bodyRef.current) bodyRef.current.style.transform = `translateX(-50%) rotate(${wobble * 0.4}deg)`;
-            paintLid(lidRef.current, total, wobble);
-        }
-        setProgressVar(total);
-
-        // Bụi lấp lánh bám theo ngón tay khi kéo đủ nhanh/xa
-        if (e.timeStamp - lastTrailTsRef.current > 60 && Math.abs(add) > 0.05) {
-            lastTrailTsRef.current = e.timeStamp;
-            const id = trailIdRef.current++;
-            setTrail(prev => [...prev.slice(-8), { id, x: (Math.random() - 0.5) * 40, y: -20 - Math.random() * 20 }]);
-            setTimeout(() => setTrail(prev => prev.filter(t => t.id !== id)), 500);
-        }
-
-        const samples = samplesRef.current;
-        samples.push({ t: e.timeStamp, y: e.clientY });
-        if (samples.length > 6) samples.shift();
-    };
-
-    const finishDrag = () => {
-        if (!draggingRef.current) return;
-        draggingRef.current = false;
-        setIsDragging(false);
-        if (bodyRef.current) bodyRef.current.style.transform = 'translateX(-50%) rotate(0deg)';
-        if (phase !== 'box') return;
-
-        const samples = samplesRef.current;
-        let velocity = 0;
-        if (samples.length >= 2) {
-            const a = samples[0];
-            const b = samples[samples.length - 1];
-            const dt = b.t - a.t;
-            if (dt > 0) {
-                const pxPerMs = (a.y - b.y) / dt;
-                velocity = (pxPerMs * 1000) / DRAG_DISTANCE;
-            }
-        }
-
-        const add = posRef.current - pullCountRef.current;
-        const committed = add >= COMMIT_THRESHOLD || velocity >= FLING_VELOCITY;
-        const target = committed ? Math.min(PULLS_NEEDED, pullCountRef.current + 1) : pullCountRef.current;
-
-        velRef.current = committed ? Math.max(velocity, 0.6) : Math.min(velocity, -0.2);
-        startSpring(target);
-        setProgressVar(target);
-
-        if (committed) {
-            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(14);
-            spawnSparks();
-            punchBody();
-            onCommitPull();
-        }
-    };
-
-    const exploding = phase === 'exploding';
-    const idle = phase === 'box' && pullCount === 0 && !isDragging;
+/* ---- Bản CSS (dự phòng khi không có WebGL) ---- */
+function GiftBoxCSS({ phase, onOpen }: { phase: GiftPhase; onOpen: () => void }) {
+    const closed = phase === 'box';
+    const opening = phase === 'exploding';
 
     return (
-        <div
-            ref={wrapRef}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={finishDrag}
-            onPointerCancel={finishDrag}
-            role="button"
-            aria-label="Vuốt lên để mở nắp hộp quà"
+        <button
+            type="button"
+            onClick={onOpen}
+            disabled={!closed}
+            aria-label="Chạm để mở hộp quà"
             style={{
                 position: 'relative',
                 width: 224,
                 height: 210,
-                touchAction: 'none',
-                cursor: phase === 'box' ? (isDragging ? 'grabbing' : 'grab') : 'default',
-                perspective: 640,
+                padding: 0,
+                border: 'none',
+                background: 'none',
+                outline: 'none',
+                cursor: closed ? 'pointer' : 'default',
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
                 WebkitTapHighlightColor: 'transparent',
-                animation: idle ? 'boxIdle 3.2s ease-in-out infinite' : undefined,
-                ['--progress' as any]: '0',
+                transformOrigin: '50% 90%',
+                animation: closed ? 'giftWiggle 2.4s ease-in-out infinite' : undefined,
             }}
         >
-            {/* Ambient glow, brightens as you pull */}
             <div
                 style={{
-                    position: 'absolute', left: '50%', top: '56%', width: 210, height: 210,
-                    transform: `translate(-50%,-50%) scale(${isDragging ? 1.1 : 1})`,
+                    position: 'absolute', left: 7, top: 'calc(56% - 105px)', width: 210, height: 210,
                     borderRadius: '50%',
                     background: 'radial-gradient(circle, rgba(255,180,80,0.42) 0%, rgba(255,120,180,0.15) 45%, transparent 70%)',
-                    opacity: 'calc(0.5 + var(--progress) * 0.6)',
                     filter: 'blur(3px)', pointerEvents: 'none',
-                    transition: 'transform .25s ease',
+                    animation: closed ? 'glowBreath 2.4s ease-in-out infinite' : undefined,
+                    opacity: closed ? undefined : 0.9,
                 }}
             />
 
-            {/* Slow-floating glitter around the box */}
-            {[
-                { l: 8, t: 18, d: 0, s: 12 },
-                { l: 88, t: 6, d: 0.6, s: 9 },
-                { l: 4, t: 62, d: 1.1, s: 8 },
-                { l: 92, t: 58, d: 1.7, s: 11 },
-            ].map((g, i) => (
+            {GLITTERS.map((g, i) => (
                 <span
                     key={i}
                     style={{
                         position: 'absolute', left: `${g.l}%`, top: `${g.t}%`, fontSize: g.s,
-                        pointerEvents: 'none', opacity: 0.55,
+                        pointerEvents: 'none', opacity: 0.55, color: '#FFD93D',
                         animation: `glitterFloat 2.8s ease-in-out ${g.d}s infinite`,
                     }}
                 >
@@ -574,49 +361,15 @@ function GiftBox({
                 </span>
             ))}
 
-            {/* Sparkle bursts on each committed pull */}
-            {sparks.map(s => (
-                <span
-                    key={s.id}
-                    style={{
-                        position: 'absolute', left: '50%', top: '46%', fontSize: 18,
-                        pointerEvents: 'none', zIndex: 6,
-                        animation: 'sparkBurst .65s ease-out forwards',
-                        ['--dx' as any]: `${s.dx}px`,
-                        ['--dy' as any]: `${s.dy}px`,
-                        ['--rot' as any]: `${s.rot}deg`,
-                    }}
-                >
-                    {s.emoji}
-                </span>
-            ))}
-
-            {/* Bụi lấp lánh bám theo ngón tay trong lúc kéo */}
-            {trail.map(t => (
-                <span
-                    key={t.id}
-                    style={{
-                        position: 'absolute', left: `calc(50% + ${t.x}px)`, top: `calc(42% + ${t.y}px)`,
-                        width: 4, height: 4, borderRadius: '50%',
-                        background: 'rgba(255,217,61,0.9)',
-                        boxShadow: '0 0 6px rgba(255,180,60,0.8)',
-                        pointerEvents: 'none', zIndex: 5,
-                        animation: 'trailFade .5s ease-out forwards',
-                    }}
-                />
-            ))}
-
-            {/* Box body */}
             <div
-                ref={bodyRef}
                 style={{
-                    position: 'absolute', left: '50%', bottom: 18, transform: 'translateX(-50%)',
+                    position: 'absolute', left: 34, bottom: 18,
                     width: 156, height: 112, borderRadius: '12px 12px 16px 16px',
                     background: 'linear-gradient(145deg,#ff86bd 0%,#f857a6 42%,#c2185b 100%)',
-                    boxShadow: `0 ${20 + pullCount * 2}px 38px rgba(200,20,100,${0.32 + pullCount * 0.05}), inset 0 -8px 0 rgba(0,0,0,0.14), inset 0 2px 0 rgba(255,255,255,0.25)`,
-                    opacity: exploding ? 0 : 1,
+                    boxShadow: '0 20px 38px rgba(200,20,100,0.32), inset 0 -8px 0 rgba(0,0,0,0.14), inset 0 2px 0 rgba(255,255,255,0.25)',
                     overflow: 'hidden',
-                    transition: 'opacity .5s ease .2s, box-shadow .3s ease',
+                    transformOrigin: '50% 100%',
+                    animation: opening ? 'bodySquish .45s ease-out' : undefined,
                 }}
             >
                 <div
@@ -645,31 +398,43 @@ function GiftBox({
                 />
             </div>
 
-            {/* Khe sáng rò ra giữa thân và nắp khi kéo — báo hiệu sắp bung */}
             <div
                 style={{
-                    position: 'absolute', left: '50%', bottom: 122,
-                    width: 150, height: 24, borderRadius: 8,
-                    background: 'radial-gradient(ellipse at center, rgba(255,220,120,0.9) 0%, rgba(255,180,80,0.4) 50%, transparent 80%)',
-                    opacity: 'calc(var(--progress) * 0.9)',
-                    transform: 'translateX(-50%) scaleY(calc(0.3 + var(--progress) * 1.4))',
-                    filter: 'blur(2px)',
-                    zIndex: 2, pointerEvents: 'none',
-                    transition: isDragging ? 'none' : 'opacity .3s ease, transform .3s ease',
+                    position: 'absolute', left: 27, bottom: 110, width: 170, height: 170,
+                    borderRadius: '50%', pointerEvents: 'none', zIndex: 2,
+                    background: 'radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(253,224,71,.65) 35%, transparent 70%)',
+                    opacity: 0,
+                    animation: opening ? 'glowOut 1.1s ease-out .1s forwards' : undefined,
                 }}
             />
 
-            {/* Lid — transform driven imperatively via lidRef, never via React style */}
+            {opening &&
+                SPARKS.map((s) => (
+                    <span
+                        key={s.id}
+                        style={{
+                            position: 'absolute', left: '50%', top: '42%', fontSize: 18,
+                            pointerEvents: 'none', zIndex: 6, opacity: 0,
+                            animation: `sparkBurst .9s ease-out ${0.12 + s.delay}s forwards`,
+                            ['--dx' as any]: `${s.dx}px`,
+                            ['--dy' as any]: `${s.dy}px`,
+                            ['--rot' as any]: `${s.rot}deg`,
+                        }}
+                    >
+                        {s.emoji}
+                    </span>
+                ))}
+
             <div
-                ref={lidRef}
                 style={{
-                    position: 'absolute', left: '50%', bottom: 128,
-                    transformOrigin: 'bottom center', transformStyle: 'preserve-3d',
+                    position: 'absolute', left: 24, bottom: 128,
                     width: 176, height: 36, borderRadius: 11,
                     background: 'linear-gradient(150deg,#ffa4d2 0%,#ff6fcb 45%,#e84fa8 100%)',
                     boxShadow: '0 10px 20px rgba(200,20,100,0.32), inset 0 2px 0 rgba(255,255,255,0.35)',
                     zIndex: 3,
+                    transformOrigin: '20% 100%',
                     willChange: 'transform',
+                    animation: opening ? 'lidPop .8s cubic-bezier(.3,1.4,.5,1) forwards' : undefined,
                 }}
             >
                 <div
@@ -680,8 +445,6 @@ function GiftBox({
                         boxShadow: 'inset 2px 0 0 rgba(255,255,255,0.35), inset -2px 0 0 rgba(0,0,0,0.08)',
                     }}
                 />
-
-                {/* Bow: two loops + a knot, sits on top of the lid as the pull handle */}
                 <div style={{ position: 'absolute', left: '50%', top: -30, transform: 'translateX(-50%)', width: 76, height: 34 }}>
                     <div style={{
                         position: 'absolute', left: 0, top: 6, width: 34, height: 24, borderRadius: '60% 40% 50% 50% / 70% 70% 30% 30%',
@@ -701,50 +464,855 @@ function GiftBox({
                     }} />
                 </div>
             </div>
-
-            {/* Hint + progress track */}
-            {phase === 'box' && (
-                <div
-                    style={{
-                        position: 'absolute', left: '50%', bottom: -12, transform: 'translateX(-50%)',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                        opacity: isDragging ? 0.3 : 1, transition: 'opacity .2s ease',
-                        width: '100%',
-                    }}
-                >
-                    <span
-                        key={pullCount}
-                        style={{
-                            fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.65)',
-                            display: 'flex', alignItems: 'center', gap: 5,
-                            animation: pullCount > 0 ? 'hintPulse .4s ease-out' : undefined,
-                        }}
-                    >
-                        <span style={{ display: 'flex', flexDirection: 'column', lineHeight: '5px', animation: isDragging ? undefined : 'chevronFloat 1.4s ease-in-out infinite' }}>
-                            <span style={{ fontSize: 9, opacity: 0.5 }}>﹀</span>
-                            <span style={{ fontSize: 9 }}>﹀</span>
-                        </span>
-                        {pullCount === 0 && 'Vuốt lên để mở nắp hộp quà'}
-                        {pullCount === 1 && 'Còn 2 lần nữa thôi!'}
-                        {pullCount === 2 && 'Sắp rồi, vuốt lần cuối!'}
-                    </span>
-                    <div style={{ width: 134, height: 7, borderRadius: 999, background: 'rgba(255,255,255,.12)', overflow: 'hidden', position: 'relative' }}>
-                        <div
-                            style={{
-                                position: 'absolute', inset: 0, borderRadius: 999,
-                                width: 'calc(var(--progress) * 100%)',
-                                background: 'linear-gradient(90deg,#FFD93D,#FF6FCB)',
-                                transition: isDragging ? 'none' : 'width .3s ease',
-                            }}
-                        />
-                        {[1, 2].map(i => (
-                            <div key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: `${(i / PULLS_NEEDED) * 100}%`, width: 2, background: 'rgba(0,0,0,.25)' }} />
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
+        </button>
     );
+}
+
+/* ---------------- Gift box 3D (three.js, tải lười) ---------------- */
+
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3);
+const easeInCubic = (x: number) => x * x * x;
+
+function drawStar2D(g: CanvasRenderingContext2D, x: number, y: number, R: number, r: number) {
+    g.beginPath();
+    for (let i = 0; i < 10; i++) {
+        const a = (i * Math.PI) / 5 - Math.PI / 2;
+        const rad = i % 2 ? r : R;
+        const px = x + Math.cos(a) * rad;
+        const py = y + Math.sin(a) * rad;
+        i === 0 ? g.moveTo(px, py) : g.lineTo(px, py);
+    }
+    g.closePath();
+    g.fill();
+}
+
+function makeSoftTexture(THREE: typeof import('three'), rgb: string) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d')!;
+    const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grad.addColorStop(0, `rgba(${rgb},1)`);
+    grad.addColorStop(0.35, `rgba(${rgb},0.55)`);
+    grad.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+}
+
+// Giấy gói: nền hồng đậm, sọc chéo mờ, sao vàng/kem và chấm (lặp liền mạch)
+function makePaperTexture(THREE: typeof import('three')) {
+    const S = 512;
+    const c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d')!;
+    const bg = g.createLinearGradient(0, 0, S, S);
+    bg.addColorStop(0, '#ff4fa3');
+    bg.addColorStop(0.5, '#e6247f');
+    bg.addColorStop(1, '#b3125f');
+    g.fillStyle = bg;
+    g.fillRect(0, 0, S, S);
+
+    g.fillStyle = 'rgba(255,255,255,0.07)';
+    for (let i = -S; i < S; i += 64) {
+        g.beginPath();
+        g.moveTo(i, 0); g.lineTo(i + 22, 0); g.lineTo(i + 22 + S, S); g.lineTo(i + S, S);
+        g.closePath();
+        g.fill();
+    }
+
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+            const cx = col * 128 + (row % 2 ? 0 : 64);
+            const cy = row * 128 + 64;
+            for (const dx of [-S, 0, S]) {
+                g.fillStyle = (row + col) % 2 ? '#fff1c9' : '#ffd36a';
+                drawStar2D(g, cx + dx, cy, 24, 10);
+                g.fillStyle = 'rgba(255,255,255,0.8)';
+                g.beginPath(); g.arc(cx + 64 + dx, cy, 5, 0, Math.PI * 2); g.fill();
+                g.beginPath(); g.arc(cx + 32 + dx, cy + 64, 3.2, 0, Math.PI * 2); g.fill();
+            }
+        }
+    }
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+}
+
+function makeTagTexture(THREE: typeof import('three'), name: string) {
+    const c = document.createElement('canvas');
+    c.width = 320; c.height = 200;
+    const g = c.getContext('2d')!;
+    g.fillStyle = '#fff4dc';
+    g.fillRect(0, 0, 320, 200);
+    g.strokeStyle = '#e0a93b'; g.lineWidth = 8; g.strokeRect(10, 10, 300, 180);
+    g.lineWidth = 2; g.strokeRect(22, 22, 276, 156);
+    g.textAlign = 'center';
+
+    const fit = (text: string, weightStyle: string, family: string, start: number, maxW: number) => {
+        let fs = start;
+        g.font = `${weightStyle} ${fs}px ${family}`;
+        while (g.measureText(text).width > maxW && fs > 16) {
+            fs -= 2;
+            g.font = `${weightStyle} ${fs}px ${family}`;
+        }
+    };
+
+    g.fillStyle = '#b3125f';
+    fit('Happy Birthday', 'italic 700', '"Segoe Script","Brush Script MT",cursive,serif', 40, 250);
+    g.fillText('Happy Birthday', 160, 86);
+
+    g.fillStyle = '#7a0f45';
+    fit(name, '800', 'system-ui,sans-serif', 46, 240);
+    g.fillText(name, 160, 144);
+
+    g.fillStyle = '#e0a93b';
+    drawStar2D(g, 48, 168, 9, 4);
+    drawStar2D(g, 272, 168, 9, 4);
+
+    g.fillStyle = '#c98a1f';
+    g.beginPath(); g.arc(36, 36, 8, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#6b3b00';
+    g.beginPath(); g.arc(36, 36, 4, 0, Math.PI * 2); g.fill();
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+}
+
+// Chùm tia sáng toả ra từ tâm
+function makeRaysTexture(THREE: typeof import('three')) {
+    const S = 512;
+    const c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d')!;
+    const grad = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    grad.addColorStop(0, 'rgba(255,230,160,0.85)');
+    grad.addColorStop(0.55, 'rgba(255,190,220,0.35)');
+    grad.addColorStop(1, 'rgba(255,190,220,0)');
+    g.fillStyle = grad;
+    const n = 14;
+    for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        g.beginPath();
+        g.moveTo(S / 2, S / 2);
+        g.arc(S / 2, S / 2, S / 2, a - 0.1, a + 0.1);
+        g.closePath();
+        g.fill();
+    }
+    return new THREE.CanvasTexture(c);
+}
+
+// Ánh lóe 4 cánh
+function makeGlintTexture(THREE: typeof import('three')) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d')!;
+    const glow = g.createRadialGradient(64, 64, 0, 64, 64, 40);
+    glow.addColorStop(0, 'rgba(255,255,255,0.9)');
+    glow.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = glow;
+    g.fillRect(0, 0, 128, 128);
+    g.translate(64, 64);
+    g.fillStyle = '#ffffff';
+    g.beginPath();
+    g.moveTo(0, -62);
+    g.quadraticCurveTo(4, -4, 62, 0);
+    g.quadraticCurveTo(4, 4, 0, 62);
+    g.quadraticCurveTo(-4, 4, -62, 0);
+    g.quadraticCurveTo(-4, -4, 0, -62);
+    g.fill();
+    return new THREE.CanvasTexture(c);
+}
+
+// Chùm sáng đứng: sáng ở chân, mờ dần lên trên và ra hai bên
+function makeBeamTexture(THREE: typeof import('three')) {
+    const w = 64, h = 128;
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d')!;
+    const img = g.createImageData(w, h);
+    for (let y = 0; y < h; y++) {
+        const fy = Math.pow(y / (h - 1), 1.4);
+        for (let x = 0; x < w; x++) {
+            const u = Math.abs((x / (w - 1)) * 2 - 1);
+            const a = fy * Math.pow(1 - u, 2.2);
+            const i = (y * w + x) * 4;
+            img.data[i] = 255;
+            img.data[i + 1] = 226;
+            img.data[i + 2] = 150;
+            img.data[i + 3] = Math.round(a * 255);
+        }
+    }
+    g.putImageData(img, 0, 0);
+    return new THREE.CanvasTexture(c);
+}
+
+// Dải ruy băng phẳng chạy dọc theo một đường cong (width/side tuỳ biến theo từng điểm)
+function makeRibbon(
+    THREE: typeof import('three'),
+    pts: any[],
+    widthFn: (u: number) => number,
+    sideFn: (i: number, tangent: any, u: number) => any,
+) {
+    const n = pts.length;
+    const pos = new Float32Array(n * 6);
+    const uv = new Float32Array(n * 4);
+    const idx: number[] = [];
+    for (let i = 0; i < n; i++) {
+        const u = i / (n - 1);
+        const a = pts[Math.max(0, i - 1)];
+        const b = pts[Math.min(n - 1, i + 1)];
+        const tan = new THREE.Vector3().subVectors(b, a).normalize();
+        const side = sideFn(i, tan, u);
+        const hw = widthFn(u) / 2;
+        const p = pts[i];
+        pos.set(
+            [p.x + side.x * hw, p.y + side.y * hw, p.z + side.z * hw, p.x - side.x * hw, p.y - side.y * hw, p.z - side.z * hw],
+            i * 6,
+        );
+        uv.set([0, u, 1, u], i * 4);
+        if (i < n - 1) {
+            const k = i * 2;
+            idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2);
+        }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    return geo;
+}
+
+function GiftBox3D({
+    phase,
+    name,
+    onOpen,
+    onFail,
+}: {
+    phase: GiftPhase;
+    name: string;
+    onOpen: () => void;
+    onFail: () => void;
+}) {
+    const mountRef = useRef<HTMLDivElement>(null);
+    const phaseRef = useRef<GiftPhase>(phase);
+    const pressedRef = useRef(false);
+    phaseRef.current = phase;
+
+    useEffect(() => {
+        let disposed = false;
+        let raf = 0;
+        let cleanup: () => void = () => { };
+
+        (async () => {
+            try {
+                const THREE = await import('three');
+                const { RoundedBoxGeometry } = await import(
+                    'three/examples/jsm/geometries/RoundedBoxGeometry.js'
+                );
+                const { RoomEnvironment } = await import(
+                    'three/examples/jsm/environments/RoomEnvironment.js'
+                );
+                if (disposed || !mountRef.current) return;
+
+                const mount = mountRef.current;
+                const W = 296, H = 300;
+
+                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+                renderer.setSize(W, H);
+                renderer.setClearColor(0x000000, 0);
+                renderer.outputColorSpace = THREE.SRGBColorSpace;
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1.2;
+                renderer.domElement.style.display = 'block';
+                mount.appendChild(renderer.domElement);
+
+                const scene = new THREE.Scene();
+                const camBase = new THREE.Vector3(0, 2.7, 8.9);
+                const lookTarget = new THREE.Vector3(0, 0.6, 0);
+                const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 60);
+                camera.position.copy(camBase);
+                camera.lookAt(lookTarget);
+
+                const pmrem = new THREE.PMREMGenerator(renderer);
+                const envScene = new (RoomEnvironment as any)(renderer);
+                const envTex = pmrem.fromScene(envScene, 0.04).texture;
+                scene.environment = envTex;
+                if (envScene.dispose) envScene.dispose();
+                pmrem.dispose();
+
+                scene.add(new THREE.HemisphereLight(0xffffff, 0x8844aa, 0.4));
+                const key = new THREE.DirectionalLight(0xffffff, 2.0);
+                key.position.set(3, 6, 5);
+                scene.add(key);
+                const rim = new THREE.DirectionalLight(0xff7ac0, 1.6);
+                rim.position.set(-4, 2, -3);
+                scene.add(rim);
+                const rim2 = new THREE.DirectionalLight(0x9b8cff, 1.0);
+                rim2.position.set(4, 3, -4);
+                scene.add(rim2);
+                const innerLight = new THREE.PointLight(0xffd36b, 0, 9);
+                innerLight.position.set(0, 1.2, 0.2);
+                scene.add(innerLight);
+
+                const paperTex = makePaperTexture(THREE);
+                paperTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                const paperMat = new THREE.MeshPhysicalMaterial({
+                    map: paperTex, roughness: 0.42, metalness: 0,
+                    clearcoat: 0.7, clearcoatRoughness: 0.18, envMapIntensity: 0.9,
+                });
+                const goldMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffcf5a, metalness: 1, roughness: 0.24,
+                    clearcoat: 0.4, clearcoatRoughness: 0.2, envMapIntensity: 1.4,
+                });
+                const goldSideMat = goldMat.clone();
+                goldSideMat.side = THREE.DoubleSide;
+                const starMat = new THREE.MeshStandardMaterial({
+                    color: 0xffd24a, metalness: 0.9, roughness: 0.25,
+                    emissive: 0xff9a1f, emissiveIntensity: 0.35, envMapIntensity: 1.2,
+                });
+                const heroMat = starMat.clone();
+                heroMat.emissiveIntensity = 0.8;
+
+                const pedestal = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.7, 1.8, 0.16, 72),
+                    new THREE.MeshPhysicalMaterial({
+                        color: 0x2b1457, metalness: 0.6, roughness: 0.28,
+                        clearcoat: 1, clearcoatRoughness: 0.12, envMapIntensity: 1,
+                    }),
+                );
+                pedestal.position.y = -0.83;
+                scene.add(pedestal);
+
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: 0xffc2e3, transparent: true, opacity: 0.8, toneMapped: false,
+                });
+                const pedRing = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.03, 12, 96), ringMat);
+                pedRing.rotation.x = Math.PI / 2;
+                pedRing.position.y = -0.745;
+                scene.add(pedRing);
+
+                const glowTex = makeSoftTexture(THREE, '255,214,110');
+                const pinkGlowTex = makeSoftTexture(THREE, '255,110,190');
+                const pedGlow = new THREE.Sprite(
+                    new THREE.SpriteMaterial({ map: pinkGlowTex, transparent: true, opacity: 0.45, depthWrite: false, blending: THREE.AdditiveBlending }),
+                );
+                pedGlow.position.set(0, -0.95, 0);
+                pedGlow.scale.set(5.6, 2.6, 1);
+                scene.add(pedGlow);
+
+                const shadow = new THREE.Mesh(
+                    new THREE.PlaneGeometry(3.4, 3.4),
+                    new THREE.MeshBasicMaterial({
+                        map: makeSoftTexture(THREE, '0,0,0'),
+                        transparent: true, opacity: 0.5, depthWrite: false,
+                    }),
+                );
+                shadow.rotation.x = -Math.PI / 2;
+                shadow.position.y = -0.74;
+                scene.add(shadow);
+
+                const rayMat = new THREE.MeshBasicMaterial({
+                    map: makeRaysTexture(THREE), transparent: true, opacity: 0.3,
+                    depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
+                });
+                const rays = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), rayMat);
+                rays.position.set(0, 0.7, -2.4);
+                scene.add(rays);
+
+                const halo = new THREE.Sprite(
+                    new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending }),
+                );
+                halo.position.set(0, 0.5, -1.8);
+                halo.scale.set(5.6, 5.6, 1);
+                scene.add(halo);
+
+                const root = new THREE.Group();
+                root.position.y = 0;
+                scene.add(root);
+
+                const bodyGroup = new THREE.Group();
+                root.add(bodyGroup);
+                bodyGroup.add(new THREE.Mesh(new RoundedBoxGeometry(2, 1.5, 2, 5, 0.09), paperMat));
+                bodyGroup.add(new THREE.Mesh(new RoundedBoxGeometry(0.36, 1.52, 2.07, 3, 0.03), goldMat));
+                bodyGroup.add(new THREE.Mesh(new RoundedBoxGeometry(2.07, 1.524, 0.36, 3, 0.03), goldMat));
+
+                const tagMat = new THREE.MeshStandardMaterial({
+                    map: makeTagTexture(THREE, name), roughness: 0.6, metalness: 0, side: THREE.DoubleSide,
+                });
+                const tag = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.4), tagMat);
+                tag.position.set(0.56, 0.08, 1.06);
+                tag.rotation.z = -0.1;
+                bodyGroup.add(tag);
+                const stringCurve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(0.3, 0.26, 1.06),
+                    new THREE.Vector3(0.27, 0.5, 1.07),
+                    new THREE.Vector3(0.14, 0.73, 1.06),
+                ]);
+                bodyGroup.add(new THREE.Mesh(new THREE.TubeGeometry(stringCurve, 16, 0.012, 6, false), goldMat));
+
+                const topGlow = new THREE.Mesh(
+                    new THREE.PlaneGeometry(1.9, 1.9),
+                    new THREE.MeshBasicMaterial({
+                        map: glowTex, transparent: true, opacity: 0, depthWrite: false,
+                        blending: THREE.AdditiveBlending, toneMapped: false,
+                    }),
+                );
+                topGlow.rotation.x = -Math.PI / 2;
+                topGlow.position.y = 0.76;
+                bodyGroup.add(topGlow);
+
+                const lid = new THREE.Group();
+                root.add(lid);
+                const lidMesh = new THREE.Mesh(new RoundedBoxGeometry(2.24, 0.42, 2.24, 5, 0.08), paperMat);
+                lidMesh.position.y = 0.21;
+                lid.add(lidMesh);
+                const lidRibA = new THREE.Mesh(new RoundedBoxGeometry(0.38, 0.44, 2.3, 3, 0.03), goldMat);
+                lidRibA.position.y = 0.21;
+                lid.add(lidRibA);
+                const lidRibB = new THREE.Mesh(new RoundedBoxGeometry(2.3, 0.444, 0.38, 3, 0.03), goldMat);
+                lidRibB.position.y = 0.21;
+                lid.add(lidRibB);
+
+                const bow = new THREE.Group();
+                bow.position.y = 0.42;
+                lid.add(bow);
+
+                const LOOP_N = 64;
+                const loopPts = (L: number, Hh: number) =>
+                    Array.from({ length: LOOP_N + 1 }, (_, i) => {
+                        const th = (i / LOOP_N) * Math.PI * 2;
+                        const u = (1 - Math.cos(th)) / 2;
+                        return new THREE.Vector3(L * u, Hh * Math.sin(th) * (0.55 + 0.45 * u), 0);
+                    });
+                const zAxis = new THREE.Vector3(0, 0, 1);
+                const loopSide = (_i: number, tan: any, u: number) => {
+                    const n = new THREE.Vector3(-tan.y, tan.x, 0).normalize();
+                    const a = 1.25 * Math.sin(u * Math.PI);
+                    return zAxis.clone().multiplyScalar(Math.cos(a)).add(n.multiplyScalar(Math.sin(a))).normalize();
+                };
+                const addLoop = (L: number, Hh: number, rotZ: number, mirror: boolean, yaw: number, y: number, w: number) => {
+                    const geo = makeRibbon(THREE, loopPts(L, Hh), (u) => w * (0.6 + 0.4 * Math.sin(u * Math.PI)), loopSide);
+                    const m = new THREE.Mesh(geo, goldSideMat);
+                    m.rotation.set(0, yaw, rotZ);
+                    const pivot = new THREE.Group();
+                    pivot.rotation.y = mirror ? Math.PI : 0;
+                    pivot.position.y = y;
+                    pivot.add(m);
+                    bow.add(pivot);
+                };
+                addLoop(1.05, 0.5, 0.28, false, 0.2, 0.1, 0.5);
+                addLoop(1.05, 0.5, 0.28, true, 0.2, 0.1, 0.5);
+                addLoop(0.8, 0.4, 1.05, false, -0.25, 0.14, 0.46);
+                addLoop(0.8, 0.4, 1.05, true, -0.25, 0.14, 0.46);
+
+                const knot = new THREE.Mesh(new THREE.SphereGeometry(0.21, 32, 24), goldMat);
+                knot.scale.set(1.15, 0.8, 1);
+                knot.position.y = 0.12;
+                bow.add(knot);
+
+                const tailSide = () => new THREE.Vector3(1, 0, 0);
+                const makeTail = (ctrl: [number, number, number][]) => {
+                    const curve = new THREE.CatmullRomCurve3(ctrl.map((p) => new THREE.Vector3(...p)));
+                    const geo = makeRibbon(THREE, curve.getPoints(48), (u) => 0.34 * (1 - 0.12 * u), tailSide);
+                    return new THREE.Mesh(geo, goldSideMat);
+                };
+                lid.add(makeTail([
+                    [0.05, 0.47, 0.05], [0.3, 0.45, 0.4], [0.55, 0.44, 0.8], [0.72, 0.43, 1.1],
+                    [0.8, 0.3, 1.2], [0.82, 0.05, 1.22], [0.84, -0.12, 1.22],
+                ]));
+                lid.add(makeTail([
+                    [-0.05, 0.47, 0.05], [-0.3, 0.45, 0.4], [-0.5, 0.44, 0.8], [-0.6, 0.42, 1.12],
+                    [-0.62, 0.3, 1.22], [-0.58, 0.05, 1.22], [-0.54, -0.07, 1.22],
+                ]));
+
+                const starShape = new THREE.Shape();
+                for (let i = 0; i < 10; i++) {
+                    const a = (i * Math.PI) / 5 - Math.PI / 2;
+                    const r = i % 2 ? 0.14 : 0.3;
+                    const px = Math.cos(a) * r, py = Math.sin(a) * r;
+                    i === 0 ? starShape.moveTo(px, py) : starShape.lineTo(px, py);
+                }
+                starShape.closePath();
+                const starGeo = new THREE.ExtrudeGeometry(starShape, {
+                    depth: 0.08, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2,
+                });
+                starGeo.center();
+
+                const orbitStars = Array.from({ length: 6 }, (_, i) => {
+                    const m = new THREE.Mesh(starGeo, starMat);
+                    const sc = 0.5 + (i % 3) * 0.18;
+                    m.scale.setScalar(sc);
+                    scene.add(m);
+                    return {
+                        m, a: (i / 6) * Math.PI * 2, r: 2.0 + (i % 3) * 0.12,
+                        y: 0.1 + (i % 4) * 0.42, sp: 0.28 + (i % 3) * 0.08, ph: i * 1.7,
+                    };
+                });
+
+                const heroStar = new THREE.Mesh(starGeo, heroMat);
+                heroStar.scale.setScalar(0.0001);
+                heroStar.position.set(0, 1, 0.3);
+                scene.add(heroStar);
+
+                const glintTex = makeGlintTexture(THREE);
+                const glints = ([
+                    [0.9, 1.5, 0.5, 0],
+                    [-0.55, 0.45, 1.25, 2.1],
+                    [0.1, 0.6, 1.1, 4.2],
+                    [1.0, -0.1, 1.15, 1.1],
+                ] as number[][]).map(([x, y, z, ph]) => {
+                    const s = new THREE.Sprite(
+                        new THREE.SpriteMaterial({ map: glintTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }),
+                    );
+                    s.position.set(x, y, z);
+                    root.add(s);
+                    return { s, ph };
+                });
+
+                const burst = new THREE.Sprite(
+                    new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }),
+                );
+                burst.position.set(0, 0.95, 0.5);
+                scene.add(burst);
+
+                const beamGeo = new THREE.PlaneGeometry(1, 1);
+                beamGeo.translate(0, 0.5, 0);
+                const beam = new THREE.Mesh(
+                    beamGeo,
+                    new THREE.MeshBasicMaterial({
+                        map: makeBeamTexture(THREE), transparent: true, opacity: 0,
+                        depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
+                    }),
+                );
+                beam.position.set(0, 0.78, 0.3);
+                beam.scale.set(1.9, 0.01, 1);
+                scene.add(beam);
+
+                const shock = new THREE.Mesh(
+                    new THREE.RingGeometry(0.9, 1.0, 72),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xffd9a0, transparent: true, opacity: 0, depthWrite: false,
+                        blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false,
+                    }),
+                );
+                shock.rotation.x = -Math.PI / 2;
+                shock.position.y = -0.72;
+                scene.add(shock);
+
+                const N = 70;
+                const pPos = new Float32Array(N * 3);
+                const pVel = new Float32Array(N * 3);
+                const pCol = new Float32Array(N * 3);
+                const palette = ['#FF6B9D', '#FFD93D', '#6BCB77', '#4D96FF', '#C77DFF', '#FFB347'].map((c) => new THREE.Color(c));
+                const pGeo = new THREE.BufferGeometry();
+                pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+                pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+                const pMat = new THREE.PointsMaterial({
+                    size: 0.17, map: makeSoftTexture(THREE, '255,255,255'),
+                    vertexColors: true, transparent: true, depthWrite: false,
+                    blending: THREE.AdditiveBlending, opacity: 1,
+                });
+                const points = new THREE.Points(pGeo, pMat);
+                points.visible = false;
+                points.frustumCulled = false;
+                scene.add(points);
+
+                const M = 48;
+                const confMesh = new THREE.InstancedMesh(
+                    new THREE.PlaneGeometry(0.16, 0.09),
+                    new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, toneMapped: false }),
+                    M,
+                );
+                confMesh.frustumCulled = false;
+                confMesh.visible = false;
+                scene.add(confMesh);
+                const cPos = new Float32Array(M * 3);
+                const cVel = new Float32Array(M * 3);
+                const cRot = new Float32Array(M * 3);
+                const cAng = new Float32Array(M * 3);
+                const dummy = new THREE.Object3D();
+                const tmpCol = new THREE.Color();
+                for (let i = 0; i < M; i++) {
+                    confMesh.setColorAt(i, tmpCol.set(CONFETTI_COLORS[i % CONFETTI_COLORS.length]));
+                    dummy.scale.setScalar(0);
+                    dummy.updateMatrix();
+                    confMesh.setMatrixAt(i, dummy.matrix);
+                }
+
+                const lidVel = new THREE.Vector3();
+                const lidAng = new THREE.Vector3();
+                let launched = false;
+                let openStart: number | null = null;
+                let pressK = 0;
+                const LAUNCH_AT = 0.16;
+
+                const launch = () => {
+                    launched = true;
+                    lidVel.set(0.7, 5.6, -0.9);
+                    lidAng.set(-2.6, 1.6, 1.4);
+
+                    for (let i = 0; i < N; i++) {
+                        const a = Math.random() * Math.PI * 2;
+                        const sp = 0.8 + Math.random() * 2.2;
+                        pPos[i * 3] = 0; pPos[i * 3 + 1] = 0.9; pPos[i * 3 + 2] = 0;
+                        pVel[i * 3] = Math.cos(a) * sp;
+                        pVel[i * 3 + 1] = 3 + Math.random() * 3.5;
+                        pVel[i * 3 + 2] = Math.sin(a) * sp * 0.6;
+                        const col = palette[i % palette.length];
+                        pCol[i * 3] = col.r; pCol[i * 3 + 1] = col.g; pCol[i * 3 + 2] = col.b;
+                    }
+                    (pGeo.attributes.color as any).needsUpdate = true;
+                    points.visible = true;
+
+                    for (let i = 0; i < M; i++) {
+                        const a = Math.random() * Math.PI * 2;
+                        const sp = 0.6 + Math.random() * 1.8;
+                        cPos[i * 3] = 0; cPos[i * 3 + 1] = 0.9; cPos[i * 3 + 2] = 0.1;
+                        cVel[i * 3] = Math.cos(a) * sp;
+                        cVel[i * 3 + 1] = 3.5 + Math.random() * 3;
+                        cVel[i * 3 + 2] = Math.sin(a) * sp * 0.7;
+                        cRot[i * 3] = Math.random() * 6; cRot[i * 3 + 1] = Math.random() * 6; cRot[i * 3 + 2] = Math.random() * 6;
+                        cAng[i * 3] = (Math.random() - 0.5) * 14;
+                        cAng[i * 3 + 1] = (Math.random() - 0.5) * 14;
+                        cAng[i * 3 + 2] = (Math.random() - 0.5) * 14;
+                    }
+                    confMesh.visible = true;
+                };
+
+                renderer.compile(scene, camera);
+
+                const clock = new THREE.Clock();
+                let last = 0;
+
+                const tick = () => {
+                    raf = requestAnimationFrame(tick);
+                    const t = clock.getElapsedTime();
+                    const dt = Math.min(t - last, 1 / 30);
+                    last = t;
+
+                    const opening = phaseRef.current !== 'box';
+                    if (opening && openStart === null) openStart = t;
+
+                    pressK += ((pressedRef.current && !opening ? 1 : 0) - pressK) * Math.min(1, dt * 18);
+
+                    let sy = 1;
+                    let hop = 0;
+                    let air = 0;
+                    let wob = 0;
+                    let q = -1;
+
+                    if (!opening) {
+                        const cyc = t % 3;
+                        let crouch = 0, land = 0;
+                        if (cyc < 0.9) {
+                            const u = cyc / 0.9;
+                            crouch = u < 0.2 ? Math.sin((u / 0.2) * Math.PI / 2) : u < 0.35 ? Math.cos(((u - 0.2) / 0.15) * Math.PI / 2) : 0;
+                            air = u > 0.3 && u < 0.8 ? Math.sin(((u - 0.3) / 0.5) * Math.PI) : 0;
+                            land = u > 0.8 ? Math.sin(((u - 0.8) / 0.2) * Math.PI) : 0;
+                            wob = Math.sin(u * Math.PI * 6) * air;
+                        }
+                        sy = 1 - 0.09 * crouch + 0.05 * air - 0.07 * land - 0.08 * pressK;
+                        hop = 0.3 * air;
+                        root.rotation.y = -0.35 + Math.sin(t * 0.7) * 0.35;
+                        root.rotation.z = 0.05 * wob;
+                        (halo.material as any).opacity = 0.3 + 0.12 * Math.sin(t * 2.4);
+                    } else {
+                        const e = t - (openStart as number);
+                        if (!launched && e >= LAUNCH_AT) launch();
+
+                        if (e < LAUNCH_AT) {
+                            sy = 1 - 0.12 * Math.sin((e / LAUNCH_AT) * Math.PI / 2);
+                        } else {
+                            const qq = e - LAUNCH_AT;
+                            sy = 1 + Math.exp(-7 * qq) * (-0.12 * Math.cos(20 * qq) + 0.03 * Math.sin(20 * qq));
+                        }
+                        root.rotation.y += (-0.1 - root.rotation.y) * Math.min(1, dt * 6);
+                        root.rotation.z *= 0.85;
+
+                        if (launched) {
+                            q = e - LAUNCH_AT;
+
+                            lidVel.y -= 16 * dt;
+                            lid.position.addScaledVector(lidVel, dt);
+                            lid.rotation.x += lidAng.x * dt;
+                            lid.rotation.y += lidAng.y * dt;
+                            lid.rotation.z += lidAng.z * dt;
+                            const sc = 1 - easeInCubic(clamp01((q - 0.45) / 0.35));
+                            lid.scale.setScalar(Math.max(sc, 0.0001));
+                            lid.visible = sc > 0.002;
+
+                            innerLight.intensity = 30 * Math.max(0, 1 - q / 1.2);
+                            const bs = 1.2 + q * 6;
+                            burst.scale.set(bs, bs, 1);
+                            (burst.material as any).opacity = Math.min(1, q / 0.05) * Math.max(0, 1 - q / 0.7) * 0.9;
+                            (halo.material as any).opacity = 0.35 + 0.4 * Math.max(0, 1 - q / 1.2);
+                            (topGlow.material as any).opacity = Math.min(1, q / 0.3) * (0.5 + 0.1 * Math.sin(t * 5));
+
+                            beam.scale.set(1.9, 2.6 * easeOutCubic(clamp01(q / 0.5)) + 0.01, 1);
+                            (beam.material as any).opacity = Math.min(1, q / 0.12) * Math.max(0, 1 - q / 1.4) * 0.9;
+
+                            const sk = 0.5 + q * 3.4;
+                            shock.scale.set(sk, sk, 1);
+                            (shock.material as any).opacity = Math.max(0, 1 - q / 0.8) * 0.85;
+
+                            const hk = clamp01(q / 1.3);
+                            heroStar.position.y = 1.0 + easeOutCubic(clamp01(q / 0.9)) * 1.7;
+                            heroStar.scale.setScalar(Math.max(Math.pow(Math.sin(hk * Math.PI), 0.6) * 1.5, 0.0001));
+                            heroStar.rotation.y = q * 5;
+                            heroStar.rotation.z = Math.sin(q * 3) * 0.2;
+
+                            const shk = Math.exp(-q * 9);
+                            camera.position.set(
+                                camBase.x + Math.sin(q * 70) * 0.06 * shk,
+                                camBase.y + Math.cos(q * 63) * 0.05 * shk,
+                                camBase.z,
+                            );
+                            camera.lookAt(lookTarget);
+
+                            for (let i = 0; i < N; i++) {
+                                pVel[i * 3 + 1] -= 5 * dt;
+                                pPos[i * 3] += pVel[i * 3] * dt;
+                                pPos[i * 3 + 1] += pVel[i * 3 + 1] * dt;
+                                pPos[i * 3 + 2] += pVel[i * 3 + 2] * dt;
+                            }
+                            (pGeo.attributes.position as any).needsUpdate = true;
+                            pMat.opacity = 1 - clamp01((q - 0.9) / 1.0);
+
+                            const cs = 1 - clamp01((q - 1.2) / 0.4);
+                            for (let i = 0; i < M; i++) {
+                                cVel[i * 3] *= 0.992;
+                                cVel[i * 3 + 1] -= 9 * dt;
+                                cPos[i * 3] += cVel[i * 3] * dt;
+                                cPos[i * 3 + 1] += cVel[i * 3 + 1] * dt;
+                                cPos[i * 3 + 2] += cVel[i * 3 + 2] * dt;
+                                cRot[i * 3] += cAng[i * 3] * dt;
+                                cRot[i * 3 + 1] += cAng[i * 3 + 1] * dt;
+                                cRot[i * 3 + 2] += cAng[i * 3 + 2] * dt;
+                                dummy.position.set(cPos[i * 3], cPos[i * 3 + 1], cPos[i * 3 + 2]);
+                                dummy.rotation.set(cRot[i * 3], cRot[i * 3 + 1], cRot[i * 3 + 2]);
+                                dummy.scale.setScalar(Math.max(cs, 0.0001));
+                                dummy.updateMatrix();
+                                confMesh.setMatrixAt(i, dummy.matrix);
+                            }
+                            confMesh.instanceMatrix.needsUpdate = true;
+                        }
+                    }
+
+                    const inv = 1 / Math.sqrt(Math.max(sy, 0.5));
+                    bodyGroup.scale.set(inv, sy, inv);
+                    bodyGroup.position.y = -0.75 + 0.75 * sy;
+                    const topY = -0.75 + 1.5 * sy;
+                    root.position.y = hop;
+
+                    if (!launched) {
+                        lid.position.set(0, topY + 0.05 * air, 0);
+                        lid.rotation.set(-0.1 * air, 0, 0.05 * wob);
+                        lid.scale.setScalar(1);
+                    }
+
+                    const sh2 = 1 - 0.25 * (hop / 0.3);
+                    shadow.scale.set(sh2, sh2, 1);
+                    (shadow.material as any).opacity = 0.5 - 0.15 * (hop / 0.3);
+
+                    rays.rotation.z = t * 0.12;
+                    rayMat.opacity = 0.3 + 0.06 * Math.sin(t * 1.7) + (q >= 0 ? 0.6 * Math.max(0, 1 - q / 1.6) : 0);
+
+                    ringMat.opacity = 0.65 + 0.25 * Math.sin(t * 2.5);
+
+                    orbitStars.forEach((st) => {
+                        const a = st.a + t * st.sp;
+                        st.m.position.set(
+                            Math.cos(a) * st.r,
+                            st.y + Math.sin(t * 1.3 + st.ph) * 0.15,
+                            Math.sin(a) * st.r * 0.78 + 0.2,
+                        );
+                        st.m.rotation.y = t * 1.4 + st.ph;
+                        st.m.rotation.z = Math.sin(t * 0.9 + st.ph) * 0.35;
+                    });
+
+                    glints.forEach((gl) => {
+                        const v = Math.pow(Math.max(0, Math.sin(t * 1.8 + gl.ph)), 8);
+                        const m = gl.s.material as any;
+                        m.opacity = opening ? 0 : v;
+                        m.rotation = t * 0.5;
+                        const sc = 0.15 + 0.55 * v;
+                        gl.s.scale.set(sc, sc, 1);
+                    });
+
+                    renderer.render(scene, camera);
+                };
+                tick();
+
+                cleanup = () => {
+                    cancelAnimationFrame(raf);
+                    scene.traverse((o: any) => {
+                        if (o.geometry) o.geometry.dispose();
+                        if (o.material) {
+                            const mats = Array.isArray(o.material) ? o.material : [o.material];
+                            mats.forEach((m: any) => {
+                                if (m.map) m.map.dispose();
+                                m.dispose();
+                            });
+                        }
+                    });
+                    envTex.dispose();
+                    renderer.dispose();
+                    if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
+                };
+            } catch (err) {
+                console.warn('GiftBox3D: không khởi tạo được WebGL, dùng bản CSS.', err);
+                if (!disposed) onFail();
+            }
+        })();
+
+        return () => {
+            disposed = true;
+            cancelAnimationFrame(raf);
+            cleanup();
+        };
+    }, []);
+
+    const closed = phase === 'box';
+    const release = () => { pressedRef.current = false; };
+
+    return (
+        <button
+            type="button"
+            onClick={onOpen}
+            onPointerDown={() => { pressedRef.current = true; }}
+            onPointerUp={release}
+            onPointerLeave={release}
+            onPointerCancel={release}
+            disabled={!closed}
+            aria-label="Chạm để mở hộp quà"
+            style={{
+                width: 296,
+                height: 300,
+                padding: 0,
+                border: 'none',
+                background: 'none',
+                outline: 'none',
+                display: 'block',
+                cursor: closed ? 'pointer' : 'default',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+            }}
+        >
+            <div ref={mountRef} style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
+        </button>
+    );
+}
+
+function GiftBox(props: { phase: GiftPhase; name: string; onOpen: () => void }) {
+    const [failed, setFailed] = useState(false);
+    if (failed) return <GiftBoxCSS phase={props.phase} onOpen={props.onOpen} />;
+    return <GiftBox3D {...props} onFail={() => setFailed(true)} />;
 }
 
 export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
@@ -753,9 +1321,10 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
     const [hasEverShown, setHasEverShown] = useState(false);
     const [musicPlaying, setMusicPlaying] = useState(false);
     const closingRef = useRef(false);
+    const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const audioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [phase, setPhase] = useState<GiftPhase>('box');
-    const [pullCount, setPullCount] = useState(0);
 
     useEffect(() => {
         if (show) {
@@ -768,10 +1337,17 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
         if (!hasEverShown) return;
         const audio = new Audio('/sounds/happy-birthday.mp3');
         audio.volume = 0.75;
+        audio.preload = 'auto';
+        audio.load();
         audioRef.current = audio;
         audio.addEventListener('ended', () => setMusicPlaying(false));
         return () => { audio.pause(); audio.src = ''; };
     }, [hasEverShown]);
+
+    useEffect(() => () => {
+        if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+        if (audioTimerRef.current) clearTimeout(audioTimerRef.current);
+    }, []);
 
     if (!hasEverShown) return null;
 
@@ -790,30 +1366,25 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
         setTimeout(onClose, 400);
     };
 
-    const handleCommitPull = () => {
+    const handleOpenGift = () => {
         if (phase !== 'box') return;
-        const next = pullCount + 1;
-        setPullCount(next);
+        setPhase('exploding');
 
-        if (next >= PULLS_NEEDED) {
-            setPhase('settling');
-            setTimeout(() => {
-                setPhase('exploding');
+        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
 
-                const audio = audioRef.current;
-                if (audio) {
-                    audio.play().then(() => setMusicPlaying(true)).catch(() => {
-                        const retry = () => {
-                            audio.play().then(() => setMusicPlaying(true)).catch(() => { });
-                            document.removeEventListener('click', retry);
-                        };
-                        document.addEventListener('click', retry, { once: true });
-                    });
-                }
+        audioTimerRef.current = setTimeout(() => {
+            const audio = audioRef.current;
+            if (!audio) return;
+            audio.play().then(() => setMusicPlaying(true)).catch(() => {
+                const retry = () => {
+                    audio.play().then(() => setMusicPlaying(true)).catch(() => { });
+                    document.removeEventListener('click', retry);
+                };
+                document.addEventListener('click', retry, { once: true });
+            });
+        }, 120);
 
-                setTimeout(() => setPhase('revealed'), 750);
-            }, 420);
-        }
+        revealTimerRef.current = setTimeout(() => setPhase('revealed'), 1600);
     };
 
     const firstName = userName.split(' ').pop() ?? userName;
@@ -838,11 +1409,9 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                     boxShadow: '0 32px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)',
                 }}
             >
-                {/* Wrapper riêng cho hiệu ứng rung khi nắp bung — tách khỏi transform mở modal ở div cha để không đè lên nhau */}
-                <div style={{ animation: phase === 'exploding' ? 'modalShake .4s ease-out' : undefined }}>
-                    {phase === 'exploding' || phase === 'revealed' ? <ConfettiCanvas /> : null}
+                <div>
+                    {phase === 'revealed' ? <ConfettiCanvas /> : null}
 
-                    {/* Close */}
                     <button
                         onClick={(e) => { e.stopPropagation(); handleClose(); }}
                         style={{
@@ -855,27 +1424,36 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                     </button>
 
                     {phase !== 'revealed' ? (
-                        /* ---------------- Gift box phase ---------------- */
                         <div
                             style={{
-                                position: 'relative', zIndex: 10, padding: '32px 24px 30px',
+                                position: 'relative', zIndex: 10, padding: '28px 12px 22px',
                                 display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
                             }}
                         >
                             <p
                                 style={{
                                     color: '#FFD93D', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em',
-                                    textTransform: 'uppercase', marginBottom: 8, opacity: phase === 'box' ? 1 : 0,
+                                    textTransform: 'uppercase', marginBottom: 2, opacity: phase === 'box' ? 1 : 0,
                                     transition: 'opacity .3s ease',
                                 }}
                             >
                                 🎁 có một món quà cho {firstName}
                             </p>
 
-                            <GiftBox phase={phase} pullCount={pullCount} onCommitPull={handleCommitPull} />
+                            <GiftBox phase={phase} name={firstName} onOpen={handleOpenGift} />
+
+                            <p
+                                style={{
+                                    marginTop: 2, fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,.8)',
+                                    animation: phase === 'box' ? 'hintPulse 1.6s ease-in-out infinite' : undefined,
+                                    opacity: phase === 'box' ? 1 : 0,
+                                    transition: 'opacity .25s ease',
+                                }}
+                            >
+                                👆 Chạm để mở quà
+                            </p>
                         </div>
                     ) : (
-                        /* ---------------- Revealed (cake) phase ---------------- */
                         <div
                             style={{
                                 position: 'relative', zIndex: 10, padding: '28px 24px 24px',
@@ -901,7 +1479,6 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                                 Chúc bạn sinh nhật thật vui, sức khỏe dồi dào — và tiếp tục đánh cầu thật đẹp nhé!
                             </div>
 
-                            {/* Music indicator */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, height: 20, opacity: 0, animation: 'fadeUp .5s ease-out .45s forwards' }}>
                                 {musicPlaying ? (
                                     <>
@@ -950,10 +1527,6 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                     from{height:4px}
                     to{height:14px}
                 }
-                @keyframes boxIdle {
-                    0%,100%{transform:translateY(0) rotate(0deg)}
-                    50%{transform:translateY(-5px) rotate(-1.2deg)}
-                }
                 @keyframes glitterFloat {
                     0%,100%{transform:translateY(0) scale(1);opacity:.35}
                     50%{transform:translateY(-10px) scale(1.25);opacity:.85}
@@ -962,29 +1535,43 @@ export function BirthdayModal({ userName, show, onClose }: BirthdayModalProps) {
                     0%{left:-60%}
                     45%,100%{left:120%}
                 }
-                @keyframes chevronFloat {
-                    0%,100%{opacity:.4;transform:translateY(2px)}
-                    50%{opacity:1;transform:translateY(-3px)}
-                }
                 @keyframes sparkBurst {
                     0%{transform:translate(-50%,-50%) rotate(0deg) scale(.4);opacity:0}
                     15%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}
                     100%{transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)) scale(.5);opacity:0}
                 }
-                @keyframes trailFade {
-                    0% { opacity: 1; transform: scale(1) translateY(0); }
-                    100% { opacity: 0; transform: scale(0.3) translateY(-14px); }
+
+                /* ---- Bản CSS dự phòng ---- */
+                @keyframes giftWiggle {
+                    0%, 100% { transform: translateY(0) rotate(0deg); }
+                    8%  { transform: translateY(-8px) rotate(-5deg); }
+                    16% { transform: translateY(0) rotate(5deg); }
+                    24% { transform: translateY(-4px) rotate(-3deg); }
+                    32% { transform: translateY(0) rotate(2deg); }
+                    40%, 90% { transform: translateY(0) rotate(0deg); }
+                }
+                @keyframes glowBreath {
+                    0%, 100% { opacity: .55; transform: scale(1); }
+                    50% { opacity: 1; transform: scale(1.08); }
+                }
+                @keyframes bodySquish {
+                    0% { transform: scale(1, 1); }
+                    35% { transform: scale(1.06, .9); }
+                    100% { transform: scale(1, 1); }
+                }
+                @keyframes lidPop {
+                    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+                    45% { transform: translate(30px, -110px) rotate(-22deg); opacity: 1; }
+                    100% { transform: translate(80px, -40px) rotate(-60deg); opacity: 0; }
+                }
+                @keyframes glowOut {
+                    0% { opacity: 0; transform: scale(.2); }
+                    40% { opacity: 1; transform: scale(1.1); }
+                    100% { opacity: 0; transform: scale(2.4); }
                 }
                 @keyframes hintPulse {
-                    0% { transform: scale(1.35); color: #FFD93D; }
-                    100% { transform: scale(1); }
-                }
-                @keyframes modalShake {
-                    0%, 100% { transform: scale(1) translateX(0); }
-                    20% { transform: scale(1.015) translateX(-3px); }
-                    40% { transform: scale(1.015) translateX(3px); }
-                    60% { transform: scale(1.01) translateX(-2px); }
-                    80% { transform: scale(1.01) translateX(2px); }
+                    0%, 100% { opacity: .65; transform: translateY(0); }
+                    50% { opacity: 1; transform: translateY(-3px); }
                 }
             `}</style>
         </div>

@@ -35,6 +35,7 @@ export function TransactionDetailModal({
 
   const [detail, setDetail] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [penaltyGone, setPenaltyGone] = useState(false);
   const [sharingReceipt, setSharingReceipt] = useState(false);
   const [visible, setVisible] = useState(false);
 
@@ -88,7 +89,11 @@ export function TransactionDetailModal({
 
   const hasSnapshot = isSessionPayment && Boolean(tx.metadata);
 
-  const shouldFetch = isSessionPayment || isShirtOrder || isPenaltyPayment;
+  // Khoản phạt đã bị admin hủy: backend lưu ảnh chụp chi tiết vào metadata của giao dịch ví
+  const penaltySnapshot = isPenaltyPayment ? (tx.metadata?.penalty_snapshot ?? null) : null;
+
+  const shouldFetch =
+    isSessionPayment || isShirtOrder || (isPenaltyPayment && !penaltySnapshot);
 
   const shirtOrderRegIds: string[] = isShirtOrder
     ? (tx.metadata?.registration_ids?.length ? tx.metadata.registration_ids : [tx.reference_id])
@@ -110,7 +115,12 @@ export function TransactionDetailModal({
 
     request
       .then(({ data }) => { if (!ignore) setDetail(data); })
-      .catch(() => { if (!ignore) setDetail(null); })
+      .catch((err: any) => {
+        if (ignore) return;
+        setDetail(null);
+        // Khoản phạt không còn (đã bị admin hủy/xóa trước khi có ảnh chụp)
+        if (isPenaltyPayment && err?.response?.status === 404) setPenaltyGone(true);
+      })
       .finally(() => { if (!ignore) setLoadingDetail(false); });
 
     return () => { ignore = true; };
@@ -118,7 +128,15 @@ export function TransactionDetailModal({
 
   const reg = detail?.registration;
   const liveGuests = detail?.grouped_guests ?? [];
-  const penalty = isPenaltyPayment ? detail : null;
+  const penaltyCancelled =
+    isPenaltyPayment && (Boolean(tx.metadata?.penalty_cancelled) || penaltyGone);
+  const penalty = isPenaltyPayment
+    ? (penaltySnapshot ??
+        detail ??
+        (penaltyGone
+          ? { title: tx.title, description: tx.description, amount: Math.abs(Number(tx.amount)) }
+          : null))
+    : null;
 
   const isRefunded = isSessionPayment && transactions.some((t: any) =>
     t.type === 'refund' &&
@@ -156,7 +174,7 @@ export function TransactionDetailModal({
   const sessionDetailFailed = isSessionPayment && !hasSnapshot && !loadingDetail && !reg;
 
   const isLoadingPenaltyDetail = isPenaltyPayment && loadingDetail;
-  const penaltyDetailFailed = isPenaltyPayment && !loadingDetail && !penalty;
+  const penaltyDetailFailed = isPenaltyPayment && !loadingDetail && !penalty && !penaltyGone;
 
   if (typeof document === "undefined") return null;
 
@@ -489,6 +507,16 @@ export function TransactionDetailModal({
                 <p className="text-xs font-semibold text-[var(--text-faint)] uppercase tracking-wide mb-2">
                   Chi tiết khoản phạt
                 </p>
+
+                {penaltyCancelled && (
+                  <div className="mb-2 flex items-start gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2.5 text-xs text-[var(--text-muted)]">
+                    <Ban className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <span>
+                      Khoản phạt này đã được admin hủy. Số tiền (nếu đã trừ ví) được hoàn lại
+                      bằng giao dịch &quot;Hoàn tiền phạt&quot; riêng trong lịch sử.
+                    </span>
+                  </div>
+                )}
 
                 {isLoadingPenaltyDetail ? (
                   <div className="flex items-center justify-center py-6 text-[var(--text-faint)] text-sm gap-2">

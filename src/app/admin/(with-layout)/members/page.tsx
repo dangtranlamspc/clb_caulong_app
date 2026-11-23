@@ -15,6 +15,7 @@ import GradientBorderButton from '@/components/ui/GradientBorderButton';
 import Modal from '@/components/ui/Modal';
 import MemberForm from '@/components/admin/members/MemberForm';
 import ChangePasswordModal from '@/components/admin/members/ChangePasswordModal';
+import DeleteMemberModal from '@/components/admin/members/DeleteMemberModal';
 
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(s => ({ value: s, label: s }));
 
@@ -458,24 +459,9 @@ export default function AdminMembersPage() {
         }
     };
 
+    // Mở modal xóa (DeleteMemberModal tự tải thông tin ví và xử lý xóa)
     const handleDelete = (id: string, name: string) => {
         setDeleteConfirm({ id, name });
-    };
-
-    const confirmDelete = async () => {
-        if (!deleteConfirm) return;
-        const { id } = deleteConfirm;
-        setActionLoading(id);
-        try {
-            await membersAdminApi.delete(id);
-            toast.success('Đã xóa thành viên');
-            fetchUsers();
-        } catch (err: any) {
-            toast.error(err?.response?.data?.message ?? 'Xóa thất bại');
-        } finally {
-            setActionLoading(null);
-            setDeleteConfirm(null);
-        }
     };
 
     const handleApprove = async (id: string) => {
@@ -868,37 +854,14 @@ export default function AdminMembersPage() {
                     </div>
                 </Modal>
 
-                <Modal
-                    isOpen={!!deleteConfirm}
+                <DeleteMemberModal
+                    target={deleteConfirm}
                     onClose={() => setDeleteConfirm(null)}
-                    title="Xóa thành viên"
-                >
-                    <div className="space-y-4">
-                        <p className="text-sm text-[var(--text-muted)]">
-                            Xóa thành viên{' '}
-                            <span className="font-semibold text-[var(--text)]">{deleteConfirm?.name}</span>?
-                            Hành động này <span className="font-medium text-[var(--danger)]">không thể hoàn tác</span>.
-                        </p>
-                        <div className="flex justify-end gap-2 pt-2">
-                            <button
-                                onClick={() => setDeleteConfirm(null)}
-                                className="px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-hover)] transition-colors"
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                disabled={actionLoading === deleteConfirm?.id}
-                                className="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center gap-2"
-                            >
-                                {actionLoading === deleteConfirm?.id && (
-                                    <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                                )}
-                                Xác nhận xóa
-                            </button>
-                        </div>
-                    </div>
-                </Modal>
+                    onDeleted={() => {
+                        setDeleteConfirm(null);
+                        fetchUsers();
+                    }}
+                />
 
                 <Modal
                     isOpen={!!toggleConfirm}
