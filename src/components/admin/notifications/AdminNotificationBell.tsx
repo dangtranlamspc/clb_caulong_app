@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import Lottie, { LottieRefCurrentProps } from "lottie-react";
 import { Trash2, Loader2, CheckCircle2, XCircle, Phone, X, Wallet, ChevronLeft } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
-import { walletAdminApi, registrationsAdminApi, matchesAdminApi, eventsAdminApi, userDrinksAdminApi } from "@/lib/api";
+import { walletAdminApi, registrationsAdminApi, matchesAdminApi, eventsAdminApi, userDrinksAdminApi, membersAdminApi } from "@/lib/api";
 import toast from "react-hot-toast";
 import bellAnimation from "../../../../public/lottie/noti.json";
 import { usePathname, useRouter } from "next/navigation";
@@ -512,6 +512,14 @@ export function AdminNotificationBell() {
 
 
     const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+
+    const [memberConfirm, setMemberConfirm] = useState<{
+        notifId: string;
+        userId: string;
+        name?: string | null;
+        action: "approve" | "reject";
+    } | null>(null);
+
     const [deletingAll, setDeletingAll] = useState(false);
 
     const [navigatingToEvents, setNavigatingToEvents] = useState(false);
@@ -728,6 +736,43 @@ export function AdminNotificationBell() {
         }
     };
 
+    const askApproveMember = (notifId: string, userId: string, name?: string | null) =>
+        setMemberConfirm({ notifId, userId, name, action: "approve" });
+
+    const askRejectMember = (notifId: string, userId: string, name?: string | null) =>
+        setMemberConfirm({ notifId, userId, name, action: "reject" });
+
+    const confirmMemberAction = async () => {
+        if (!memberConfirm) return;
+        const { notifId, userId, action } = memberConfirm;
+        setProcessingId(notifId);
+        setProcessingAction(action);
+        try {
+            if (action === "approve") {
+                await membersAdminApi.approve(userId);
+                toast.success("Đã duyệt tài khoản");
+            } else {
+                await membersAdminApi.reject(userId);
+                toast.success("Đã từ chối tài khoản đăng ký");
+            }
+            await markRead(notifId);
+            markResolved(notifId, action === "approve" ? "approved" : "rejected");
+            setMemberConfirm(null);
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Thao tác thất bại, vui lòng thử lại");
+        } finally {
+            setProcessingId(null);
+            setProcessingAction(null);
+        }
+    };
+
+    const handleOpenMembersPage = (notifId: string) => {
+        markRead(notifId);
+        setOpen(false);
+        router.push("/admin/members");
+    };
+
+
 
     const handleApproveDrinkRequest = async (notifId: string, requestId: string) => {
         setProcessingId(notifId);
@@ -893,6 +938,9 @@ export function AdminNotificationBell() {
                                     const isRegistrationPending = n.type === "registration_pending";
                                     const registrationId = n.data?.registration_id;
 
+                                    const isMemberRegistrationPending = n.type === "member_registration_pending";
+                                    const memberUserId = n.data?.user_id;
+
                                     const isMatchResultPending = n.type === "match_result_pending";
                                     const matchId = n.data?.match_id;
 
@@ -1015,6 +1063,37 @@ export function AdminNotificationBell() {
                                                             >
                                                                 {isRejecting && <Loader2 className="w-4 h-4 animate-spin" />}
                                                                 Từ chối
+                                                            </button>
+                                                        </div>
+                                                    )
+                                                )}
+
+                                                {isMemberRegistrationPending && memberUserId && (
+                                                    isResolved ? (
+                                                        <ResolvedBadge action={resolvedAction} />
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 mt-3">
+                                                            <button
+                                                                onClick={() => handleOpenMembersPage(n.id)}
+                                                                className={BTN_SM_INFO}
+                                                            >
+                                                                Chi tiết
+                                                            </button>
+                                                            <button
+                                                                onClick={() => askRejectMember(n.id, memberUserId, n.data?.full_name)}
+                                                                disabled={isProcessing}
+                                                                className={BTN_SM_REJECT}
+                                                            >
+                                                                {isRejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Từ chối
+                                                            </button>
+                                                            <button
+                                                                onClick={() => askApproveMember(n.id, memberUserId, n.data?.full_name)}
+                                                                disabled={isProcessing}
+                                                                className={BTN_SM_APPROVE}
+                                                            >
+                                                                {isApproving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                                Duyệt
                                                             </button>
                                                         </div>
                                                     )
@@ -1233,6 +1312,95 @@ export function AdminNotificationBell() {
                         setShirtOrderCancelModal(null);
                     }}
                 />
+            )}
+
+            {memberConfirm && typeof document !== "undefined" && createPortal(
+                <div
+                    className="fixed inset-0 z-[999999] bg-black/40 flex items-center justify-center p-4"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget && processingId !== memberConfirm.notifId) {
+                            setMemberConfirm(null);
+                        }
+                    }}
+                >
+                    <div className="bg-[var(--surface)] rounded-2xl w-full max-w-sm shadow-xl overflow-hidden">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+                            <div className="flex items-center gap-2.5">
+                                <div
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center ${memberConfirm.action === "approve"
+                                        ? "bg-[var(--success-soft)]"
+                                        : "bg-[var(--danger-soft)]"
+                                        }`}
+                                >
+                                    {memberConfirm.action === "approve" ? (
+                                        <CheckCircle2 className="w-4 h-4 text-[var(--success)]" />
+                                    ) : (
+                                        <XCircle className="w-4 h-4 text-[var(--danger)]" />
+                                    )}
+                                </div>
+                                <p className="font-bold text-[var(--text)]">
+                                    {memberConfirm.action === "approve" ? "Duyệt tài khoản?" : "Từ chối đăng ký?"}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setMemberConfirm(null)}
+                                disabled={processingId === memberConfirm.notifId}
+                                aria-label="Đóng"
+                                className="w-7 h-7 rounded-full bg-[var(--surface-muted)] flex items-center justify-center hover:bg-[var(--border-strong)] disabled:opacity-50"
+                            >
+                                <X className="w-4 h-4 text-[var(--text-muted)]" />
+                            </button>
+                        </div>
+
+                        <div className="px-5 py-4">
+                            <p className="text-sm text-[var(--text-muted)]">
+                                {memberConfirm.action === "approve" ? (
+                                    <>
+                                        Duyệt đăng ký của{" "}
+                                        <strong className="text-[var(--text)]">
+                                            {memberConfirm.name ?? "thành viên này"}
+                                        </strong>
+                                        ? Thành viên sẽ có thể đăng nhập và sử dụng hệ thống, đồng thời nhận email thông báo.
+                                    </>
+                                ) : (
+                                    <>
+                                        Từ chối đăng ký của{" "}
+                                        <strong className="text-[var(--text)]">
+                                            {memberConfirm.name ?? "thành viên này"}
+                                        </strong>
+                                        ? Tài khoản sẽ chuyển sang{" "}
+                                        <span className="font-medium text-[var(--danger)]">Đã từ chối</span>, bị vô hiệu hóa
+                                        và không thể đăng nhập.
+                                    </>
+                                )}
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 px-5 py-4 border-t border-[var(--border)]">
+                            <button
+                                onClick={() => setMemberConfirm(null)}
+                                disabled={processingId === memberConfirm.notifId}
+                                className="flex-1 min-h-[44px] rounded-xl bg-[var(--surface-muted)] hover:bg-[var(--border-strong)] text-[var(--text)] text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={confirmMemberAction}
+                                disabled={processingId === memberConfirm.notifId}
+                                className={`flex-1 min-h-[44px] rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition active:scale-[0.98] disabled:opacity-50 ${memberConfirm.action === "approve"
+                                    ? "bg-emerald-500 hover:bg-emerald-600"
+                                    : "bg-red-500 hover:bg-red-600"
+                                    }`}
+                            >
+                                {processingId === memberConfirm.notifId && (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                )}
+                                {memberConfirm.action === "approve" ? "Xác nhận duyệt" : "Xác nhận từ chối"}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body,
             )}
 
             {showDeleteAllModal && typeof document !== "undefined" && createPortal(

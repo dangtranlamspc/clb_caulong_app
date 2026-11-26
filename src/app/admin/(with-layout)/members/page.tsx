@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -16,6 +16,7 @@ import Modal from '@/components/ui/Modal';
 import MemberForm from '@/components/admin/members/MemberForm';
 import ChangePasswordModal from '@/components/admin/members/ChangePasswordModal';
 import DeleteMemberModal from '@/components/admin/members/DeleteMemberModal';
+import { supabase } from '@/lib/supabase';
 
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(s => ({ value: s, label: s }));
 
@@ -372,8 +373,8 @@ export default function AdminMembersPage() {
         return () => clearTimeout(t);
     }, [searchInput]);
 
-    const fetchUsers = useCallback(async () => {
-        setLoading(true);
+    const fetchUsers = useCallback(async (silent = false) => {
+        if (!silent) setLoading(true);
         try {
             const params = Object.fromEntries(Object.entries(query).filter(([, v]) => v !== ''));
             const { data } = await membersAdminApi.list(params);
@@ -384,11 +385,31 @@ export default function AdminMembersPage() {
                 toast.error('Thao tác quá nhanh, vui lòng thử lại sau vài giây');
             }
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     }, [query]);
 
     useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+    const fetchRef = useRef(fetchUsers);
+    useEffect(() => { fetchRef.current = fetchUsers; }, [fetchUsers]);
+
+    useEffect(() => {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+
+        const channel = supabase
+            .channel('members-admin-realtime')
+            .on('broadcast', { event: 'members_changed' }, () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fetchRef.current(true), 300);
+            })
+            .subscribe();
+
+        return () => {
+            clearTimeout(timer);
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const handleExport = async () => {
         setExporting(true);
@@ -600,7 +621,13 @@ export default function AdminMembersPage() {
                             Không tìm thấy dữ liệu
                         </div>
                     ) : users.map((user) => (
-                        <div key={user.id} className="p-4 space-y-3 bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm">
+                        <div
+                            key={user.id}
+                            className={`p-4 space-y-3 rounded-xl border shadow-sm ${user.approval_status === 'pending' && user.email_verified !== false
+                                ? 'bg-[var(--warning-soft)] border-[var(--warning)]'
+                                : 'bg-[var(--surface)] border-[var(--border)]'
+                                }`}
+                        >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="flex items-center gap-3 min-w-0">
                                     <Avatar user={user} sizeClass="w-10 h-10 text-sm" />
@@ -705,7 +732,13 @@ export default function AdminMembersPage() {
                                     </td>
                                 </tr>
                             ) : users.map((user) => (
-                                <tr key={user.id} className="hover:bg-[var(--surface-hover)] transition-colors">
+                                <tr
+                                    key={user.id}
+                                    className={`transition-colors ${user.approval_status === 'pending' && user.email_verified !== false
+                                        ? 'bg-[var(--warning-soft)]'
+                                        : 'hover:bg-[var(--surface-hover)]'
+                                        }`}
+                                >
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-3">
                                             <Avatar user={user} sizeClass="w-9 h-9 text-sm" />
